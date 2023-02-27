@@ -1,5 +1,6 @@
 require("analytics")
 local logger = require("logger")
+require("engine.panel")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -111,13 +112,24 @@ Stack =
     s.gpanel_buffer = ""
     s.input_buffer = {} -- Inputs that haven't been processed yet
     s.confirmedInput = {} -- All inputs the player has input ever
+    -- The number of individual garbage blocks created on this stack
+    -- used for giving a unique identifier to each new garbage block
+    s.garbageCreatedCount = 0
+    s.garbageLandedThisFrame = {}
+    -- The number of individual panels created on this stack
+    -- used for giving new panels their own unique identifier
+    s.panelsCreatedCount = 0
+    -- 2 dimensional table for containing all panels
+    -- panel[i] gets the row where i is the index of the row with 1 being the most bottom row that is in play (not dimmed)
+    -- panel[i][j] gets the panel at row i where j is the column index counting from left to right starting from 1
+    -- the update order for panels is bottom to top and left to right as well
     s.panels = {}
     s.width = 6
     s.height = 12
     for i = 0, s.height do
       s.panels[i] = {}
       for j = 1, s.width do
-        s.panels[i][j] = Panel()
+        s.panels[i][j] = s:createPanel(i, j)
       end
     end
 
@@ -158,17 +170,16 @@ Stack =
 
     s.n_active_panels = 0
     s.n_prev_active_panels = 0
-    s.n_chain_panels = 0
 
     -- These change depending on the difficulty and speed levels:
-    s.FRAMECOUNT_HOVER = s.FRAMECOUNT_HOVER or FC_HOVER[s.difficulty]
-    s.FRAMECOUNT_FLASH = s.FRAMECOUNT_FLASH or FC_FLASH[s.difficulty]
-    s.FRAMECOUNT_FACE = s.FRAMECOUNT_FACE or FC_FACE[s.difficulty]
-    s.FRAMECOUNT_POP = s.FRAMECOUNT_POP or FC_POP[s.difficulty]
-    s.FRAMECOUNT_MATCH = s.FRAMECOUNT_FACE + s.FRAMECOUNT_FLASH
-    s.FRAMECOUNT_RISE = speed_to_rise_time[s.speed]
+    s.FRAMECOUNTS = {}
+    s.FRAMECOUNTS.HOVER = s.FRAMECOUNTS.HOVER or FC_HOVER[s.difficulty]
+    s.FRAMECOUNTS.FLASH = s.FRAMECOUNTS.FLASH or FC_FLASH[s.difficulty]
+    s.FRAMECOUNTS.FACE = s.FRAMECOUNTS.FACE or FC_FACE[s.difficulty]
+    s.FRAMECOUNTS.POP = s.FRAMECOUNTS.POP or FC_POP[s.difficulty]
+    s.FRAMECOUNTS.MATCH = s.FRAMECOUNTS.FACE + s.FRAMECOUNTS.FLASH
 
-    s.rise_timer = s.FRAMECOUNT_RISE
+    s.rise_timer = speed_to_rise_time[s.speed]
 
     -- Player input stuff:
     s.manual_raise = false -- set until raising is completed
@@ -260,11 +271,11 @@ function Stack.setLevel(self, level)
   end
   -- mode 1: increase speed per time interval?
   self.max_health = level_to_hang_time[level]
-  self.FRAMECOUNT_HOVER = level_to_hover[level]
-  self.FRAMECOUNT_GPHOVER = level_to_garbage_panel_hover[level]
-  self.FRAMECOUNT_FLASH = level_to_flash[level]
-  self.FRAMECOUNT_FACE = level_to_face[level]
-  self.FRAMECOUNT_POP = level_to_pop[level]
+  self.FRAMECOUNTS.HOVER = level_to_hover[level]
+  self.FRAMECOUNTS.GPHOVER = level_to_garbage_panel_hover[level]
+  self.FRAMECOUNTS.FLASH = level_to_flash[level]
+  self.FRAMECOUNTS.FACE = level_to_face[level]
+  self.FRAMECOUNTS.POP = level_to_pop[level]
   self.combo_constant = level_to_combo_constant[level]
   self.combo_coefficient = level_to_combo_coefficient[level]
   self.chain_constant = level_to_chain_constant[level]
@@ -332,7 +343,7 @@ function Stack.divergenceString(stackToTest)
       for i=#panels,1,-1 do
           for j=1,#panels[i] do
             result = result .. (tostring(panels[i][j].color)) .. " "
-            if panels[i][j].state ~= "normal" then
+            if panels[i][j].state ~= Panel.states.normal then
               result = result .. (panels[i][j].state) .. " "
             end
           end
@@ -393,17 +404,20 @@ function Stack.rollbackCopy(source, other)
   if source.panels[0] then
     startRow = 0
   end
+  other.panelsCreatedCount = source.panelsCreatedCount
   for i = startRow, height_to_cpy do
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        other.panels[i][j] = Panel()
+        -- other isn't a stack object and therefore doesn't know the method
+        -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
+        other.panels[i][j] = Stack.createPanel(other, i, j)
       end
     end
     for j = 1, width do
       local opanel = other.panels[i][j]
       local spanel = source.panels[i][j]
-      opanel:clear()
+      opanel:clear(true, true)
       for k, v in pairs(spanel) do
         opanel[k] = v
       end
@@ -436,8 +450,6 @@ function Stack.rollbackCopy(source, other)
   other.chain_counter = source.chain_counter
   other.n_active_panels = source.n_active_panels
   other.n_prev_active_panels = source.n_prev_active_panels
-  other.n_chain_panels = source.n_chain_panels
-  other.FRAMECOUNT_RISE = source.FRAMECOUNT_RISE
   other.rise_timer = source.rise_timer
   other.manual_raise = source.manual_raise
   other.manual_raise_yet = source.manual_raise_yet
@@ -626,158 +638,6 @@ function Stack.taunt(self, taunt_type)
   self.taunt_queue:push(love.timer.getTime())
 end
 
--- Represents an individual panel in the stack
-Panel =
-  class(
-  function(p)
-    p:clear()
-  end
-)
-
-function Panel.regularColorsArray()
-  return {
-    1, -- hearts
-    2, -- circles
-    3, -- triangles
-    4, -- stars
-    5, -- diamonds
-    6, -- inverse triangles
-    }
-    -- Note see the methods below for square, shock, and colorless
-end
-
-function Panel.extendedRegularColorsArray()
-  local result = Panel.regularColorsArray()
-  result[#result+1] = 7 -- squares
-  return result
-end
-
-function Panel.allPossibleColorsArray()
-  local result = Panel.extendedRegularColorsArray()
-  result[#result+1] = 8 -- shock
-  result[#result+1] = 9 -- colorless
-  return result
-end
-
--- Sets all variables to the default settings
-function Panel.clear(self)
-  -- color 0 is an empty panel.
-  -- colors 1-7 are normal colors, 8 is [!], 9 is garbage.
-  self.color = 0
-  -- A panel's timer indicates for how many more frames it will:
-  --  . be swapping
-  --  . sit in the MATCHED state before being set POPPING
-  --  . sit in the POPPING state before actually being POPPED
-  --  . sit and be POPPED before disappearing for good
-  --  . hover before FALLING
-  -- depending on which one of these states the panel is in.
-  self.timer = 0
-  -- is_swapping is set if the panel is swapping.
-  -- The panel's timer then counts down from 3 to 0,
-  -- causing the swap to end 3 frames later.
-  -- The timer is also used to offset the panel's
-  -- position on the screen.
-
-  self.initial_time = nil
-  self.pop_time = nil
-  self.pop_index = nil
-  self.x_offset = nil
-  self.y_offset = nil
-  self.width = nil
-  self.height = nil
-  self.garbage = nil
-  self.metal = nil
-  self.shake_time = nil
-  self.match_anyway = nil
-
-  -- Also flags
-  self:clear_flags()
-end
-
--- states:
--- swapping, matched, popping, popped, hovering,
--- falling, dimmed, landing, normal
--- flags:
--- from_left
--- dont_swap
--- chaining
-
-do
-  local exclude_hover_set = {
-    matched = true,
-    popping = true,
-    popped = true,
-    hovering = true,
-    falling = true
-  }
-  function Panel.exclude_hover(self)
-    return exclude_hover_set[self.state] or self.garbage
-  end
-
-  local exclude_match_set = {
-    swapping = true,
-    matched = true,
-    popping = true,
-    popped = true,
-    dimmed = true,
-    falling = true
-  }
-  function Panel.exclude_match(self)
-    return exclude_match_set[self.state] or self.color == 0 or self.color == 9 or (self.state == "hovering" and not self.match_anyway)
-  end
-
-  local exclude_swap_set = {
-    matched = true,
-    popping = true,
-    popped = true,
-    hovering = true,
-    dimmed = true
-  }
-  function Panel.exclude_swap(self)
-    return exclude_swap_set[self.state] or self.dont_swap or self.garbage
-  end
-
-  function Panel.support_garbage(self)
-    return self.color ~= 0 or self.hovering
-  end
-
-  -- "Block garbage fall" means
-  -- "falling-ness should not propogate up through this panel"
-  -- We need this because garbage doesn't hover, it just falls
-  -- opportunistically.
-  local block_garbage_fall_set = {
-    matched = true,
-    popping = true,
-    popped = true,
-    hovering = true,
-    swapping = true
-  }
-  function Panel.block_garbage_fall(self)
-    return block_garbage_fall_set[self.state] or self.color == 0
-  end
-
-  function Panel.dangerous(self)
-    return self.color ~= 0 and not (self.state == "falling" and self.garbage)
-  end
-end
-
-function Panel.has_flags(self)
-  return (self.state ~= "normal") or self.is_swapping_from_left or self.dont_swap or self.chaining
-end
-
-function Panel.clear_flags(self)
-  self.combo_index = nil
-  self.combo_size = nil
-  self.chain_index = nil
-  self.is_swapping_from_left = nil
-  self.dont_swap = nil
-  self.chaining = nil
-  -- Animation timer for "bounce" after falling from garbage.
-  self.fell_from_garbage = nil
-  self.state = "normal"
-end
-
-
 function Stack.set_puzzle_state(self, puzzle)
   -- Copy the puzzle into our state
   local boardSizeInPanels = self.width * self.height
@@ -798,6 +658,7 @@ end
 
 function Stack.puzzleStringToPanels(self, puzzleString)
   local panels = {}
+  local garbageId = 0
   local garbageStartRow = nil
   local garbageStartColumn = nil
   local isMetal = false
@@ -813,7 +674,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
       for column = 6, 1, -1 do
           local color = string.sub(rowString, column, column)
           if not garbageStartRow and tonumber(color) then
-            local panel = Panel()
+            local panel = self:createPanel(row, column)
             panel.color = tonumber(color)
             panels[row][column] = panel
           else
@@ -826,8 +687,10 @@ function Stack.puzzleStringToPanels(self, puzzleString)
                 isMetal = true
               end
             end
-            local panel = Panel()
-            panel.garbage = true
+            local panel = self:createPanel(row, column)
+            panel.garbageId = garbageId
+            garbageId = garbageId + 1
+            panel.isGarbage = true
             panel.color = 9
             panel.y_offset = row - garbageStartRow
             -- iterating the row right to left to make sure we catch the start of each garbage block
@@ -849,6 +712,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
                 connectedGarbagePanels[i].height = height
                 connectedGarbagePanels[i].width = width
                 connectedGarbagePanels[i].shake_time = shake_time
+                connectedGarbagePanels[i].garbageId = garbageId
                 -- panels are already in the main table and they should already be updated by reference
               end
               garbageStartRow = nil
@@ -863,7 +727,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   -- add row 0 because it crashes if there is no row 0 for whatever reason
   panels[0] = {}
   for column = 6, 1, -1 do
-    local panel = Panel()
+    local panel = self:createPanel(0, column)
     panel.color = 9
     panels[0][column] = panel
   end
@@ -918,7 +782,8 @@ function Stack.hasGarbage(self)
   -- garbage is more likely to be found at the top of the stack
   for row = #self.panels, 1, -1 do
     for column = 1, #self.panels[row] do
-      if self.panels[row][column].garbage and self.panels[row][column].state ~= "matched" then
+      if self.panels[row][column].isGarbage
+        and self.panels[row][column].state ~= Panel.states.matched then
         return true
       end
     end
@@ -928,7 +793,7 @@ function Stack.hasGarbage(self)
 end
 
 function Stack.puzzle_failed(self)
-  if not self.do_countdown and not self:hasPendingAction() then
+  if not self.do_countdown and not self:hasActivePanels() then
     if self.puzzle.puzzleType == "moves" then
         return self.puzzle.remaining_moves == 0
     elseif self.puzzle.puzzleType == "chain" then
@@ -936,7 +801,7 @@ function Stack.puzzle_failed(self)
         -- We finished matching but never made a chain -> fail
         return true
       end
-      if #self.analytic.data.reached_chains > 0 and self.n_chain_panels == 0 then
+      if #self.analytic.data.reached_chains > 0 and not self:hasChainingPanels() then
         -- We achieved a chain, finished chaining, but haven't won yet -> fail
         return true
       end
@@ -950,7 +815,7 @@ function Stack.puzzle_failed(self)
   return false
 end
 
-function Stack.hasPendingAction(self)
+function Stack.hasActivePanels(self)
   return self.n_active_panels > 0 or self.n_prev_active_panels > 0
 end
 
@@ -958,7 +823,7 @@ function Stack.has_falling_garbage(self)
   for i = 1, self.height + 3 do --we shouldn't have to check quite 3 rows above height, but just to make sure...
     local panelRow = self.panels[i]
     for j = 1, self.width do
-      if panelRow and panelRow[j].garbage and panelRow[j].state == "falling" then
+      if panelRow and panelRow[j].isGarbage and panelRow[j].state == Panel.states.falling then
         return true
       end
     end
@@ -1221,7 +1086,7 @@ function Stack.shouldPlayDangerMusic(self)
     for row = self.height - 2, self.height do
       local panelRow = self.panels[row]
       for column = 1, self.width do
-        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
+        if panelRow[column].color ~= 0 and panelRow[column].state ~= Panel.states.falling or panelRow[column]:dangerous() then
           if self.shake_time > 0 then
             return false
           else
@@ -1254,6 +1119,36 @@ function Stack.shouldPlayDangerMusic(self)
   return false
 end
 
+function Stack.updatePanels(self)
+  self.shake_time_on_frame = 0
+  for row = 1, #self.panels do
+    for col = 1, self.width do
+      local panel = self.panels[row][col]
+      panel:update(self.panels)
+    end
+  end
+end
+
+function Stack.shouldDropGarbage(self)
+  -- this is legit ugly, these should rather be returned in a parameter table
+  -- or even better in a dedicated garbage class table
+  local _, next_garbage_block_height, _, from_chain = unpack(self.garbage_q:peek())
+
+  -- new garbage can't drop if the stack is full
+  -- new garbage always drops one by one
+  if not self.panels_in_top_row and not self:has_falling_garbage() then
+    if next_garbage_block_height > 1 then
+      -- drop chain garbage higher than 1 row immediately
+      return from_chain
+      -- there is a gap here for combo garbage higher than 1 but unless you implement a meme mode,
+      -- that doesn't exist anyway
+    else
+      -- otherwise garbage should only be dropped if there are no active panels
+      return not self:hasActivePanels()
+    end
+  end
+end
+
 -- One run of the engine routine.
 function Stack.simulate(self)
   -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
@@ -1262,6 +1157,7 @@ function Stack.simulate(self)
     local panels = self.panels
     local panel = nil
     local swapped_this_frame = nil
+    self.garbageLandedThisFrame = {}
     if self.do_countdown then
       self.game_stopwatch_running = false
       self.rise_lock = true
@@ -1337,25 +1233,20 @@ function Stack.simulate(self)
       self.top_cur_row = self.height
       self:new_row()
     end
-    self.prev_rise_lock = self.rise_lock
-    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
-    if self.prev_rise_lock and not self.rise_lock then
-      self.prevent_manual_raise = false
-    end
+
+    self:updateRiseLock()
 
     -- Increase the speed if applicable
     if self.speedIncreaseMode == 1 then
       -- increase per interval
       if self.CLOCK == self.nextSpeedIncreaseClock then
         self.speed = min(self.speed + 1, 99)
-        self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
         self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
       end
     elseif self.panels_to_speedup <= 0 then
       -- mode 2: increase speed based on cleared panels
       self.speed = min(self.speed + 1, 99)
       self.panels_to_speedup = self.panels_to_speedup + panels_to_next_speed[self.speed]
-      self.FRAMECOUNT_RISE = speed_to_rise_time[self.speed]
     end
 
     -- Phase 0 //////////////////////////////////////////////////////////////
@@ -1383,7 +1274,7 @@ function Stack.simulate(self)
                 self.top_cur_row = self.height
                 self:new_row()
               end
-              self.rise_timer = self.rise_timer + self.FRAMECOUNT_RISE
+              self.rise_timer = self.rise_timer + speed_to_rise_time[self.speed]
             end
           end
         end
@@ -1415,287 +1306,11 @@ function Stack.simulate(self)
       end
     end
 
-    -- Phase 2. /////////////////////////////////////////////////////////////
-    -- Timer-expiring actions + falling
-    local propogate_fall = {false, false, false, false, false, false}
-    local skip_col = 0
-    local shake_time = 0
-    popsize = "small"
-    for row = 1, #panels do
-      for col = 1, self.width do
-        local cntinue = false
-        if skip_col > 0 then
-          skip_col = skip_col - 1
-          cntinue = true
-        end
-        panel = panels[row][col]
-        if cntinue then
-        elseif panel.garbage then
-          if panel.state == "matched" then
-            -- try to fall
-            panel.timer = panel.timer - 1
-            if panel.timer == panel.pop_time then
-              if config.popfx == true then
-                self:enqueue_popfx(col, row, popsize)
-              end
-              if self:shouldChangeSoundEffects() then
-                SFX_Garbage_Pop_Play = panel.pop_index
-              end
-            end
-            if panel.timer == 0 then
-              if panel.y_offset == -1 then
-                local color, chaining = panel.color, panel.chaining
-                panel:clear()
-                panel.color, panel.chaining = color, chaining
-                self:set_hoverers(row, col, self.FRAMECOUNT_GPHOVER, true, true)
-                panel.fell_from_garbage = 12
-              else
-                panel.state = "normal"
-              end
-            end
-          elseif (panel.state == "normal" or panel.state == "falling") then
-            -- x_offset relative to the right side of the garbage
-            if panel.x_offset == 0 then
-              local supported = false
-              -- y_offset relative to the bottom of the garbage
-              if panel.y_offset == 0 then
-                -- width refers to how wide the garbage is, check if there is support anywhere along the width
-                for i = col, col + panel.width - 1 do
-                  if panels[row - 1][i]:support_garbage() then
-                    supported = true
-                    break
-                  end
-                end
-              else
-                supported = not propogate_fall[col]
-              end
-              if supported then
-                for x = col, col - 1 + panel.width do
-                  panels[row][x].state = "normal"
-                  propogate_fall[x] = false
-                end
-              else
-                skip_col = panel.width - 1
-                for x = col, col - 1 + panel.width do
-                  panels[row - 1][x]:clear()
-                  propogate_fall[x] = true
-                  panels[row][x].state = "falling"
-                  panels[row - 1][x], panels[row][x] = panels[row][x], panels[row - 1][x]
-                end
-              end
-            end
-            if panel.shake_time and panel.state == "normal" then
-              if row <= self.height then
-                if self:shouldChangeSoundEffects() then
-                  if panel.height > 3 then
-                    self.sfx_garbage_thud = 3
-                  else
-                    self.sfx_garbage_thud = panel.height
-                  end
-                end
-                shake_time = max(shake_time, panel.shake_time, self.peak_shake_time or 0)
-                --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
-                self.peak_shake_time = max(shake_time, self.peak_shake_time or 0)
-                panel.shake_time = nil
-              end
-            end
-          end
-          cntinue = true
-        end
-        if propogate_fall[col] and not cntinue then
-          if panel:block_garbage_fall() then
-            propogate_fall[col] = false
-          else
-            panel.state = "falling"
-            panel.timer = 0
-          end
-        end
-        if cntinue then
-        elseif panel.state == "falling" then
-          -- if it's on the bottom row, it should surely land
-          if row == 1 then
-            -- if there's a panel below, this panel's gonna land
-            -- unless the panel below is falling.
-            panel.state = "landing"
-            panel.timer = 12
-            if self:shouldChangeSoundEffects() then
-              self.sfx_land = true
-            end
-          elseif panels[row - 1][col].color ~= 0 and panels[row - 1][col].state ~= "falling" then
-            -- if it lands on a hovering panel, it inherits
-            -- that panel's hover time.
-            if panels[row - 1][col].state == "hovering" then
-              panel.state = "normal"
-              self:set_hoverers(row, col, panels[row - 1][col].timer, false, false)
-            else
-              panel.state = "landing"
-              panel.timer = 12
-            end
-            if self:shouldChangeSoundEffects() then
-              self.sfx_land = true
-            end
-          else
-            panels[row - 1][col], panels[row][col] = panels[row][col], panels[row - 1][col]
-            panels[row][col]:clear()
-          end
-        elseif panel:has_flags() and panel.timer ~= 0 then
-          panel.timer = panel.timer - 1
-          if panel.timer == 0 then
-            if panel.state == "swapping" then
-              -- a swap has completed here.
-              panel.state = "normal"
-              panel.dont_swap = nil
-              local from_left = panel.is_swapping_from_left
-              panel.is_swapping_from_left = nil
-              -- Now there are a few cases where some hovering must
-              -- be done.
-              if panel.color ~= 0 then
-                if row ~= 1 then
-                  if panels[row - 1][col].color == 0 then
-                    self:set_hoverers(row, col, self.FRAMECOUNT_HOVER, false, true, false)
-                    -- if there is no panel beneath this panel
-                    -- it will begin to hover.
-                    -- CRAZY BUG EMULATION:
-                    -- the space it was swapping from hovers too
-                    if from_left then
-                      if panels[row][col - 1].state == "falling" then
-                        self:set_hoverers(row, col - 1, self.FRAMECOUNT_HOVER, false, true)
-                      end
-                    else
-                      if panels[row][col + 1].state == "falling" then
-                        self:set_hoverers(row, col + 1, self.FRAMECOUNT_HOVER + 1, false, false)
-                      end
-                    end
-                  elseif panels[row - 1][col].state == "hovering" then
-                    -- swap may have landed on a hover
-                    self:set_hoverers(row, col, self.FRAMECOUNT_HOVER, false, true, panels[row - 1][col].match_anyway, "inherited")
-                  end
-                end
-              else
-                -- an empty space finished swapping...
-                -- panels above it hover
-                self:set_hoverers(row + 1, col, self.FRAMECOUNT_HOVER + 1, false, false, false, "empty")
-              end
-            elseif panel.state == "hovering" then
-              if panels[row - 1][col].state == "hovering" then
-                -- This panel is no longer hovering.
-                -- it will now fall without sitting around
-                -- for any longer!
-                panel.timer = panels[row - 1][col].timer
-              elseif panels[row - 1][col].color ~= 0 then
-                panel.state = "landing"
-                panel.timer = 12
-              else
-                panel.state = "falling"
-                panels[row][col], panels[row - 1][col] = panels[row - 1][col], panels[row][col]
-                panel.timer = 0
-                -- Not sure if needed:
-                panels[row][col]:clear_flags()
-              end
-            elseif panel.state == "landing" then
-              panel.state = "normal"
-            elseif panel.state == "matched" then
-              -- This panel's match just finished the whole
-              -- flashing and looking distressed thing.
-              -- It is given a pop time based on its place
-              -- in the match.
-              panel.state = "popping"
-              panel.timer = panel.combo_index * self.FRAMECOUNT_POP
-            elseif panel.state == "popping" then
-              --logger.debug("POP")
-              if (panel.combo_size > 6) or self.chain_counter > 1 then
-                popsize = "normal"
-              end
-              if self.chain_counter > 2 then
-                popsize = "big"
-              end
-              if self.chain_counter > 3 then
-                popsize = "giant"
-              end
-              if config.popfx == true then
-                self:enqueue_popfx(col, row, popsize)
-              end
-              self.score = self.score + 10
-              -- self.score_render=1;
-              -- TODO: What is self.score_render?
-              -- this panel just popped
-              -- Now it's invisible, but sits and waits
-              -- for the last panel in the combo to pop
-              -- before actually being removed.
-
-              -- If it is the last panel to pop,
-              -- it should be removed immediately!
-              if panel.combo_size == panel.combo_index then
-                self.panels_cleared = self.panels_cleared + 1
-                if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                  self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
-                end
-                if self:shouldChangeSoundEffects() then
-                  SFX_Pop_Play = 1
-                end
-                self.poppedPanelIndex = panel.combo_index
-                panel.color = 0
-		if self.panels_to_speedup then
-	          self.panels_to_speedup = self.panels_to_speedup - 1
-	        end
-                if panel.chaining then
-                  self.n_chain_panels = self.n_chain_panels - 1
-                end
-                panel:clear_flags()
-                self:set_hoverers(row + 1, col, self.FRAMECOUNT_HOVER + 1, true, false, true, "combo")
-              else
-                panel.state = "popped"
-                panel.timer = (panel.combo_size - panel.combo_index) * self.FRAMECOUNT_POP
-                self.panels_cleared = self.panels_cleared + 1
-                if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-                  self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
-                end
-                if self:shouldChangeSoundEffects() then
-                  SFX_Pop_Play = 1
-                end
-                self.poppedPanelIndex = panel.combo_index
-              end
-            elseif panel.state == "popped" then
-              -- It's time for this panel
-              -- to be gone forever :'(
-              if self.panels_to_speedup then
-                self.panels_to_speedup = self.panels_to_speedup - 1
-              end
-              if panel.chaining then
-                self.n_chain_panels = self.n_chain_panels - 1
-              end
-              panel.color = 0
-              panel:clear_flags()
-              -- Any panels sitting on top of it
-              -- hover and are flagged as CHAINING
-              self:set_hoverers(row + 1, col, self.FRAMECOUNT_HOVER + 1, true, false, true, "popped")
-            elseif panel.state == "dead" then
-              -- Nothing to do here, the player lost.
-            else
-              -- what the heck.
-              -- if a timer runs out and the routine can't
-              -- figure out what flag it is, tell brandon.
-              -- No seriously, email him or something.
-              error("something terrible happened\n" .. "panel.state was " .. tostring(panel.state) .. " when a timer expired?!\n" .. "panel.is_swapping_from_left = " .. tostring(panel.is_swapping_from_left) .. "\n" .. "panel.dont_swap = " .. tostring(panel.dont_swap) .. "\n" .. "panel.chaining = " .. tostring(panel.chaining))
-            end
-          -- the timer-expiring action has completed
-          end
-        end
-        -- Advance the fell-from-garbage bounce timer, or clear it and stop animating if the panel isn't hovering or falling.
-        if cntinue then
-        elseif panel.fell_from_garbage then
-          if panel.state ~= "hovering" and panel.state ~= "falling" then
-            panel.fell_from_garbage = nil
-          else
-            panel.fell_from_garbage = panel.fell_from_garbage - 1
-          end
-        end
-      end
-    end
+    self:updatePanels()
 
     local prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
-    self.shake_time = max(self.shake_time, shake_time)
+    self.shake_time = max(self.shake_time, self.shake_time_on_frame)
     if self.shake_time == 0 then
       self.peak_shake_time = 0
     end
@@ -1776,7 +1391,7 @@ function Stack.simulate(self)
     end
 
     -- if at the end of the routine there are no chain panels, the chain ends.
-    if self.chain_counter ~= 0 and self.n_chain_panels == 0 then
+    if self.chain_counter ~= 0 and not self:hasChainingPanels() then
       self.chains[self.currentChainStartFrame].finish = self.CLOCK
       self.chains[self.currentChainStartFrame].size = self.chain_counter
       self.currentChainStartFrame = nil
@@ -1796,17 +1411,7 @@ function Stack.simulate(self)
     -- lol owned
     end
 
-    self.n_prev_active_panels = self.n_active_panels
-    self.n_active_panels = 0
-    self.active_panels = {}
-    for row = 1, self.height do
-      for col = 1, self.width do
-        local panel = panels[row][col]
-        if (panel.garbage and panel.state ~= "normal") or (panel.color ~= 0 and panel.state ~= "landing" and (panel:exclude_hover() or panel.state == "swapping") and not panel.garbage) or panel.state == "swapping" then
-          self.n_active_panels = self.n_active_panels + 1
-        end
-      end
-    end
+    self:updateActivePanels()
 
     if self.telegraph then
       local to_send = self.telegraph:popAllReadyGarbage(self.CLOCK)
@@ -1862,10 +1467,8 @@ function Stack.simulate(self)
     end
 
     if self.garbage_q:len() > 0 then
-      local garbage = self.garbage_q:peek()
-      local drop_it = not self.panels_in_top_row and not self:has_falling_garbage() and ((garbage.isChain and garbage.height > 1) or (self.n_active_panels == 0 and self.n_prev_active_panels == 0))
-      if drop_it and self.garbage_q:len() > 0 then
-        if self:drop_garbage(garbage) then
+      if self:shouldDropGarbage() then
+        if self:tryDropGarbage(self.garbage_q:peek()) then
           self.garbage_q:pop()
         end
       end
@@ -2248,7 +1851,7 @@ function Stack.set_game_over(self)
     for row = 1, #panels do
       for col = 1, self.width do
         local panel = panels[row][col]
-        panel.state = "dead"
+        panel.state = Panel.states.dead
         if row == #panels then
           self:enqueue_popfx(col, row, popsize)
         end
@@ -2276,7 +1879,7 @@ function Stack.canSwap(self, row, column)
     (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
     (not panels[row][column]:exclude_swap()) and
     (not panels[row][column + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
-    (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
+    (row == #panels or (panels[row + 1][column].state ~= Panel.states.hovering and panels[row + 1][column + 1].state ~= Panel.states.hovering)) and --also, we can't swap if the game countdown isn't finished
     not self.do_countdown and --also, don't swap on the first frame
     not (self.CLOCK and self.CLOCK <= 1)
   -- If you have two pieces stacked vertically, you can't move
@@ -2286,14 +1889,14 @@ function Stack.canSwap(self, row, column)
     do_swap = do_swap -- failing the condition if we already determined we cant swap 
       and not -- one of the next 4 lines must be false in order to swap
         (row ~= self.height -- true if cursor is not at top of stack
-        and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
+        and (panels[row + 1][column].state == Panel.states.swapping and panels[row + 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels above cursor are swapping
         and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
         and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
 
     do_swap = do_swap  -- failing the condition if we already determined we cant swap 
       and not -- one of the next 4 lines must be false in order to swap
         (row ~= 1 -- true if the cursor is not at the bottom of the stack
-        and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
+        and (panels[row - 1][column].state == Panel.states.swapping and panels[row - 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels below cursor are swapping
         and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
         and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
   end
@@ -2309,19 +1912,11 @@ function Stack.swap(self)
   local row = self.cur_row
   local col = self.cur_col
   self:processPuzzleSwap()
-  panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
-  local tmp_chaining = panels[row][col].chaining
-  panels[row][col]:clear_flags()
-  panels[row][col].state = "swapping"
-  panels[row][col].chaining = tmp_chaining
-  tmp_chaining = panels[row][col + 1].chaining
-  panels[row][col + 1]:clear_flags()
-  panels[row][col + 1].state = "swapping"
-  panels[row][col + 1].is_swapping_from_left = true
-  panels[row][col + 1].chaining = tmp_chaining
-
-  panels[row][col].timer = 4
-  panels[row][col + 1].timer = 4
+  local leftPanel = panels[row][col]
+  local rightPanel = panels[row][col + 1]
+  leftPanel:startSwap(true)
+  rightPanel:startSwap(false)
+  Panel.switch(leftPanel, rightPanel, panels)
 
   if self:shouldChangeSoundEffects() then
     SFX_Swap_Play = 1
@@ -2331,10 +1926,10 @@ function Stack.swap(self)
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
   if self.cur_row ~= 1 then
-    if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == "falling") then
+    if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
       panels[row][col].dont_swap = true
     end
-    if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == "falling") then
+    if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
       panels[row][col + 1].dont_swap = true
     end
   end
@@ -2380,14 +1975,14 @@ function Stack.remove_extra_rows(self)
   end
 end
 
--- drops a width x height garbage.
-function Stack.drop_garbage(self, garbage)
+-- tries to drop a width x height garbage.
+-- returns true if garbage was dropped, false otherwise
+function Stack.tryDropGarbage(self, garbage)
 
-  logger.debug("dropping garbage at frame "..self.CLOCK)
-  local spawn_row = self.height + 1
+  logger.debug("trying to drop garbage at frame "..self.CLOCK)
 
   -- Do one last check for panels in the way.
-  for i = spawn_row, #self.panels do
+  for i = self.height + 1, #self.panels do
     if self.panels[i] then
       for j = 1, self.width do
         if self.panels[i][j] then
@@ -2404,36 +1999,45 @@ function Stack.drop_garbage(self, garbage)
     logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
   end
 
-  for i = self.height + 1, spawn_row + garbage.height - 1 do
-    if not self.panels[i] then
-      self.panels[i] = {}
-      for j = 1, self.width do
-        self.panels[i][j] = Panel()
-      end
-    end
+  self:dropGarbage(garbage)
+
+  return true
+end
+
+function Stack.getGarbageSpawnColumn(self, garbageWidth)
+  local columns = self.garbageSizeDropColumnMaps[garbageWidth]
+  local index = self.currentGarbageDropColumnIndexes[garbageWidth]
+  local spawnColumn = columns[index]
+  -- the next piece of garbage of that width should fall at a different idx
+  self.currentGarbageDropColumnIndexes[garbageWidth] = wrap(1, index + 1, #columns)
+  return spawnColumn
+end
+
+function Stack.dropGarbage(self, garbage)
+  -- garbage always drops in row 13
+  local originRow = self.height + 1
+  -- combo garbage will alternate it's spawn column
+  local originCol = self:getGarbageSpawnColumn(garbage.width)
+  local function isPartOfGarbage(column)
+    return column >= originCol and column < (originCol + garbage.width)
   end
 
-  local columns = self.garbageSizeDropColumnMaps[garbage.width]
-  local index = self.currentGarbageDropColumnIndexes[garbage.width]
-  local spawn_col = columns[index]
-  self.currentGarbageDropColumnIndexes[garbage.width] = wrap(1, index + 1, #columns)
   local shake_time = garbage_to_shake_time[garbage.width * garbage.height]
-  for y = spawn_row, spawn_row + garbage.height - 1 do
-    for x = spawn_col, spawn_col + garbage.width - 1 do
+  
+  for y = originRow, originRow + garbage.height - 1 do
+    for x = originCol, originCol + garbage.width - 1 do
       local panel = self.panels[y][x]
       panel.garbage = true
       panel.color = 9
       panel.width = garbage.width
       panel.height = garbage.height
-      panel.y_offset = y - spawn_row
-      panel.x_offset = x - spawn_col
+      panel.y_offset = y - originRow
+      panel.x_offset = x - originCol
       panel.shake_time = shake_time
       panel.state = "falling"
       panel.metal = garbage.isMetal
     end
   end
-
-  return true
 end
 
 -- Goes through whole stack checking for matches and updating chains etc based on matches.
@@ -2478,7 +2082,6 @@ function Stack.check_matches(self)
           end
           if panel.match_anyway and panel.chaining then
             panel.chaining = nil
-            self.n_chain_panels = self.n_chain_panels - 1
           end
           is_chain = is_chain or panel.chaining
         end
@@ -2498,7 +2101,6 @@ function Stack.check_matches(self)
           end
           if panel.match_anyway and panel.chaining then
             panel.chaining = nil
-            self.n_chain_panels = self.n_chain_panels - 1
           end
           is_chain = is_chain or panel.chaining
         end
@@ -2517,9 +2119,9 @@ function Stack.check_matches(self)
     local panel = panels[y][x]
 
     -- We found a new panel we haven't handled yet that we should
-    if ((panel.garbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
+    if ((panel.isGarbage and panel.state == Panel.states.normal) or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
       -- We matched a new garbage
-      if ((metal and panel.metal) or (normal and not panel.metal)) and panel.garbage and not garbage[panel] then
+      if ((metal and panel.metal) or (normal and not panel.metal)) and panel.isGarbage and not garbage[panel] then
         garbage[panel] = true
         if self:shouldChangeSoundEffects() then
           SFX_garbage_match_play = true
@@ -2530,7 +2132,7 @@ function Stack.check_matches(self)
       end
       seen[panel] = seen[panel] or normal
       seenm[panel] = seenm[panel] or metal
-      if panel.garbage then
+      if panel.isGarbage then
         normal = normal and not panel.metal
         metal = metal and panel.metal
       end
@@ -2562,8 +2164,8 @@ function Stack.check_matches(self)
   local first_panel_row = 0
   local first_panel_col = 0
   local metal_count = 0
-  local pre_stop_time = self.FRAMECOUNT_MATCH + self.FRAMECOUNT_POP * (combo_size + garbage_size)
-  local garbage_match_time = self.FRAMECOUNT_MATCH + self.FRAMECOUNT_POP * (combo_size + garbage_size)
+  local pre_stop_time = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (combo_size + garbage_size)
+  local garbage_match_time = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (combo_size + garbage_size)
   local garbage_index = garbage_size - 1
   local combo_index = combo_size
   for row = 1, #panels do
@@ -2571,10 +2173,10 @@ function Stack.check_matches(self)
     for col = self.width, 1, -1 do
       local panel = panels[row][col]
       if garbage[panel] then
-        panel.state = "matched"
-        panel.timer = garbage_match_time + 1
+        panel.state = Panel.states.matched
+        panel:setTimer(garbage_match_time + 1)
         panel.initial_time = garbage_match_time
-        panel.pop_time = self.FRAMECOUNT_POP * garbage_index
+        panel.pop_time = self.FRAMECOUNTS.POP * garbage_index
         panel.pop_index = min(max(garbage_size - garbage_index, 1), 10)
         panel.y_offset = panel.y_offset - 1
         panel.height = panel.height - 1
@@ -2592,7 +2194,6 @@ function Stack.check_matches(self)
           panel.color = string.sub(gpan_row, col, col) + 0
           if is_chain then
             panel.chaining = true
-            self.n_chain_panels = self.n_chain_panels + 1
           end
         end
         garbage_index = garbage_index - 1
@@ -2601,15 +2202,17 @@ function Stack.check_matches(self)
           if panel.color == 8 then
             metal_count = metal_count + 1
           end
-          panel.state = "matched"
-          panel.timer = self.FRAMECOUNT_MATCH + 1
+          panel.state = Panel.states.matched
+          panel:setTimer(self.FRAMECOUNTS.MATCH + 1)
           if is_chain and not panel.chaining then
             panel.chaining = true
-            self.n_chain_panels = self.n_chain_panels + 1
           end
           panel.combo_index = combo_index
           panel.combo_size = combo_size
           panel.chain_index = self.chain_counter
+          if panel.fell_from_garbage then
+            panel.fell_from_garbage = nil
+          end
           combo_index = combo_index - 1
           if combo_index == 0 then
             first_panel_col = col
@@ -2626,14 +2229,12 @@ function Stack.check_matches(self)
               -- loses its chain flag.
               -- no swapping panel below
               -- so this panel loses its chain flag
-              if panels[row - 1][col].state ~= "swapping" and panel.chaining then
+              if panels[row - 1][col].state ~= Panel.states.swapping and panel.chaining then
                 --if panel.chaining then
                 panel.chaining = nil
-                self.n_chain_panels = self.n_chain_panels - 1
               end
             elseif (panel.chaining) then
               panel.chaining = nil
-              self.n_chain_panels = self.n_chain_panels - 1
             end
           end
         end
@@ -2758,49 +2359,6 @@ function Stack.check_matches(self)
   end
 end
 
--- Sets the hovering state on the appropriate panels
-function Stack.set_hoverers(self, row, col, hover_time, add_chaining, extra_tick, match_anyway, debug_tag)
-  assert(type(match_anyway) ~= "string")
-  -- the extra_tick flag is for use during Phase 1&2,
-  -- when panels above the first should be given an extra tick of hover time.
-  -- This is because their timers will be decremented once on the same tick
-  -- they are set, as Phase 1&2 iterates backward through the stack.
-  local not_first = 0 -- if 1, the current panel isn't the first one
-  local hovers_time = hover_time
-  local brk = row > #self.panels
-  local panels = self.panels
-  while not brk do
-    local panel = panels[row][col]
-    if panel.color == 0 or panel:exclude_hover() or panel.state == "hovering" and panel.timer <= hover_time then
-      brk = true
-    else
-      if panel.state == "swapping" then
-        hovers_time = hovers_time + panels[row][col].timer - 1
-      else
-        local chaining = panel.chaining
-        panel:clear_flags()
-        panel.state = "hovering"
-        panel.match_anyway = match_anyway
-        panel.debug_tag = debug_tag
-        local adding_chaining = (not chaining) and panel.color ~= 9 and add_chaining
-        if chaining or adding_chaining then
-          panel.chaining = true
-        end
-        panel.timer = hovers_time
-        if extra_tick then
-          panel.timer = panel.timer + not_first
-        end
-        if adding_chaining then
-          self.n_chain_panels = self.n_chain_panels + 1
-        end
-      end
-      not_first = 1
-    end
-    row = row + 1
-    brk = brk or row > #self.panels
-  end
-end
-
 function Stack:recordComboHistory(time, width, height, metal)
 
   if self.combos[time] == nil then 
@@ -2815,14 +2373,27 @@ function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
   self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
-  -- move panels up
-  for row = #panels + 1, 1, -1 do
-    panels[row] = panels[row - 1]
-  end
-  panels[0] = {}
-  -- put bottom row into play
+
+  -- create new row at the top
+  local stackHeight = #panels + 1
+  panels[stackHeight] = {}
+
   for col = 1, self.width do
-    panels[1][col].state = "normal"
+    panels[stackHeight][col] = self:createPanel(stackHeight, col)
+  end
+
+  -- move panels up
+  for row = stackHeight, 1, -1 do
+    for col = #panels[row], 1, -1 do
+      Panel.switch(panels[row][col], panels[row - 1][col], panels)
+    end
+  end
+
+  -- the new row we created earlier at the top is now at row 0!
+  -- while the former row 0 is at row 1 and in play
+  -- therefore we need to override dimmed state in row 1
+  for col = 1, self.width do
+    panels[1][col].state = Panel.states.normal
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
@@ -2835,7 +2406,7 @@ function Stack.new_row(self)
     self.panelGenCount = self.panelGenCount + 1
   end
 
-  -- generate a new row
+  -- assign colors to the new row 0
   local metal_panels_this_row = 0
   if self.metal_panels_queued > 3 then
     self.metal_panels_queued = self.metal_panels_queued - 2
@@ -2845,8 +2416,7 @@ function Stack.new_row(self)
     metal_panels_this_row = 1
   end
   for col = 1, self.width do
-    local panel = Panel()
-    panels[0][col] = panel
+    local panel = panels[0][col]
     local this_panel_color = string.sub(self.panel_buffer, col, col)
     --a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
     if tonumber(this_panel_color) then
@@ -2865,13 +2435,13 @@ function Stack.new_row(self)
       end
     end
     panel.color = this_panel_color + 0
-    panel.state = "dimmed"
+    panel.state = Panel.states.dimmed
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
 end
 
-function Stack:getAttackPatternData() 
+function Stack:getAttackPatternData()
 
   local data = {}
   data.name = "Player " .. self.which
@@ -2912,4 +2482,151 @@ function Stack:getAttackPatternData()
   end
 
   return data
+end
+
+function Stack.createPanel(self, row, column)
+  self.panelsCreatedCount = self.panelsCreatedCount + 1
+  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
+  panel.onPop = function(panel)
+    self:onPop(panel)
+  end
+  panel.onPopped = function(panel)
+    self:onPopped(panel)
+  end
+  panel.onLand = function(panel)
+    self:onLand(panel)
+  end
+  panel.onGarbageLand = function(panel)
+    self:onGarbageLand(panel)
+  end
+  self.panels[row][column] = panel
+  return panel
+end
+
+function Stack.onPop(self, panel)
+  --logger.debug("POP")
+  if (panel.combo_size > 6) or self.chain_counter > 1 then
+    popsize = "normal"
+  end
+  if self.chain_counter > 2 then
+    popsize = "big"
+  end
+  if self.chain_counter > 3 then
+    popsize = "giant"
+  end
+  if config.popfx == true then
+    self:enqueue_popfx(panel.column, panel.row, popsize)
+  end
+  self.score = self.score + 10
+
+  self.panels_cleared = self.panels_cleared + 1
+  if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+    self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+  end
+  if self:shouldChangeSoundEffects() then
+    SFX_Pop_Play = 1
+  end
+  self.poppedPanelIndex = panel.combo_index
+end
+
+function Stack.onPopped(self, panel)
+  if self.panels_to_speedup then
+    self.panels_to_speedup = self.panels_to_speedup - 1
+  end
+end
+
+function Stack.onLand(self, panel)
+  if self:shouldChangeSoundEffects() then
+    self.sfx_land = true
+  end
+end
+
+function Stack.onGarbageLand(self, panel)
+  if panel.shake_time and panel.state == Panel.states.normal
+    -- only parts of the garbage that are on the visible board can be considered for shake
+    and panel.row <= self.height then
+    --runtime optimization to not repeatedly update shaketime for the same piece of garbage
+    if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
+      if self:shouldChangeSoundEffects() then
+        if panel.height > 3 then
+          self.sfx_garbage_thud = 3
+        else
+          self.sfx_garbage_thud = panel.height
+        end
+      end
+      self.shake_time_on_frame = max(self.shake_time_on_frame, panel.shake_time, self.peak_shake_time or 0)
+      --a smaller garbage block landing should renew the largest of the previous blocks' shake times since our shake time was last zero.
+      self.peak_shake_time = max(self.shake_time_on_frame, self.peak_shake_time or 0)
+
+      -- to prevent from running this code dozens of time for the same garbage block
+      -- all panels of a garbage block have the same id + shake time
+      self.garbageLandedThisFrame[#self.garbageLandedThisFrame+1] = panel.garbageId
+    end
+
+    -- whether we ran through it or not, the panel should lose its shake time
+    panel.shake_time = nil
+  end
+end
+
+function Stack.hasChainingPanels(self)
+  -- row 0 panels can never chain cause they're dimmed
+  for row = 1, #self.panels do
+    for col = 1, self.width do
+      local panel = self.panels[row][col]
+      if panel.chaining and panel.color ~= 0 then
+        return true
+      end
+    end
+  end
+
+  return false
+end
+
+function Stack.updateActivePanels(self)
+  self.n_prev_active_panels = self.n_active_panels
+  self.n_active_panels = #self:getActivePanels()
+end
+
+function Stack.getActivePanels(self)
+  local activePanels = {}
+
+  for row = 1, self.height do
+    for col = 1, self.width do
+      local panel = self.panels[row][col]
+      if panel.isGarbage then
+        if panel.state ~= Panel.states.normal then
+          activePanels[#activePanels+1] = panel
+        end
+      else
+        if panel.color ~= 0
+        -- dimmed is implicitly filtered by only checking in row 1 and up
+        and panel.state ~= Panel.states.normal
+        and panel.state ~= Panel.states.landing then
+          activePanels[#activePanels+1] = panel
+        end
+      end
+    end
+  end
+
+  return activePanels
+end
+
+function Stack.updateRiseLock(self)
+  self.prev_rise_lock = self.rise_lock
+  if self.do_countdown then
+    self.rise_lock = true
+  elseif self.do_swap then
+    self.rise_lock = true
+  elseif self.shake_time > 0 then
+    self.rise_lock = true
+  elseif self:hasActivePanels() then
+    self.rise_lock = true
+  else
+    self.rise_lock = false
+  end
+
+  -- prevent manual raise is set true when manually raising
+  if self.prev_rise_lock and not self.rise_lock then
+    self.prevent_manual_raise = false
+  end
 end
