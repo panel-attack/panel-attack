@@ -4,6 +4,8 @@ GarbageQueue = class(function(s)
   s.chainGarbage = Queue()
   s.comboGarbage = {Queue(), Queue(), Queue(), Queue(), Queue(), Queue()} -- index here represents width, and length represents how many of that width queued
   s.metal = Queue()
+  -- a ghost chain is a chain that's not a chain? Possibly obsolete
+  s.ghostChain = nil
 end)
 
 function GarbageQueue.makeCopy(self)
@@ -36,6 +38,14 @@ function GarbageQueue.makeCopy(self)
   return other
 end
 
+-- accepts multiple pieces of garbage in an array
+-- garbage is expected to be a table with the values
+--  width
+--  height
+--  isMetal
+--  isChain
+--  timeAttackInteracts
+--  finalized (optional)
 function GarbageQueue.push(self, garbageArray)
   if garbageArray then
     for _, garbage in pairs(garbageArray) do
@@ -45,7 +55,7 @@ function GarbageQueue.push(self, garbageArray)
           self.metal:push(garbage)
         elseif garbage.isChain or (garbage.height > 1 and not GAME.battleRoom.trainingModeSettings) then
           if not garbage.isChain then
-            error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
+            error("ERROR: garbage with height > 1 was not marked as 'isChain'")
           end
           self.chainGarbage:push(garbage)
           self.ghostChain = nil
