@@ -1,7 +1,14 @@
 require("class")
 
--- A class representing a Queue data structure where you typically put new data on the front and take data off the back.
--- TODO consolidate with ServerQueue
+-- A class representing a Queue data structure
+-- The implementation follows the LIFO concept (last in first out)
+-- Pushed values are appended to the end (last)
+-- Popping takes out values from the start (first)
+-- You can iterate over values in the queue via
+--   for i = queue.first, queue.last do
+--     queue[i] -- do stuff
+--   end
+-- where first refers to the next value getting popped and last to the last
 Queue =
   class(
   function(q)
