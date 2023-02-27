@@ -1004,6 +1004,6 @@ function draw_pause()
     local scale = canvas_width / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
     menu_drawf(image, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
-  gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
+  gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, LARGE_FONT)
   gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
 end

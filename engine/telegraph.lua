@@ -71,7 +71,6 @@ function Telegraph:privatePush(garbage, attackOriginColumn, attackOriginRow, tim
   if garbage.isChain then
     garbageToSend = self:growChain(timeAttackInteracts)
   else
-    -- get combo_garbage_widths, n_resulting_metal_garbage
     garbageToSend = self:addComboGarbage(garbage, timeAttackInteracts)
   end
   self:registerAttack(garbageToSend, attackOriginColumn, attackOriginRow, timeAttackInteracts)
@@ -86,8 +85,8 @@ function Telegraph:registerAttack(garbage, attackOriginColumn, attackOriginRow, 
     garbage = deepcpy(garbage)
     self.attacks[timeAttackInteracts][#self.attacks[timeAttackInteracts] + 1] = {
       timeAttackInteracts = timeAttackInteracts,
-      origin_col = attackOriginColumn,
-      origin_row = attackOriginRow,
+      originColumn = attackOriginColumn,
+      originRow = attackOriginRow,
       garbageToSend = garbage
     }
   end
@@ -156,66 +155,66 @@ end
 -- Metal won't delay a combo
 -- Combo delays a metal, metal goes on top
 function Telegraph:popAllReadyGarbage(time)
-  local ready_garbage = {}
-  local n_chain_stoppers, n_combo_stoppers = 0, 0 -- count of stoppers remaining
-  local subject = self
+  local poppedGarbage = {}
+  local chainStopperCount = 0
+  local comboStopperCount = 0
 
   -- remove any chain stoppers that expire this frame,
-  for chainIndex, chainReleaseFrame in pairs(subject.stoppers.chain) do
+  for chainIndex, chainReleaseFrame in pairs(self.stoppers.chain) do
     if chainReleaseFrame <= time then
       logger.debug("removing a chain stopper at " .. chainReleaseFrame)
-      subject.stoppers.chain[chainIndex] = nil
+      self.stoppers.chain[chainIndex] = nil
     else
-      n_chain_stoppers = n_chain_stoppers + 1
+      chainStopperCount = chainStopperCount + 1
     end
   end
 
   -- remove any combo stoppers that expire this frame,
-  for comboGarbageWidth, comboReleaseFrame in pairs(subject.stoppers.combo) do
+  for comboGarbageWidth, comboReleaseFrame in pairs(self.stoppers.combo) do
     if comboReleaseFrame <= time then
       logger.debug("removing a combo stopper at " .. comboReleaseFrame)
-      subject.stoppers.combo[comboGarbageWidth] = nil
+      self.stoppers.combo[comboGarbageWidth] = nil
     else
-      n_combo_stoppers = n_combo_stoppers + 1
+      comboStopperCount = comboStopperCount + 1
     end
   end
 
   -- remove the metal stopper if it expires this frame
-  if subject.stoppers.metal and subject.stoppers.metal <= time then
-    logger.debug("removing a metal stopper at " .. subject.stoppers.metal)
-    subject.stoppers.metal = nil
+  if self.stoppers.metal and self.stoppers.metal <= time then
+    logger.debug("removing a metal stopper at " .. self.stoppers.metal)
+    self.stoppers.metal = nil
   end
 
-  while subject.garbageQueue.chain_garbage:peek() do
+  while self.garbageQueue.chain_garbage:peek() do
 
-    if not subject.stoppers.chain[subject.garbageQueue.chain_garbage.first] and subject.garbageQueue.chain_garbage:peek().finalized then
+    if not self.stoppers.chain[self.garbageQueue.chain_garbage.first] and self.garbageQueue.chain_garbage:peek().finalized then
       logger.debug("committing chain at " .. time)
-      ready_garbage[#ready_garbage + 1] = subject.garbageQueue:pop()
+      poppedGarbage[#poppedGarbage + 1] = self.garbageQueue:pop()
     else
       logger.debug("could be chaining or stopper")
       -- there was a stopper here or their chain could still be going, stop and return.
-      if ready_garbage[1] then
-        return ready_garbage
+      if poppedGarbage[1] then
+        return poppedGarbage
       else
         return nil
       end
     end
   end
 
-  for combo_garbage_width = 1, 6 do
-    local n_blocks_of_this_width = subject.garbageQueue.combo_garbage[combo_garbage_width]:len()
+  for comboGarbageWidth = 1, 6 do
+    local blockCount = self.garbageQueue.combo_garbage[comboGarbageWidth]:len()
 
-    local frame_to_release = subject.stoppers.combo[combo_garbage_width]
-    if n_blocks_of_this_width > 0 then
+    local frame_to_release = self.stoppers.combo[comboGarbageWidth]
+    if blockCount > 0 then
       if not frame_to_release then
         logger.debug("committing combo at " .. time)
-        for i = 1, n_blocks_of_this_width do
-          ready_garbage[#ready_garbage + 1] = subject.garbageQueue:pop()
+        for i = 1, blockCount do
+          poppedGarbage[#poppedGarbage + 1] = self.garbageQueue:pop()
         end
       else
         -- there was a stopper here, stop and return
-        if ready_garbage[1] then
-          return ready_garbage
+        if poppedGarbage[1] then
+          return poppedGarbage
         else
           return nil
         end
@@ -223,12 +222,13 @@ function Telegraph:popAllReadyGarbage(time)
     end
   end
 
-  while subject.garbageQueue.metal:peek() and not subject.stoppers.metal do
+  while self.garbageQueue.metal:peek() and not self.stoppers.metal do
     logger.debug("committing metal at " .. time)
-    ready_garbage[#ready_garbage + 1] = subject.garbageQueue:pop()
+    poppedGarbage[#poppedGarbage + 1] = self.garbageQueue:pop()
   end
-  if ready_garbage[1] then
-    return ready_garbage
+
+  if poppedGarbage[1] then
+    return poppedGarbage
   else
     return nil
   end

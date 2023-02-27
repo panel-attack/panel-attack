@@ -38,7 +38,7 @@ random_character_special_value = "__RandomCharacter"
 
 default_input_repeat_delay = 20
 
-large_font = 10 -- large font base+10
+LARGE_FONT = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
 key_names = {"up", "down", "left", "right", "swap1",
