@@ -2230,15 +2230,12 @@ function Stack:updateNonMatchingPanels()
       -- we might have to remove its chain flag...!
       -- It can't actually chain the first frame it hovers,
       -- so it can keep its chaining flag in that case.
-      if not (panel.match_anyway or panel:exclude_match()) then
+      if not panel:exclude_match() then
         if row > 1 then
           -- a panel landed on the bottom row, so it surely
           -- loses its chain flag.
           -- no swapping panel below
           -- so this panel loses its chain flag
-          if panel == nil or self.panels[row - 1] == nil or self.panels[row - 1][column] == nil then
-            local phi = 5
-          end
           if self.panels[row - 1][column].state ~= Panel.states.swapping and panel.chaining then
             -- if panel.chaining then
             panel.chaining = nil

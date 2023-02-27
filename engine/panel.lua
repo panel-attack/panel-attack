@@ -292,7 +292,7 @@ swappingState.excludeMatch = true
 matchedState.excludeMatch = true
 poppingState.excludeMatch = true
 poppedState.excludeMatch = true
-hoverState.excludeMatch = false
+hoverState.excludeMatch = true
 fallingState.excludeMatch = true
 landingState.excludeMatch = false
 dimmedState.excludeMatch = true
@@ -303,9 +303,6 @@ deadState.excludeMatch = true
 function Panel.exclude_match(self)
   -- panels without colors can't match
   if self.color == 0 or self.color == 9 then
-    return true
-  -- i'm still figuring out how exactly that match_anyway flag works
-  elseif self.state == Panel.states.hovering and not self.match_anyway then
     return true
   else
     local state = self:getStateTable()
@@ -411,8 +408,6 @@ function Panel.clear(self, clearChaining, clearColor)
   -- garbage panels and regular panels behave differently in about any scenario
   self.isGarbage = false
 
-  self.match_anyway = nil
-
   -- Also flags
   self:clear_flags(clearChaining)
 end
@@ -478,7 +473,6 @@ function Panel.update(self, panels)
   self.stateChanged = false
   self.propagatesChaining = false
   self.propagatesFalling = false
-  self.match_anyway = nil
   -- the flags for indicating a (possible garbage) match during the checkMatch process
   -- clear it here to not have to make an extra iteration through all panels
   self.matching = false
