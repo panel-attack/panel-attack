@@ -131,7 +131,7 @@ end
 function Telegraph:privateChainingEnded(chainEndTime)
 
   self.senderCurrentlyChaining = false
-  local chain = self.garbageQueue.chain_garbage[self.garbageQueue.chain_garbage.last]
+  local chain = self.garbageQueue.chainGarbage[self.garbageQueue.chainGarbage.last]
   if chain.timeAttackInteracts >= chainEndTime then
     logger.error("Finalizing a chain that ended before it was earned.")
   end
@@ -147,7 +147,7 @@ function Telegraph.growChain(self, timeAttackInteracts)
   end
 
   local result = self.garbageQueue:growChain(timeAttackInteracts, newChain)
-  self.stoppers.chain[self.garbageQueue.chain_garbage.last] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
+  self.stoppers.chain[self.garbageQueue.chainGarbage.last] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   return result
 end
 
@@ -191,9 +191,9 @@ function Telegraph:popAllReadyGarbage(time)
     self.stoppers.metal = nil
   end
 
-  while self.garbageQueue.chain_garbage:peek() do
+  while self.garbageQueue.chainGarbage:peek() do
 
-    if not self.stoppers.chain[self.garbageQueue.chain_garbage.first] and self.garbageQueue.chain_garbage:peek().finalized then
+    if not self.stoppers.chain[self.garbageQueue.chainGarbage.first] and self.garbageQueue.chainGarbage:peek().finalized then
       logger.debug("committing chain at " .. time)
       poppedGarbage[#poppedGarbage + 1] = self.garbageQueue:pop()
     else
@@ -208,7 +208,7 @@ function Telegraph:popAllReadyGarbage(time)
   end
 
   for comboGarbageWidth = 1, 6 do
-    local blockCount = self.garbageQueue.combo_garbage[comboGarbageWidth]:len()
+    local blockCount = self.garbageQueue.comboGarbage[comboGarbageWidth]:len()
 
     local frame_to_release = self.stoppers.combo[comboGarbageWidth]
     if blockCount > 0 then

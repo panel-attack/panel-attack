@@ -238,7 +238,7 @@ function TelegraphGraphics:renderTelegraph()
         local stopperTime = nil
 
         if garbage.isChain then
-          stopperTime = telegraph.stoppers.chain[telegraph.garbageQueue.chain_garbage.first]
+          stopperTime = telegraph.stoppers.chain[telegraph.garbageQueue.chainGarbage.first]
           if stopperTime and garbage.finalized then
             stopperTime = stopperTime .. " F"
           end
@@ -260,10 +260,10 @@ function TelegraphGraphics:renderTelegraph()
     currentIndex = currentIndex + 1
   end
 
-  if not drewChain and telegraph.garbageQueue.ghost_chain then
+  if not drewChain and telegraph.garbageQueue.ghostChain then
     local drawX = self:telegraphRenderXPosition(0)
     -- local draw_y = self.posY -- already defined like this further above
-    local height = math.min(telegraph.garbageQueue.ghost_chain, 14)
+    local height = math.min(telegraph.garbageQueue.ghostChain, 14)
     local chainGfx = self.gfx.telegraph.chain[height]
     draw(chainGfx.image, drawX, drawY, 0, chainGfx.xScale, chainGfx.yScale)
 

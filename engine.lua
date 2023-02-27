@@ -341,7 +341,7 @@ function Stack.divergenceString(stackToTest)
   end
 
   if stackToTest.telegraph then
-    result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
+    result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbageQueue.chainGarbage:len() .. "\n"
     result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
     result = result .. "telegraph.attacks " .. table.length(stackToTest.telegraph.attacks) .. "\n"
   end
@@ -593,7 +593,9 @@ end
 
 function Stack.deleteRollbackCopy(self, frame)
   if self.prev_states[frame] then
-    Telegraph.saveClone(self.prev_states[frame].telegraph)
+    if self.telegraph then
+      self.telegraph:saveClone(self.prev_states[frame].telegraph)
+    end
 
      -- Has a reference to stacks we don't want kept around
     self.prev_states[frame].telegraph = nil
