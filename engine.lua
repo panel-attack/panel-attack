@@ -1807,7 +1807,7 @@ function Stack.simulate(self)
     end
 
     if self.telegraph then
-      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
+      local to_send = self.telegraph:popAllReadyGarbage(self.CLOCK)
       if to_send and to_send[1] then
         -- Right now the training attacks are put on the players telegraph, 
         -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.

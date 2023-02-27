@@ -155,7 +155,7 @@ function TelegraphGraphics:renderAttacks()
       for _, attack in ipairs(attacksThisFrame) do
         for _, garbage_block in ipairs(attack.garbageToSend) do
           garbage_block.destination_x = self:telegraphRenderXPosition(
-                                            telegraph.garbageQueue:get_idx_of_garbage(garbage_block)) +
+                                            telegraph.garbageQueue:getGarbageIndex(garbage_block)) +
                                             (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / self.gfx.attack.width) / 2)
           garbage_block.destination_y = garbage_block.destination_y or (self.pos_y - TELEGRAPH_PADDING)
 

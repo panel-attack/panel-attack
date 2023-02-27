@@ -141,7 +141,7 @@ function Telegraph.growChain(self, timeAttackInteracts)
     newChain = true
   end
 
-  local result = self.garbageQueue:grow_chain(timeAttackInteracts, newChain)
+  local result = self.garbageQueue:growChain(timeAttackInteracts, newChain)
   self.stoppers.chain[self.garbageQueue.chain_garbage.last] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   return result
 end
@@ -155,7 +155,7 @@ end
 
 -- Metal won't delay a combo
 -- Combo delays a metal, metal goes on top
-function Telegraph:pop_all_ready_garbage(time)
+function Telegraph:popAllReadyGarbage(time)
   local ready_garbage = {}
   local n_chain_stoppers, n_combo_stoppers = 0, 0 -- count of stoppers remaining
   local subject = self

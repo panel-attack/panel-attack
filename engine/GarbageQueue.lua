@@ -101,7 +101,7 @@ function GarbageQueue.pop(self)
   return nil
 end
 
-function GarbageQueue.to_string(self)
+function GarbageQueue:toString()
   local ret = "Combos:\n"
   for i = 6, 3, -1 do
     ret = ret .. i .. "-wides: " .. self.combo_garbage[i]:len() .. "\n"
@@ -110,7 +110,7 @@ function GarbageQueue.to_string(self)
   if self.chain_garbage:peek() then
     -- list chain garbage last to first such that the one to fall first is at the bottom of the list (if any).
     for i = self.chain_garbage.first, self.chain_garbage.last do
-      -- print("in GarbageQueue.to_string. i="..i)
+      -- print("in GarbageQueue.toString. i="..i)
       -- print("table_to_string(self.chain_garbage)")
       -- print(table_to_string(self.chain_garbage))
       -- I've run into a bug where I think the following line errors if there is more than one chain_garbage in the queue... TODO: figure that out.
@@ -136,7 +136,7 @@ end
 
 -- This is used by the telegraph to increase the size of the chain garbage being built
 -- or add a 6-wide if there is not chain garbage yet in the queue
-function GarbageQueue:grow_chain(timeAttackInteracts, newChain)
+function GarbageQueue:growChain(timeAttackInteracts, newChain)
   local result = nil
 
   if newChain then
@@ -157,7 +157,7 @@ end
 -- returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
 -- note: the first index for our implemented Queue object is 0, not 1
 -- this will return 0 for the first index.
-function GarbageQueue.get_idx_of_garbage(self, garbage)
+function GarbageQueue.getGarbageIndex(self, garbage)
   local copy = self:makeCopy()
   local idx = -1
   local idx_found = false
