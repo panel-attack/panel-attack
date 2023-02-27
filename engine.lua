@@ -2404,8 +2404,8 @@ end
 
 -- checks the stack for garbage panels that have a negative y offset and assigns them a color from the gpanel_buffer
 function Stack:convertGarbagePanels(isChain)
-  local garbagePanelRow = nil
   for row = 1, self.height do
+    local garbagePanelRow = nil
     for column = self.width, 1, -1 do
       local panel = self.panels[row][column]
       if panel.y_offset == -1 then
