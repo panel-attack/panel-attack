@@ -2074,7 +2074,7 @@ function Stack:getMatchingPanels()
   for i = 1, #candidatePanels do
     verticallyConnected = {}
     horizontallyConnected = {}
-    -- check in all 4 directions
+    -- check in all 4 directions until we found a panel of a different color
     -- below
     for row = candidatePanels[i].row - 1, 1, -1 do
       panel = panels[row][candidatePanels[i].column]
@@ -2465,90 +2465,94 @@ function Stack:incrementChainCounter()
   end
 end
 
+-- returns an integer indexed table of all garbage panels that are connected to the matching panels
+-- effectively a more optimized version of the past flood queue approach
 function Stack:getConnectedGarbagePanels(matchingPanels)
   local garbagePanels = {}
-
-  local panelsChecked = {}
   local panelsToCheck = Queue()
-  for i = 1, #matchingPanels do
-    local panel = matchingPanels[i]
-    panelsChecked[#panelsChecked + 1] = panel.id
 
-    -- mark surrounding panels to check whether they are matched garbage or not
-    if panel.row > 1 then
-      local panelToCheck = self.panels[panel.row - 1][panel.column]
-      panelToCheck.matchesGarbage = true
-      panelToCheck.matchesMetal = true
-      panelsToCheck:push(panelToCheck)
-    end
-    if panel.row < self.height then
-      local panelToCheck = self.panels[panel.row + 1][panel.column]
-      panelToCheck.matchesGarbage = true
-      panelToCheck.matchesMetal = true
-      panelsToCheck:push(panelToCheck)
-    end
-    if panel.column > 1 then
-      local panelToCheck = self.panels[panel.row][panel.column - 1]
-      panelToCheck.matchesGarbage = true
-      panelToCheck.matchesMetal = true
-      panelsToCheck:push(panelToCheck)
-    end
-    if panel.column < self.width then
-      local panelToCheck = self.panels[panel.row][panel.column + 1]
-      panelToCheck.matchesGarbage = true
-      panelToCheck.matchesMetal = true
+  local function pushIfNotMatchingAlready(matchingPanel, panelToCheck, matchAll)
+    if not panelToCheck.matching then
+      if matchAll then
+        panelToCheck.matchesMetal = true
+        panelToCheck.matchesGarbage = true
+      else
+        panelToCheck.matchesMetal = matchingPanel.metal
+        panelToCheck.matchesGarbage = not matchingPanel.metal
+      end
       panelsToCheck:push(panelToCheck)
     end
   end
 
+  for i = 1, #matchingPanels do
+    local panel = matchingPanels[i]
+    -- Put all panels adjacent to the matching panel into the queue
+    -- below
+    if panel.row > 1 then
+      local panelToCheck = self.panels[panel.row - 1][panel.column]
+      pushIfNotMatchingAlready(panel, panelToCheck, true)
+    end
+    -- above
+    if panel.row < self.height then
+      local panelToCheck = self.panels[panel.row + 1][panel.column]
+      pushIfNotMatchingAlready(panel, panelToCheck, true)
+    end
+    -- to the left
+    if panel.column > 1 then
+      local panelToCheck = self.panels[panel.row][panel.column - 1]
+      pushIfNotMatchingAlready(panel, panelToCheck, true)
+    end
+    -- to the right
+    if panel.column < self.width then
+      local panelToCheck = self.panels[panel.row][panel.column + 1]
+      pushIfNotMatchingAlready(panel, panelToCheck, true)
+    end
+  end
+
+  -- any panel in panelsToCheck is guaranteed to be adjacent to a panel that is already matching
   while panelsToCheck:len() > 0 do
     local panel = panelsToCheck:pop()
-    -- avoid doublechecking the same panel
-    if not panelsChecked[panel.id] then
+    -- avoid rechecking a panel already matched
+    if not panel.matching then
       if panel.isGarbage and panel.state == Panel.states.normal then
         if (panel.metal and panel.matchesMetal) or (not panel.metal and panel.matchesGarbage) then
+          -- if a panel is adjacent to a matching non-garbage panel or a matching garbage panel of the same type, 
+          -- it should match too
           panel.matching = true
           garbagePanels[#garbagePanels + 1] = panel
 
+          -- additionally all non-matching panels adjacent to the new garbage panel get added to the queue
+          -- pushIfNotMatchingAlready sets a flag which garbage type can match
           if panel.row > 1 then
             local panelToCheck = self.panels[panel.row - 1][panel.column]
-            panelToCheck.matchesMetal = panel.metal
-            panelToCheck.matchesGarbage = not panel.metal
-            panelsToCheck:push(panelToCheck)
+            pushIfNotMatchingAlready(panel, panelToCheck)
           end
 
           if panel.row < self.height then
             local panelToCheck = self.panels[panel.row + 1][panel.column]
-            panelToCheck.matchesMetal = panel.metal
-            panelToCheck.matchesGarbage = not panel.metal
-            panelsToCheck:push(panelToCheck)
+            pushIfNotMatchingAlready(panel, panelToCheck)
           end
 
           if panel.column > 1 then
             local panelToCheck = self.panels[panel.row][panel.column - 1]
-            panelToCheck.matchesMetal = panel.metal
-            panelToCheck.matchesGarbage = not panel.metal
-            panelsToCheck:push(panelToCheck)
+            pushIfNotMatchingAlready(panel, panelToCheck)
           end
 
           if panel.column < self.width then
             local panelToCheck = self.panels[panel.row][panel.column + 1]
-            panelToCheck.matchesMetal = panel.metal
-            panelToCheck.matchesGarbage = not panel.metal
-            panelsToCheck:push(panelToCheck)
+            pushIfNotMatchingAlready(panel, panelToCheck)
           end
         end
       end
-
-      panelsChecked[panel.id] = true
     end
+    -- repeat until we can no longer add new panels to the queue because all adjacent panels to our matching ones
+    -- are either matching already or non-garbage panels or garbage panels of the other type
   end
 
   return garbagePanels
 end
 
 function Stack:recordComboHistory(time, width, height, metal)
-
   if self.combos[time] == nil then
     self.combos[time] = {}
   end
