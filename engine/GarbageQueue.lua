@@ -165,9 +165,6 @@ function GarbageQueue.get_idx_of_garbage(self, garbage)
   local current_block = copy:pop()
   while current_block and not idx_found do
     idx = idx + 1
-    if current_block.width == nil or garbage.width == nil then
-      local phi = 5
-    end
     if garbage.isChain and current_block.isChain and current_block.height >= garbage.height then
       idx_found = true
     elseif not garbage.isChain and not current_block.isChain and current_block.width >= garbage.width then
