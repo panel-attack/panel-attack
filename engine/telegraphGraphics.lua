@@ -51,7 +51,7 @@ end
 TelegraphGraphics = class(function(self, telegraph)
   self.telegraph = telegraph
   self.sender = telegraph.sender
-  self.receiver = telegraph.owner
+  self.receiver = telegraph.receiver
   self:updatePosition()
   self:preloadGraphics()
   -- some constant used for drawing
@@ -59,8 +59,8 @@ TelegraphGraphics = class(function(self, telegraph)
 end)
 
 function TelegraphGraphics:updatePosition()
-  self.posX = self.telegraph.owner.pos_x - 4
-  self.posY = self.telegraph.owner.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  self.posX = self.telegraph.receiver.pos_x - 4
+  self.posY = self.telegraph.receiver.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
 end
 
 function TelegraphGraphics:preloadGraphics()

@@ -1,9 +1,9 @@
 local logger = require("logger")
 require("engine.telegraphGraphics")
 
-Telegraph = class(function(self, sender, owner)
+Telegraph = class(function(self, sender, receiver)
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
-  self.garbageQueue = GarbageQueue(sender)
+  self.garbageQueue = GarbageQueue()
 
   -- Attacks must stay in the telegraph a certain amount of time before they can be sent, we track this with "stoppers"
   -- note: keys for stoppers such as self.stoppers.chain[some_key]
@@ -12,12 +12,13 @@ Telegraph = class(function(self, sender, owner)
   self.stoppers = {chain = {}, combo = {}, metal = nil}
   -- The stack that sent this garbage
   self.sender = sender
-  -- The stack that is receiving the garbage
-  self.owner = owner
+  -- The stack that is receiving the garbage; not directly referenced for functionality but used for determining the draw position
+  self.receiver = receiver
   -- A copy of the chains and combos earned used to render the animation of going to the telegraph
   self.attacks = {}
-  -- Set when we start a new chain, cleared when the sender is done chaining, used to know if we should grow a chain or start a new one, and to know if we are allowed to send the attack since the sender is done.
-  -- (typically sending is prevented by garbage chaining)
+  -- Set when we start a new chain, cleared when the sender is done chaining,
+  -- used to know if we should grow a chain or start a new one
+  -- (if we only wanted to know about chain state we could refer to sender.chain_counter instead)
   self.senderCurrentlyChaining = false
   self.clonePool = {}
 
@@ -31,7 +32,7 @@ end
 function Telegraph:getRecycledInstance()
   local instance
   if #self.clonePool == 0 then
-    instance = Telegraph(self.sender, self.owner)
+    instance = Telegraph(self.sender, self.receiver)
   else
     instance = self.clonePool[#self.clonePool]
     self.clonePool[#self.clonePool] = nil
@@ -53,13 +54,13 @@ function Telegraph.rollbackCopy(source, other)
 
   -- We don't want saved copies to hold on to stacks, up to the rollback restore to set these back up.
   other.sender = nil
-  other.owner = nil
+  other.receiver = nil
   return other
 end
 
 -- Adds a piece of garbage to the queue
 function Telegraph:push(garbage, attackOriginCol, attackOriginRow, frameEarned)
-  assert(self.sender ~= nil and self.owner ~= nil, "telegraph needs owner and sender set")
+  assert(self.sender ~= nil and self.receiver ~= nil, "telegraph needs receiver and sender set")
   assert(frameEarned == self.sender.CLOCK, "expected sender clock to equal attack")
 
   self:privatePush(garbage, attackOriginCol, attackOriginRow, frameEarned + 1)

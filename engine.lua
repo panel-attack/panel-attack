@@ -469,7 +469,7 @@ end
 function Stack.restoreFromRollbackCopy(self, other)
   Stack.rollbackCopy(other, self)
   if self.telegraph then
-    self.telegraph.owner = self.garbage_target
+    self.telegraph.receiver = self.garbage_target
     self.telegraph.sender = self
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
@@ -608,7 +608,7 @@ end
 function Stack.set_garbage_target(self, new_target)
   self.garbage_target = new_target
   if self.telegraph then
-    self.telegraph.owner = new_target
+    self.telegraph.receiver = new_target
     self.telegraph.graphics:updatePosition()
   end
 end
