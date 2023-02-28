@@ -287,26 +287,26 @@ deadState.update = function(panel, panels)
   -- dead is dead
 end
 
-normalState.excludeMatch = false
-swappingState.excludeMatch = true
-matchedState.excludeMatch = true
-poppingState.excludeMatch = true
-poppedState.excludeMatch = true
-hoverState.excludeMatch = true
-fallingState.excludeMatch = true
-landingState.excludeMatch = false
-dimmedState.excludeMatch = true
-deadState.excludeMatch = true
+normalState.allowsMatch = true
+swappingState.allowsMatch = false
+matchedState.allowsMatch = false
+poppingState.allowsMatch = false
+poppedState.allowsMatch = false
+hoverState.allowsMatch = false
+fallingState.allowsMatch = false
+landingState.allowsMatch = true
+dimmedState.allowsMatch = false
+deadState.allowsMatch = false
 
 -- returns false if this panel can be matched
 -- true if it cannot be matched
-function Panel.exclude_match(self)
+function Panel.canMatch(self)
   -- panels without colors can't match
   if self.color == 0 or self.color == 9 then
-    return true
+    return false
   else
     local state = self:getStateTable()
-    return state.excludeMatch
+    return state.allowsMatch
   end
 end
 

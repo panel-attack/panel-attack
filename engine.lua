@@ -2061,7 +2061,7 @@ function Stack:getMatchingPanels()
     for col = 1, self.width do
       local panel = panels[row][col]
       panel.matching = false
-      if panel.stateChanged and not panel:exclude_match() then
+      if panel.stateChanged and panel:canMatch() then
         candidatePanels[#candidatePanels + 1] = panel
       end
     end
@@ -2078,7 +2078,7 @@ function Stack:getMatchingPanels()
     -- below
     for row = candidatePanels[i].row - 1, 1, -1 do
       panel = panels[row][candidatePanels[i].column]
-      if panel.color == candidatePanels[i].color and not panel:exclude_match() then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
         break
@@ -2087,7 +2087,7 @@ function Stack:getMatchingPanels()
     -- above
     for row = candidatePanels[i].row + 1, self.height do
       panel = panels[row][candidatePanels[i].column]
-      if panel.color == candidatePanels[i].color and not panel:exclude_match() then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
         break
@@ -2096,7 +2096,7 @@ function Stack:getMatchingPanels()
     -- to the left
     for column = candidatePanels[i].column - 1, 1, -1 do
       panel = panels[candidatePanels[i].row][column]
-      if panel.color == candidatePanels[i].color and not panel:exclude_match() then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
         break
@@ -2105,7 +2105,7 @@ function Stack:getMatchingPanels()
     -- to the right
     for column = candidatePanels[i].column + 1, self.width do
       panel = panels[candidatePanels[i].row][column]
-      if panel.color == candidatePanels[i].color and not panel:exclude_match() then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
         break
@@ -2227,7 +2227,7 @@ function Stack:updateNonMatchingPanels()
     for column = 1, self.width do
       local panel = self.panels[row][column]
       -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
-      if not panel.matching and panel.chaining and not panel:exclude_match() then
+      if not panel.matching and panel.chaining and panel:canMatch() then
         if row > 1 then
           -- no swapping panel below so this panel loses its chain flag
           if self.panels[row - 1][column].state ~= Panel.states.swapping then
