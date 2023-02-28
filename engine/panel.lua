@@ -310,30 +310,30 @@ function Panel.canMatch(self)
   end
 end
 
-normalState.excludeSwap = false
-swappingState.excludeSwap = false
-matchedState.excludeSwap = true
-poppingState.excludeSwap = true
-poppedState.excludeSwap = true
-hoverState.excludeSwap = true
-fallingState.excludeSwap = false
-landingState.excludeSwap = false
-dimmedState.excludeSwap = true
-deadState.excludeSwap = true
+normalState.canSwap = true
+swappingState.canSwap = true
+matchedState.canSwap = false
+poppingState.canSwap = false
+poppedState.canSwap = false
+hoverState.canSwap = false
+fallingState.canSwap = true
+landingState.canSwap = true
+dimmedState.canSwap = false
+deadState.canSwap = false
 
 -- returns false if this panel can be swapped
 -- true if it can not be swapped
-function Panel.exclude_swap(self)
+function Panel.canSwap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
   if self.dont_swap then
-    return true
+    return false
   -- can't swap garbage panels or even garbage to start with
   elseif self.isGarbage then
-    return true
+    return false
   else
     local state = self:getStateTable()
-    return state.excludeSwap
+    return state.canSwap
   end
 end
 

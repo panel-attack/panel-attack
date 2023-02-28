@@ -1874,7 +1874,7 @@ function Stack.canSwap(self, row, column)
   -- in order for a swap to occur, one of the two panels in
   -- the cursor must not be a non-panel.
   local do_swap = (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
-  (not panels[row][column]:exclude_swap()) and (not panels[row][column + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
+  (panels[row][column]:canSwap()) and (panels[row][column + 1]:canSwap()) and -- also, neither space above us can be hovering.
                       (row == #panels or
                           (panels[row + 1][column].state ~= Panel.states.hovering and panels[row + 1][column + 1].state ~=
                               Panel.states.hovering)) and -- also, we can't swap if the game countdown isn't finished
