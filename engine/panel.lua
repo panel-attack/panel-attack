@@ -321,6 +321,18 @@ landingState.canSwap = true
 dimmedState.canSwap = false
 deadState.canSwap = false
 
+-- dedicated setter to troubleshoot timers constantly being overwritten by engine
+function Panel.setTimer(self, frames)
+  self.timer = frames
+end
+
+-- decrements the panels timer by 1 if it's above 0
+function Panel.decrementTimer(self)
+  if self.timer > 0 then
+    self.timer = self.timer - 1
+  end
+end
+
 -- returns false if this panel can be swapped
 -- true if it can not be swapped
 function Panel.canSwap(self)
@@ -390,7 +402,6 @@ function Panel.clear(self, clearChaining, clearColor)
   self.initial_time = nil
   -- variables for handling pop FX
   self.pop_time = nil
-  self.pop_index = nil
 
   -- garbage fields
   -- garbage is anchored at the bottom left corner with 0 for x and y offset
@@ -433,10 +444,8 @@ function Panel.clear_flags(self, clearChaining)
   -- combo fields
   -- index compared against size determines the pop timing
   self.combo_index = nil
+  -- also used for popFX
   self.combo_size = nil
-
-  -- number of the chain link if this panel got matched as part of a chain (I think)
-  self.chain_index = nil
 
   -- a direction indicator so we can check if swaps are possible with currently swapping panels
   -- ...and their surroundings
@@ -485,22 +494,6 @@ function Panel.update(self, panels)
   -- edge case, not sure if this can be put into swappingState.update without breaking things
   if self.state == Panel.states.swapping then
     swappingState.propagateChaining(self, panels)
-  end
-end
-
--- sets all necessary information to make the panel start swapping
-function Panel.startSwap(self, isSwappingFromLeft)
-  local chaining = self.chaining
-  self:clear_flags()
-  self.stateChanged = true
-  self.state = Panel.states.swapping
-  self.chaining = chaining
-  self.timer = 4
-  self.isSwappingFromLeft = isSwappingFromLeft
-  if self.fell_from_garbage then
-    -- fell_from_garbage is used for a bounce animation upon falling from matched garbage
-    -- upon starting a swap, it should no longer animate
-    self.fell_from_garbage = nil
   end
 end
 
@@ -640,6 +633,22 @@ function Panel.supportedFromBelow(self, panels)
   end
 end
 
+-- sets all necessary information to make the panel start swapping
+function Panel.startSwap(self, isSwappingFromLeft)
+  local chaining = self.chaining
+  self:clear_flags()
+  self.stateChanged = true
+  self.state = Panel.states.swapping
+  self.chaining = chaining
+  self.timer = 4
+  self.isSwappingFromLeft = isSwappingFromLeft
+  if self.fell_from_garbage then
+    -- fell_from_garbage is used for a bounce animation upon falling from matched garbage
+    -- upon starting a swap, it should no longer animate
+    self.fell_from_garbage = nil
+  end
+end
+
 -- switches the panel with the panel below and refreshes its state/flags
 function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
@@ -678,14 +687,22 @@ function Panel.land(self)
   self.stateChanged = true
 end
 
--- dedicated setter to troubleshoot timers constantly being overwritten by engine
-function Panel.setTimer(self, frames)
-  self.timer = frames
-end
-
--- decrements the panels timer by 1 if it's above 0
-function Panel.decrementTimer(self)
-  if self.timer > 0 then
-    self.timer = self.timer - 1
+-- puts a non-garbage panel into the matched state
+-- isChainLink: true if the match the panel is part of forms a new chain link
+-- comboIndex: index for determining pop order among all panels of the match
+-- comboSize: used for popFX and calculation of timers related to popping/popped state
+--
+-- garbagePanels have to process by row due to color generation and have their extra logic in checkMatches
+function Panel:match(isChainLink, comboIndex, comboSize)
+  self.state = Panel.states.matched
+  -- +1 because match always occurs before the timer decrements on the frame
+  self:setTimer(self.frameTimes.MATCH + 1)
+  if isChainLink then
+    self.chaining = true
   end
+  if self.fell_from_garbage then
+    self.fell_from_garbage = nil
+  end
+  self.combo_index = comboIndex
+  self.combo_size = comboSize
 end

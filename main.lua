@@ -14,9 +14,10 @@ require("character_loader") -- after globals!
 local CustomRun = require("CustomRun")
 require("stage") -- after globals!
 require("save")
-require("engine/GarbageQueue")
-require("engine/telegraph")
+require("engine.GarbageQueue")
+require("engine.telegraph")
 require("engine")
+require("engine.checkMatches")
 require("AttackEngine")
 require("localization")
 require("graphics")
