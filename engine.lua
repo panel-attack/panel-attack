@@ -2164,7 +2164,7 @@ function Stack:checkMatches()
   local matchingPanels = self:getMatchingPanels()
   local comboSize = #matchingPanels
 
-  if #comboSize > 0 then
+  if comboSize > 0 then
     local metalCount = self:getMetalCount(matchingPanels)
     local isChainLink = self:isChainLink(matchingPanels)
     if isChainLink then
@@ -2190,7 +2190,7 @@ function Stack:checkMatches()
     end
 
     self.analytic:register_destroyed_panels(comboSize)
-    self:updateScoreWithBonus()
+    self:updateScoreWithBonus(comboSize)
     self:showCards(isChainLink, comboSize, attackGfxOrigin)
   end
 
@@ -2257,11 +2257,7 @@ function Stack:sortByPopOrder(panelList, isGarbage)
         return a.column < b.column
       end
     else
-      if isGarbage then
-        return a.row > b.row
-      else
         return a.row < b.row
-      end
     end
   end)
 
@@ -2332,13 +2328,15 @@ function Stack:recordChainHistory()
 end
 
 function Stack:updateScoreWithCombo(comboSize)
-  if (score_mode == SCOREMODE_TA) then
-    self.score = self.score + score_combo_TA[math.min(30, comboSize)]
-  elseif (score_mode == SCOREMODE_PDP64) then
-    if (comboSize < 41) then
-      self.score = self.score + score_combo_PdP64[comboSize]
-    else
-      self.score = self.score + 20400 + ((comboSize - 40) * 800)
+  if comboSize > 3 then
+    if (score_mode == SCOREMODE_TA) then
+      self.score = self.score + score_combo_TA[math.min(30, comboSize)]
+    elseif (score_mode == SCOREMODE_PDP64) then
+      if (comboSize < 41) then
+        self.score = self.score + score_combo_PdP64[comboSize]
+      else
+        self.score = self.score + 20400 + ((comboSize - 40) * 800)
+      end
     end
   end
 end

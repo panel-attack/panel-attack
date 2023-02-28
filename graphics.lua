@@ -510,12 +510,6 @@ function Stack.render(self)
             elseif panel.state == Panel.states.dead then
               gprint("dead", draw_x, draw_y)
             end
-            if panel.match_anyway ~= nil then
-              gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
-              if panel.debug_tag then
-                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
-              end
-            end
             if panel.chaining then
               gprint("chaining", draw_x, draw_y + 30)
             end
