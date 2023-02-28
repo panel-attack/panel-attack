@@ -2421,7 +2421,7 @@ function Stack:convertGarbagePanels(isChain)
     local garbagePanelRow = nil
     for column = 1, self.width do
       local panel = self.panels[row][column]
-      if panel.y_offset == -1 then
+      if panel.y_offset == -1 and panel.color == 9 then
         -- the bottom row of the garbage piece is about to transform into panels
         if garbagePanelRow == nil then
           garbagePanelRow = self:getGarbagePanelRow()
