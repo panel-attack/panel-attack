@@ -2282,32 +2282,36 @@ function Stack:matchMatchingPanels(matchingPanels, isChain)
 end
 
 function Stack:pushGarbage(coordinate, comboSize, isChain, metalCount)
-  if self.garbage_target and self.telegraph then
-    for i = 3, metalCount do
+  for i = 3, metalCount do
+    if self.garbage_target and self.telegraph then
       self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false},
-                           coordinate.column,
-                           coordinate.row,
-                           self.CLOCK)
-      self:recordComboHistory(self.CLOCK, 6, 1, true)
+                          coordinate.column,
+                          coordinate.row,
+                          self.CLOCK)
     end
+    self:recordComboHistory(self.CLOCK, 6, 1, true)
+  end
 
-    local combo_pieces = combo_garbage[comboSize]
-    for i = 1, #combo_pieces do
+  local combo_pieces = combo_garbage[comboSize]
+  for i = 1, #combo_pieces do
+    if self.garbage_target and self.telegraph then
       -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
       self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false},
                           coordinate.column,
                           coordinate.row,
                           self.CLOCK)
-      self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
     end
+    self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
+  end
 
-    if isChain then
-      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true},
-                          coordinate.column,
-                          coordinate.row,
-                          self.CLOCK)
-      self:recordChainHistory()
+  if isChain then
+    if self.garbage_target and self.telegraph then
+    self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true},
+                        coordinate.column,
+                        coordinate.row,
+                        self.CLOCK)
     end
+    self:recordChainHistory()
   end
 end
 
