@@ -2224,22 +2224,20 @@ end
 
 function Stack:updateNonMatchingPanels()
   for row = 1, self.height do
-    for column = self.width, 1, -1 do
+    for column = 1, self.width do
       local panel = self.panels[row][column]
       -- if a panel wasn't matched but was eligible,
       -- we might have to remove its chain flag...!
       -- It can't actually chain the first frame it hovers,
       -- so it can keep its chaining flag in that case.
-      if not panel:exclude_match() then
+      if not panel.matching and panel.chaining and not panel:exclude_match() then
         if row > 1 then
-          -- a panel landed on the bottom row, so it surely
-          -- loses its chain flag.
           -- no swapping panel below
           -- so this panel loses its chain flag
-          if self.panels[row - 1][column].state ~= Panel.states.swapping and panel.chaining then
-            -- if panel.chaining then
+          if self.panels[row - 1][column].state ~= Panel.states.swapping then
             panel.chaining = nil
           end
+        -- a panel landed on the bottom row, so it surely loses its chain flag.
         elseif (panel.chaining) then
           panel.chaining = nil
         end
