@@ -2175,13 +2175,13 @@ function Stack:checkMatches()
 
     local attackGfxOrigin = self:matchMatchingPanels(matchingPanels, isChainLink)
     local garbagePanels = self:getConnectedGarbagePanels(matchingPanels)
-    local garbagePanelCount = #garbagePanels
-    if garbagePanelCount > 0 then
-      local garbageMatchTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCount)
-      self:matchGarbagePanels(garbagePanels, garbageMatchTime, isChainLink, garbagePanelCount)
+    local garbagePanelCountOnScreen = table.count(garbagePanels, function(p) return p.row <= self.height end)
+    if garbagePanelCountOnScreen > 0 then
+      local garbageMatchTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCountOnScreen)
+      self:matchGarbagePanels(garbagePanels, garbageMatchTime, isChainLink, garbagePanelCountOnScreen)
     end
 
-    local preStopTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCount)
+    local preStopTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCountOnScreen)
     self.pre_stop_time = max(self.pre_stop_time, preStopTime)
 
     if comboSize > 3 or isChainLink or metalCount > 0 then
@@ -2400,15 +2400,21 @@ end
 function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, garbagePanelCount)
   self:sortByPopOrder(garbagePanels, true)
 
-  for i = 1, garbagePanelCount do
+  if self.which == 1 and self.CLOCK > 981 then
+    local phi = 5
+  end
+
+  for i = 1, #garbagePanels do
     local panel = garbagePanels[i]
-    panel.state = Panel.states.matched
-    panel:setTimer(garbageMatchTime + 1)
-    panel.initial_time = garbageMatchTime
-    panel.pop_time = self.FRAMECOUNTS.POP * (garbagePanelCount - i)
-    panel.pop_index = min(max(i, 1), 10)
     panel.y_offset = panel.y_offset - 1
     panel.height = panel.height - 1
+    if panel.row <= self.height then
+      panel.state = Panel.states.matched
+      panel:setTimer(garbageMatchTime + 1)
+      panel.initial_time = garbageMatchTime
+      panel.pop_time = self.FRAMECOUNTS.POP * (garbagePanelCount - i)
+      panel.pop_index = min(max(i, 1), 10)
+    end
   end
 
   self:convertGarbagePanels(isChain)
@@ -2488,7 +2494,7 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
       pushIfNotMatchingAlready(panel, panelToCheck, true)
     end
     -- above
-    if panel.row < self.height then
+    if panel.row < #self.panels then
       local panelToCheck = self.panels[panel.row + 1][panel.column]
       pushIfNotMatchingAlready(panel, panelToCheck, true)
     end
@@ -2523,7 +2529,7 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
             pushIfNotMatchingAlready(panel, panelToCheck)
           end
 
-          if panel.row < self.height then
+          if panel.row < #self.panels then
             local panelToCheck = self.panels[panel.row + 1][panel.column]
             pushIfNotMatchingAlready(panel, panelToCheck)
           end

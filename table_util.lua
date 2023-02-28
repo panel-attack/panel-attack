@@ -129,3 +129,14 @@ end
 function table.hasElements(tab)
   return next(tab) ~= nil
 end
+
+-- returns the amount of elements in the table that satisfy the condition
+function table.count(tab, condition)
+  local count = 0
+  for _, v in pairs(tab) do
+    if condition(v) then
+      count = count +1
+    end
+  end
+  return count
+end
