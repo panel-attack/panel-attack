@@ -2400,10 +2400,6 @@ end
 function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, garbagePanelCount)
   self:sortByPopOrder(garbagePanels, true)
 
-  if self.which == 1 and self.CLOCK > 981 then
-    local phi = 5
-  end
-
   for i = 1, #garbagePanels do
     local panel = garbagePanels[i]
     panel.y_offset = panel.y_offset - 1
