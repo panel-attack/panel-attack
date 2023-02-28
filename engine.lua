@@ -2238,7 +2238,7 @@ function Stack:updateNonMatchingPanels()
             panel.chaining = nil
           end
         -- a panel landed on the bottom row, so it surely loses its chain flag.
-        elseif (panel.chaining) then
+        else
           panel.chaining = nil
         end
       end
