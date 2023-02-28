@@ -310,32 +310,20 @@ function Panel.canMatch(self)
   end
 end
 
-normalState.canSwap = true
-swappingState.canSwap = true
-matchedState.canSwap = false
-poppingState.canSwap = false
-poppedState.canSwap = false
-hoverState.canSwap = false
-fallingState.canSwap = true
-landingState.canSwap = true
-dimmedState.canSwap = false
-deadState.canSwap = false
+normalState.allowsSwap = true
+swappingState.allowsSwap = true
+matchedState.allowsSwap = false
+poppingState.allowsSwap = false
+poppedState.allowsSwap = false
+hoverState.allowsSwap = false
+fallingState.allowsSwap = true
+landingState.allowsSwap = true
+dimmedState.allowsSwap = false
+deadState.allowsSwap = false
 
--- dedicated setter to troubleshoot timers constantly being overwritten by engine
-function Panel.setTimer(self, frames)
-  self.timer = frames
-end
-
--- decrements the panels timer by 1 if it's above 0
-function Panel.decrementTimer(self)
-  if self.timer > 0 then
-    self.timer = self.timer - 1
-  end
-end
-
--- returns false if this panel can be swapped
+-- returns false if this panel is allowed to be swapped based on its color, state and dont_swap flag
 -- true if it can not be swapped
-function Panel.canSwap(self)
+function Panel.allowsSwap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
   if self.dont_swap then
@@ -345,7 +333,7 @@ function Panel.canSwap(self)
     return false
   else
     local state = self:getStateTable()
-    return state.canSwap
+    return state.allowsSwap
   end
 end
 
@@ -474,6 +462,18 @@ function Panel.clear_flags(self, clearChaining)
   -- panels will check if this is set on the panel below to update their chaining state
   -- in combination with their own state
   self.propagatesChaining = false
+end
+
+-- dedicated setter to troubleshoot timers constantly being overwritten by engine
+function Panel.setTimer(self, frames)
+  self.timer = frames
+end
+
+-- decrements the panels timer by 1 if it's above 0
+function Panel.decrementTimer(self)
+  if self.timer > 0 then
+    self.timer = self.timer - 1
+  end
 end
 
 -- updates the panel for this frame based on its state and its surroundings
@@ -705,4 +705,8 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   end
   self.combo_index = comboIndex
   self.combo_size = comboSize
+end
+
+function Panel:canSwap()
+
 end
