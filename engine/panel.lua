@@ -522,9 +522,6 @@ end
 function Panel.switch(panel1, panel2, panels)
   -- confirm the panel positions are up to date
   assert(panel1.id == panels[panel1.row][panel1.column].id)
-  if panels[panel2.row] == nil or panels[panel2.row][panel2.column] == nil then
-    local phi = 5
-  end
   assert(panel2.id == panels[panel2.row][panel2.column].id)
 
   -- confirm the panels are directly adjacent to each other
@@ -797,9 +794,6 @@ end
 -- returns true if a rollback has been applied
 -- returns false if the targetFrame is older than the panel
 function Panel:rollbackToFrame(frame)
-  if self.id == 115 then
-    local phi = 4
-  end
   local targetLifeTime = frame - self.birthFrame
 
   if targetLifeTime < 0 then
