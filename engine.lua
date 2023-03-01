@@ -1354,7 +1354,7 @@ function Stack.simulate(self)
     if (self.swap_1 or self.swap_2) and not swapped_this_frame then
       local leftPanel = self.panels[self.cur_row][self.cur_col]
       local rightPanel = self.panels[self.cur_row][self.cur_col + 1]
-      local do_swap = self:canSwapPanels(leftPanel, rightPanel)
+      local do_swap = self:canSwap(leftPanel, rightPanel)
 
       if do_swap then
         self.do_swap = true
@@ -1871,7 +1871,7 @@ function Stack.pick_win_sfx(self)
   end
 end
 
-function Stack:canSwapPanels(leftPanel, rightPanel)
+function Stack:canSwap(leftPanel, rightPanel)
   if math.abs(leftPanel.column - rightPanel.column) ~= 1 or leftPanel.row ~= rightPanel.row then
     -- panels are not horizontally adjacent, can't swap
     return false
