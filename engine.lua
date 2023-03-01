@@ -612,6 +612,9 @@ function Stack.saveForRollback(self)
 end
 
 function Stack:savePanelStates()
+  if self.which == 1 and self.CLOCK == 3000 then
+    local phi = 5
+  end
   for _, panel in pairs(self.panelsById) do
     if not panel:saveState(self.CLOCK) then
       -- the panel has been dead for too long, eliminate it from the list

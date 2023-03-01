@@ -739,9 +739,9 @@ end
 -- returns true if the panel is still relevant
 -- returns false if the panel has been dead for too long to still be rollback relevant
 function Panel:saveState(clock)
-  if self.deathFrame and self.deathFrame - MAX_LAG - 1 > clock then
+  if self.deathFrame then
     -- the panel is no longer relevant
-    return false
+    return not (self.deathFrame + MAX_LAG < clock)
   elseif self.stateChanged then
     -- idea:
     -- for all timerbased states, it's enough if we save state when it was first applied to the panel
