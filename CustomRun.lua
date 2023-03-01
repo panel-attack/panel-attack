@@ -35,11 +35,11 @@ function CustomRun.sleep()
 
   local idleTime = targetTime - currentTime
   -- Spend as much time as necessary collecting garbage, but at least 0.1ms
-  manualGc(math.max(0.0001, idleTime * 0.99))
-  currentTime = love.timer.getTime()
-  CustomRun.runMetrics.gcDuration = currentTime - originalTime
-  originalTime = currentTime
-  idleTime = targetTime - currentTime
+  -- manualGc(math.max(0.0001, idleTime * 0.99))
+  -- currentTime = love.timer.getTime()
+  -- CustomRun.runMetrics.gcDuration = currentTime - originalTime
+  -- originalTime = currentTime
+  -- idleTime = targetTime - currentTime
 
   -- Sleep any remaining amount of time to fill up the frametime
   -- On most machines GC will have reduced the remaining idle time to near nothing

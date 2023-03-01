@@ -15,7 +15,9 @@ assert(stack.panels[1][2].color == 1, "wrong color")
 stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
 match:run()
 match:run()
-assert(stack:canSwap(1, 4), "should be able to swap")
+local leftPanel = stack.panels[1][4]
+local rightPanel = stack.panels[1][5]
+assert(stack:canSwapPanels(leftPanel, rightPanel), "should be able to swap")
 
 reset_filters()
 stop_the_music()
