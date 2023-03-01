@@ -1892,23 +1892,29 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
   local row = leftPanel.row
   local column = leftPanel.column
 
+  local panelAboveLeft
+  local panelAboveRight
+
+  if row < self.height then
+    panelAboveLeft = self.panels[row + 1][leftPanel.column]
+    panelAboveRight = self.panels[row + 1][rightPanel.column]
+    -- neither space above us can be hovering
+    if panelAboveLeft.state == Panel.states.hovering or panelAboveRight.state == Panel.states.hovering then
+      return false
+    end
+  end
+
   local panels = self.panels
-  -- in order for a swap to occur, one of the two panels in
-  -- the cursor must not be a non-panel.
-  local do_swap = -- also, neither space above us can be hovering.
-                      (row == #panels or
-                          (panels[row + 1][column].state ~= Panel.states.hovering and panels[row + 1][column + 1].state ~=
-                              Panel.states.hovering))
+
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
-  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then -- if either panel inside the cursor is air
-    do_swap = do_swap -- failing the condition if we already determined we cant swap 
-    and not -- one of the next 4 lines must be false in order to swap
-    (row ~= self.height -- true if cursor is not at top of stack
-    and (panels[row + 1][column].state == Panel.states.swapping and panels[row + 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels above cursor are swapping
-    and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
-    and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
+  if leftPanel.color == 0 or rightPanel.color == 0 then -- if either panel inside the cursor is air
+    local do_swap = not -- one of the next 4 lines must be false in order to swap
+    ((panelAboveLeft and panelAboveRight) -- true if cursor is not at top of stack
+    and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping) -- true if BOTH panels above cursor are swapping
+    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) -- true if either panel above the cursor is air
+    and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0)) -- true if either panel above the cursor is not air
 
     do_swap = do_swap -- failing the condition if we already determined we cant swap 
     and not -- one of the next 4 lines must be false in order to swap
@@ -1916,9 +1922,11 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
     and (panels[row - 1][column].state == Panel.states.swapping and panels[row - 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels below cursor are swapping
     and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
     and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
+
+    return do_swap
   end
 
-  return do_swap
+  return true
 end
 
 function Stack:canSwapPanelsOld(leftPanel, rightPanel)
