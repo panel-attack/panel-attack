@@ -16,7 +16,7 @@ class(
     p.stateChanged = true
     p.saveStates = {}
     p.rowIndex = {}
-    p.birthFrame = birthFrame
+    p.birthFrame = birthFrame or 0
   end
 )
 

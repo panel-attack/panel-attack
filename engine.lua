@@ -59,12 +59,6 @@ Stack = class(function(s, arguments)
     end
   end
 
-  s.CLOCK = 0
-  s.game_stopwatch = 0
-  s.game_stopwatch_running = false
-  s.do_countdown = true
-  s.max_runs_per_frame = 3
-
   -- frame.png dimensions
   if wantsCanvas then
     s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
@@ -131,6 +125,12 @@ Stack = class(function(s, arguments)
       s:createPanel(row, col)
     end
   end
+
+  s.CLOCK = 0
+  s.game_stopwatch = 0
+  s.game_stopwatch_running = false
+  s.do_countdown = true
+  s.max_runs_per_frame = 3
 
   s.displacement = 16
   -- This variable indicates how far below the top of the play
