@@ -730,6 +730,7 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   self.combo_size = comboSize
 end
 
+-- we save rowchanges separately because everything else can be saved sparsely via the panel.stateChanged flag
 function Panel:saveRowIndex(clock)
   self.rowIndex[clock] = self.row
 end
@@ -748,8 +749,9 @@ function Panel:saveState(clock)
     -- for non-timerbased states either nothing happens (normal/dimmed/dead state) or the row drops by one per frame
     -- for now i'm lazy and save states for each frame of falling state but I should calculate the row later on instead
     local state = {}
-    state.row = self.row
     -- rows are also stored separately in self.rowIndex[clock]
+    -- will get overwritten if the entry there is more recent
+    state.row = self.row
     state.column = self.column
     state.deathFrame = self.deathFrame
 
@@ -790,7 +792,6 @@ function Panel:saveState(clock)
 end
 
 -- rolls the panel back to its state at the frame
--- rowDiff describes how many new rows were generated in the meantime
 -- returns true if a rollback has been applied
 -- returns false if the targetFrame is older than the panel
 function Panel:rollbackToFrame(frame)
@@ -858,6 +859,7 @@ function Panel:rollbackToFrame(frame)
         end
       end
 
+      -- overwrite the row
       if next(self.rowIndex) then
         local rowIndex
         local rowIndexUpdateTime

@@ -470,7 +470,7 @@ function Stack.rollbackCopy(source, other)
   other.metal_panels_queued = source.metal_panels_queued
   other.panels_cleared = source.panels_cleared
   other.danger_timer = source.danger_timer
-  --other.analytic = deepcpy(source.analytic)
+  other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
   other.currentChainStartFrame = source.currentChainStartFrame
 
