@@ -1911,14 +1911,8 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
       -- a regular panel will always fall, no questions asked
       if (panelAboveLeft.color ~= 0 and not panelAboveLeft.isGarbage) then
         return false
-      elseif panelAboveLeft.isGarbage then
-        -- simulate the switch and see if the garbage would fall without the panel
-        Panel.switch(leftPanel, rightPanel, self.panels)
-        local swapAllowed = panelAboveLeft:supportedFromBelow(self.panels)
-        Panel.switch(leftPanel, rightPanel, self.panels)
-        if not swapAllowed then
-          return false
-        end
+      elseif panelAboveLeft.isGarbage and not panelAboveLeft:supportedFromBelow(self.panels) then
+        return false
       end
     end
 
@@ -1927,15 +1921,8 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
       -- a regular panel will always fall, no questions asked
       if (panelAboveRight.color ~= 0 and not panelAboveRight.isGarbage) then
         return false
-      elseif panelAboveRight.isGarbage then
-        -- simulate the switch and see if the garbage would fall without the panel
-        Panel.switch(leftPanel, rightPanel, self.panels)
-        local swapAllowed = panelAboveLeft:supportedFromBelow(self.panels)
-        -- then undo the switch
-        Panel.switch(leftPanel, rightPanel, self.panels)
-        if not swapAllowed then
-          return false
-        end
+      elseif panelAboveRight.isGarbage and not panelAboveRight:supportedFromBelow(self.panels) then
+        return false
       end
     end
   end
