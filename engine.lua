@@ -1906,7 +1906,9 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
-  if leftPanel.color == 0 or rightPanel.color == 0 then -- if either panel inside the cursor is air
+  --
+  -- if either panel inside the cursor is air
+  if leftPanel.color == 0 or rightPanel.color == 0 then
     if panelAboveLeft and panelAboveRight
     -- true if BOTH panels above cursor are swapping
     and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping)
@@ -1915,115 +1917,15 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
       return false
     end
 
-    local panelBelowLeft
-    local panelBelowRight
-
     if row > 1 then
-      panelBelowLeft = self.panels[row - 1][leftPanel.column]
-      panelBelowRight = self.panels[row - 1][rightPanel.column]
-    end
-
-    if panelBelowLeft and panelBelowRight -- true if BOTH panels below cursor are swapping
-    and (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping) -- -- these two together are true if 1 panel is air, the other isn't
-    and (panelBelowLeft.color == 0 or panelBelowRight.color == 0) and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
-      return false
-    end
-  end
-
-  return true
-end
-
-function Stack:canSwapPanelsOld(leftPanel, rightPanel)
-  if math.abs(leftPanel.column - rightPanel.column) ~= 1 or leftPanel.row ~= rightPanel.row then
-    -- panels are not horizontally adjacent, can't swap
-    return false
-  elseif self.do_countdown or self.CLOCK <= 1 then
-    -- swapping is not possible during countdown and on the first frame
-    return false
-  elseif self.puzzle and self.puzzle.moves ~= 0 and self.puzzle.remaining_moves == 0 then
-    -- used all available moves in a move puzzle
-    return false
-  elseif leftPanel.color == 0 and rightPanel.color == 0 then
-    -- can't swap two empty spaces with each other
-    return false
-  elseif not leftPanel:allowsSwap() or not rightPanel:allowsSwap() then
-    -- one of the panels can't be swapped based on its state / color / garbage
-    return false
-  end
-
-  local row = leftPanel.row
-
-  local panelAboveLeft
-  local panelAboveRight
-
-  if row < self.height then
-    panelAboveLeft = self.panels[row + 1][leftPanel.column]
-    panelAboveRight = self.panels[row + 1][rightPanel.column]
-    -- neither space above us can be hovering
-    if panelAboveLeft.state == Panel.states.hovering or panelAboveRight.state == Panel.states.hovering then
-      return false
-    end
-
-    -- can't swap an empty panel if the panel above is scheduled to fall
-    if leftPanel.color == 0 then
-      -- a regular panel will always fall, no questions asked
-      if (panelAboveLeft.color ~= 0 and not panelAboveLeft.isGarbage) then
-        return false
-      elseif panelAboveLeft.isGarbage and not panelAboveLeft:supportedFromBelow(self.panels) then
+      local panelBelowLeft = self.panels[row - 1][leftPanel.column]
+      local panelBelowRight = self.panels[row - 1][rightPanel.column]
+      -- true if BOTH panels below cursor are swapping
+      if (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping) 
+      -- these two together are true if 1 panel is air, the other isn't
+      and (panelBelowLeft.color == 0 or panelBelowRight.color == 0) and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
         return false
       end
-    end
-
-    -- can't swap an empty panel if the panel above is scheduled to fall
-    if rightPanel.color == 0 then
-      -- a regular panel will always fall, no questions asked
-      if (panelAboveRight.color ~= 0 and not panelAboveRight.isGarbage) then
-        return false
-      elseif panelAboveRight.isGarbage and not panelAboveRight:supportedFromBelow(self.panels) then
-        return false
-      end
-    end
-  end
-
-  local panelBelowLeft
-  local panelBelowRight
-
-  if row > 1 then
-    panelBelowLeft = self.panels[row - 1][leftPanel.column]
-    panelBelowRight = self.panels[row - 1][rightPanel.column]
-
-    -- can't swap if the panel is scheduled to fall
-    if leftPanel.color ~= 0 then
-      if panelBelowLeft.state == Panel.states.falling then
-        return false
-      elseif panelBelowLeft.color == 0 then
-        return false
-      end
-    end
-    if rightPanel.color ~= 0 then
-      if panelAboveRight == Panel.states.falling then
-        return false
-      elseif panelBelowRight.color == 0 then
-        return false
-      end
-    end
-  end
-
-  -- If you have two pieces stacked vertically, 
-  -- you can't move both of them to the right or left by swapping with empty space
-  -- TODO: This might be wrong if something lands on a swapping panel?
-  if leftPanel.color == 0 or rightPanel == 0 then
-    -- true if we're not in the top row
-    if panelAboveLeft and panelAboveRight 
-    -- true if BOTH panels above cursor are swapping
-    and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping)
-    -- these two together are true if 1 panel is air, the other isn't
-    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0) then
-      return false
-    elseif panelBelowLeft and panelBelowRight -- true if BOTH panels below cursor are swapping
-    and (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping) -- -- these two together are true if 1 panel is air, the other isn't
-    and (panelBelowLeft.color == 0 or panelBelowRight.color == 0) and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
-      return false
     end
   end
 
@@ -2050,11 +1952,11 @@ function Stack.swap(self)
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
   if self.cur_row ~= 1 then
-    if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
-      panels[row][col].dont_swap = true
+    if leftPanel.color ~= 0 and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
+      leftPanel.dont_swap = true
     end
-    if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
-      panels[row][col + 1].dont_swap = true
+    if rightPanel.color ~= 0 and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
+      rightPanel.dont_swap = true
     end
   end
 
@@ -2062,11 +1964,11 @@ function Stack.swap(self)
   -- then you can't swap it back since the panel should
   -- start falling.
   if self.cur_row ~= self.height then
-    if panels[row][col].color == 0 and panels[row + 1][col].color ~= 0 then
-      panels[row][col].dont_swap = true
+    if leftPanel.color == 0 and panels[row + 1][col].color ~= 0 then
+      leftPanel.dont_swap = true
     end
-    if panels[row][col + 1].color == 0 and panels[row + 1][col + 1].color ~= 0 then
-      panels[row][col + 1].dont_swap = true
+    if rightPanel.color == 0 and panels[row + 1][col + 1].color ~= 0 then
+      rightPanel.dont_swap = true
     end
   end
 end

@@ -17,7 +17,7 @@ match:run()
 match:run()
 local leftPanel = stack.panels[1][4]
 local rightPanel = stack.panels[1][5]
-assert(stack:canSwapPanels(leftPanel, rightPanel), "should be able to swap")
+assert(stack:canSwap(leftPanel, rightPanel), "should be able to swap")
 
 reset_filters()
 stop_the_music()
