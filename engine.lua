@@ -116,7 +116,7 @@ Stack = class(function(s, arguments)
   -- panel[i][j] gets the panel at row i where j is the column index counting from left to right starting from 1
   -- the update order for panels is bottom to top and left to right as well
   s.panels = {}
-  s.panelsById = {}
+  s.panelRollbackQueue = Queue()
   s.width = 6
   s.height = 12
   for row = 0, s.height do
@@ -508,10 +508,11 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
-    for _, panel in pairs(self.panelsById) do
-      if not panel:rollbackToFrame(frame) then
+    for i = self.panelRollbackQueue.first, self.panelRollbackQueue.last do
+      if not self.panelRollbackQueue[i]:rollbackToFrame(frame) then
         -- the panel didn't exist at the frame yet, eliminate it from the list
-        self.panelsById[panel.id] = nil
+        self.panelRollbackQueue[i] = self.panelRollbackQueue[self.panelRollbackQueue.first]
+        self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
       end
     end
 
@@ -612,13 +613,11 @@ function Stack.saveForRollback(self)
 end
 
 function Stack:savePanelStates()
-  if self.which == 1 and self.CLOCK == 3000 then
-    local phi = 5
-  end
-  for _, panel in pairs(self.panelsById) do
-    if not panel:saveState(self.CLOCK) then
+  for i = self.panelRollbackQueue.first, self.panelRollbackQueue.last do
+    if not self.panelRollbackQueue[i]:saveState(self.CLOCK) then
       -- the panel has been dead for too long, eliminate it from the list
-      self.panelsById[panel.id] = nil
+      self.panelRollbackQueue[i] = self.panelRollbackQueue[self.panelRollbackQueue.first]
+      self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
     end
   end
 end
@@ -2223,7 +2222,7 @@ function Stack.createPanel(self, row, column)
     self:onGarbageLand(panel)
   end
   self.panels[row][column] = panel
-  self.panelsById[panel.id] = panel
+  self.panelRollbackQueue:push(panel)
   return panel
 end
 
