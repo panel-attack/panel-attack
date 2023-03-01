@@ -502,9 +502,6 @@ end
 -- this may be used for falling and also swapping interactions as a surefire way to update both panels
 function Panel.switch(panel1, panel2, panels)
   -- confirm the panel positions are up to date
-  if panels[panel1.row] == nil or panels[panel1.row][panel1.column] == nil then
-    local phi = 5
-  end
   assert(panel1.id == panels[panel1.row][panel1.column].id)
   assert(panel2.id == panels[panel2.row][panel2.column].id)
 
