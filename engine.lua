@@ -1871,8 +1871,8 @@ function Stack.pick_win_sfx(self)
   end
 end
 
-function Stack:canSwap(leftPanel, rightPanel)
-  if math.abs(leftPanel.column - rightPanel.column) ~= 1 or leftPanel.row ~= rightPanel.row then
+function Stack:canSwap(panel1, panel2)
+  if math.abs(panel1.column - panel2.column) ~= 1 or panel1.row ~= panel2.row then
     -- panels are not horizontally adjacent, can't swap
     return false
   elseif self.do_countdown or self.CLOCK <= 1 then
@@ -1881,24 +1881,24 @@ function Stack:canSwap(leftPanel, rightPanel)
   elseif self.puzzle and self.puzzle.moves ~= 0 and self.puzzle.remaining_moves == 0 then
     -- used all available moves in a move puzzle
     return false
-  elseif leftPanel.color == 0 and rightPanel.color == 0 then
+  elseif panel1.color == 0 and panel2.color == 0 then
     -- can't swap two empty spaces with each other
     return false
-  elseif not leftPanel:allowsSwap() or not rightPanel:allowsSwap() then
+  elseif not panel1:allowsSwap() or not panel2:allowsSwap() then
     -- one of the panels can't be swapped based on its state / color / garbage
     return false
   end
 
-  local row = leftPanel.row
+  local row = panel1.row
 
-  local panelAboveLeft
-  local panelAboveRight
+  local panelAbove1
+  local panelAbove2
 
   if row < self.height then
-    panelAboveLeft = self.panels[row + 1][leftPanel.column]
-    panelAboveRight = self.panels[row + 1][rightPanel.column]
+    panelAbove1 = self.panels[row + 1][panel1.column]
+    panelAbove2 = self.panels[row + 1][panel2.column]
     -- neither space above us can be hovering
-    if panelAboveLeft.state == Panel.states.hovering or panelAboveRight.state == Panel.states.hovering then
+    if panelAbove1.state == Panel.states.hovering or panelAbove2.state == Panel.states.hovering then
       return false
     end
   end
@@ -1908,22 +1908,22 @@ function Stack:canSwap(leftPanel, rightPanel)
   -- TODO: This might be wrong if something lands on a swapping panel?
   --
   -- if either panel inside the cursor is air
-  if leftPanel.color == 0 or rightPanel.color == 0 then
-    if panelAboveLeft and panelAboveRight
+  if panel1.color == 0 or panel2.color == 0 then
+    if panelAbove1 and panelAbove2
     -- true if BOTH panels above cursor are swapping
-    and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping)
+    and (panelAbove1.state == Panel.states.swapping and panelAbove2.state == Panel.states.swapping)
     -- these two together are true if 1 panel is air, the other isn't
-    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0) then
+    and (panelAbove1.color == 0 or panelAbove2.color == 0) and (panelAbove1.color ~= 0 or panelAbove2.color ~= 0) then
       return false
     end
 
     if row > 1 then
-      local panelBelowLeft = self.panels[row - 1][leftPanel.column]
-      local panelBelowRight = self.panels[row - 1][rightPanel.column]
+      local panelBelow1 = self.panels[row - 1][panel1.column]
+      local panelBelow2 = self.panels[row - 1][panel2.column]
       -- true if BOTH panels below cursor are swapping
-      if (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping) 
+      if (panelBelow1.state == Panel.states.swapping and panelBelow2.state == Panel.states.swapping)
       -- these two together are true if 1 panel is air, the other isn't
-      and (panelBelowLeft.color == 0 or panelBelowRight.color == 0) and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
+      and (panelBelow1.color == 0 or panelBelow2.color == 0) and (panelBelow1.color ~= 0 or panelBelow2.color ~= 0) then
         return false
       end
     end
