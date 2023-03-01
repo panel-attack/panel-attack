@@ -102,6 +102,9 @@ end
 swappingState.changeState = function(panel, panels)
   local function finishSwap()
     panel.state = Panel.states.normal
+    if panel.id == 99 then
+      local phi = 4
+    end
     panel.dont_swap = nil
     panel.isSwappingFromLeft = nil
     panel.stateChanged = true
@@ -442,6 +445,9 @@ function Panel.clear_flags(self, clearChaining)
   -- in the future this should probably get axed
   -- in about all scenarios swapping is forbidden cause a panel should hover after completing its swap
   -- or something like that...so we could check "queuedHover" instead (see below)
+  if self.id == 99 and self.color == 0 then
+    local phi = 4
+  end
   self.dont_swap = nil
   -- if a panel is swapping while the panel below finishes its popped state
   -- then this panel should be forced to hover after and the panels above as well

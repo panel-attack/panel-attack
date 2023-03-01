@@ -572,7 +572,7 @@ function Stack:shouldSaveRollback()
   end
 
   if GAME.match.isFromReplay then
-    return true
+    return false
   end
 
   -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
@@ -1943,6 +1943,7 @@ function Stack.swap(self)
   leftPanel:startSwap(true)
   rightPanel:startSwap(false)
   Panel.switch(leftPanel, rightPanel, panels)
+  leftPanel, rightPanel = rightPanel, leftPanel
 
   if self:shouldChangeSoundEffects() then
     SFX_Swap_Play = 1
