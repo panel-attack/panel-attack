@@ -243,7 +243,6 @@ Stack = class(function(s, arguments)
   s.framesBehindArray = {}
   s.totalFramesBehind = 0
   s.warningsTriggered = {}
-  s.newRowsGenerated = 0
 
   s.time_quads = {}
   s.move_quads = {}
@@ -474,7 +473,6 @@ function Stack.rollbackCopy(source, other)
   --other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
   other.currentChainStartFrame = source.currentChainStartFrame
-  other.newRowsGenerated = source.newRowsGenerated
 
   return other
 end
@@ -510,9 +508,8 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
-    local rowDiff = self.newRowsGenerated - prev_states[frame].newRowsGenerated
     for _, panel in pairs(self.panelsById) do
-      if not panel:rollbackToFrame(frame, rowDiff) then
+      if not panel:rollbackToFrame(frame) then
         -- the panel didn't exist at the frame yet, eliminate it from the list
         self.panelsById[panel.id] = nil
       end
@@ -2156,7 +2153,6 @@ function Stack.new_row(self)
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
-  self.newRowsGenerated = self.newRowsGenerated + 1
 end
 
 function Stack:getAttackPatternData()
