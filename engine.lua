@@ -1872,22 +1872,22 @@ function Stack.pick_win_sfx(self)
 end
 
 function Stack:canSwapPanels(leftPanel, rightPanel)
-  if math.abs(leftPanel.column - rightPanel.column) ~= 1 or leftPanel.row ~= rightPanel.row then
-    -- panels are not horizontally adjacent, can't swap
-    return false
-  elseif self.do_countdown or self.CLOCK <= 1 then
-    -- swapping is not possible during countdown and on the first frame
-    return false
-  elseif self.puzzle and self.puzzle.moves ~= 0 and self.puzzle.remaining_moves == 0 then
-    -- used all available moves in a move puzzle
-    return false
-  elseif leftPanel.color == 0 and rightPanel.color == 0 then
-    -- can't swap two empty spaces with each other
-    return false
-  elseif not leftPanel:allowsSwap() or not rightPanel:allowsSwap() then
-    -- one of the panels can't be swapped based on its state / color / garbage
-    return false
-  end
+  -- if math.abs(leftPanel.column - rightPanel.column) ~= 1 or leftPanel.row ~= rightPanel.row then
+  --   -- panels are not horizontally adjacent, can't swap
+  --   return false
+  -- elseif self.do_countdown or self.CLOCK <= 1 then
+  --   -- swapping is not possible during countdown and on the first frame
+  --   return false
+  -- elseif self.puzzle and self.puzzle.moves ~= 0 and self.puzzle.remaining_moves == 0 then
+  --   -- used all available moves in a move puzzle
+  --   return false
+  -- elseif leftPanel.color == 0 and rightPanel.color == 0 then
+  --   -- can't swap two empty spaces with each other
+  --   return false
+  -- elseif not leftPanel:allowsSwap() or not rightPanel:allowsSwap() then
+  --   -- one of the panels can't be swapped based on its state / color / garbage
+  --   return false
+  -- end
 
   local panels = self.panels
   local row = leftPanel.row
