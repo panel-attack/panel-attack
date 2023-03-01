@@ -59,6 +59,12 @@ Stack = class(function(s, arguments)
     end
   end
 
+  s.CLOCK = 0
+  s.game_stopwatch = 0
+  s.game_stopwatch_running = false
+  s.do_countdown = true
+  s.max_runs_per_frame = 3
+
   -- frame.png dimensions
   if wantsCanvas then
     s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
@@ -116,20 +122,15 @@ Stack = class(function(s, arguments)
   -- panel[i][j] gets the panel at row i where j is the column index counting from left to right starting from 1
   -- the update order for panels is bottom to top and left to right as well
   s.panels = {}
+  s.panelsById = {}
   s.width = 6
   s.height = 12
-  for i = 0, s.height do
-    s.panels[i] = {}
-    for j = 1, s.width do
-      s.panels[i][j] = s:createPanel(i, j)
+  for row = 0, s.height do
+    s.panels[row] = {}
+    for col = 1, s.width do
+      s:createPanel(row, col)
     end
   end
-
-  s.CLOCK = 0
-  s.game_stopwatch = 0
-  s.game_stopwatch_running = false
-  s.do_countdown = true
-  s.max_runs_per_frame = 3
 
   s.displacement = 16
   -- This variable indicates how far below the top of the play
@@ -345,11 +346,12 @@ function Stack.divergenceString(stackToTest)
   local panels = stackToTest.panels
 
   if panels then
-    for i = #panels, 1, -1 do
-      for j = 1, #panels[i] do
-        result = result .. (tostring(panels[i][j].color)) .. " "
-        if panels[i][j].state ~= Panel.states.normal then
-          result = result .. (panels[i][j].state) .. " "
+    for row = #panels, 1, -1 do
+      for col = 1, #panels[row] do
+        local panel = stackToTest.panels[row][col]
+        result = result .. (tostring(panel.color)) .. " "
+        if panel.state ~= Panel.states.normal then
+          result = result .. (panel.state) .. " "
         end
       end
       result = result .. "\n"
@@ -402,6 +404,7 @@ function Stack.rollbackCopy(source, other)
   if source.telegraph then
     other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
   end
+
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
@@ -410,22 +413,13 @@ function Stack.rollbackCopy(source, other)
     startRow = 0
   end
   other.panelsCreatedCount = source.panelsCreatedCount
-  for i = startRow, height_to_cpy do
-    if other.panels[i] == nil then
-      other.panels[i] = {}
-      for j = 1, width do
-        -- other isn't a stack object and therefore doesn't know the method
-        -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
-        other.panels[i][j] = Stack.createPanel(other, i, j)
-      end
+  for row = startRow, height_to_cpy do
+    if other.panels[row] == nil then
+      other.panels[row] = {}
     end
-    for j = 1, width do
-      local opanel = other.panels[i][j]
-      local spanel = source.panels[i][j]
-      opanel:clear(true, true)
-      for k, v in pairs(spanel) do
-        opanel[k] = v
-      end
+    for col = 1, width do
+      -- panels have their own rollback routine, it's sufficient to just set the reference here
+      other.panels[row][col] = source.panels[row][col]
     end
   end
   -- this is too eliminate offscreen rows of chain garbage higher up that the clone might have had
@@ -476,7 +470,7 @@ function Stack.rollbackCopy(source, other)
   other.metal_panels_queued = source.metal_panels_queued
   other.panels_cleared = source.panels_cleared
   other.danger_timer = source.danger_timer
-  other.analytic = deepcpy(source.analytic)
+  --other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
   other.currentChainStartFrame = source.currentChainStartFrame
 
@@ -513,6 +507,16 @@ function Stack.rollbackToFrame(self, frame)
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
+
+    for _, panel in pairs(self.panelsById) do
+      if panel.row > 3 then
+        local phi = 4
+      end
+      if not panel:rollbackToFrame(frame) then
+        -- the panel didn't exist at the frame yet, eliminate it from the list
+        self.panelsById[panel.id] = nil
+      end
+    end
 
     for f = frame, currentFrame do
       self:deleteRollbackCopy(f)
@@ -591,6 +595,9 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
+  -- we should always delete outdated copies to keep the clonePool populated
+  local deleteFrame = self.CLOCK - MAX_LAG - 1
+  self:deleteRollbackCopy(deleteFrame)
 
   if self:shouldSaveRollback() == false then
     return
@@ -601,11 +608,19 @@ function Stack.saveForRollback(self)
   self.garbage_target = nil
   self.prev_states = nil
   self:remove_extra_rows()
-  prev_states[self.CLOCK] = Stack.rollbackCopy(self)
+  self:savePanelStates()
+  prev_states[self.CLOCK] = self:rollbackCopy()
   self.prev_states = prev_states
   self.garbage_target = garbage_target
-  local deleteFrame = self.CLOCK - MAX_LAG - 1
-  self:deleteRollbackCopy(deleteFrame)
+end
+
+function Stack:savePanelStates()
+  for _, panel in pairs(self.panelsById) do
+    if not panel:saveState(self.CLOCK) then
+      -- the panel has been dead for too long, eliminate it from the list
+      self.panelsById[panel.id] = nil
+    end
+  end
 end
 
 function Stack.deleteRollbackCopy(self, frame)
@@ -653,7 +668,7 @@ function Stack.set_puzzle_state(self, puzzle)
   local puzzleString = puzzle.stack
 
   self.puzzle = puzzle
-  self.panels = self:puzzleStringToPanels(puzzleString)
+  self:puzzleStringToPanels(puzzleString)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
@@ -662,7 +677,6 @@ function Stack.set_puzzle_state(self, puzzle)
 end
 
 function Stack.puzzleStringToPanels(self, puzzleString)
-  local panels = {}
   local garbageId = 0
   local garbageStartRow = nil
   local garbageStartColumn = nil
@@ -675,13 +689,11 @@ function Stack.puzzleStringToPanels(self, puzzleString)
     local rowString = string.sub(puzzleString, #puzzleString - 5, #puzzleString)
     puzzleString = string.sub(puzzleString, 1, #puzzleString - 6)
     -- copy the panels into the row
-    panels[row] = {}
     for column = 6, 1, -1 do
       local color = string.sub(rowString, column, column)
       if not garbageStartRow and tonumber(color) then
         local panel = self:createPanel(row, column)
         panel.color = tonumber(color)
-        panels[row][column] = panel
       else
         -- start of a garbage block
         if color == "]" or color == "}" then
@@ -703,7 +715,6 @@ function Stack.puzzleStringToPanels(self, puzzleString)
         -- instead save the column index in that field to calculate it later
         panel.x_offset = column
         panel.metal = isMetal
-        panels[row][column] = panel
         table.insert(connectedGarbagePanels, panel)
         -- garbage ends here
         if color == "[" or color == "{" then
@@ -730,14 +741,10 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   end
 
   -- add row 0 because it crashes if there is no row 0 for whatever reason
-  panels[0] = {}
   for column = 6, 1, -1 do
     local panel = self:createPanel(0, column)
     panel.color = 9
-    panels[0][column] = panel
   end
-
-  return panels
 end
 
 function Stack.toPuzzleInfo(self)
@@ -764,10 +771,9 @@ function Stack.puzzle_done(self)
     if self.puzzle.puzzleType == "clear" then
       return not self:hasGarbage()
     else
-      local panels = self.panels
       for row = 1, self.height do
         for col = 1, self.width do
-          local color = panels[row][col].color
+          local color = self.panels[row][col].color
           if color ~= 0 and color ~= 9 then
             return false
           end
@@ -785,9 +791,10 @@ end
 
 function Stack.hasGarbage(self)
   -- garbage is more likely to be found at the top of the stack
-  for row = #self.panels, 1, -1 do
+  for row = self.height, 1, -1 do
     for column = 1, #self.panels[row] do
-      if self.panels[row][column].isGarbage and self.panels[row][column].state ~= Panel.states.matched then
+      local panel = self.panels[row][column]
+      if panel.isGarbage and panel.state ~= Panel.states.matched then
         return true
       end
     end
@@ -824,11 +831,13 @@ function Stack.hasActivePanels(self)
 end
 
 function Stack.has_falling_garbage(self)
-  for i = 1, self.height + 3 do -- we shouldn't have to check quite 3 rows above height, but just to make sure...
-    local panelRow = self.panels[i]
-    for j = 1, self.width do
-      if panelRow and panelRow[j].isGarbage and panelRow[j].state == Panel.states.falling then
-        return true
+  for row = 1, self.height + 3 do -- we shouldn't have to check quite 3 rows above height, but just to make sure...
+    if self.panels[row] then
+      for col = 1, self.width do
+        local panel = self.panels[row][col]
+        if panel and panel.isGarbage and panel.state == Panel.states.falling then
+          return true
+        end
       end
     end
   end
@@ -1048,9 +1057,9 @@ local d_col = {up = 0, down = 0, left = -1, right = 1}
 local d_row = {up = 1, down = -1, left = 0, right = 0}
 
 function Stack.hasPanelsInTopRow(self)
-  local panelRow = self.panels[self.height]
-  for idx = 1, self.width do
-    if panelRow[idx]:dangerous() then
+  for col = 1, self.width do
+    local panel = self.panels[self.height][col]
+    if panel:dangerous() then
       return true
     end
   end
@@ -1060,13 +1069,13 @@ end
 function Stack.updateDangerBounce(self)
   -- calculate which columns should bounce
   self.danger = false
-  local panelRow = self.panels[self.height - 1]
-  for idx = 1, self.width do
-    if panelRow[idx]:dangerous() then
+  for col = 1, self.width do
+    local panel = self.panels[self.height - 1][col]
+    if panel:dangerous() then
       self.danger = true
-      self.danger_col[idx] = true
+      self.danger_col[col] = true
     else
-      self.danger_col[idx] = false
+      self.danger_col[col] = false
     end
   end
   if self.danger then
@@ -1088,9 +1097,9 @@ function Stack.shouldPlayDangerMusic(self)
   if not self.danger_music then
     -- currently playing normal music
     for row = self.height - 2, self.height do
-      local panelRow = self.panels[row]
       for column = 1, self.width do
-        if panelRow[column].color ~= 0 and panelRow[column].state ~= Panel.states.falling or panelRow[column]:dangerous() then
+        local panel = self.panels[row][column]
+        if panel.color ~= 0 and panel.state ~= Panel.states.falling or panel:dangerous() then
           if self.shake_time > 0 then
             return false
           else
@@ -1106,16 +1115,10 @@ function Stack.shouldPlayDangerMusic(self)
       minRowForDangerMusic = self.height - 3
     end
     for row = minRowForDangerMusic, self.height do
-      local panelRow = self.panels[row]
-      if panelRow ~= nil and type(panelRow) == "table" then
-        for column = 1, self.width do
-          if panelRow[column].color ~= 0 then
-            return true
-          end
+      for column = 1, self.width do
+        if self.panels[row][column].color ~= 0 then
+          return true
         end
-      elseif self.warningsTriggered["Panels Invalid"] == nil then
-        logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
-        self.warningsTriggered["Panels Invalid"] = true
       end
     end
   end
@@ -1433,8 +1436,8 @@ function Stack.simulate(self)
 
     self.panels_in_top_row = false
     -- If any dangerous panels are in the top row, garbage should not fall.
-    for col_idx = 1, self.width do
-      if panels[self.height][col_idx]:dangerous() then
+    for col = 1, self.width do
+      if self.panels[self.height][col]:dangerous() then
         self.panels_in_top_row = true
       end
     end
@@ -1457,10 +1460,10 @@ function Stack.simulate(self)
     -- end
 
     -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
-    for row_idx = self.height + 1, #self.panels do
-      for col_idx = 1, self.width do
-        if panels[row_idx][col_idx].color ~= 0 then
-          self.panels_in_top_row = true
+    for row = self.height + 1, #self.panels do
+      for col = 1, self.width do
+        if self.panels[row][col].color ~= 0 then
+          self.panels_in_top_row = self:hasPanelsInTopRow()
         end
       end
     end
@@ -1852,7 +1855,7 @@ function Stack.set_game_over(self)
     local panels = self.panels
     for row = 1, #panels do
       for col = 1, self.width do
-        local panel = panels[row][col]
+        local panel = self.panels[row][col]
         panel.state = Panel.states.dead
         if row == #panels then
           self:enqueue_popfx(col, row, popsize)
@@ -1919,7 +1922,7 @@ function Stack:canSwap(panel1, panel2)
 
     if row > 1 then
       local panelBelow1 = self.panels[row - 1][panel1.column]
-      local panelBelow2 = self.panels[row - 1][panel2.column]
+      local panelBelow2 = self.panels[row - 1][panel1.column]
       -- true if BOTH panels below cursor are swapping
       if (panelBelow1.state == Panel.states.swapping and panelBelow2.state == Panel.states.swapping)
       -- these two together are true if 1 panel is air, the other isn't
@@ -1938,8 +1941,8 @@ function Stack.swap(self)
   local row = self.cur_row
   local col = self.cur_col
   self:processPuzzleSwap()
-  local leftPanel = panels[row][col]
-  local rightPanel = panels[row][col + 1]
+  local leftPanel = self.panels[row][col]
+  local rightPanel = self.panels[row][col + 1]
   leftPanel:startSwap(true)
   rightPanel:startSwap(false)
   Panel.switch(leftPanel, rightPanel, panels)
@@ -1953,10 +1956,12 @@ function Stack.swap(self)
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
   if self.cur_row ~= 1 then
-    if leftPanel.color ~= 0 and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
+    local panelBelow = self.panels[row - 1][col]
+    if leftPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == Panel.states.falling) then
       leftPanel.dont_swap = true
     end
-    if rightPanel.color ~= 0 and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
+    panelBelow = self.panels[row - 1][col + 1]
+    if rightPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == Panel.states.falling) then
       rightPanel.dont_swap = true
     end
   end
@@ -1965,10 +1970,10 @@ function Stack.swap(self)
   -- then you can't swap it back since the panel should
   -- start falling.
   if self.cur_row ~= self.height then
-    if leftPanel.color == 0 and panels[row + 1][col].color ~= 0 then
+    if leftPanel.color == 0 and self.panels[row + 1][col].color ~= 0 then
       leftPanel.dont_swap = true
     end
-    if rightPanel.color == 0 and panels[row + 1][col + 1].color ~= 0 then
+    if rightPanel.color == 0 and self.panels[row + 1][col + 1].color ~= 0 then
       rightPanel.dont_swap = true
     end
   end
@@ -1989,16 +1994,17 @@ end
 function Stack.remove_extra_rows(self)
   local panels = self.panels
   for row = #panels, self.height + 1, -1 do
-    local nonempty = false
-    local panelRow = panels[row]
     for col = 1, self.width do
-      nonempty = nonempty or (panelRow[col].color ~= 0)
+      if self.panels[row][col].color ~= 0 then
+        return
+      end
     end
-    if nonempty then
-      break
-    else
-      panels[row] = nil
+    -- we didn't break out so the row is empty, meaning the row needs to be cleared
+    for col = 1, self.width do
+      -- mark the dead panels with their deathFrame so they can get removed once rollbackTime is over
+      self.panels[row][col].deathFrame = self.CLOCK
     end
+    panels[row] = nil
   end
 end
 
@@ -2009,14 +2015,13 @@ function Stack.tryDropGarbage(self, garbage)
   logger.debug("trying to drop garbage at frame " .. self.CLOCK)
 
   -- Do one last check for panels in the way.
-  for i = self.height + 1, #self.panels do
-    if self.panels[i] then
-      for j = 1, self.width do
-        if self.panels[i][j] then
-          if self.panels[i][j].color ~= 0 then
-            logger.trace("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
-            return false
-          end
+  for row = self.height + 1, #self.panels do
+    if self.panels[row] then
+      for col = 1, self.width do
+        local panel = self.panels[row][col]
+        if panel and panel.color ~= 0 then
+          logger.trace("Aborting garbage drop: panel found at row " .. tostring(row) .. " column " .. tostring(col))
+          return false
         end
       end
     end
@@ -2059,10 +2064,9 @@ function Stack.dropGarbage(self, garbage)
       -- every row that will receive garbage needs to be fully filled up
       -- so iterate from 1 to stack width instead of column to column + width - 1
       for col = 1, self.width do
-        self.panels[row][col] = self:createPanel(row, col)
+        local panel = self:createPanel(row, col)
 
         if isPartOfGarbage(col) then
-          local panel = self.panels[row][col]
           panel.garbageId = self.garbageCreatedCount
           panel.isGarbage = true
           panel.color = 9
@@ -2092,13 +2096,17 @@ function Stack.new_row(self)
   panels[stackHeight] = {}
 
   for col = 1, self.width do
-    panels[stackHeight][col] = self:createPanel(stackHeight, col)
+    self:createPanel(stackHeight, col)
   end
 
   -- move panels up
   for row = stackHeight, 1, -1 do
     for col = #panels[row], 1, -1 do
-      Panel.switch(panels[row][col], panels[row - 1][col], panels)
+      local panel1 = self.panels[row][col]
+      if panel1 == nil then
+        local phi = 5
+      end
+      Panel.switch(self.panels[row][col], self.panels[row - 1][col], panels)
     end
   end
 
@@ -2106,8 +2114,9 @@ function Stack.new_row(self)
   -- while the former row 0 is at row 1 and in play
   -- therefore we need to override dimmed state in row 1
   for col = 1, self.width do
-    panels[1][col].state = Panel.states.normal
-    panels[1][col].stateChanged = true
+    local panel = self.panels[1][col]
+    panel.state = Panel.states.normal
+    panel.stateChanged = true
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
@@ -2131,7 +2140,7 @@ function Stack.new_row(self)
     metal_panels_this_row = 1
   end
   for col = 1, self.width do
-    local panel = panels[0][col]
+    local panel = self.panels[0][col]
     local this_panel_color = string.sub(self.panel_buffer, col, col)
     -- a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
     if tonumber(this_panel_color) then
@@ -2207,7 +2216,7 @@ end
 
 function Stack.createPanel(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
-  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
+  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS, self.CLOCK)
   panel.onPop = function(panel)
     self:onPop(panel)
   end
@@ -2221,6 +2230,7 @@ function Stack.createPanel(self, row, column)
     self:onGarbageLand(panel)
   end
   self.panels[row][column] = panel
+  self.panelsById[panel.id] = panel
   return panel
 end
 

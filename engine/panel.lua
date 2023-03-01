@@ -1,7 +1,7 @@
 -- Represents an individual panel in the stack
 Panel =
 class(
-  function(p, id, row, column, frameTimes)
+  function(p, id, row, column, frameTimes, birthFrame)
     local metatable = getmetatable(p)
     metatable.__tostring = function(panel)
       return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state..",timer:"..panel.timer
@@ -12,6 +12,10 @@ class(
     p.row = row
     p.column = column
     p.frameTimes = frameTimes
+    p.lifeTime = 0
+    p.stateChanged = true
+    p.saveStates = {}
+    p.birthFrame = birthFrame
   end
 )
 
@@ -138,6 +142,12 @@ matchedState.update = function(panel, panels)
   panel:decrementTimer()
   if panel.timer == 0 then
     matchedState.changeState(panel, panels)
+  elseif panel.timer == panel.frameTimes.MATCH then
+    -- matches are checked right before update
+    -- its timer is set to MATCH + 1 to compensate
+    -- but the stateChanged field gets cleared too early
+    -- mark the panel as changed again so everyone else can know the panel got matched this frame!
+    panel.stateChanged = true
   end
 end
 
@@ -150,6 +160,7 @@ matchedState.changeState = function(panel, panels)
     else
       -- upper rows of chain type garbage just return to being unmatched garbage
       panel.state = Panel.states.normal
+      panel.stateChanged = true
     end
   else
     -- This panel's match just finished the whole flashing and looking distressed thing.
@@ -386,7 +397,7 @@ function Panel.clear(self, clearChaining, clearColor)
   -- The timer is also used to offset the panel's
   -- position on the screen.
 
-  -- total time for the panel to go from being matched to converting into a non-garbage panel
+  -- total time for the panel to go from being matched to converting into a non-matched panel
   self.initial_time = nil
   -- variables for handling pop FX
   self.pop_time = nil
@@ -456,7 +467,7 @@ function Panel.clear_flags(self, clearChaining)
   self.fell_from_garbage = nil
 
   -- a convenience bool to know whether we should take a closer look at a panel this frame or not
-  self.stateChanged = false
+  self.stateChanged = true
 
   -- panels are updated bottom to top
   -- panels will check if this is set on the panel below to update their chaining state
@@ -487,6 +498,8 @@ function Panel.update(self, panels)
   self.matching = false
   self.matchesMetal = false
   self.matchesGarbage = false
+
+  self.lifeTime = self.lifeTime + 1
 
   local stateTable = self:getStateTable()
   stateTable.update(self, panels)
@@ -695,6 +708,7 @@ end
 -- garbagePanels have to process by row due to color generation and have their extra logic in checkMatches
 function Panel:match(isChainLink, comboIndex, comboSize)
   self.state = Panel.states.matched
+  self.stateChanged = true
   -- +1 because match always occurs before the timer decrements on the frame
   self:setTimer(self.frameTimes.MATCH + 1)
   if isChainLink then
@@ -705,4 +719,130 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   end
   self.combo_index = comboIndex
   self.combo_size = comboSize
+end
+
+-- saves the current state of the panel into its saveStates table if its state was changed
+-- returns true if the panel is still relevant
+-- returns false if the panel has been dead for too long to still be rollback relevant
+function Panel:saveState(clock)
+  if self.deathFrame and self.deathFrame - MAX_LAG - 1 > clock then
+    -- the panel is no longer relevant
+    return false
+  elseif self.stateChanged or self.state == Panel.states.falling then
+    -- idea:
+    -- for all timerbased states, it's enough if we save state when it was first applied to the panel
+    -- for a rollback we can calculate the timer based on the difference between frame of the saveState and targetFrame
+    -- for non-timerbased states either nothing happens (normal/dimmed/dead state) or the row drops by one per frame
+    -- for now i'm lazy and save states for each frame of falling state but I should calculate the row later on instead
+    local state = {}
+    state.row = self.row
+    state.column = self.column
+    state.deathFrame = self.deathFrame
+
+    state.color = self.color
+    state.state = self.state
+    state.timer = self.timer
+
+    state.pop_time = self.pop_time
+    state.combo_index = self.combo_index
+    state.combo_size = self.combo_size
+
+    state.isGarbage = self.isGarbage
+    -- no point saving these for non garbage, normal panels can't transform into garbage
+    if self.isGarbage then
+      state.x_offset = self.x_offset
+      state.y_offset = self.y_offset
+      state.width = self.width
+      state.height = self.height
+      state.metal = self.metal
+      state.shake_time = self.shake_time
+      state.initial_time = self.initial_time
+    end
+
+    state.isSwappingFromLeft = self.isSwappingFromLeft
+    state.dont_swap = self.dont_swap
+    state.queuedHover = self.queuedHover
+    state.chaining = self.chaining
+    state.fell_from_garbage = self.fell_from_garbage
+
+    self.saveStates[self.lifeTime] = state
+
+    return true
+  end
+
+  -- TODO: eliminate states too old to be relevant
+  -- after testing, this might not be worth the trouble
+end
+
+-- rolls the panel back to its state at the frame
+-- returns true if a rollback has been applied
+-- returns false if the targetFrame is older than the panel
+function Panel:rollbackToFrame(frame)
+  local targetLifeTime = frame - self.birthFrame
+
+  if targetLifeTime < 0 then
+    -- this panel didn't exist yet!
+    return false
+  else
+    local saveState
+    local saveStateLifeTime
+    local framesWithSaveStates = table.getKeys(self.saveStates)
+    -- we need the oldest state that is younger than the frame we're rolling back to
+    for i = 1, #framesWithSaveStates do
+      if framesWithSaveStates[i] > targetLifeTime then
+        break
+      end
+      saveStateLifeTime = framesWithSaveStates[i]
+      saveState = self.saveStates[saveStateLifeTime]
+    end
+
+    if saveState then
+      -- apply saveState
+      self.row = saveState.row
+      self.column = saveState.column
+      self.deathFrame = saveState.deathFrame
+
+      self.color = saveState.color
+      self.state = saveState.state
+
+      self.pop_time = saveState.pop_time
+      self.combo_index = saveState.combo_index
+      self.combo_size = saveState.combo_size
+
+      if saveState.isGarbage then
+        if not self.isGarbage then
+          self.isGarbage = saveState.isGarbage
+          -- the kind of immutable fields for garbage
+          self.x_offset = saveState.x_offset
+          self.width = saveState.width
+          self.metal = saveState.metal
+        end
+        self.y_offset = saveState.y_offset
+        self.height = saveState.height
+        self.shake_time = saveState.shake_time
+        self.initial_time = saveState.initial_time
+      end
+
+      self.isSwappingFromLeft = saveState.isSwappingFromLeft
+      self.dont_swap = saveState.dont_swap
+      self.queuedHover = saveState.queuedHover
+      self.chaining = saveState.chaining
+
+      -- apply with diff for timer based variables
+      if saveState.timer == 0 then
+        self.timer = 0
+      else
+        local timeDiff = targetLifeTime - saveStateLifeTime
+        -- apply the timer diff between safe state and targetframe
+        self.timer = saveState.timer - timeDiff
+        self.fell_from_garbage = math.max(saveState.fell_from_garbage - timeDiff, 0)
+      end
+    else
+      -- this panel hasn't moved all game!
+      -- that means there's nothing to roll back for this panel either and it can stay as is
+    end
+
+    self.lifeTime = targetLifeTime
+    return true
+  end
 end

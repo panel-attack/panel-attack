@@ -108,7 +108,7 @@ end
 function table.getKeys(tab)
   local keys = {}
   for key, _ in pairs(tab) do
-    table.insert(keys, key)
+    keys[#keys+1] = key
   end
   table.sort(keys)
 

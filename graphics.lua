@@ -317,7 +317,7 @@ function Stack.render(self)
       local panel = self.panels[row][col]
       local draw_x = 4 + (col - 1) * 16
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
-      if panel.color ~= 0 and panel.state ~= Panel.states.popped then
+      if panel and panel.color ~= 0 and panel.state ~= Panel.states.popped then
         local draw_frame = 1
         if panel.isGarbage then
           local imgs = {flash = metals.flash}
