@@ -1889,8 +1889,55 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
     return false
   end
 
-  if rightPanel.id == 150 and self.which == 2 then
-    local phi = 5
+  local panels = self.panels
+  local row = leftPanel.row
+  local column = leftPanel.column
+
+  local do_swap = (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
+  panels[row][column]:allowsSwap() and panels[row][column + 1]:allowsSwap() and -- also, 
+                      (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and -- also, we can't swap if the game countdown isn't finished
+                      not self.do_countdown and -- also, don't swap on the first frame
+  not (self.CLOCK and self.CLOCK <= 1)
+  -- If you have two pieces stacked vertically, you can't move
+  -- both of them to the right or left by swapping with empty space.
+  -- TODO: This might be wrong if something lands on a swapping panel?
+  if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then -- if either panel inside the cursor is air
+    do_swap = do_swap -- failing the condition if we already determined we cant swap 
+    and not -- one of the next 4 lines must be false in order to swap
+    (row ~= self.height -- true if cursor is not at top of stack
+    and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
+    and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
+    and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
+
+    do_swap = do_swap -- failing the condition if we already determined we cant swap 
+    and not -- one of the next 4 lines must be false in order to swap
+    (row ~= 1 -- true if the cursor is not at the bottom of the stack
+    and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
+    and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
+    and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
+  end
+
+  do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle.remaining_moves > 0)
+
+  return do_swap
+end
+
+function Stack:canSwapPanelsOld(leftPanel, rightPanel)
+  if math.abs(leftPanel.column - rightPanel.column) ~= 1 or leftPanel.row ~= rightPanel.row then
+    -- panels are not horizontally adjacent, can't swap
+    return false
+  elseif self.do_countdown or self.CLOCK <= 1 then
+    -- swapping is not possible during countdown and on the first frame
+    return false
+  elseif self.puzzle and self.puzzle.moves ~= 0 and self.puzzle.remaining_moves == 0 then
+    -- used all available moves in a move puzzle
+    return false
+  elseif leftPanel.color == 0 and rightPanel.color == 0 then
+    -- can't swap two empty spaces with each other
+    return false
+  elseif not leftPanel:allowsSwap() or not rightPanel:allowsSwap() then
+    -- one of the panels can't be swapped based on its state / color / garbage
+    return false
   end
 
   local row = leftPanel.row
@@ -1956,19 +2003,13 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
   -- TODO: This might be wrong if something lands on a swapping panel?
   if leftPanel.color == 0 or rightPanel == 0 then
     -- true if we're not in the top row
-    if panelAboveLeft and panelAboveRight
-    -- true if BOTH panels above cursor are swapping
-    and (panelAboveLeft.state == "swapping" and panelAboveRight.state == "swapping")
-    -- -- these two together are true if 1 panel is air, the other isn't
-    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0)
-    and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0) then
+    if panelAboveLeft and panelAboveRight -- true if BOTH panels above cursor are swapping
+    and (panelAboveLeft.state == "swapping" and panelAboveRight.state == "swapping") -- -- these two together are true if 1 panel is air, the other isn't
+    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0) then
       return false
-    elseif panelBelowLeft and panelBelowRight
-    -- true if BOTH panels below cursor are swapping
-    and (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping)
-    -- -- these two together are true if 1 panel is air, the other isn't
-    and (panelBelowLeft.color == 0 or panelBelowRight.color == 0)
-    and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
+    elseif panelBelowLeft and panelBelowRight -- true if BOTH panels below cursor are swapping
+    and (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping) -- -- these two together are true if 1 panel is air, the other isn't
+    and (panelBelowLeft.color == 0 or panelBelowRight.color == 0) and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
       return false
     end
   end
@@ -1977,30 +2018,28 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
 end
 
 function Stack.canSwap(self, row, column)
-  local do_swap =
-    (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
-    (not panels[row][column]:exclude_swap()) and
-    (not panels[row][column + 1]:exclude_swap()) and -- also, 
-    (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
-    not self.do_countdown and --also, don't swap on the first frame
-    not (self.CLOCK and self.CLOCK <= 1)
+  local do_swap = (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
+  (not panels[row][column]:exclude_swap()) and (not panels[row][column + 1]:exclude_swap()) and -- also, 
+                      (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and -- also, we can't swap if the game countdown isn't finished
+                      not self.do_countdown and -- also, don't swap on the first frame
+  not (self.CLOCK and self.CLOCK <= 1)
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
   if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then -- if either panel inside the cursor is air
     do_swap = do_swap -- failing the condition if we already determined we cant swap 
-      and not -- one of the next 4 lines must be false in order to swap
-        (row ~= self.height -- true if cursor is not at top of stack
-        and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
-        and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
-        and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
+    and not -- one of the next 4 lines must be false in order to swap
+    (row ~= self.height -- true if cursor is not at top of stack
+    and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
+    and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
+    and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
 
-    do_swap = do_swap  -- failing the condition if we already determined we cant swap 
-      and not -- one of the next 4 lines must be false in order to swap
-        (row ~= 1 -- true if the cursor is not at the bottom of the stack
-        and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
-        and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
-        and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
+    do_swap = do_swap -- failing the condition if we already determined we cant swap 
+    and not -- one of the next 4 lines must be false in order to swap
+    (row ~= 1 -- true if the cursor is not at the bottom of the stack
+    and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
+    and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
+    and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
   end
 
   do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle.remaining_moves > 0)
@@ -2024,29 +2063,29 @@ function Stack.swap(self)
     SFX_Swap_Play = 1
   end
 
-  -- -- If you're swapping a panel into a position
-  -- -- above an empty space or above a falling piece
-  -- -- then you can't take it back since it will start falling.
-  -- if self.cur_row ~= 1 then
-  --   if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
-  --     panels[row][col].dont_swap = true
-  --   end
-  --   if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
-  --     panels[row][col + 1].dont_swap = true
-  --   end
-  -- end
+  -- If you're swapping a panel into a position
+  -- above an empty space or above a falling piece
+  -- then you can't take it back since it will start falling.
+  if self.cur_row ~= 1 then
+    if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
+      panels[row][col].dont_swap = true
+    end
+    if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
+      panels[row][col + 1].dont_swap = true
+    end
+  end
 
-  -- -- If you're swapping a blank space under a panel,
-  -- -- then you can't swap it back since the panel should
-  -- -- start falling.
-  -- if self.cur_row ~= self.height then
-  --   if panels[row][col].color == 0 and panels[row + 1][col].color ~= 0 then
-  --     panels[row][col].dont_swap = true
-  --   end
-  --   if panels[row][col + 1].color == 0 and panels[row + 1][col + 1].color ~= 0 then
-  --     panels[row][col + 1].dont_swap = true
-  --   end
-  -- end
+  -- If you're swapping a blank space under a panel,
+  -- then you can't swap it back since the panel should
+  -- start falling.
+  if self.cur_row ~= self.height then
+    if panels[row][col].color == 0 and panels[row + 1][col].color ~= 0 then
+      panels[row][col].dont_swap = true
+    end
+    if panels[row][col + 1].color == 0 and panels[row + 1][col + 1].color ~= 0 then
+      panels[row][col + 1].dont_swap = true
+    end
+  end
 end
 
 function Stack.processPuzzleSwap(self)
