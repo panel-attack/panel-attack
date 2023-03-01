@@ -96,7 +96,7 @@ function Stack:getMatchingPanels()
 
   for row = 1, self.height do
     for col = 1, self.width do
-      local panel = self.panels[row][col]
+      local panel = panels[row][col]
       panel.matching = false
       if panel.stateChanged and panel:canMatch() then
         candidatePanels[#candidatePanels + 1] = panel
@@ -114,7 +114,7 @@ function Stack:getMatchingPanels()
     -- check in all 4 directions until we found a panel of a different color
     -- below
     for row = candidatePanels[i].row - 1, 1, -1 do
-      panel = self.panels[row][candidatePanels[i].column]
+      panel = panels[row][candidatePanels[i].column]
       if panel.color == candidatePanels[i].color and panel:canMatch() then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
@@ -123,7 +123,7 @@ function Stack:getMatchingPanels()
     end
     -- above
     for row = candidatePanels[i].row + 1, self.height do
-      panel = self.panels[row][candidatePanels[i].column]
+      panel = panels[row][candidatePanels[i].column]
       if panel.color == candidatePanels[i].color and panel:canMatch() then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
@@ -132,7 +132,7 @@ function Stack:getMatchingPanels()
     end
     -- to the left
     for column = candidatePanels[i].column - 1, 1, -1 do
-      panel = self.panels[candidatePanels[i].row][column]
+      panel = panels[candidatePanels[i].row][column]
       if panel.color == candidatePanels[i].color and panel:canMatch() then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
@@ -141,7 +141,7 @@ function Stack:getMatchingPanels()
     end
     -- to the right
     for column = candidatePanels[i].column + 1, self.width do
-      panel = self.panels[candidatePanels[i].row][column]
+      panel = panels[candidatePanels[i].row][column]
       if panel.color == candidatePanels[i].color and panel:canMatch() then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else

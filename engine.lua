@@ -1852,7 +1852,7 @@ function Stack.set_game_over(self)
     local panels = self.panels
     for row = 1, #panels do
       for col = 1, self.width do
-        local panel = self.panels[row][col]
+        local panel = panels[row][col]
         panel.state = Panel.states.dead
         if row == #panels then
           self:enqueue_popfx(col, row, popsize)
@@ -1919,7 +1919,7 @@ function Stack:canSwap(panel1, panel2)
 
     if row > 1 then
       local panelBelow1 = self.panels[row - 1][panel1.column]
-      local panelBelow2 = self.panels[row - 1][panel1.column]
+      local panelBelow2 = self.panels[row - 1][panel2.column]
       -- true if BOTH panels below cursor are swapping
       if (panelBelow1.state == Panel.states.swapping and panelBelow2.state == Panel.states.swapping)
       -- these two together are true if 1 panel is air, the other isn't
@@ -1938,8 +1938,8 @@ function Stack.swap(self)
   local row = self.cur_row
   local col = self.cur_col
   self:processPuzzleSwap()
-  local leftPanel = self.panels[row][col]
-  local rightPanel = self.panels[row][col + 1]
+  local leftPanel = panels[row][col]
+  local rightPanel = panels[row][col + 1]
   leftPanel:startSwap(true)
   rightPanel:startSwap(false)
   Panel.switch(leftPanel, rightPanel, panels)
@@ -1953,11 +1953,11 @@ function Stack.swap(self)
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
   if self.cur_row ~= 1 then
-    local panelBelow = self.panels[row - 1][col]
+    local panelBelow = panels[row - 1][col]
     if leftPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == Panel.states.falling) then
       leftPanel.dont_swap = true
     end
-    panelBelow = self.panels[row - 1][col + 1]
+    panelBelow = panels[row - 1][col + 1]
     if rightPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == Panel.states.falling) then
       rightPanel.dont_swap = true
     end
@@ -1967,10 +1967,10 @@ function Stack.swap(self)
   -- then you can't swap it back since the panel should
   -- start falling.
   if self.cur_row ~= self.height then
-    if leftPanel.color == 0 and self.panels[row + 1][col].color ~= 0 then
+    if leftPanel.color == 0 and panels[row + 1][col].color ~= 0 then
       leftPanel.dont_swap = true
     end
-    if rightPanel.color == 0 and self.panels[row + 1][col + 1].color ~= 0 then
+    if rightPanel.color == 0 and panels[row + 1][col + 1].color ~= 0 then
       rightPanel.dont_swap = true
     end
   end
@@ -2099,9 +2099,9 @@ function Stack.new_row(self)
   -- move panels up
   for row = stackHeight, 1, -1 do
     for col = #panels[row], 1, -1 do
-      Panel.switch(self.panels[row][col], self.panels[row - 1][col], panels)
-      self.panels[row][col]:saveRowIndex(self.CLOCK)
-      self.panels[row - 1][col]:saveRowIndex(self.CLOCK)
+      Panel.switch(panels[row][col], panels[row - 1][col], panels)
+      panels[row][col]:saveRowIndex(self.CLOCK)
+      panels[row - 1][col]:saveRowIndex(self.CLOCK)
     end
   end
 
@@ -2130,7 +2130,7 @@ function Stack.new_row(self)
     metal_panels_this_row = 1
   end
   for col = 1, self.width do
-    local panel = self.panels[0][col]
+    local panel = panels[0][col]
     local this_panel_color = string.sub(self.panel_buffer, col, col)
     -- a capital letter for the place where the first shock block should spawn (if earned), and a lower case letter is where a second should spawn (if earned).  (color 8 is metal)
     if tonumber(this_panel_color) then
