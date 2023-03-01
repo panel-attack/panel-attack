@@ -780,6 +780,7 @@ function Panel:saveState(clock)
     state.queuedHover = self.queuedHover
     state.chaining = self.chaining
     state.fell_from_garbage = self.fell_from_garbage
+    state.stateChanged = self.stateChanged
 
     self.saveStates[self.lifeTime] = state
   end
@@ -846,6 +847,11 @@ function Panel:rollbackToFrame(frame)
       self.dont_swap = saveState.dont_swap
       self.queuedHover = saveState.queuedHover
       self.chaining = saveState.chaining
+
+      local timeDiff = targetLifeTime - saveStateLifeTime
+      if timeDiff == 0 then
+        self.stateChanged = saveState.stateChanged
+      end
 
       -- apply with diff for timer based variables
       if saveState.timer == 0 then
