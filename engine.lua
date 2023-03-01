@@ -1910,20 +1910,27 @@ function Stack:canSwapPanels(leftPanel, rightPanel)
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
   if leftPanel.color == 0 or rightPanel.color == 0 then -- if either panel inside the cursor is air
-    local do_swap = not -- one of the next 4 lines must be false in order to swap
-    ((panelAboveLeft and panelAboveRight) -- true if cursor is not at top of stack
-    and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping) -- true if BOTH panels above cursor are swapping
-    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) -- true if either panel above the cursor is air
-    and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0)) -- true if either panel above the cursor is not air
+    if panelAboveLeft and panelAboveRight
+    -- true if BOTH panels above cursor are swapping
+    and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping)
+    -- these two together are true if 1 panel is air, the other isn't
+    and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0) then
+      return false
+    end
 
-    do_swap = do_swap -- failing the condition if we already determined we cant swap 
-    and not -- one of the next 4 lines must be false in order to swap
-    (row ~= 1 -- true if the cursor is not at the bottom of the stack
-    and (panels[row - 1][column].state == Panel.states.swapping and panels[row - 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels below cursor are swapping
-    and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
-    and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
+    local panelBelowLeft
+    local panelBelowRight
 
-    return do_swap
+    if row > 1 then
+      panelBelowLeft = self.panels[row - 1][leftPanel.column]
+      panelBelowRight = self.panels[row - 1][rightPanel.column]
+    end
+
+    if panelBelowLeft and panelBelowRight -- true if BOTH panels below cursor are swapping
+    and (panelBelowLeft.state == Panel.states.swapping and panelBelowRight.state == Panel.states.swapping) -- -- these two together are true if 1 panel is air, the other isn't
+    and (panelBelowLeft.color == 0 or panelBelowRight.color == 0) and (panelBelowLeft.color ~= 0 or panelBelowRight.color ~= 0) then
+      return false
+    end
   end
 
   return true
@@ -2010,8 +2017,10 @@ function Stack:canSwapPanelsOld(leftPanel, rightPanel)
   -- TODO: This might be wrong if something lands on a swapping panel?
   if leftPanel.color == 0 or rightPanel == 0 then
     -- true if we're not in the top row
-    if panelAboveLeft and panelAboveRight -- true if BOTH panels above cursor are swapping
-    and (panelAboveLeft.state == "swapping" and panelAboveRight.state == "swapping") -- -- these two together are true if 1 panel is air, the other isn't
+    if panelAboveLeft and panelAboveRight 
+    -- true if BOTH panels above cursor are swapping
+    and (panelAboveLeft.state == Panel.states.swapping and panelAboveRight.state == Panel.states.swapping)
+    -- these two together are true if 1 panel is air, the other isn't
     and (panelAboveLeft.color == 0 or panelAboveRight.color == 0) and (panelAboveLeft.color ~= 0 or panelAboveRight.color ~= 0) then
       return false
     elseif panelBelowLeft and panelBelowRight -- true if BOTH panels below cursor are swapping
