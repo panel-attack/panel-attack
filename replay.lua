@@ -31,6 +31,9 @@ function Replay.loadFromFile(replay)
   if replay.vs then
     GAME.battleRoom = BattleRoom()
     GAME.match = Match("vs", GAME.battleRoom)
+    if replay.vs.stage then
+      current_stage = replay.vs.stage
+    end
     replayDetails = replay.vs
   elseif replay.endless or replay.time then
     if replay.time then

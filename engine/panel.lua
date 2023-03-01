@@ -15,6 +15,7 @@ class(
     p.lifeTime = 0
     p.stateChanged = true
     p.saveStates = {}
+    p.rowIndex = {}
     p.birthFrame = birthFrame
   end
 )
@@ -100,6 +101,11 @@ swappingState.update = function(panel, panels)
     else
       swappingState.changeState(panel, panels)
     end
+  elseif panel.timer == 3 then
+    -- swaps are initiated right before update
+    -- its timer is set to 4 to compensate
+    -- mark the panel as changed again so everyone else can know the panel got swapped this frame!
+    panel.stateChanged = true
   end
 end
 
@@ -516,6 +522,9 @@ end
 function Panel.switch(panel1, panel2, panels)
   -- confirm the panel positions are up to date
   assert(panel1.id == panels[panel1.row][panel1.column].id)
+  if panels[panel2.row] == nil or panels[panel2.row][panel2.column] == nil then
+    local phi = 5
+  end
   assert(panel2.id == panels[panel2.row][panel2.column].id)
 
   -- confirm the panels are directly adjacent to each other
@@ -666,6 +675,9 @@ end
 function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
   Panel.switch(self, panelBelow, panels)
+  local clock = self.birthFrame + self.lifeTime
+  self:saveRowIndex(clock)
+  panelBelow:saveRowIndex(clock)
   -- panelBelow is now actually panelAbove
   if self.isGarbage then
     -- panels above should fall immediately rather than starting to hover
@@ -721,6 +733,10 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   self.combo_size = comboSize
 end
 
+function Panel:saveRowIndex(clock)
+  self.rowIndex[clock] = self.row
+end
+
 -- saves the current state of the panel into its saveStates table if its state was changed
 -- returns true if the panel is still relevant
 -- returns false if the panel has been dead for too long to still be rollback relevant
@@ -728,7 +744,7 @@ function Panel:saveState(clock)
   if self.deathFrame and self.deathFrame - MAX_LAG - 1 > clock then
     -- the panel is no longer relevant
     return false
-  elseif self.stateChanged or self.state == Panel.states.falling then
+  elseif self.stateChanged then
     -- idea:
     -- for all timerbased states, it's enough if we save state when it was first applied to the panel
     -- for a rollback we can calculate the timer based on the difference between frame of the saveState and targetFrame
@@ -736,6 +752,7 @@ function Panel:saveState(clock)
     -- for now i'm lazy and save states for each frame of falling state but I should calculate the row later on instead
     local state = {}
     state.row = self.row
+    -- rows are also stored separately in self.rowIndex[clock]
     state.column = self.column
     state.deathFrame = self.deathFrame
 
@@ -766,18 +783,23 @@ function Panel:saveState(clock)
     state.fell_from_garbage = self.fell_from_garbage
 
     self.saveStates[self.lifeTime] = state
-
-    return true
   end
 
   -- TODO: eliminate states too old to be relevant
   -- after testing, this might not be worth the trouble
+  -- panels have a limited lifetime anyway so they won't accumulate forever
+
+  return true
 end
 
 -- rolls the panel back to its state at the frame
+-- rowDiff describes how many new rows were generated in the meantime
 -- returns true if a rollback has been applied
 -- returns false if the targetFrame is older than the panel
 function Panel:rollbackToFrame(frame)
+  if self.id == 115 then
+    local phi = 4
+  end
   local targetLifeTime = frame - self.birthFrame
 
   if targetLifeTime < 0 then
@@ -788,16 +810,18 @@ function Panel:rollbackToFrame(frame)
     local saveStateLifeTime
     local framesWithSaveStates = table.getKeys(self.saveStates)
     -- we need the oldest state that is younger than the frame we're rolling back to
-    for i = 1, #framesWithSaveStates do
-      if framesWithSaveStates[i] > targetLifeTime then
-        break
-      end
+    for i = #framesWithSaveStates, 1, -1 do
       saveStateLifeTime = framesWithSaveStates[i]
       saveState = self.saveStates[saveStateLifeTime]
+
+      if framesWithSaveStates[i] > targetLifeTime then
+        self.saveStates[framesWithSaveStates[i]] = nil
+      else
+        break
+      end
     end
 
     if saveState then
-      -- apply saveState
       self.row = saveState.row
       self.column = saveState.column
       self.deathFrame = saveState.deathFrame
@@ -835,7 +859,30 @@ function Panel:rollbackToFrame(frame)
         local timeDiff = targetLifeTime - saveStateLifeTime
         -- apply the timer diff between safe state and targetframe
         self.timer = saveState.timer - timeDiff
-        self.fell_from_garbage = math.max(saveState.fell_from_garbage - timeDiff, 0)
+        if self.fell_from_garbage then
+          self.fell_from_garbage = math.max(saveState.fell_from_garbage - timeDiff, 0)
+        end
+      end
+
+      if next(self.rowIndex) then
+        local rowIndex
+        local rowIndexUpdateTime
+        local framesWithRowIndexUpdate = table.getKeys(self.rowIndex)
+        -- we need the oldest state that is younger than the frame we're rolling back to
+        for i = #framesWithRowIndexUpdate, 1, -1 do
+          rowIndexUpdateTime = framesWithRowIndexUpdate[i]
+          rowIndex = self.rowIndex[rowIndexUpdateTime]
+
+          if rowIndexUpdateTime > targetLifeTime then
+            self.rowIndex[framesWithRowIndexUpdate[i]] = nil
+          else
+            break
+          end
+        end
+
+        if rowIndexUpdateTime > saveStateLifeTime then
+          self.row = rowIndex
+        end
       end
     else
       -- this panel hasn't moved all game!

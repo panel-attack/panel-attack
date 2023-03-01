@@ -243,6 +243,7 @@ Stack = class(function(s, arguments)
   s.framesBehindArray = {}
   s.totalFramesBehind = 0
   s.warningsTriggered = {}
+  s.newRowsGenerated = 0
 
   s.time_quads = {}
   s.move_quads = {}
@@ -473,6 +474,7 @@ function Stack.rollbackCopy(source, other)
   --other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
   other.currentChainStartFrame = source.currentChainStartFrame
+  other.newRowsGenerated = source.newRowsGenerated
 
   return other
 end
@@ -508,11 +510,9 @@ function Stack.rollbackToFrame(self, frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 
+    local rowDiff = self.newRowsGenerated - prev_states[frame].newRowsGenerated
     for _, panel in pairs(self.panelsById) do
-      if panel.row > 3 then
-        local phi = 4
-      end
-      if not panel:rollbackToFrame(frame) then
+      if not panel:rollbackToFrame(frame, rowDiff) then
         -- the panel didn't exist at the frame yet, eliminate it from the list
         self.panelsById[panel.id] = nil
       end
@@ -2102,22 +2102,15 @@ function Stack.new_row(self)
   -- move panels up
   for row = stackHeight, 1, -1 do
     for col = #panels[row], 1, -1 do
-      local panel1 = self.panels[row][col]
-      if panel1 == nil then
-        local phi = 5
-      end
       Panel.switch(self.panels[row][col], self.panels[row - 1][col], panels)
+      self.panels[row][col]:saveRowIndex(self.CLOCK)
+      self.panels[row - 1][col]:saveRowIndex(self.CLOCK)
     end
   end
 
   -- the new row we created earlier at the top is now at row 0!
   -- while the former row 0 is at row 1 and in play
-  -- therefore we need to override dimmed state in row 1
-  for col = 1, self.width do
-    local panel = self.panels[1][col]
-    panel.state = Panel.states.normal
-    panel.stateChanged = true
-  end
+  -- the new row 1 will update its status by itself!
 
   if string.len(self.panel_buffer) <= 10 * self.width then
     local opponentLevel = nil
@@ -2163,6 +2156,7 @@ function Stack.new_row(self)
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
+  self.newRowsGenerated = self.newRowsGenerated + 1
 end
 
 function Stack:getAttackPatternData()
