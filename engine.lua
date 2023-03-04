@@ -1,5 +1,6 @@
 require("analytics")
 local logger = require("logger")
+local tableUtil = require("table_util")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -2915,4 +2916,19 @@ function Stack:getAttackPatternData()
   end
 
   return data
+end
+
+function Stack:getInfo()
+  local info = {}
+  info.playerNumber = self.which
+  info.character = self.character
+  info.panels = self.panels_dir
+  info.rollbackCount = self.rollbackCount
+  if self.prev_states then
+    info.rollbackCopyCount = table.length(self.prev_states)
+  else
+    info.rollbackCopyCount = 0
+  end
+
+  return info
 end
