@@ -71,6 +71,8 @@ Stack =
       s.speed = speed
     end
 
+    s.FRAMECOUNTS = {}
+
     if level then
       s:setLevel(level)
       -- mode 1: increase speed based on fixed intervals
@@ -78,6 +80,14 @@ Stack =
       s.nextSpeedIncreaseClock = DT_SPEED_INCREASE
     else
       s.difficulty = difficulty or 2
+
+      -- These change depending on the difficulty and speed levels:
+      s.FRAMECOUNTS.HOVER = s.FRAMECOUNTS.HOVER or FC_HOVER[s.difficulty]
+      s.FRAMECOUNTS.FLASH = s.FRAMECOUNTS.FLASH or FC_FLASH[s.difficulty]
+      s.FRAMECOUNTS.FACE = s.FRAMECOUNTS.FACE or FC_FACE[s.difficulty]
+      s.FRAMECOUNTS.POP = s.FRAMECOUNTS.POP or FC_POP[s.difficulty]
+      s.FRAMECOUNTS.MATCH = s.FRAMECOUNTS.FACE + s.FRAMECOUNTS.FLASH
+
       -- mode 2: increase speed based on how many panels were cleared
       s.speedIncreaseMode = 2
       if not speed then
@@ -170,14 +180,6 @@ Stack =
 
     s.n_active_panels = 0
     s.n_prev_active_panels = 0
-
-    -- These change depending on the difficulty and speed levels:
-    s.FRAMECOUNTS = {}
-    s.FRAMECOUNTS.HOVER = s.FRAMECOUNTS.HOVER or FC_HOVER[s.difficulty]
-    s.FRAMECOUNTS.FLASH = s.FRAMECOUNTS.FLASH or FC_FLASH[s.difficulty]
-    s.FRAMECOUNTS.FACE = s.FRAMECOUNTS.FACE or FC_FACE[s.difficulty]
-    s.FRAMECOUNTS.POP = s.FRAMECOUNTS.POP or FC_POP[s.difficulty]
-    s.FRAMECOUNTS.MATCH = s.FRAMECOUNTS.FACE + s.FRAMECOUNTS.FLASH
 
     s.rise_timer = speed_to_rise_time[s.speed]
 
@@ -276,6 +278,7 @@ function Stack.setLevel(self, level)
   self.FRAMECOUNTS.FLASH = level_to_flash[level]
   self.FRAMECOUNTS.FACE = level_to_face[level]
   self.FRAMECOUNTS.POP = level_to_pop[level]
+  self.FRAMECOUNTS.MATCH = self.FRAMECOUNTS.FACE + self.FRAMECOUNTS.FLASH
   self.combo_constant = level_to_combo_constant[level]
   self.combo_coefficient = level_to_combo_coefficient[level]
   self.chain_constant = level_to_chain_constant[level]
