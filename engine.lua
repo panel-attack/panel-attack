@@ -622,7 +622,11 @@ function Stack:assertEquality(other)
   assertEqual(other.input_buffer, self.input_buffer, "input_buffer")
   assertEqual(other.garbage_q, self.garbage_q, "garbage_q")
   assertEqual(other.garbageSizeDropColumnMaps, self.garbageSizeDropColumnMaps, "garbageSizeDropColumnMaps")
-  assertEqual(other.panels, self.panels, "panels")
+  -- split up for better output readability
+  assertEqual(#other.panels, #self.panels, "panels rowcount")
+  for i = 0, #self.panels do
+    assertEqual(other.panels[i], self.panels[i], "row " .. i .. " panels")
+  end
   assertEqual(other.pop_q, self.pop_q, "pop_q")
   assertEqual(other.puzzle, self.puzzle, "puzzle")
   assertEqual(other.taunt_queue, self.taunt_queue, "taunt_queue")
