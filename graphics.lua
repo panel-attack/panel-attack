@@ -982,7 +982,6 @@ function Stack.render_countdown(self)
     if self.countdown_CLOCK <= 8 then
       local ready_y = initial_ready_y + (self.CLOCK - 1) * ready_y_drop_speed
       draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
-
     elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
         draw(themes[config.theme].images.IMG_ready, ready_x, initial_ready_y + 8 * 6)
