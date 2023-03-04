@@ -82,6 +82,28 @@ function Telegraph.saveClone(toSave)
   clone_pool[#clone_pool + 1] = toSave
 end
 
+function Telegraph:debugCopy()
+  local copy = {}
+  copy.garbage_queue = deepcpy(self.garbage_queue)
+  copy.stoppers = deepcpy(self.stoppers)
+  copy.attacks = deepcpy(self.attacks)
+  copy.pos_x = self.pos_x
+  copy.pos_y = self.pos_y
+  copy.senderCurrentlyChaining = self.senderCurrentlyChaining
+
+  return copy
+end
+
+function Telegraph:equals(other)
+  assertEqual(other.garbage_queue, self.garbage_queue, "telegraph.garbage_queue")
+  assertEqual(other.stoppers, self.stoppers, "telegraph.stoppers")
+  assertEqual(other.attacks, self.attacks, "telegraph.attacks")
+  assertEqual(other.pos_x, self.pos_x, "telegraph.pos_x")
+  assertEqual(other.pos_y, self.pos_y, "telegraph.pos_y")
+  assertEqual(other.senderCurrentlyChaining, self.senderCurrentlyChaining, "telegraph.senderCurrentlyChaining")
+
+end
+
 function Telegraph.rollbackCopy(source, other)
   if other == nil then
     if #clone_pool == 0 then

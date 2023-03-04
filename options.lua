@@ -893,6 +893,13 @@ local function debug_menu(button_idx)
     debugMenu:set_button_setting(3, config.debugShowServers and loc("op_on") or loc("op_off"))
   end
 
+  local function updateRollback(noToggle)
+    if not noToggle then
+      config.rollbackMode = not config.rollbackMode
+    end
+    debugMenu:set_button_setting(4, config.rollbackMode and loc("op_on") or loc("op_off"))
+  end
+
   local function nextMenu()
     debugMenu:selectNextIndex()
   end
@@ -909,10 +916,12 @@ local function debug_menu(button_idx)
   debugMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
   debugMenu:add_button("VS Frames Behind", nextMenu, goEscape, decreaseVsFramesBehind, increaseVsFramesBehind)
   debugMenu:add_button("Show Debug Servers", update_debugServers, goEscape, update_debugServers, update_debugServers)
+  debugMenu:add_button("Rollback Mode", updateRollback, goEscape, updateRollback, updateRollback)
   debugMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_debug(true)
   updateVsFramesBehind()
   update_debugServers(true)
+  updateRollback(true)
 
   if button_idx then
     debugMenu:set_active_idx(button_idx)

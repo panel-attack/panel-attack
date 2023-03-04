@@ -163,6 +163,8 @@ function Match:debugCheckDivergence()
   self.savedStackP2 = nil
 end
 
+local rollbackModePreRollbackCopy
+
 function Match:run()
   local P1 = self.P1
   local P2 = self.P2
@@ -174,11 +176,29 @@ function Match:run()
   local startTime = love.timer.getTime()
 
   -- We need to save CLOCK 0 as a base case
-  if P1.CLOCK == 0 then  
+  if P1.CLOCK == 0 then
     P1:saveForRollback()
   end
-  if P2 and P2.CLOCK == 0 then  
+  if P2 and P2.CLOCK == 0 then
     P2:saveForRollback()
+  end
+
+  if config.rollbackMode then
+    if P1.CLOCK > 0 then
+      local clock = P1.CLOCK
+      rollbackModePreRollbackCopy = P1:debugCopy()
+      -- MAX_LAG would be nice but with the current performance of rollback, the game is just gonna die
+      -- i'm already getting broken replays with just a diff of 5 frames though
+      --P1:rollbackToFrame(math.max(0, P1.CLOCK - MAX_LAG + 1))
+      P1:rollbackToFrame(math.max(0, P1.CLOCK - 5))
+      while P1.CLOCK < clock do
+        P1:saveForRollback()
+        P1:run()
+      end
+      if not P1:equals(rollbackModePreRollbackCopy) then
+        local phi = 5
+      end
+    end
   end
 
   if self.P1CPU then
