@@ -517,7 +517,7 @@ function Stack:debugCopy()
   return copy
 end
 
-function Stack:equals(other)
+function Stack:assertEquality(other)
   assert(self.CLOCK == other.CLOCK, "no point comparing two stack at different clock times")
 
   assertEqual(other.character, self.character, "character")
