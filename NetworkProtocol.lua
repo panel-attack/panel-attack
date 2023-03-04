@@ -33,7 +33,8 @@ for _, value in pairs(NetworkProtocol.serverMessageTypes) do
   NetworkProtocol.serverPrefixToMessageType[value.prefix] = value
 end
 
--- Creates a UTF8 message string with the type at the beginning and the end marker at the end
+-- Returns if the message type prefix is one of the ones that happens all the time (ping or player input) 
+-- thus may be too verbose to print all the time in debug
 function NetworkProtocol.isMessageTypeVerbose(type)
   if type == NetworkProtocol.serverMessageTypes.ping.prefix or 
     type == NetworkProtocol.serverMessageTypes.opponentInput.prefix or 

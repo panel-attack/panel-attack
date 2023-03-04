@@ -104,8 +104,8 @@ function Connection.send(self, stuff)
     logger.debug("Connection " .. self.index .. " Sending JSON: " .. stuff)
   else
     if type(stuff) == "string" then
-      local type = stuff[1]
-      if NetworkProtocol.isMessageTypeVerbose(type) == false then
+      local type = stuff:sub(1, 1)
+      if type ~= nil and NetworkProtocol.isMessageTypeVerbose(type) == false then
         logger.debug("Connection " .. self.index .. " sending " .. stuff)
       end
     end
