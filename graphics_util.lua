@@ -57,7 +57,7 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
 end
 
 function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
-  local supportedImageFormats = {".png", ".jpg"}
+  local supportedImageFormats = {".png", ".jpg", ".jpeg"}
   local supportedScales = {3, 2, 1}
   for _, extension in ipairs(supportedImageFormats) do
     for _, scale in ipairs(supportedScales) do
