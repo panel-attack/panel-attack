@@ -1,3 +1,5 @@
+SERVER_MODE = true -- global to know the server is running the process
+
 local socket = require("socket")
 local logger = require("logger")
 require("class")
@@ -5,6 +7,7 @@ json = require("dkjson")
 require("stridx")
 require("gen_panels")
 require("csprng")
+local NetworkProtocol = require("NetworkProtocol")
 require("server.server_globals")
 require("server.server_file_io")
 require("server.Connection")
@@ -22,7 +25,6 @@ local lobby_changed = false
 local time = os.time
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
-SERVER_MODE = true -- global to know the server is running the process
 local connectionNumberIndex = 1 -- GLOBAL counter of the next available connection index
 local roomNumberIndex = 1 -- the next available room number
 local rooms = {}  
@@ -123,7 +125,7 @@ end
 
 -- a and be are connection objects
 function Server:create_room(a, b)
-  lobby_changed = true
+  self:setLobbyChanged()
   self:clear_proposals(a.name)
   self:clear_proposals(b.name)
   local new_room = Room(a, b, roomNumberIndex, leaderboard)
@@ -157,7 +159,7 @@ end
 
 function Server:start_match(a, b)
   if (a.player_number ~= 1) then
-    logger.debug("Match starting, players a and b need to be swapped.")
+    logger.debug("players a and b need to be swapped.")
     a, b = b, a
     if (a.player_number == 1) then
       logger.debug("Success, player a now has player_number 1.")
@@ -171,8 +173,8 @@ function Server:start_match(a, b)
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}
+    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number, inputMethod = a.inputMethod},
+    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number, inputMethod = b.inputMethod}
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
@@ -199,7 +201,7 @@ function Server:start_match(a, b)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
-  lobby_changed = true
+  self:setLobbyChanged()
   a:setup_game()
   b:setup_game()
   if not a.room then
@@ -276,11 +278,13 @@ end
 
 function Server:addSpectator(room, connection)
   room:add_spectator(connection)
-  lobby_changed = true
+  self:setLobbyChanged()
 end
 
 function Server:removeSpectator(room, connection)
-  lobby_changed = room:remove_spectator(connection)
+  if room:remove_spectator(connection) then
+    self:setLobbyChanged()
+  end
 end
 
 
@@ -573,32 +577,10 @@ function Server:broadcast_lobby()
   end
 end
 
---[[function process_game_over_message(sender, message)
-  sender.room.game_outcome_reports[sender.player_number] = {i_won=message.i_won, tie=message.tie}
-  print("processing game_over message. Sender: "..sender.name)
-  local reports = sender.room.game_outcome_reports
-  if not reports[sender.opponent.player_number] then
-    sender.room.game_outcome_reports["official outcome"] = "pending other player's report"
-  elseif reports[1].tie and reports[2].tie then
-    sender.room.game_outcome_reports["official outcome"] = "tie"
-  elseif reports[1].i_won ~= not reports[2].i_won or reports[1].tie ~= reports[2].tie then
-    sender.room.game_outcome_reports["official outcome"] = "clients disagree"
-  elseif reports[1].i_won then
-    sender.room.game_outcome_reports["official outcome"] = 1
-  elseif reports[2].i_won then
-    sender.room.game_outcome_reports["official outcome"] = 2
-  else
-    print("Error: nobody won or tied?")
-  end
-  print("process_game_over_message outcome for "..sender.room.name..": "..sender.room.game_outcome_reports["official outcome"])
-end
---]]
-
 local server_socket = nil
 
 logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
-server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
---local server_socket = socket.bind("*", 59569) --for beta server
+server_socket = socket.bind("*", SERVER_PORT or 49569)
 server_socket:settimeout(0)
 if TCP_NODELAY_ENABLED then
   server_socket:setoption("tcp-nodelay", true)
@@ -748,7 +730,7 @@ function Server:update()
         logger.debug("Closing connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
-        v:send("ELOL") -- Request a ping to make sure the connection is still active
+        v:send(NetworkProtocol.serverMessageTypes.ping.prefix) -- Request a ping to make sure the connection is still active
       end
     end
     

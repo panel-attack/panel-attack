@@ -1,6 +1,9 @@
 require("analytics")
+local TouchDataEncoding = require("engine.TouchDataEncoding")
+local TouchInputController = require("engine.TouchInputController")
 local logger = require("logger")
-local tableUtil = require("table_util")
+local utf8 = require("utf8")
+require("table_util")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -13,6 +16,7 @@ local max = math.max
 local garbage_bounce_time = #garbage_bounce_table
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
+local COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 
 -- Represents the full panel stack for one player
 Stack =
@@ -27,6 +31,7 @@ Stack =
     -- level or difficulty should be set
     assert(arguments.level ~= nil or arguments.difficulty ~= nil)
     local level = arguments.level
+    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local difficulty = arguments.difficulty
     local speed = arguments.speed
     local player_number = arguments.player_number or which
@@ -37,7 +42,7 @@ Stack =
     s.character = character
     s.max_health = 1
     s.panels_dir = panels_dir
-    s.portraitFade = 0
+    s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
     s.is_local = is_local
 
     s.drawsAnalytics = true
@@ -105,8 +110,11 @@ Stack =
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
     s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
-
-    s:moveForPlayerNumber(which)
+    
+    s.inputMethod = inputMethod
+    if s.inputMethod == "touch" then
+      s.touchInputController = TouchInputController(s)
+    end
 
     s.panel_buffer = ""
     s.gpanel_buffer = ""
@@ -121,10 +129,11 @@ Stack =
         s.panels[i][j] = Panel()
       end
     end
+    s:moveForPlayerNumber(which)
 
     s.CLOCK = 0
     s.game_stopwatch = 0
-    s.game_stopwatch_running = false
+    s.game_stopwatch_running = true -- set to false if countdown starts
     s.do_countdown = true
     s.max_runs_per_frame = 3
 
@@ -189,6 +198,8 @@ Stack =
     s.cur_dir = nil -- the direction pressed
     s.cur_row = 7 -- the row the cursor's on
     s.cur_col = 3 -- the column the left half of the cursor's on
+    s.queuedSwapColumn = 0 -- the left column of the two columns to swap or 0 if no swap queued
+    s.queuedSwapRow = 0 -- the row of the queued swap or 0 if no swap queued
     s.top_cur_row = s.height + (s.match.mode == "puzzle" and 0 or -1)
 
     s.poppedPanelIndex = s.poppedPanelIndex or 1
@@ -251,7 +262,32 @@ Stack =
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+
+    s:createCursors()
   end)
+
+function Stack:createCursors()
+  local cursorImage = themes[config.theme].images.IMG_cursor[1]
+  local imageWidth = cursorImage:getWidth()
+  local imageHeight = cursorImage:getHeight()
+  self.cursorQuads = {}
+  if self.inputMethod == "touch" then
+    -- For touch we will show just one panels worth of cursor. 
+    -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
+    -- The cursor image has a margin that extends past the panel and two panels in the middle
+    -- We want to render the margin and just the outer half of the panel
+    local cursorWidth = 40
+    local panelWidth = 16
+    local margin = (cursorWidth - panelWidth * 2) / 2
+    local halfCursorWidth = margin + panelWidth / 2
+    local percentDesired = halfCursorWidth / 40
+    local quadWidth = math.floor(imageWidth * percentDesired)
+    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+  else
+    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, imageWidth, imageHeight, imageWidth, imageHeight)
+  end
+end
 
 function Stack.setLevel(self, level)
   self.level = level
@@ -298,6 +334,9 @@ function Stack:deinit()
   GraphicsUtil:releaseQuad(self.multi_prestopQuad)
   GraphicsUtil:releaseQuad(self.multi_stopQuad)
   GraphicsUtil:releaseQuad(self.multi_shakeQuad)
+  for _, quad in ipairs(self.cursorQuads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
 end
 
 -- Positions the stack draw position for the given player
@@ -371,7 +410,8 @@ function Stack.rollbackCopy(source, other)
       source.clonePool[#source.clonePool] = nil
     end
   end
-  other.do_swap = source.do_swap
+  other.queuedSwapColumn = source.queuedSwapColumn
+  other.queuedSwapRow = source.queuedSwapRow
   other.speed = source.speed
   other.health = source.health
 
@@ -416,10 +456,6 @@ function Stack.rollbackCopy(source, other)
   end
 
   other.countdown_CLOCK = source.countdown_CLOCK
-  other.starting_cur_row = source.starting_cur_row
-  other.starting_cur_col = source.starting_cur_col
-  other.countdown_cursor_state = source.countdown_cursor_state
-  other.countdown_cur_speed = source.countdown_cur_speed
   other.countdown_timer = source.countdown_timer
   other.CLOCK = source.CLOCK
   other.game_stopwatch = source.game_stopwatch
@@ -427,7 +463,6 @@ function Stack.rollbackCopy(source, other)
   other.prev_rise_lock = source.prev_rise_lock
   other.rise_lock = source.rise_lock
   other.top_cur_row = source.top_cur_row
-  other.cursor_lock = source.cursor_lock
   other.displacement = source.displacement
   other.nextSpeedIncreaseClock = source.nextSpeedIncreaseClock
   other.panels_to_speedup = source.panels_to_speedup
@@ -450,7 +485,6 @@ function Stack.rollbackCopy(source, other)
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
-  other.ready_y = source.ready_y  
   other.panel_buffer = source.panel_buffer
   other.gpanel_buffer = source.gpanel_buffer
   other.panelGenCount = source.panelGenCount
@@ -463,7 +497,7 @@ function Stack.rollbackCopy(source, other)
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
   other.currentChainStartFrame = source.currentChainStartFrame
-
+    
   return other
 end
 
@@ -965,6 +999,18 @@ function Stack.has_falling_garbage(self)
   return false
 end
 
+function Stack:swapQueued()
+  if self.queuedSwapColumn ~= 0 and self.queuedSwapRow ~= 0 then
+    return true
+  end
+  return false
+end
+
+function Stack:setQueuedSwapPosition(column, row)
+  self.queuedSwapColumn = column
+  self.queuedSwapRow = row
+end
+
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
   if self.do_first_row then
@@ -988,32 +1034,67 @@ end
 function Stack.controls(self)
   local new_dir = nil
   local sdata = self.input_state
-  local raise, swap, up, down, left, right = unpack(base64decode[sdata])
-  if (raise) and (not self.prevent_manual_raise) then
-    self.manual_raise = true
-    self.manual_raise_yet = false
-  end
-
-  self.swap_1 = swap
-  self.swap_2 = swap
-
-  if up then
-    new_dir = "up"
-  elseif down then
-    new_dir = "down"
-  elseif left then
-    new_dir = "left"
-  elseif right then
-    new_dir = "right"
-  end
-
-  if new_dir == self.cur_dir then
-    if self.cur_timer ~= self.cur_wait_time then
-      self.cur_timer = self.cur_timer + 1
+  local raise
+  if self.inputMethod == "touch" then
+    local cursorColumn, cursorRow
+    raise, cursorRow, cursorColumn = TouchDataEncoding.latinStringToTouchData(sdata, self.width)
+    local canSetCursor = true
+    if self.do_countdown then      
+      if self.animatingCursorDuringCountdown then
+        canSetCursor = false
+      end
     end
-  else
-    self.cur_dir = new_dir
-    self.cur_timer = 0
+
+    if canSetCursor then
+      if self.cur_col ~= cursorColumn or self.cur_row ~= cursorRow or (cursorColumn == 0 and cursorRow == 0) then
+        -- We moved the cursor from a previous column, try to swap
+        if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
+          local swapColumn = math.min(self.cur_col, cursorColumn)
+          if self:canSwap(cursorRow, swapColumn) then
+            self:setQueuedSwapPosition(swapColumn, cursorRow)
+          end
+        end
+        self.cur_col = cursorColumn
+        self.cur_row = cursorRow
+      end
+    end
+
+    -- Make sure we don't set the cursor higher than the top allowed row
+    if self.cur_row > 0 and self.cur_row > self.top_cur_row then
+      self.cur_row = self.top_cur_row
+    end
+  else --input method is controller
+    local swap, up, down, left, right
+    raise, swap, up, down, left, right = unpack(base64decode[sdata])
+
+    self.swap_1 = swap
+    self.swap_2 = swap
+
+    if up then
+      new_dir = "up"
+    elseif down then
+      new_dir = "down"
+    elseif left then
+      new_dir = "left"
+    elseif right then
+      new_dir = "right"
+    end
+
+    if new_dir == self.cur_dir then
+      if self.cur_timer ~= self.cur_wait_time then
+        self.cur_timer = self.cur_timer + 1
+      end
+    else
+      self.cur_dir = new_dir
+      self.cur_timer = 0
+    end
+  end
+
+  if raise then
+    if not self.prevent_manual_raise then
+      self.manual_raise = true
+      self.manual_raise_yet = false
+    end
   end
 end
 
@@ -1105,7 +1186,7 @@ function Stack.setupInput(self)
 end
 
 function Stack.receiveConfirmedInput(self, input)
-  if string.len(input) == 1 then
+  if utf8.len(input) == 1 then
     self.confirmedInput[#self.confirmedInput+1] = input
     self.input_buffer[#self.input_buffer+1] = input
   else
@@ -1261,66 +1342,8 @@ function Stack.simulate(self)
     local panels = self.panels
     local panel = nil
     local swapped_this_frame = nil
-    if self.do_countdown then
-      self.game_stopwatch_running = false
-      self.rise_lock = true
-      if not self.countdown_cursor_state then
-        self.countdown_CLOCK = self.CLOCK
-        self.starting_cur_row = self.cur_row
-        self.starting_cur_col = self.cur_col
-        self.cur_row = self.height
-        self.cur_col = self.width - 1
-        self.countdown_cursor_state = "ready_falling"
-        self.countdown_cur_speed = 4 --one move every this many frames
-        self.cursor_lock = true
-      end
-      if self.countdown_CLOCK == 8 then
-        self.countdown_cursor_state = "moving_down"
-        self.countdown_timer = 180 --3 seconds at 60 fps
-      elseif self.countdown_cursor_state == "moving_down" then
-        --move down
-        if self.cur_row == self.starting_cur_row then
-          self.countdown_cursor_state = "moving_left"
-        elseif self.CLOCK % self.countdown_cur_speed == 0 then
-          self.cur_row = self.cur_row - 1
-        end
-      elseif self.countdown_cursor_state == "moving_left" then
-        --move left
-        if self.cur_col == self.starting_cur_col then
-          self.countdown_cursor_state = "ready"
-          self.cursor_lock = nil
-        elseif self.CLOCK % self.countdown_cur_speed == 0 then
-          self.cur_col = self.cur_col - 1
-        end
-      end
-      if self.countdown_timer then
-        if self.countdown_timer == 0 then
-          --we are done counting down
-          self.do_countdown = nil
-          self.countdown_timer = nil
-          self.starting_cur_row = nil
-          self.starting_cur_col = nil
-          self.countdown_CLOCK = nil
-          self.game_stopwatch_running = true
-          if self.which == 1 and self:shouldChangeSoundEffects() then
-            SFX_Go_Play = 1
-          end
-        elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
-          --play beep for timer dropping to next second in 3-2-1 countdown
-          if self.which == 1 and self:shouldChangeSoundEffects() then
-            SFX_Countdown_Play = 1
-          end
-        end
-        if self.countdown_timer then
-          self.countdown_timer = self.countdown_timer - 1
-        end
-      end
-      if self.countdown_CLOCK then
-        self.countdown_CLOCK = self.countdown_CLOCK + 1
-      end
-    else 
-      self.game_stopwatch_running = true
-    end
+
+    self:runCountDownIfNeeded()
 
     if self.pre_stop_time ~= 0 then
       self.pre_stop_time = self.pre_stop_time - 1
@@ -1337,7 +1360,7 @@ function Stack.simulate(self)
       self:new_row()
     end
     self.prev_rise_lock = self.rise_lock
-    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self.do_swap
+    self.rise_lock = self.n_active_panels ~= 0 or self.n_prev_active_panels ~= 0 or self.shake_time ~= 0 or self.do_countdown or self:swapQueued()
     if self.prev_rise_lock and not self.rise_lock then
       self.prevent_manual_raise = false
     end
@@ -1398,10 +1421,10 @@ function Stack.simulate(self)
     end
 
     -- Begin the swap we input last frame.
-    if self.do_swap then
-      self:swap()
+    if self:swapQueued() then
+      self:swap(self.queuedSwapRow, self.queuedSwapColumn)
       swapped_this_frame = true
-      self.do_swap = nil
+      self:setQueuedSwapPosition(0, 0)
     end
 
     -- Look for matches.
@@ -1704,21 +1727,24 @@ function Stack.simulate(self)
 
     -- CURSOR MOVEMENT
     local playMoveSounds = true -- set this to false to disable move sounds for debugging
-    if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and not self.cursor_lock then
-      local prev_row = self.cur_row
-      local prev_col = self.cur_col
-      self.cur_row = bound(1, self.cur_row + d_row[self.cur_dir], self.top_cur_row)
-      self.cur_col = bound(1, self.cur_col + d_col[self.cur_dir], self.width - 1)
-      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-        if self:shouldChangeSoundEffects() then
-          SFX_Cur_Move_Play = 1
-        end
-        if self.cur_timer ~= self.cur_wait_time then
-          self.analytic:register_move()
-        end
-      end
+    if self.inputMethod == "touch" then
+        --with touch, cursor movement happen at stack:control time
     else
-      self.cur_row = bound(1, self.cur_row, self.top_cur_row)
+      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) then
+        local prev_row = self.cur_row
+        local prev_col = self.cur_col
+        self:moveCursorInDirection(self.cur_dir)
+        if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+          if self:shouldChangeSoundEffects() then
+            SFX_Cur_Move_Play = 1
+          end
+          if self.cur_timer ~= self.cur_wait_time then
+            self.analytic:register_move()
+          end
+        end
+      else
+        self.cur_row = bound(1, self.cur_row, self.top_cur_row)
+      end
     end
 
     if self.cur_timer ~= self.cur_wait_time then
@@ -1737,16 +1763,18 @@ function Stack.simulate(self)
       end
     end
 
-    -- SWAPPING
-    if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-      local do_swap = self:canSwap(self.cur_row, self.cur_col)
-
-      if do_swap then
-        self.do_swap = true
-        self.analytic:register_swap()
+    -- Queue Swapping
+    -- Note: Swapping is queued in Stack.controls for touch mode
+    if self.inputMethod == "controller" then
+      if (self.swap_1 or self.swap_2) and not swapped_this_frame then
+        local canSwap = self:canSwap(self.cur_row, self.cur_col)
+        if canSwap then
+          self:setQueuedSwapPosition(self.cur_col, self.cur_row)
+          self.analytic:register_swap()
+        end
+        self.swap_1 = false
+        self.swap_2 = false
       end
-      self.swap_1 = false
-      self.swap_2 = false
     end
 
     -- MANUAL STACK RAISING
@@ -2083,6 +2111,71 @@ function Stack.simulate(self)
   self:update_cards()
 end
 
+function Stack:runCountDownIfNeeded()
+  if self.do_countdown then
+    self.game_stopwatch_running = false
+    self.rise_lock = true
+    if not self.countdown_CLOCK then
+      self.countdown_CLOCK = self.CLOCK
+      self.animatingCursorDuringCountdown = true
+      self.cur_row = self.height
+      self.cur_col = self.width - 1
+      if self.inputMethod == "touch" then
+        self.cur_col = self.width
+      end
+    end
+    local COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
+    if self.countdown_CLOCK == 8 then
+      self.countdown_timer = COUNTDOWN_LENGTH
+    end
+    if self.countdown_timer then
+      local countDownFrame = COUNTDOWN_LENGTH - self.countdown_timer
+      if countDownFrame > 0 and countDownFrame % COUNTDOWN_CURSOR_SPEED == 0 then
+        local moveIndex = math.floor(countDownFrame / COUNTDOWN_CURSOR_SPEED)
+        if moveIndex <= 4 then
+          self:moveCursorInDirection("down")
+        elseif moveIndex <= 6 then
+          self:moveCursorInDirection("left")
+        elseif moveIndex == 10 then
+          self.animatingCursorDuringCountdown = false
+          if self.inputMethod == "touch" then
+            self.cur_row = 0
+            self.cur_col = 0
+          end
+        end
+      end
+      if self.countdown_timer == 0 then
+        --we are done counting down
+        self.do_countdown = false
+        self.countdown_timer = nil
+        self.countdown_CLOCK = nil
+        self.animatingCursorDuringCountdown = nil
+        self.game_stopwatch_running = true
+        if self.which == 1 and self:shouldChangeSoundEffects() then
+          SFX_Go_Play = 1
+        end
+      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
+        --play beep for timer dropping to next second in 3-2-1 countdown
+        if self.which == 1 and self:shouldChangeSoundEffects() then
+          SFX_Countdown_Play = 1
+        end
+      end
+      if self.countdown_timer then
+        self.countdown_timer = self.countdown_timer - 1
+      end
+    end
+    if self.countdown_CLOCK then
+      self.countdown_CLOCK = self.countdown_CLOCK + 1
+    end
+  end
+end
+
+function Stack:moveCursorInDirection(directionString)
+  assert(directionString ~= nil and type(directionString) == "string")
+  self.cur_row = bound(1, self.cur_row + d_row[directionString], self.top_cur_row)
+  self.cur_col = bound(1, self.cur_col + d_col[directionString], self.width - 1)
+end
+
 -- Called on a stack by the attacker with the time to start processing the garbage drop
 function Stack:receiveGarbage(frameToReceive, garbageList)
 
@@ -2265,10 +2358,9 @@ function Stack.pick_win_sfx(self)
   end
 end
 
+-- returns true if the panel in row/column can be swapped with the panel to its right (column + 1)
 function Stack.canSwap(self, row, column)
   local panels = self.panels
-  local width = self.width
-  local height = self.height
   -- in order for a swap to occur, one of the two panels in
   -- the cursor must not be a non-panel.
   local do_swap =
@@ -2303,10 +2395,8 @@ function Stack.canSwap(self, row, column)
 end
 
 -- Swaps panels at the current cursor location
-function Stack.swap(self)
+function Stack:swap(row, col)
   local panels = self.panels
-  local row = self.cur_row
-  local col = self.cur_col
   self:processPuzzleSwap()
   panels[row][col], panels[row][col + 1] = panels[row][col + 1], panels[row][col]
   local tmp_chaining = panels[row][col].chaining
@@ -2329,7 +2419,7 @@ function Stack.swap(self)
   -- If you're swapping a panel into a position
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
-  if self.cur_row ~= 1 then
+  if row ~= 1 then
     if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == "falling") then
       panels[row][col].dont_swap = true
     end
@@ -2341,7 +2431,7 @@ function Stack.swap(self)
   -- If you're swapping a blank space under a panel,
   -- then you can't swap it back since the panel should
   -- start falling.
-  if self.cur_row ~= self.height then
+  if row ~= self.height then
     if panels[row][col].color == 0 and panels[row + 1][col].color ~= 0 then
       panels[row][col].dont_swap = true
     end
@@ -2815,7 +2905,12 @@ end
 function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
-  self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+  if self.cur_row ~= 0 then
+    self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+  end
+  if self.inputMethod == "touch" then
+    self.touchInputController:stackIsCreatingNewRow()
+  end
   -- move panels up
   for row = #panels + 1, 1, -1 do
     panels[row] = panels[row - 1]

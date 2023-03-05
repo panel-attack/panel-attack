@@ -485,6 +485,7 @@ function select_screen.initializeFromPlayerConfig(self, playerNumber)
   self.players[playerNumber].character = config.character
   self.players[playerNumber].selectedCharacter = config.character
   self.players[playerNumber].level = config.level
+  self.players[playerNumber].inputMethod = config.inputMethod or "controller"
   self.players[playerNumber].panels_dir = config.panels
   self.players[playerNumber].ready = false
   self.players[playerNumber].ranked = config.ranked
@@ -497,6 +498,7 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].character = characters[menuState.character] and menuState.character or nil
   self.players[playerNumber].selectedCharacter = menuState.character_is_random and menuState.character_is_random or menuState.character
   self.players[playerNumber].level = menuState.level
+  self.players[playerNumber].inputMethod = menuState.inputMethod
   self.players[playerNumber].panels_dir = menuState.panels_dir
   self.players[playerNumber].ready = false
   self.players[playerNumber].wants_ready = menuState.wants_ready or false
@@ -544,6 +546,7 @@ function select_screen.updateMyConfig(self)
   config.character = myPlayer.selectedCharacter
   config.stage = myPlayer.selectedStage
   config.level = myPlayer.level
+  config.inputMethod = myPlayer.inputMethod
   config.ranked = myPlayer.ranked
   config.panels = myPlayer.panels_dir
 end
@@ -562,6 +565,7 @@ function select_screen.sendMenuState(self)
   menuState.wants_ready = self.players[self.my_player_number].wants_ready
   menuState.ready = self.players[self.my_player_number].ready
   menuState.level = self.players[self.my_player_number].level
+  menuState.inputMethod = self.players[self.my_player_number].inputMethod
 
   json_send({menu_state = menuState})
 end
@@ -792,10 +796,10 @@ function select_screen.startNetPlayMatch(self, msg)
   if GAME.battleRoom.spectating then
     is_local = false
   end
-  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, character = msg.player_settings.character, player_number = msg.player_settings.player_number}
+  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
   GAME.match.P1 = P1
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
+  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
   GAME.match.P2 = P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
@@ -833,9 +837,10 @@ end
 -- returns transition to local vs screen
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match.P1 = P1
-  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
+  --note: local P2 not currently allowed to use "touch" input method
   GAME.match.P2 = P2
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
@@ -852,7 +857,7 @@ end
 -- returns transition to local_vs_yourself screen
 function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   if GAME.battleRoom.trainingModeSettings then
     self:initializeAttackEngine()
   end
