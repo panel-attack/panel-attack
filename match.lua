@@ -15,8 +15,7 @@ Match =
     self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
-    self.attackEngine = nil
-    self.current_music_is_casual = true 
+    self.current_music_is_casual = true
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
     self.current_music_is_casual = true
@@ -504,4 +503,19 @@ function Match.render(self)
     draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
   end
+end
+
+function Match:getInfo()
+  local info = {}
+  info.mode = self.mode
+  info.stage = current_stage
+  info.stacks = {}
+  if P1 then
+    info.stacks[1] = P1:getInfo()
+  end
+  if P2 then
+    info.stacks[2] = P2:getInfo()
+  end
+
+  return info
 end
