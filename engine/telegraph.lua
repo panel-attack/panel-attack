@@ -113,6 +113,7 @@ function Telegraph:push(garbage, attackOriginCol, attackOriginRow, frameEarned)
   assert(self.sender ~= nil and self.owner ~= nil, "telegraph needs owner and sender set")
   assert(frameEarned == self.sender.CLOCK, "expected sender clock to equal attack")
 
+  -- the attack only starts interacting with the telegraph on the next frame, not the same it was earned
   self:privatePush(garbage, attackOriginCol, attackOriginRow, frameEarned + 1)
 end
 
