@@ -2,7 +2,7 @@ local logger = require("logger")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
-local utf8 = require("utf8")
+local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 require("replay")
@@ -72,12 +72,17 @@ function fmainloop()
     require("PuzzleTests")
     require("ServerQueueTests")
     require("StackTests")
+    require("tests.JsonEncodingTests")
+    require("tests.NetworkProtocolTests")
     require("tests.ThemeTests")
+    require("tests.TouchDataEncodingTests")
+    require("tests.utf8AdditionsTests")
     require("table_util_tests")
     require("utilTests")
     -- Medium level tests (integration tests)
     require("tests.StackReplayTests")
     require("tests.StackRollbackReplayTests")
+    require("tests.StackTouchReplayTests")
     -- Performance Tests
     if PERFORMANCE_TESTS_ENABLED then
       require("tests/performanceTests")
@@ -357,6 +362,7 @@ function createNewReplay(match)
     modeReplay.difficulty = P1.difficulty
     modeReplay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
     modeReplay.in_buf = ""
+    modeReplay.inputMethod = P1.inputMethod
   elseif mode == "vs" then
     modeReplay.P = ""
     modeReplay.O = ""
@@ -364,6 +370,7 @@ function createNewReplay(match)
     modeReplay.Q = ""
     modeReplay.in_buf = ""
     modeReplay.P1_level = P1.level
+    modeReplay.P1_inputMethod = P1.inputMethod
     modeReplay.P1_name = GAME.battleRoom.playerNames[1]
     modeReplay.P1_char = P1.character
     modeReplay.P1_char = P1.character
@@ -371,6 +378,7 @@ function createNewReplay(match)
     modeReplay.do_countdown = true
     if P2 then
       modeReplay.P2_level = P2.level
+      modeReplay.P2_inputMethod = P2.inputMethod
       modeReplay.P2_name = GAME.battleRoom.playerNames[2]
       modeReplay.P2_char = P2.character
       modeReplay.P2_cur_wait_time = P2.cur_wait_time
@@ -379,7 +387,6 @@ function createNewReplay(match)
       modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[P2.player_number]
     end
   end
-
   return result
 end
 
@@ -566,7 +573,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   end
   commonGameSetup()
 
-  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character}
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod=config.inputMethod}
 
   GAME.match.P1 = P1
   P1:wait_for_random_character()
@@ -1745,7 +1752,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     end
 
     GAME.match = Match("puzzle")
-    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character}
+    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
     if not character then
@@ -2100,7 +2107,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
         end
 
         -- if conditions are met, leave the game over screen
-        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape())) or left_select_menu then
+        if t >= timemin and ((t >= timemax and timemax >= 0) or (menu_enter() or menu_escape() or love.mouse.isDown(1))) or left_select_menu then
           setMusicFadePercentage(1) -- reset the music back to normal config volume
           if not keepMusic then
             stop_the_music()

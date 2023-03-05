@@ -154,6 +154,10 @@ matchedState.update = function(panel, panels)
     -- but the stateChanged field gets cleared too early
     -- mark the panel as changed again so everyone else can know the panel got matched this frame!
     panel.stateChanged = true
+  elseif panel.isGarbage and panel.timer == panel.pop_time then
+    -- technically this is criminal and garbage panels should enter popping state too
+    -- there is also little reason why garbage uses pop_time and normal panels timer
+    panel:onPop()
   end
 end
 

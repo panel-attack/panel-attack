@@ -1,6 +1,6 @@
 
 local match = Match("puzzle") -- to stop rising
-local stack = Stack{which=1, match=match, is_local=false, level=5}
+local stack = Stack{which=1, match=match, is_local=false, level=5, inputMethod="controller"}
 match.P1 = stack
 stack.do_countdown = false
 stack:wait_for_random_character()

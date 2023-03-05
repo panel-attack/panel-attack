@@ -47,17 +47,17 @@ function logger.error(msg)
 end
 
 function direct_log(prefix, msg)
-    local socket_millis = math.floor(socket.gettime()%1 * 1000)
+  local socket_millis = math.floor(socket.gettime()%1 * 1000)
 
-    -- Lua date format strings reference: https://www.lua.org/pil/22.1.html
-    -- %x - Date
-    -- %X - Time
-    local message = string.format("%s.%03d %s:%s", os.date("%x %X"), socket_millis, prefix, msg)
-    print(message)
-    -- note the space in the string below is on purpose
-    if SERVER_MODE == nil and (prefix == "ERROR" or prefix == " WARN") then
-      love.filesystem.append("warnings.txt", message .. "\n")
-    end
+  -- Lua date format strings reference: https://www.lua.org/pil/22.1.html
+  -- %x - Date
+  -- %X - Time
+  local message = string.format("%s.%03d %s:%s", os.date("%x %X"), socket_millis, prefix, msg)
+  print(message)
+  -- note the space in the string below is on purpose
+  if SERVER_MODE == nil and (prefix == "ERROR" or prefix == " WARN") then
+    love.filesystem.append("warnings.txt", message .. "\n")
+  end
 end
 
 return logger;
