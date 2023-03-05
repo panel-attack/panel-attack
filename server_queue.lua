@@ -90,7 +90,7 @@ function ServerQueue.pop_next_with(self, ...)
   end
 end
 
--- pop all messages containing any specified keys...
+-- Pop all messages where any of the keys in their dictionary match the specified keys
 function ServerQueue.pop_all_with(self, ...)
   local ret = {}
 
