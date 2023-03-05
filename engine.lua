@@ -413,6 +413,288 @@ function Stack.divergenceString(stackToTest)
   return result
 end
 
+-- returns a copy solely for debugging that makes no compromises in content for memory or performance
+-- basically returns everything minus clonePool minus prevFrames
+function Stack:debugCopy()
+  local copy = {}
+
+  -- fields we're not going to copy
+  if false then
+    -- everything that is directly related to drawing and love objects
+    copy.canvas = self.canvas
+    copy.healthQuad = self.health_quad
+    copy.id = self.id
+    copy.level_quad = self.level_quad
+    copy.move_quads = self.move_quads
+    copy.mirror_x = self.mirror_x
+    copy.multi_prestopQuad = self.multi_prestopQuad
+    copy.multi_shakeQuad = self.multi_shakeQuad
+    copy.multi_stopQuad = self.multi_stopQuad
+    copy.multiplication = self.multiplication
+    copy.origin_x = self.origin_x
+    copy.pos_x = self.pos_x
+    copy.pos_y = self.pos_y
+    copy.score_quads = self.score_quads
+    copy.score_x = self.score_x
+    copy.score_y = self.score_y
+    copy.speed_quads = self.speed_quads
+    copy.time_quads = self.time_quads
+    copy.VAR_number = self.VAR_numbers
+
+    -- also ignore everything related to desync and rollback
+    copy.clonePool = deepcpy(self.clonePool)
+    copy.framesBehindArray = deepcpy(self.framesBehindArray)
+    copy.lastRollbackFrame = self.lastRollbackFrame
+    copy.rollbackCount = self.rollbackCount
+    copy.prev_states = deepcpy(self.prev_states)
+    copy.totalFramesBehind = self.totalFramesBehind
+
+    -- as well as everything that doesn't truly belong to the stack and would cause circular references
+    copy.match = self.match
+    copy.garbage_target = self.garbage_target
+  end
+
+  -- primitive fields (in alphabetical order so it's easier to see if something is missing)
+  copy.character = self.character
+  copy.chain_coefficient = self.chain_coefficient
+  copy.chain_constant = self.chain_constant
+  copy.chain_counter = self.chain_counter
+  copy.CLOCK = self.CLOCK
+  copy.combo_chain_play = self.combo_chain_play
+  copy.combo_coefficient = self.combo_coefficient
+  copy.combo_constant = self.combo_constant
+  copy.countdown_CLOCK = self.countdown_CLOCK
+  copy.countdown_cur_speed = self.countdown_cur_speed
+  copy.countdown_cursor_state = self.countdown_cursor_state
+  copy.countdown_timer = self.countdown_timer
+  copy.cur_col = self.cur_col
+  copy.cur_dir = self.cur_dir
+  copy.cur_row = self.cur_row
+  copy.cur_timer = self.cur_timer
+  copy.cur_wait_time = self.cur_wait_time
+  copy.currentChainStartFrame = self.currentChainStartFrame
+  copy.cursor_lock = self.cursor_lock
+  copy.danger = self.danger
+  copy.danger_music = self.danger_music
+  copy.danger_timer = self.danger_timer
+  copy.difficulty = self.difficulty
+  copy.displacement = self.displacement
+  copy.do_countdown = self.do_countdown
+  copy.do_first_row = self.do_first_row
+  copy.do_swap = self.do_swap
+  copy.drawsAnalytics = self.drawsAnalytics
+  copy.fade_music_clock = self.fade_music_clock
+  copy.FRAMECOUNT_FACE = self.FRAMECOUNT_FACE
+  copy.FRAMECOUNT_FLASH = self.FRAMECOUNT_FLASH
+  copy.FRAMECOUNT_GPHOVER = self.FRAMECOUNT_GPHOVER
+  copy.FRAMECOUNT_HOVER = self.FRAMECOUNT_HOVER
+  copy.FRAMECOUNT_MATCH = self.FRAMECOUNT_MATCH
+  copy.FRAMECOUNT_POP = self.FRAMECOUNT_POP
+  copy.game_over = self.game_over
+  copy.game_over_clock = self.game_over_clock
+  copy.game_stopwatch = self.game_stopwatch
+  copy.game_stopwatch_running = self.game_stopwatch_running
+  copy.garbageGenCount = self.garbageGenCount
+  copy.gpanel_buffer = self.gpanel_buffer
+  copy.has_risen = self.has_risen
+  copy.health = self.health
+  copy.height = self.height
+  copy.input_state = self.input_state
+  copy.is_local = self.is_local
+  copy.lastPopLevelPlayed = self.lastPopLevelPlayed
+  copy.lastPopIndexPlayed = self.lastPopIndexPlayed
+  copy.level = self.level
+  copy.manual_raise = self.manual_raise
+  copy.manual_raise_yet = self.manual_raise_yet
+  copy.max_health = self.max_health
+  copy.max_runs_per_frame = self.max_runs_per_frame
+  copy.metal_panels_queued = self.metal_panels_queued
+  copy.n_active_panels = self.n_active_panels
+  copy.n_chain_panels = self.n_chain_panels
+  copy.N_COLORS = self.N_COLORS
+  copy.n_prev_active_panels = self.n_prev_active_panels
+  copy.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock
+  copy.panel_buffer = self.panel_buffer
+  copy.panelGenCount = self.panelGenCount
+  copy.panels_cleared = self.panels_cleared
+  copy.panels_dir = self.panels_dir
+  copy.panels_in_top_row = self.panels_in_top_row
+  copy.panels_to_speedup = self.panels_to_speedup
+  copy.peak_shake_time = self.peak_shake_time
+  copy.play_to_end = self.play_to_end
+  copy.player_number = self.player_number
+  copy.poppedPanelIndex = self.poppedPanelIndex
+  copy.portraitFade = self.portraitFade
+  copy.pre_stop_time = self.pre_stop_time
+  copy.prev_rise_lock = self.prev_rise_lock
+  copy.prevent_manual_raise = self.prevent_manual_raise
+
+  copy.rise_lock = self.rise_lock
+  copy.rise_timer = self.rise_timer
+  copy.score = self.score
+  copy.sfx_land = self.sfx_land
+  copy.sfx_garbage_thud = self.sfx_garbage_thud
+  copy.shake_time = self.shake_time
+  copy.speed = self.speed
+  copy.speedIncreaseMode = self.speedIncreaseMode
+  copy.starting_cur_col = self.starting_cur_col
+  copy.starting_cur_row = self.starting_cur_row
+  copy.stop_time = self.stop_time
+  copy.swap_1 = self.swap_1
+  copy.swap_2 = self.swap_2
+  copy.taunt_down = self.taunt_down
+  copy.taunt_up = self.taunt_up
+  copy.top_cur_row = self.top_cur_row
+  copy.which = self.which
+  copy.width = self.width
+
+  -- deepcopy all table type children (again, alphabetical order)
+  copy.analytic = deepcpy(self.analytic)
+  copy.card_q = deepcpy(self.card_q)
+  copy.chains = deepcpy(self.chains)
+  copy.combos = deepcpy(self.combos)
+  copy.confirmedInput = deepcpy(self.confirmedInput)
+  copy.currentGarbageDropColumnIndexes = deepcpy(self.currentGarbageDropColumnIndexes)
+  copy.danger_col = deepcpy(self.danger_col)
+  copy.input_buffer = deepcpy(self.input_buffer)
+  copy.later_garbage = deepcpy(self.later_garbage)
+  copy.garbage_q = deepcpy(self.garbage_q)
+  copy.garbageSizeDropColumnMaps = deepcpy(self.garbageSizeDropColumnMaps)
+  copy.panels = deepcpy(self.panels)
+  copy.pop_q = deepcpy(self.pop_q)
+  copy.puzzle = deepcpy(self.puzzle)
+  copy.taunt_queue = deepcpy(self.taunt_queue)
+  if self.telegraph then
+    -- telegraph has a reference to Stack so we can't deepcpy
+    copy.telegraph = self.telegraph:debugCopy()
+  end
+  copy.warningsTriggered = deepcpy(self.warningsTriggered)
+
+  return copy
+end
+
+function Stack:assertEquality(other)
+  assert(self.CLOCK == other.CLOCK, "no point comparing two stack at different clock times")
+
+  assertEqual(other.character, self.character, "character")
+  assertEqual(other.chain_coefficient, self.chain_coefficient, "chain_coefficient")
+  assertEqual(other.chain_constant, self.chain_constant, "chain_constant")
+  assertEqual(other.chain_counter, self.chain_counter, "chain_counter")
+  assertEqual(other.combo_chain_play, self.combo_chain_play, "combo_chain_play")
+  assertEqual(other.combo_coefficient, self.combo_coefficient, "combo_coefficient")
+  assertEqual(other.combo_constant, self.combo_constant, "combo_constant")
+  assertEqual(other.countdown_CLOCK, self.countdown_CLOCK, "countdown_CLOCK")
+  assertEqual(other.countdown_cur_speed, self.countdown_cur_speed, "countdown_cur_speed")
+  assertEqual(other.countdown_cursor_state, self.countdown_cursor_state, "countdown_cursor_state")
+  assertEqual(other.countdown_timer, self.countdown_timer, "countdown_timer")
+  assertEqual(other.cur_col, self.cur_col, "cur_col")
+  assertEqual(other.cur_dir, self.cur_dir, "cur_dir")
+  assertEqual(other.cur_row, self.cur_row, "cur_row")
+  assertEqual(other.cur_timer, self.cur_timer, "cur_timer")
+  assertEqual(other.cur_wait_time, self.cur_wait_time, "cur_wait_time")
+  assertEqual(other.currentChainStartFrame, self.currentChainStartFrame, "currentChainStartFrame")
+  assertEqual(other.cursor_lock, self.cursor_lock, "cursor_lock")
+  assertEqual(other.danger, self.danger, "danger")
+  assertEqual(other.danger_music, self.danger_music, "danger_music")
+  assertEqual(other.danger_timer, self.danger_timer, "danger_timer")
+  assertEqual(other.difficulty, self.difficulty, "difficulty")
+  assertEqual(other.displacement, self.displacement, "displacement")
+  assertEqual(other.do_countdown, self.do_countdown, "do_countdown")
+  assertEqual(other.do_first_row, self.do_first_row, "do_first_row")
+  assertEqual(other.do_swap, self.do_swap, "do_swap")
+  assertEqual(other.drawsAnalytics, self.drawsAnalytics, "drawsAnalytics")
+  assertEqual(other.fade_music_clock, self.fade_music_clock, "fade_music_clock")
+  assertEqual(other.FRAMECOUNT_FACE, self.FRAMECOUNT_FACE, "FRAMECOUNT_FACE")
+  assertEqual(other.FRAMECOUNT_FLASH, self.FRAMECOUNT_FLASH, "FRAMECOUNT_FLASH")
+  assertEqual(other.FRAMECOUNT_GPHOVER, self.FRAMECOUNT_GPHOVER, "FRAMECOUNT_GPHOVER")
+  assertEqual(other.FRAMECOUNT_HOVER, self.FRAMECOUNT_HOVER, "FRAMECOUNT_HOVER")
+  assertEqual(other.FRAMECOUNT_MATCH, self.FRAMECOUNT_MATCH, "FRAMECOUNT_MATCH")
+  assertEqual(other.FRAMECOUNT_POP, self.FRAMECOUNT_POP, "FRAMECOUNT_POP")
+  assertEqual(other.game_over, self.game_over, "game_over")
+  assertEqual(other.game_over_clock, self.game_over_clock, "game_over_clock")
+  assertEqual(other.game_stopwatch, self.game_stopwatch, "game_stopwatch")
+  assertEqual(other.game_stopwatch_running, self.game_stopwatch_running, "game_stopwatch_running")
+  assertEqual(other.garbageGenCount, self.garbageGenCount, "garbageGenCount")
+  assertEqual(other.gpanel_buffer, self.gpanel_buffer, "gpanel_buffer")
+  assertEqual(other.has_risen, self.has_risen, "has_risen")
+  assertEqual(other.health, self.health, "health")
+  assertEqual(other.height, self.height, "height")
+  assertEqual(other.input_state, self.input_state, "input_state")
+  assertEqual(other.is_local, self.is_local, "is_local")
+  assertEqual(other.lastPopLevelPlayed, self.lastPopLevelPlayed, "lastPopLevelPlayed")
+  assertEqual(other.lastPopIndexPlayed, self.lastPopIndexPlayed, "lastPopIndexPlayed")
+  assertEqual(other.level, self.level, "level")
+  assertEqual(other.manual_raise, self.manual_raise, "manual_raise")
+  assertEqual(other.manual_raise_yet, self.manual_raise_yet, "manual_raise_yet")
+  assertEqual(other.max_health, self.max_health, "max_health")
+  assertEqual(other.max_runs_per_frame, self.max_runs_per_frame, "max_runs_per_frame")
+  assertEqual(other.metal_panels_queued, self.metal_panels_queued, "metal_panels_queued")
+  assertEqual(other.n_active_panels, self.n_active_panels, "n_active_panels")
+  assertEqual(other.n_chain_panels, self.n_chain_panels, "n_chain_panels")
+  assertEqual(other.N_COLORS, self.N_COLORS, "N_COLORS")
+  assertEqual(other.n_prev_active_panels, self.n_prev_active_panels, "n_prev_active_panels")
+  assertEqual(other.nextSpeedIncreaseClock, self.nextSpeedIncreaseClock, "nextSpeedIncreaseClock")
+  assertEqual(other.panel_buffer, self.panel_buffer, "panel_buffer")
+  assertEqual(other.panelGenCount, self.panelGenCount, "panelGenCount")
+  assertEqual(other.panels_cleared, self.panels_cleared, "panels_cleared")
+  assertEqual(other.panels_dir, self.panels_dir, "panels_dir")
+  assertEqual(other.panels_in_top_row, self.panels_in_top_row, "panels_in_top_row")
+  assertEqual(other.panels_to_speedup, self.panels_to_speedup, "panels_to_speedup")
+  assertEqual(other.peak_shake_time, self.peak_shake_time, "peak_shake_time")
+  assertEqual(other.play_to_end, self.play_to_end, "play_to_end")
+  assertEqual(other.player_number, self.player_number, "player_number")
+  assertEqual(other.poppedPanelIndex, self.poppedPanelIndex, "poppedPanelIndex")
+  assertEqual(other.portraitFade, self.portraitFade, "portraitFade")
+  assertEqual(other.pre_stop_time, self.pre_stop_time, "pre_stop_time")
+  assertEqual(other.prev_rise_lock, self.prev_rise_lock, "prev_rise_lock")
+  assertEqual(other.prevent_manual_raise, self.prevent_manual_raise, "prevent_manual_raise")
+  assertEqual(other.rise_lock, self.rise_lock, "rise_lock")
+  assertEqual(other.rise_timer, self.rise_timer, "rise_timer")
+  assertEqual(other.score, self.score, "score")
+  assertEqual(other.sfx_land, self.sfx_land, "sfx_land")
+  assertEqual(other.sfx_garbage_thud, self.sfx_garbage_thud, "sfx_garbage_thud")
+  assertEqual(other.shake_time, self.shake_time, "shake_time")
+  assertEqual(other.speed, self.speed, "speed")
+  assertEqual(other.speedIncreaseMode, self.speedIncreaseMode, "speedIncreaseMode")
+  assertEqual(other.starting_cur_col, self.starting_cur_col, "starting_cur_col")
+  assertEqual(other.starting_cur_row, self.starting_cur_row, "starting_cur_row")
+  assertEqual(other.stop_time, self.stop_time, "stop_time")
+  assertEqual(other.swap_1, self.swap_1, "swap_1")
+  assertEqual(other.swap_2, self.swap_2, "swap_2")
+  assertEqual(other.taunt_down, self.taunt_down, "taunt_down")
+  assertEqual(other.taunt_up, self.taunt_up, "taunt_up")
+  assertEqual(other.top_cur_row, self.top_cur_row, "top_cur_row")
+  assertEqual(other.which, self.which, "which")
+  assertEqual(other.width, self.width, "width")
+
+  -- table values
+  assertEqual(other.analytic, self.analytic, "analytic")
+  assertEqual(other.card_q, self.card_q, "card_q")
+  assertEqual(other.chains, self.chains, "chains")
+  assertEqual(other.combos, self.combos, "combos")
+  assertEqual(other.confirmedInput, self.confirmedInput, "confirmedInput")
+  assertEqual(other.currentGarbageDropColumnIndexes, self.currentGarbageDropColumnIndexes, "currentGarbageDropColumnIndexes")
+  assertEqual(other.danger_col, self.danger_col, "danger_col")
+  assertEqual(other.input_buffer, self.input_buffer, "input_buffer")
+  assertEqual(other.garbage_q, self.garbage_q, "garbage_q")
+  assertEqual(other.garbageSizeDropColumnMaps, self.garbageSizeDropColumnMaps, "garbageSizeDropColumnMaps")
+  -- split up for better output readability
+  assertEqual(#other.panels, #self.panels, "panels rowcount")
+  for i = 0, #self.panels do
+    assertEqual(other.panels[i], self.panels[i], "row " .. i .. " panels")
+  end
+  assertEqual(other.pop_q, self.pop_q, "pop_q")
+  assertEqual(other.puzzle, self.puzzle, "puzzle")
+  assertEqual(other.taunt_queue, self.taunt_queue, "taunt_queue")
+  if other.telegraph then
+    -- telegraph is not deepcopied so we need to fetch a debugCopy for the assert 
+    assertEqual(other.telegraph, self.telegraph:debugCopy(), "telegraph")
+  end
+  assertEqual(other.warningsTriggered, self.warningsTriggered, "warningsTriggered")
+
+  return true
+end
+
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
 -- param source the stack to copy from
 -- param other the variable to copy to
@@ -536,7 +818,7 @@ function Stack.rollbackToFrame(self, frame)
 
   if frame < currentFrame then
     local prev_states = self.prev_states
-    logger.debug("Rolling back " .. self.which .. " to " .. frame)
+    logger.debug("Rolling back stack " .. self.which .. " to frame " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
 

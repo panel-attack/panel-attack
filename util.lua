@@ -1,3 +1,4 @@
+local logger = require("logger")
 local utf8 = require("utf8Additions")
 local pairs = pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
@@ -73,16 +74,36 @@ end
 function deep_content_equal(a, b)
   if type(a) ~= "table" or type(b) ~= "table" then
     return a == b
-  end
-  for i = 1, 2 do
-    for k, v in pairs(a) do
-      if not deep_content_equal(v, b[k]) then
-        return false
+  else
+    if a == b then
+      -- two tables could still be reference equal
+      return true
+    else
+      for i = 1, 2 do
+        for k, v in pairs(a) do
+          if not deep_content_equal(v, b[k]) then
+            local msg = "contents are not equal for key " .. k .. ":"
+            if type(v) == "table" then
+              msg = msg .. "\nIn a:\n" .. table.toString(v)
+              if type(b[k]) == "table"then
+                msg = msg .. "\nIn b:\n" .. table.toString(b[k])
+              else
+                msg = msg .. "\nIn b:\n" .. type(b[k])
+              end
+            else
+              msg = msg .. "\nIn a:\n" .. tostring(v)
+              msg = msg .. "\nIn b:\n" .. tostring(b[k])
+            end
+            logger.debug(msg)
+            return false
+          end
+        end
+        a, b = b, a
       end
+
+      return true
     end
-    a, b = b, a
   end
-  return true
 end
 
 -- copy the table one key deep
@@ -125,18 +146,6 @@ function deepcpy(tab)
   end
   local ret = real_deepcpy(tab)
   deepcpy_mapping = {}
-  return ret
-end
-
-function table_to_string(tab)
-  local ret = ""
-  for k,v in pairs(tab) do
-    if type(v) == "table" then
-      ret = ret..k.." table:\n"..table_to_string(v).."\n"
-    else
-      ret = ret..k.." "..tostring(v).."\n"
-    end
-  end
   return ret
 end
 
@@ -411,4 +420,14 @@ function string.toCharTable(self)
     t[#t+1] = character
   end
   return t
+end
+
+function assertEqual(val1, val2, valName)
+  if type(val1) == "table" then
+    assert(deep_content_equal(val1, val2), valName .. " is different:\n" ..
+      "val1:\n" .. table.toString(val1) .. "\n" ..
+      "val2:\n" .. table.toString(val2))
+  else
+    assert(val1 == val2, valName .. " is different:\nval1: " .. tostring(val1) .. "\nval2: " .. tostring(val2))
+  end
 end

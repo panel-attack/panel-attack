@@ -69,11 +69,12 @@ function table.insertListAt(list, position, tab)
 end
 
 -- returns true if the table contains the given element, otherwise false
+-- for table values, equality is evaluated via reference equality not value equality
 function table.contains(tab, element)
   return table.trueForAny(
     tab,
     function(tabElement)
-      return deep_content_equal(tabElement, element)
+      return tabElement == element
     end
   )
 end
@@ -139,4 +140,16 @@ function table.count(tab, condition)
     end
   end
   return count
+end
+
+function table.toString(tab)
+  local ret = ""
+  for k,v in pairs(tab) do
+    if type(v) == "table" then
+      ret = ret..k.." table:\n"..table.toString(v).."\n"
+    else
+      ret = ret..k.." "..tostring(v).."\n"
+    end
+  end
+  return ret
 end
