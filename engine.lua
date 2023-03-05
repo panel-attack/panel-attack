@@ -604,7 +604,7 @@ function Stack:shouldSaveRollback()
   end
 
   if GAME.match.isFromReplay then
-    return false
+    return true
   end
 
   -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
