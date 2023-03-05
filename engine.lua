@@ -1203,6 +1203,7 @@ end
 
 function Stack.updatePanels(self)
   self.shake_time_on_frame = 0
+  self.popSizeThisFrame = "small"
   for row = 1, #self.panels do
     for col = 1, self.width do
       local panel = self.panels[row][col]
@@ -2617,29 +2618,37 @@ function Stack.createPanel(self, row, column)
 end
 
 function Stack.onPop(self, panel)
-  --logger.debug("POP")
-  if (panel.combo_size > 6) or self.chain_counter > 1 then
-    popsize = "normal"
-  end
-  if self.chain_counter > 2 then
-    popsize = "big"
-  end
-  if self.chain_counter > 3 then
-    popsize = "giant"
-  end
-  if config.popfx == true then
-    self:enqueue_popfx(panel.column, panel.row, popsize)
-  end
-  self.score = self.score + 10
+  if panel.isGarbage then
+    if config.popfx == true then
+      self:enqueue_popfx(panel.column, panel.row, self.popSizeThisFrame)
+    end
+    if self:shouldChangeSoundEffects() then
+      SFX_Garbage_Pop_Play = panel.pop_index
+    end
+  else
+    if config.popfx == true then
+      if (panel.combo_size > 6) or self.chain_counter > 1 then
+        self.popSizeThisFrame = "normal"
+      end
+      if self.chain_counter > 2 then
+        self.popSizeThisFrame = "big"
+      end
+      if self.chain_counter > 3 then
+        self.popSizeThisFrame = "giant"
+      end
+      self:enqueue_popfx(panel.column, panel.row, self.popSizeThisFrame)
+    end
+    self.score = self.score + 10
 
-  self.panels_cleared = self.panels_cleared + 1
-  if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-    self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+    self.panels_cleared = self.panels_cleared + 1
+    if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
+      self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+    end
+    if self:shouldChangeSoundEffects() then
+      SFX_Pop_Play = 1
+    end
+    self.poppedPanelIndex = panel.combo_index
   end
-  if self:shouldChangeSoundEffects() then
-    SFX_Pop_Play = 1
-  end
-  self.poppedPanelIndex = panel.combo_index
 end
 
 function Stack.onPopped(self, panel)
