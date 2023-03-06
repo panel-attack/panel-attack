@@ -1,0 +1,1 @@
+{"vs":{"do_countdown":true,"I":"A909","seed":1866552,"O":"","Q":"","P1_level":10,"P1_char":"Charlotte","P2_level":10,"P2_char":"Charlotte","P1_win_count":0,"P2_win_count":0,"P":"","P2_name":"Player 2","P2_cur_wait_time":20,"P1_name":"Player 1","in_buf":"A909","P1_cur_wait_time":20},"engineVersion":"046"}

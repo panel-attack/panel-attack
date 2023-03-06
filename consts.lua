@@ -5,7 +5,14 @@ local consts = {}
 consts.FRAME_RATE = 1/60
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
-VERSION = "046"
+
+consts.ENGINE_VERSIONS = {}
+consts.ENGINE_VERSIONS.PRE_TELEGRAPH = "045"
+consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE = "046"
+consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
+
+VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
+VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
 canvas_width = 1280
 canvas_height = 720
@@ -143,14 +150,6 @@ panels_to_next_speed =
   45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
   45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
   45, 45, 45, 45, 45, 45, 45, 45, math.huge}
-
--- vs mode and 2P time attack use a speed system in which
--- speed increases every 15 seconds.  However, instead of
--- exposing speed and difficulty directly, they expose levels.
--- A level is a speed, a difficulty, and an amount of time
--- that can be spent at the top of the screen without dying.
--- level also determines the number of colors
---level_to_difficulty        = {  1,  1,  2,  2,  2,  2,  2,  3,  3,  3}
 
 -- What speed level you start on.
 level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32, 45}

@@ -382,11 +382,11 @@ function Character.reassignLegacySfx(self)
     end
     
     self:fillInMissingSounds(self.sounds.chain, "chain", maxIndex)
+  end
 
-    if #self.sounds.shock > 0 then
-      -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
-      self.sounds.combo_echo = nil
-    end
+  if #self.sounds.shock > 0 then
+    -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
+    self.sounds.combo_echo = {}
   end
 end
 
@@ -594,14 +594,18 @@ function Character.playAttackSfx(self, attack)
         stopIfPlaying(v[i])
       end
     end
-    for i = 1, #self.sounds.combo_echo do
-      stopIfPlaying(self.sounds.combo_echo[i])
-    end
-    for _, v in pairs(self.sounds.shock) do
-      for i = 1, #v do
-        stopIfPlaying(v[i])
+    if table.length(self.sounds.shock) > 0 then
+      for _, v in pairs(self.sounds.shock) do
+        for i = 1, #v do
+          stopIfPlaying(v[i])
+        end
+      end
+    else
+      for i = 1, #self.sounds.combo_echo do
+        stopIfPlaying(self.sounds.combo_echo[i])
       end
     end
+
     for _, v in pairs(self.sounds.chain) do
       for i = 1, #v do
         stopIfPlaying(v[i])

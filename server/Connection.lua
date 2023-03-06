@@ -1,10 +1,10 @@
 require("class")
 local logger = require("logger")
+local NetworkProtocol = require("NetworkProtocol")
 
-local byte = string.byte
-local char = string.char
-local floor = math.floor
 local time = os.time
+local utf8 = require("utf8Additions")
+require("tests.utf8AdditionsTests")
 
 -- Represents a connection to a specific player. Responsible for sending and receiving messages
 Connection =
@@ -19,8 +19,9 @@ Connection =
     s.player_number = 0 -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
     s.logged_in = false --whether connection has successfully logged into the rating system.
     s.user_id = nil
-    s.wants_ranked_match = false --TODO: let the user change wants_ranked_match
+    s.wants_ranked_match = false
     s.server = server
+    s.inputMethod = "controller"
   end
 )
 
@@ -54,6 +55,8 @@ function Connection.login(self, user_id)
       self.user_id = their_new_user_id
       self.logged_in = true
       logger.info("New user: " .. self.name .. " was created")
+      self.server.database:insertNewPlayer(their_new_user_id, self.name)
+      self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
   elseif not playerbase.players[self.user_id] then
     deny_login(self, "The user_id provided was not found on this server")
@@ -70,6 +73,7 @@ function Connection.login(self, user_id)
       end
       self.logged_in = true
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
+      self.server.database:updatePlayerUsername(self.user_id, self.name)
       logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
     end
   elseif playerbase.players[self.user_id] then
@@ -80,15 +84,15 @@ function Connection.login(self, user_id)
   end
 
   if self.logged_in then
-    self:send(self.server:lobby_state())
     leaderboard:update_timestamp(user_id)
+    self.server:setLobbyChanged()
   end
 
   return self.logged_in
 end
 
 function Connection.menu_state(self)
-  local state = {cursor = self.cursor, stage = self.stage, stage_is_random = self.stage_is_random, ready = self.ready, character = self.character, character_is_random = self.character_is_random, character_display_name = self.character_display_name, panels_dir = self.panels_dir, level = self.level, ranked = self.wants_ranked_match}
+  local state = {cursor = self.cursor, stage = self.stage, stage_is_random = self.stage_is_random, ready = self.ready, character = self.character, character_is_random = self.character_is_random, character_display_name = self.character_display_name, panels_dir = self.panels_dir, level = self.level, ranked = self.wants_ranked_match, inputMethod = self.inputMethod}
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -96,14 +100,14 @@ end
 function Connection.send(self, stuff)
   if type(stuff) == "table" then
     local json = json.encode(stuff)
-    local len = json:len()
-    local prefix = "J" .. char(floor(len / 65536)) .. char(floor((len / 256) % 256)) .. char(len % 256)
-    --print(byte(prefix[1]), byte(prefix[2]), byte(prefix[3]), byte(prefix[4]))
-    logger.debug("sending json " .. json)
-    stuff = prefix .. json
+    stuff = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.jsonMessage.prefix, json)
+    logger.debug("Connection " .. self.index .. " Sending JSON: " .. stuff)
   else
-    if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
-      logger.debug("sending non-json " .. stuff)
+    if type(stuff) == "string" then
+      local type = stuff:sub(1, 1)
+      if type ~= nil and NetworkProtocol.isMessageTypeVerbose(type) == false then
+        logger.debug("Connection " .. self.index .. " sending " .. stuff)
+      end
     end
   end
   local retry_count = 0
@@ -111,16 +115,13 @@ function Connection.send(self, stuff)
   local foo = {}
   while not foo[1] and retry_count <= 5 do
     foo = {self.socket:send(stuff)}
-    if stuff[1] ~= "I" and stuff[1] ~= "U" and stuff[1] ~= "E" then
-      logger.trace(unpack(foo))
-    end
     if not foo[1] then
-      logger.debug("WARNING: Connection.send failed. will retry...")
+      logger.debug("Connection.send failed. will retry...")
       retry_count = retry_count + 1
     end
   end
   if not foo[1] then
-    logger.debug("Closing connection for " .. (self.name or "nil") .. ". During Connection.send, foo[1] was nil after " .. times_to_retry .. " retries were attempted")
+    logger.debug("Closing connection for " .. (self.name or "nil") .. ". Connection.send failed after " .. times_to_retry .. " retries were attempted")
     self:close()
   end
 end
@@ -146,6 +147,7 @@ function Connection.setup_game(self)
 end
 
 function Connection.close(self)
+  logger.debug("Closing connection to " .. self.index)
   if self.state == "lobby" then
     self.server:setLobbyChanged()
   end
@@ -167,81 +169,41 @@ function Connection.close(self)
   self.socket:close()
 end
 
+-- Handle NetworkProtocol.clientMessageTypes.versionCheck
 function Connection.H(self, version)
   if version ~= VERSION and not ANY_ENGINE_VERSION_ENABLED then
-    self:send("N")
+    self:send(NetworkProtocol.serverMessageTypes.versionWrong.prefix)
   else
-    self:send("H")
+    self:send(NetworkProtocol.serverMessageTypes.versionCorrect.prefix)
   end
 end
 
+-- Handle NetworkProtocol.clientMessageTypes.playerInput
 function Connection.I(self, message)
   if self.opponent then
-    self.opponent:send("I" .. message)
+    local iMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.opponentInput.prefix, message)
+    self.opponent:send(iMessage)
     if not self.room then
       logger.warn("WARNING: missing room")
       logger.warn(self.name)
       logger.warn("doesn't have a room, we are wondering if this disconnects spectators")
     end
     if self.player_number == 1 and self.room then
-      self.room:send_to_spectators("U" .. message)
+      local uMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix, message)
+      self.room:send_to_spectators(uMessage)
       self.room.replay.vs.in_buf = self.room.replay.vs.in_buf .. message
     elseif self.player_number == 2 and self.room then
-      self.room:send_to_spectators("I" .. message)
+      self.room:send_to_spectators(iMessage)
       self.room.replay.vs.I = self.room.replay.vs.I .. message
     end
   end
 end
 
-
--- got pong
-function Connection.F(self, message)
+-- Handle clientMessageTypes.acknowledgedPing
+function Connection.E(self, message)
 end
 
-local ok_ncolors = {}
-for i = 2, 7 do
-  ok_ncolors[i .. ""] = true
-end
-function Connection.P(self, message)
-  if not ok_ncolors[message[1]] then
-    return
-  end
-  local ncolors = 0 + message[1]
-  -- TODO: remove this server message type
-  local ret = "Garbage Panel Generation is now local only"
-  self:send("P" .. ret)
-  if self.player_number == 1 then
-    self.room:send_to_spectators("P" .. ret)
-    self.room.replay.vs.P = self.room.replay.vs.P .. ret
-  elseif self.player_number == 2 then
-    self.room:send_to_spectators("O" .. ret)
-    self.room.replay.vs.O = self.room.replay.vs.O .. ret
-  end
-  if self.opponent then
-    self.opponent:send("O" .. ret)
-  end
-end
-
-function Connection.Q(self, message)
-  if not ok_ncolors[message[1]] then
-    return
-  end
-  local ncolors = 0 + message[1]
-  -- TODO: remove this server message type
-  local ret = "Garbage Panel Generation is now local only"
-  self:send("Q" .. ret)
-  if self.player_number == 1 then
-    self.room:send_to_spectators("Q" .. ret)
-    self.room.replay.vs.Q = self.room.replay.vs.Q .. ret
-  elseif self.player_number == 2 then
-    self.room:send_to_spectators("R" .. ret)
-    self.room.replay.vs.R = self.room.replay.vs.R .. ret
-  end
-  if self.opponent then
-    self.opponent:send("R" .. ret)
-  end
-end
-
+-- Handle clientMessageTypes.jsonMessage
 function Connection.J(self, message)
   message = json.decode(message)
   local response
@@ -279,7 +241,7 @@ function Connection.J(self, message)
     elseif message.name:find("[^_%w]") then
       response = {choose_another_name = {reason = "Usernames are limited to alphanumeric and underscores"}}
       self:send(response)
-    elseif string.len(message.name) > NAME_LENGTH_LIMIT then
+    elseif utf8.len(message.name) > NAME_LENGTH_LIMIT then
       response = {choose_another_name = {reason = "The name length limit is " .. NAME_LENGTH_LIMIT .. " characters"}}
       self:send(response)
     else
@@ -291,16 +253,13 @@ function Connection.J(self, message)
       self.stage_is_random = message.stage_is_random
       self.panels_dir = message.panels_dir
       self.level = message.level
+      self.inputMethod = (message.inputMethod or "controller")
       self.save_replays_publicly = message.save_replays_publicly
       self.wants_ranked_match = message.ranked
-      self.server:setLobbyChanged()
       self.state = "lobby"
       self.server.name_to_idx[self.name] = self.index
+      -- Don't update lobby yet, we will do that when they are logged in
     end
-  elseif message.taunt then
-    message.player_number = self.player_number
-    self.opponent:send(message)
-    self.room:send_to_spectators(message)
   elseif message.login_request then
     self:login(message.user_id)
   elseif message.logout then
@@ -323,12 +282,9 @@ function Connection.J(self, message)
       end
     end
     if requestedRoom and requestedRoom:state() == "character select" then
-      -- TODO: allow them to join
-      logger.debug("join allowed")
       logger.debug("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
       self.server:addSpectator(requestedRoom, self)
     elseif requestedRoom and requestedRoom:state() == "playing" then
-      logger.debug("join-in-progress allowed")
       logger.debug("adding " .. self.name .. " to room nr " .. message.spectate_request.roomNumber)
       self.server:addSpectator(requestedRoom, self)
     else
@@ -337,6 +293,7 @@ function Connection.J(self, message)
     end
   elseif self.state == "character select" and message.menu_state then
     self.level = message.menu_state.level
+    self.inputMethod = (message.menu_state.inputMethod or "controller") --one day we will require message to include input method, but it is not this day.
     self.character = message.menu_state.character
     self.character_is_random = message.menu_state.character_is_random
     self.character_display_name = message.menu_state.character_display_name
@@ -370,6 +327,8 @@ function Connection.J(self, message)
         in_buf = "",
         P1_level = self.room.a.level,
         P2_level = self.room.b.level,
+        P1_inputMethod = self.room.a.inputMethod,
+        P2_inputMethod = self.room.b.inputMethod,
         P1_char = self.room.a.character,
         P2_char = self.room.b.character,
         ranked = self.room:rating_adjustment_approved(),
@@ -386,9 +345,13 @@ function Connection.J(self, message)
       logger.debug("about to send match start to spectators of " .. (self.name or "nil") .. " and " .. (self.opponent.name or "nil"))
       self.room:send_to_spectators(message) -- TODO: may need to include in the message who is sending the message
     end
+  elseif self.state == "playing" and message.taunt then
+    message.player_number = self.player_number
+    self.opponent:send(message)
+    self.room:send_to_spectators(message)
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
-    if self.room:resolve_game_outcome() then
+    if self.room:resolve_game_outcome(self.server.database) then
       logger.debug("\n*******************************")
       logger.debug("***" .. self.room.a.name .. " " .. self.room.win_counts[1] .. " - " .. self.room.win_counts[2] .. " " .. self.room.b.name .. "***")
       logger.debug("*******************************\n")
@@ -409,69 +372,6 @@ function Connection.J(self, message)
   end
 end
 
--- TODO: this should not be O(n^2) lol
-function Connection.data_received(self, data)
-  local type_to_length = {H = 4, E = 4, F = 4, P = 8, I = 2, L = 2, Q = 8, U = 2}
-  self.last_read = time()
-  if data:len() ~= 2 and data[1] ~= "F" then
-    logger.trace("got raw data " .. data)
-  end
-  data = self.leftovers .. data
-  local idx = 1
-  while data:len() > 0 do
-    --assert(type(data) == "string")
-    local msg_type = data[1]
-    --assert(type(msg_type) == "string")
-    if msg_type == "J" then
-      if data:len() < 4 then
-        break
-      end
-      local msg_len = byte(data[2]) * 65536 + byte(data[3]) * 256 + byte(data[4])
-      if data:len() < 4 + msg_len then
-        break
-      end
-      local jmsg = data:sub(5, msg_len + 4)
-      logger.debug("got JSON message " .. jmsg)
-      local status, error = pcall(
-          function()
-            self:J(jmsg)
-          end
-        )
-      if error and type(error) == "string" then
-        logger.debug("Pcall results for json: " .. tostring(status))
-      end
-      data = data:sub(msg_len + 5)
-    else
-      if msg_type ~= "I" and msg_type ~= "F" then
-        logger.trace("using non-J type " .. msg_type)
-      end
-      local total_len = type_to_length[msg_type]
-      if not total_len then
-        logger.warn("closing because len did not exist")
-        self:close()
-        return
-      end
-      if data:len() < total_len then
-        logger.warn("breaking because len was too small")
-        break
-      end
-      local res = {
-        pcall(
-          function()
-            self[msg_type](self, data:sub(2, total_len))
-          end
-        )
-      }
-      if (msg_type ~= "I" and msg_type ~= "F") or not res[1] then
-        logger.trace("got message " .. msg_type .. " " .. data:sub(2, total_len))
-        logger.trace("Pcall results for " .. msg_type .. ": ", unpack(res))
-      end
-      data = data:sub(total_len + 1)
-    end
-  end
-  self.leftovers = data
-end
-
 function Connection.read(self)
   local junk, err, data = self.socket:receive("*a")
   if not err then
@@ -481,3 +381,33 @@ function Connection.read(self)
     self:data_received(data)
   end
 end
+
+function Connection.data_received(self, data)
+  self.last_read = time()
+  self.leftovers = self.leftovers .. data
+
+  while true do
+    local type, message, remaining = NetworkProtocol.getMessageFromString(self.leftovers, false)
+    if type then
+      self:processMessage(type, message)
+      self.leftovers = remaining
+    else
+      break
+    end
+  end
+end
+
+function Connection:processMessage(messageType, data)
+  if messageType ~= NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix then
+    logger.trace(self.index .. "- processing message:" .. messageType .. " data: " .. data)
+  end
+  local status, error = pcall(
+      function()
+        self[messageType](self, data)
+      end
+    )
+  if status == false and error and type(error) == "string" then
+    logger.error("pcall error results: " .. tostring(error))
+  end
+end
+

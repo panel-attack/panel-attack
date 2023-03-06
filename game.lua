@@ -33,6 +33,10 @@ function Game.clearMatch(self)
     self.match:deinit()
     self.match = nil
   end
+  self:reset()
+end
+
+function Game:reset()
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false
@@ -49,15 +53,20 @@ function Game.errorData(errorString, traceBack)
   local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
   local systemInfo = system_info or "Unknown"
 
-  local errorData = { 
+  local errorData = {
       stack = traceBack,
       name = username,
       error = errorString,
       engine_version = VERSION,
       release_version = buildVersion,
       operating_system = systemInfo,
-      love_version = loveVersion
+      love_version = loveVersion,
+      theme = config.theme
     }
+
+  if GAME.match then
+    errorData.matchInfo = GAME.match:getInfo()
+  end
 
   return errorData
 end
@@ -70,12 +79,30 @@ function Game.detailedErrorLogString(errorData)
   local detailedErrorLogString = 
     "Stack Trace: " .. errorData.stack .. newLine ..
     "Username: " .. errorData.name .. newLine ..
+    "Theme: " .. errorData.theme .. newLine ..
     "Error Message: " .. errorData.error .. newLine ..
     "Engine Version: " .. errorData.engine_version .. newLine ..
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
-    "Love Version: " .. errorData.love_version .. newLine .. 
+    "Love Version: " .. errorData.love_version .. newLine ..
     "UTC Time: " .. formattedTime
+
+    if errorData.matchInfo then
+      detailedErrorLogString = detailedErrorLogString .. newLine ..
+      errorData.matchInfo.mode .. " Match Info: " .. newLine ..
+      "  Stage: " .. errorData.matchInfo.stage .. newLine ..
+      "  Stacks: "
+      for i = 1, #errorData.matchInfo.stacks do
+        local stack = errorData.matchInfo.stacks[i]
+        detailedErrorLogString = detailedErrorLogString .. newLine ..
+        "    P" .. i .. ": " .. newLine ..
+        "      Player Number: " .. stack.playerNumber .. newLine ..
+        "      Character: " .. stack.character  .. newLine ..
+        "      Panels: " .. stack.panels  .. newLine ..
+        "      Rollback Count: " .. stack.rollbackCount .. newLine ..
+        "      Rollback Frames Saved: " .. stack.rollbackCopyCount
+      end
+    end
 
   return detailedErrorLogString
 end

@@ -2,7 +2,6 @@ require("class")
 socket = require("socket")
 GAME = require("game")
 require("match")
-local manualGC = require("libraries.batteries.manual_gc")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
@@ -33,7 +32,7 @@ require("timezones")
 require("gen_panels")
 require("panels")
 require("Theme")
-local utf8 = require("utf8")
+local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
@@ -152,15 +151,12 @@ function love.update(dt)
 
   update_music()
   GAME.rich_presence:runCallbacks()
-  
-  manualGC(0.0001, nil, nil)
 end
 
 -- Called whenever the game needs to draw.
 function love.draw()
-  if GAME.foreground_overlay then
-    local scale = canvas_width / math.max(GAME.foreground_overlay:getWidth(), GAME.foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(GAME.foreground_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if GAME then
+    GAME.isDrawing = true
   end
 
   -- Clear the screen
@@ -168,11 +164,28 @@ function love.draw()
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
+  -- draw background and its overlay
+  if GAME.backgroundImage then
+    GAME.backgroundImage:draw()
+  end
+  if GAME.background_overlay then
+    local scale = canvas_width / math.max(GAME.background_overlay:getWidth(), GAME.background_overlay:getHeight()) -- keep image ratio
+    menu_drawf(GAME.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  end
+
+  for i = gfx_q.first, gfx_q.last do
+    gfx_q[i][1](unpack(gfx_q[i][2]))
+  end
+  gfx_q:clear()
+
+  if GAME.foreground_overlay then
+    local scale = canvas_width / math.max(GAME.foreground_overlay:getWidth(), GAME.foreground_overlay:getHeight()) -- keep image ratio
+    menu_drawf(GAME.foreground_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  end
+  
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
-    if CustomRun.runTimeGraph then
-      CustomRun.runTimeGraph:draw()
-    else
+    if not CustomRun.runTimeGraph then
       gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
     end
   end
@@ -180,11 +193,6 @@ function love.draw()
   if STONER_MODE then 
     gprintf("STONER", 1, 1 + (11 * 4))
   end
-
-  for i = gfx_q.first, gfx_q.last do
-    gfx_q[i][1](unpack(gfx_q[i][2]))
-  end
-  gfx_q:clear()
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
@@ -208,13 +216,8 @@ function love.draw()
     love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
   end
 
-  -- draw background and its overlay
-  if GAME.backgroundImage then
-    GAME.backgroundImage:draw()
-  end
-  if GAME.background_overlay then
-    local scale = canvas_width / math.max(GAME.background_overlay:getWidth(), GAME.background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(GAME.background_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  if GAME then
+    GAME.isDrawing = false
   end
 end
 

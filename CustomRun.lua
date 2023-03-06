@@ -1,20 +1,24 @@
+local manualGc = require("libraries.batteries.manual_gc")
 
 local CustomRun = {}
 CustomRun.FRAME_RATE = 1 / 60
 CustomRun.runMetrics = {}
 CustomRun.runMetrics.previousSleepEnd = 0
 CustomRun.runMetrics.dt = 0
-CustomRun.runMetrics.sleepDuration = 0
 CustomRun.runMetrics.updateDuration = 0
+CustomRun.runMetrics.graphDuration = 0
 CustomRun.runMetrics.drawDuration = 0
 CustomRun.runMetrics.presentDuration = 0
+CustomRun.runMetrics.gcDuration = 0
+CustomRun.runMetrics.sleepDuration = 0
+
 CustomRun.runTimeGraph = nil
 
 leftover_time = 0
 
 -- Sleeps just the right amount of time to make our next update step be one frame long.
 -- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
-function CustomRun:sleep()
+function CustomRun.sleep()
 
   local targetDelay = CustomRun.FRAME_RATE
   -- We want leftover time to be above 0 but less than a quarter frame.
@@ -29,11 +33,26 @@ function CustomRun:sleep()
   local originalTime = love.timer.getTime()
   local currentTime = originalTime
 
-  -- Sleep a percentage of our time to wait to save cpu
-  local sleepRatio = .99
-  local sleepTime = (targetTime - currentTime) * sleepRatio
-  if love.timer and sleepTime > 0 then
-    love.timer.sleep(sleepTime)
+  local idleTime = targetTime - currentTime
+  -- actively collecting garbage is very CPU intensive
+  -- only do it while a match is on-going
+  if (GAME and GAME.match and GAME.focused and not GAME.gameIsPaused) then
+    -- Spend as much time as necessary collecting garbage, but at least 0.1ms
+    -- manualGc itself has a ceiling at which it will stop
+    manualGc(math.max(0.0001, idleTime * 0.99))
+    currentTime = love.timer.getTime()
+    CustomRun.runMetrics.gcDuration = currentTime - originalTime
+    originalTime = currentTime
+    idleTime = targetTime - currentTime
+  else
+    CustomRun.runMetrics.gcDuration = 0
+  end
+
+  -- Sleep any remaining amount of time to fill up the frametime to 1/60 of a second
+  -- On most machines GC will have reduced the remaining idle time to near nothing
+  -- But strong machines may exit garbage collection early and need to sleep the remaining time
+  if idleTime > 0 then
+    love.timer.sleep(idleTime * 0.99)
   end
   currentTime = love.timer.getTime()
 
@@ -49,11 +68,6 @@ end
 -- This is our custom version of run that uses a custom sleep and records metrics.
 local dt = 0
 function CustomRun.innerRun()
-
-  if love.timer then
-    CustomRun.sleep()
-  end
-
   -- Process events.
   if love.event then
     love.event.pump()
@@ -91,13 +105,26 @@ function CustomRun.innerRun()
       CustomRun.runMetrics.drawDuration = love.timer.getTime() - preDrawTime
     end
 
+    -- draw the RunTimeGraph here so it doesn't contribute to the love.draw load
+    if CustomRun.runTimeGraph then
+      local preGraphDrawTime = love.timer.getTime()
+      CustomRun.runTimeGraph:draw()
+      CustomRun.runMetrics.graphDuration = CustomRun.runMetrics.graphDuration + (love.timer.getTime() - preGraphDrawTime)
+    end
+    
     local prePresentTime = love.timer.getTime()
     love.graphics.present()
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
   end
 
+  if love.timer then
+    CustomRun.sleep()
+  end
+
   if CustomRun.runTimeGraph ~= nil then
+    local preGraphUpdateTime = love.timer.getTime()
     CustomRun.runTimeGraph:updateWithMetrics(CustomRun.runMetrics)
+    CustomRun.runMetrics.graphDuration = love.timer.getTime() - preGraphUpdateTime
   end
 end
 

@@ -1,3 +1,5 @@
+SERVER_MODE = true -- global to know the server is running the process
+
 local socket = require("socket")
 local logger = require("logger")
 require("class")
@@ -5,6 +7,8 @@ json = require("dkjson")
 require("stridx")
 require("gen_panels")
 require("csprng")
+local NetworkProtocol = require("NetworkProtocol")
+require("server.server_globals")
 require("server.server_file_io")
 require("server.Connection")
 require("server.Leaderboard")
@@ -13,6 +17,7 @@ require("server.Room")
 require("util")
 require("timezones")
 local lfs = require("lfs")
+local database = require("server.PADatabase")
 
 local pairs = pairs
 local ipairs = ipairs
@@ -20,7 +25,6 @@ local lobby_changed = false
 local time = os.time
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
-SERVER_MODE = true -- global to know the server is running the process
 local connectionNumberIndex = 1 -- GLOBAL counter of the next available connection index
 local roomNumberIndex = 1 -- the next available room number
 local rooms = {}  
@@ -39,6 +43,7 @@ Server =
     s.connections = {} -- all connection objects
     s.name_to_idx = {} -- mapping of player names to their unique connectionNumberIndex
     s.socket_to_idx = {} -- mapping of sockets to their unique connectionNumberIndex
+    s.database = database
   end
 )
 
@@ -120,7 +125,7 @@ end
 
 -- a and be are connection objects
 function Server:create_room(a, b)
-  lobby_changed = true
+  self:setLobbyChanged()
   self:clear_proposals(a.name)
   self:clear_proposals(b.name)
   local new_room = Room(a, b, roomNumberIndex, leaderboard)
@@ -154,7 +159,7 @@ end
 
 function Server:start_match(a, b)
   if (a.player_number ~= 1) then
-    logger.debug("Match starting, players a and b need to be swapped.")
+    logger.debug("players a and b need to be swapped.")
     a, b = b, a
     if (a.player_number == 1) then
       logger.debug("Success, player a now has player_number 1.")
@@ -168,8 +173,8 @@ function Server:start_match(a, b)
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number}
+    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number, inputMethod = a.inputMethod},
+    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number, inputMethod = b.inputMethod}
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
@@ -196,7 +201,7 @@ function Server:start_match(a, b)
   a.room:send_to_spectators(msg)
   msg.player_settings, msg.opponent_settings = msg.opponent_settings, msg.player_settings
   b:send(msg)
-  lobby_changed = true
+  self:setLobbyChanged()
   a:setup_game()
   b:setup_game()
   if not a.room then
@@ -273,11 +278,13 @@ end
 
 function Server:addSpectator(room, connection)
   room:add_spectator(connection)
-  lobby_changed = true
+  self:setLobbyChanged()
 end
 
 function Server:removeSpectator(room, connection)
-  lobby_changed = room:remove_spectator(connection)
+  if room:remove_spectator(connection) then
+    self:setLobbyChanged()
+  end
 end
 
 
@@ -306,7 +313,7 @@ function calculate_rating_adjustment(Rc, Ro, Oa, k) -- -- print("calculating exp
   return Rn
 end
 
-function adjust_ratings(room, winning_player_number)
+function adjust_ratings(room, winning_player_number, gameID)
   logger.debug("Adjusting the rating of " .. room.a.name .. " and " .. room.b.name .. ". Player " .. winning_player_number .. " wins!")
   local players = {room.a, room.b}
   local continue = true
@@ -319,6 +326,7 @@ function adjust_ratings(room, winning_player_number)
       logger.debug("Gave " .. playerbase.players[players[player_number].user_id] .. " a new rating of " .. DEFAULT_RATING)
       if not PLACEMENT_MATCHES_ENABLED then
         leaderboard.players[players[player_number].user_id].placement_done = true
+        database:insertPlayerELOChange(players[player_number].user_id, DEFAULT_RATING, gameID)
       end
       write_leaderboard_file()
     end
@@ -344,6 +352,7 @@ function adjust_ratings(room, winning_player_number)
       if placement_done[players[player_number].opponent.user_id] then
         logger.debug("Player " .. player_number .. " played a non-placement ranked match.  Updating his rating now.")
         room.ratings[player_number].new = calculate_rating_adjustment(leaderboard.players[players[player_number].user_id].rating, leaderboard.players[players[player_number].opponent.user_id].rating, Oa, k)
+        database:insertPlayerELOChange(players[player_number].user_id, room.ratings[player_number].new, gameID)
       else
         logger.debug("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
         room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
@@ -568,32 +577,10 @@ function Server:broadcast_lobby()
   end
 end
 
---[[function process_game_over_message(sender, message)
-  sender.room.game_outcome_reports[sender.player_number] = {i_won=message.i_won, tie=message.tie}
-  print("processing game_over message. Sender: "..sender.name)
-  local reports = sender.room.game_outcome_reports
-  if not reports[sender.opponent.player_number] then
-    sender.room.game_outcome_reports["official outcome"] = "pending other player's report"
-  elseif reports[1].tie and reports[2].tie then
-    sender.room.game_outcome_reports["official outcome"] = "tie"
-  elseif reports[1].i_won ~= not reports[2].i_won or reports[1].tie ~= reports[2].tie then
-    sender.room.game_outcome_reports["official outcome"] = "clients disagree"
-  elseif reports[1].i_won then
-    sender.room.game_outcome_reports["official outcome"] = 1
-  elseif reports[2].i_won then
-    sender.room.game_outcome_reports["official outcome"] = 2
-  else
-    print("Error: nobody won or tied?")
-  end
-  print("process_game_over_message outcome for "..sender.room.name..": "..sender.room.game_outcome_reports["official outcome"])
-end
---]]
-
 local server_socket = nil
 
 logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
-server_socket = socket.bind("*", SERVER_PORT or 49569) --for official server
---local server_socket = socket.bind("*", 59569) --for beta server
+server_socket = socket.bind("*", SERVER_PORT or 49569)
 server_socket:settimeout(0)
 if TCP_NODELAY_ENABLED then
   server_socket:setoption("tcp-nodelay", true)
@@ -605,11 +592,57 @@ read_players_file()
 read_deleted_players_file()
 leaderboard = Leaderboard("leaderboard")
 read_leaderboard_file()
-for k, v in pairs(playerbase.players) do
-  if leaderboard.players[k] then
-    leaderboard.players[k].user_name = v
+
+
+local function importDatabase()
+  local usedNames = {}
+  local cleanedPlayerData = {}
+  for key, value in pairs(playerbase.players) do
+    local name = value
+    while usedNames[name] ~= nil do
+      name = name .. math.random(1, 9999)
+    end
+    cleanedPlayerData[key] = value
+    usedNames[name] = true
   end
+
+  database:beginTransaction() -- this stops the database from attempting to commit every statement individually 
+  logger.info("Importing leaderboard.csv to database")
+  for k, v in pairs(cleanedPlayerData) do
+    local rating = 0
+    if leaderboard.players[k] then
+      rating = leaderboard.players[k].rating
+    end
+    database:insertNewPlayer(k, v)
+    database:insertPlayerELOChange(k, rating, 0)
+  end
+
+  local gameMatches = readGameResults()
+  if gameMatches then -- only do it if there was a gameResults file to begin with
+    logger.info("Importing GameResults.csv to database")
+    for _, result in ipairs(gameMatches) do
+      local player1ID = result[1]
+      local player2ID = result[2]
+      local player1Won = result[3] == 1
+      local ranked = result[4] == 1
+      local gameID = database:insertGame(ranked)
+      if player1Won then
+        database:insertPlayerGameResult(player1ID, gameID, nil,  1)
+        database:insertPlayerGameResult(player2ID, gameID, nil,  2)
+      else
+        database:insertPlayerGameResult(player2ID, gameID, nil,  1)
+        database:insertPlayerGameResult(player1ID, gameID, nil,  2)
+      end
+    end
+  end
+  database:commitTransaction() -- bulk commit every statement from the start of beginTransaction
 end
+  
+local isPlayerTableEmpty = database:getPlayerRecordCount() == 0
+if isPlayerTableEmpty then
+  importDatabase()
+end
+
 logger.debug("leaderboard json:")
 logger.debug(json.encode(leaderboard.players))
 write_leaderboard_file()
@@ -697,7 +730,7 @@ function Server:update()
         logger.debug("Closing connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
         v:close()
       elseif now - v.last_read > 1 then
-        v:send("ELOL") -- Request a ping to make sure the connection is still active
+        v:send(NetworkProtocol.serverMessageTypes.ping.prefix) -- Request a ping to make sure the connection is still active
       end
     end
     

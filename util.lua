@@ -1,4 +1,5 @@
-local sort, pairs = table.sort, pairs
+local utf8 = require("utf8Additions")
+local pairs = pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 
 -- bounds b so a<=b<=c
@@ -209,59 +210,110 @@ function trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
-function compress_input_string(inputs)
-  if inputs:match("%(%d+%)") or not inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
-    return inputs
-  else
-    local compressedTable = {}
-    local inputTable = string.toCharTable(inputs)
-    local repeatCount = 1
-    local currentInput = inputTable[1]
-    local function addToTable()
-      -- write the input
-      if tonumber(currentInput) == nil then
-        compressedTable[#compressedTable+1] = currentInput .. repeatCount
-      else
-        local completeInput = "(" .. currentInput
-        for j = 2, repeatCount do
-          completeInput = completeInput .. currentInput
-        end
-        compressedTable[#compressedTable+1] = completeInput .. ")"
-      end
-    end
+-- Returns if the unicode codepoint (representative number) is either the left or right parenthesis
+local function codePointIsParenthesis(codePoint)
+  if codePoint >= 40 and codePoint <= 41 then
+    return true
+  end
+  return false
+end
 
-    for i = 2, #inputTable do
-      if inputTable[i] ~= currentInput then
-        addToTable()
-        currentInput = inputTable[i]
+-- Returns if the unicode codepoint (representative number) is a digit from 0-9
+local function codePointIsDigit(codePoint)
+  if codePoint >= 48 and codePoint <= 57 then
+    return true
+  end
+  return false
+end
+
+function compress_input_string(inputs)
+  local compressedTable = {}
+  local function addToTable(codePoint, repeatCount)
+    local currentInput = utf8.char(codePoint)
+    -- write the input
+    if tonumber(currentInput) == nil then
+      compressedTable[#compressedTable+1] = currentInput .. repeatCount
+    else
+      local completeInput = "(" .. currentInput
+      for j = 2, repeatCount do
+        completeInput = completeInput .. currentInput
+      end
+      compressedTable[#compressedTable+1] = completeInput .. ")"
+    end
+  end
+
+  local previousCodePoint = nil
+  local repeatCount = 1
+  for p, codePoint in utf8.codes(inputs) do
+    if codePointIsDigit(codePoint) and codePointIsParenthesis(previousCodePoint) == true then
+      -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
+      return inputs
+    end
+    if p > 1 then
+      if previousCodePoint ~= codePoint then
+        addToTable(previousCodePoint, repeatCount)
         repeatCount = 1
       else
         repeatCount = repeatCount + 1
       end
     end
-    -- add the final entry without having to check for table length in every iteration
-    addToTable()
-
-    return table.concat(compressedTable)
+    previousCodePoint = codePoint
   end
+  -- add the final entry without having to check for table length in every iteration
+  addToTable(previousCodePoint, repeatCount)
+
+  return table.concat(compressedTable)
 end
 
 function uncompress_input_string(inputs)
-  if inputs:match("[%a%+%/][%a%+%/]") then
-    -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
-    return inputs
-  else
-    local inputChunks = {}
-    for w in inputs:gmatch("[%a%+%/]%d+%(?%d*%)?") do
-      inputChunks[#inputChunks+1] = string.rep(w:sub(1, 1), w:match("%d+"))
-      local input_value = w:match("%(%d+%)")
-      if input_value then
-        inputChunks[#inputChunks+1] = input_value:match("%d+")
+
+  local previousCodePoint = nil
+  local inputChunks = {}
+  local numberString = nil
+  local characterCodePoint = nil
+  -- Go through the characters one by one, saving character and then the number sequence and after passing it writing out that many characters
+  for p, codePoint in utf8.codes(inputs) do
+    if p > 1 then
+      if codePointIsDigit(codePoint) then 
+        local number = utf8.char(codePoint)
+        if numberString == nil then
+          characterCodePoint = previousCodePoint
+          numberString = ""
+        end
+        numberString = numberString .. number
+      else
+        if numberString ~= nil then
+          if codePointIsParenthesis(characterCodePoint) then
+            inputChunks[#inputChunks+1] = numberString
+          else
+            local character = utf8.char(characterCodePoint)
+            local repeatCount = tonumber(numberString)
+            inputChunks[#inputChunks+1] = string.rep(character, repeatCount)
+          end
+          numberString = nil
+        end
+        if previousCodePoint == codePoint then
+          -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
+          return inputs
+        else
+          -- Nothing to do yet
+        end
       end
     end
-    return table.concat(inputChunks)
+    previousCodePoint = codePoint
   end
+
+  local result
+  if numberString ~= nil then
+    local character = utf8.char(characterCodePoint)
+    local repeatCount = tonumber(numberString)
+    inputChunks[#inputChunks+1] = string.rep(character, repeatCount)
+    result = table.concat(inputChunks)
+  else
+    -- We never encountered a single number, this string wasn't compressed
+    result = inputs
+  end
+  return result
 end
 
 function dump(o, includeNewLines)
@@ -285,9 +337,9 @@ end
 
 function json.isValid(str)
   local content = trim(str)
-  local length = string.len(content)
-  local firstChar = string.sub(content, 1, 1)
-  local lastChar = string.sub(content, length, length)
+  local length = utf8.len(content)
+  local firstChar = utf8.sub(content, 1, 1)
+  local lastChar = utf8.sub(content, length, length)
   -- early quit condition for clearly non-matching files
   if not table.contains({"{", "["}, firstChar) or not table.contains({"}", "]"}, lastChar) then
     return false
@@ -354,8 +406,9 @@ end
 
 function string.toCharTable(self)
   local t = {}
-  for field in self:gmatch(".") do
-    t[#t+1] = field
+  for _, codePoint in utf8.codes(self) do
+    local character = utf8.char(codePoint)
+    t[#t+1] = character
   end
   return t
 end

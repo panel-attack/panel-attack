@@ -1,61 +1,24 @@
 
 local logger = require("logger")
-
-local function recordReplayRunSpeed(path)
-        
-    GAME.muteSoundEffects = true
-
-    Replay.loadFromPath(path)
-    Replay.loadFromFile(replay)
-
-    assert(GAME ~= nil)
-    assert(GAME.match ~= nil)
-    assert(GAME.match.P1 ~= nil)
-    assert(GAME.match.P2 ~= nil)
-
-    local match = GAME.match
-    local player1 = GAME.match.P1
-    local player2 = GAME.match.P2
-
-    local startTime = love.timer.getTime()
-
-    local matchOutcome = match.battleRoom:matchOutcome()
-    while matchOutcome == nil do
-        -- local time1 = love.timer.getTime()
-        match:run()
-        -- local time2 = love.timer.getTime()
-        -- print("Run " .. player1.CLOCK .. " took " .. time2 - time1)
-        -- local garbage = collectgarbage("count")
-        -- print("Memory " .. garbage)
-        matchOutcome = match.battleRoom:matchOutcome()
-    end
-    local endTime = love.timer.getTime()
-
-    reset_filters()
-    stop_the_music()
-    replay = {}
-    GAME:clearMatch()
-    return endTime - startTime
-end
+local utf8 = require("utf8Additions")
+local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 
 local function testReplayPerformanceWithPath(path)
   local runCount = 3
   local totalTime = 0
   for i = 1, runCount, 1 do
     collectgarbage("collect")
-    local time = recordReplayRunSpeed(path)
+    local _, time = StackReplayTestingUtils:simulateReplayWithPath(path)
 
     totalTime = totalTime + time
     logger.warn("Run " .. i .. " took " .. time)
-    --local garbage = collectgarbage("count")
-    --logger.warn("Memory " .. garbage)
   end
 
   logger.warn("Total Time: " .. round(totalTime / runCount, 5))
 end
 
 testReplayPerformanceWithPath("tests/replays/v046-2022-06-04-19-06-21-Hekato-L8-vs-CoreyBLD-L8-Casual-draw.txt")
-testReplayPerformanceWithPath("tests/replays/10min-v046-2022-07-25-00-23-46-Geminorum-L10-vs-Zyza-L10-Casual-P1wins.txt")
+--testReplayPerformanceWithPath("tests/replays/10min-v046-2022-07-25-00-23-46-Geminorum-L10-vs-Zyza-L10-Casual-P1wins.txt")
 
 -- performance comparison between string usage and table concat for singleplayer
 -- simulated for one minute without restorefromrollbackcopy and debugmode off
@@ -69,8 +32,8 @@ local function testPerformanceString(seconds)
   for i = 1, loopCount do
     local time = love.timer.getTime()
     -- check in send_controls
-    local len1 = string.len(confirmedInputsP1)
-    local len2 = string.len(confirmedInputsP1)
+    local len1 = utf8.len(confirmedInputsP1)
+    local len2 = utf8.len(confirmedInputsP1)
     -- receiveConfirmedInput, called in send_controls
     confirmedInputsP1 = confirmedInputsP1 .. "A"
     local loopTime = love.timer.getTime() - time
@@ -121,7 +84,7 @@ local function testPerformanceTableStringLen(seconds)
     local len2 = #confirmedInputsP1
     -- receiveConfirmedInput, called in send_controls
     local input = "A"
-    if string.len(input) == 1 then
+    if utf8.len(input) == 1 then
       confirmedInputsP1[#confirmedInputsP1+1] = input
     else
       local inputs = string.toCharTable(input)
