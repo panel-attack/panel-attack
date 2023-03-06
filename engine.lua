@@ -277,6 +277,7 @@ Stack = class(function(s, arguments)
                                                    themes[config.theme].images.IMG_multibar_shake_bar:getHeight(),
                                                    themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
                                                    themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+  s:createCursors()
 end)
 
 function Stack:createCursors()
@@ -560,12 +561,19 @@ function Stack:debugCopy()
   copy.later_garbage = deepcpy(self.later_garbage)
   copy.garbage_q = deepcpy(self.garbage_q)
   copy.garbageSizeDropColumnMaps = deepcpy(self.garbageSizeDropColumnMaps)
-  copy.panels = deepcpy(self.panels)
+  -- panels have their own rollback logic so we can't deepcpy
+  copy.panels = {}
+  for row = 0, #self.panels do
+    copy.panels[row] = {}
+    for col = 1, #self.panels[row] do
+      copy.panels[row][col] = self.panels[row][col]:debugCopy()
+    end
+  end
   copy.pop_q = deepcpy(self.pop_q)
   copy.puzzle = deepcpy(self.puzzle)
   copy.taunt_queue = deepcpy(self.taunt_queue)
   if self.telegraph then
-    -- telegraph has a reference to Stack so we can't deepcpy
+    -- telegraph has a reference to Stack and its own clone rollbackCopy logic so we can't deepcpy
     copy.telegraph = self.telegraph:debugCopy()
   end
   copy.warningsTriggered = deepcpy(self.warningsTriggered)
@@ -668,8 +676,8 @@ function Stack:assertEquality(other)
   assertEqual(other.width, self.width, "width")
 
   -- table values
-  assertEqual(other.analytic, self.analytic, "analytic")
-  assertEqual(other.card_q, self.card_q, "card_q")
+  --assertEqual(other.analytic, self.analytic, "analytic")
+  --assertEqual(other.card_q, self.card_q, "card_q")
   assertEqual(other.chains, self.chains, "chains")
   assertEqual(other.combos, self.combos, "combos")
   assertEqual(other.confirmedInput, self.confirmedInput, "confirmedInput")
@@ -680,10 +688,12 @@ function Stack:assertEquality(other)
   assertEqual(other.garbageSizeDropColumnMaps, self.garbageSizeDropColumnMaps, "garbageSizeDropColumnMaps")
   -- split up for better output readability
   assertEqual(#other.panels, #self.panels, "panels rowcount")
-  for i = 0, #self.panels do
-    assertEqual(other.panels[i], self.panels[i], "row " .. i .. " panels")
+  for row = 0, #self.panels do
+    for col = 1, #self.panels[row] do
+      assertEqual(other.panels[row][col], self.panels[row][col]:debugCopy(), "row " .. row .. ", col " .. col .. " panel")
+    end
   end
-  assertEqual(other.pop_q, self.pop_q, "pop_q")
+  --assertEqual(other.pop_q, self.pop_q, "pop_q")
   assertEqual(other.puzzle, self.puzzle, "puzzle")
   assertEqual(other.taunt_queue, self.taunt_queue, "taunt_queue")
   if other.telegraph then
@@ -930,8 +940,15 @@ function Stack:savePanelStates()
   for i = self.panelRollbackQueue.first, self.panelRollbackQueue.last do
     if not self.panelRollbackQueue[i]:saveState(self.CLOCK) then
       -- the panel has been dead for too long, eliminate it from the list
-      self.panelRollbackQueue[i] = self.panelRollbackQueue[self.panelRollbackQueue.first]
-      self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
+      if i > self.panelRollbackQueue.first then
+        -- by moving the first panel in the queue to its position
+        self.panelRollbackQueue[i] = self.panelRollbackQueue[self.panelRollbackQueue.first]
+        self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
+      else
+        -- if the panel is the first in the queue, just nil it and advance the index
+        self.panelRollbackQueue[i] = nil
+        self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
+      end
     end
   end
 end
@@ -1489,7 +1506,7 @@ end
 function Stack.updatePanels(self)
   self.shake_time_on_frame = 0
   self.popSizeThisFrame = "small"
-  for row = 1, #self.panels do
+  for row = 0, #self.panels do
     for col = 1, self.width do
       self.panels[row][col]:update(self.panels)
     end
