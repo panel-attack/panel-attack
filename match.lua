@@ -7,6 +7,7 @@ Match =
     self.P1 = nil
     self.P2 = nil
     self.attackEngine = nil
+    self.engineVersion = VERSION
     self.mode = mode
     assert(mode ~= "vs" or battleRoom)
     self.battleRoom = battleRoom
