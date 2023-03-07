@@ -1,4 +1,5 @@
-You can also find this file with prettier formatting at https://github.com/panel-attack/panel-attack/blob/beta/readme_characters.md  
+You can also find this file with prettier formatting at  
+https://github.com/panel-attack/panel-attack/blob/beta/readme_characters.md  
 
 This README consists of 3 parts.  
 In part 1 some general thoughts on character creation are discussed.  
@@ -542,19 +543,5 @@ In the general thoughts on resolution, targetting a window size of 2560x1440 was
 Ultimately though, on a 1280x720 window, a 1280x720 background will look best as it doesn't have to through any scaling before display.  
 However, there is a relatively simple solution:  
 Simply provide the same asset in multiple resolutions!  
-As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.
-
-### Understanding the naming convention
-
-Internally, Panel Attack draws on a 1280x720 canvas that is then scaled to fit the game window (depending on configuration).  
-So intuitively one would think that a higher resolution asset would get scaled down to fit the canvas and then scaled up to fit a higher resolution window.  
-That is not the case however, there is some magic that allows the game to realize that it doesn't have to scale:   
-The magic of conventions.  
-A 1280x720 background on the canvas would be the normal case, it fits exactly, its "scale factor" is 1.
-A 2560x1440 background on the canvas would have a scale factor of 2 in comparison to the canvas.  
-A 3840x2160 background on the canvas would have a scale factor of 3 in comparison to the canvas.  
-When having multiple resolutions, you can tell Panel Attack about the scale factor by appending
-"@scaleFactorx" to the file name.  
-So in the case of a 2560x1440 background for the main menu, you can name the file "main@2x.png" while having a 1280x720 version just called "main.png".  
-Depending on the resolution of the user, Panel Attack will automatically pick the more background with the better fitting resolution.  
-(Note that this only works with even numbered)
+As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.  
+To do that, you provide the normal asset with the recommended size with a @2x at the end, and you provide a half resolution one with an @1x at the end. 
