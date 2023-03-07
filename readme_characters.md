@@ -52,9 +52,9 @@ The strongest noticeable elements of a character are:
 
 This should be relatively easy for most custom characters.  
 Do a wallpaper search for your character and then cut out your character in the correct aspect ratio.  
-If it is smaller than the recommended size do NOT scale it up inside the image editor.  
-If you want to try to match the recommended size without losing quality by upscaling, you can try to use AI supported solutions such as https://waifu2x.io  
-These will use much more complex and intelligent strategies to fill in for the information that isn't there in the lower res version than your image editor of choice ever can!
+If it is smaller than the recommended size do not scale it up inside the image editor.  
+Scaling up forces your image editing program to come up with pixels that weren't there before, usually resulting in noticeable quality loss.  
+If Panel Attack then scales your image again, it can look quite poor compared to if Panel Attack can scale the original version directly
 
 #### Character icon
 
@@ -79,7 +79,7 @@ Many mods won't even have face2 and some may not have filler1 or filler2.
 Draw over whatever icon/symbol the other mod used with the background color to clear them up.  
 And now paste your own symbol on top for face and doubleface! How?  
 You can find a lot of assets with transparent backgrounds online that fit this purpose.  
-There are dedicated websites like https://www.spriters-resource.com that aggregate graphic assets of games you can use.  
+There are various dedicated websites that aggregate graphic assets of games you can use.  
 If you're not successful there, search the internet for the respective character/series/game/franchise you want with keywords like "png", "transparent background", "icon" and you should find something satisfying popping up.  
 
 For the fillers, you can follow the same approach but often something more subtle or even leaving them with only with the background color works better than choosing another flashy icon.
@@ -425,7 +425,7 @@ Recommended size: 168x168px
 #### "burst" or "fade"
 
 The image atlas used for PopFX.  
-The image should be 9 equal sized frames in a row, first frame is the telegraph, frames 2 to 9 are the burst or fade animation.  
+The image should be 9 equal sized frames in a row, the first frame is currently unused, frames 2 to 9 are the burst or fade animation.  
 
 Aspect ratio of each individual frame: 1:1 (square)
 Recommended size per frame: 32x32px
