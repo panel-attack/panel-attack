@@ -301,7 +301,7 @@ I vaguely remember there was something wrong with this documentation, so I'm lea
 
 ## Graphic assets
 
-You may use .png or .jpg for these.
+You may use .png or .jpg/.jpeg for these.
 .gif files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.
 
 Assets will get scaled and stretched if they don't match the recommended size or aspect ratio.  
@@ -545,3 +545,17 @@ However, there is a relatively simple solution:
 Simply provide the same asset in multiple resolutions!  
 As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.  
 To do that, you provide the normal asset with the recommended size with a @2x at the end, and you provide a half resolution one with an @1x at the end. 
+
+# Common issues
+
+## Panel Attack doesn't show a certain sprite / play a certain SFX
+
+Mod files are strictly case sensitive.  
+They should always be written in full lower case, including the extension.  
+While a mod that varies capitalization in filenames may work fine on Windows, it won't display correctly on Linux/Unix systems.  
+
+## Character X is too loud/quiet!
+
+As mods are created by the community it is difficult to enforce a standard for volumes of music and SFX.  
+A general recommendation for volume of music and voice lines is to normalize the track and then reduce its volume by 6dB.  
+An option to adjust volume by character in Panel Attack itself does currently not exist
