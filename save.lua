@@ -52,44 +52,6 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
 end
 
--- writes a replay file of the given path and filename
-function write_replay_file(path, filename)
-  assert(path ~= nil)
-  assert(filename ~= nil)
-  pcall(
-    function()
-      love.filesystem.createDirectory(path)
-      local file = love.filesystem.newFile(path .. "/" .. filename)
-      set_replay_browser_path(path)
-      file:open("w")
-      logger.debug("Writing to Replay File")
-      if replay.puzzle then
-        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
-        logger.debug("Compressed puzzle in_buf")
-        logger.debug(replay.puzzle.in_buf)
-      else
-        logger.debug("No Puzzle")
-      end
-      if replay.endless then
-        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
-        logger.debug("Compressed endless in_buf")
-        logger.debug(replay.endless.in_buf)
-      else
-        logger.debug("No Endless")
-      end
-      if replay.vs then
-        replay.vs.I = compress_input_string(replay.vs.I)
-        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
-        logger.debug("Compressed vs I/in_buf")
-      else
-        logger.debug("No vs")
-      end
-      file:write(json.encode(replay))
-      file:close()
-    end
-  )
-end
-
 -- writes to the "user_id.txt" file of the directory of the connected ip
 function write_user_id_file()
   pcall(

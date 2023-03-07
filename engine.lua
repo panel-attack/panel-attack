@@ -36,7 +36,10 @@ Stack =
     local difficulty = arguments.difficulty
     local speed = arguments.speed
     local player_number = arguments.player_number or which
-    local wantsCanvas = arguments.wantsCanvas or 1
+    local wantsCanvas = arguments.wantsCanvas
+    if wantsCanvas == nil then
+      wantsCanvas = true
+    end
     local character = arguments.character or config.character
 
     s.match = match

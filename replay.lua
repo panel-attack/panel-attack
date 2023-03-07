@@ -1,4 +1,5 @@
 local utf8 = require("utf8Additions")
+local logger = require("logger")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -119,6 +120,145 @@ function Replay.loadFromFile(replay)
   if P2 then
     P2:starting_state()
   end
+end
+
+
+local function addReplayStatisticsToReplay(replay)
+  local r = replay[GAME.match.mode]
+  r.duration = GAME.match:gameEndedClockTime()
+  if GAME.match.mode == "vs" and P2 then
+    r.match_type = match_type
+    local p1GameResult = P1:gameResult()
+    if p1GameResult == 1 then
+      r.winner = P1.which
+    elseif p1GameResult == -1 then
+      r.winner = P2.which
+    elseif p1GameResult == 0 then
+      r.winner = 0
+    end
+  end
+  r.playerStats = {}
+  
+  if P1 then
+    r.playerStats[P1.which] = {}
+    r.playerStats[P1.which].number = P1.which
+    r.playerStats[P1.which] = P1.analytic.data
+    r.playerStats[P1.which].score = P1.score
+    if GAME.match.mode == "vs" and GAME.match.room_ratings then
+      r.playerStats[P1.which].rating = GAME.match.room_ratings[P1.which]
+    end
+  end
+
+  if P2 then
+    r.playerStats[P2.which] = {}
+    r.playerStats[P2.which].number = P2.which
+    r.playerStats[P2.which] = P2.analytic.data
+    r.playerStats[P2.which].score = P2.score
+    if GAME.match.mode == "vs" and GAME.match.room_ratings then
+      r.playerStats[P2.which].rating = GAME.match.room_ratings[P2.which]
+    end
+  end
+
+  return replay
+end
+
+function Replay.finalizeAndWriteReplay(extraPath, extraFilename)
+  replay = addReplayStatisticsToReplay(replay)
+  replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
+  replay[GAME.match.mode].stage = current_stage
+
+  local now = os.date("*t", to_UTC(os.time()))
+  local sep = "/"
+  local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+  if extraPath then
+    path = path .. sep .. extraPath
+  end
+  local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+  if extraFilename then
+    filename = filename .. "-" .. extraFilename
+  end
+  filename = filename .. ".json"
+  logger.debug("saving replay as " .. path .. sep .. filename)
+  Replay.write_replay_file(path, filename)
+end
+
+function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
+
+  incompleteGame = incompleteGame or false
+  
+  local extraPath, extraFilename = "", ""
+
+  if GAME.match:warningOccurred() then
+    extraFilename = extraFilename .. "-WARNING-OCCURRED"
+  end
+
+  if P2 then
+    replay[GAME.match.mode].I = table.concat(P2.confirmedInput)
+
+    local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
+    --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
+    if rep_b_name < rep_a_name then
+      extraPath = rep_b_name .. "-vs-" .. rep_a_name
+    else
+      extraPath = rep_a_name .. "-vs-" .. rep_b_name
+    end
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
+    if match_type and match_type ~= "" then
+      extraFilename = extraFilename .. "-" .. match_type
+    end
+    if incompleteGame then
+      extraFilename = extraFilename .. "-INCOMPLETE"
+    else
+      if outcome_claim == 1 or outcome_claim == 2 then
+        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
+      elseif outcome_claim == 0 then
+        extraFilename = extraFilename .. "-draw"
+      end
+    end
+  else -- vs Self
+    extraPath = "Vs Self"
+    extraFilename = extraFilename .. "vsSelf-" .. "L" .. P1.level
+  end
+
+  Replay.finalizeAndWriteReplay(extraPath, extraFilename)
+end
+
+-- writes a replay file of the given path and filename
+function Replay.write_replay_file(path, filename)
+  assert(path ~= nil)
+  assert(filename ~= nil)
+  pcall(
+    function()
+      love.filesystem.createDirectory(path)
+      local file = love.filesystem.newFile(path .. "/" .. filename)
+      set_replay_browser_path(path)
+      file:open("w")
+      logger.debug("Writing to Replay File")
+      if replay.puzzle then
+        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
+        logger.debug("Compressed puzzle in_buf")
+        logger.debug(replay.puzzle.in_buf)
+      else
+        logger.debug("No Puzzle")
+      end
+      if replay.endless then
+        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
+        logger.debug("Compressed endless in_buf")
+        logger.debug(replay.endless.in_buf)
+      else
+        logger.debug("No Endless")
+      end
+      if replay.vs then
+        replay.vs.I = compress_input_string(replay.vs.I)
+        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
+        logger.debug("Compressed vs I/in_buf")
+      else
+        logger.debug("No vs")
+      end
+      file:write(json.encode(replay))
+      file:close()
+    end
+  )
 end
 
 return Replay
