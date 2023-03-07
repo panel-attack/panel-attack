@@ -9,7 +9,7 @@ In part 2 you can find an exhaustive list of all assets used for theme.
 ## Graphics 
 
 Theme creation is quite different from the creation of other mods.  
-Unlike with characters or stages where you provide assets that will go into one exact spot with one exact resolution, themes don't limit you too much.  
+Unlike with characters or stages where you provide assets that will go into one exact spot with one exact resolution, themes don't limit you much in regards to position and scale of assets.  
 Many files in fact do not have a specific size or aspect ratio but merely a configurable anchor point to place them.  
 Due to this, it is required for theme assets that you specify how big the file is relative to the canvas of 1280x720.  
 
@@ -22,7 +22,7 @@ For this reason the "id" of the theme is always the foldername.
 
 ## Graphic assets
 
-~~ [.png, .jpg] ~~
+[.png, .jpg, .jpeg]
 
 - "background/main", "background/select_screen", "background/readme": backgrounds used in the menus
 - ("background/bg_overlay"), ("background/fg_overlay"): overlays: the first one is on top of the stage's background while the other one is up front
@@ -74,12 +74,12 @@ The value given should be a whole number.
 
 You may override the visible state configured in each character's/stage's configuration by providing respective files that explicitly state the visible mods.
 
-#### characters.txt
+##### characters.txt
 
 If present, only characters listed in this file will show up in character selection.  
 Separate the IDs by new lines.
 
-#### stages.txt
+##### stages.txt
 
 If present, only stages listed in this file will show up in stage selection.  
 Separate the IDs by new lines.
