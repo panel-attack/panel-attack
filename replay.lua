@@ -167,50 +167,53 @@ function Replay.loadFromFile(replay)
 end
 
 
-local function addReplayStatisticsToReplay(replay)
-  local r = replay[GAME.match.mode]
-  r.duration = GAME.match:gameEndedClockTime()
-  if GAME.match.mode == "vs" and P2 then
+local function addReplayStatisticsToReplay(match, replay)
+  local r = replay[match.mode]
+  r.duration = match:gameEndedClockTime()
+  if match.mode == "vs" and match.P2 then
     r.match_type = match_type
-    local p1GameResult = P1:gameResult()
+    local p1GameResult = match.P1:gameResult()
     if p1GameResult == 1 then
-      r.winner = P1.which
+      r.winner = match.P1.which
     elseif p1GameResult == -1 then
-      r.winner = P2.which
+      r.winner = match.P2.which
     elseif p1GameResult == 0 then
       r.winner = 0
     end
   end
   r.playerStats = {}
   
-  if P1 then
-    r.playerStats[P1.which] = {}
-    r.playerStats[P1.which].number = P1.which
-    r.playerStats[P1.which] = P1.analytic.data
-    r.playerStats[P1.which].score = P1.score
-    if GAME.match.mode == "vs" and GAME.match.room_ratings then
-      r.playerStats[P1.which].rating = GAME.match.room_ratings[P1.which]
+  if match.P1 then
+    r.playerStats[match.P1.which] = {}
+    r.playerStats[match.P1.which].number = match.P1.which
+    r.playerStats[match.P1.which] = match.P1.analytic.data
+    r.playerStats[match.P1.which].score = match.P1.score
+    if match.mode == "vs" and match.room_ratings then
+      r.playerStats[match.P1.which].rating = match.room_ratings[match.P1.which]
     end
   end
 
-  if P2 then
+  if match.P2 then
     r.playerStats[P2.which] = {}
     r.playerStats[P2.which].number = P2.which
     r.playerStats[P2.which] = P2.analytic.data
     r.playerStats[P2.which].score = P2.score
-    if GAME.match.mode == "vs" and GAME.match.room_ratings then
-      r.playerStats[P2.which].rating = GAME.match.room_ratings[P2.which]
+    if match.mode == "vs" and match.room_ratings then
+      r.playerStats[P2.which].rating = match.room_ratings[P2.which]
     end
   end
 
   return replay
 end
 
-function Replay.finalizeAndWriteReplay(extraPath, extraFilename)
-  replay = addReplayStatisticsToReplay(replay)
-  replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
-  replay[GAME.match.mode].stage = current_stage
+function Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)
+  Replay.finalizeReplay(match, replay)
+  local path, filename = Replay.finalReplayFilename(extraPath, extraFilename)
+  local replayJSON = json.encode(replay)
+  Replay.write_replay_file(path, filename, replayJSON)
+end
 
+function Replay.finalReplayFilename(extraPath, extraFilename)
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
   local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
@@ -223,22 +226,30 @@ function Replay.finalizeAndWriteReplay(extraPath, extraFilename)
   end
   filename = filename .. ".json"
   logger.debug("saving replay as " .. path .. sep .. filename)
-  Replay.write_replay_file(path, filename)
+  return path, filename
 end
 
-function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
+function Replay.finalizeReplay(match, replay)
+  replay = addReplayStatisticsToReplay(match, replay)
+  replay[match.mode].in_buf = table.concat(match.P1.confirmedInput)
+  replay[match.mode].stage = current_stage
+  if P2 then
+    replay[match.mode].I = table.concat(P2.confirmedInput)
+  end
+  Replay.compressReplay(replay)
+end
+
+function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame, match, replay)
 
   incompleteGame = incompleteGame or false
   
   local extraPath, extraFilename = "", ""
 
-  if GAME.match:warningOccurred() then
+  if match:warningOccurred() then
     extraFilename = extraFilename .. "-WARNING-OCCURRED"
   end
 
   if P2 then
-    replay[GAME.match.mode].I = table.concat(P2.confirmedInput)
-
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
     if rep_b_name < rep_a_name then
@@ -264,42 +275,39 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     extraFilename = extraFilename .. "vsSelf-" .. "L" .. P1.level
   end
 
-  Replay.finalizeAndWriteReplay(extraPath, extraFilename)
+  Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)
+end
+
+function Replay.compressReplay(replay)
+  if replay.puzzle then
+    replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
+    logger.debug("Compressed puzzle in_buf")
+    logger.debug(replay.puzzle.in_buf)
+  end
+  if replay.endless then
+    replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
+    logger.debug("Compressed endless in_buf")
+    logger.debug(replay.endless.in_buf)
+  end
+  if replay.vs then
+    replay.vs.I = compress_input_string(replay.vs.I)
+    replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
+    logger.debug("Compressed vs I/in_buf")
+  end
 end
 
 -- writes a replay file of the given path and filename
-function Replay.write_replay_file(path, filename)
+function Replay.write_replay_file(path, filename, replayJSON)
   assert(path ~= nil)
   assert(filename ~= nil)
+  assert(replayJSON ~= nil)
   pcall(
     function()
       love.filesystem.createDirectory(path)
       local file = love.filesystem.newFile(path .. "/" .. filename)
       set_replay_browser_path(path)
       file:open("w")
-      logger.debug("Writing to Replay File")
-      if replay.puzzle then
-        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
-        logger.debug("Compressed puzzle in_buf")
-        logger.debug(replay.puzzle.in_buf)
-      else
-        logger.debug("No Puzzle")
-      end
-      if replay.endless then
-        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
-        logger.debug("Compressed endless in_buf")
-        logger.debug(replay.endless.in_buf)
-      else
-        logger.debug("No Endless")
-      end
-      if replay.vs then
-        replay.vs.I = compress_input_string(replay.vs.I)
-        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
-        logger.debug("Compressed vs I/in_buf")
-      else
-        logger.debug("No vs")
-      end
-      file:write(json.encode(replay))
+      file:write(replayJSON)
       file:close()
     end
   )
