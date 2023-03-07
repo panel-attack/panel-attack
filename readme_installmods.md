@@ -1,4 +1,5 @@
-You can also find this file with prettier formatting at https://github.com/panel-attack/panel-attack/blob/beta/readme_installmods.md  
+You can also find this file with prettier formatting at 
+https://github.com/panel-attack/panel-attack/blob/beta/readme_installmods.md  
 A video explanation is available at https://youtu.be/_SA1UeLwnSE
 
 # How to install a mod
@@ -11,7 +12,8 @@ Puzzles, training mode files and replays.
 ## Step 1: Find your Panel Attack user data folder 
 
 Panel Attack saves most of its data in (somewhat hidden) user data folder so that multiple users of the same PC don't interfere with each other.  
-Depending on your operating system the location is different:  
+Depending on your operating system the location is different.  
+You can always find out about the save location by going to Options -> About -> System Info 
 
 ### Windows
 
@@ -37,6 +39,17 @@ Depending on whether your $XDG_DATA_HOME environment variable is set or not, the
 
 Note that running a panel.exe through wine and running a panel.love through a native love installation on the same machine may result in different save locations.
 
+### Android
+
+Android is a special case as it is very protective of its internal data and usually does not let users edit the Panel Attack save directory on non-rooted devices.  
+That save data usually looks like this:
+  /data/data/org.love2d.android/files/save/  
+
+In early 2023 we changed Panel Attack to save its data in external (user-visible) storage:
+  /Android/data/org.love2d.android/files/save/
+
+This automatically applies for new installations but old installations may go through a migration process.  
+Please ask in the discord for help with this.
 
 ## Step 2: Unpacking your mod and understanding where it belongs
 

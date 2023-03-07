@@ -1,4 +1,5 @@
-You can also find this file with prettier formatting at https://github.com/panel-attack/panel-attack/blob/beta/readme_characters.md  
+You can also find this file with prettier formatting at  
+https://github.com/panel-attack/panel-attack/blob/beta/readme_characters.md  
 
 This README consists of 3 parts.  
 In part 1 some general thoughts on character creation are discussed.  
@@ -52,9 +53,9 @@ The strongest noticeable elements of a character are:
 
 This should be relatively easy for most custom characters.  
 Do a wallpaper search for your character and then cut out your character in the correct aspect ratio.  
-If it is smaller than the recommended size do NOT scale it up inside the image editor.  
-If you want to try to match the recommended size without losing quality by upscaling, you can try to use AI supported solutions such as https://waifu2x.io  
-These will use much more complex and intelligent strategies to fill in for the information that isn't there in the lower res version than your image editor of choice ever can!
+If it is smaller than the recommended size do not scale it up inside the image editor.  
+Scaling up forces your image editing program to come up with pixels that weren't there before, usually resulting in noticeable quality loss.  
+If Panel Attack then scales your image again, it can look quite poor compared to if Panel Attack can scale the original version directly
 
 #### Character icon
 
@@ -70,7 +71,7 @@ There is a reasonable low-effort way around truly having to deal with it:
 Look through other characters.  
 Pick one that has a fitting color + border for your character.  
 Copy its garbage assets to your character!  
-The borders are the most annoying part and now you don't have to them anymore!
+The borders are the most annoying part and now you don't have to do them anymore!
 
 ##### Personalising the garbage!
 
@@ -79,7 +80,7 @@ Many mods won't even have face2 and some may not have filler1 or filler2.
 Draw over whatever icon/symbol the other mod used with the background color to clear them up.  
 And now paste your own symbol on top for face and doubleface! How?  
 You can find a lot of assets with transparent backgrounds online that fit this purpose.  
-There are dedicated websites like https://www.spriters-resource.com that aggregate graphic assets of games you can use.  
+There are various dedicated websites that aggregate graphic assets of games you can use.  
 If you're not successful there, search the internet for the respective character/series/game/franchise you want with keywords like "png", "transparent background", "icon" and you should find something satisfying popping up.  
 
 For the fillers, you can follow the same approach but often something more subtle or even leaving them with only with the background color works better than choosing another flashy icon.
@@ -300,7 +301,7 @@ I vaguely remember there was something wrong with this documentation, so I'm lea
 
 ## Graphic assets
 
-You may use .png or .jpg for these.
+You may use .png or .jpg/.jpeg for these.
 .gif files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.
 
 Assets will get scaled and stretched if they don't match the recommended size or aspect ratio.  
@@ -425,7 +426,7 @@ Recommended size: 168x168px
 #### "burst" or "fade"
 
 The image atlas used for PopFX.  
-The image should be 9 equal sized frames in a row, first frame is the telegraph, frames 2 to 9 are the burst or fade animation.  
+The image should be 9 equal sized frames in a row, the first frame is currently unused, frames 2 to 9 are the burst or fade animation.  
 
 Aspect ratio of each individual frame: 1:1 (square)
 Recommended size per frame: 32x32px
@@ -542,19 +543,19 @@ In the general thoughts on resolution, targetting a window size of 2560x1440 was
 Ultimately though, on a 1280x720 window, a 1280x720 background will look best as it doesn't have to through any scaling before display.  
 However, there is a relatively simple solution:  
 Simply provide the same asset in multiple resolutions!  
-As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.
+As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.  
+To do that, you provide the normal asset with the recommended size with a @2x at the end, and you provide a half resolution one with an @1x at the end. 
 
-### Understanding the naming convention
+# Common issues
 
-Internally, Panel Attack draws on a 1280x720 canvas that is then scaled to fit the game window (depending on configuration).  
-So intuitively one would think that a higher resolution asset would get scaled down to fit the canvas and then scaled up to fit a higher resolution window.  
-That is not the case however, there is some magic that allows the game to realize that it doesn't have to scale:   
-The magic of conventions.  
-A 1280x720 background on the canvas would be the normal case, it fits exactly, its "scale factor" is 1.
-A 2560x1440 background on the canvas would have a scale factor of 2 in comparison to the canvas.  
-A 3840x2160 background on the canvas would have a scale factor of 3 in comparison to the canvas.  
-When having multiple resolutions, you can tell Panel Attack about the scale factor by appending
-"@scaleFactorx" to the file name.  
-So in the case of a 2560x1440 background for the main menu, you can name the file "main@2x.png" while having a 1280x720 version just called "main.png".  
-Depending on the resolution of the user, Panel Attack will automatically pick the more background with the better fitting resolution.  
-(Note that this only works with even numbered)
+## Panel Attack doesn't show a certain sprite / play a certain SFX
+
+Mod files are strictly case sensitive.  
+They should always be written in full lower case, including the extension.  
+While a mod that varies capitalization in filenames may work fine on Windows, it won't display correctly on Linux/Unix systems.  
+
+## Character X is too loud/quiet!
+
+As mods are created by the community it is difficult to enforce a standard for volumes of music and SFX.  
+A general recommendation for volume of music and voice lines is to normalize the track and then reduce its volume by 6dB.  
+An option to adjust volume by character in Panel Attack itself does currently not exist.
