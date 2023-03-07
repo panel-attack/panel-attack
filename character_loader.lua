@@ -139,6 +139,10 @@ end
 
 -- Initializes the characters globals with data
 function characters_init()
+  characters = {} -- holds all characters, most of them will not be fully loaded
+  characters_ids = {} -- holds all characters ids
+  characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
+  characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
   add_characters_from_dir_rec("characters")
   fill_characters_ids()
 
@@ -148,8 +152,8 @@ function characters_init()
     fill_characters_ids()
   end
 
-  if love.filesystem.getInfo("themes/" .. config.theme .. "/characters.txt") then
-    for line in love.filesystem.lines("themes/" .. config.theme .. "/characters.txt") do
+  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") then
+    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") do
       line = trim(line) -- remove whitespace
       if characters[line] then
         -- found at least a valid character in a characters.txt file

@@ -1,6 +1,7 @@
 json = require("dkjson")
 require("util")
-require("consts")
+local consts = require("consts")
+require("Theme") -- needed for directory location
 
 -- Default configuration values
 config = {
@@ -10,7 +11,7 @@ config = {
       -- Lang used for localization
     language_code                 = "EN",
   
-    theme                         = default_theme_dir,
+    theme                         = consts.DEFAULT_THEME_DIRECTORY,
     panels                     	  = nil, -- setup later in panel init
     character                     = random_character_special_value,
     stage                         = random_stage_special_value,
@@ -35,6 +36,7 @@ config = {
     music_volume                  = 100,
     -- Debug mode flag
     debug_mode                    = false,
+    debugShowServers              = false,
     -- Show FPS in the top-left corner of the screen
     show_fps                      = false,
     -- Show ingame infos while playing the game
@@ -68,6 +70,7 @@ config = {
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
+    -- inputMethod                 = "touch"
   }
   
   -- writes to the "conf.json" file
@@ -103,7 +106,7 @@ config = {
   
         -- do stuff using read_data.version for retrocompatibility here
   
-        if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme) then
+        if type(read_data.theme) == "string" and love.filesystem.getInfo(Theme.themeDirectoryPath .. read_data.theme .. "/config.json") then
           configTable.theme = read_data.theme
         end
   
@@ -166,6 +169,9 @@ config = {
         end
         if type(read_data.debug_mode) == "boolean" then
           configTable.debug_mode = read_data.debug_mode
+        end
+        if type(read_data.debugShowServers) == "boolean" then
+          configTable.debugShowServers = read_data.debugShowServers
         end
         if type(read_data.show_fps) == "boolean" then
           configTable.show_fps = read_data.show_fps

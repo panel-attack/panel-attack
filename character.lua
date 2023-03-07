@@ -331,7 +331,7 @@ function Character.sound_init(self, full, yields)
         self.musics[music]:setLooping(false)
       end
     elseif not self.musics[music] and defaulted_musics[music] and not self:is_bundle() then
-      self.musics[music] = default_character.musics[music] or zero_sound
+      self.musics[music] = default_character.musics[music] or themes[config.theme].zero_sound
     end
 
     if yields then
@@ -382,11 +382,11 @@ function Character.reassignLegacySfx(self)
     end
     
     self:fillInMissingSounds(self.sounds.chain, "chain", maxIndex)
+  end
 
-    if #self.sounds.shock > 0 then
-      -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
-      self.sounds.combo_echo = nil
-    end
+  if #self.sounds.shock > 0 then
+    -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
+    self.sounds.combo_echo = {}
   end
 end
 
@@ -419,19 +419,23 @@ function Character.loadSfx(self, name, yields)
   for i = 1, #files do
     stringLen = string.len(name)
     local index = tonumber(string.match(files[i], "%d+", stringLen + 1))
-    if index == nil then
-      -- indicates that there is no index, implicit 1
-      index = 1
+
+    -- for files with no suffix at all, index would be nil but they should go in sfx[1] instead
+    local targetIndex = 1
+    if index ~= nil then
+      -- otherwise use the index as normal
+      targetIndex = index
     end
 
+
     if perSizeSfxStart[name] then
-      if sfx[index] == nil then
-        sfx[index] = self:loadSubSfx(name, index)
+      if sfx[targetIndex] == nil then
+        sfx[targetIndex] = self:loadSubSfx(name, index)
       end
     else
       local sound = load_sound_from_supported_extensions(self.path .. "/" .. files[i], false)
       if sound ~= nil then
-        sfx[index] = sound
+        sfx[targetIndex] = sound
       end
 
       if yields then
@@ -439,8 +443,8 @@ function Character.loadSfx(self, name, yields)
       end
     end
 
-    if sfx[index] then
-      maxIndex = math.max(maxIndex, index)
+    if sfx[targetIndex] then
+      maxIndex = math.max(maxIndex, targetIndex)
     end
   end
 
@@ -455,9 +459,9 @@ end
 function Character.loadSubSfx(self, name, index, yields)
   local sfxTable = {}
 
-  if index == 1 then
-    -- index 1 is implicit, e.g. chain, chain_2, chain2, chain2_2
-    -- so change it to an empty string so it isn't counted towards string length when searching variations
+  if index == nil then
+    -- index 1 can be implicit, e.g. chain, chain_2, chain2, chain2_2 (actually the official spec)
+    -- change it to an empty string so it doesn't crash on concat
     index = ""
   end
   local stringLen = string.len(name..index)
@@ -527,7 +531,7 @@ end
 local function playRandomSfx(sfxTable, fallback)
   if not GAME.muteSoundEffects then
     if sfxTable and #sfxTable > 0 then
-      sfxTable[math.random(#sfxTable)]:play()
+      table.getRandomElement(sfxTable):play()
     elseif fallback then
       playRandomSfx(fallback)
     end
@@ -590,14 +594,18 @@ function Character.playAttackSfx(self, attack)
         stopIfPlaying(v[i])
       end
     end
-    for i = 1, #self.sounds.combo_echo do
-      stopIfPlaying(self.sounds.combo_echo[i])
-    end
-    for _, v in pairs(self.sounds.shock) do
-      for i = 1, #v do
-        stopIfPlaying(v[i])
+    if table.length(self.sounds.shock) > 0 then
+      for _, v in pairs(self.sounds.shock) do
+        for i = 1, #v do
+          stopIfPlaying(v[i])
+        end
+      end
+    else
+      for i = 1, #self.sounds.combo_echo do
+        stopIfPlaying(self.sounds.combo_echo[i])
       end
     end
+
     for _, v in pairs(self.sounds.chain) do
       for i = 1, #v do
         stopIfPlaying(v[i])
@@ -641,6 +649,7 @@ function Character.playTauntUpSfx(self, tauntUp)
     for _, t in ipairs(self.sounds.taunt_up) do
       stopIfPlaying(t)
     end
+    -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_up[tauntUp] then
       self.sounds.taunt_up[tauntUp]:play()
     else
@@ -649,17 +658,26 @@ function Character.playTauntUpSfx(self, tauntUp)
   end
 end
 
--- tauntDown is rolled externally in order to send the exact same taunt index to the enemy as plays locally
 function Character.playTauntDownSfx(self, tauntDown)
   if #self.sounds.taunt_down ~= 0 then
     for _, t in ipairs(self.sounds.taunt_down) do
       stopIfPlaying(t)
     end
+    -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_down[tauntDown] then
       self.sounds.taunt_down[tauntDown]:play()
     else
       playRandomSfx(self.sounds.taunt_down)
     end
+  end
+end
+
+function Character.playTaunt(self, tauntType, index)
+  -- find instead of equals for forward compatibility
+  if string.find(tauntType, "up", nil, true) then
+    self:playTauntUpSfx(index)
+  elseif string.find(tauntType, "down", nil, true) then
+    self:playTauntDownSfx(index)
   end
 end
 

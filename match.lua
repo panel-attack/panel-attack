@@ -7,6 +7,7 @@ Match =
     self.P1 = nil
     self.P2 = nil
     self.attackEngine = nil
+    self.engineVersion = VERSION
     self.mode = mode
     assert(mode ~= "vs" or battleRoom)
     self.battleRoom = battleRoom
@@ -15,8 +16,7 @@ Match =
     self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
-    self.attackEngine = nil
-    self.current_music_is_casual = true 
+    self.current_music_is_casual = true
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
     self.current_music_is_casual = true
@@ -96,26 +96,11 @@ function Match.matchOutcome(self)
   return results
 end
 
-function Match:debugShouldTestRollback()
-  return false -- config.debug_mode
-end
-
-function Match:debugRollbackAndCaptureState()
-
-  if not self:debugShouldTestRollback() then
-    return
-  end
-
-  local rollbackAmount = 50
-
+function Match:debugRollbackAndCaptureState(clockGoal)
   local P1 = self.P1
   local P2 = self.P2
 
-  if P1.CLOCK <= rollbackAmount then
-    return
-  end
-
-  if P1.garbage_target and P1.garbage_target.CLOCK ~= P1.CLOCK then
+  if P1.CLOCK <= clockGoal then
     return
   end
 
@@ -123,10 +108,12 @@ function Match:debugRollbackAndCaptureState()
   if P2 then
     self.savedStackP2 = P2.prev_states[P2.CLOCK]
   end
-  
-  P1:rollbackToFrame(P1.CLOCK - rollbackAmount)
+
+  local rollbackResult = P1:rollbackToFrame(clockGoal)
+  assert(rollbackResult)
   if P2 then
-    P2:rollbackToFrame(P2.CLOCK - rollbackAmount)
+    rollbackResult = P2:rollbackToFrame(clockGoal)
+    assert(rollbackResult)
   end
 end
 
@@ -142,13 +129,11 @@ end
 
 function Match:debugAssertDivergence(stack, savedStack)
 
-  local diverged = false
   for k,v in pairs(savedStack) do
     if type(v) ~= "table" then
       local v2 = stack[k]
       if v ~= v2 then
-        diverged = true
-        logger.error("Stacks have diverged")
+        error("Stacks have diverged")
       end
     end
   end
@@ -157,16 +142,11 @@ function Match:debugAssertDivergence(stack, savedStack)
   local localStackString = Stack.divergenceString(stack)
 
   if savedStackString ~= localStackString then
-    diverged = true
-    logger.error("Stacks have diverged")
+    error("Stacks have diverged")
   end
 end
 
 function Match:debugCheckDivergence()
-
-  if not self:debugShouldTestRollback() then
-    return
-  end
 
   if not self.savedStackP1 or self.savedStackP1.CLOCK ~= self.P1.CLOCK then
     return
@@ -208,8 +188,6 @@ function Match:run()
   if self.P2CPU then
     self.P2CPU:run(P2)
   end
-
-  self:debugRollbackAndCaptureState()
 
   if P1 and P1.is_local and not self.P1CPU and P1:game_ended() == false then
     P1:send_controls()
@@ -526,4 +504,19 @@ function Match.render(self)
     draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
   end
+end
+
+function Match:getInfo()
+  local info = {}
+  info.mode = self.mode
+  info.stage = current_stage
+  info.stacks = {}
+  if P1 then
+    info.stacks[1] = P1:getInfo()
+  end
+  if P2 then
+    info.stacks[2] = P2:getInfo()
+  end
+
+  return info
 end

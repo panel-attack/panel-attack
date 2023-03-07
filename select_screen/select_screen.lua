@@ -485,6 +485,7 @@ function select_screen.initializeFromPlayerConfig(self, playerNumber)
   self.players[playerNumber].character = config.character
   self.players[playerNumber].selectedCharacter = config.character
   self.players[playerNumber].level = config.level
+  self.players[playerNumber].inputMethod = config.inputMethod or "controller"
   self.players[playerNumber].panels_dir = config.panels
   self.players[playerNumber].ready = false
   self.players[playerNumber].ranked = config.ranked
@@ -497,6 +498,7 @@ function select_screen.initializeFromMenuState(self, playerNumber, menuState)
   self.players[playerNumber].character = characters[menuState.character] and menuState.character or nil
   self.players[playerNumber].selectedCharacter = menuState.character_is_random and menuState.character_is_random or menuState.character
   self.players[playerNumber].level = menuState.level
+  self.players[playerNumber].inputMethod = menuState.inputMethod
   self.players[playerNumber].panels_dir = menuState.panels_dir
   self.players[playerNumber].ready = false
   self.players[playerNumber].wants_ready = menuState.wants_ready or false
@@ -544,6 +546,7 @@ function select_screen.updateMyConfig(self)
   config.character = myPlayer.selectedCharacter
   config.stage = myPlayer.selectedStage
   config.level = myPlayer.level
+  config.inputMethod = myPlayer.inputMethod
   config.ranked = myPlayer.ranked
   config.panels = myPlayer.panels_dir
 end
@@ -562,6 +565,7 @@ function select_screen.sendMenuState(self)
   menuState.wants_ready = self.players[self.my_player_number].wants_ready
   menuState.ready = self.players[self.my_player_number].ready
   menuState.level = self.players[self.my_player_number].level
+  menuState.inputMethod = self.players[self.my_player_number].inputMethod
 
   json_send({menu_state = menuState})
 end
@@ -792,10 +796,10 @@ function select_screen.startNetPlayMatch(self, msg)
   if GAME.battleRoom.spectating then
     is_local = false
   end
-  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, character = msg.player_settings.character, player_number = msg.player_settings.player_number}
+  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
   GAME.match.P1 = P1
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
+  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
   GAME.match.P2 = P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
@@ -817,6 +821,8 @@ function select_screen.startNetPlayMatch(self, msg)
     P2.play_to_end = true
   end
 
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+
   -- Proceed to the game screen and start the game
   P1:starting_state()
   P2:starting_state()
@@ -831,9 +837,10 @@ end
 -- returns transition to local vs screen
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match.P1 = P1
-  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
+  --note: local P2 not currently allowed to use "touch" input method
   GAME.match.P2 = P2
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
@@ -850,7 +857,7 @@ end
 -- returns transition to local_vs_yourself screen
 function select_screen.start1pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   if GAME.battleRoom.trainingModeSettings then
     self:initializeAttackEngine()
   end
@@ -862,6 +869,9 @@ function select_screen.start1pLocalMatch(self)
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
+
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+
   P1:starting_state()
   return main_dumb_transition, {main_local_vs_yourself, "", 0, 0}
 end
@@ -881,6 +891,9 @@ function select_screen.start1pCpuMatch(self)
   stage_loader_load(current_stage)
   stage_loader_wait()
   P2:moveForPlayerNumber(2)
+
+  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+
   P1:starting_state()
   P2:starting_state()
   return main_dumb_transition, {main_local_vs, "", 0, 0}
@@ -925,6 +938,13 @@ end
 
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  -- 2p vs local needs to have its input properly divided in select screen already
+  -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
+  -- for all others, the player can hold their decision until game start
+  if not self:isMultiplayer() or self:isNetPlay() then
+    GAME.input:allowAllInputConfigurations()
+  end
+
   self.roomInitializationMessage = roomInitializationMessage
   self:initialize(character_select_mode)
   self:loadThemeAssets()
@@ -934,7 +954,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   self:setInitialCursors()
 
   -- Setup settings for Main Character Select for 2 Player over Network
-  if select_screen:isNetPlay() then
+  if self:isNetPlay() then
     local abort = self:setupForNetPlay()
     if abort then
       -- abort due to connection loss or timeout
@@ -949,6 +969,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
   if self:isMultiplayer() then
     self:setUpOpponentPlayer()
   end
+
   self:refreshReadyStates()
 
   self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
@@ -957,7 +978,7 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
 
   -- Main loop for running the select screen and drawing
   while true do
-    graphics:draw(self)
+    gfx_q:push({graphics.draw, {graphics, self}})
 
     if select_screen:isNetPlay() then
       local leaveRoom = self:handleServerMessages()

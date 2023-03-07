@@ -94,7 +94,9 @@ function Telegraph.rollbackCopy(source, other)
 
   other.garbage_queue = source.garbage_queue:makeCopy()
   other.stoppers = deepcpy(source.stoppers)
-  other.attacks = deepcpy(source.attacks)
+  if config.renderAttacks then
+    other.attacks = deepcpy(source.attacks)
+  end
   other.sender = source.sender
   other.pos_x = source.pos_x
   other.pos_y = source.pos_y
@@ -107,54 +109,48 @@ function Telegraph.rollbackCopy(source, other)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph:push(garbage, attack_origin_col, attack_origin_row, frame_earned)
-
+function Telegraph:push(garbage, attackOriginCol, attackOriginRow, frameEarned)
   assert(self.sender ~= nil and self.owner ~= nil, "telegraph needs owner and sender set")
+  assert(frameEarned == self.sender.CLOCK, "expected sender clock to equal attack")
 
-  local timeAttackInteracts = frame_earned + 1
-  --logger.debug("Player " .. self.sender.which .. " attacked with " .. attack_type .. " at " .. frame_earned)
-
-  assert(frame_earned == self.sender.CLOCK, "expected sender clock to equal attack")
-
-  self:privatePush(garbage, attack_origin_col, attack_origin_row, timeAttackInteracts)
+  -- the attack only starts interacting with the telegraph on the next frame, not the same it was earned
+  self:privatePush(garbage, attackOriginCol, attackOriginRow, frameEarned + 1)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph.privatePush(self, garbage, attack_origin_col, attack_origin_row, timeAttackInteracts)
-  local stuff_to_send
-  if garbage[4] then
-    stuff_to_send = self:grow_chain(timeAttackInteracts)
+function Telegraph.privatePush(self, garbage, attackOriginColumn, attackOriginRow, timeAttackInteracts)
+  local garbageToSend
+  if garbage.isChain then
+    garbageToSend = self:grow_chain(timeAttackInteracts)
   else
     -- get combo_garbage_widths, n_resulting_metal_garbage
-    stuff_to_send = self:add_combo_garbage(garbage, timeAttackInteracts)
-    stuff_to_send = deepcpy(stuff_to_send) -- we don't want to use the same object as in the garbage queue so they don't change each other
+    garbageToSend = self:add_combo_garbage(garbage, timeAttackInteracts)
+    garbageToSend = deepcpy(garbageToSend) -- we don't want to use the same object as in the garbage queue so they don't change each other
   end
-  if not self.attacks[timeAttackInteracts] then
-    self.attacks[timeAttackInteracts] = {}
+  if config.renderAttacks then
+    if not self.attacks[timeAttackInteracts] then
+      self.attacks[timeAttackInteracts] = {}
+    end
+    self.attacks[timeAttackInteracts][#self.attacks[timeAttackInteracts]+1] =
+      {timeAttackInteracts=timeAttackInteracts, origin_col=attackOriginColumn, origin_row= attackOriginRow, stuff_to_send=garbageToSend}
   end
-  self.attacks[timeAttackInteracts][#self.attacks[timeAttackInteracts]+1] =
-    {timeAttackInteracts=timeAttackInteracts, origin_col=attack_origin_col, origin_row= attack_origin_row, stuff_to_send=stuff_to_send}
 end
 
 function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
-  logger.debug("Telegraph.add_combo_garbage "..(garbage[1] or "nil").." "..(garbage[3] and "true" or "false"))
-  local stuff_to_send = {}
-  if garbage[3] and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.mergeComboMetalQueue) then
-    stuff_to_send[#stuff_to_send+1] = {6, 1, true, false, timeAttackInteracts = timeAttackInteracts}
+  logger.debug("Telegraph.add_combo_garbage "..(garbage.width or "nil").." "..(garbage.isMetal and "true" or "false"))
+  local garbageToSend = {}
+  if garbage.isMetal and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.mergeComboMetalQueue) then
+    garbageToSend[#garbageToSend+1] = {6, 1, true, false, timeAttackInteracts = timeAttackInteracts}
     self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   else
-    stuff_to_send[#stuff_to_send+1] = {garbage[1], garbage[2], garbage[3], garbage[4], timeAttackInteracts = timeAttackInteracts}
-    self.stoppers.combo[garbage[1]] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
+    garbageToSend[#garbageToSend+1] = {garbage.width, garbage.height, garbage.isMetal, garbage.isChain, timeAttackInteracts = timeAttackInteracts}
+    self.stoppers.combo[garbage.width] = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   end
-  self.garbage_queue:push(stuff_to_send)
-  return stuff_to_send
-  
+  self.garbage_queue:push(garbageToSend)
+  return garbageToSend
 end
 
 function Telegraph:chainingEnded(frameEnded)
-
-  local timeAttackInteracts = frameEnded + 1
-
   logger.debug("Player " .. self.sender.which .. " chain ended at " .. frameEnded)
 
   if not GAME.battleRoom.trainingModeSettings then
@@ -389,7 +385,6 @@ function Telegraph:render()
   end
 
   if config.renderTelegraph then
-    
     -- Render if we are "currently chaining" for debug purposes
     if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
       draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.pos_y, 0, atk_scale, atk_scale)

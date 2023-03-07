@@ -12,7 +12,14 @@ function love.conf(t)
   t.version = "11.3"                  -- The LÖVE version this game was made for (string)
   t.console = false                   -- Attach a console (boolean, Windows only)
   t.accelerometerjoystick = false     -- Enable the accelerometer on iOS and Android by exposing it as a Joystick (boolean)
-  t.externalstorage = false           -- True to save files (and read from the save directory) in external storage on Android (boolean) 
+  -- is loaded inside the auto updater
+  --- game and auto updater should always start inside the same storage for the config to read and write correctly
+  if UseAndroidExternalStorage ~= nil then
+    t.externalstorage = UseAndroidExternalStorage    -- True to save files (and read from the save directory) in external storage on Android (boolean) 
+  else
+    -- game was started without auto_updater or an outdated auto_updater that isn't external_storage ready
+    t.externalstorage = false
+  end
   t.gammacorrect = false              -- Enable gamma-correct rendering, when supported by the system (boolean)
 
   t.audio.mic = false                 -- Request and use microphone capabilities in Android (boolean)
