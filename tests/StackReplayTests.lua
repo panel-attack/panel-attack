@@ -113,7 +113,7 @@ catchAndSyncTest()
 -- Prior to the touch builds, you couldn't move the cursor before it was in position
 -- Thus we need to make sure we don't allow moving in replays before touch
 local function movingBeforeInPositionDisallowedPriorToTouch()
-  match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-11-23-29-43-Newsy-L8-vs-ilikebeingsmart-L8-Casual-P2wins.txt")
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-11-23-29-43-Newsy-L8-vs-ilikebeingsmart-L8-Casual-P2wins.txt")
 
   StackReplayTestingUtils:simulateMatchUntil(match, 10)
   assert(match ~= nil)

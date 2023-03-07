@@ -8,6 +8,50 @@ class(
     end
   )
 
+function Replay.createNewReplay(match)
+  local mode = match.mode
+  local result = {}
+  result.engineVersion = VERSION
+
+  result[mode] = {}
+  local modeReplay = result[mode]
+
+  modeReplay.seed = match.seed
+
+  if mode == "endless" or mode == "time" then
+    modeReplay.do_countdown = match.P1.do_countdown or false
+    modeReplay.speed = match.P1.speed
+    modeReplay.difficulty = match.P1.difficulty
+    modeReplay.cur_wait_time = match.P1.cur_wait_time or default_input_repeat_delay
+    modeReplay.in_buf = ""
+    modeReplay.inputMethod = match.P1.inputMethod
+  elseif mode == "vs" then
+    modeReplay.P = ""
+    modeReplay.O = ""
+    modeReplay.I = ""
+    modeReplay.Q = ""
+    modeReplay.in_buf = ""
+    modeReplay.P1_level = match.P1.level
+    modeReplay.P1_inputMethod = match.P1.inputMethod
+    modeReplay.P1_name = GAME.battleRoom.playerNames[1]
+    modeReplay.P1_char = match.P1.character
+    modeReplay.P1_char = match.P1.character
+    modeReplay.P1_cur_wait_time = match.P1.cur_wait_time
+    modeReplay.do_countdown = true
+    if match.P2 then
+      modeReplay.P2_level = match.P2.level
+      modeReplay.P2_inputMethod = match.P2.inputMethod
+      modeReplay.P2_name = GAME.battleRoom.playerNames[2]
+      modeReplay.P2_char = match.P2.character
+      modeReplay.P2_cur_wait_time = match.P2.cur_wait_time
+
+      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[match.P1.player_number]
+      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[match.P2.player_number]
+    end
+  end
+  return result
+end
+
 function Replay.replayCanBeViewed(replay)
   if replay.engineVersion >= VERSION_MIN_VIEW and replay.engineVersion <= VERSION then
     if not replay.puzzle then
