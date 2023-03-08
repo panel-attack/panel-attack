@@ -448,9 +448,11 @@ You may override the visible state configured in each character's/stage's config
 ### characters.txt
 
 If present, only characters listed in this file will show up in character selection.  
+Only characters listed in this file will be eligible for random selection.  
 Separate the IDs by new lines.
 
 ##### stages.txt
 
 If present, only stages listed in this file will show up in stage selection.  
+Only stages listed in this file will be eligible for random selection.  
 Separate the IDs by new lines.
