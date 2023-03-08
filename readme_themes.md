@@ -101,6 +101,17 @@ Usually this should be a .png that is transparent in most parts.
 This is drawn on top of everything else!  
 Although usually not necessary you can use it to obstruct certain parts of the game.
 
+#### Pause
+
+The pause image is displayed when pausing the game in single player game modes.  
+Although technically a background, this one does NOT go into the background subdirectory.  
+The image will get scaled down to fit the screen while maintaining aspect ratio if it has a different aspect ratio than 16:9.
+
+### Fonts
+
+`pixel_font_blue.png` is a sprite atlas for a font that is used for displaying 1P records in menus and character selection.  
+While `pixel_font_grey` and `pixel_font_yellow` can also be specified, they currently don't get used by the game.
+
 ### Character selection
 
 #### Flags
@@ -127,16 +138,39 @@ p2_select_screen_cursor2
 In multiplayer, various selection submenus have a marker to show which player the setting belongs to.  
 The image used for this is called p1 or p2 respectively for each player number.
 
-#### Ready Overlays
+#### Button Overlays
 
-"load" will be displayed on top of the player tile if the selected character of the player is still being loaded.
-"ready" will be displayed on top of the player tile when the player has loaded all assets and readied up.
-
+`load` will be displayed on top of the player tile if the selected character of the player is still being loaded.
+`ready` will be displayed on top of the player tile when the player has loaded all assets and readied up.  
+Additionally it used ingame during the countdown.
+`super` will be displayed on top of a character tile when holding the selection key and the character is super selectable.
 
 #### Icons
 
-"random_stage": Thumbnail for random stage selection. See readme_stages for the recommended size.
-"random_character": Icon for random character selection. See readme_characters for the recommended size.
+`random_stage`: Thumbnail for random stage selection. See readme_stages for the recommended size.
+`random_character`: Icon for random character selection. See readme_characters for the recommended size.
+
+#### Level display
+
+Level icons have to be provided inside its own `level` subdirectory.  
+Each level has to provide a focused and unfocused version for the level slider:  
+```
+level1
+level1unfocus
+level2
+level2unfocus
+etc...
+level10
+level10unfocus
+level11
+level11unfocus
+```
+
+Additionally an extra `level_cursor` image is being used for the selection process.
+
+
+-----------------------------------------------------------
+
 
 ### Ingame
 
@@ -352,12 +386,20 @@ Configuration:
 "move_Pos": [40, 34],
 ```
 
-#### Pause
+#### Fallback PopFX
 
-The pause image is displayed when pausing the game in single player game modes.  
-Although technically a background, this one does NOT go into the background subdirectory.  
-The image will get scaled down to fit the screen while maintaining aspect ratio if it has a different aspect ratio than 16:9.
+A theme should provide a fallback for the `burst` and `fade` PopFX sprites for display in case the selected character does not provide them.  
 
+#### Analytics
+
+If analytics are enabled, several icon graphics will be shown to the side of each stack.  
+Some of them are derived from character or other theme assets but some are specific for analytics.  
+All icons get scaled for quadratic display
+
+`GPM` for garbage per minute icon
+`APM` for actions per minute icon
+`swap` for the swap counter icon
+`CursorCount` for the cursor move counter icon
 
 -----------------------------------------------------------
 
