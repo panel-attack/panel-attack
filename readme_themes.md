@@ -33,6 +33,10 @@ You may use .png or .jpg/.jpeg for these.
 All file names are case sensitive and the extension *always* has to be lowercase!  
 While an incorrectly cased file may load on Windows, it will not on other operating systems!
 
+### Default image
+
+`transparent` is the fallback image for display if any image asset from any mod type cannot be loaded.
+
 ### Backgrounds
 
 Theme backgrounds can be static or scrolling.  
