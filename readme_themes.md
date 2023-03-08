@@ -10,10 +10,12 @@ In part 2 you can find an exhaustive list of all assets used for theme.
 ## Graphics 
 
 Theme creation is quite different from the creation of other mods.  
-Unlike with characters or stages where you provide assets that will go into one exact spot with one exact resolution, themes don't limit you much in regards to position and scale of assets.  
-Many files in fact do not have a specific size or aspect ratio but merely a configurable anchor point to place them.  
+Unlike with characters or stages where you provide assets that will go into one exact spot with one exact resolution, themes don't limit you as much in regards to position and scale of assets.  
+Various files in fact do not have a specific size or aspect ratio but merely a configurable anchor point to place them.  
 Due to this, it is required for theme assets that you specify in the configuration how a graphic should be scaled.  
-If no configuration is given, standard values from the default theme will be used.
+If no configuration is given, standard values from the default theme will be used.  
+You can find the default configuration at  
+https://github.com/panel-attack/panel-attack/blob/beta/themes/Panel%20Attack%20Modern/config.json
 
 
 -----------------------------------------------------------
@@ -28,8 +30,8 @@ For this reason the "id" of the theme is always the foldername.
 
 You may use .png or .jpg/.jpeg for these.
 .gif files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.  
-All file names are case sensitive for both the name and the extension!  
-While a capitalized file may load on Windows, it will not on other operating systems!
+All file names are case sensitive and the extension *always* has to be lowercase!  
+While an incorrectly cased file may load on Windows, it will not on other operating systems!
 
 ### Backgrounds
 

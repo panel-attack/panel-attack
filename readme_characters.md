@@ -546,13 +546,17 @@ Simply provide the same asset in multiple resolutions!
 As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.  
 To do that, you provide the normal asset with the recommended size with a @2x at the end, and you provide a half resolution one with an @1x at the end. 
 
+
+-----------------------------------------------------------
+
+
 # Common issues
 
 ## Panel Attack doesn't show a certain sprite / play a certain SFX
 
 Mod files are strictly case sensitive.  
-They should always be written in full lower case, including the extension.  
-While a mod that varies capitalization in filenames may work fine on Windows, it won't display correctly on Linux/Unix systems.  
+They should always be written exactly as in these readmes and the extension should always be lower case.
+While a mod that varies case in filenames may work fine on Windows, it won't display correctly on Linux/Unix systems.  
 
 ## Character X is too loud/quiet!
 
