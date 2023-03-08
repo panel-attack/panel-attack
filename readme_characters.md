@@ -450,6 +450,7 @@ SFX played on sending an attack.
 These will interrupt each other.  
 If a combo chain is performed, the chain SFX will take priority.  
 If a shock combo is performed, the shock SFX will take priority.  
+If a shock chain is performed, the shock SFX will take priority.
 
 #### combo
 
