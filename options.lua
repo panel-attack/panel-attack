@@ -995,11 +995,15 @@ local function about_menu(button_idx)
   end
 
   local function show_panels_readme()
-    ret = {show_readme, {"readme_panels.md", 4}}
+    ret = {show_readme, {"readme_panels.txt", 4}}
   end
 
   local function show_attack_readme()
     ret = {show_readme, {"readme_training.txt", 5}}
+  end
+
+  local function show_installMods_readme()
+    ret = {show_readme, {"readme_installmods.md"}}
   end
 
   local function show_system_info()
@@ -1061,6 +1065,7 @@ local function about_menu(button_idx)
   aboutMenu:add_button(loc("op_about_stages"), show_stages_readme, goEscape)
   aboutMenu:add_button(loc("op_about_panels"), show_panels_readme, goEscape)
   aboutMenu:add_button("About Attack Files", show_attack_readme, goEscape)
+  aboutMenu:add_button("Installing Mods", show_installMods_readme, goEscape)
   aboutMenu:add_button("System Info", show_system_info, goEscape)
   aboutMenu:add_button(loc("back"), exitSettings, exitSettings)
 

@@ -16,12 +16,14 @@ Rather than trying to read through all of this and trying to understand it, it o
 
 Well, yes and no.  
 Over the years, many things have changed and a mod created five, two, one or half a year ago may not use all features available or not use the available features optimally.  
-Chain cards for example can go up to x99, combo SFX can be assigned per combo size if you wish so and high resolution assets actually look good on high resolution monitors now (unlike in the past where a lowres asset would probably look as well or better).  
+Chain cards for example can go up to x99, combo SFX can be assigned per combo size if you wish so and high resolution assets actually look good on high resolution monitors now (unlike in the past).  
 All of the mentioned changes happened in late 2022 and who knows what the future brings? (aside from updates for this doc)
 
-Referencing existing mods is generally a fantastic idea (especially for garbage) but try to understand the context and the possibilities when referencing a mod so you can very clearly decide which parts you want to copy and which ones you want to do differently.  
+Referencing existing mods is generally a fantastic idea (especially for garbage).  
+However, try to understand the context and the possibilities when referencing a mod so you can very clearly decide which parts you want to copy and which ones you want to do differently.  
 
-For instance, most mods created until late 2022 are made with a target resolution of 1280x720. The majority that aren't are made with a target resolution of 640x360 instead. Chances are, you are playing Panel Attack on a higher resolution and things may end up looking like sandpaper if you just copy sizes from an existing mod.
+For instance, most mods created until late 2022 are made with a target resolution of 1280x720. The majority that aren't are made with a target resolution of 640x360 instead.  
+Chances are, you are playing Panel Attack on a higher resolution and things may end up looking like sandpaper if you just copy sizes from an existing mod.
 
 ## Resolution
 
@@ -81,7 +83,7 @@ Draw over whatever icon/symbol the other mod used with the background color to c
 And now paste your own symbol on top for face and doubleface! How?  
 You can find a lot of assets with transparent backgrounds online that fit this purpose.  
 There are various dedicated websites that aggregate graphic assets of games you can use.  
-If you're not successful there, search the internet for the respective character/series/game/franchise you want with keywords like "png", "transparent background", "icon" and you should find something satisfying popping up.  
+If you're not successful there, search the internet for the respective character/series/game/franchise you want with keywords like "png", "transparent background", "icon" and you should find something good.  
 
 For the fillers, you can follow the same approach but often something more subtle or even leaving them with only with the background color works better than choosing another flashy icon.
 
@@ -91,7 +93,7 @@ These are the backbone of a good character.
 SFX are very important because they allow you to roughly tell what your opponent is doing just by listening.  
 Aside from the obvious chain and combo SFX there are two more SFX that can contribute strongly and in a more subtle way:  
 garbage_land and garbage_match are sounds that can let you know when your opponent is letting garbage drop and when they start clearing.
-While garbage_land and garbage_match are not quite as important, Panel Attack does currently not provide default sounds for these, making their absence quite noticeable compared to characters that have them.  
+While garbage_land and garbage_match are not quite as important, Panel Attack does currently not provide default sounds for these, making their absence quite noticeable.  
 
 As a recommendation (for what is currently possible, may change with future updates):  
 It should be somewhat possible to tell combo and chain SFX apart so you know what is coming.  
@@ -223,7 +225,8 @@ The default option if not specified. Also deprecated, please use per_chain style
 	x5 plays "chain_echo",   
 	x6+ plays "chain2_echo"  
 Due to backwards compatibility reason the classic system remains as the default.  
-If you wish to use classic style chain sounds, you can use the per_chain system and name the classic system's "chain" as "chain2", "chain2" as "chain4", "chain_echo" as "chain5" and "chain2_echo" as "chain6".
+If you wish to use classic style chain sounds, you can use the per_chain system.  
+Simply rename the classic system's "chain" as "chain2", "chain2" as "chain4", "chain_echo" as "chain5" and "chain2_echo" as "chain6".
 
 ##### per_chain
 
@@ -539,7 +542,7 @@ If no danger_music is supplied, the normal_music will loop infinitely.
 ## Multi-Resolution support
 
 An asset will look best on a window size that makes it just as big as the asset is itself.  
-In the general thoughts on resolution, targetting a window size of 2560x1440 was suggested to find a good compromise that looks decent on both lower and higher resolutions while being somewhat ready for future developments and spreading of UHD technology among users.  
+In the general thoughts on resolution, targetting a window size of 2560x1440 was suggested to find a good compromise that looks decent on both lower and higher resolutions.  
 Ultimately though, on a 1280x720 window, a 1280x720 background will look best as it doesn't have to through any scaling before display.  
 However, there is a relatively simple solution:  
 Simply provide the same asset in multiple resolutions!  
