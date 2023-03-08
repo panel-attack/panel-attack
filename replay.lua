@@ -51,6 +51,7 @@ function Replay.loadFromFile(replay)
   end
 
   assert(replayDetails.seed, "invalid replay: seed must be set")
+  GAME.match.engineVersion = replay.engineVersion
   GAME.match.seed = replayDetails.seed
   GAME.match.isFromReplay = true
 

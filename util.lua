@@ -227,6 +227,12 @@ local function codePointIsDigit(codePoint)
 end
 
 function compress_input_string(inputs)
+  assert(inputs ~= nil)
+  assert(type(inputs) == "string")
+  if string.len(inputs) == 0 then
+    return inputs
+  end
+  
   local compressedTable = {}
   local function addToTable(codePoint, repeatCount)
     local currentInput = utf8.char(codePoint)

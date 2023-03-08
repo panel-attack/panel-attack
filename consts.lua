@@ -6,8 +6,13 @@ consts.FRAME_RATE = 1/60
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 
-VERSION = "047" -- The current engine version
-VERSION_MIN_VIEW = "046" -- The lowest version number that can be watched
+consts.ENGINE_VERSIONS = {}
+consts.ENGINE_VERSIONS.PRE_TELEGRAPH = "045"
+consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE = "046"
+consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
+
+VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
+VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
 canvas_width = 1280
 canvas_height = 720
