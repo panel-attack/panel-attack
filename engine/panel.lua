@@ -14,9 +14,10 @@ class(
     p.frameTimes = frameTimes
     p.saveStates = Queue()
     p.birthFrame = birthFrame or 0
-    p.rowIndex = Queue()
-    p.rowIndex.first = p.birthFrame
-    p.rowIndex.last = p.birthFrame - 1
+    p.saveRowIndex = Queue()
+    p.saveRowIndex.first = p.birthFrame
+    p.saveRowIndex.last = p.birthFrame - 1
+    p.saveChaining = Queue()
   end
 )
 
@@ -734,16 +735,23 @@ end
 -- returns false if the panel has been dead for too long to still be rollback relevant
 function Panel:saveState(clock)
   if self.deathFrame then
-    -- the panel is no longer relevant
-    return not (self.deathFrame + MAX_LAG < clock)
-  elseif self.stateChanged or self.saveStates:len() == 0 then
+    if self.deathFrame + MAX_LAG < clock then
+      -- the panel is no longer relevant
+      self.saveStates:clear()
+      self.saveChaining:clear()
+      self.saveRowIndex:clear()
+      return false
+    else
+      return true
+    end
+  elseif self.stateChanged or self.saveStates.last == -1 then
     -- idea:
     -- for all timerbased states, it's enough if we save state when it was first applied to the panel
     -- for a rollback we can calculate the timer based on the difference between frame of the saveState and targetFrame
     -- for non-timerbased states either nothing happens (normal/dimmed/dead state) or the row drops by one per frame
     -- for now i'm lazy and save states for each frame of falling state but I should calculate the row later on instead
     local state = {}
-    -- rows are also stored separately in self.rowIndex[clock]
+    -- rows are stored separately in self.saveRowIndex[clock]
     -- state.row = self.row
     state.clock = clock
     state.column = self.column
@@ -781,11 +789,12 @@ function Panel:saveState(clock)
 
   -- save the row on every frame
   -- this only works under the assumption that this function doesn't skip a frame
-  if not self.rowIndex[clock] then
-    self.rowIndex:push(self.row)
-    if self.rowIndex:len() > MAX_LAG then
-      self.rowIndex:pop(self.row)
-    end
+  if not self.saveRowIndex[clock] then
+    self.saveRowIndex:push(self.row)
+  end
+
+  if not self.saveChaining[clock] then
+    self.saveChaining:push(self.chaining)
   end
 
   -- TODO: eliminate states too old to be relevant
@@ -805,9 +814,6 @@ function Panel:rollbackToFrame(targetFrame)
     -- < because the rollback copy for the frame it gets created, won't know about the panel yet, only on the frame after!
     return false
   else
-    if self.id == 115 then
-      local phi = 5
-    end
     local saveState
     -- we need the oldest state that is younger than the frame we're rolling back to
     for i = self.saveStates.last, self.saveStates.first, -1 do
@@ -875,13 +881,21 @@ function Panel:rollbackToFrame(targetFrame)
       -- that means there's nothing to roll back for this panel either and it can stay as is
     end
 
-    -- fetch the value from the rowIndex table
-    self.row = self.rowIndex[targetFrame]
+    -- row and chaining are the only non-timer things on a panel that can change without a state change
+
+    -- fetch the value from the saveRowIndex table
+    self.row = self.saveRowIndex[targetFrame]
     -- clear it
-    self.rowIndex:clear()
+    self.saveRowIndex:clear()
     -- reset the starting point so that index access works properly
-    self.rowIndex.first = targetFrame
-    self.rowIndex.last = targetFrame - 1
+    self.saveRowIndex.first = targetFrame
+    self.saveRowIndex.last = targetFrame - 1
+
+    self.chaining = self.saveChaining[targetFrame]
+    self.saveChaining:clear()
+    -- reset the starting point so that index access works properly
+    self.saveChaining.first = targetFrame
+    self.saveChaining.last = targetFrame - 1
 
     return true
   end
@@ -889,8 +903,7 @@ end
 
 function Panel:debugCopy()
   local copy = {}
-  -- rows are also stored separately in self.rowIndex[clock]
-  -- will get overwritten if the entry there is more recent
+
   copy.row = self.row
   copy.column = self.column
   copy.deathFrame = self.deathFrame

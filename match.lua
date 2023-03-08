@@ -202,8 +202,10 @@ function Match:run()
       end
       logger.debug("Fast forward P1 to frame " .. clock)
       -- save rollback for the current frame
-      P1:saveForRollback()
-      P1:assertEquality(rollbackModePreRollbackCopy)
+      if self:gameEndedClockTime() == 0 then
+        P1:saveForRollback()
+        P1:assertEquality(rollbackModePreRollbackCopy)
+      end
     end
   end
 
