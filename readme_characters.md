@@ -539,17 +539,6 @@ If the client's "danger music change-back delay" (audio configuration) is enable
 If no danger_music is supplied, the normal_music will loop infinitely.
 
 
-## Multi-Resolution support
-
-An asset will look best on a window size that makes it just as big as the asset is itself.  
-In the general thoughts on resolution, targetting a window size of 2560x1440 was suggested to find a good compromise that looks decent on both lower and higher resolutions.  
-Ultimately though, on a 1280x720 window, a 1280x720 background will look best as it doesn't have to through any scaling before display.  
-However, there is a relatively simple solution:  
-Simply provide the same asset in multiple resolutions!  
-As it is not possible to use the same filename multiple times in the same directory, Panel Attack uses a naming convention to mark different resolutions if there is more than one.  
-To do that, you provide the normal asset with the recommended size with a @2x at the end, and you provide a half resolution one with an @1x at the end. 
-
-
 -----------------------------------------------------------
 
 
