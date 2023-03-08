@@ -468,13 +468,13 @@ All other attack SFX fall back to this if not present.
 
 #### shock
 
-For shock matches and combos, provide a SFX for each match/combo size. 
-More than one variation may be provided for each size by appending _# to the filename where # is a number.
-Example:		
-		+3 "shock3"(, "shock3_2, "shock3_3" ...),
-		+4 "shock4"(, "shock4_2, "shock4_3" ...),
-		...,
-		+7 "shock7"(, "shock7_2, ...)
+For shock matches and combos, provide a SFX for each match/combo size.  
+More than one variation may be provided for each size by appending _# to the filename where # is a number.  
+Example:		 
+		+3 "shock3"(, "shock3_2, "shock3_3" ...),  
+		+4 "shock4"(, "shock4_2, "shock4_3" ...),  
+		...,  
+		+7 "shock7"(, "shock7_2, ...)  
 [DEPRECATED] "combo_echo", ("combo_echo2", "combo_echo3"...) will get used upon a +6 or +7 shock combo. These files have NO effect if shock files are present.
 
 
