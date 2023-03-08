@@ -41,7 +41,7 @@ While an incorrectly cased file may load on Windows, it will not on other operat
 
 Theme backgrounds can be static or scrolling.  
 For static backgrounds no extra configuration is necessary.  
-For scrolling backgrounds you need to the `tiled` configuration to `true`.
+For scrolling backgrounds you need to set the `tiled` configuration to `true`.
 Additionally you can modify the scrolling speed via `speed_x` and `speed_y`.
 
 Backgrounds need to be placed inside of a background subdirectory inside the theme directory.
@@ -394,7 +394,7 @@ Configuration:
 
 #### Fallback PopFX
 
-A theme should provide a fallback for the `burst` and `fade` PopFX sprites for display in case the selected character does not provide them.  
+A theme should provide a fallback for the `burst` and `fade` PopFX tile maps for display in case the selected character does not provide them.  
 
 #### Analytics
 
@@ -412,23 +412,61 @@ All icons get scaled for quadratic display
 
 ## SFX assets
 
-[.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis
+You may use .mp3, .ogg, .wav, .it or .flac for these.  
+.midi files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.  
+All file names are case sensitive and the extension *always* has to be lowercase!  
+While an incorrectly cased file may load on Windows, it will not on other operating systems!  
 
-- "sfx/countdown", "sfx/go": played at the start of a match
-- "sfx/move", "sfx/swap": played when moving and swapping
-- "sfx/land": Played when a panel lands
-- "sfx/gameover": played when each game is over
-- "sfx/fanfare1": played when a player makes a x4 chain
-- "sfx/fanfare2": 5x chain, "sfx/fanfare3": x6 chain
-- "sfx/thud_1", "sfx/thud_2", "sfx/thud_3": garbage landing noise
-- "sfx/menu_move", "sfx/menu_validate", "sfx/menu_cancel": menu
-- "sfx/notification": will play upon receiving a request or a request's answer while playing online
-- "sfx/pop1-1", "sfx/pop1-2", ..., "sfx/pop1-10", "sfx/pop2-1", ..., "sfx/pop2-10", ..., "sfx/pop4-10": panel pops
+All sfx have to be placed inside the `sfx` subdirectory.  
+
+### Menus
+
+`menu_move`: will play when moving the cursor in menus  
+`menu_validate`: will play when confirming a menu with Swap1/A/Start  
+`menu_cancel`: will play when exiting menus with Swap2/B  
+`notification`: will play upon receiving a request or a request's answer while looking for games
+
+### Gameplay
+
+`countdown` and `go`: will play at the start of the match if countdown is enabled for the game mode  
+`move`: will play when moving the cursor  
+`swap`: will play when performing a swap  
+`land`: will play when a non-garbage panel lands  
+`thud_1`, `thud_2`, `thud_3`: will play when garbage lands (depending on garbage size)  
+`fanfare1`: will play when a player finishes a chain at x4  
+`fanfare2`: will play when a player finishes a chain at x5  
+`fanfare3`: will play when a player finishes a chain at x6 or higher  
+`gameover` will play when the game is over
+
+#### Pop sounds
+
+Pop sounds will play based on the length of the currently on-going chain.  
+Every time a match happens, the game plays `pop#-1` for the first popping panel, `pop#-2` for the second etc. until maxing out at `pop#-10` which is then getting repeated for further panels.
+
+While no chain is on-going, `pop1` SFX are used.  
+`pop2` SFX is used for x2 chains.  
+`pop3` SFX is used for x3 chains.  
+`pop4` SFX is used for x4 chains and higher.  
+
+
+-----------------------------------------------------------
+
 
 ## Music assets
 
-- ("music/main", ("music/main_start")), ("music/select_screen", ("music/select_screen_start")): musics that will be used in those menus, "main" will be used as fallback if "select_screen" is missing. 
-"_start"s are played before the normal versions, once.
+Music can optionally play at various screens of the game.  
+You may use .mp3, .ogg, .wav, .it or .flac for these.  
+.midi files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.  
+All file names are case sensitive and the extension *always* has to be lowercase!  
+While an incorrectly cased file may load on Windows, it will not on other operating systems!  
+
+All music has to be placed inside the `music` subdirectory.  
+
+`main` and optionally `main_start` for all button menus.  
+`select_screen` and optionally `select_screen_start` for character selection.  
+If `main` exists but `select_screen` does not, `main` will play in character selection as well.
+
+`_start` files are played before the main music file once and serve to facilitate looping with a reasonable intro.
 
 
 -----------------------------------------------------------
