@@ -15,12 +15,14 @@ Rather than trying to read through all of this and trying to understand it, it o
 
 Well, yes and no.  
 Over the years, many things have changed and a mod created five, two, one or half a year ago may not use all features available or not use the available features optimally.  
-You can use a dynamic music style that seamlessly fades between your two tracks and high resolution assets actually look good on high resolution monitors now (unlike in the past where a lowres asset would probably look as well or better).  
-All of the mentioned changes happened in 2022 and who knows what the future brings? (aside from updates for this doc)  
+Chain cards for example can go up to x99, combo SFX can be assigned per combo size if you wish so and high resolution assets actually look good on high resolution monitors now (unlike in the past).  
+All of the mentioned changes happened in late 2022 and who knows what the future brings? (aside from updates for this doc)
 
-Referencing existing mods is generally a good idea but try to understand the context and the possibilities when referencing a mod so you can very clearly decide which parts you want to copy and which ones you want to do differently.  
+Referencing existing mods is generally a fantastic idea (especially for garbage).  
+However, try to understand the context and the possibilities when referencing a mod so you can very clearly decide which parts you want to copy and which ones you want to do differently.  
 
-For instance, most mods created until late 2022 are made with a target resolution of 1280x720. The majority that aren't are made with a target resolution of 640x360 instead. Chances are, you are playing Panel Attack on a higher resolution and things may end up looking like sandpaper if you just copy sizes from an existing mod.
+For instance, most mods created until late 2022 are made with a target resolution of 1280x720. The majority that aren't are made with a target resolution of 640x360 instead.  
+Chances are, you are playing Panel Attack on a higher resolution and things may end up looking like sandpaper if you just copy sizes from an existing mod.
 
 ## Resolution
 
@@ -71,7 +73,8 @@ Every config.json should specify the stage's id and its name.
 
 The unique identifier of the stage. IF MISSING THE STAGE MAY BE IGNORED!  
 The id should be long and unique so that the game can properly distinguish between different stage mods of potentially the same music/background.  
-It is generally recommended to add your username to the id to ensure its uniqueness, e.g. "endaris_umineko_dir" for a stage mod of the song "dir" by user Endaris based on the Umineko no Naku Koro Ni games.
+It is generally recommended to add your username to the id to ensure its uniqueness.  
+For example "endaris_umineko_dir" for a stage mod of the song "dir" by user Endaris based on the Umineko no Naku Koro Ni games.
 
 #### name
 
