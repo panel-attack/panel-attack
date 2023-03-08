@@ -1,9 +1,11 @@
 require("analytics")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local TouchInputController = require("engine.TouchInputController")
+local consts = require("consts")
 local logger = require("logger")
 local utf8 = require("utf8")
 require("engine.panel")
+require("table_util")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -1347,7 +1349,7 @@ function Stack.simulate(self)
     if self.inputMethod == "touch" then
         --with touch, cursor movement happen at stack:control time
     else
-      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) then
+      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and self.cursorLock == nil then
         local prev_row = self.cur_row
         local prev_col = self.cur_col
         self:moveCursorInDirection(self.cur_dir)
@@ -1723,6 +1725,9 @@ function Stack:runCountDownIfNeeded()
     if not self.countdown_CLOCK then
       self.countdown_CLOCK = self.CLOCK
       self.animatingCursorDuringCountdown = true
+      if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
+        self.cursorLock = true
+      end
       self.cur_row = self.height
       self.cur_col = self.width - 1
       if self.inputMethod == "touch" then
@@ -1741,6 +1746,9 @@ function Stack:runCountDownIfNeeded()
           self:moveCursorInDirection("down")
         elseif moveIndex <= 6 then
           self:moveCursorInDirection("left")
+          if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE and moveIndex == 6 then
+            self.cursorLock = nil
+          end
         elseif moveIndex == 10 then
           self.animatingCursorDuringCountdown = false
           if self.inputMethod == "touch" then
@@ -2353,7 +2361,7 @@ function Stack.check_matches(self)
       if metal_count >= 3 then
         -- Give a shock garbage for every shock block after 2
         for i = 3, metal_count do
-          self.telegraph:push({6, 1, true, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, first_panel_col, first_panel_row, self.CLOCK)
           self:recordComboHistory(self.CLOCK, 6, 1, true)
         end
       end
@@ -2379,13 +2387,10 @@ function Stack.check_matches(self)
         for i=1,#combo_pieces do
           -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
           -- OP! Too bad its hard to get shock panels in vs. :)
-          self.telegraph:push({combo_pieces[i], 1, false, false}, first_panel_col, first_panel_row, self.CLOCK)
+          self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, first_panel_col, first_panel_row, self.CLOCK)
           self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
         end
       end
-      --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
-      --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      --TODO: this stuff ^
       first_panel_row = first_panel_row + 1 -- offset chain cards
     end
     if (is_chain) then
@@ -2400,7 +2405,7 @@ function Stack.check_matches(self)
     --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
     --          first_panel_row<<4+P1StackPosY+self.displacement-9);
       if self.garbage_target and self.telegraph then
-        self.telegraph:push({6, self.chain_counter - 1, false, true}, first_panel_col, first_panel_row, self.CLOCK)
+        self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, first_panel_col, first_panel_row, self.CLOCK)
       end
     end
     local chain_bonus = self.chain_counter
@@ -2483,6 +2488,9 @@ function Stack.new_row(self)
   -- move cursor up
   if self.cur_row ~= 0 then
     self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+  end
+  if self.queuedSwapRow > 0 then
+    self.queuedSwapRow = self.queuedSwapRow + 1
   end
   if self.inputMethod == "touch" then
     self.touchInputController:stackIsCreatingNewRow()
@@ -2751,4 +2759,19 @@ function Stack.updateRiseLock(self)
   if self.prev_rise_lock and not self.rise_lock then
     self.prevent_manual_raise = false
   end
+end
+
+function Stack:getInfo()
+  local info = {}
+  info.playerNumber = self.which
+  info.character = self.character
+  info.panels = self.panels_dir
+  info.rollbackCount = self.rollbackCount
+  if self.prev_states then
+    info.rollbackCopyCount = table.length(self.prev_states)
+  else
+    info.rollbackCopyCount = 0
+  end
+
+  return info
 end
