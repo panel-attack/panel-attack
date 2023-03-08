@@ -2915,6 +2915,9 @@ function Stack.new_row(self)
   if self.cur_row ~= 0 then
     self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
   end
+  if self.queuedSwapRow > 0 then
+    self.queuedSwapRow = self.queuedSwapRow + 1
+  end
   if self.inputMethod == "touch" then
     self.touchInputController:stackIsCreatingNewRow()
   end
