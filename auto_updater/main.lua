@@ -246,9 +246,12 @@ local function run()
 end
 
 local function setDebugFlag(args)
-  for i = 1, #args do
-    if tostring(args[i]):lower() == "debug" then
-      debugMode = true
+  -- on android, args seems to be nil so we need to sanity check
+  if args then
+    for i = 1, #args do
+      if tostring(args[i]):lower() == "debug" then
+        debugMode = true
+      end
     end
   end
 end

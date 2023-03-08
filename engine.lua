@@ -1,9 +1,11 @@
 require("analytics")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local TouchInputController = require("engine.TouchInputController")
+local consts = require("consts")
 local logger = require("logger")
 local utf8 = require("utf8")
 require("engine.panel")
+require("table_util")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -1641,7 +1643,7 @@ function Stack.simulate(self)
     if self.inputMethod == "touch" then
         --with touch, cursor movement happen at stack:control time
     else
-      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) then
+      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and self.cursorLock == nil then
         local prev_row = self.cur_row
         local prev_col = self.cur_col
         self:moveCursorInDirection(self.cur_dir)
@@ -2023,6 +2025,9 @@ function Stack:runCountDownIfNeeded()
     if not self.countdown_CLOCK then
       self.countdown_CLOCK = self.CLOCK
       self.animatingCursorDuringCountdown = true
+      if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
+        self.cursorLock = true
+      end
       self.cur_row = self.height
       self.cur_col = self.width - 1
       if self.inputMethod == "touch" then
@@ -2041,6 +2046,9 @@ function Stack:runCountDownIfNeeded()
           self:moveCursorInDirection("down")
         elseif moveIndex <= 6 then
           self:moveCursorInDirection("left")
+          if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE and moveIndex == 6 then
+            self.cursorLock = nil
+          end
         elseif moveIndex == 10 then
           self.animatingCursorDuringCountdown = false
           if self.inputMethod == "touch" then
@@ -2478,6 +2486,9 @@ function Stack.new_row(self)
   if self.cur_row ~= 0 then
     self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
   end
+  if self.queuedSwapRow > 0 then
+    self.queuedSwapRow = self.queuedSwapRow + 1
+  end
   if self.inputMethod == "touch" then
     self.touchInputController:stackIsCreatingNewRow()
   end
@@ -2749,4 +2760,19 @@ function Stack.updateRiseLock(self)
   if self.prev_rise_lock and not self.rise_lock then
     self.prevent_manual_raise = false
   end
+end
+
+function Stack:getInfo()
+  local info = {}
+  info.playerNumber = self.which
+  info.character = self.character
+  info.panels = self.panels_dir
+  info.rollbackCount = self.rollbackCount
+  if self.prev_states then
+    info.rollbackCopyCount = table.length(self.prev_states)
+  else
+    info.rollbackCopyCount = 0
+  end
+
+  return info
 end
