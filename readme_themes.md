@@ -12,8 +12,11 @@ In part 2 you can find an exhaustive list of all assets used for theme.
 Theme creation is quite different from the creation of other mods.  
 Unlike with characters or stages where you provide assets that will go into one exact spot with one exact resolution, themes don't limit you much in regards to position and scale of assets.  
 Many files in fact do not have a specific size or aspect ratio but merely a configurable anchor point to place them.  
-Due to this, it is required for theme assets that you specify how big the file is relative to the canvas of 1280x720.  
+Due to this, it is required for theme assets that you specify in the configuration how a graphic should be scaled.  
+If no configuration is given, standard values from the default theme will be used.
 
+
+-----------------------------------------------------------
 
 
 # Theme configuration and asset list
@@ -23,23 +26,345 @@ For this reason the "id" of the theme is always the foldername.
 
 ## Graphic assets
 
-[.png, .jpg, .jpeg]
+You may use .png or .jpg/.jpeg for these.
+.gif files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.  
+All file names are case sensitive for both the name and the extension!  
+While a capitalized file may load on Windows, it will not on other operating systems!
 
-- "background/main", "background/select_screen", "background/readme": backgrounds used in the menus
-- ("background/bg_overlay"), ("background/fg_overlay"): overlays: the first one is on top of the stage's background while the other one is up front
-- "pause": overlay during the pause
-- "chain/chain00", "chain/chain02", ... "chain/chain19", "combo/combo04", ..., "combo/combo66": chains and combo counter
-- "flags/": flags to be displayed in the select screen (based on the character's specified flags). Values are mostly the country codes from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2, not all flags are available
-- "1", "2", "3": countdown
-- "p1", "cursor1", "p1_select_screen_cursor1", "p1_select_screen_cursor2": cursors for player 1, change p1 by p2 for those of player 2
-- "ready", "loading", "super": displayed when a player is ready, loading, or super selecting something in the select screen
-- "frame", "wall", "healthbar_frame_1P", "healthbar_frame_1P_absolute": layout ingame
-- "random_stage", "random_character": thumbnail and icon for random stage and random character
+### Backgrounds
+
+Theme backgrounds can be static or scrolling.  
+For static backgrounds no extra configuration is necessary.  
+For scrolling backgrounds you need to the `tiled` configuration to `true`.
+Additionally you can modify the scrolling speed via `speed_x` and `speed_y`.
+
+Backgrounds need to be placed inside of a background subdirectory inside the theme directory.
+
+#### main
+
+The background shown in button based menus.
+
+Configuration variables and default values:
+```
+"bg_main_is_tiled": false,
+"bg_main_speed_x": 0,
+"bg_main_speed_y": 0,
+```
+
+#### select_screen
+
+The background shown in character selection.
+
+Configuration variables and default values:
+```
+"bg_select_screen_is_tiled": false,
+"bg_select_screen_speed_x": 0,
+"bg_select_screen_speed_y": 0,
+```
+
+#### readme
+
+The background shown while displaying readme files.
+
+Configuration variables and default values:
+```
+"bg_readme_is_tiled": false,
+"bg_readme_speed_x": 0,
+"bg_readme_speed_y": 0,
+```
+
+#### title
+
+The background shown while displaying the title screen at the start of the game.
+
+Configuration variables and default values:
+```
+"bg_title_is_tiled": false,
+"bg_title_speed_x": 0,
+"bg_title_speed_y": 0,
+```
+
+### Background overlays
+
+Background overlays are displayed during gameplay and cannot be scrolling.  
+
+Like the regular backgrounds they need to be placed inside of the background subdirectory as well.
+
+#### bg_overlay
+
+Background drawn on top of the stage background.  
+Use this to give sufficient background contrast to your other theme elements!  
+Usually this should be a .png that is transparent in most parts.
+
+#### fg_overlay
+
+This is drawn on top of everything else!  
+Although usually not necessary you can use it to obstruct certain parts of the game.
+
+### Character selection
+
+#### Flags
+
+Flags are saved in the flags subdirectory.  
+Flags will be displayed during character selection on characters that specify a flag in their config.json that has an image of the same name in the flags directory.
+It is generally recommended to at least supply the flags already provided by the default theme to tell apart language specific versions of mods.  
+
+#### Character Selection Cursor
+
+The character selection cursor is made from 2 different images that are alternately being drawn on various occasions.  
+A general recommendation is to use a more transparent version for the second image.  
+
+For player 1:
+p1_select_screen_cursor1
+p1_select_screen_cursor2
+
+For player 2:
+p2_select_screen_cursor1
+p2_select_screen_cursor2
+
+#### Character Selection Player Indicator 
+
+In multiplayer, various selection submenus have a marker to show which player the setting belongs to.  
+The image used for this is called p1 or p2 respectively for each player number.
+
+#### Ready Overlays
+
+"load" will be displayed on top of the player tile if the selected character of the player is still being loaded.
+"ready" will be displayed on top of the player tile when the player has loaded all assets and readied up.
+
+
+#### Icons
+
+"random_stage": Thumbnail for random stage selection. See readme_stages for the recommended size.
+"random_character": Icon for random character selection. See readme_characters for the recommended size.
+
+### Ingame
+
+#### Cards
+
+Cards are the indicators displayed during gameplay and in analytics to show the achieved combo/chain size.  
+They will be scaled to be quadratic if they aren't already, recommended size is 96x96.
+
+##### Chain cards
+
+Chain cards are saved in the chain subdirectory.  
+They are displayed upon achieving a chain during gameplay and also shown in analytics.  
+Panel Attack supports up to 99 numbered chain cards plus one for a mystery chain.  
+Chain cards have to be named chain, followed by 2 digits for the chain index, e.g. chain02.png for a x2 chain.
+chain00.png is used as the mystery chain card and displayed for any chain index that does not have its own chain card.  
+The general recommendation is to provide chain cards up to x13, but better x19.
+
+##### Combo cards
+
+Combo cards are saved in the combo subdirectory.  
+They are displayed upon achieving a combo during gameplay and also shown in analytics.  
+Combos are naturally limited to +66 due to the stack size.
+Combo cards have to be named combo, followed by 2 digits for the combo size, e.g. `combo04.png` for a +4 combo.
+If a combo does not have a card, the +30 combo card will get displayed.  
+If that one isn't available either, the game falls back to the mystery chain card.  
+The general recommendation is to provide combo cards at least up to +27, but better all combo sizes.
+
+#### Ingame cursor
+
+The ingame cursor is made from 2 different images, `cursor1` and `cursor2`, that are alternately being drawn.  
+
+#### Countdown
+
+Images numbered `1`, `2` and `3` respectively that are displayed during countdown.  
+Will get displayed just as is, no scaling or configuration available!
+
+#### Stack Frame
+
+The sum of images that are drawn around the stack as borders plus additional information.
+They need to be saved in the frame subdirectory.
+
+##### frame
+
+Image for the borders to left, right and top side of the stack.  
+Will always get scaled to an aspect ratio of 13:28!!  
+One version needs to be provided for each player:
+`frame1P` for player 1  
+`frame2P` for player 2
+
+##### wall
+
+Image for the bottom border of the stack. 
+Unlike stack, this needs to be opaque in order to obstruct panel vision when raising it to the top to "lock" the stack.  
+Width of this image always gets scaled to fit the stack width
+
+#### Health bar
+
+The healthbar is being drawn to the side of the stack to indicate remaining invincibility frames
+The healthbar supports two different display modes, configured in the theme's config.json:
+```
+"multibar_is_absolute": true,
+```
+When set to false, the game will always fully fill up the multibar upon gaining invincibility frames.  
+The depletion speed depends on how many invincibility frames were gained.
+When set to true, the multibar will be filled up depending on how many invincibility frames were gained.
+The depletion speed is constant.
+
+##### Frame
+
+Depending on which mode is chosen, different images will be used.  
+For an absolute multibar, use `healthbar_frame_1P_absolute`.  
+This expects a single compartment shared by health and invincibility frames.
+For a relative multibar, use `healthbar_frame_1P`.  
+This expects separate compartments for health and invincibility frames.
+
+Position and scale have to be configured separately in the config.json:
+```
+"multibar_Pos": [-13, 96],
+"multibar_Scale": 1,
+```
+
+For a relative multibar, the compartment for health bar needs to be specified separately:
+```
+"healthbar_frame_Pos": [-17, -4],
+"healthbar_frame_Scale": 1,
+```
+
+For absolute multibars, the healthbar setting is obsolete as health will be part of the multibar.
+
+##### Multibars
+
+Multibars are colered bars for display inside of the multibar frame.  
+They will get scaled vertically to match the available invincibility frames / health at the respective moment.  
+
+`healthbar` for the remaining health  
+`multibar_shake_bar` for remaining shake time
+`multibar_stop_bar` for remaining stop time
+`multibar_prestop_bar` for remaining pre-stop time
+
+#### Game info
+
+Game info is the info usually displayed in the middle of the screen between the two stacks.  
+Location and scale is configurable for each element.  
+Note that each configuration that has to be displayed per player is configured for player 1.  
+Player 2 will use mirrored values based on the player 1 configuration.
+
+##### Match type
+
+Match type refers to the `ranked` or `casual` image label.  
+Configuration:
+```
+"matchtypeLabel_Scale": 1,
+"matchtypeLabel_Pos": [-18, -34],
+```
+
+##### Time
+
+Refers to the `time` label and the time displayed.
+Time itself is drawn from the `time_numbers` tile map.
+Configuration:
+```
+"timeLabel_Scale": 1,
+"timeLabel_Pos": [-4, 2],
+"time_Scale": 0.70,
+"time_Pos": [26, 26],
+```
+
+##### Spectator position
+
+Only the position is configurable here.  
+Specifying an offscreen position effectively disables spectator display.
+Configuration:
+```
+"spectators_Pos": [547, 460],
+```
+
+##### Player names
+
+Only the position is configurable here:
+```
+"name_Pos": [20, -30],
+```
+
+##### Score
+
+Refers to the `score_1P` and `score_2P` label.  
+Score itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.  
+Configuration:
+```
+"scoreLabel_Scale": 1,
+"scoreLabel_Pos": [104, 25],
+"score_Scale": 0.5,
+"score_Pos": [116, 34],
+```
+
+##### Speed
+
+Refers to the `speed_1P` and `speed_2P` label.  
+Speed itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.  
+Configuration:
+```
+"speedLabel_Scale": 1,
+"speedLabel_Pos": [104, 42],
+"speed_Scale": 0.5,
+"speed_Pos": [116, 50],
+```
+
+##### Level
+
+Refers to the `level_1P` and `level_2P` label.  
+Level itself is drawn from the `level_numbers_1P` and `level_numbers_2P` tile maps.  
+Configuration:
+```
+"levelLabel_Scale": 1,
+"levelLabel_Pos": [105, 58],
+"level_Pos": [112, 66],
+"level_Scale": 1,
+```
+
+##### Rating
+
+Refers to the `rating_1P` and `rating_2P` label.
+Rating itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.  
+Configuration:
+```
+"ratingLabel_Scale": 1,
+"ratingLabel_Pos": [0, 140],
+"rating_Scale": 0.5,
+"rating_Pos": [38, 162],
+```
+
+##### Wins
+
+Refers to the `wins` label.
+Rating itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.  
+Configuration:
+```
+"winLabel_Scale": 1,
+"winLabel_Pos": [10, 190],
+"win_Scale": 0.75,
+"win_Pos": [40, 212],
+```
+
+##### Moves
+
+Refers to the `moves` label, drawn in puzzle mode only.
+Move count itself is drawn from the `numbers_1P` tile map.  
+Configuration:
+```
+"moveLabel_Scale": 1,
+"moveLabel_Pos": [468, 170],
+"move_Scale": 1,
+"move_Pos": [40, 34],
+```
+
+#### Pause
+
+The pause image is displayed when pausing the game in single player game modes.  
+Although technically a background, this one does NOT go into the background subdirectory.  
+The image will get scaled down to fit the screen while maintaining aspect ratio if it has a different aspect ratio than 16:9.
+
+
+-----------------------------------------------------------
 
 
 ## SFX assets
 
-~~ [.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis ~~
+[.mp3, .ogg, .wav, .it, .flac] optional sounds are in parenthesis
 
 - "sfx/countdown", "sfx/go": played at the start of a match
 - "sfx/move", "sfx/swap": played when moving and swapping
@@ -58,6 +383,9 @@ For this reason the "id" of the theme is always the foldername.
 "_start"s are played before the normal versions, once.
 
 
+-----------------------------------------------------------
+
+
 ## Miscellaneous assets
 
 ### Font
@@ -69,13 +397,11 @@ You may provide a font by simply dropping a .ttf font file in the theme folder.
 The font's size can be changed in the config.json file with the parameter font_size.  
 The value given should be a whole number.
 
-----
-
-#### Character selection filters
+### Character selection filters
 
 You may override the visible state configured in each character's/stage's configuration by providing respective files that explicitly state the visible mods.
 
-##### characters.txt
+### characters.txt
 
 If present, only characters listed in this file will show up in character selection.  
 Separate the IDs by new lines.

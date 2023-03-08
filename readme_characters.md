@@ -481,7 +481,7 @@ Unless written otherwise, these SFX do not have fallback sounds and won't play a
 
 #### garbage_match
 
-Played when clearing garbage.
+Played when the character matches a piece of garbage.
 
 #### garbage_land
 
