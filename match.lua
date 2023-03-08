@@ -200,6 +200,7 @@ function Match:run()
         P1:saveForRollback()
         P1:run()
       end
+      logger.debug("Fast forward P1 to frame " .. clock)
       -- save rollback for the current frame
       P1:saveForRollback()
       P1:assertEquality(rollbackModePreRollbackCopy)

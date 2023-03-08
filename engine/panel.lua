@@ -12,7 +12,7 @@ class(
     p.row = row
     p.column = column
     p.frameTimes = frameTimes
-    p.saveStates = {}
+    p.saveStates = Queue()
     p.birthFrame = birthFrame or 0
     p.rowIndex = Queue()
     p.rowIndex.first = p.birthFrame
@@ -445,6 +445,9 @@ end
 -- clears information relating to state, matches and various stuff
 -- a true argument must be supplied to clear the chaining flag as well
 function Panel.clear_flags(self, clearChaining)
+  -- a convenience bool to know whether we should take a closer look at a panel this frame or not
+  self.stateChanged = self.state ~= Panel.states.normal
+
   -- determines what can happen with this panel
   -- or what will happen with it if nothing else happens with it
   -- in normal state normally nothing happens until you touch it or its surroundings
@@ -475,9 +478,6 @@ function Panel.clear_flags(self, clearChaining)
   end
   -- Animation timer for "bounce" after falling from garbage.
   self.fell_from_garbage = nil
-
-  -- a convenience bool to know whether we should take a closer look at a panel this frame or not
-  self.stateChanged = true
 
   -- panels are updated bottom to top
   -- panels will check if this is set on the panel below to update their chaining state
@@ -729,15 +729,6 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   self.combo_size = comboSize
 end
 
--- saved for rollback
--- we save rowchanges separately because everything else can be saved sparsely via the panel.stateChanged flag
-function Panel:saveRowIndex(clock)
-  -- row index saves happen outside the regular rollback cycle
-  -- and before the clock timer is incremented
-  -- so always save these for 1 frame into the future
-  self.rowIndex[clock + 1] = self.row
-end
-
 -- saves the current state of the panel into its saveStates table if its state was changed
 -- returns true if the panel is still relevant
 -- returns false if the panel has been dead for too long to still be rollback relevant
@@ -745,7 +736,7 @@ function Panel:saveState(clock)
   if self.deathFrame then
     -- the panel is no longer relevant
     return not (self.deathFrame + MAX_LAG < clock)
-  elseif self.stateChanged or next(self.saveStates) == nil then
+  elseif self.stateChanged or self.saveStates:len() == 0 then
     -- idea:
     -- for all timerbased states, it's enough if we save state when it was first applied to the panel
     -- for a rollback we can calculate the timer based on the difference between frame of the saveState and targetFrame
@@ -754,6 +745,7 @@ function Panel:saveState(clock)
     local state = {}
     -- rows are also stored separately in self.rowIndex[clock]
     -- state.row = self.row
+    state.clock = clock
     state.column = self.column
     state.deathFrame = self.deathFrame
 
@@ -784,7 +776,7 @@ function Panel:saveState(clock)
     state.fell_from_garbage = self.fell_from_garbage
     state.stateChanged = self.stateChanged
 
-    self.saveStates[clock] = state
+    self.saveStates:push(state)
   end
 
   -- save the row on every frame
@@ -808,27 +800,30 @@ end
 -- returns true if a rollback has been applied
 -- returns false if the targetFrame is older than the panel
 function Panel:rollbackToFrame(targetFrame)
-  if targetFrame <= self.birthFrame then
+  if targetFrame > 0 and targetFrame <= self.birthFrame then
     -- this panel didn't exist yet!
+    -- < because the rollback copy for the frame it gets created, won't know about the panel yet, only on the frame after!
     return false
   else
+    if self.id == 115 then
+      local phi = 5
+    end
     local saveState
-    local saveStateClock
-    local framesWithSaveStates = table.getKeys(self.saveStates)
     -- we need the oldest state that is younger than the frame we're rolling back to
-    for i = #framesWithSaveStates, 1, -1 do
-      saveStateClock = framesWithSaveStates[i]
-      saveState = self.saveStates[saveStateClock]
+    for i = self.saveStates.last, self.saveStates.first, -1 do
+      saveState = self.saveStates[i]
 
-      if framesWithSaveStates[i] > targetFrame then
-        self.saveStates[framesWithSaveStates[i]] = nil
+      -- delete states that are newer than the frame we're rolling back to
+      if saveState.clock > targetFrame then
+        saveState = nil
+        self.saveStates[i] = nil
       else
         break
       end
     end
 
     if saveState then
-      assert(saveStateClock <= targetFrame, "erroneously trying to rollback with future information")
+      assert(saveState.clock <= targetFrame, "erroneously trying to rollback with future information")
       self.column = saveState.column
       self.deathFrame = saveState.deathFrame
 
@@ -858,8 +853,12 @@ function Panel:rollbackToFrame(targetFrame)
       self.queuedHover = saveState.queuedHover
       self.chaining = saveState.chaining
 
-      local timeDiff = targetFrame - saveStateClock
-      self.stateChanged = (timeDiff == 0)
+      local timeDiff = targetFrame - saveState.clock
+      if (timeDiff == 0) then
+        self.stateChanged = saveState.stateChanged
+      else
+        self.stateChanged = false
+      end
 
       -- apply with diff for timer based variables
       if saveState.timer == 0 then

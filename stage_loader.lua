@@ -62,3 +62,22 @@ function stage_loader_clear()
     end
   end
 end
+
+function resolveStageSelection(stageId)
+  if not stages[stageId] then
+    -- resolve via random selection
+    stageId = table.getRandomElement(stages_ids_for_current_theme)
+  end
+
+  stageId = resolveStageBundle(stageId)
+
+  return stageId
+end
+
+function resolveStageBundle(stageId)
+  while stages[stageId]:is_bundle() do
+    stageId = table.getRandomElement(stages[stageId].sub_stages)
+  end
+
+  return stageId
+end

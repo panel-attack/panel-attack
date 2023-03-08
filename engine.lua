@@ -531,7 +531,8 @@ function Stack:debugCopy()
   copy.pre_stop_time = self.pre_stop_time
   copy.prev_rise_lock = self.prev_rise_lock
   copy.prevent_manual_raise = self.prevent_manual_raise
-
+  copy.queuedSwapColumn = self.queuedSwapColumn
+  copy.queuedSwapRow = self.queuedSwapRow
   copy.rise_lock = self.rise_lock
   copy.rise_timer = self.rise_timer
   copy.score = self.score
@@ -658,6 +659,8 @@ function Stack:assertEquality(other)
   assertEqual(other.pre_stop_time, self.pre_stop_time, "pre_stop_time")
   assertEqual(other.prev_rise_lock, self.prev_rise_lock, "prev_rise_lock")
   assertEqual(other.prevent_manual_raise, self.prevent_manual_raise, "prevent_manual_raise")
+  assertEqual(other.queuedSwapColumn, self.queuedSwapColumn, "queuedSwapColumn")
+  assertEqual(other.queuedSwapRow, self.queuedSwapRow, "queuedSwapRow")
   assertEqual(other.rise_lock, self.rise_lock, "rise_lock")
   assertEqual(other.rise_timer, self.rise_timer, "rise_timer")
   assertEqual(other.score, self.score, "score")
@@ -942,13 +945,13 @@ function Stack:savePanelStates()
   for i = self.panelRollbackQueue.first, self.panelRollbackQueue.last do
     if not self.panelRollbackQueue[i]:saveState(self.CLOCK) then
       -- the panel has been dead for too long, eliminate it from the list
-      if i > self.panelRollbackQueue.first then
-        -- by moving the first panel in the queue to its position
-        self.panelRollbackQueue[i] = self.panelRollbackQueue[self.panelRollbackQueue.first]
-        self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
+      if i == self.panelRollbackQueue.first then
+        -- if the panel is the first in the queue, we can just pop (remove) it
+        self.panelRollbackQueue:pop()
       else
-        -- if the panel is the first in the queue, just nil it and advance the index
-        self.panelRollbackQueue[i] = nil
+        -- we "delete" it by moving the first panel in the queue to its position
+        self.panelRollbackQueue[i] = self.panelRollbackQueue[self.panelRollbackQueue.first]
+        -- and advance the first index
         self.panelRollbackQueue.first = self.panelRollbackQueue.first + 1
       end
     end
@@ -2505,8 +2508,6 @@ function Stack.new_row(self)
   for row = stackHeight, 1, -1 do
     for col = #panels[row], 1, -1 do
       Panel.switch(panels[row][col], panels[row - 1][col], panels)
-      panels[row][col]:saveRowIndex(self.CLOCK)
-      panels[row - 1][col]:saveRowIndex(self.CLOCK)
     end
   end
 
