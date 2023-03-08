@@ -461,7 +461,7 @@ If no combo SFX are provided at all, the default chain sound will be used instea
 #### chain
 
 Played on performing chains, depending on the chain_style set in the config.json.  
-See the explanation of combo_style for details.  
+See the explanation of chain_style for details.  
 All other attack SFX fall back to this if not present.
 
 
