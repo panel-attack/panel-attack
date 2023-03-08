@@ -112,10 +112,15 @@ Stack = class(function(s, arguments)
   -- This increases by 1 wrapping every time garbage drops.
   s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
-    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
-    s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
+  s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
+  s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
 
-    s:moveForPlayerNumber(which)
+  s.inputMethod = inputMethod
+  if s.inputMethod == "touch" then
+    s.touchInputController = TouchInputController(s)
+  end
+
+  s:moveForPlayerNumber(which)
 
   s.panel_buffer = ""
   s.gpanel_buffer = ""
