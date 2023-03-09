@@ -732,10 +732,6 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   self.combo_size = comboSize
 end
 
-function Panel:saveRow(clock)
-  self.saveRowIndex[clock] = self.row
-end
-
 -- saves the current state of the panel into its saveStates table if its state was changed
 -- returns true if the panel is still relevant
 -- returns false if the panel has been dead for too long to still be rollback relevant
@@ -748,11 +744,10 @@ function Panel:saveState(clock)
     -- for all timerbased states, it's enough if we save state when it was first applied to the panel
     -- for a rollback we can calculate the timer based on the difference between frame of the saveState and targetFrame
     -- for non-timerbased states either nothing happens (normal/dimmed/dead state) or the row drops by one per frame
-    -- for now i'm lazy and save states for each frame of falling state but I should calculate the row later on instead
+    -- the only values that can change without a state change are chaining and row
     local state = {}
-    -- rows are stored separately in self.saveRowIndex[clock]
-    -- state.row = self.row
-    self:saveRow(clock)
+    -- rows are stored separately in self.saveRowIndex[clock] and rolled back separately from there
+    self.saveRowIndex[clock] = self.row
     state.column = self.column
     state.deathFrame = self.deathFrame
 
@@ -786,7 +781,7 @@ function Panel:saveState(clock)
   elseif self.rowChanged then
     -- this field only exists for facilitating rollback
     self.rowChanged = false
-    self:saveRow(clock)
+    self.saveRowIndex[clock] = self.row
   end
 
   if self.saveChaining:lastValue() ~= self.chaining then
