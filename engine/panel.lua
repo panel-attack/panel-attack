@@ -70,7 +70,6 @@ normalState.update = function(panel, panels)
     -- empty panels can only be normal or swapping and don't passively enter other states
     if panel.color ~= 0 then
       local panelBelow = getPanelBelow(panel, panels)
-      --panel:clearChainingFlag(panelBelow)
       
       if panelBelow and panelBelow.stateChanged then
         if panelBelow.state == Panel.states.hovering then
@@ -731,21 +730,6 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   end
   self.combo_index = comboIndex
   self.combo_size = comboSize
-end
-
-function Panel:clearChainingFlag(panelBelow)
-  -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
-  if not self.matching and self.chaining then
-    if self.row == 1 then
-      -- a panel landed on the bottom row, so it surely loses its chain flag.
-      self.chaining = false
-    else
-      if panelBelow.state ~= Panel.states.swapping then
-        -- no swapping panel below so this panel loses its chain flag
-        self.chaining = false
-      end
-    end
-  end
 end
 
 function Panel:saveRow(clock)

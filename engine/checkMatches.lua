@@ -97,7 +97,6 @@ function Stack:getMatchingPanels()
   for row = 1, self.height do
     for col = 1, self.width do
       local panel = panels[row][col]
-      panel.matching = false
       if panel.stateChanged and panel:canMatch() then
         candidatePanels[#candidatePanels + 1] = panel
       end
