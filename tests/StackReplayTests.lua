@@ -1,4 +1,5 @@
 require("table_util")
+local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
@@ -19,6 +20,7 @@ basicEndlessTest()
 local function basicTimeAttackTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2022-09-12-04-02-30-Spd11-Dif1-timeattack.txt")
   assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "time")
   assert(match.seed == 3490465)
   assert(match.P1.game_stopwatch == 7201)
@@ -35,6 +37,7 @@ basicTimeAttackTest()
 local function basicVsTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
   assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "vs")
   assert(match.seed == 2992240)
   assert(match.P1.game_over_clock == 2039)
@@ -54,6 +57,7 @@ basicVsTest()
 local function noInputsInVsIsDrawTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-22-27-36-Player 1-L10-vs-Player 2-L10-draw.txt")
   assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "vs")
   assert(match.seed == 1866552)
   assert(match.P1.game_over_clock == 908)
@@ -74,6 +78,7 @@ noInputsInVsIsDrawTest()
 local function frameTricksTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-07-16-37-02-Spd10-Dif3-endless.txt")
   assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "endless")
   assert(match.seed == 9399683)
   assert(match.P1.game_over_clock == 10032)
@@ -88,6 +93,7 @@ frameTricksTest()
 local function catchAndSyncTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-31-08-57-51-Galadic97-L10-vs-iTSMEJASOn-L8-Casual-P1wins.txt")
   assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "vs")
   assert(match.seed == 8739468)
   assert(match.P1.game_over_clock == 0)
@@ -102,3 +108,48 @@ local function catchAndSyncTest()
 end
 
 catchAndSyncTest()
+
+-- Moving the cursor before ready is done
+-- Prior to the touch builds, you couldn't move the cursor before it was in position
+-- Thus we need to make sure we don't allow moving in replays before touch
+local function movingBeforeInPositionDisallowedPriorToTouch()
+  match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-11-23-29-43-Newsy-L8-vs-ilikebeingsmart-L8-Casual-P2wins.txt")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 10)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P1.cur_row == 11)
+  assert(match.P1.cur_col == 5)
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 15)
+  assert(match.P1.cur_row == 10)
+  assert(match.P1.cur_col == 5)
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 19)
+  assert(match.P1.cur_row == 9)
+  assert(match.P1.cur_col == 5)
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 23)
+  assert(match.P1.cur_row == 8)
+  assert(match.P1.cur_col == 5)
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 27)
+  assert(match.P1.cur_row == 7)
+  assert(match.P1.cur_col == 5)
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 31)
+  assert(match.P1.cur_row == 7)
+  assert(match.P1.cur_col == 4)
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 35)
+  assert(match.P1.cur_row == 7)
+  assert(match.P1.cur_col == 3)
+
+  -- Make sure the user can move now
+  StackReplayTestingUtils:simulateMatchUntil(match, 60)
+  assert(match.P1.cur_row == 6)
+  assert(match.P1.cur_col == 3)
+end
+
+movingBeforeInPositionDisallowedPriorToTouch()

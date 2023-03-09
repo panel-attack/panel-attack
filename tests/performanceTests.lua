@@ -1,5 +1,6 @@
 
 local logger = require("logger")
+local utf8 = require("utf8Additions")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 
 local function testReplayPerformanceWithPath(path)
@@ -31,8 +32,8 @@ local function testPerformanceString(seconds)
   for i = 1, loopCount do
     local time = love.timer.getTime()
     -- check in send_controls
-    local len1 = string.len(confirmedInputsP1)
-    local len2 = string.len(confirmedInputsP1)
+    local len1 = utf8.len(confirmedInputsP1)
+    local len2 = utf8.len(confirmedInputsP1)
     -- receiveConfirmedInput, called in send_controls
     confirmedInputsP1 = confirmedInputsP1 .. "A"
     local loopTime = love.timer.getTime() - time
@@ -83,7 +84,7 @@ local function testPerformanceTableStringLen(seconds)
     local len2 = #confirmedInputsP1
     -- receiveConfirmedInput, called in send_controls
     local input = "A"
-    if string.len(input) == 1 then
+    if utf8.len(input) == 1 then
       confirmedInputsP1[#confirmedInputsP1+1] = input
     else
       local inputs = string.toCharTable(input)
