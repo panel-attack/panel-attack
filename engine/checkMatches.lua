@@ -492,11 +492,11 @@ function Stack:clearChainingFlags()
         if row > 1 then
           -- no swapping panel below so this panel loses its chain flag
           if self.panels[row - 1][column].state ~= Panel.states.swapping then
-            panel.chaining = nil
+            panel.chaining = false
           end
           -- a panel landed on the bottom row, so it surely loses its chain flag.
         else
-          panel.chaining = nil
+          panel.chaining = false
         end
       end
     end

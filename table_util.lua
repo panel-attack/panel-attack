@@ -74,7 +74,7 @@ function table.contains(tab, element)
   return table.trueForAny(
     tab,
     function(tabElement)
-      return tabElement == element
+      return deep_content_equal(tabElement, element)
     end
   )
 end

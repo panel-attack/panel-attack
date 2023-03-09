@@ -1,3 +1,5 @@
+local NewSparseRollbackFrameList = require("engine.RollbackFrameList")
+
 -- Represents an individual panel in the stack
 Panel =
 class(
@@ -12,12 +14,11 @@ class(
     p.row = row
     p.column = column
     p.frameTimes = frameTimes
-    p.saveStates = Queue()
     p.birthFrame = birthFrame or 0
-    p.saveRowIndex = Queue()
-    p.saveRowIndex.first = p.birthFrame
-    p.saveRowIndex.last = p.birthFrame - 1
-    p.saveChaining = Queue()
+    p.chaining = false
+    p.saveStates = NewSparseRollbackFrameList()
+    p.saveRowIndex = NewSparseRollbackFrameList()
+    p.saveChaining = NewSparseRollbackFrameList()
   end
 )
 
@@ -59,8 +60,7 @@ local dimmedState = {}
 local deadState = {}
 
 normalState.update = function(panel, panels)
-  local panelBelow = getPanelBelow(panel, panels)
-
+  
   if panel.isGarbage then
     if not panel:supportedFromBelow(panels) then
       -- Garbage blocks fall without a hover time
@@ -69,6 +69,9 @@ normalState.update = function(panel, panels)
   else
     -- empty panels can only be normal or swapping and don't passively enter other states
     if panel.color ~= 0 then
+      local panelBelow = getPanelBelow(panel, panels)
+      --panel:clearChainingFlag(panelBelow)
+      
       if panelBelow and panelBelow.stateChanged then
         if panelBelow.state == Panel.states.hovering then
           panel:enterHoverState(panelBelow)
@@ -475,7 +478,7 @@ function Panel.clear_flags(self, clearChaining)
 
   -- this is optional to be cleared cause a lot of times we want to keep that information
   if clearChaining then
-    self.chaining = nil
+    self.chaining = false
   end
   -- Animation timer for "bounce" after falling from garbage.
   self.fell_from_garbage = nil
@@ -657,11 +660,9 @@ end
 
 -- sets all necessary information to make the panel start swapping
 function Panel.startSwap(self, isSwappingFromLeft)
-  local chaining = self.chaining
-  self:clear_flags()
+  self:clear_flags(false)
   self.stateChanged = true
   self.state = Panel.states.swapping
-  self.chaining = chaining
   self.timer = 4
   self.isSwappingFromLeft = isSwappingFromLeft
   if self.fell_from_garbage then
@@ -676,6 +677,8 @@ function Panel.fall(self, panels)
   local panelBelow = getPanelBelow(self, panels)
   Panel.switch(self, panelBelow, panels)
   -- panelBelow is now actually panelAbove
+  self.rowChanged = true
+  panelBelow.rowChanged = true
   if self.isGarbage then
     -- panels above should fall immediately rather than starting to hover
     panelBelow.propagatesFalling = true
@@ -730,6 +733,25 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   self.combo_size = comboSize
 end
 
+function Panel:clearChainingFlag(panelBelow)
+  -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
+  if not self.matching and self.chaining then
+    if self.row == 1 then
+      -- a panel landed on the bottom row, so it surely loses its chain flag.
+      self.chaining = false
+    else
+      if panelBelow.state ~= Panel.states.swapping then
+        -- no swapping panel below so this panel loses its chain flag
+        self.chaining = false
+      end
+    end
+  end
+end
+
+function Panel:saveRow(clock)
+  self.saveRowIndex[clock] = self.row
+end
+
 -- saves the current state of the panel into its saveStates table if its state was changed
 -- returns true if the panel is still relevant
 -- returns false if the panel has been dead for too long to still be rollback relevant
@@ -737,7 +759,7 @@ function Panel:saveState(clock)
   if self.deathFrame then
     -- the panel is no longer relevant
     return not (self.deathFrame + MAX_LAG < clock)
-  elseif self.stateChanged or self.saveStates.last == -1 then
+  elseif self.stateChanged or self.saveStates.length == 0 then
     -- idea:
     -- for all timerbased states, it's enough if we save state when it was first applied to the panel
     -- for a rollback we can calculate the timer based on the difference between frame of the saveState and targetFrame
@@ -746,7 +768,7 @@ function Panel:saveState(clock)
     local state = {}
     -- rows are stored separately in self.saveRowIndex[clock]
     -- state.row = self.row
-    state.clock = clock
+    self:saveRow(clock)
     state.column = self.column
     state.deathFrame = self.deathFrame
 
@@ -773,26 +795,24 @@ function Panel:saveState(clock)
     state.isSwappingFromLeft = self.isSwappingFromLeft
     state.dont_swap = self.dont_swap
     state.queuedHover = self.queuedHover
-    state.chaining = self.chaining
     state.fell_from_garbage = self.fell_from_garbage
     state.stateChanged = self.stateChanged
 
-    self.saveStates:push(state)
+    self.saveStates[clock] = state
+  elseif self.rowChanged then
+    -- this field only exists for facilitating rollback
+    self.rowChanged = false
+    self:saveRow(clock)
   end
 
-  -- save the row on every frame
-  -- this only works under the assumption that this function doesn't skip a frame
-  if not self.saveRowIndex[clock] then
-    self.saveRowIndex:push(self.row)
-  end
-
-  if not self.saveChaining[clock] then
-    self.saveChaining:push(self.chaining)
+  if self.saveChaining:lastValue() ~= self.chaining then
+    self.saveChaining[clock] = self.chaining
   end
 
   -- TODO: eliminate states too old to be relevant
   -- after testing, this might not be worth the trouble
   -- panels have a limited lifetime anyway so they won't accumulate forever
+  -- and it costs a lot of performance
 
   return true
 end
@@ -807,22 +827,10 @@ function Panel:rollbackToFrame(targetFrame)
     -- < because the rollback copy for the frame it gets created, won't know about the panel yet, only on the frame after!
     return false
   else
-    local saveState
-    -- we need the oldest state that is younger than the frame we're rolling back to
-    for i = self.saveStates.last, self.saveStates.first, -1 do
-      saveState = self.saveStates[i]
-
-      -- delete states that are newer than the frame we're rolling back to
-      if saveState.clock > targetFrame then
-        saveState = nil
-        self.saveStates[i] = nil
-      else
-        break
-      end
-    end
+    -- RollbackFrameList implements a metafunction that returns two values on index access
+    local saveState, timeDiff = self.saveStates:getValueAtFrame(targetFrame)
 
     if saveState then
-      assert(saveState.clock <= targetFrame, "erroneously trying to rollback with future information")
       self.column = saveState.column
       self.deathFrame = saveState.deathFrame
 
@@ -850,10 +858,8 @@ function Panel:rollbackToFrame(targetFrame)
       self.isSwappingFromLeft = saveState.isSwappingFromLeft
       self.dont_swap = saveState.dont_swap
       self.queuedHover = saveState.queuedHover
-      self.chaining = saveState.chaining
 
-      local timeDiff = targetFrame - saveState.clock
-      if (timeDiff == 0) then
+      if timeDiff == 0 then
         self.stateChanged = saveState.stateChanged
       else
         self.stateChanged = false
@@ -877,18 +883,12 @@ function Panel:rollbackToFrame(targetFrame)
     -- row and chaining are the only non-timer things on a panel that can change without a state change
 
     -- fetch the value from the saveRowIndex table
-    self.row = self.saveRowIndex[targetFrame]
+    self.row = self.saveRowIndex:getValueAtFrame(targetFrame)
     -- clear it
-    self.saveRowIndex:clear()
-    -- reset the starting point so that index access works properly
-    self.saveRowIndex.first = targetFrame
-    self.saveRowIndex.last = targetFrame - 1
+    self.saveRowIndex:clearToFrame(targetFrame)
 
-    self.chaining = self.saveChaining[targetFrame]
-    self.saveChaining:clear()
-    -- reset the starting point so that index access works properly
-    self.saveChaining.first = targetFrame
-    self.saveChaining.last = targetFrame - 1
+    self.chaining = self.saveChaining:getValueAtFrame(targetFrame)
+    self.saveChaining:clearToFrame(targetFrame)
 
     return true
   end
