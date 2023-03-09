@@ -869,10 +869,10 @@ function Panel:rollbackToFrame(targetFrame)
     -- fetch the value from the saveRowIndex table
     self.row = self.saveRowIndex:getValueAtFrame(targetFrame)
     -- clear it
-    self.saveRowIndex:clearToFrame(targetFrame)
+    self.saveRowIndex:clearFromFrame(targetFrame)
 
     self.chaining = self.saveChaining:getValueAtFrame(targetFrame)
-    self.saveChaining:clearToFrame(targetFrame)
+    self.saveChaining:clearFromFrame(targetFrame)
 
     return true
   end

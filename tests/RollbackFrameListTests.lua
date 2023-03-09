@@ -10,7 +10,7 @@ local function basicTest()
   assert(list.length == 3)
   assert(list:getValueAtFrame(7) == 5)
   assert(list:lastValue() == 10)
-  list:clearToFrame(3)
+  list:clearFromFrame(3)
   assert(list:lastValue() == 1)
   assert(list.length == 1)
 end

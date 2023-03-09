@@ -27,7 +27,7 @@ local function getValueAtFrame(table, key)
   end
 end
 
-local function clearToFrame(table, frame)
+local function clearFromFrame(table, frame)
   for i = table.length, 1, -1 do
     if table.indices[i] > frame then
       table[table.indices[i]] = nil
@@ -49,7 +49,7 @@ end
 
 local function NewSparseRollbackFrameList()
   local sparselyIndexedList = { indices = {}, length = 0 }
-  sparselyIndexedList.clearToFrame = clearToFrame
+  sparselyIndexedList.clearFromFrame = clearFromFrame
   sparselyIndexedList.lastValue = lastValue
   sparselyIndexedList.getValueAtFrame = getValueAtFrame
   local metatable = {}
