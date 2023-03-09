@@ -67,6 +67,17 @@ sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install lsqlite3complete
 ```
 and change the require to use lsqlite3complete
 
+
+### lua-utf8
+
+```
+sudo luarocks --lua-dir=/opt/homebrew/opt/lua@5.1 install lua-utf8
+```
+on some OS's you may need this command instead
+```
+sudo luarocks install luautf8
+```
+
 ### Add lua to your path
 
 This step depends more on your shell and environment, but make sure lua's install directory is on your path
