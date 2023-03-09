@@ -230,7 +230,7 @@ Stack = class(function(s, arguments)
 
   s.shake_time = 0
 
-  s.prev_states = {}
+  s.prev_states = Queue()
 
   s.analytic = AnalyticsInstance(s.is_local)
 
@@ -838,10 +838,9 @@ function Stack.rollbackToFrame(self, frame)
   end
 
   if frame < currentFrame then
-    local prev_states = self.prev_states
     logger.debug("Rolling back stack " .. self.which .. " to frame " .. frame)
-    assert(prev_states[frame])
-    self:restoreFromRollbackCopy(prev_states[frame])
+    assert(self.prev_states[frame])
+    self:restoreFromRollbackCopy(self.prev_states[frame])
 
     for i = self.panelRollbackQueue.first, self.panelRollbackQueue.last do
       if not self.panelRollbackQueue[i]:rollbackToFrame(frame) then
@@ -851,8 +850,10 @@ function Stack.rollbackToFrame(self, frame)
       end
     end
 
-    for f = frame, currentFrame do
-      self:deleteRollbackCopy(f)
+    -- future frames will get rebuilt
+    -- old frames definitely won't get used after performing a rollback anymore
+    while self.prev_states:len() > 0 do
+      self:deleteOldestRollbackCopy()
     end
 
     if self.garbage_target and self.garbage_target.later_garbage then
@@ -928,23 +929,33 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
-  -- we should always delete outdated copies to keep the clonePool populated
-  local deleteFrame = self.CLOCK - MAX_LAG - 1
-  self:deleteRollbackCopy(deleteFrame)
-
-  if self:shouldSaveRollback() == false then
-    return
+  if self:shouldSaveRollback() then
+    local prev_states = self.prev_states
+    if prev_states:len() == 0 then
+      prev_states.first = self.CLOCK
+      prev_states.last = self.CLOCK - 1
+    end
+    local garbage_target = self.garbage_target
+    self.garbage_target = nil
+    self.prev_states = nil
+    self:remove_extra_rows()
+    self:savePanelStates()
+    prev_states:push(self:rollbackCopy())
+    self.prev_states = prev_states
+    self.garbage_target = garbage_target
+    if self.prev_states.first == self.CLOCK - MAX_LAG - 1 then
+      self:deleteOldestRollbackCopy()
+    end
+  else
+    if self.prev_states:len() > 0 then
+      -- we caught up so much that are previous rollback copies will no longer be needed
+      -- put them all back into the clone pool!
+      while self.prev_states:len() > 0 do
+        self:deleteOldestRollbackCopy()
+      end
+      self:deletePanelStates()
+    end
   end
-
-  local prev_states = self.prev_states
-  local garbage_target = self.garbage_target
-  self.garbage_target = nil
-  self.prev_states = nil
-  self:remove_extra_rows()
-  self:savePanelStates()
-  prev_states[self.CLOCK] = self:rollbackCopy()
-  self.prev_states = prev_states
-  self.garbage_target = garbage_target
 end
 
 function Stack:savePanelStates()
@@ -964,17 +975,23 @@ function Stack:savePanelStates()
   end
 end
 
-function Stack.deleteRollbackCopy(self, frame)
-  if self.prev_states[frame] then
+function Stack:deletePanelStates()
+  for i = self.panelRollbackQueue.first, self.panelRollbackQueue.last do
+    self.panelRollbackQueue[i]:clearSaveStates()
+  end
+end
+
+function Stack.deleteOldestRollbackCopy(self)
+  if self.prev_states:len() > 0 then
+    local prevState = self.prev_states:pop()
     if self.telegraph then
-      self.telegraph:saveClone(self.prev_states[frame].telegraph)
+      self.telegraph:saveClone(prevState.telegraph)
     end
 
     -- Has a reference to stacks we don't want kept around
-    self.prev_states[frame].telegraph = nil
+    prevState.telegraph = nil
 
-    self.clonePool[#self.clonePool + 1] = self.prev_states[frame]
-    self.prev_states[frame] = nil
+    self.clonePool[#self.clonePool + 1] = prevState
   end
 end
 

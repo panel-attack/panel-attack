@@ -873,6 +873,12 @@ function Panel:rollbackToFrame(targetFrame)
   end
 end
 
+function Panel:clearSaveStates()
+  self.saveStates:clear()
+  self.saveChaining:clear()
+  self.saveRowIndex:clear()
+end
+
 function Panel:debugCopy()
   local copy = {}
 

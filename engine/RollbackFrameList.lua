@@ -39,6 +39,18 @@ local function clearFromFrame(table, frame)
   end
 end
 
+-- more of a fake clear
+-- it doesn't really matter if the values stay in the table
+-- but it would cause work clearing them up or giving them up for garbage collection
+-- clear is called when stacks are sufficiently close to each other again that rollback doesn't happen
+-- so any new values will have higher indices anyway
+-- old values will get garbage collected after the game with the owner's death
+-- tl;dr, we don't wanna drop frames just because we caught up!
+local function clear(table)
+  table.indices = {}
+  table.length = 0
+end
+
 local function lastValue(table)
   if table.length > 0 then
     return table[table.indices[table.length]]
@@ -50,6 +62,7 @@ end
 local function NewSparseRollbackFrameList()
   local sparselyIndexedList = { indices = {}, length = 0 }
   sparselyIndexedList.clearFromFrame = clearFromFrame
+  sparselyIndexedList.clear = clear
   sparselyIndexedList.lastValue = lastValue
   sparselyIndexedList.getValueAtFrame = getValueAtFrame
   local metatable = {}
