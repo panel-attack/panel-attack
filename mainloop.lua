@@ -84,12 +84,12 @@ function fmainloop()
     require("tests.StackReplayTests")
     require("tests.StackRollbackReplayTests")
     require("tests.StackTouchReplayTests")
-    -- Performance Tests
-    if PERFORMANCE_TESTS_ENABLED then
-      require("tests/performanceTests")
-    end
   end
-
+  -- Performance Tests
+  if PERFORMANCE_TESTS_ENABLED then
+    require("tests/performanceTests")
+  end
+  
   local func, arg = main_title, nil
 
   while true do
