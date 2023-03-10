@@ -296,6 +296,7 @@ function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onSc
       panel:setTimer(garbageMatchTime + 1)
       panel.initial_time = garbageMatchTime
       panel.pop_time = self.FRAMECOUNTS.POP * (onScreenCount - i)
+      panel.pop_index = math.min(i, 10)
     end
   end
 
