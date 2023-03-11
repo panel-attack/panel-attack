@@ -3,7 +3,6 @@ local logger = require("logger")
 local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 -- vertical space between telegraph and stack
 local TELEGRAPH_BLOCK_WIDTH = 26
-local TELEGRAPH_ATTACK_MAX_SPEED = 8 -- fastest an attack can travel toward the telegraph per frame
 -- The telegraph_attack_animation below refers the little loop shape attacks make before they start traveling toward the target.
 local TELEGRAPH_ATTACK_ANIMATION_SPEED = {4, 4, 4, 4, 4, 2, 2, 2, 2, 1, 1, 1, 1, .5, .5, .5, .5, 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 8}
 -- the following are angles out of 64, 0 being right, 32 being left, 16 being down, and 48 being up.
