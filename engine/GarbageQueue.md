@@ -57,6 +57,6 @@ Whether this piece of garbage will drop depends on three conditions:
 
 1. If it originates from a chain and has a height of more than 1, it will get dropped.  
 2. If there haven't been active panels on the last and the current frame, the garbage will get dropped.  
-3. If the stack has panels in its highest row, no garbage may drop, regardless of the other conditions.  
+3. If the stack has panels in its highest row or another piece of garbage is still falling, no garbage may drop, regardless of the other conditions.  
 
 Upon dropping, the garbage enters its target stack in the form of panels and is removed from the stack's queue.
