@@ -25,11 +25,14 @@ The cardinal rules are the following:
 3. Metal garbage cannot leave the staging phase while combo garbage remains in it.
 
 The other rules differ depending on chain or combo garbage.  
-For chain garbage:  
+
+##### Chain garbage
+
 1. Chain garbage will stay in staging while the corresponding chain is still on-going.  
 2. The scheduled stay for a chain starts with the time of its last chain link.
 
-For combo garbage:  
+##### Combo garbage 
+
 1. Combo garbage cannot leave the staging phase while smaller combo garbage remains in it.  
 2. Combo garbage entering the staging phase extends the stay of all combo garbage of the same size to the new garbage's scheduled stay.
 
