@@ -1152,7 +1152,12 @@ function options.main(button_idx)
 
     write_conf_file()
 
-    if config.theme ~= memory_before_options_menu.theme then
+    local themeChanged = true
+    if memory_before_options_menu ~= nil and config.theme == memory_before_options_menu.theme then
+      themeChanged = false
+    end
+
+    if themeChanged then
       gprint(loc("op_reload_theme"), unpack(previousMenuPosition))
       wait()
       stop_the_music()
@@ -1161,22 +1166,18 @@ function options.main(button_idx)
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
       end
-    end
 
-    -- stages before characters since they are part of their loading
-    if config.theme ~= memory_before_options_menu.theme then
+      -- stages before characters since they are part of their loading
       gprint(loc("op_reload_stages"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       stages_init()
-    end
 
-    if config.theme ~= memory_before_options_menu.theme then
       gprint(loc("op_reload_characters"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       characters_init()
     end
 
-    if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
+    if memory_before_options_menu == nil or config.enable_analytics ~= memory_before_options_menu.enable_analytics then
       gprint(loc("op_reload_analytics"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       analytics.init()
@@ -1185,7 +1186,6 @@ function options.main(button_idx)
     apply_config_volume()
 
     memory_before_options_menu = nil
-    normal_music_for_sound_option = nil
     ret = {main_select_mode}
   end
 
@@ -1211,6 +1211,9 @@ function options.main(button_idx)
         end
       end
     end
+  end
+
+  if memory_before_options_menu == nil then 
     memory_before_options_menu = {
       theme = config.theme,
       --this one is actually updated with the menu and change upon leaving, be careful!
