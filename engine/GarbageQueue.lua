@@ -1,10 +1,12 @@
 local logger = require("logger")
 
+-- Holds garbage in a queue and follows a specific order for which types should be popped out first.
 GarbageQueue = class(function(s)
   s.chainGarbage = Queue()
   s.comboGarbage = {Queue(), Queue(), Queue(), Queue(), Queue(), Queue()} -- index here represents width, and length represents how many of that width queued
   s.metal = Queue()
-  -- a ghost chain is a chain that's not a chain? Possibly obsolete
+
+  -- a ghost chain keeps the smaller version of a chain thats growing showing in the telegraph while the new chain's attack animation is still animating to the telegraph.
   s.ghostChain = nil
 end)
 
