@@ -12,22 +12,10 @@ end)
 
 function GarbageQueue.makeCopy(self)
   local other = GarbageQueue()
-  local activeChain = self.chainGarbage:peek()
-  if activeChain then
-    -- width, height, metal, from_chain, finalized
-    other.chainGarbage:push({
-      width = activeChain.width,
-      height = activeChain.height,
-      isMetal = activeChain.isMetal,
-      isChain = activeChain.isChain,
-      timeAttackInteracts = activeChain.timeAttackInteracts,
-      finalized = activeChain.finalized
-    })
-    for i = self.chainGarbage.first + 1, self.chainGarbage.last do
-      other.chainGarbage:push(self.chainGarbage[i])
-    end
-  end
+  -- chain garbage is mutable as it can grow, deepcopy it!
+  other.chainGarbage = deepcpy(self.chainGarbage)
 
+  -- combo and metal garbage are immutable, we can pass by reference and save resources for table generation and collection
   for i = 1, 6 do
     for j = self.comboGarbage[i].first, self.comboGarbage[i].last do
       other.comboGarbage[i]:push(self.comboGarbage[i][j])
