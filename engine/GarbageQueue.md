@@ -50,16 +50,19 @@ If so, it gets added to the stack's own garbage queue which is equivalent to ent
 Once garbage entered the Delay phase, the stack checks on every frame whether the highest priority piece of garbage should drop or not.  
 Only one piece of garbage may be dropped per frame.  
 
-Priority rules:  
+#### Priority rules 
+
 1. Chain garbage drops before combo garbage.  
-2. Chain garbage drops in order by height from small to big.  
+2. Chain garbage drops in order of creation.  
 3. Combo garbage drops before metal garbage.  
 4. Combo garbage drops in order by width from small to big.  
 
-Whether this piece of garbage will drop depends on three conditions:  
+#### Requirements for dropping
 
-1. If it originates from a chain and has a height of more than 1, it will get dropped.  
-2. If there haven't been active panels on the last and the current frame, the garbage will get dropped.  
-3. If the stack has panels in its highest row or another piece of garbage is still falling, no garbage may drop, regardless of the other conditions.  
+If the stack has panels in its highest row or another piece of garbage is still falling, no garbage may drop at all.  
+If this is not the case, garbage will drop if it fulfills either of the following conditions: 
+
+1. If it originates from a chain and has a height of more than 1  
+2. If there haven't been active panels on the last and the current frame  
 
 Upon dropping, the garbage enters its target stack in the form of panels and is removed from the stack's queue.
