@@ -17,7 +17,11 @@ class(
 
 -- convenience function for getting panel in the row below if there is one
 local function getPanelBelow(panel, panels)
-  return panels[panel.row - 1][panel.column]
+  if panel.row <= 1 then
+    return nil
+  else
+    return panels[panel.row - 1][panel.column]
+  end
 end
 
 Panel.states = {
@@ -49,17 +53,21 @@ local dimmedState = {}
 local deadState = {}
 
 normalState.update = function(panel, panels)
-  local t = love.timer.getTime()
-  if panel.color ~= 0 then
-    if panel.isGarbage then
-      if not panel:supportedFromBelow(panels) then
-        -- Garbage blocks fall without a hover time
-        panel:fall(panels)
-      end
-    else
+  if panel.isGarbage then
+    if not panel:supportedFromBelow(panels) then
+      -- Garbage blocks fall without a hover time
+      panel:fall(panels)
+    end
+  else
+    -- empty panels can only be normal or swapping and don't passively enter other states
+    if panel.color ~= 0 then
       local panelBelow = getPanelBelow(panel, panels)
-      if panelBelow.stateChanged then
+      if panelBelow and panelBelow.stateChanged then
         if panelBelow.state == Panel.states.hovering then
+          panel:enterHoverState(panelBelow)
+        elseif panelBelow.state == Panel.states.swapping
+          and panelBelow.queuedHover == true
+          and panelBelow.propagatesChaining then
           panel:enterHoverState(panelBelow)
         elseif panelBelow.color == 0 and panelBelow.state == Panel.states.normal then
           if panelBelow.propagatesFalling then
@@ -69,10 +77,6 @@ normalState.update = function(panel, panels)
           else
             panel:enterHoverState(panelBelow)
           end
-        elseif panelBelow.queuedHover == true
-        and panelBelow.propagatesChaining
-        and panelBelow.state == Panel.states.swapping then
-          panel:enterHoverState(panelBelow)
         end
         -- all other transformations from normal state are actively set by stack routines:
         -- swap
@@ -91,8 +95,6 @@ swappingState.update = function(panel, panels)
     else
       swappingState.changeState(panel, panels)
     end
-  else
-    swappingState.propagateChaining(panel, panels)
   end
 end
 
@@ -482,6 +484,11 @@ function Panel.update(self, panels)
 
   local stateTable = self:getStateTable()
   stateTable.update(self, panels)
+
+  -- edge case, not sure if this can be put into swappingState.update without breaking things
+  if self.state == Panel.states.swapping then
+    swappingState.propagateChaining(self, panels)
+  end
 end
 
 -- sets all necessary information to make the panel start swapping
@@ -614,11 +621,6 @@ function Panel.supportedFromBelow(self, panels)
     -- check if it supported in any column over the entire width of the garbage
     local startColumn = self.column - self.x_offset
     local endColumn = self.column - self.x_offset + self.width - 1
-    -- this is implicitly "optimised" already
-    -- as panels get updated in the same order as they're checked
-    -- we're basically bound to immediately find a panel with the same garbage id for all garbage panels of a row
-    -- after the first one went through the entire check and got dropped
-    -- while if the garbage is supported we already get an early exit
     for column = startColumn, endColumn do
       local panel = panels[self.row - 1][column]
       if panel.color ~= 0 then
