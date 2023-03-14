@@ -17,11 +17,13 @@ class(
 
 -- convenience function for getting panel in the row below if there is one
 local function getPanelBelow(panel, panels)
-  if panel.row <= 1 then
-    return nil
-  else
+  -- by definition, there is a row 0 that always has dimmed state panels
+  -- dimmed state panels never use this function so we can omit the sanity check for performance
+  -- if panel.row <= 1 then
+  --   return nil
+  -- else
     return panels[panel.row - 1][panel.column]
-  end
+  -- end
 end
 
 Panel.states = {
@@ -62,7 +64,7 @@ normalState.update = function(panel, panels)
     -- empty panels can only be normal or swapping and don't passively enter other states
     if panel.color ~= 0 then
       local panelBelow = getPanelBelow(panel, panels)
-      if panelBelow and panelBelow.stateChanged then
+      if panelBelow.stateChanged then
         if panelBelow.state == Panel.states.hovering then
           panel:enterHoverState(panelBelow)
         elseif panelBelow.state == Panel.states.swapping
