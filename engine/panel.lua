@@ -24,10 +24,23 @@ local function getPanelBelow(panel, panels)
   end
 end
 
+Panel.states = {
+  normal = 0,
+  swapping = 1,
+  matched = 2,
+  popping = 3,
+  popped = 4,
+  hovering = 5,
+  falling = 6,
+  landing = 7,
+  dimmed = 8,
+  dead = 9
+}
+
 -- all possible states a panel can have
 -- the state tables provide functions that describe their state update/transformations
 -- the state tables provide booleans that describe which actions are possible in their state
--- the state table of a panel is assigned to its state property and can directly be accessed from there
+-- the state table of a panel can be acquired via Panel:getStateTable()
 local normalState = {}
 local swappingState = {}
 local matchedState = {}
@@ -38,19 +51,6 @@ local fallingState = {}
 local landingState = {}
 local dimmedState = {}
 local deadState = {}
-
-Panel.states = {
-  normal = normalState,
-  swapping = swappingState,
-  matched = matchedState,
-  popping = poppingState,
-  popped = poppedState,
-  hovering = hoverState,
-  falling = fallingState,
-  landing = landingState,
-  dimmed = dimmedState,
-  dead = deadState
-}
 
 normalState.update = function(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
@@ -312,7 +312,8 @@ function Panel.exclude_match(self)
   elseif self.state == Panel.states.hovering and not self.match_anyway then
     return true
   else
-    return self.state.excludeMatch
+    local state = self:getStateTable()
+    return state.excludeMatch
   end
 end
 
@@ -338,7 +339,8 @@ function Panel.exclude_swap(self)
   elseif self.isGarbage then
     return true
   else
-    return self.state.excludeSwap
+    local state = self:getStateTable()
+    return state.excludeSwap
   end
 end
 
@@ -481,7 +483,8 @@ function Panel.update(self, panels)
   self.propagatesChaining = false
   self.propagatesFalling = false
 
-  self.state.update(self, panels)
+  local stateTable = self:getStateTable()
+  stateTable.update(self, panels)
 
   -- edge case, not sure if this can be put into swappingState.update without breaking things
   if self.state == Panel.states.swapping then
@@ -582,6 +585,31 @@ function Panel.enterHoverState(self, panelBelow)
   end
 
   self.stateChanged = true
+end
+
+-- gets the table holding the information and functions of the state the panel is in
+function Panel.getStateTable(self)
+  if self.state == Panel.states.normal then
+    return normalState
+  elseif self.state == Panel.states.swapping then
+    return swappingState
+  elseif self.state == Panel.states.matched then
+    return matchedState
+  elseif self.state == Panel.states.popping then
+    return poppingState
+  elseif self.state == Panel.states.popped then
+    return poppedState
+  elseif self.state == Panel.states.hovering then
+    return hoverState
+  elseif self.state == Panel.states.falling then
+    return fallingState
+  elseif self.state == Panel.states.landing then
+    return landingState
+  elseif self.state == Panel.states.dimmed then
+    return dimmedState
+  elseif self.state == Panel.states.dead then
+    return deadState
+  end
 end
 
 -- returns true if there are "stable" panels below that keep it from falling down
