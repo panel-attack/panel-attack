@@ -97,6 +97,8 @@ swappingState.update = function(panel, panels)
     else
       swappingState.changeState(panel, panels)
     end
+  else
+    swappingState.propagateChaining(panel, panels)
   end
 end
 
@@ -486,11 +488,6 @@ function Panel.update(self, panels)
 
   local stateTable = self:getStateTable()
   stateTable.update(self, panels)
-
-  -- edge case, not sure if this can be put into swappingState.update without breaking things
-  if self.state == Panel.states.swapping then
-    swappingState.propagateChaining(self, panels)
-  end
 end
 
 -- sets all necessary information to make the panel start swapping
