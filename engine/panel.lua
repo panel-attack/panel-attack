@@ -67,10 +67,6 @@ normalState.update = function(panel, panels)
       if panelBelow.stateChanged then
         if panelBelow.state == Panel.states.hovering then
           panel:enterHoverState(panelBelow)
-        elseif panelBelow.state == Panel.states.swapping
-          and panelBelow.queuedHover == true
-          and panelBelow.propagatesChaining then
-          panel:enterHoverState(panelBelow)
         elseif panelBelow.color == 0 and panelBelow.state == Panel.states.normal then
           if panelBelow.propagatesFalling then
             -- the panel below is empty because garbage below dropped
@@ -79,6 +75,10 @@ normalState.update = function(panel, panels)
           else
             panel:enterHoverState(panelBelow)
           end
+        elseif panelBelow.queuedHover == true
+        and panelBelow.propagatesChaining
+        and panelBelow.state == Panel.states.swapping then
+          panel:enterHoverState(panelBelow)
         end
         -- all other transformations from normal state are actively set by stack routines:
         -- swap
