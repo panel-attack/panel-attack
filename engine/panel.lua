@@ -208,15 +208,15 @@ local function supportedFromBelow(panel, panels)
     local startColumn = panel.column - panel.x_offset
     local endColumn = panel.column - panel.x_offset + panel.width - 1
     for column = startColumn, endColumn do
-      local panel = panels[panel.row - 1][column]
-      if panel.color ~= 0 then
-        if panel.isGarbage == false then
+      local panelBelow = panels[panel.row - 1][column]
+      if panelBelow.color ~= 0 then
+        if panelBelow.isGarbage == false then
           return true
         else
           -- panels belonging to the same brick of garbage can't be considered as supporting
-          if panel.garbageId == panel.garbageId then
+          if panel.garbageId == panelBelow.garbageId then
             -- unless the y offset is different
-            return panel.y_offset ~= panel.y_offset
+            return panel.y_offset ~= panelBelow.y_offset
           else
             return true
           end
