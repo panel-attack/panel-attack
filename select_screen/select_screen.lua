@@ -1,4 +1,5 @@
 local logger = require("logger")
+local Replay = require("replay")
 local graphics = require("select_screen.select_screen_graphics")
 
 local select_screen = {}
@@ -811,7 +812,7 @@ function select_screen.startNetPlayMatch(self, msg)
   P1:set_garbage_target(P2)
   P2:set_garbage_target(P1)
   P2:moveForPlayerNumber(2)
-  replay = createNewReplay(GAME.match)
+  replay = Replay.createNewReplay(GAME.match)
 
   if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
     for k, v in pairs(replay_of_match_so_far.vs) do

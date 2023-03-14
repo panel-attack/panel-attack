@@ -5,7 +5,7 @@ local options = require("options")
 local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
-require("replay")
+local Replay = require("replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -80,6 +80,7 @@ function fmainloop()
     require("table_util_tests")
     require("utilTests")
     -- Medium level tests (integration tests)
+    require("tests.ReplayTests")
     require("tests.StackReplayTests")
     require("tests.StackRollbackReplayTests")
     require("tests.StackTouchReplayTests")
@@ -346,50 +347,6 @@ local function commonGameSetup()
   pick_use_music_from()
 end
 
-function createNewReplay(match)
-  local mode = match.mode
-  local result = {}
-  result.engineVersion = VERSION
-
-  result[mode] = {}
-  local modeReplay = result[mode]
-
-  modeReplay.seed = match.seed
-
-  if mode == "endless" or mode == "time" then
-    modeReplay.do_countdown = P1.do_countdown or false
-    modeReplay.speed = P1.speed
-    modeReplay.difficulty = P1.difficulty
-    modeReplay.cur_wait_time = P1.cur_wait_time or default_input_repeat_delay
-    modeReplay.in_buf = ""
-    modeReplay.inputMethod = P1.inputMethod
-  elseif mode == "vs" then
-    modeReplay.P = ""
-    modeReplay.O = ""
-    modeReplay.I = ""
-    modeReplay.Q = ""
-    modeReplay.in_buf = ""
-    modeReplay.P1_level = P1.level
-    modeReplay.P1_inputMethod = P1.inputMethod
-    modeReplay.P1_name = GAME.battleRoom.playerNames[1]
-    modeReplay.P1_char = P1.character
-    modeReplay.P1_char = P1.character
-    modeReplay.P1_cur_wait_time = P1.cur_wait_time
-    modeReplay.do_countdown = true
-    if P2 then
-      modeReplay.P2_level = P2.level
-      modeReplay.P2_inputMethod = P2.inputMethod
-      modeReplay.P2_name = GAME.battleRoom.playerNames[2]
-      modeReplay.P2_char = P2.character
-      modeReplay.P2_cur_wait_time = P2.cur_wait_time
-
-      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[P1.player_number]
-      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[P2.player_number]
-    end
-  end
-  return result
-end
-
 local function handle_pause(self)
   if GAME.match.supportsPause then
     if menu_pause() or (not GAME.focused and not GAME.gameIsPaused) then
@@ -406,106 +363,6 @@ local function handle_pause(self)
       end
     end
   end
-end
-
-local function addReplayStatisticsToReplay(replay)
-  local r = replay[GAME.match.mode]
-  r.duration = GAME.match:gameEndedClockTime()
-  if GAME.match.mode == "vs" and P2 then
-    r.match_type = match_type
-    local p1GameResult = P1:gameResult()
-    if p1GameResult == 1 then
-      r.winner = P1.which
-    elseif p1GameResult == -1 then
-      r.winner = P2.which
-    elseif p1GameResult == 0 then
-      r.winner = 0
-    end
-  end
-  r.playerStats = {}
-  
-  if P1 then
-    r.playerStats[P1.which] = {}
-    r.playerStats[P1.which].number = P1.which
-    r.playerStats[P1.which] = P1.analytic.data
-    r.playerStats[P1.which].score = P1.score
-    if GAME.match.mode == "vs" and GAME.match.room_ratings then
-      r.playerStats[P1.which].rating = GAME.match.room_ratings[P1.which]
-    end
-  end
-
-  if P2 then
-    r.playerStats[P2.which] = {}
-    r.playerStats[P2.which].number = P2.which
-    r.playerStats[P2.which] = P2.analytic.data
-    r.playerStats[P2.which].score = P2.score
-    if GAME.match.mode == "vs" and GAME.match.room_ratings then
-      r.playerStats[P2.which].rating = GAME.match.room_ratings[P2.which]
-    end
-  end
-
-  return replay
-end
-
-local function finalizeAndWriteReplay(extraPath, extraFilename)
-  replay = addReplayStatisticsToReplay(replay)
-  replay[GAME.match.mode].in_buf = table.concat(P1.confirmedInput)
-  replay[GAME.match.mode].stage = current_stage
-
-  local now = os.date("*t", to_UTC(os.time()))
-  local sep = "/"
-  local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-  if extraPath then
-    path = path .. sep .. extraPath
-  end
-  local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
-  if extraFilename then
-    filename = filename .. "-" .. extraFilename
-  end
-  filename = filename .. ".json"
-  logger.debug("saving replay as " .. path .. sep .. filename)
-  write_replay_file(path, filename)
-end
-
-local function finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame)
-
-  incompleteGame = incompleteGame or false
-  
-  local extraPath, extraFilename = "", ""
-
-  if GAME.match:warningOccurred() then
-    extraFilename = extraFilename .. "-WARNING-OCCURRED"
-  end
-
-  if P2 then
-    replay[GAME.match.mode].I = table.concat(P2.confirmedInput)
-
-    local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
-    --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
-    if rep_b_name < rep_a_name then
-      extraPath = rep_b_name .. "-vs-" .. rep_a_name
-    else
-      extraPath = rep_a_name .. "-vs-" .. rep_b_name
-    end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
-    if match_type and match_type ~= "" then
-      extraFilename = extraFilename .. "-" .. match_type
-    end
-    if incompleteGame then
-      extraFilename = extraFilename .. "-INCOMPLETE"
-    else
-      if outcome_claim == 1 or outcome_claim == 2 then
-        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
-      elseif outcome_claim == 0 then
-        extraFilename = extraFilename .. "-draw"
-      end
-    end
-  else -- vs Self
-    extraPath = "Vs Self"
-    extraFilename = extraFilename .. "vsSelf-" .. "L" .. P1.level
-  end
-
-  finalizeAndWriteReplay(extraPath, extraFilename)
 end
 
 local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFunction, processGameResultsFunction)
@@ -580,7 +437,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
 
-  replay = createNewReplay(GAME.match)
+  replay = Replay.createNewReplay(GAME.match)
 
   P1:starting_state()
 
@@ -614,7 +471,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
         extraPath = "Time Attack"
         extraFilename = "Spd" .. stack.speed .. "-Dif" .. stack.difficulty .. "-timeattack"
       end
-      finalizeAndWriteReplay(extraPath, extraFilename)
+      Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
     end
 
     GAME.input:allowAllInputConfigurations()
@@ -1407,7 +1264,7 @@ function main_net_vs()
       local messages = server_queue:pop_all_with("leave_room")
       for _, msg in ipairs(messages) do
         if msg.leave_room then -- lost room during game, go back to lobby
-          finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+          Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true, GAME.match, replay)
 
           -- Show a message that the match connection was lost along with the average frames behind.
           local message = loc("ss_room_closed_in_game")
@@ -1461,7 +1318,7 @@ function main_net_vs()
 
     if not GAME.battleRoom.spectating then
       if P1.tooFarBehindError or P2.tooFarBehindError then
-        finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true)
+        Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true, GAME.match, replay)
         GAME:clearMatch()
         json_send({leave_room = true})
         local ip = GAME.connected_server_ip
@@ -1503,7 +1360,7 @@ function main_net_vs()
       
       json_send({game_over = true, outcome = outcome_claim})
 
-      finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
+      Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim, false, GAME.match, replay)
     
       if GAME.battleRoom.spectating then
         -- next_func, text, winnerSFX, timemax, keepMusic, args
@@ -1541,7 +1398,7 @@ function main_local_vs()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match)
+  replay = Replay.createNewReplay(GAME.match)
   
   local function update() 
     assert((P1.CLOCK == P2.CLOCK), "should run at same speed: " .. P1.CLOCK .. " - " .. P2.CLOCK)
@@ -1574,7 +1431,7 @@ function main_local_vs()
       local winSFX = matchOutcome["winSFX"]
       local outcome_claim = matchOutcome["outcome_claim"]
       
-      finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim)
+      Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim, false, GAME.match, replay)
 
       return {game_over_transition, 
           {select_screen.main, end_text, winSFX, nil, false, {select_screen, "2p_local_vs"}}
@@ -1600,7 +1457,7 @@ function main_local_vs_yourself()
 
   commonGameSetup()
 
-  replay = createNewReplay(GAME.match)
+  replay = Replay.createNewReplay(GAME.match)
   
   local function update() 
 
@@ -1625,7 +1482,7 @@ function main_local_vs_yourself()
   local function processGameResults(gameResult) 
     if not GAME.battleRoom.trainingModeSettings  then
       GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
-      finalizeAndWriteVsReplay(nil, nil)
+      Replay.finalizeAndWriteVsReplay(nil, nil, false, GAME.match, replay)
     end
 
     return {game_over_transition,

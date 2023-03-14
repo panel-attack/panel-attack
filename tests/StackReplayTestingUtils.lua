@@ -5,6 +5,18 @@ function StackReplayTestingUtils:simulateReplayWithPath(path)
   return self:fullySimulateMatch(match)
 end
 
+function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level)
+  local match = Match("endless")
+  match.seed = 1
+  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod="controller"}
+
+  match.P1 = P1
+  P1:wait_for_random_character()
+  P1:starting_state()
+
+  return match
+end
+
 function StackReplayTestingUtils:fullySimulateMatch(match)
   local startTime = love.timer.getTime()
 
@@ -25,7 +37,7 @@ function StackReplayTestingUtils:simulateStack(stack, clockGoal)
     stack:run()
     stack:saveForRollback()
   end
-  assert(match.P1.CLOCK == clockGoal)
+  assert(stack.CLOCK == clockGoal)
 end
 
 function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
