@@ -53,8 +53,6 @@ local dimmedState = {}
 local deadState = {}
 
 normalState.update = function(panel, panels)
-  local panelBelow = getPanelBelow(panel, panels)
-
   if panel.isGarbage then
     if not panel:supportedFromBelow(panels) then
       -- Garbage blocks fall without a hover time
@@ -63,6 +61,7 @@ normalState.update = function(panel, panels)
   else
     -- empty panels can only be normal or swapping and don't passively enter other states
     if panel.color ~= 0 then
+      local panelBelow = getPanelBelow(panel, panels)
       if panelBelow and panelBelow.stateChanged then
         if panelBelow.state == Panel.states.hovering then
           panel:enterHoverState(panelBelow)
