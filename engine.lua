@@ -766,6 +766,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   for column = 6, 1, -1 do
     local panel = self:createPanel(0, column)
     panel.color = 9
+    panel.state = "dimmed"
     panels[0][column] = panel
   end
 
