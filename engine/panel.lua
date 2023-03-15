@@ -4,7 +4,7 @@ local function clear_flags(panel, clearChaining)
   -- determines what can happen with this panel
   -- or what will happen with it if nothing else happens with it
   -- in normal state normally nothing happens until you touch it or its surroundings
-  panel.state = Panel.states.normal
+  panel.state = "normal"
 
   -- combo fields
   -- index compared against size determines the pop timing
