@@ -217,6 +217,8 @@ end
 local function fall(panel, panels)
   local panelBelow = getPanelBelow(panel, panels)
   Panel.switch(panel, panelBelow, panels)
+  panel.rowChanged = true
+  panelBelow.rowChanged = true
   -- panelBelow is now actually panelAbove
   if panel.isGarbage then
     -- panels above should fall immediately rather than starting to hover
