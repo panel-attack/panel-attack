@@ -1152,7 +1152,7 @@ function Stack.hasGarbage(self)
   for row = self.height, 1, -1 do
     for column = 1, #self.panels[row] do
       local panel = self.panels[row][column]
-      if panel.isGarbage and panel.state ~= Panel.states.matched then
+      if panel.isGarbage and panel.state ~= "matched" then
         return true
       end
     end
@@ -1193,7 +1193,7 @@ function Stack.has_falling_garbage(self)
     if self.panels[row] then
       for col = 1, self.width do
         local panel = self.panels[row][col]
-        if panel and panel.isGarbage and panel.state == Panel.states.falling then
+        if panel and panel.isGarbage and panel.state == "falling" then
           return true
         end
       end
@@ -1506,7 +1506,7 @@ function Stack.shouldPlayDangerMusic(self)
     for row = self.height - 2, self.height do
       for column = 1, self.width do
         local panel = self.panels[row][column]
-        if panel.color ~= 0 and panel.state ~= Panel.states.falling or panel:dangerous() then
+        if panel.color ~= 0 and panel.state ~= "falling" or panel:dangerous() then
           if self.shake_time > 0 then
             return false
           else
@@ -2280,7 +2280,7 @@ function Stack.set_game_over(self)
     for row = 1, #panels do
       for col = 1, self.width do
         local panel = panels[row][col]
-        panel.state = Panel.states.dead
+        panel.state = "dead"
         if row == #panels then
           self:enqueue_popfx(col, row, popsize)
         end
@@ -2325,7 +2325,7 @@ function Stack:canSwap(panel1, panel2)
     panelAbove1 = self.panels[row + 1][panel1.column]
     panelAbove2 = self.panels[row + 1][panel2.column]
     -- neither space above us can be hovering
-    if panelAbove1.state == Panel.states.hovering or panelAbove2.state == Panel.states.hovering then
+    if panelAbove1.state == "hovering" or panelAbove2.state == "hovering" then
       return false
     end
   end
@@ -2338,7 +2338,7 @@ function Stack:canSwap(panel1, panel2)
   if panel1.color == 0 or panel2.color == 0 then
     if panelAbove1 and panelAbove2
     -- true if BOTH panels above cursor are swapping
-    and (panelAbove1.state == Panel.states.swapping and panelAbove2.state == Panel.states.swapping)
+    and (panelAbove1.state == "swapping" and panelAbove2.state == "swapping")
     -- these two together are true if 1 panel is air, the other isn't
     and (panelAbove1.color == 0 or panelAbove2.color == 0) and (panelAbove1.color ~= 0 or panelAbove2.color ~= 0) then
       return false
@@ -2348,7 +2348,7 @@ function Stack:canSwap(panel1, panel2)
       local panelBelow1 = self.panels[row - 1][panel1.column]
       local panelBelow2 = self.panels[row - 1][panel2.column]
       -- true if BOTH panels below cursor are swapping
-      if (panelBelow1.state == Panel.states.swapping and panelBelow2.state == Panel.states.swapping)
+      if (panelBelow1.state == "swapping" and panelBelow2.state == "swapping")
       -- these two together are true if 1 panel is air, the other isn't
       and (panelBelow1.color == 0 or panelBelow2.color == 0) and (panelBelow1.color ~= 0 or panelBelow2.color ~= 0) then
         return false
@@ -2379,11 +2379,11 @@ function Stack:swap(row, col)
   -- then you can't take it back since it will start falling.
   if row ~= 1 then
     local panelBelow = panels[row - 1][col]
-    if leftPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == Panel.states.falling) then
+    if leftPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == "falling") then
       leftPanel.dont_swap = true
     end
     panelBelow = panels[row - 1][col + 1]
-    if rightPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == Panel.states.falling) then
+    if rightPanel.color ~= 0 and (panelBelow.color == 0 or panelBelow.state == "falling") then
       rightPanel.dont_swap = true
     end
   end
@@ -2497,7 +2497,7 @@ function Stack.dropGarbage(self, garbage)
           panel.y_offset = row - originRow
           panel.x_offset = col - originCol
           panel.shake_time = shakeTime
-          panel.state = Panel.states.falling
+          panel.state = "falling"
           panel.row = row
           panel.column = col
           panel.metal = garbage.isMetal
@@ -2581,7 +2581,7 @@ function Stack.new_row(self)
       end
     end
     panel.color = this_panel_color + 0
-    panel.state = Panel.states.dimmed
+    panel.state = "dimmed"
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
@@ -2703,9 +2703,10 @@ function Stack.onLand(self, panel)
 end
 
 function Stack.onGarbageLand(self, panel)
-  if panel.shake_time and panel.state == Panel.states.normal -- only parts of the garbage that are on the visible board can be considered for shake
-  and panel.row <= self.height then
-    -- runtime optimization to not repeatedly update shaketime for the same piece of garbage
+  if panel.shake_time and panel.state == "normal"
+    -- only parts of the garbage that are on the visible board can be considered for shake
+    and panel.row <= self.height then
+    --runtime optimization to not repeatedly update shaketime for the same piece of garbage
     if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
       if self:shouldChangeSoundEffects() then
         if panel.height > 3 then
@@ -2754,13 +2755,15 @@ function Stack.getActivePanels(self)
     for col = 1, self.width do
       local panel = self.panels[row][col]
       if panel.isGarbage then
-        if panel.state ~= Panel.states.normal then
-          activePanels[#activePanels + 1] = panel
+        if panel.state ~= "normal" then
+          activePanels[#activePanels+1] = panel
         end
       else
-        if panel.color ~= 0 -- dimmed is implicitly filtered by only checking in row 1 and up
-        and panel.state ~= Panel.states.normal and panel.state ~= Panel.states.landing then
-          activePanels[#activePanels + 1] = panel
+        if panel.color ~= 0
+        -- dimmed is implicitly filtered by only checking in row 1 and up
+        and panel.state ~= "normal"
+        and panel.state ~= "landing" then
+          activePanels[#activePanels+1] = panel
         end
       end
     end
