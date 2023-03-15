@@ -276,31 +276,6 @@ local landingState = {}
 local dimmedState = {}
 local deadState = {}
 
--- gets the table holding the information and functions of the state the panel is in
-local function getStateTable(panel)
-  if panel.state == "normal" then
-    return normalState
-  elseif panel.state == "swapping" then
-    return swappingState
-  elseif panel.state == "matched" then
-    return matchedState
-  elseif panel.state == "popping" then
-    return poppingState
-  elseif panel.state == "popped" then
-    return poppedState
-  elseif panel.state == "hovering" then
-    return hoverState
-  elseif panel.state == "falling" then
-    return fallingState
-  elseif panel.state == "landing" then
-    return landingState
-  elseif panel.state == "dimmed" then
-    return dimmedState
-  elseif panel.state == "dead" then
-    return deadState
-  end
-end
-
 normalState.update = function(panel, panels)
   if panel.isGarbage then
     if not supportedFromBelow(panel, panels) then
@@ -541,17 +516,6 @@ deadState.update = function(panel, panels)
   -- dead is dead
 end
 
-normalState.excludeMatch = false
-swappingState.excludeMatch = true
-matchedState.excludeMatch = true
-poppingState.excludeMatch = true
-poppedState.excludeMatch = true
-hoverState.excludeMatch = false
-fallingState.excludeMatch = true
-landingState.excludeMatch = false
-dimmedState.excludeMatch = true
-deadState.excludeMatch = true
-
 -- returns false if this panel can be matched
 -- true if it cannot be matched
 function Panel.exclude_match(self)
@@ -562,21 +526,15 @@ function Panel.exclude_match(self)
   elseif self.state == "hovering" and not self.match_anyway then
     return true
   else
-    local state = getStateTable(self)
-    return state.excludeMatch
+    if self.state == "normal"
+    or self.state == "landing" then
+      return false
+    else
+      -- swapping, matched, popping, popped, hover, falling, dimmed, dead
+      return true
+    end
   end
 end
-
-normalState.excludeSwap = false
-swappingState.excludeSwap = false
-matchedState.excludeSwap = true
-poppingState.excludeSwap = true
-poppedState.excludeSwap = true
-hoverState.excludeSwap = true
-fallingState.excludeSwap = false
-landingState.excludeSwap = false
-dimmedState.excludeSwap = true
-deadState.excludeSwap = true
 
 -- returns false if this panel can be swapped
 -- true if it can not be swapped
@@ -589,8 +547,15 @@ function Panel.exclude_swap(self)
   elseif self.isGarbage then
     return true
   else
-    local state = getStateTable(self)
-    return state.excludeSwap
+    if self.state == "normal"
+    or self.state == "swapping"
+    or self.state == "falling"
+    or self.state == "landing" then
+      return false
+    else
+      -- matched, popping, popped, hovering, dimmed, dead
+      return true
+    end
   end
 end
 
@@ -629,8 +594,27 @@ function Panel.update(self, panels)
   self.propagatesChaining = false
   self.propagatesFalling = false
 
-  local stateTable = getStateTable(self)
-  stateTable.update(self, panels)
+  if self.state == "normal" then
+    normalState.update(self, panels)
+  elseif self.state == "swapping" then
+    swappingState.update(self, panels)
+  elseif self.state == "matched" then
+    matchedState.update(self, panels)
+  elseif self.state == "popping" then
+    poppingState.update(self, panels)
+  elseif self.state == "popped" then
+    poppedState.update(self, panels)
+  elseif self.state == "hovering" then
+    hoverState.update(self, panels)
+  elseif self.state == "falling" then
+    fallingState.update(self, panels)
+  elseif self.state == "landing" then
+    landingState.update(self, panels)
+  elseif self.state == "dimmed" then
+    dimmedState.update(self, panels)
+  elseif self.state == "dead" then
+    deadState.update(self, panels)
+  end
 end
 
 -- sets all necessary information to make the panel start swapping
