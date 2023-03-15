@@ -262,12 +262,7 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
 
           if panel.row < #self.panels then
             local panelToCheck = self.panels[panel.row + 1][panel.column]
-            if panelToCheck.row <= self.height
-            or (panel.isGarbage and panelToCheck.isGarbage and panel.garbageId == panelToCheck.garbageId) then
-              -- for matching, only extend above the visible panels for panels of already matched garbage
-              -- we never want to match garbage that is still completely off-screen!
-              pushIfNotMatchingAlready(panel, panelToCheck)
-            end
+            pushIfNotMatchingAlready(panel, panelToCheck)
           end
 
           if panel.column > 1 then
@@ -296,13 +291,12 @@ function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onSc
     local panel = garbagePanels[i]
     panel.y_offset = panel.y_offset - 1
     panel.height = panel.height - 1
-    if panel.row <= self.height then
-      panel.state = "matched"
-      panel:setTimer(garbageMatchTime + 1)
-      panel.initial_time = garbageMatchTime
-      panel.pop_time = self.FRAMECOUNTS.POP * (onScreenCount - i)
-      panel.pop_index = math.min(i, 10)
-    end
+    panel.state = "matched"
+    panel:setTimer(garbageMatchTime + 1)
+    panel.initial_time = garbageMatchTime
+    -- these two may end up with nonsense values for off-screen garbage but it doesn't matter
+    panel.pop_time = self.FRAMECOUNTS.POP * (onScreenCount - i)
+    panel.pop_index = math.min(i, 10)
   end
 
   self:convertGarbagePanels(isChain)
@@ -311,7 +305,7 @@ end
 -- checks the stack for garbage panels that have a negative y offset and assigns them a color from the gpanel_buffer
 function Stack:convertGarbagePanels(isChain)
   -- color assignments are done per row so we need to iterate the stack properly
-  for row = 1, self.height do
+  for row = 1, #self.panels do
     local garbagePanelRow = nil
     for column = 1, self.width do
       local panel = self.panels[row][column]
