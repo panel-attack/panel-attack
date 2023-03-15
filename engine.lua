@@ -395,7 +395,7 @@ function Stack.divergenceString(stackToTest)
       for col = 1, #panels[row] do
         local panel = stackToTest.panels[row][col]
         result = result .. (tostring(panel.color)) .. " "
-        if panel.state ~= Panel.states.normal then
+        if panel.state ~= "normal" then
           result = result .. (panel.state) .. " "
         end
       end
