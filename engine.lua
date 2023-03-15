@@ -910,7 +910,7 @@ function Stack:shouldSaveRollback()
   end
 
   if GAME.match.isFromReplay then
-    return false
+    return true
   end
 
   -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
@@ -1102,6 +1102,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   for column = 6, 1, -1 do
     local panel = self:createPanel(0, column)
     panel.color = 9
+    panel.state = "dimmed"
   end
 end
 

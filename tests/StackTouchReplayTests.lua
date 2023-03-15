@@ -45,7 +45,7 @@ local testReplayFolder = "tests/replays/"
 -- Panel matches, becomes deselected
 
 local function simpleTouchTest()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v047-2023-02-13-02-07-36-Spd3-Dif1-endless.json")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v047-2023-02-13-02-07-36-Spd3-Dif1-endless.json")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
   assert(match.mode == "endless")
