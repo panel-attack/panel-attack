@@ -929,7 +929,9 @@ function Stack.controls(self)
         -- We moved the cursor from a previous column, try to swap
         if self.cur_col ~= 0 and self.cur_row ~= 0 and cursorColumn ~= self.cur_col and cursorRow ~= 0 then
           local swapColumn = math.min(self.cur_col, cursorColumn)
-          if self:canSwap(cursorRow, swapColumn) then
+          local panel1 = self.panels[cursorRow][swapColumn]
+          local panel2 = self.panels[cursorRow][swapColumn + 1]
+          if self:canSwap(panel1, panel2) then
             self:setQueuedSwapPosition(swapColumn, cursorRow)
           end
         end
