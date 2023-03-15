@@ -391,15 +391,15 @@ function Stack.divergenceString(stackToTest)
   local panels = stackToTest.panels
 
   if panels then
-    for i = #panels, 1, -1 do
-      for j = 1, #panels[i] do
-        result = result .. (tostring(panels[i][j].color)) .. " "
-        if panels[i][j].state ~= Panel.states.normal then
-          result = result .. (panels[i][j].state) .. " "
-        end
+      for i=#panels,1,-1 do
+          for j=1,#panels[i] do
+            result = result .. (tostring(panels[i][j].color)) .. " "
+            if panels[i][j].state ~= "normal" then
+              result = result .. (panels[i][j].state) .. " "
+            end
+          end
+          result = result .. "\n"
       end
-      result = result .. "\n"
-    end
   end
 
   if stackToTest.telegraph then
@@ -613,7 +613,7 @@ function Stack:shouldSaveRollback()
   end
 
   if GAME.match.isFromReplay then
-    return true
+    return false
   end
 
   -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
@@ -828,7 +828,8 @@ function Stack.hasGarbage(self)
   -- garbage is more likely to be found at the top of the stack
   for row = #self.panels, 1, -1 do
     for column = 1, #self.panels[row] do
-      if self.panels[row][column].isGarbage and self.panels[row][column].state ~= Panel.states.matched then
+      if self.panels[row][column].isGarbage
+        and self.panels[row][column].state ~= "matched" then
         return true
       end
     end
@@ -868,7 +869,7 @@ function Stack.has_falling_garbage(self)
   for i = 1, self.height + 3 do -- we shouldn't have to check quite 3 rows above height, but just to make sure...
     local panelRow = self.panels[i]
     for j = 1, self.width do
-      if panelRow and panelRow[j].isGarbage and panelRow[j].state == Panel.states.falling then
+      if panelRow and panelRow[j].isGarbage and panelRow[j].state == "falling" then
         return true
       end
     end
@@ -1178,7 +1179,7 @@ function Stack.shouldPlayDangerMusic(self)
     for row = self.height - 2, self.height do
       local panelRow = self.panels[row]
       for column = 1, self.width do
-        if panelRow[column].color ~= 0 and panelRow[column].state ~= Panel.states.falling or panelRow[column]:dangerous() then
+        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
           if self.shake_time > 0 then
             return false
           else
@@ -1956,7 +1957,7 @@ function Stack.set_game_over(self)
     for row = 1, #panels do
       for col = 1, self.width do
         local panel = panels[row][col]
-        panel.state = Panel.states.dead
+        panel.state = "dead"
         if row == #panels then
           self:enqueue_popfx(col, row, popsize)
         end
@@ -1979,30 +1980,30 @@ function Stack.canSwap(self, row, column)
   local panels = self.panels
   -- in order for a swap to occur, one of the two panels in
   -- the cursor must not be a non-panel.
-  local do_swap = (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
-  (panels[row][column]:canSwap()) and (panels[row][column + 1]:canSwap()) and -- also, neither space above us can be hovering.
-                      (row == #panels or
-                          (panels[row + 1][column].state ~= Panel.states.hovering and panels[row + 1][column + 1].state ~=
-                              Panel.states.hovering)) and -- also, we can't swap if the game countdown isn't finished
-  not self.do_countdown and -- also, don't swap on the first frame
-  not (self.CLOCK and self.CLOCK <= 1)
+  local do_swap =
+    (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
+    panels[row][column]:canSwap() and
+    panels[row][column + 1]:canSwap() and -- also, neither space above us can be hovering.
+    (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
+    not self.do_countdown and --also, don't swap on the first frame
+    not (self.CLOCK and self.CLOCK <= 1)
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
   if panels[row][column].color == 0 or panels[row][column + 1].color == 0 then -- if either panel inside the cursor is air
     do_swap = do_swap -- failing the condition if we already determined we cant swap 
-    and not -- one of the next 4 lines must be false in order to swap
-    (row ~= self.height -- true if cursor is not at top of stack
-    and (panels[row + 1][column].state == Panel.states.swapping and panels[row + 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels above cursor are swapping
-    and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
-    and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
+      and not -- one of the next 4 lines must be false in order to swap
+        (row ~= self.height -- true if cursor is not at top of stack
+        and (panels[row + 1][column].state == "swapping" and panels[row + 1][column + 1].state == "swapping") -- true if BOTH panels above cursor are swapping
+        and (panels[row + 1][column].color == 0 or panels[row + 1][column + 1].color == 0) -- true if either panel above the cursor is air
+        and (panels[row + 1][column].color ~= 0 or panels[row + 1][column + 1].color ~= 0)) -- true if either panel above the cursor is not air
 
-    do_swap = do_swap -- failing the condition if we already determined we cant swap 
-    and not -- one of the next 4 lines must be false in order to swap
-    (row ~= 1 -- true if the cursor is not at the bottom of the stack
-    and (panels[row - 1][column].state == Panel.states.swapping and panels[row - 1][column + 1].state == Panel.states.swapping) -- true if BOTH panels below cursor are swapping
-    and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
-    and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
+    do_swap = do_swap  -- failing the condition if we already determined we cant swap 
+      and not -- one of the next 4 lines must be false in order to swap
+        (row ~= 1 -- true if the cursor is not at the bottom of the stack
+        and (panels[row - 1][column].state == "swapping" and panels[row - 1][column + 1].state == "swapping") -- true if BOTH panels below cursor are swapping
+        and (panels[row - 1][column].color == 0 or panels[row - 1][column + 1].color == 0) -- true if either panel below the cursor is air
+        and (panels[row - 1][column].color ~= 0 or panels[row - 1][column + 1].color ~= 0)) -- true if either panel below the cursor is not air
   end
 
   do_swap = do_swap and (not self.puzzle or self.puzzle.moves == 0 or self.puzzle.remaining_moves > 0)
@@ -2028,10 +2029,10 @@ function Stack:swap(row, col)
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
   if row ~= 1 then
-    if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
+    if (panels[row][col].color ~= 0) and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == "falling") then
       panels[row][col].dont_swap = true
     end
-    if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
+    if (panels[row][col + 1].color ~= 0) and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == "falling") then
       panels[row][col + 1].dont_swap = true
     end
   end
@@ -2146,7 +2147,7 @@ function Stack.dropGarbage(self, garbage)
           panel.y_offset = row - originRow
           panel.x_offset = col - originCol
           panel.shake_time = shakeTime
-          panel.state = Panel.states.falling
+          panel.state = "falling"
           panel.row = row
           panel.column = col
           panel.metal = garbage.isMetal
@@ -2189,7 +2190,7 @@ function Stack.new_row(self)
   -- while the former row 0 is at row 1 and in play
   -- therefore we need to override dimmed state in row 1
   for col = 1, self.width do
-    panels[1][col].state = Panel.states.normal
+    panels[1][col].state = "normal"
     panels[1][col].stateChanged = true
   end
 
@@ -2233,7 +2234,7 @@ function Stack.new_row(self)
       end
     end
     panel.color = this_panel_color + 0
-    panel.state = Panel.states.dimmed
+    panel.state = "dimmed"
   end
   self.panel_buffer = string.sub(self.panel_buffer, 7)
   self.displacement = 16
@@ -2354,9 +2355,10 @@ function Stack.onLand(self, panel)
 end
 
 function Stack.onGarbageLand(self, panel)
-  if panel.shake_time and panel.state == Panel.states.normal -- only parts of the garbage that are on the visible board can be considered for shake
-  and panel.row <= self.height then
-    -- runtime optimization to not repeatedly update shaketime for the same piece of garbage
+  if panel.shake_time and panel.state == "normal"
+    -- only parts of the garbage that are on the visible board can be considered for shake
+    and panel.row <= self.height then
+    --runtime optimization to not repeatedly update shaketime for the same piece of garbage
     if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
       if self:shouldChangeSoundEffects() then
         if panel.height > 3 then
@@ -2405,13 +2407,15 @@ function Stack.getActivePanels(self)
     for col = 1, self.width do
       local panel = self.panels[row][col]
       if panel.isGarbage then
-        if panel.state ~= Panel.states.normal then
-          activePanels[#activePanels + 1] = panel
+        if panel.state ~= "normal" then
+          activePanels[#activePanels+1] = panel
         end
       else
-        if panel.color ~= 0 -- dimmed is implicitly filtered by only checking in row 1 and up
-        and panel.state ~= Panel.states.normal and panel.state ~= Panel.states.landing then
-          activePanels[#activePanels + 1] = panel
+        if panel.color ~= 0
+        -- dimmed is implicitly filtered by only checking in row 1 and up
+        and panel.state ~= "normal"
+        and panel.state ~= "landing" then
+          activePanels[#activePanels+1] = panel
         end
       end
     end

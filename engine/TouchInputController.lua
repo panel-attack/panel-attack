@@ -240,9 +240,9 @@ end
 function TouchInputController:panelIsSelectable(row, column)
   local panel = self.stack.panels[row][column]
   if not panel.isGarbage and
-     (panel.state == Panel.states.normal or
-      panel.state == Panel.states.landing or
-      panel.state == Panel.states.swapping) then
+     (panel.state == "normal" or
+      panel.state == "landing" or
+      panel.state == "swapping") then
     return true
   else
     return false

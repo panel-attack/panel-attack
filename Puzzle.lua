@@ -119,7 +119,7 @@ function Puzzle.toPuzzleString(panels)
   local function getPanelColor(panel)
     if panel.isGarbage then
       local effectiveHeight = panel.height
-      if panel.state == Panel.states.matched then
+      if panel.state == "matched" then
         -- this is making the assumption that garbage that is currently clearing into panels is still to be included for the garbage block
         effectiveHeight = panel.height + 1
       end

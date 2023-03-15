@@ -321,7 +321,7 @@ function Stack.render(self)
       local panel = self.panels[row][col]
       local draw_x = 4 + (col - 1) * 16
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
-      if panel.color ~= 0 and panel.state ~= Panel.states.popped then
+      if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.isGarbage then
           local imgs = {flash = metals.flash}
@@ -377,7 +377,7 @@ function Stack.render(self)
               draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
             end
           end
-          if panel.state == Panel.states.matched then
+          if panel.state == "matched" then
             local flash_time = panel.initial_time - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               if panel.timer > panel.pop_time then
@@ -406,7 +406,7 @@ function Stack.render(self)
             end
           end
         else
-          if panel.state == Panel.states.matched then
+          if panel.state == "matched" then
             local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
@@ -415,19 +415,19 @@ function Stack.render(self)
             else
               draw_frame = 5
             end
-          elseif panel.state == Panel.states.popping then
+          elseif panel.state == "popping" then
             draw_frame = 6
-          elseif panel.state == Panel.states.landing then
+          elseif panel.state == "landing" then
             draw_frame = bounce_table[panel.timer + 1]
-          elseif panel.state == Panel.states.swapping then
+          elseif panel.state == "swapping" then
             if panel.isSwappingFromLeft then
               draw_x = draw_x - panel.timer * 4
             else
               draw_x = draw_x + panel.timer * 4
             end
-          elseif panel.state == Panel.states.dead then
+          elseif panel.state == "dead" then
             draw_frame = 6
-          elseif panel.state == Panel.states.dimmed then
+          elseif panel.state == "dimmed" then
             draw_frame = 7
           elseif panel.fell_from_garbage then
             draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
@@ -492,27 +492,13 @@ function Stack.render(self)
 
         -- Require hovering over a stack to show details
         if mouseX >= self.pos_x * GFX_SCALE and mouseX <= (self.pos_x + self.width * 16) * GFX_SCALE then
-          if not (panel.color == 0 and panel.state == Panel.states.normal) then
-            if panel.state == Panel.states.normal then
-              gprint("normal", draw_x, draw_y)
-            elseif panel.state == Panel.states.swapping then
-              gprint("swapping", draw_x, draw_y)
-            elseif panel.state == Panel.states.matched then
-              gprint("matched", draw_x, draw_y)
-            elseif panel.state == Panel.states.popping then
-              gprint("popping", draw_x, draw_y)
-            elseif panel.state == Panel.states.popped then
-              gprint("popped", draw_x, draw_y)
-            elseif panel.state == Panel.states.hovering then
-              gprint("hovering", draw_x, draw_y)
-            elseif panel.state == Panel.states.falling then
-              gprint("falling", draw_x, draw_y)
-            elseif panel.state == Panel.states.landing then
-              gprint("landing", draw_x, draw_y)
-            elseif panel.state == Panel.states.dimmed then
-              gprint("dimmed", draw_x, draw_y)
-            elseif panel.state == Panel.states.dead then
-              gprint("dead", draw_x, draw_y)
+          if not (panel.color == 0 and panel.state == "normal") then
+            gprint(panel.state, draw_x, draw_y)
+            if panel.match_anyway ~= nil then
+              gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
+              if panel.debug_tag then
+                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+              end
             end
             if panel.chaining then
               gprint("chaining", draw_x, draw_y + 30)
