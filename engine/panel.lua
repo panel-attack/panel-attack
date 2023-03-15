@@ -271,31 +271,6 @@ local landingState = {}
 local dimmedState = {}
 local deadState = {}
 
--- gets the table holding the information and functions of the state the panel is in
-local function getStateTable(panel)
-  if panel.state == "normal" then
-    return normalState
-  elseif panel.state == "swapping" then
-    return swappingState
-  elseif panel.state == "matched" then
-    return matchedState
-  elseif panel.state == "popping" then
-    return poppingState
-  elseif panel.state == "popped" then
-    return poppedState
-  elseif panel.state == "hovering" then
-    return hoverState
-  elseif panel.state == "falling" then
-    return fallingState
-  elseif panel.state == "landing" then
-    return landingState
-  elseif panel.state == "dimmed" then
-    return dimmedState
-  elseif panel.state == "dead" then
-    return deadState
-  end
-end
-
 normalState.update = function(panel, panels)
   if panel.isGarbage then
     if not supportedFromBelow(panel, panels) then
@@ -536,17 +511,6 @@ deadState.update = function(panel, panels)
   -- dead is dead
 end
 
-normalState.allowsMatch = true
-swappingState.allowsMatch = false
-matchedState.allowsMatch = false
-poppingState.allowsMatch = false
-poppedState.allowsMatch = false
-hoverState.allowsMatch = false
-fallingState.allowsMatch = false
-landingState.allowsMatch = true
-dimmedState.allowsMatch = false
-deadState.allowsMatch = false
-
 -- returns false if this panel can be matched
 -- true if it cannot be matched
 function Panel.canMatch(self)
@@ -554,24 +518,18 @@ function Panel.canMatch(self)
   if self.color == 0 or self.color == 9 then
     return false
   else
-    local state = getStateTable(self)
-    return state.allowsMatch
+    if self.state == "normal"
+    or self.state == "landing" then
+      return true
+    else
+      -- swapping, matched, popping, popped, hover, falling, dimmed, dead
+      return false
+    end
   end
 end
 
-normalState.allowsSwap = true
-swappingState.allowsSwap = true
-matchedState.allowsSwap = false
-poppingState.allowsSwap = false
-poppedState.allowsSwap = false
-hoverState.allowsSwap = false
-fallingState.allowsSwap = true
-landingState.allowsSwap = true
-dimmedState.allowsSwap = false
-deadState.allowsSwap = false
-
--- returns false if this panel is allowed to be swapped based on its color, state and dont_swap flag
--- true if it can not be swapped
+-- returns true if this panel is allowed to be swapped based on its color, state and dont_swap flag
+-- false if it can not be swapped
 function Panel.allowsSwap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
@@ -581,8 +539,15 @@ function Panel.allowsSwap(self)
   elseif self.isGarbage then
     return false
   else
-    local state = getStateTable(self)
-    return state.allowsSwap
+    if self.state == "normal"
+    or self.state == "swapping"
+    or self.state == "falling"
+    or self.state == "landing" then
+      return true
+    else
+      -- matched, popping, popped, hovering, dimmed, dead
+      return false
+    end
   end
 end
 
@@ -626,8 +591,27 @@ function Panel.update(self, panels)
   self.matchesMetal = false
   self.matchesGarbage = false
 
-  local stateTable = getStateTable(self)
-  stateTable.update(self, panels)
+  if self.state == "normal" then
+    normalState.update(self, panels)
+  elseif self.state == "swapping" then
+    swappingState.update(self, panels)
+  elseif self.state == "matched" then
+    matchedState.update(self, panels)
+  elseif self.state == "popping" then
+    poppingState.update(self, panels)
+  elseif self.state == "popped" then
+    poppedState.update(self, panels)
+  elseif self.state == "hovering" then
+    hoverState.update(self, panels)
+  elseif self.state == "falling" then
+    fallingState.update(self, panels)
+  elseif self.state == "landing" then
+    landingState.update(self, panels)
+  elseif self.state == "dimmed" then
+    dimmedState.update(self, panels)
+  elseif self.state == "dead" then
+    deadState.update(self, panels)
+  end
 end
 
 -- sets all necessary information to make the panel start swapping
