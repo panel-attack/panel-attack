@@ -2004,7 +2004,7 @@ function Stack:canSwap(panel1, panel2)
     panelAbove1 = self.panels[row + 1][panel1.column]
     panelAbove2 = self.panels[row + 1][panel2.column]
     -- neither space above us can be hovering
-    if panelAbove1.state == Panel.states.hovering or panelAbove2.state == Panel.states.hovering then
+    if panelAbove1.state == "hovering" or panelAbove2.state == "hovering" then
       return false
     end
   end
@@ -2017,7 +2017,7 @@ function Stack:canSwap(panel1, panel2)
   if panel1.color == 0 or panel2.color == 0 then
     if panelAbove1 and panelAbove2
     -- true if BOTH panels above cursor are swapping
-    and (panelAbove1.state == Panel.states.swapping and panelAbove2.state == Panel.states.swapping)
+    and (panelAbove1.state == "swapping" and panelAbove2.state == "swapping")
     -- these two together are true if 1 panel is air, the other isn't
     and (panelAbove1.color == 0 or panelAbove2.color == 0) and (panelAbove1.color ~= 0 or panelAbove2.color ~= 0) then
       return false
@@ -2027,7 +2027,7 @@ function Stack:canSwap(panel1, panel2)
       local panelBelow1 = self.panels[row - 1][panel1.column]
       local panelBelow2 = self.panels[row - 1][panel2.column]
       -- true if BOTH panels below cursor are swapping
-      if (panelBelow1.state == Panel.states.swapping and panelBelow2.state == Panel.states.swapping)
+      if (panelBelow1.state == "swapping" and panelBelow2.state == "swapping")
       -- these two together are true if 1 panel is air, the other isn't
       and (panelBelow1.color == 0 or panelBelow2.color == 0) and (panelBelow1.color ~= 0 or panelBelow2.color ~= 0) then
         return false
@@ -2057,10 +2057,10 @@ function Stack:swap(row, col)
   -- above an empty space or above a falling piece
   -- then you can't take it back since it will start falling.
   if row ~= 1 then
-    if leftPanel.color ~= 0 and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == Panel.states.falling) then
+    if leftPanel.color ~= 0 and (panels[row - 1][col].color == 0 or panels[row - 1][col].state == "falling") then
       leftPanel.dont_swap = true
     end
-    if rightPanel.color ~= 0 and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == Panel.states.falling) then
+    if rightPanel.color ~= 0 and (panels[row - 1][col + 1].color == 0 or panels[row - 1][col + 1].state == "falling") then
       rightPanel.dont_swap = true
     end
   end
