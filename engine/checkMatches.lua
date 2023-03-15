@@ -225,7 +225,9 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
       pushIfNotMatchingAlready(panel, panelToCheck, true)
     end
     -- above
-    if panel.row < #self.panels then
+    if panel.row < self.height then
+      -- only if the panel isn't in the top row
+      -- we don't want to match off-screen garbage ever
       local panelToCheck = self.panels[panel.row + 1][panel.column]
       pushIfNotMatchingAlready(panel, panelToCheck, true)
     end
