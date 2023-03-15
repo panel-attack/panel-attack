@@ -18,6 +18,7 @@ local GameBase = class(
     self.winnerSFX = nil
     self.keepMusic = false
     self.currentStage = config.stage
+    self.randomizeStage = true
     self.backgroundImage = nil
     
     self.frameInfo = {
@@ -106,7 +107,7 @@ function GameBase:pickRandomStage()
 end
 
 function GameBase:useCurrentStage()
-  if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
+  if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE and self.randomizeStage then
     self:pickRandomStage()
   end
   current_stage = self.currentStage
@@ -139,6 +140,7 @@ end
 function GameBase:load(sceneParams)
   leftover_time = 1 / 120
   self.shouldAbortGame = false
+  self.randomizeStage = sceneParams.randomizeStage == nil or sceneParams.randomizeStage -- default true or sceneParams.randomizeStage
   self:useCurrentStage()
   pickUseMusicFrom()
   self:customLoad(sceneParams)

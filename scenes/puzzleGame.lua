@@ -30,7 +30,7 @@ function puzzleGame:customRun()
   -- reset level
   if input.isDown["TauntUp"] or input.isDown["TauntDown"] then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    sceneManager:switchToScene("puzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character})
+    sceneManager:switchToScene("puzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, randomizeStage = false})
   end
 end
 
