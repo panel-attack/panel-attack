@@ -246,7 +246,7 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
     local panel = panelsToCheck:pop()
     -- avoid rechecking a panel already matched
     if not panel.matching then
-      if panel.isGarbage and panel.state == Panel.states.normal then
+      if panel.isGarbage and panel.state == "normal" then
         if (panel.metal and panel.matchesMetal) or (not panel.metal and panel.matchesGarbage) then
           -- if a panel is adjacent to a matching non-garbage panel or a matching garbage panel of the same type, 
           -- it should match too
@@ -297,7 +297,7 @@ function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onSc
     panel.y_offset = panel.y_offset - 1
     panel.height = panel.height - 1
     if panel.row <= self.height then
-      panel.state = Panel.states.matched
+      panel.state = "matched"
       panel:setTimer(garbageMatchTime + 1)
       panel.initial_time = garbageMatchTime
       panel.pop_time = self.FRAMECOUNTS.POP * (onScreenCount - i)
@@ -496,7 +496,7 @@ function Stack:clearChainingFlags()
       if not panel.matching and panel.chaining and panel:canMatch() then
         if row > 1 then
           -- no swapping panel below so this panel loses its chain flag
-          if self.panels[row - 1][column].state ~= Panel.states.swapping then
+          if self.panels[row - 1][column].state ~= "swapping" then
             panel.chaining = nil
           end
           -- a panel landed on the bottom row, so it surely loses its chain flag.
