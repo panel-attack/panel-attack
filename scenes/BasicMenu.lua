@@ -50,7 +50,7 @@ function BasicMenu:startGame()
 
   GAME.match.P1:starting_state()
   
-  sceneManager:switchToScene(self.gameScene)
+  sceneManager:switchToScene(self.gameScene, {})
 end
 
 local function exitMenu()
