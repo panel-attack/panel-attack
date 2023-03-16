@@ -11,12 +11,10 @@ CustomRun.runMetrics.drawDuration = 0
 CustomRun.runMetrics.presentDuration = 0
 CustomRun.runMetrics.gcDuration = 0
 CustomRun.runMetrics.sleepDuration = 0
-CustomRun.runMetrics.eventsMemAlloc = 0
 CustomRun.runMetrics.updateMemAlloc = 0
 CustomRun.runMetrics.graphMemAlloc = 0
 CustomRun.runMetrics.drawMemAlloc = 0
 CustomRun.runMetrics.presentMemAlloc = 0
-CustomRun.runMetrics.sleepMemCollect = 0
 
 CustomRun.runTimeGraph = nil
 
@@ -76,7 +74,6 @@ local dt = 0
 local mem = 0
 local prevMem = 0
 function CustomRun.innerRun()
-  mem = collectgarbage("count")
   -- Process events.
   if love.event then
     love.event.pump()
@@ -90,9 +87,7 @@ function CustomRun.innerRun()
     end
   end
 
-  prevMem = mem
   mem = collectgarbage("count")
-  CustomRun.runMetrics.eventsMemAlloc = mem - prevMem
 
   -- Update dt, as we'll be passing it to update
   if love.timer then
@@ -133,7 +128,7 @@ function CustomRun.innerRun()
       mem = collectgarbage("count")
       CustomRun.runMetrics.graphMemAlloc = CustomRun.runMetrics.graphMemAlloc + mem - prevMem
     end
-    
+
     local prePresentTime = love.timer.getTime()
     love.graphics.present()
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
@@ -144,9 +139,7 @@ function CustomRun.innerRun()
 
   if love.timer then
     CustomRun.sleep()
-    prevMem = mem
     mem = collectgarbage("count")
-    CustomRun.runMetrics.sleepMemCollect = mem - prevMem
   end
 
   if CustomRun.runTimeGraph ~= nil then
