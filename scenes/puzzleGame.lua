@@ -30,7 +30,7 @@ function puzzleGame:customRun()
   -- reset level
   if input.isDown["TauntUp"] or input.isDown["TauntDown"] then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    sceneManager:switchToScene("puzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, randomizeStage = false})
+    sceneManager:switchToScene("puzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, loadStageAndMusic = false})
   end
 end
 
@@ -49,14 +49,14 @@ function puzzleGame:customGameOverSetup()
     else
       self.keepMusic = true
       self.nextScene = "puzzleGame"
-      self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1}
+      self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1, loadStageAndMusic = false}
     end
-  elseif GAME.match.P1:puzzle_failed() then -- writes failed puzzle replay and returns to menu
+  elseif GAME.match.P1:puzzle_failed() then
     SFX_GameOver_Play = 1
     self.text = loc("pl_you_lose")
     self.keepMusic = true
     self.nextScene = "puzzleGame"
-    self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex}
+    self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, loadStageAndMusic = false}
   end
 end
 

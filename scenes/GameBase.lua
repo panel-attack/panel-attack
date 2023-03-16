@@ -18,7 +18,7 @@ local GameBase = class(
     self.winnerSFX = nil
     self.keepMusic = false
     self.currentStage = config.stage
-    self.randomizeStage = true
+    self.loadStageAndMusic = true
     self.backgroundImage = nil
     
     self.frameInfo = {
@@ -107,7 +107,7 @@ function GameBase:pickRandomStage()
 end
 
 function GameBase:useCurrentStage()
-  if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE and self.randomizeStage then
+  if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
     self:pickRandomStage()
   end
   current_stage = self.currentStage
@@ -140,9 +140,14 @@ end
 function GameBase:load(sceneParams)
   leftover_time = 1 / 120
   self.shouldAbortGame = false
-  self.randomizeStage = sceneParams.randomizeStage == nil or sceneParams.randomizeStage -- default true or sceneParams.randomizeStage
-  self:useCurrentStage()
-  pickUseMusicFrom()
+  self.loadStageAndMusic = true
+  if sceneParams.loadStageAndMusic ~= nil then
+    self.loadStageAndMusic = sceneParams.loadStageAndMusic
+  end
+  if self.loadStageAndMusic then
+    self:useCurrentStage()
+    pickUseMusicFrom()
+  end
   self:customLoad(sceneParams)
   replay = createNewReplay(GAME.match)
   
@@ -269,7 +274,7 @@ function GameBase:runGameOver()
   if t >= timemin and ((t >= timemax and timemax >= 0) or keyPressed) or leftSelectMenu then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     setMusicFadePercentage(1) -- reset the music back to normal config volume
-    if not keep_music then
+    if not self.keepMusic then
       stop_the_music()
     end
     SFX_GameOver_Play = 0
