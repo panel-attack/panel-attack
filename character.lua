@@ -158,7 +158,8 @@ end
 -- GRAPHICS
 
 local basic_images = {"icon"}
-local other_images = {
+local all_images = {
+  "icon",
   "topleft",
   "botleft",
   "topright",
@@ -217,7 +218,7 @@ function characters_reload_graphics()
 end
 
 function Character.graphics_init(self, full, yields)
-  local character_images = full and other_images or basic_images
+  local character_images = full and all_images or basic_images
   for _, image_name in ipairs(character_images) do
     self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
@@ -277,7 +278,7 @@ function Character.graphics_init(self, full, yields)
 end
 
 function Character.graphics_uninit(self)
-  for _, image_name in ipairs(other_images) do
+  for _, image_name in ipairs(all_images) do
     self.images[image_name] = nil
   end
   self.telegraph_garbage_images = {}
