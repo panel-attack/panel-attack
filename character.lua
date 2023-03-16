@@ -278,8 +278,10 @@ function Character.graphics_init(self, full, yields)
 end
 
 function Character.graphics_uninit(self)
-  for _, image_name in ipairs(all_images) do
-    self.images[image_name] = nil
+  for imageName, _ in pairs(self.images) do
+    if not table.contains(basic_images, imageName) then
+      self.images[imageName] = nil
+    end
   end
   self.telegraph_garbage_images = {}
 end
