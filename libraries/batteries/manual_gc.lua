@@ -69,18 +69,15 @@ return function(time_budget, memory_ceiling, disable_otherwise)
 	do
 		collectgarbage("step", 1)
     -- manually collecting garbage enables the GC again
-    GcIsRunning = true
 		steps = steps + 1
 	end
 	--safety net
 	if collectgarbage("count") / 1024 > memory_ceiling then
 		collectgarbage("collect")
     -- manually collecting garbage enables the GC again
-    GcIsRunning = true
 	end
 	--don't collect gc outside this margin
 	if disable_otherwise then
 		collectgarbage("stop")
-    GcIsRunning = false
 	end
 end

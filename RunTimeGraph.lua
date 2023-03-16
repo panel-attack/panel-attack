@@ -79,7 +79,7 @@ function RunTimeGraph:draw()
   love.graphics.scale(GAME.canvasXScale, GAME.canvasYScale)
 
   BarGraph.drawGraphs(self.graphs)
-  if not GcIsRunning then
+  if not collectgarbage("isrunning") then
     self.memAllocGraph:draw()
   end
 
