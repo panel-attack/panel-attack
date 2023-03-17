@@ -7,6 +7,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local save = require("save")
 local tableUtils = require("tableUtils")
+local Menu = require("ui.Menu")
 local consts = require("consts")
 
 --@module MainMenu
@@ -179,7 +180,7 @@ function GameBase:handlePause()
     GAME.gameIsPaused = not GAME.gameIsPaused
 
     setMusicPaused(GAME.gameIsPaused)
-
+    Menu.playValidationSfx()
     if not GAME.renderDuringPause then
       if GAME.gameIsPaused then
         reset_filters()
@@ -308,6 +309,7 @@ function GameBase:runGame(dt)
 
     if GAME.gameIsPaused and input.isDown["MenuEsc"] then
       self:abortGame()
+      Menu.playCancelSfx()
       self.shouldAbortGame = true
     end
   end
