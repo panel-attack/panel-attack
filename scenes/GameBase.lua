@@ -141,10 +141,12 @@ end
 function GameBase:load(sceneParams)
   leftover_time = 1 / 120
   self.shouldAbortGame = false
+
   self.loadStageAndMusic = true
   if sceneParams.loadStageAndMusic ~= nil then
     self.loadStageAndMusic = sceneParams.loadStageAndMusic
   end
+
   if self.loadStageAndMusic then
     self:useCurrentStage()
     pickUseMusicFrom()
@@ -184,8 +186,6 @@ function GameBase:handlePause()
     if not GAME.renderDuringPause then
       if GAME.gameIsPaused then
         reset_filters()
-      else
-        self:useCurrentStage()
       end
     end
   end
@@ -345,6 +345,7 @@ function GameBase:unload()
   end
   analytics.game_ends(GAME.match.P1.analytic)
   GAME:clearMatch()
+  stop_the_music()
 end
 
 return GameBase
