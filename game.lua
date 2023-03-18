@@ -66,7 +66,7 @@ local Game = class(
     self.mainloop = nil
 
     -- coroutines
-    self.setup = coroutine.create(function() self:setupCo() end)
+    self.setupCoroutineObject = coroutine.create(function() self:setupCoroutine() end)
   end
 )
 
@@ -81,7 +81,7 @@ function Game:load(game_updater)
   end
 end
 
-function Game:setupCo()
+function Game:setupCoroutine()
   -- loading various assets into the game
   self:drawLoadingString("Loading localization...")
   coroutine.yield()
@@ -108,10 +108,25 @@ function Game:setupCo()
   self:drawLoadingString(loc("ld_analytics"))
   coroutine.yield()
   analytics.init()
+
+  apply_config_volume()
+
+  self:createDirectoriesIfNeeded()
+  
+  self:checkForUpdates()
+
+  self:createScenes()
+
+  -- Run all unit tests now that we have everything loaded
+  if TESTS_ENABLED then
+    self:runUnitTests()
+  end
 end
 
-function Game:postSetup()
-  apply_config_volume()
+function Game:createDirectoriesIfNeeded()
+  self:drawLoadingString("Creating Folders")
+  coroutine.yield()
+
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
   love.filesystem.createDirectory("panels")
@@ -127,12 +142,19 @@ function Game:postSetup()
   if love.system.getOS() ~= "OS X" then
     recursiveRemoveFiles(".", ".DS_Store")
   end
+end
 
+function Game:checkForUpdates()
   --check for game updates
   if self.game_updater and self.game_updater.check_update_ingame then
     wait_game_update = self.game_updater:async_download_latest_version()
   end
-  
+end
+
+function Game:createScenes()
+  self:drawLoadingString("Creating Scenes")
+  coroutine.yield()
+
   -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
     require("scenes.titleScreen"),
@@ -145,17 +167,13 @@ function Game:postSetup()
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-
-  if themes[config.theme].images.bg_title then
-    sceneManager:switchToScene("titleScreen")
-  else
-    sceneManager:switchToScene("mainMenu")
-  end
-  
 end
 
-local function unitTests()
-  print("Running Unit Tests...")
+function Game:runUnitTests()
+  self:drawLoadingString("Running Unit Tests")
+  coroutine.yield()
+
+  logger.info("Running Unit Tests...")
   require("PuzzleTests")
   require("ServerQueueTests")
   require("StackTests")
@@ -164,7 +182,6 @@ local function unitTests()
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
   end
-  print("Done!")
 end
 
 -- Called every few fractions of a second to update the game
@@ -211,17 +228,13 @@ function Game:update(dt)
   end
   
   local status, err = nil, nil
-  if coroutine.status(self.setup) ~= "dead" then
-    status, err = coroutine.resume(self.setup)
+  if coroutine.status(self.setupCoroutineObject) ~= "dead" then
+    status, err = coroutine.resume(self.setupCoroutineObject)
     -- loading bar setup finished
-    if status and coroutine.status(self.setup) == "dead" then
-      self:postSetup()
-      -- Run all unit tests now that we have everything loaded
-      if TESTS_ENABLED then
-        unitTests()
-      end
+    if status and coroutine.status(self.setupCoroutineObject) == "dead" then
+      self:switchToStartScene()
     elseif not status then
-      self.crashTrace = debug.traceback(self.setup)
+      self.crashTrace = debug.traceback(self.setupCoroutineObject)
     end
   elseif sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
@@ -251,6 +264,14 @@ function Game:update(dt)
   self.rich_presence:runCallbacks()
   
   manualGC(0.0001, nil, nil)
+end
+
+function Game:switchToStartScene()
+  if themes[config.theme].images.bg_title then
+    sceneManager:switchToScene("titleScreen")
+  else
+    sceneManager:switchToScene("mainMenu")
+  end
 end
 
 function Game:draw()
