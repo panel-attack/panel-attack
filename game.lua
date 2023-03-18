@@ -137,6 +137,12 @@ function Game:postSetup()
   scenes = {
     require("scenes.titleScreen"),
     require("scenes.mainMenu"),
+    require("scenes.endlessMenu"),
+    require("scenes.endlessGame"),
+    require("scenes.puzzleMenu"),
+    require("scenes.puzzleGame"),
+    require("scenes.timeAttackMenu"),
+    require("scenes.timeAttackGame"),
     require("scenes.inputConfigMenu"),
     require("scenes.optionsMenu"),
     require("scenes.soundTest"),

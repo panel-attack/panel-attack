@@ -14,7 +14,8 @@ local GraphicsUtil = require("graphics_util")
 local FileUtils = require("FileUtils")
 local analytics = require("analytics")
 
---@module BasicMenu
+--@module optionsMenu
+-- Scene for the options menu
 local optionsMenu = Scene("optionsMenu")
 
 local ret = nil
@@ -30,6 +31,7 @@ for k, v in ipairs(localization:get_list_codes()) do
   end
 end
 
+local LABEL_WIDTH = 130
 local SCROLL_STEP = 14
 local optionsState
 local activeMenuName = "baseMenu"
@@ -225,16 +227,14 @@ function optionsMenu:init()
     }
   )
   
-  
-  local labelWidth = 130
   local baseMenuOptions = {
-    {Label({width = labelWidth, label = "op_language"}), languageStepper},
-    {Button({width = labelWidth, label = "op_general", onClick = function() switchMenu("generalMenu") end})},
-    {Button({width = labelWidth, label = "op_graphics", onClick = function() switchMenu("graphicsMenu") end})},
-    {Button({width = labelWidth, label = "op_audio", onClick = function() switchMenu("audioMenu") end})},
-    {Button({width = labelWidth, label = "op_debug", onClick = function() switchMenu("debugMenu") end})},
-    {Button({width = labelWidth, label = "op_about", onClick = function() switchMenu("aboutMenu") end})},
-    {Button({width = labelWidth, label = "back", onClick = exitMenu})},
+    {Label({width = LABEL_WIDTH, label = "op_language"}), languageStepper},
+    {Button({width = LABEL_WIDTH, label = "op_general", onClick = function() switchMenu("generalMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "op_graphics", onClick = function() switchMenu("graphicsMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "op_audio", onClick = function() switchMenu("audioMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "op_debug", onClick = function() switchMenu("debugMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "op_about", onClick = function() switchMenu("aboutMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = exitMenu})},
   }
 
   local saveReplaysPubliclyIndexMap = {["with my name"] = 1, ["anonymously"] = 2, ["not at all"] = 3}
@@ -255,13 +255,13 @@ function optionsMenu:init()
   )
 
   local generalMenuOptions = {
-    {Label({width = labelWidth, label = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
-    {Label({width = labelWidth, label = "op_fps"}), createToggleButtonGroup("show_fps")},
-    {Label({width = labelWidth, label = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")},
-    {Label({width = labelWidth, label = "op_analytics"}), createToggleButtonGroup("enable_analytics", function() analytics.init() end)},
-    {Label({width = labelWidth, label = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
-    {Label({width = labelWidth, label = "op_replay_public"}), publicReplayButtonGroup},
-    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
+    {Label({width = LABEL_WIDTH, label = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
+    {Label({width = LABEL_WIDTH, label = "op_fps"}), createToggleButtonGroup("show_fps")},
+    {Label({width = LABEL_WIDTH, label = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")},
+    {Label({width = LABEL_WIDTH, label = "op_analytics"}), createToggleButtonGroup("enable_analytics", function() analytics.init() end)},
+    {Label({width = LABEL_WIDTH, label = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
+    {Label({width = LABEL_WIDTH, label = "op_replay_public"}), publicReplayButtonGroup},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
 
   local themeIndex
@@ -296,20 +296,20 @@ function optionsMenu:init()
   )
   
   local graphicsMenuOptions = {
-    {Label({width = labelWidth, label = "op_theme"}), themeStepper},
-    {Label({width = labelWidth, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
-    {Label({width = labelWidth, label = "op_popfx"}), createToggleButtonGroup("popfx")},
-    {Label({width = labelWidth, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
-    {Label({width = labelWidth, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
-    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
+    {Label({width = LABEL_WIDTH, label = "op_theme"}), themeStepper},
+    {Label({width = LABEL_WIDTH, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
+    {Label({width = LABEL_WIDTH, label = "op_popfx"}), createToggleButtonGroup("popfx")},
+    {Label({width = LABEL_WIDTH, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
+    {Label({width = LABEL_WIDTH, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
   local soundTestMenuOptions = {
-    {Label({width = labelWidth, label = "character"})},
-    {Label({width = labelWidth, label = "op_music_type"})},
-    {Label({width = labelWidth, label = "op_music_play"})},
-    {Label({width = labelWidth, label = "op_music_sfx"})},
-    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("audioMenu") end})},
+    {Label({width = LABEL_WIDTH, label = "character"})},
+    {Label({width = LABEL_WIDTH, label = "op_music_type"})},
+    {Label({width = LABEL_WIDTH, label = "op_music_play"})},
+    {Label({width = LABEL_WIDTH, label = "op_music_sfx"})},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("audioMenu") end})},
   }
         
   local musicFrequencyIndexMap = {["stage"] = 1, ["often_stage"] = 2, ["either"] = 3, ["often_characters"] = 4, ["characters"] = 5}
@@ -332,29 +332,29 @@ function optionsMenu:init()
   )
   
   local audioMenuOptions = {
-    {Label({width = labelWidth, label = "op_vol"}), createConfigSlider("master_volume", 0, 100, function() apply_config_volume() end)},
-    {Label({width = labelWidth, label = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function() apply_config_volume() end)},
-    {Label({width = labelWidth, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
-    {Label({width = labelWidth, label = "op_use_music_from"}), musicFrequencyStepper},
-    {Label({width = labelWidth, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
-    {Button({width = labelWidth, label = "mm_music_test", onClick = function() sceneManager:switchToScene("soundTest") end})},
-    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
+    {Label({width = LABEL_WIDTH, label = "op_vol"}), createConfigSlider("master_volume", 0, 100, function() apply_config_volume() end)},
+    {Label({width = LABEL_WIDTH, label = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function() apply_config_volume() end)},
+    {Label({width = LABEL_WIDTH, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
+    {Label({width = LABEL_WIDTH, label = "op_use_music_from"}), musicFrequencyStepper},
+    {Label({width = LABEL_WIDTH, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
+    {Button({width = LABEL_WIDTH, label = "mm_music_test", onClick = function() sceneManager:switchToScene("soundTest") end})},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
   local debugMenuOptions = {
-    {Label({width = labelWidth, label = "op_debug"}), createToggleButtonGroup("debug_mode")},
-    {Label({width = labelWidth, label = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", -200, 200)},
-    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
+    {Label({width = LABEL_WIDTH, label = "op_debug"}), createToggleButtonGroup("debug_mode")},
+    {Label({width = LABEL_WIDTH, label = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", -200, 200)},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
   local aboutMenuOptions = {
-    {Button({width = labelWidth, label = "op_about_themes", onClick = setupDrawThemesInfo})},
-    {Button({width = labelWidth, label = "op_about_characters", onClick = function() setupInfo("characters") end})},
-    {Button({width = labelWidth, label = "op_about_stages", onClick = function() setupInfo("stages") end})},
-    {Button({width = labelWidth, label = "op_about_panels", onClick = function() setupInfo("panels") end})},
-    {Button({width = labelWidth, label = "About Attack Files", translate = false, onClick = function() setupInfo("attackFiles") end})},
-    {Button({width = labelWidth, label = "System Info", translate = false, onClick = setupSystemInfo})},
-    {Button({width = labelWidth, label = "back", onClick = function() switchMenu("baseMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "op_about_themes", onClick = setupDrawThemesInfo})},
+    {Button({width = LABEL_WIDTH, label = "op_about_characters", onClick = function() setupInfo("characters") end})},
+    {Button({width = LABEL_WIDTH, label = "op_about_stages", onClick = function() setupInfo("stages") end})},
+    {Button({width = LABEL_WIDTH, label = "op_about_panels", onClick = function() setupInfo("panels") end})},
+    {Button({width = LABEL_WIDTH, label = "About Attack Files", translate = false, onClick = function() setupInfo("attackFiles") end})},
+    {Button({width = LABEL_WIDTH, label = "System Info", translate = false, onClick = setupSystemInfo})},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
   menus["baseMenu"] = Menu({menuItems = baseMenuOptions})

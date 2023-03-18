@@ -8,6 +8,7 @@ local LevelSlider = class(
   function(self, options)
     self.min = 1
     self.max = #themes[config.theme].images.IMG_levels
+    self.value = options.value and util.bound(self.min, options.value, self.max) or 5
     -- pixels per value change
     self.tickLength = 11
   end,

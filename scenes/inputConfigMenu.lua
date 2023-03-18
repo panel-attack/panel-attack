@@ -12,12 +12,14 @@ local util = require("util")
 local GraphicsUtil = require("graphics_util")
 
 --@module inputConfigMenu
+-- Scene for configuring input
 local inputConfigMenu = Scene("inputConfigMenu")
 
 inputConfigMenu.settingKey = false
 inputConfigMenu.menu = nil -- set in load
 inputConfigMenu.backgroundImg = nil -- set in load
 
+local KEY_NAME_LABEL_WIDTH = 200
 local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
 local configIndex = 1
@@ -147,7 +149,7 @@ function inputConfigMenu:init()
     }
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyName = inputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
-    local label = Label({label = keyName, translate = false, width = 200})
+    local label = Label({label = keyName, translate = false, width = KEY_NAME_LABEL_WIDTH})
     menuOptions[#menuOptions + 1] = {
       Button({
           label = key,

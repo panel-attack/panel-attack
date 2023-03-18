@@ -21,7 +21,7 @@ require("stage") -- after globals!
 
 require("localization")
 require("queue")
-require("save")
+local save = require("save")
 local Game = require("Game")
 -- move to load once global dependencies have been resolved
 GAME = Game()
@@ -45,7 +45,7 @@ require("sound")
 require("timezones")
 require("gen_panels")
 require("panels")
-require("theme")
+require("Theme")
 local utf8 = require("utf8")
 require("click_menu")
 require("computerPlayers.computerPlayer")

@@ -12,6 +12,7 @@ local tableUtils = require("tableUtils")
 local utf8 = require("utf8")
 
 --@module setNameMenu
+-- Scene for setting the username
 local setNameMenu = Scene("setNameMenu")
 
 local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)

@@ -11,6 +11,7 @@ local GraphicsUtil = require("graphics_util")
 require("mainloop")
 
 --@module MainMenu
+-- Scene for the main menu
 local mainMenu = Scene("mainMenu")
 
 local function genLegacyMainloopFn(myFunction, args)
@@ -37,9 +38,9 @@ local function createMainMenuButton(label, onClick, extra_labels, translate)
 end
 
 local menuItems = {
-  {createMainMenuButton("mm_1_endless", genLegacyMainloopFn(main_endless_select))},
-  {createMainMenuButton("mm_1_puzzle", genLegacyMainloopFn(main_select_puzz))},
-  {createMainMenuButton("mm_1_time", genLegacyMainloopFn(main_timeattack_select))},
+  {createMainMenuButton("mm_1_endless", function() switchToScene("endlessMenu") end)},
+  {createMainMenuButton("mm_1_puzzle", function() switchToScene("puzzleMenu") end)},
+  {createMainMenuButton("mm_1_time", function() switchToScene("timeAttackMenu") end)},
   {createMainMenuButton("mm_1_vs", genLegacyMainloopFn(main_local_vs_yourself_setup))},
   {createMainMenuButton("mm_1_training", genLegacyMainloopFn(training_setup))},
   {createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
