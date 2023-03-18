@@ -79,7 +79,7 @@ function Replay.loadFromPath(path)
     return true
 end
 
-function Replay.loadFromFile(replay)
+function Replay.loadFromFile(replay, wantsCanvas)
   assert(replay ~= nil)
   local replayDetails
   if replay.vs then
@@ -103,12 +103,12 @@ function Replay.loadFromFile(replay)
   if replay.vs then
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
-    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
+    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
 
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
-      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
+      P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
       
       P1:set_garbage_target(P2)
       P2:set_garbage_target(P1)
@@ -135,7 +135,7 @@ function Replay.loadFromFile(replay)
 
   elseif replay.endless or replay.time then
     local inputMethod = (replayDetails.inputMethod) or "controller"
-    P1 = Stack{which=1, match=GAME.match, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
+    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
     GAME.match.P1 = P1
     P1:wait_for_random_character()
   end

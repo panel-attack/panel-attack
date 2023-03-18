@@ -1,11 +1,10 @@
 
 local function puzzleTest()
   local match = Match("puzzle") -- to stop rising
-  local stack = Stack{which=1, match=match, is_local=false, level=5, inputMethod="controller"}
+  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
   match.P1 = stack
   stack.do_countdown = false
   stack:wait_for_random_character()
-  pick_random_stage()
 
   assert(characters ~= nil, "no characters")
   stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
@@ -26,11 +25,10 @@ puzzleTest()
 
 local function basicSwapTest()
   local match = Match("endless")
-  local stack = Stack{which=1, match=match, is_local=false, level=5, inputMethod="controller"}
+  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
   match.P1 = stack
   stack.do_countdown = false
   stack:wait_for_random_character()
-  pick_random_stage()
 
   assert(characters ~= nil, "no characters")
 

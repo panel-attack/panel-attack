@@ -58,7 +58,7 @@ function StackReplayTestingUtils:setupReplayWithPath(path)
   GAME.muteSoundEffects = true
 
   Replay.loadFromPath(path)
-  Replay.loadFromFile(replay)
+  Replay.loadFromFile(replay, false)
 
   assert(GAME ~= nil)
   assert(GAME.match ~= nil)
