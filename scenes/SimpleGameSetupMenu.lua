@@ -10,8 +10,9 @@ local ButtonGroup = require("ui.ButtonGroup")
 local save = require("save")
 local GraphicsUtil = require("graphics_util")
 
---@module BasicMenu
-local BasicMenu = class(
+--@module SimpleGameSetupMenu
+-- A Scene that contains menus for basic game configuation (speed, difficulty, level, etc.)
+local SimpleGameSetupMenu = class(
   function (self, name, options)
     self.name = name
     self.gameMode = options.gameMode
@@ -20,7 +21,14 @@ local BasicMenu = class(
   Scene
 )
 
-function BasicMenu:startGame()
+-- begin abstract functions
+
+-- returns the scores for the current game mode in the form {last score, record score}
+function SimpleGameSetupMenu:getScores() return {"", ""} end
+
+-- end abstract functions
+
+function SimpleGameSetupMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   
   config.endless_speed = self.speedSlider.value
@@ -58,7 +66,7 @@ local function exitMenu()
   sceneManager:switchToScene("mainMenu")
 end
 
-function BasicMenu:init()
+function SimpleGameSetupMenu:init()
   sceneManager:addScene(self)
   
   self.speedSlider = Slider({
@@ -131,7 +139,7 @@ function BasicMenu:init()
   self.modernMenu:setVisibility(false)
 end
 
-function BasicMenu:load()
+function SimpleGameSetupMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 100
   self.classicMenu.x = x
@@ -159,11 +167,11 @@ function BasicMenu:load()
   end
 end
 
-function BasicMenu:drawBackground() 
+function SimpleGameSetupMenu:drawBackground() 
   themes[config.theme].images.bg_main:draw() 
 end
 
-function BasicMenu:update()
+function SimpleGameSetupMenu:update()
   if self.typeButtons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
   
@@ -190,7 +198,7 @@ function BasicMenu:update()
   
 end
 
-function BasicMenu:unload() 
+function SimpleGameSetupMenu:unload() 
   if self.typeButtons.value == "Classic" then
     self.classicMenu:setVisibility(false)
   else
@@ -199,4 +207,4 @@ function BasicMenu:unload()
   stop_the_music()
 end
 
-return BasicMenu
+return SimpleGameSetupMenu

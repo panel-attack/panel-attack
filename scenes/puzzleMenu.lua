@@ -10,6 +10,7 @@ local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 
 --@module puzzleMenu
+-- Scene for the puzzle selection menu
 local puzzleMenu = Scene("puzzleMenu")
 
 local font = GraphicsUtil.getGlobalFont()

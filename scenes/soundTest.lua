@@ -8,6 +8,7 @@ local Menu = require("ui.Menu")
 local tableUtils = require("tableUtils")
 
 --@module soundTest
+-- Scene for the sound test
 local soundTest = Scene("soundTest")
 
 local soundTestMenu

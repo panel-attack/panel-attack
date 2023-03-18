@@ -3,6 +3,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 
 --@module puzzleGame
+-- Scene for a puzzle mode instance of the game
 local puzzleGame = GameBase("puzzleGame", {})
 
 function puzzleGame:customLoad(sceneParams)

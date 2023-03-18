@@ -11,6 +11,7 @@ local GraphicsUtil = require("graphics_util")
 require("mainloop")
 
 --@module MainMenu
+-- Scene for the main menu
 local mainMenu = Scene("mainMenu")
 
 local function genLegacyMainloopFn(myFunction, args)

@@ -10,7 +10,8 @@ local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
 
---@module MainMenu
+--@module GameBase
+-- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
 local GameBase = class(
   function (self, name, options)
     self.name = name
@@ -33,15 +34,27 @@ local GameBase = class(
 )
 
 -- begin abstract functions
+
+-- Game mode specific post processing on the final game result (saving scores, replays, etc.)
+-- Called during unload()
 function GameBase:processGameResults(gameResult) end
 
+-- Game mode specific game state setup
+-- Called during load()
 function GameBase:customLoad(sceneParams) end
 
+-- Game mode specific behavior for leaving the game
+-- called during runGame()
 function GameBase:abortGame() end
 
+-- Game mode specific behavior for running the game
+-- called during runGame()
 function GameBase:customRun() end
 
+-- Game mode specific state setup for a game over
+-- called during setupGameOver()
 function GameBase:customGameOverSetup() end
+
 -- end abstract functions
 
 function GameBase:init()

@@ -14,7 +14,8 @@ local GraphicsUtil = require("graphics_util")
 local FileUtils = require("FileUtils")
 local analytics = require("analytics")
 
---@module BasicMenu
+--@module optionsMenu
+-- Scene for the options menu
 local optionsMenu = Scene("optionsMenu")
 
 local ret = nil

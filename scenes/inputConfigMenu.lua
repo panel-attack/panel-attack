@@ -12,6 +12,7 @@ local util = require("util")
 local GraphicsUtil = require("graphics_util")
 
 --@module inputConfigMenu
+-- Scene for configuring input
 local inputConfigMenu = Scene("inputConfigMenu")
 
 inputConfigMenu.settingKey = false

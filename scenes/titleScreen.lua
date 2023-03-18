@@ -6,6 +6,7 @@ local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 
 --@module titleScreen
+-- The title screen scene
 local titleScreen = Scene("titleScreen")
 
 local function titleDrawPressStart(percent) 

@@ -2,6 +2,7 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 
 --@module endlessGame
+-- Scene for an endless mode instance of the game
 local endlessGame = GameBase("endlessGame", {})
 
 function endlessGame:processGameResults(gameResult) 

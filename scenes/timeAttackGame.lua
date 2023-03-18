@@ -2,6 +2,7 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 
 --@module timeAttackGame
+-- Scene for an time attack mode instance of the game
 local timeAttackGame = GameBase("timeAttackGame", {})
 
 function timeAttackGame:processGameResults(gameResult) 

@@ -1,6 +1,7 @@
 local transitionUtils = require("scenes.transitionUtils")
 
 --@module sceneManager
+-- Contains all initialized scenes and handles scene transitions 
 local sceneManager = {
   activeScene = nil,
   nextScene = nil,
