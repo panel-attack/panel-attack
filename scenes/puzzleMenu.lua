@@ -13,6 +13,8 @@ local GraphicsUtil = require("graphics_util")
 -- Scene for the puzzle selection menu
 local puzzleMenu = Scene("puzzleMenu")
 
+local BUTTON_WIDTH = 60
+local BUTTON_HEIGHT = 25
 local font = GraphicsUtil.getGlobalFont()
   
 function puzzleMenu:startGame(puzzleSet)
@@ -59,8 +61,8 @@ function puzzleMenu:init()
   self.randomColorsButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off", width = 60, height = 25}),
-        Button({label = "op_on", width = 60, height = 25}),
+        Button({label = "op_off", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        Button({label = "op_on", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomColors and 2 or 1,

@@ -11,6 +11,9 @@ local tableUtils = require("tableUtils")
 -- Scene for the sound test
 local soundTest = Scene("soundTest")
 
+local BUTTON_WIDTH = 70
+local BUTTON_HEIGHT = 25
+
 local soundTestMenu
 
 local menuValidateSound
@@ -61,8 +64,8 @@ local function createSfxMenuInfo(characterId)
     sfxLabels[#sfxLabels + 1] = Label({
         label = string.match(sfx, "(.*)[.]"),
         translate = false,
-        width = 70,
-        height = 25,
+        width = BUTTON_WIDTH,
+        height = BUTTON_HEIGHT,
         isVisible = false})
     sfxValues[#sfxValues + 1] = sfx
   end
@@ -78,8 +81,8 @@ function soundTest:init()
     characterLabels[#characterLabels + 1] = Label({
         label = character.display_name,
         translate = false,
-        width = 70,
-        height = 25})
+        width = BUTTON_WIDTH,
+        height = BUTTON_HEIGHT})
     characterIds[#characterIds + 1] = character.id
   end
   
@@ -111,8 +114,8 @@ function soundTest:init()
     stageLabels[#stageLabels + 1] = Label({
         label = stage.display_name,
         translate = false,
-        width = 70,
-        height = 25})
+        width = BUTTON_WIDTH,
+        height = BUTTON_HEIGHT})
     stageIds[#stageIds + 1] = stage.id
   end
   local stageStepper = Stepper(

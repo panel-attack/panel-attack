@@ -28,6 +28,9 @@ function SimpleGameSetupMenu:getScores() return {"", ""} end
 
 -- end abstract functions
 
+local BUTTON_WIDTH = 60
+local BUTTON_HEIGHT = 25
+
 function SimpleGameSetupMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   
@@ -79,9 +82,9 @@ function SimpleGameSetupMenu:init()
   self.difficultyButtons = ButtonGroup(
       {
         buttons = {
-          Button({label = "easy", width = 60, height = 25}),
-          Button({label = "normal", width = 60, height = 25}),
-          Button({label = "hard", width = 60, height = 25}),
+          Button({label = "easy", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          Button({label = "normal", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          Button({label = "hard", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
           -- TODO: localize "EX Mode"
           Button({label = "EX Mode", translate = false}),
         },
@@ -106,11 +109,11 @@ function SimpleGameSetupMenu:init()
         Button({label = "endless_classic", onClick = function()
               self.modernMenu:setVisibility(false)
               self.classicMenu:setVisibility(true)
-              end, width = 60, height = 25}),
+              end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
         Button({label = "endless_modern", onClick = function()
               self.classicMenu:setVisibility(false) 
               self.modernMenu:setVisibility(true)
-              end, width = 60, height = 25}),
+              end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {"Classic", "Modern"},
       selectedIndex = config.endless_level and 2 or 1,
@@ -156,8 +159,8 @@ function SimpleGameSetupMenu:load()
   end
 
   for i, button in ipairs(self.difficultyButtons.buttons) do
-    button.width = 60
-    button.height = 25
+    button.width = BUTTON_WIDTH
+    button.height = BUTTON_HEIGHT
   end
   
   if self.typeButtons.value == "Classic" then
