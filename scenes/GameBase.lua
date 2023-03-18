@@ -358,7 +358,6 @@ function GameBase:unload()
   end
   analytics.game_ends(GAME.match.P1.analytic)
   GAME:clearMatch()
-  stop_the_music()
 end
 
 return GameBase

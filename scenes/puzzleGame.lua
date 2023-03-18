@@ -25,6 +25,11 @@ function puzzleGame:customLoad(sceneParams)
                       .. validationError
     sceneManager:switchToScene("puzzleMenu")
   end
+  
+  -- hack to keep music playing after reloading while paused
+  for _, track in ipairs(currently_playing_tracks) do
+    track:play()
+  end
 end
 
 function puzzleGame:customRun()
