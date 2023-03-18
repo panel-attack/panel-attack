@@ -31,10 +31,8 @@ function puzzleGame:customRun()
   -- reset level
   if input.isDown["TauntUp"] or input.isDown["TauntDown"] then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    -- hack to keep music playing after reloading while paused
-    for _, track in ipairs(currently_playing_tracks) do
-      track:play()
-    end
+    -- need to unpause the music when resetting
+    setMusicPaused(false)
     -- The character and stage and music and background should all state the same until you complete the whole puzzle set
     sceneManager:switchToScene("puzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, loadStageAndMusic = false})
   end
