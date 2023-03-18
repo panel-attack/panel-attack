@@ -29,10 +29,8 @@ end
 
 function puzzleGame:customRun()
   -- reset level
-  if input.isDown["TauntUp"] or input.isDown["TauntDown"] then 
+  if (input.isDown["TauntUp"] or input.isDown["TauntDown"]) and not GAME.gameIsPaused then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    -- need to unpause the music when resetting
-    setMusicPaused(false)
     -- The character and stage and music and background should all state the same until you complete the whole puzzle set
     sceneManager:switchToScene("puzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, loadStageAndMusic = false})
   end
