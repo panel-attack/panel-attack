@@ -421,7 +421,7 @@ end
 
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
 -- param source the stack to copy from
--- param other the variable to copy to
+-- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
   if other == nil then
     if #source.clonePool == 0 then
@@ -460,15 +460,20 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- other isn't a stack object and therefore doesn't know the method
-        -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
-        other.panels[i][j] = Stack.createPanel(other, i, j)
+        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
+        other.panels[i][j] = {}
       end
     end
     for j = 1, width do
       local opanel = other.panels[i][j]
       local spanel = source.panels[i][j]
-      opanel:clear(true, true)
+      -- Clear all variables not in source, then copy all source variables to the backup
+      -- Note the functions are kept from the same stack so they will still be valid
+      for k, _ in pairs(opanel) do
+        if spanel[k] == nil then
+          opanel[k] = nil
+        end
+      end
       for k, v in pairs(spanel) do
         opanel[k] = v
       end
@@ -2627,7 +2632,6 @@ function Stack.createPanel(self, row, column)
   panel.onGarbageLand = function(panel)
     self:onGarbageLand(panel)
   end
-  self.panels[row][column] = panel
   return panel
 end
 
