@@ -84,10 +84,12 @@ function fmainloop()
     require("tests.StackReplayTests")
     require("tests.StackRollbackReplayTests")
     require("tests.StackTouchReplayTests")
-    -- Performance Tests
-    if PERFORMANCE_TESTS_ENABLED then
-      require("tests/performanceTests")
-    end
+  end
+  if PERFORMANCE_TESTS_ENABLED then
+    GAME:drawLoadingString("Running Performance Tests")
+    wait()
+    require("tests.StackReplayPerformanceTests")
+    --require("tests.StringPerformanceTests") -- Disabled for now since they just prove lua tables are faster for rapid concatenation of strings
   end
 
   local func, arg = main_title, nil
@@ -1498,7 +1500,7 @@ function main_replay()
 
   commonGameSetup()
 
-  Replay.loadFromFile(replay)
+  Replay.loadFromFile(replay, true)
 
   local function update()
   end

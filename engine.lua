@@ -373,7 +373,10 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.pos_x = 248
     stack.score_x = 642
     stack.mirror_x = -1
-    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    stack.origin_x = stack.pos_x
+    if stack.canvas then
+      stack.origin_x = stack.origin_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    end
     stack.multiplication = 1
     stack.id = "_2P"
   end
