@@ -152,7 +152,7 @@ Stack =
     for i = 0, s.height do
       s.panels[i] = {}
       for j = 1, s.width do
-        s.panels[i][j] = s:createPanel(i, j)
+        s:createPanelAt(i, j)
       end
     end
     s:moveForPlayerNumber(which)
@@ -421,7 +421,7 @@ end
 
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
 -- param source the stack to copy from
--- param other the variable to copy to
+-- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
   if other == nil then
     if #source.clonePool == 0 then
@@ -460,15 +460,20 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- other isn't a stack object and therefore doesn't know the method
-        -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
-        other.panels[i][j] = Stack.createPanel(other, i, j)
+        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
+        other.panels[i][j] = {}
       end
     end
     for j = 1, width do
       local opanel = other.panels[i][j]
       local spanel = source.panels[i][j]
-      opanel:clear(true, true)
+      -- Clear all variables not in source, then copy all source variables to the backup
+      -- Note the functions are kept from the same stack so they will still be valid
+      for k, _ in pairs(opanel) do
+        if spanel[k] == nil then
+          opanel[k] = nil
+        end
+      end
       for k, v in pairs(spanel) do
         opanel[k] = v
       end
@@ -717,9 +722,8 @@ function Stack.puzzleStringToPanels(self, puzzleString)
       for column = 6, 1, -1 do
           local color = string.sub(rowString, column, column)
           if not garbageStartRow and tonumber(color) then
-            local panel = self:createPanel(row, column)
+            local panel = self:createPanelAt(row, column)
             panel.color = tonumber(color)
-            panels[row][column] = panel
           else
             -- start of a garbage block
             if color == "]" or color == "}" then
@@ -730,7 +734,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
                 isMetal = true
               end
             end
-            local panel = self:createPanel(row, column)
+            local panel = self:createPanelAt(row, column)
             panel.garbageId = garbageId
             garbageId = garbageId + 1
             panel.isGarbage = true
@@ -741,7 +745,6 @@ function Stack.puzzleStringToPanels(self, puzzleString)
             -- instead save the column index in that field to calculate it later
             panel.x_offset = column
             panel.metal = isMetal
-            panels[row][column] = panel
             table.insert(connectedGarbagePanels, panel)
             -- garbage ends here
             if color == "[" or color == "{" then
@@ -770,10 +773,9 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   -- add row 0 because it crashes if there is no row 0 for whatever reason
   panels[0] = {}
   for column = 6, 1, -1 do
-    local panel = self:createPanel(0, column)
+    local panel = self:createPanelAt(0, column)
     panel.color = 9
     panel.state = "dimmed"
-    panels[0][column] = panel
   end
 
   return panels
@@ -2137,10 +2139,9 @@ function Stack.dropGarbage(self, width, height, isMetal)
       -- every row that will receive garbage needs to be fully filled up
       -- so iterate from 1 to stack width instead of column to column + width - 1
       for col = 1, self.width do
-        self.panels[row][col] = self:createPanel(row, col)
+        local panel = self:createPanelAt(row, col)
 
         if isPartOfGarbage(col) then
-          local panel = self.panels[row][col]
           panel.garbageId = self.garbageCreatedCount
           panel.isGarbage = true
           panel.color = 9
@@ -2507,7 +2508,7 @@ function Stack.new_row(self)
   panels[stackHeight] = {}
 
   for col = 1, self.width do
-    panels[stackHeight][col] = self:createPanel(stackHeight, col)
+    self:createPanelAt(stackHeight, col)
   end
 
   -- move panels up
@@ -2612,7 +2613,8 @@ function Stack:getAttackPatternData()
   return data
 end
 
-function Stack.createPanel(self, row, column)
+-- creates a new panel at the specified row+column and adds it to the Stack's panels table
+function Stack.createPanelAt(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
   local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
   panel.onPop = function(panel)
