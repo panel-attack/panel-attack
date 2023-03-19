@@ -705,7 +705,7 @@ function Stack.set_puzzle_state(self, puzzle)
 end
 
 function Stack.setPanelsForPuzzleString(self, puzzleString)
-  local panels = {}
+  local panels = self.panels
   local garbageId = 0
   local garbageStartRow = nil
   local garbageStartColumn = nil
@@ -777,8 +777,6 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
     panel.color = 9
     panel.state = "dimmed"
   end
-
-  return panels
 end
 
 function Stack.toPuzzleInfo(self)
