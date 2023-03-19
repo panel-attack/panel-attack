@@ -17,6 +17,7 @@ require("util")
 
 require("globals")
 require("character_loader") -- after globals!
+local CustomRun = require("CustomRun")
 require("stage") -- after globals!
 
 require("localization")
@@ -50,6 +51,17 @@ local utf8 = require("utf8")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+
+-- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
+-- so by overwriting that, the new runInternal will get used on the next iteration
+love.pa_runInternal = CustomRun.innerRun
+if GAME_UPDATER == nil then
+  -- We don't have an autoupdater, so we need to override run.
+  -- In the autoupdater case run will already have been overridden and be running
+  love.run = CustomRun.run
+end
+
+local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
 
 if PROFILING_ENABLED then
   GAME.profiler = require("profiler")
@@ -206,21 +218,20 @@ function love.update(dt)
   inputFieldManager.update()
 
   if config.show_fps and config.debug_mode then
-    if runTimeGraph == nil then
-      runTimeGraph = RunTimeGraph()
+    if CustomRun.runTimeGraph == nil then
+      CustomRun.runTimeGraph = RunTimeGraph()
     end
   else
-    runTimeGraph = nil
+    CustomRun.runTimeGraph = nil
   end
-  
   GAME:update(dt)
 end
 
 -- Called whenever the game needs to draw.
 function love.draw()
   if config ~= nil and config.show_fps then
-    if runTimeGraph then
-      runTimeGraph:draw()
+    if not CustomRun.runTimeGraph then
+      gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
     end
   end
 

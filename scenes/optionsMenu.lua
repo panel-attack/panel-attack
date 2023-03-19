@@ -11,7 +11,7 @@ local inputManager = require("inputManager")
 local save = require("save")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
-local FileUtils = require("FileUtils")
+local fileUtils = require("fileUtils")
 local analytics = require("analytics")
 
 --@module optionsMenu
@@ -114,10 +114,10 @@ local function setupDrawThemesInfo()
   if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
     --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
     gprint(loc("op_copy_files"), 280, 280)
-    recursive_copy("themes/" .. consts.DEFAULT_THEME_DIRECTORY, "themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY)
+    fileUtils.recursiveCopy("themes/" .. consts.DEFAULT_THEME_DIRECTORY, "themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY)
 
     -- Android can't easily copy into the save dir, so do it for them to help.
-    recursive_copy("default_data/themes", "themes")
+    fileUtils.recursiveCopy("default_data/themes", "themes")
   end
   infoOffset = 0
   optionsState = "info"
@@ -266,7 +266,7 @@ function optionsMenu:init()
 
   local themeIndex
   local themeLabels = {}
-  for i, v in ipairs(FileUtils.getFilteredDirectoryItems("themes")) do
+  for i, v in ipairs(fileUtils.getFilteredDirectoryItems("themes")) do
     foundThemes[#foundThemes + 1] = v
     themeLabels[#themeLabels + 1] = Label({label = v, translate = false})
     if config.theme == v then

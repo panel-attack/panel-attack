@@ -9,6 +9,7 @@ local save = require("save")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
+local Replay = require("replay")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
@@ -59,58 +60,6 @@ function GameBase:customGameOverSetup() end
 
 function GameBase:init()
   sceneManager:addScene(self)
-end
-
-function GameBase:finalizeAndWriteReplay(extraPath, extraFilename)
-  replay[GAME.match.mode].in_buf = GAME.match.P1.confirmedInput
-
-  local now = os.date("*t", to_UTC(os.time()))
-  local sep = "/"
-  local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
-  if extraPath then
-    path = path .. sep .. extraPath
-  end
-  local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
-  if extraFilename then
-    filename = filename .. "-" .. extraFilename
-  end
-  filename = filename .. ".txt"
-  logger.info("saving replay as " .. path .. sep .. filename)
-  save.write_replay_file(path, filename)
-end
-
-function GameBase:finalizeAndWriteVsReplay(battleRoom, outcomeClaim, incompleteGame)
-  incompleteGame = incompleteGame or false
-  
-  local extraPath, extraFilename
-  if GAME.match.P2 then
-    replay[GAME.match.mode].I = GAME.match.P2.confirmedInput
-
-    --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
-    if battleRoom.playerNames[2] < battleRoom.playerNames[1] then
-      extraPath = battleRoom.playerNames[2] .. "-vs-" .. battleRoom.playerNames[1]
-    else
-      extraPath = battleRoom.playerNames[1] .. "-vs-" .. battleRoom.playerNames[2]
-    end
-    extraFilename = battleRoom.playerNames[1] .. "-L" .. GAME.match.P1.level .. "-vs-" .. battleRoom.playerNames[2] .. "-L" .. GAME.match.P2.level
-    if match_type and match_type ~= "" then
-      extraFilename = extraFilename .. "-" .. match_type
-    end
-    if incompleteGame then
-      extraFilename = extraFilename .. "-INCOMPLETE"
-    else
-      if outcomeClaim == 1 or outcomeClaim == 2 then
-        extraFilename = extraFilename .. "-P" .. outcomeClaim .. "wins"
-      elseif outcomeClaim == 0 then
-        extraFilename = extraFilename .. "-draw"
-      end
-    end
-  else -- vs Self
-    extraPath = "Vs Self"
-    extraFilename = "vsSelf-" .. "L" .. GAME.match.P1.level
-  end
-
-  self:finalizeAndWriteReplay(extraPath, extraFilename)
 end
 
 function GameBase:pickRandomStage()
@@ -165,7 +114,8 @@ function GameBase:load(sceneParams)
     pickUseMusicFrom()
   end
   self:customLoad(sceneParams)
-  replay = createNewReplay(GAME.match)
+  replay = Replay.createNewReplay(GAME.match)
+  
   
   self:initializeFrameInfo()
 end
@@ -296,7 +246,7 @@ function GameBase:runGameOver()
   end
   t = t + 1
   
-  GAME.match:render()
+  GAME.gfx_q:push({GAME.match.render, {GAME.match}})
 end
 
 function GameBase:runGame(dt)
@@ -332,14 +282,14 @@ function GameBase:runGame(dt)
   end
   
   if GAME.match.P1:gameResult() then
-    GAME.match:render()
+    GAME.gfx_q:push({GAME.match.render, {GAME.match}})
     self:setupGameOver()
     return
   end
   
   -- Render only if we are not catching up to a current spectate match
   if not (GAME.match.P1 and GAME.match.P1.play_to_end) and not (GAME.match.P2 and GAME.match.P2.play_to_end) then
-    GAME.match:render()
+    GAME.gfx_q:push({GAME.match.render, {GAME.match}})
   end
 end
 
