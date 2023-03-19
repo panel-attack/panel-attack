@@ -2341,17 +2341,16 @@ function Stack.check_matches(self)
           -- we might have to remove its chain flag...!
           -- It can't actually chain the first frame it hovers,
           -- so it can keep its chaining flag in that case.
-          if not (panel.match_anyway or panel:exclude_match()) then
+          if panel.chaining and not (panel.match_anyway or panel:exclude_match()) then
             if row ~= 1 then
               -- a panel landed on the bottom row, so it surely
               -- loses its chain flag.
               -- no swapping panel below
               -- so this panel loses its chain flag
-              if panels[row - 1][col].state ~= "swapping" and panel.chaining then
-                --if panel.chaining then
+              if panels[row - 1][col].state ~= "swapping" then
                 panel.chaining = nil
               end
-            elseif (panel.chaining) then
+            else
               panel.chaining = nil
             end
           end
