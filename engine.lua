@@ -696,7 +696,7 @@ function Stack.set_puzzle_state(self, puzzle)
   local puzzleString = puzzle.stack
 
   self.puzzle = puzzle
-  self.panels = self:puzzleStringToPanels(puzzleString)
+  self:setPanelsForPuzzleString(puzzleString)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
@@ -704,7 +704,7 @@ function Stack.set_puzzle_state(self, puzzle)
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
 end
 
-function Stack.puzzleStringToPanels(self, puzzleString)
+function Stack.setPanelsForPuzzleString(self, puzzleString)
   local panels = {}
   local garbageId = 0
   local garbageStartRow = nil
