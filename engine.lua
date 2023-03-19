@@ -3032,7 +3032,7 @@ function Stack:getInfo()
   info.panels = self.panels_dir
   info.rollbackCount = self.rollbackCount
   if self.prev_states then
-    info.rollbackCopyCount = table.length(self.prev_states)
+    info.rollbackCopyCount = tableUtils.length(self.prev_states)
   else
     info.rollbackCopyCount = 0
   end
