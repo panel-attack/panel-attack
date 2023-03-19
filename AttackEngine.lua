@@ -8,7 +8,7 @@ AttackPattern =
     self.height = height
     self.startTime = startTime
     self.endsChain = endsChain
-    self.garbage = {width, height, metal or false, chain}
+    self.garbage = {width = width, height = height, isMetal = metal or false, isChain = chain}
   end
 )
 

@@ -9,7 +9,7 @@ local analytics = require("analytics")
 local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local save = require("save")
-local FileUtils = require("FileUtils")
+local fileUtils = require("fileUtils")
 local scenes = nil
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -86,7 +86,7 @@ function Game:setupCoroutine()
   self:drawLoadingString("Loading localization...")
   coroutine.yield()
   Localization.init(localization)
-  copy_file("readme_puzzles.txt", "puzzles/README.txt")
+  fileUtils.copyFile("readme_puzzles.txt", "puzzles/README.txt")
   
   self:drawLoadingString(loc("ld_theme"))
   coroutine.yield()
@@ -134,13 +134,13 @@ function Game:createDirectoriesIfNeeded()
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
   
-  if #FileUtils.getFilteredDirectoryItems("training") == 0 then
-    recursive_copy("default_data/training", "training")
+  if #fileUtils.getFilteredDirectoryItems("training") == 0 then
+    fileUtils.recursiveCopy("default_data/training", "training")
   end
   read_attack_files("training")
   
   if love.system.getOS() ~= "OS X" then
-    recursiveRemoveFiles(".", ".DS_Store")
+    fileUtils.recursiveRemoveFiles(".", ".DS_Store")
   end
 end
 
@@ -180,11 +180,23 @@ function Game:runUnitTests()
   coroutine.yield()
 
   logger.info("Running Unit Tests...")
+  -- Small tests (unit tests)
   require("PuzzleTests")
   require("ServerQueueTests")
   require("StackTests")
+  require("tests.JsonEncodingTests")
+  require("tests.NetworkProtocolTests")
+  require("tests.ThemeTests")
+  require("tests.TouchDataEncodingTests")
+  require("tests.utf8AdditionsTests")
   require("tableUtilsTest")
   require("utilTests")
+  -- Medium level tests (integration tests)
+  require("tests.ReplayTests")
+  require("tests.StackReplayTests")
+  require("tests.StackRollbackReplayTests")
+  require("tests.StackTouchReplayTests")
+  -- Performance Tests
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
   end
@@ -299,10 +311,12 @@ function Game:draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
+  self.isDrawing = true
   for i = self.gfx_q.first, self.gfx_q.last do
     self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
   end
   self.gfx_q:clear()
+  self.isDrawing = false
   
   -- Draw the FPS if enabled
   if self.config.show_fps then
@@ -351,6 +365,10 @@ function Game:clearMatch()
     self.match:deinit()
     self.match = nil
   end
+  self:reset()
+end
+
+function Game:reset()
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false
@@ -367,15 +385,20 @@ function Game.errorData(errorString, traceBack)
   local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
   local systemInfo = system_info or "Unknown"
 
-  local errorData = { 
+  local errorData = {
       stack = traceBack,
       name = username,
       error = errorString,
       engine_version = VERSION,
       release_version = buildVersion,
       operating_system = systemInfo,
-      love_version = loveVersion
+      love_version = loveVersion,
+      theme = config.theme
     }
+
+  if GAME.match then
+    errorData.matchInfo = GAME.match:getInfo()
+  end
 
   return errorData
 end
@@ -388,12 +411,30 @@ function Game.detailedErrorLogString(errorData)
   local detailedErrorLogString = 
     "Stack Trace: " .. errorData.stack .. newLine ..
     "Username: " .. errorData.name .. newLine ..
+    "Theme: " .. errorData.theme .. newLine ..
     "Error Message: " .. errorData.error .. newLine ..
     "Engine Version: " .. errorData.engine_version .. newLine ..
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
-    "Love Version: " .. errorData.love_version .. newLine .. 
+    "Love Version: " .. errorData.love_version .. newLine ..
     "UTC Time: " .. formattedTime
+
+    if errorData.matchInfo then
+      detailedErrorLogString = detailedErrorLogString .. newLine ..
+      errorData.matchInfo.mode .. " Match Info: " .. newLine ..
+      "  Stage: " .. errorData.matchInfo.stage .. newLine ..
+      "  Stacks: "
+      for i = 1, #errorData.matchInfo.stacks do
+        local stack = errorData.matchInfo.stacks[i]
+        detailedErrorLogString = detailedErrorLogString .. newLine ..
+        "    P" .. i .. ": " .. newLine ..
+        "      Player Number: " .. stack.playerNumber .. newLine ..
+        "      Character: " .. stack.character  .. newLine ..
+        "      Panels: " .. stack.panels  .. newLine ..
+        "      Rollback Count: " .. stack.rollbackCount .. newLine ..
+        "      Rollback Frames Saved: " .. stack.rollbackCopyCount
+      end
+    end
 
   return detailedErrorLogString
 end
