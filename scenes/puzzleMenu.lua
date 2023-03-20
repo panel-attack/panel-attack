@@ -80,7 +80,7 @@ function puzzleMenu:init()
   end
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menuOptions})
+  self.menu = Menu({menuItems = menuOptions, maxItems = 10})
   self.menu:setVisibility(false)
 end
 
