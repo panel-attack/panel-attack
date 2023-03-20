@@ -3,6 +3,19 @@ local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
+-- Swap finishing the frame chaining is applied should not apply to swapped panel
+local function garbageCantDropWhileSwapping()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v047-2023-03-20-03-39-20-PDR_Lava-L10-vs-JamBox-L8-Casual-INCOMPLETE.json")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 3162)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P2.panels[4][5].chaining == nil)
+end
+
+garbageCantDropWhileSwapping()
+
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
   assert(match ~= nil)
