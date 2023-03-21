@@ -126,59 +126,6 @@ local function getPanelBelow(panel, panels)
   -- end
 end
 
--- the panel enters hover state
--- hover state is the most complex in terms of different timers and garbage vs non-garbage
--- it also propagates chain state
-local function enterHoverState(panel, panelBelow)
-  if panel.isGarbage then
-    -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
-    -- clear resets its garbage flag to false, turning it into a normal panel!
-    clear(panel, false, false)
-    panel.chaining = true
-    panel.timer = panel.frameTimes.GPHOVER
-    panel.fell_from_garbage = 12
-    panel.state = "hovering"
-    panel.propagatesChaining = true
-  else
-    local hoverTime = nil
-    if panel.state == "falling" then
-      -- falling panels inherit the hover time from the panel below
-      hoverTime = panelBelow.timer
-    elseif panel.state == "swapping" then
-      -- panels coming out of a swap always receive full hovertime
-      -- even when swapped on top of another hovering panel
-      hoverTime = panel.frameTimes.HOVER
-    elseif panel.state == "normal"
-        or panel.state == "landing" then
-      -- normal panels inherit the hover time from the panel below
-      if panelBelow.color ~= 0 then
-        if panelBelow.state == "swapping"
-          and panelBelow.propagatesChaining then
-          -- if the panel below is swapping but propagates chaining due to a pop further below,
-          --  the hovertime is the sum of remaining swap time and max hover time
-          hoverTime = panelBelow.timer + panel.frameTimes.HOVER
-        else
-          hoverTime = panelBelow.timer
-        end
-      else
-      -- if the panel below does not have a color, full hover time is given
-        hoverTime = panel.frameTimes.HOVER
-      end
-    else
-      error("Panel in state " .. panel.state .. " is trying to hover")
-    end
-
-    clear_flags(panel, false)
-    panel.state = "hovering"
-    panel.chaining = panel.chaining or panelBelow.propagatesChaining
-    panel.propagatesChaining = panelBelow.propagatesChaining
-
-    panel.timer = hoverTime
-  end
-
-  panel.stateChanged = true
-end
-
 -- returns true if there are "stable" panels below that keep it from falling down
 local function supportedFromBelow(panel, panels)
   if panel.row <= 1 then
@@ -288,19 +235,19 @@ normalState.update = function(panel, panels)
       local panelBelow = getPanelBelow(panel, panels)
       if panelBelow.stateChanged then
         if panelBelow.state == "hovering" then
-          enterHoverState(panel, panelBelow)
+          normalState.enterHoverState(panel, panelBelow)
         elseif panelBelow.color == 0 and panelBelow.state == "normal" then
           if panelBelow.propagatesFalling then
             -- the panel below is empty because garbage below dropped
             -- in that case, skip the hover and fall immediately with the garbage
             fall(panel, panels)
           else
-            enterHoverState(panel, panelBelow)
+            normalState.enterHoverState(panel, panelBelow)
           end
         elseif panelBelow.queuedHover == true
         and panelBelow.propagatesChaining
         and panelBelow.state == "swapping" then
-          enterHoverState(panel, panelBelow)
+          normalState.enterHoverState(panel, panelBelow)
         end
         -- all other transformations from normal state are actively set by stack routines:
         -- swap
@@ -311,38 +258,65 @@ normalState.update = function(panel, panels)
   end
 end
 
+local function getNormalStateHoverTime(panel, panelBelow)
+  if panelBelow.color ~= 0 then
+    if panelBelow.state == "swapping"
+      and panelBelow.propagatesChaining then
+      -- if the panel below is swapping but propagates chaining due to a pop further below,
+      --  the hovertime is the sum of remaining swap time and max hover time
+      return panelBelow.timer + panel.frameTimes.HOVER
+    else
+      -- normal panels inherit the hover time from the panel below
+      return panelBelow.timer
+    end
+  else
+    -- if the panel below does not have a color, full hover time is given
+    return panel.frameTimes.HOVER
+  end
+end
+
+normalState.enterHoverState = function(panel, panelBelow)
+  
+  clear_flags(panel, false)
+  panel.state = "hovering"
+  panel.chaining = panel.chaining or panelBelow.propagatesChaining
+  panel.propagatesChaining = panelBelow.propagatesChaining
+
+  panel.timer = getNormalStateHoverTime(panel, panelBelow)
+  panel.stateChanged = true
+end
+
 swappingState.update = function(panel, panels)
   decrementTimer(panel)
   if panel.timer == 0 then
-    if panel.queuedHover then
-      enterHoverState(panel, getPanelBelow(panel, panels))
-    else
-      swappingState.changeState(panel, panels)
-    end
+    swappingState.changeState(panel, panels)
   else
     swappingState.propagateChaining(panel, panels)
   end
 end
 
+local function swappingStateFinishSwap(panel)
+  panel.state = "normal"
+  panel.dont_swap = nil
+  panel.isSwappingFromLeft = nil
+  panel.stateChanged = true
+end
+
 swappingState.changeState = function(panel, panels)
-  local function finishSwap()
-    panel.state = "normal"
-    panel.dont_swap = nil
-    panel.isSwappingFromLeft = nil
-    panel.stateChanged = true
-  end
 
   local panelBelow = getPanelBelow(panel, panels)
 
   if panel.color == 0 then
-    finishSwap()
+    swappingStateFinishSwap(panel)
   else
-    if panelBelow and panelBelow.color == 0 then
-      enterHoverState(panel, panelBelow)
-    elseif panelBelow and panelBelow.state == "hovering" then
-      enterHoverState(panel, panelBelow)
+    if panelBelow then
+      if panelBelow.color == 0 or panelBelow.state == "hovering" or panel.queuedHover then
+        swappingState.enterHoverState(panel, panelBelow)
+      else
+        swappingStateFinishSwap(panel)
+      end
     else
-      finishSwap()
+      swappingStateFinishSwap(panel)
     end
   end
 end
@@ -357,6 +331,19 @@ swappingState.propagateChaining = function(panel, panels)
     panel.stateChanged = true
     panel.propagatesChaining = true
   end
+end
+
+swappingState.enterHoverState = function(panel, panelBelow)
+  clear_flags(panel, false)
+  panel.state = "hovering"
+  -- swapping panels do NOT get the chaining flag if the panelBelow propagates chaining when the swap ends 
+  --panel.chaining = panel.chaining
+  -- all panels above may still get the chaining flag though if it is currently propagating
+  panel.propagatesChaining = panelBelow.propagatesChaining
+
+  -- swapping panels always get full hover time
+  panel.timer = panel.frameTimes.HOVER
+  panel.stateChanged = true
 end
 
 matchedState.update = function(panel, panels)
@@ -375,7 +362,7 @@ matchedState.changeState = function(panel, panels)
     if panel.y_offset == -1 then
       -- this means the matched garbage panel is part of the bottom row of the garbage
       -- so it will actually convert itself into a non-garbage panel and start to hover
-      enterHoverState(panel)
+      matchedState.enterHoverState(panel)
     else
       -- upper rows of chain type garbage just return to being unmatched garbage
       panel.state = "normal"
@@ -387,6 +374,18 @@ matchedState.changeState = function(panel, panels)
     panel.timer = panel.combo_index * panel.frameTimes.POP
     panel.stateChanged = true
   end
+end
+
+matchedState.enterHoverState = function(panel)
+  -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
+  -- clear resets its garbage flag to false, turning it into a normal panel!
+  clear(panel, false, false)
+  panel.chaining = true
+  panel.propagatesChaining = true
+  panel.timer = panel.frameTimes.GPHOVER
+  panel.fell_from_garbage = 12
+  panel.state = "hovering"
+  panel.stateChanged = true
 end
 
 poppingState.update = function(panel, panels)
@@ -467,7 +466,7 @@ fallingState.update = function(panel, panels)
       local panelBelow = getPanelBelow(panel, panels)
       -- no need to nil check because the panel would always get landed at row 1 before getting here
       if panelBelow.state == "hovering" then
-        enterHoverState(panel, panelBelow)
+        fallingState.enterHoverState(panel, panelBelow)
       else
         land(panel)
       end
@@ -481,6 +480,16 @@ fallingState.update = function(panel, panels)
   if not panel.stateChanged and panel.fell_from_garbage then
     panel.fell_from_garbage = panel.fell_from_garbage - 1
   end
+end
+
+fallingState.enterHoverState = function(panel, panelBelow)
+  clear_flags(panel, false)
+  panel.state = "hovering"
+  panel.stateChanged = true
+  panel.chaining = panel.chaining or panelBelow.propagatesChaining
+  panel.propagatesChaining = panelBelow.propagatesChaining
+-- falling panels inherit the hover time from the panel below
+  panel.timer = panelBelow.timer
 end
 
 landingState.update = function(panel, panels)
