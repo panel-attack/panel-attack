@@ -106,13 +106,13 @@ function AttackEngine.run(self)
             self.telegraph:chainingEnded(self.CLOCK)
           else
             local garbage = self.attackPatterns[i].garbage
-            if garbage[4] then
-              local chainCounter = garbage[2] + 1
+            if garbage.isChain then
+              local chainCounter = garbage.height + 1
               maxChain = math.max(chainCounter, maxChain)
             else
-              maxCombo = garbage[1] + 1 -- TODO: Handle combos SFX greather than 7
+              maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
             end
-            hasMetal = garbage[3] or hasMetal
+            hasMetal = garbage.isMetal or hasMetal
             self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.CLOCK)
           end
         end
