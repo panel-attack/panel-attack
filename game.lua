@@ -8,6 +8,8 @@ local sound = require("sound")
 local analytics = require("analytics")
 local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
+local save = require("save")
+local fileUtils = require("fileUtils")
 local scenes = nil
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -64,7 +66,7 @@ local Game = class(
     self.mainloop = nil
 
     -- coroutines
-    self.setup = coroutine.create(function() self:setupCo() end)
+    self.setupCoroutineObject = coroutine.create(function() self:setupCoroutine() end)
   end
 )
 
@@ -73,18 +75,18 @@ Game.newCanvasSnappedScale = newCanvasSnappedScale
 function Game:load(game_updater)
   -- move to constructor
   self.game_updater = game_updater
-  local user_input_conf = read_key_file()
+  local user_input_conf = save.read_key_file()
   if user_input_conf then
     self.input.inputConfigurations = user_input_conf
   end
 end
 
-function Game:setupCo()
+function Game:setupCoroutine()
   -- loading various assets into the game
   self:drawLoadingString("Loading localization...")
   coroutine.yield()
   Localization.init(localization)
-  copy_file("readme_puzzles.txt", "puzzles/README.txt")
+  fileUtils.copyFile("readme_puzzles.txt", "puzzles/README.txt")
   
   self:drawLoadingString(loc("ld_theme"))
   coroutine.yield()
@@ -106,10 +108,25 @@ function Game:setupCo()
   self:drawLoadingString(loc("ld_analytics"))
   coroutine.yield()
   analytics.init()
+
+  apply_config_volume()
+
+  self:createDirectoriesIfNeeded()
+  
+  self:checkForUpdates()
+
+  self:createScenes()
+
+  -- Run all unit tests now that we have everything loaded
+  if TESTS_ENABLED then
+    self:runUnitTests()
+  end
 end
 
-function Game:postSetup()
-  apply_config_volume()
+function Game:createDirectoriesIfNeeded()
+  self:drawLoadingString("Creating Folders")
+  coroutine.yield()
+
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
   love.filesystem.createDirectory("panels")
@@ -117,49 +134,72 @@ function Game:postSetup()
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
   
-  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
-    recursive_copy("default_data/training", "training")
+  if #fileUtils.getFilteredDirectoryItems("training") == 0 then
+    fileUtils.recursiveCopy("default_data/training", "training")
   end
   read_attack_files("training")
   
   if love.system.getOS() ~= "OS X" then
-    recursiveRemoveFiles(".", ".DS_Store")
+    fileUtils.recursiveRemoveFiles(".", ".DS_Store")
   end
+end
 
+function Game:checkForUpdates()
   --check for game updates
   if self.game_updater and self.game_updater.check_update_ingame then
     wait_game_update = self.game_updater:async_download_latest_version()
   end
-  
+end
+
+function Game:createScenes()
+  self:drawLoadingString("Creating Scenes")
+  coroutine.yield()
+
   -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
     require("scenes.titleScreen"),
     require("scenes.mainMenu"),
-    require("scenes.inputConfigMenu")
+    require("scenes.endlessMenu"),
+    require("scenes.endlessGame"),
+    require("scenes.puzzleMenu"),
+    require("scenes.puzzleGame"),
+    require("scenes.timeAttackMenu"),
+    require("scenes.timeAttackGame"),
+    require("scenes.inputConfigMenu"),
+    require("scenes.optionsMenu"),
+    require("scenes.soundTest"),
+    require("scenes.setNameMenu")
   }
   for i, scene in ipairs(scenes) do
     scene:init()
   end
-
-  if themes[config.theme].images.bg_title then
-    sceneManager:switchToScene("titleScreen")
-  else
-    sceneManager:switchToScene("mainMenu")
-  end
-  
 end
 
-local function unitTests()
-  print("Running Unit Tests...")
+function Game:runUnitTests()
+  self:drawLoadingString("Running Unit Tests")
+  coroutine.yield()
+
+  logger.info("Running Unit Tests...")
+  -- Small tests (unit tests)
   require("PuzzleTests")
   require("ServerQueueTests")
   require("StackTests")
+  require("tests.JsonEncodingTests")
+  require("tests.NetworkProtocolTests")
+  require("tests.ThemeTests")
+  require("tests.TouchDataEncodingTests")
+  require("tests.utf8AdditionsTests")
   require("tableUtilsTest")
   require("utilTests")
+  -- Medium level tests (integration tests)
+  require("tests.ReplayTests")
+  require("tests.StackReplayTests")
+  require("tests.StackRollbackReplayTests")
+  require("tests.StackTouchReplayTests")
+  -- Performance Tests
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
   end
-  print("Done!")
 end
 
 -- Called every few fractions of a second to update the game
@@ -206,17 +246,13 @@ function Game:update(dt)
   end
   
   local status, err = nil, nil
-  if coroutine.status(self.setup) ~= "dead" then
-    status, err = coroutine.resume(self.setup)
+  if coroutine.status(self.setupCoroutineObject) ~= "dead" then
+    status, err = coroutine.resume(self.setupCoroutineObject)
     -- loading bar setup finished
-    if status and coroutine.status(self.setup) == "dead" then
-      self:postSetup()
-      -- Run all unit tests now that we have everything loaded
-      if TESTS_ENABLED then
-        unitTests()
-      end
+    if status and coroutine.status(self.setupCoroutineObject) == "dead" then
+      self:switchToStartScene()
     elseif not status then
-      self.crashTrace = debug.traceback(self.setup)
+      self.crashTrace = debug.traceback(self.setupCoroutineObject)
     end
   elseif sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
@@ -248,6 +284,14 @@ function Game:update(dt)
   manualGC(0.0001, nil, nil)
 end
 
+function Game:switchToStartScene()
+  if themes[config.theme].images.bg_title then
+    sceneManager:switchToScene("titleScreen")
+  else
+    sceneManager:switchToScene("mainMenu")
+  end
+end
+
 function Game:draw()
   if sceneManager.activeScene then
     sceneManager.activeScene:drawForeground()
@@ -267,10 +311,12 @@ function Game:draw()
     gprintf("STONER", 1, 1 + (11 * 4))
   end
 
+  self.isDrawing = true
   for i = self.gfx_q.first, self.gfx_q.last do
     self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
   end
   self.gfx_q:clear()
+  self.isDrawing = false
   
   -- Draw the FPS if enabled
   if self.config.show_fps then
@@ -319,6 +365,10 @@ function Game:clearMatch()
     self.match:deinit()
     self.match = nil
   end
+  self:reset()
+end
+
+function Game:reset()
   self.gameIsPaused = false
   self.renderDuringPause = false
   self.preventSounds = false
@@ -335,15 +385,20 @@ function Game.errorData(errorString, traceBack)
   local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
   local systemInfo = system_info or "Unknown"
 
-  local errorData = { 
+  local errorData = {
       stack = traceBack,
       name = username,
       error = errorString,
       engine_version = VERSION,
       release_version = buildVersion,
       operating_system = systemInfo,
-      love_version = loveVersion
+      love_version = loveVersion,
+      theme = config.theme
     }
+
+  if GAME.match then
+    errorData.matchInfo = GAME.match:getInfo()
+  end
 
   return errorData
 end
@@ -356,12 +411,30 @@ function Game.detailedErrorLogString(errorData)
   local detailedErrorLogString = 
     "Stack Trace: " .. errorData.stack .. newLine ..
     "Username: " .. errorData.name .. newLine ..
+    "Theme: " .. errorData.theme .. newLine ..
     "Error Message: " .. errorData.error .. newLine ..
     "Engine Version: " .. errorData.engine_version .. newLine ..
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
-    "Love Version: " .. errorData.love_version .. newLine .. 
+    "Love Version: " .. errorData.love_version .. newLine ..
     "UTC Time: " .. formattedTime
+
+    if errorData.matchInfo then
+      detailedErrorLogString = detailedErrorLogString .. newLine ..
+      errorData.matchInfo.mode .. " Match Info: " .. newLine ..
+      "  Stage: " .. errorData.matchInfo.stage .. newLine ..
+      "  Stacks: "
+      for i = 1, #errorData.matchInfo.stacks do
+        local stack = errorData.matchInfo.stacks[i]
+        detailedErrorLogString = detailedErrorLogString .. newLine ..
+        "    P" .. i .. ": " .. newLine ..
+        "      Player Number: " .. stack.playerNumber .. newLine ..
+        "      Character: " .. stack.character  .. newLine ..
+        "      Panels: " .. stack.panels  .. newLine ..
+        "      Rollback Count: " .. stack.rollbackCount .. newLine ..
+        "      Rollback Frames Saved: " .. stack.rollbackCopyCount
+      end
+    end
 
   return detailedErrorLogString
 end

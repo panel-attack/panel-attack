@@ -1,6 +1,7 @@
 json = require("dkjson")
 local util = require("util")
 local consts = require("consts")
+require("Theme") -- needed for directory location
 
 -- Default configuration values
 config = {
@@ -69,6 +70,7 @@ config = {
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
+    -- inputMethod                 = "touch"
   }
   
   -- writes to the "conf.json" file
@@ -104,7 +106,7 @@ config = {
   
         -- do stuff using read_data.version for retrocompatibility here
   
-        if type(read_data.theme) == "string" and love.filesystem.getInfo("themes/" .. read_data.theme .. "/config.json") then
+        if type(read_data.theme) == "string" and love.filesystem.getInfo(Theme.themeDirectoryPath .. read_data.theme .. "/config.json") then
           configTable.theme = read_data.theme
         end
   

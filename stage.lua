@@ -1,6 +1,7 @@
 require("stage_loader")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local fileUtils = require("fileUtils")
 require("UpdatingImage")
 
 -- Stuff defined in this file:
@@ -100,7 +101,7 @@ end
 -- adds stages from the path given
 local function add_stages_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local current_path = path .. "/" .. v
     if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
@@ -171,13 +172,13 @@ function stages_init()
   fill_stages_ids()
 
   if #stages_ids == 0 then
-    recursive_copy("default_data/stages", "stages")
+    fileUtils.recursiveCopy("default_data/stages", "stages")
     add_stages_from_dir_rec("stages")
     fill_stages_ids()
   end
 
-  if love.filesystem.getInfo("themes/" .. config.theme .. "/stages.txt") then
-    for line in love.filesystem.lines("themes/" .. config.theme .. "/stages.txt") do
+  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") then
+    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") do
       line = trim(line) -- remove whitespace
       -- found at least a valid stage in a stages.txt file
       if stages[line] then
@@ -277,7 +278,7 @@ function Stage.sound_init(self, full, yields)
         self.musics[music]:setLooping(false)
       end
     elseif not self.musics[music] and defaulted_musics[music] then
-      self.musics[music] = default_stage.musics[music] or zero_sound
+      self.musics[music] = default_stage.musics[music] or themes[config.theme].zero_sound
     end
 
     if yields then

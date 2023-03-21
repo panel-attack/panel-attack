@@ -6,8 +6,8 @@ local Button = require("ui.Button")
 local BUTTON_PADDING = 5
 
 local function setLabels(self, labels, values, selectedIndex)
-  if self.labels then
-    self.label[self.selectedIndex]:detach()
+  if self.labels and #self.labels > 0 then
+    self.labels[self.selectedIndex]:detach()
   end
   
   self.selectedIndex = selectedIndex
@@ -16,9 +16,11 @@ local function setLabels(self, labels, values, selectedIndex)
   for _, label in ipairs(labels) do
     label.x = self.leftButton.width + BUTTON_PADDING
   end
-  self:addChild(self.labels[self.selectedIndex])
-  self.labels[self.selectedIndex]:setVisibility(self.isVisible)
-  self.value = self.values[self.selectedIndex]
+  if #self.labels > 0 then
+    self:addChild(self.labels[self.selectedIndex])
+    self.labels[self.selectedIndex]:setVisibility(self.isVisible)
+    self.value = self.values[self.selectedIndex]
+  end
 end
 
 local function setState(self, i)
@@ -52,8 +54,10 @@ local Stepper = class(
     
     setLabels(self, options.labels, options.values, self.selectedIndex)
     
-    self.labels[self.selectedIndex]:setVisibility(self.isVisible)
-    self.rightButton.x = self.labels[self.selectedIndex].width + 25 + 10
+    if #self.labels > 0 then
+      self.labels[self.selectedIndex]:setVisibility(self.isVisible)
+      self.rightButton.x = self.labels[self.selectedIndex].width + 25 + 10
+    end
 
     for i, label in ipairs(self.labels) do
       label:setVisibility(false)

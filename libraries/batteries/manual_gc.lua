@@ -36,10 +36,14 @@ freely, subject to the following restrictions:
   time_budget - 1ms (1e-3)
     adjust down or up as needed. games that generate more garbage
     will need to spend longer on gc each frame.
+      during PA matches, CustomRun will pass in the remaining idle time each frame
+      clients will use the full remaining time until the step limit
   memory_ceiling - 64mb
     a good place to start, though some games will need much more.
     remember, this is lua memory, not the total memory consumption
     of your game.
+      for PA upped to 256 MB, 2 stacks with full rollback on long game durations takes up 100MB 
+      on slower machines this may pile up and break through even 128MB too easily
   disable_otherwise - false
     disabling the gc completely is dangerous - any big allocation
     event (eg - level gen) could push you to an out of memory
@@ -49,8 +53,14 @@ freely, subject to the following restrictions:
 
 return function(time_budget, memory_ceiling, disable_otherwise)
 	time_budget = time_budget or 1e-3
-	memory_ceiling = memory_ceiling or 64
-    local max_steps = 10000
+  -- 64 MB memory is too low for long replays, they are guaranteed to hit the limit
+  -- On weaker machines, it may pile up so quickly that even 128 may be breached (accumulating several MBs per second)
+  -- so putting 256 MB for now
+	memory_ceiling = memory_ceiling or 256
+  -- original step limit was 10000
+  -- after some testing it turns out that machines in need of more garbage collection won't reach that many steps
+  -- while strong machines will just consume a lot more CPU; 5000 should be enough to guarantee performance
+  local max_steps = 5000
 	local steps = 0
 	local start_time = love.timer.getTime()
 	while

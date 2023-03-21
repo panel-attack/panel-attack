@@ -50,9 +50,9 @@ local function setButtons(self, buttons, values, selectedIndex)
   self.value = self.values[self.selectedIndex]
 end
 
-local function setActiveButton(self, selected_index)
-  local new_index = util.bound(1, selected_index, #self.buttons)
-  self.buttons[new_index].onClick()
+local function setActiveButton(self, selectedIndex)
+  local newIndex = util.bound(1, selectedIndex, #self.buttons)
+  self.buttons[newIndex].onClick()
 end
 
 local ButtonGroup = class(

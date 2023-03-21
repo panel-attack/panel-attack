@@ -2,6 +2,7 @@ require("queue")
 require("globals")
 require("character")
 local logger = require("logger")
+local fileUtils = require("fileUtils")
 
 local loading_queue = Queue()
 
@@ -73,7 +74,7 @@ end
 -- Adds all the characters recursively in a folder to the global characters variable
 local function add_characters_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then
@@ -139,17 +140,21 @@ end
 
 -- Initializes the characters globals with data
 function characters_init()
+  characters = {} -- holds all characters, most of them will not be fully loaded
+  characters_ids = {} -- holds all characters ids
+  characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
+  characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
   add_characters_from_dir_rec("characters")
   fill_characters_ids()
 
   if #characters_ids == 0 then
-    recursive_copy("default_data/characters", "characters")
+    fileUtils.recursiveCopy("default_data/characters", "characters")
     add_characters_from_dir_rec("characters")
     fill_characters_ids()
   end
 
-  if love.filesystem.getInfo("themes/" .. config.theme .. "/characters.txt") then
-    for line in love.filesystem.lines("themes/" .. config.theme .. "/characters.txt") do
+  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") then
+    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") do
       line = trim(line) -- remove whitespace
       if characters[line] then
         -- found at least a valid character in a characters.txt file
