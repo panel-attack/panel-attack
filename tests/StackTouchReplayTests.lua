@@ -44,6 +44,10 @@ local testReplayFolder = "tests/replays/"
 -- Expected:
 -- Panel matches, becomes deselected
 
+local function teardown()
+  GAME:clearMatch()
+end
+
 local function simpleTouchTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v047-2023-02-13-02-07-36-Spd3-Dif1-endless.json")
   assert(match ~= nil)
@@ -55,6 +59,7 @@ local function simpleTouchTest()
   assert(table.length(match.P1.chains) == 1)
   assert(table.length(match.P1.combos) == 0)
   assert(match.P1.analytic.data.destroyed_panels == 31)
+  teardown()
 end
 
 simpleTouchTest()

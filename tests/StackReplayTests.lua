@@ -3,6 +3,10 @@ local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
+local function teardown()
+  GAME:clearMatch()
+end
+
 -- Swap finishing the frame chaining is applied should not apply to swapped panel
 local function garbageCantDropWhileSwapping()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v047-2023-03-20-03-39-20-PDR_Lava-L10-vs-JamBox-L8-Casual-INCOMPLETE.json")
@@ -12,6 +16,7 @@ local function garbageCantDropWhileSwapping()
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
   assert(match.mode == "vs")
   assert(match.P2.panels[4][5].chaining == nil)
+  teardown()
 end
 
 garbageCantDropWhileSwapping()
@@ -25,6 +30,7 @@ local function basicEndlessTest()
   assert(match.P1.max_health == 1)
   assert(match.P1.score == 37)
   assert(match.P1.difficulty == 3)
+  teardown()
 end
 
 basicEndlessTest()
@@ -42,6 +48,7 @@ local function basicTimeAttackTest()
   assert(match.P1.difficulty == 1)
   assert(table.length(match.P1.chains) == 8)
   assert(table.length(match.P1.combos) == 0)
+  teardown()
 end
 
 basicTimeAttackTest()
@@ -62,6 +69,7 @@ local function basicVsTest()
   assert(table.length(match.P2.chains) == 4)
   assert(table.length(match.P2.combos) == 4)
   assert(match.P1:gameResult() == -1)
+  teardown()
 end
 
 basicVsTest()
@@ -82,6 +90,7 @@ local function noInputsInVsIsDrawTest()
   assert(table.length(match.P2.chains) == 0)
   assert(table.length(match.P2.combos) == 0)
   assert(match.P1:gameResult() == 0)
+  teardown()
 end
 
 noInputsInVsIsDrawTest()
@@ -118,6 +127,7 @@ local function catchAndSyncTest()
   assert(table.length(match.P2.chains) == 2)
   assert(table.length(match.P2.combos) == 2)
   assert(match.P1:gameResult() == 1)
+  teardown()
 end
 
 catchAndSyncTest()
@@ -163,6 +173,7 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   StackReplayTestingUtils:simulateMatchUntil(match, 60)
   assert(match.P1.cur_row == 6)
   assert(match.P1.cur_col == 3)
+  teardown()
 end
 
 movingBeforeInPositionDisallowedPriorToTouch()
