@@ -1,26 +1,7 @@
-
-local logger = require("logger")
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-
-local function testReplayPerformanceWithPath(path)
-  local runCount = 3
-  local totalTime = 0
-  for i = 1, runCount, 1 do
-    collectgarbage("collect")
-    local _, time = StackReplayTestingUtils:simulateReplayWithPath(path)
-
-    totalTime = totalTime + time
-    logger.warn("Run " .. i .. " took " .. time)
-  end
-
-  logger.warn("Total Time: " .. round(totalTime / runCount, 5))
-end
-
-testReplayPerformanceWithPath("tests/replays/v046-2022-06-04-19-06-21-Hekato-L8-vs-CoreyBLD-L8-Casual-draw.txt")
---testReplayPerformanceWithPath("tests/replays/10min-v046-2022-07-25-00-23-46-Geminorum-L10-vs-Zyza-L10-Casual-P1wins.txt")
-
 -- performance comparison between string usage and table concat for singleplayer
 -- simulated for one minute without restorefromrollbackcopy and debugmode off
+
+local utf8 = require("utf8")
 
 local function testPerformanceString(seconds)
   local confirmedInputsP1 = ""
@@ -31,8 +12,8 @@ local function testPerformanceString(seconds)
   for i = 1, loopCount do
     local time = love.timer.getTime()
     -- check in send_controls
-    local len1 = string.len(confirmedInputsP1)
-    local len2 = string.len(confirmedInputsP1)
+    local len1 = utf8.len(confirmedInputsP1)
+    local len2 = utf8.len(confirmedInputsP1)
     -- receiveConfirmedInput, called in send_controls
     confirmedInputsP1 = confirmedInputsP1 .. "A"
     local loopTime = love.timer.getTime() - time
@@ -83,7 +64,7 @@ local function testPerformanceTableStringLen(seconds)
     local len2 = #confirmedInputsP1
     -- receiveConfirmedInput, called in send_controls
     local input = "A"
-    if string.len(input) == 1 then
+    if utf8.len(input) == 1 then
       confirmedInputsP1[#confirmedInputsP1+1] = input
     else
       local inputs = string.toCharTable(input)
