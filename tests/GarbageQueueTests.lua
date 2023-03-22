@@ -1,11 +1,9 @@
 local GarbageQueueTestingUtils = require("tests.GarbageQueueTestingUtils")
 
-local attackFile = "/tests/attackFiles/dumpAttackPatternGarache GQ.json"
-
 -- 150 frames
 local minTransferTime = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + GARBAGE_DELAY_LAND_TIME
 
-local function testGarbageQueue1()
+local function testComboQueueing1()
   local match = GarbageQueueTestingUtils.createMatch()
   local P1 = match.P1
   GarbageQueueTestingUtils.runToFrame(match, 350)
@@ -24,4 +22,4 @@ local function testGarbageQueue1()
   assert(P1.telegraph.garbage_queue:len() == 1, "5 wide should still be inside")
 end
 
-testGarbageQueue1()
+testComboQueueing1()
