@@ -194,7 +194,7 @@ function Telegraph:popAllReadyGarbage(time)
   end
 
   while self.garbageQueue.chainGarbage:peek() do
-
+    -- typically garbage chaining will keep resetting this stopper, preventing anything from being sent
     if not self.stoppers.chain[self.garbageQueue.chainGarbage.first] and self.garbageQueue.chainGarbage:peek().finalized then
       logger.debug("committing chain at " .. time)
       poppedGarbage[#poppedGarbage + 1] = self.garbageQueue:pop()

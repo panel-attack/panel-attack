@@ -1,31 +1,21 @@
 local logger = require("logger")
 
+-- Holds garbage in a queue and follows a specific order for which types should be popped out first.
 GarbageQueue = class(function(s)
   s.chainGarbage = Queue()
   s.comboGarbage = {Queue(), Queue(), Queue(), Queue(), Queue(), Queue()} -- index here represents width, and length represents how many of that width queued
   s.metal = Queue()
-  -- a ghost chain is a chain that's not a chain? Possibly obsolete
+
+  -- a ghost chain keeps the smaller version of a chain thats growing showing in the telegraph while the new chain's attack animation is still animating to the telegraph.
   s.ghostChain = nil
 end)
 
 function GarbageQueue.makeCopy(self)
   local other = GarbageQueue()
-  local activeChain = self.chainGarbage:peek()
-  if activeChain then
-    -- width, height, metal, from_chain, finalized
-    other.chainGarbage:push({
-      width = activeChain.width,
-      height = activeChain.height,
-      isMetal = activeChain.isMetal,
-      isChain = activeChain.isChain,
-      timeAttackInteracts = activeChain.timeAttackInteracts,
-      finalized = activeChain.finalized
-    })
-    for i = self.chainGarbage.first + 1, self.chainGarbage.last do
-      other.chainGarbage:push(self.chainGarbage[i])
-    end
-  end
+  -- chain garbage is mutable as it can grow, deepcopy it!
+  other.chainGarbage = deepcpy(self.chainGarbage)
 
+  -- combo and metal garbage are immutable, we can pass by reference and save resources for table generation and collection
   for i = 1, 6 do
     for j = self.comboGarbage[i].first, self.comboGarbage[i].last do
       other.comboGarbage[i]:push(self.comboGarbage[i][j])

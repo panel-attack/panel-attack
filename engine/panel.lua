@@ -66,6 +66,7 @@ local function clear(panel, clearChaining, clearColor)
   panel.initial_time = nil
   -- variables for handling pop FX
   panel.pop_time = nil
+  panel.pop_index = nil
 
   -- garbage fields
   -- garbage is anchored at the bottom left corner with 0 for x and y offset

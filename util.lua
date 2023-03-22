@@ -227,8 +227,8 @@ local function codePointIsDigit(codePoint)
 end
 
 function compress_input_string(inputs)
-  assert(inputs ~= nil)
-  assert(type(inputs) == "string")
+  assert(inputs ~= nil, "string must be provided for compression")
+  assert(type(inputs) == "string", "input to be compressed must be a string")
   if string.len(inputs) == 0 then
     return inputs
   end
