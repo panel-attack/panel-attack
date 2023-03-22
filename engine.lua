@@ -1229,15 +1229,15 @@ function Stack.shouldDropGarbage(self, garbage)
   if not self.panels_in_top_row and not self:has_falling_garbage() then
     if not self:hasActivePanels() then
       return true
-    elseif from_chain then
+    elseif garbage.isChain then
       -- drop chain garbage higher than 1 row immediately
-      return next_garbage_block_height > 1
+      return garbage.height > 1
     else
       -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
       -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
       -- and because of that hack, we need to do another hack here and allow n-height combo garbage
       -- but only if trainingmodesettings have been set on the GAME global
-      return next_garbage_block_height > 1 and GAME.battleRoom.trainingModeSettings ~= nil
+      return garbage.height > 1 and GAME.battleRoom.trainingModeSettings ~= nil
     end
   end
 end
