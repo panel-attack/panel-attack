@@ -31,5 +31,5 @@ testGetMessage("H" .. NetworkProtocol.markedMessageForTypeAndBody("U", "Ā") .. 
 -- Test we can send a J and then H message
 testGetMessage(NetworkProtocol.markedMessageForTypeAndBody("J", "{body=1}") .. "H", {"J", "H"}, {"{body=1}", ""}, true)
 
--- Test we can send a J and then H message with part of the next message after
-testGetMessage(NetworkProtocol.markedMessageForTypeAndBody("J", "{body=1}") .. string.char(128), {"J"}, {"{body=1}"}, true)
+-- Test we can send a J and then part of the next message after
+testGetMessage(NetworkProtocol.markedMessageForTypeAndBody("J", "{body=1}") .. "J" .. string.char(128), {"J"}, {"{body=1}"}, true)

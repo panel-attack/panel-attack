@@ -352,6 +352,8 @@ encode2 = function (value, indent, level, buffer, buflen, tables, globalorder, s
       buffer[buflen] = "}"
     end
     tables[value] = nil
+  elseif valtype == 'function' then
+    -- ignore this
   else
     return exception ('unsupported type', value, state, buffer, buflen,
       "type '" .. valtype .. "' is not supported by JSON.")

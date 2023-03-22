@@ -323,7 +323,7 @@ function Stack.render(self)
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
-        if panel.garbage then
+        if panel.isGarbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
             if not self.garbage_target then 
@@ -379,7 +379,7 @@ function Stack.render(self)
           end
           if panel.state == "matched" then
             local flash_time = panel.initial_time - panel.timer
-            if flash_time >= self.FRAMECOUNT_FLASH then
+            if flash_time >= self.FRAMECOUNTS.FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
                   draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
@@ -407,8 +407,8 @@ function Stack.render(self)
           end
         else
           if panel.state == "matched" then
-            local flash_time = self.FRAMECOUNT_MATCH - panel.timer
-            if flash_time >= self.FRAMECOUNT_FLASH then
+            local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
+            if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
             elseif flash_time % 2 == 1 then
               draw_frame = 1
@@ -420,7 +420,7 @@ function Stack.render(self)
           elseif panel.state == "landing" then
             draw_frame = bounce_table[panel.timer + 1]
           elseif panel.state == "swapping" then
-            if panel.is_swapping_from_left then
+            if panel.isSwappingFromLeft then
               draw_x = draw_x - panel.timer * 4
             else
               draw_x = draw_x + panel.timer * 4
@@ -492,7 +492,7 @@ function Stack.render(self)
 
         -- Require hovering over a stack to show details
         if mouseX >= self.pos_x * GFX_SCALE and mouseX <= (self.pos_x + self.width * 16) * GFX_SCALE then
-          if panel.color ~= 0 and panel.state ~= "popped" then
+          if not (panel.color == 0 and panel.state == "normal") then
             gprint(panel.state, draw_x, draw_y)
             if panel.match_anyway ~= nil then
               gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
