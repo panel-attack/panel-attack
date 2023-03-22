@@ -866,7 +866,7 @@ function select_screen.start1pLocalMatch(self)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   if GAME.battleRoom.trainingModeSettings then
     GAME.match.attackEngine = AttackEngine.createFromSettings(GAME.battleRoom.trainingModeSettings)
-    Game.match.attackEngine:setTarget(P1)
+    GAME.match.attackEngine:setTarget(P1)
   end
   GAME.match.P1 = P1
   if not GAME.battleRoom.trainingModeSettings then
