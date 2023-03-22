@@ -17,7 +17,7 @@ function SimulatedOpponent:setAttackEngine(attackEngine)
   self.attackEngine = attackEngine
 end
 
-function SimulatedOpponent:stackWidth()
+function SimulatedOpponent:stackCanvasWidth()
   return 96
 end
 

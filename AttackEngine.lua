@@ -15,8 +15,8 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, target, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender, character)
-    self.target = target
+  function(self, garbageTargetStack, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender, character)
+    self.garbageTargetStack = garbageTargetStack
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
     self.disableQueueLimit = disableQueueLimit
@@ -52,15 +52,15 @@ function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, 
     end
   end
 
-  attackEngine:setTarget(P1)
+  attackEngine:setGarbageTargetStack(P1)
 
   return attackEngine
 end
 
-function AttackEngine:setTarget(target)
-  self.target = target
+function AttackEngine:setGarbageTargetStack(garbageTargetStack)
+  self.garbageTargetStack = garbageTargetStack
   if self.telegraph then
-    self.telegraph:updatePositionForTarget(target)
+    self.telegraph:updatePositionForGarbageTargetStack(garbageTargetStack)
   end
 end
 
@@ -83,7 +83,7 @@ function AttackEngine.addEndChainPattern(self, start, repeatDelay)
 end
 
 function AttackEngine.run(self)
-  assert(self.target, "No target set on attack engine")
+  assert(self.garbageTargetStack, "No target set on attack engine")
   
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
 
@@ -96,7 +96,7 @@ function AttackEngine.run(self)
   local maxCombo = 0
   local hasMetal = false
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  if self.disableQueueLimit or self.target.garbage_q:len() <= 72 then
+  if self.disableQueueLimit or self.garbageTargetStack.garbage_q:len() <= 72 then
     for i = 1, #self.attackPatterns do
       if self.CLOCK >= self.attackPatterns[i].startTime then
         local difference = self.CLOCK - self.attackPatterns[i].startTime
@@ -120,7 +120,7 @@ function AttackEngine.run(self)
     end
   end
 
-  self.telegraph:popAllAndSendToTarget(self.CLOCK, self.target)
+  self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTargetStack)
 
   local metalCount = 0
   if hasMetal then

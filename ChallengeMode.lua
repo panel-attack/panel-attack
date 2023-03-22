@@ -74,7 +74,7 @@ ChallengeMode =
   end
 )
 
-function ChallengeMode:firstAttackFilePath(difficulty, stageIndex)
+function ChallengeMode:attackFilePath(difficulty, stageIndex)
   for i = stageIndex, 1, -1 do
     local path = "default_data/training/challenge-" .. difficulty .. "-" .. i .. ".json"
     if love.filesystem.getInfo(path) then
@@ -86,7 +86,7 @@ function ChallengeMode:firstAttackFilePath(difficulty, stageIndex)
 end
 
 function ChallengeMode:attackFile(difficulty, stageIndex)
-  return read_attack_file(self:firstAttackFilePath(difficulty, stageIndex))
+  return read_attack_file(self:attackFilePath(difficulty, stageIndex))
 end
 
 function ChallengeMode:beginStage()

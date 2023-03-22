@@ -244,12 +244,12 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
 
     s.opponentStack = nil -- the other stack you are playing against
-    s.target = nil -- the target you are sending attacks to
+    s.garbageTargetStack = nil -- the target you are sending attacks to
 
     if s.match.mode == "vs" then
       s.telegraph = Telegraph(s) 
       -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
-      -- NOTE: this is the telegraph our stack is adding into and that show over the other player
+      -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
       -- .sender = us
     end
 
@@ -648,15 +648,15 @@ function Stack.saveForRollback(self)
 
   local opponentStack = self.opponentStack
   local prev_states = self.prev_states
-  local attackTarget = self.target
+  local attackTarget = self.garbageTargetStack
   self.opponentStack = nil
-  self.target = nil
+  self.garbageTargetStack = nil
   self.prev_states = nil
   self:remove_extra_rows()
   prev_states[self.CLOCK] = Stack.rollbackCopy(self)
   self.prev_states = prev_states
   self.opponentStack = opponentStack
-  self.target = attackTarget
+  self.garbageTargetStack = attackTarget
   local deleteFrame = self.CLOCK - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
 end
@@ -673,6 +673,8 @@ function Stack.deleteRollbackCopy(self, frame)
   end
 end
 
+-- Sets the opponent stack we are playing against.
+-- This object must be a full stack object, it is used to determine who is winning, CLOCK value and more.
 function Stack.setOpponent(self, newOpponent)
   self.opponentStack = newOpponent
 end
@@ -683,20 +685,26 @@ end
 -- pos_x
 -- pos_y
 -- mirror_x
--- :stackWidth
-function Stack.setTarget(self, newTarget)
-  self.target = newTarget
+-- stackCanvasWidth
+function Stack.setGarbageTargetStack(self, newGarbageTargetStack)
+  if newGarbageTargetStack ~= nil then
+    assert(newGarbageTargetStack.pos_x ~= nil)
+    assert(newGarbageTargetStack.pos_y ~= nil)
+    assert(newGarbageTargetStack.mirror_x ~= nil)
+    assert(newGarbageTargetStack.stackCanvasWidth ~= nil)
+  end
+  self.garbageTargetStack = newGarbageTargetStack
   if self.telegraph then
-    self.telegraph:updatePositionForTarget(newTarget)
+    self.telegraph:updatePositionForGarbageTargetStack(newGarbageTargetStack)
   end
 end
 
-function Stack:stackWidth()
-  local stackWidth = 0
+function Stack:stackCanvasWidth()
+  local stackCanvasWidth = 0
   if self.canvas then 
-    stackWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
+    stackCanvasWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
   end
-  return stackWidth
+  return stackCanvasWidth
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -1483,7 +1491,7 @@ function Stack.simulate(self)
     self:updateActivePanels()
 
     if self.telegraph then
-      self.telegraph:popAllAndSendToTarget(self.CLOCK, self.target)
+      self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTargetStack)
     end
     
     if self.later_garbage[self.CLOCK] then
@@ -2393,7 +2401,7 @@ function Stack.check_matches(self)
   end
 
   if (combo_size ~= 0) then
-    if self.target and self.telegraph then
+    if self.garbageTargetStack and self.telegraph then
       if metal_count >= 3 then
         -- Give a shock garbage for every shock block after 2
         for i = 3, metal_count do
@@ -2419,7 +2427,7 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.target and self.telegraph then
+      if self.garbageTargetStack and self.telegraph then
         local combo_pieces = combo_garbage[combo_size]
         for i=1,#combo_pieces do
           -- Give out combo garbage based on the lookup table, even if we already made shock garbage,

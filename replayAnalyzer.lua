@@ -1,6 +1,8 @@
 local logger = require("logger")
 local separator = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
+-- Helper debug functions for analyzing a set of replays and outputting attack files from them.
+
 local function finishedMatchForPath(path)
   logger.info("Processing " .. path)
   pcall(

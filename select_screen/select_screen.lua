@@ -822,9 +822,9 @@ function select_screen.startNetPlayMatch(self, msg)
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
   P1:setOpponent(P2)
-  P1:setTarget(P2)
+  P1:setGarbageTargetStack(P2)
   P2:setOpponent(P1)
-  P2:setTarget(P1)
+  P2:setGarbageTargetStack(P1)
   P2:moveForPlayerNumber(2)
   replay = Replay.createNewReplay(GAME.match)
 
@@ -863,9 +863,9 @@ function select_screen.start2pLocalMatch(self)
   --note: local P2 not currently allowed to use "touch" input method
   GAME.match.P2 = P2
   P1:setOpponent(P2)
-  P1:setTarget(P2)
+  P1:setGarbageTargetStack(P2)
   P2:setOpponent(P1)
-  P2:setTarget(P1)
+  P2:setGarbageTargetStack(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
@@ -916,9 +916,9 @@ function select_screen.start1pLocalMatch(self)
   
   GAME.match.P1 = P1
   if not GAME.match.simulatedOpponent then
-    P1:setTarget(P1)
+    P1:setGarbageTargetStack(P1)
   else
-    P1:setTarget(GAME.match.simulatedOpponent)
+    P1:setGarbageTargetStack(GAME.match.simulatedOpponent)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
