@@ -1,4 +1,4 @@
-local AttackEngineTestingUtils = {}
+local GarbageQueueTestingUtils = {}
 
 local function stackRunOverride(self)
   self:updatePanels()
@@ -34,8 +34,9 @@ local function stackShouldRunOverride(stack, runsSoFar)
   return runsSoFar < 1
 end
 
-function AttackEngineTestingUtils.createMatch(attackFile, stackHealth)
-  local match = Match("vs")
+function GarbageQueueTestingUtils.createMatch(attackFile, stackHealth)
+  local battleRoom = BattleRoom()
+  local match = Match("vs", battleRoom)
   match.attackEngine = AttackEngine.createFromSettings(readAttackFile(attackFile))
   local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=true, panels_dir=config.panels, level=1, character=config.character, inputMethod="controller"}
   P1.health = stackHealth or 100000
@@ -48,7 +49,7 @@ function AttackEngineTestingUtils.createMatch(attackFile, stackHealth)
   P1:starting_state()
 end
 
-function AttackEngineTestingUtils.runToFrame(match, frame)
+function GarbageQueueTestingUtils.runToFrame(match, frame)
   while match.P1.CLOCK < frame do
     match:run()
   end
@@ -56,7 +57,7 @@ function AttackEngineTestingUtils.runToFrame(match, frame)
 end
 
 -- clears panels until only "count" rows are left
-function AttackEngineTestingUtils.reduceRowsTo(stack, count)
+function GarbageQueueTestingUtils.reduceRowsTo(stack, count)
   for row = #stack.panels, count do
     for col = 1, stack.width do
       stack.panels[row][col]:clear(true)
@@ -64,12 +65,12 @@ function AttackEngineTestingUtils.reduceRowsTo(stack, count)
   end
 end
 
-function AttackEngineTestingUtils.simulateActivity(stack)
+function GarbageQueueTestingUtils.simulateActivity(stack)
   stack.hasActivePanels = function() return true end
 end
 
-function AttackEngineTestingUtils.simulateInactivity(stack)
+function GarbageQueueTestingUtils.simulateInactivity(stack)
   stack.hasActivePanels = function() return false end
 end
 
-return AttackEngineTestingUtils
+return GarbageQueueTestingUtils
