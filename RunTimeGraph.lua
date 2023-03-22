@@ -12,51 +12,62 @@ local RunTimeGraph = class(function(self)
   self.graphs = {}
 
   -- fps graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 60, valueCount)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 60, valueCount, 1)
   self.graphs[#self.graphs]:setFillColor({0, 1, 0, 1}, 1)
   y = y + height + padding
 
   -- memory graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 256, valueCount)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, 256, valueCount, 1)
   y = y + height + padding
 
   -- leftover time
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1, valueCount)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1, valueCount, 1)
   self.graphs[#self.graphs]:setFillColor({0, 1, 1, 1}, 1)
   y = y + height + padding
 
   -- run loop graph
-  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1, valueCount)
+  self.graphs[#self.graphs + 1] = BarGraph(x, y, width, height, updateSpeed, consts.FRAME_RATE * 1, valueCount, 6)
   self.graphs[#self.graphs]:setFillColor({0, 0, 1, 1}, 1) -- love.update
   self.graphs[#self.graphs]:setFillColor({1, 0.3, 0.3, 1}, 2) -- love.draw
   self.graphs[#self.graphs]:setFillColor({0.5, 0.5, 0.5, 1}, 3) -- self:draw + self:updateWithMetrics
   self.graphs[#self.graphs]:setFillColor({1, 1, 1, 1}, 4) -- love.present
   self.graphs[#self.graphs]:setFillColor({0.2, 0.2, 1, 1}, 5) -- manualGc
   self.graphs[#self.graphs]:setFillColor({0, 1, 0, 1}, 6) -- love.timer.sleep
-
   y = y + height + padding
+
+  -- memory allocation graph
+  self.memAllocGraph = BarGraph(x, y, width, height, updateSpeed, 128, valueCount, 4)
+  self.memAllocGraph:setFillColor({0, 0, 1, 1}, 1) -- love.update
+  self.memAllocGraph:setFillColor({1, 0.3, 0.3, 1}, 2) -- love.draw
+  self.memAllocGraph:setFillColor({0.5, 0.5, 0.5, 1}, 3) -- self:draw + self:updateWithMetrics
+  self.memAllocGraph:setFillColor({1, 1, 1, 1}, 4) -- love.present
 end)
 
 function RunTimeGraph:updateWithMetrics(runMetrics)
   local dt = runMetrics.dt
   local fps = math.round(1.0 / dt, 1)
   local averageFPS = love.timer.getFPS()
-  self.graphs[1]:updateGraph({fps}, "FPS: " .. averageFPS .. " (" .. fps .. ")", dt)
+  local memAllocated = math.floor(runMetrics.updateMemAlloc + runMetrics.drawMemAlloc + runMetrics.graphMemAlloc + runMetrics.presentMemAlloc)
+  self.graphs[1]:updateGraph("FPS: " .. averageFPS .. " (" .. fps .. ")", dt, fps)
 
   local memoryCount = collectgarbage("count")
   memoryCount = round(memoryCount / 1024, 1)
-  self.graphs[2]:updateGraph({memoryCount}, "Memory: " .. memoryCount .. " Mb", dt)
+  self.graphs[2]:updateGraph("Memory: " .. memoryCount .. " Mb", dt, memoryCount)
 
-  self.graphs[3]:updateGraph({leftover_time}, "leftover_time " .. leftover_time, dt)
+  self.graphs[3]:updateGraph("leftover_time " .. leftover_time, dt, leftover_time)
 
-  self.graphs[4]:updateGraph({runMetrics.updateDuration,
-                              runMetrics.drawDuration,
-                              runMetrics.graphDuration,
-                              runMetrics.presentDuration,
-                              runMetrics.gcDuration,
-                              runMetrics.sleepDuration
-                            },
-                             "Run Loop", dt)
+  self.graphs[4]:updateGraph("Run Loop", dt, runMetrics.updateDuration,
+                                             runMetrics.drawDuration,
+                                             runMetrics.graphDuration,
+                                             runMetrics.presentDuration,
+                                             runMetrics.gcDuration,
+                                             runMetrics.sleepDuration
+                            )
+
+  self.memAllocGraph:updateGraph("Memory Alloc " .. memAllocated .. "kB", dt, runMetrics.updateMemAlloc,
+                                                                             runMetrics.drawMemAlloc,
+                                                                             runMetrics.graphMemAlloc,
+                                                                             runMetrics.presentMemAlloc)
 end
 
 function RunTimeGraph:draw()
@@ -68,6 +79,9 @@ function RunTimeGraph:draw()
   love.graphics.scale(GAME.canvasXScale, GAME.canvasYScale)
 
   BarGraph.drawGraphs(self.graphs)
+  if not collectgarbage("isrunning") then
+    self.memAllocGraph:draw()
+  end
 
   love.graphics.pop()
 end

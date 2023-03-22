@@ -20,22 +20,27 @@ local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level
 local COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 
 -- Represents the full panel stack for one player
-Stack = class(function(s, arguments)
-  local which = arguments.which or 1
-  assert(arguments.match ~= nil)
-  local match = arguments.match
-  assert(arguments.is_local ~= nil)
-  local is_local = arguments.is_local
-  local panels_dir = arguments.panels_dir or config.panels
-  -- level or difficulty should be set
-  assert(arguments.level ~= nil or arguments.difficulty ~= nil)
-  local level = arguments.level
-  local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
-  local difficulty = arguments.difficulty
-  local speed = arguments.speed
-  local player_number = arguments.player_number or which
-  local wantsCanvas = arguments.wantsCanvas or 1
-  local character = arguments.character or config.character
+Stack =
+  class(
+  function(s, arguments)
+    local which = arguments.which or 1
+    assert(arguments.match ~= nil)
+    local match = arguments.match
+    assert(arguments.is_local ~= nil)
+    local is_local = arguments.is_local
+    local panels_dir = arguments.panels_dir or config.panels
+    -- level or difficulty should be set
+    assert(arguments.level ~= nil or arguments.difficulty ~= nil)
+    local level = arguments.level
+    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
+    local difficulty = arguments.difficulty
+    local speed = arguments.speed
+    local player_number = arguments.player_number or which
+    local wantsCanvas = arguments.wantsCanvas
+    if wantsCanvas == nil then
+      wantsCanvas = true
+    end
+    local character = arguments.character or config.character
 
   s.FRAMECOUNTS = {}
 
@@ -143,7 +148,7 @@ Stack = class(function(s, arguments)
   for i = 0, s.height do
     s.panels[i] = {}
     for j = 1, s.width do
-      s.panels[i][j] = s:createPanel(i, j)
+      s:createPanelAt(i, j)
     end
   end
 
@@ -377,7 +382,10 @@ function Stack.moveForPlayerNumber(stack, player_num)
     stack.pos_x = 248
     stack.score_x = 642
     stack.mirror_x = -1
-    stack.origin_x = stack.pos_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    stack.origin_x = stack.pos_x
+    if stack.canvas then
+      stack.origin_x = stack.origin_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
+    end
     stack.multiplication = 1
     stack.id = "_2P"
   end
@@ -422,7 +430,7 @@ end
 
 -- Backup important variables into the passed in variable to be restored in rollback. Note this doesn't do a full copy.
 -- param source the stack to copy from
--- param other the variable to copy to
+-- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
   if other == nil then
     if #source.clonePool == 0 then
@@ -461,15 +469,20 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- other isn't a stack object and therefore doesn't know the method
-        -- as all fields will get overwritten anyway further below, it doesn't matter that this is being overwritten
-        other.panels[i][j] = Stack.createPanel(other, i, j)
+        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
+        other.panels[i][j] = {}
       end
     end
     for j = 1, width do
       local opanel = other.panels[i][j]
       local spanel = source.panels[i][j]
-      opanel:clear(true, true)
+      -- Clear all variables not in source, then copy all source variables to the backup
+      -- Note the functions are kept from the same stack so they will still be valid
+      for k, _ in pairs(opanel) do
+        if spanel[k] == nil then
+          opanel[k] = nil
+        end
+      end
       for k, v in pairs(spanel) do
         opanel[k] = v
       end
@@ -694,7 +707,7 @@ function Stack.set_puzzle_state(self, puzzle)
   local puzzleString = puzzle.stack
 
   self.puzzle = puzzle
-  self.panels = self:puzzleStringToPanels(puzzleString)
+  self:setPanelsForPuzzleString(puzzleString)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
@@ -702,8 +715,8 @@ function Stack.set_puzzle_state(self, puzzle)
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
 end
 
-function Stack.puzzleStringToPanels(self, puzzleString)
-  local panels = {}
+function Stack.setPanelsForPuzzleString(self, puzzleString)
+  local panels = self.panels
   local garbageId = 0
   local garbageStartRow = nil
   local garbageStartColumn = nil
@@ -720,9 +733,8 @@ function Stack.puzzleStringToPanels(self, puzzleString)
     for column = 6, 1, -1 do
       local color = string.sub(rowString, column, column)
       if not garbageStartRow and tonumber(color) then
-        local panel = self:createPanel(row, column)
+        local panel = self:createPanelAt(row, column)
         panel.color = tonumber(color)
-        panels[row][column] = panel
       else
         -- start of a garbage block
         if color == "]" or color == "}" then
@@ -733,7 +745,7 @@ function Stack.puzzleStringToPanels(self, puzzleString)
             isMetal = true
           end
         end
-        local panel = self:createPanel(row, column)
+        local panel = self:createPanelAt(row, column)
         panel.garbageId = garbageId
         garbageId = garbageId + 1
         panel.isGarbage = true
@@ -744,7 +756,6 @@ function Stack.puzzleStringToPanels(self, puzzleString)
         -- instead save the column index in that field to calculate it later
         panel.x_offset = column
         panel.metal = isMetal
-        panels[row][column] = panel
         table.insert(connectedGarbagePanels, panel)
         -- garbage ends here
         if color == "[" or color == "{" then
@@ -773,13 +784,10 @@ function Stack.puzzleStringToPanels(self, puzzleString)
   -- add row 0 because it crashes if there is no row 0 for whatever reason
   panels[0] = {}
   for column = 6, 1, -1 do
-    local panel = self:createPanel(0, column)
+    local panel = self:createPanelAt(0, column)
     panel.color = 9
     panel.state = "dimmed"
-    panels[0][column] = panel
   end
-
-  return panels
 end
 
 function Stack.toPuzzleInfo(self)
@@ -1218,27 +1226,27 @@ function Stack.updatePanels(self)
   self.popSizeThisFrame = "small"
   for row = 1, #self.panels do
     for col = 1, self.width do
-      self.panels[row][col]:update(self.panels)
+      local panel = self.panels[row][col]
+      panel:update(self.panels)
     end
   end
 end
 
-function Stack.shouldDropGarbage(self)
-  -- this is legit ugly, these should rather be returned in a parameter table
-  -- or even better in a dedicated garbage class table
-  local garbage = self.garbage_q:peek()
-
+function Stack.shouldDropGarbage(self, garbage)
   -- new garbage can't drop if the stack is full
   -- new garbage always drops one by one
   if not self.panels_in_top_row and not self:has_falling_garbage() then
-    if garbage.height > 1 then
+    if not self:hasActivePanels() then
+      return true
+    elseif garbage.isChain then
       -- drop chain garbage higher than 1 row immediately
-      return garbage.isChain
-      -- there is a gap here for combo garbage higher than 1 but unless you implement a meme mode,
-      -- that doesn't exist anyway
+      return garbage.height > 1
     else
-      -- otherwise garbage should only be dropped if there are no active panels
-      return not self:hasActivePanels()
+      -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
+      -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
+      -- and because of that hack, we need to do another hack here and allow n-height combo garbage
+      -- but only if trainingmodesettings have been set on the GAME global
+      return garbage.height > 1 and GAME.battleRoom.trainingModeSettings ~= nil
     end
   end
 end
@@ -1500,8 +1508,9 @@ function Stack.simulate(self)
     end
 
     if self.garbage_q:len() > 0 then
-      if self:shouldDropGarbage() then
-        if self:tryDropGarbage(self.garbage_q:peek()) then
+      local garbage = self.garbage_q:peek()
+      if self:shouldDropGarbage(garbage) then
+        if self:tryDropGarbage(garbage) then
           self.garbage_q:pop()
         end
       end
@@ -2083,7 +2092,7 @@ end
 -- returns true if garbage was dropped, false otherwise
 function Stack.tryDropGarbage(self, garbage)
 
-  logger.debug("trying to drop garbage at frame " .. self.CLOCK)
+  logger.debug("trying to drop garbage at frame "..self.CLOCK)
 
   -- Do one last check for panels in the way.
   for i = self.height + 1, #self.panels do
@@ -2136,10 +2145,9 @@ function Stack.dropGarbage(self, garbage)
       -- every row that will receive garbage needs to be fully filled up
       -- so iterate from 1 to stack width instead of column to column + width - 1
       for col = 1, self.width do
-        self.panels[row][col] = self:createPanel(row, col)
+        local panel = self:createPanelAt(row, col)
 
         if isPartOfGarbage(col) then
-          local panel = self.panels[row][col]
           panel.garbageId = self.garbageCreatedCount
           panel.isGarbage = true
           panel.color = 9
@@ -2177,7 +2185,7 @@ function Stack.new_row(self)
   panels[stackHeight] = {}
 
   for col = 1, self.width do
-    panels[stackHeight][col] = self:createPanel(stackHeight, col)
+    self:createPanelAt(stackHeight, col)
   end
 
   -- move panels up
@@ -2290,7 +2298,8 @@ function Stack:getAttackPatternData()
   return data
 end
 
-function Stack.createPanel(self, row, column)
+-- creates a new panel at the specified row+column and adds it to the Stack's panels table
+function Stack.createPanelAt(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
   local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
   panel.onPop = function(panel)
