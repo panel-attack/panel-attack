@@ -1,5 +1,5 @@
 local logger = require("logger")
-require("health")
+require("Health")
 
 -- Challenge Stage is a particular stage in challenge mode.
 ChallengeStage =
