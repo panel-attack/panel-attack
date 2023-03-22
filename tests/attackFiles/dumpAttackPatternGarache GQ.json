@@ -1,0 +1,58 @@
+{
+    "attackPatterns": [
+        {
+            "metal": false,
+            "startTime": 356,
+            "width": 3,
+            "height": 1,
+            "chain": false
+        },
+        {
+            "chain": [
+                437,
+                504
+            ],
+            "chainEndTime": 563
+        },
+        {
+            "metal": false,
+            "startTime": 509,
+            "width": 3,
+            "height": 1,
+            "chain": false
+        },
+        {
+            "chain": [
+                670,
+                747,
+                814
+            ],
+            "chainEndTime": 881
+        },
+        {
+            "metal": false,
+            "startTime": 670,
+            "width": 3,
+            "height": 1,
+            "chain": false
+        },
+        {
+            "metal": false,
+            "startTime": 859,
+            "width": 4,
+            "height": 1,
+            "chain": false
+        },
+        {
+            "chain": [
+                1066,
+                1214
+            ],
+            "chainEndTime": 1284
+        }
+    ],
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "name": "Player 1",
+    "mergeComboMetalQueue": false
+}
