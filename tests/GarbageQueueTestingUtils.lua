@@ -1,10 +1,17 @@
 local GarbageQueueTestingUtils = {}
 
+local function readAttackFile(path)
+  if love.filesystem.getInfo(path, "file") then
+    local fileContent = love.filesystem.read(path)
+    return json.decode(fileContent)
+  end
+end
+
 local function stackRunOverride(self)
   self:updatePanels()
 
   if self.telegraph then
-    local to_send = self.telegraph:popAllReadyGarbage(self.CLOCK)
+    local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
     if to_send and to_send[1] then
       -- Right now the training attacks are put on the players telegraph, 
       -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.
@@ -14,14 +21,13 @@ local function stackRunOverride(self)
   end
 
   if self.later_garbage[self.CLOCK] then
-    self.garbage_q:pushTable(self.later_garbage[self.CLOCK])
+    self.garbage_q:push(self.later_garbage[self.CLOCK])
     self.later_garbage[self.CLOCK] = nil
   end
 
   if self.garbage_q:len() > 0 then
-    local garbage = self.garbage_q:peek()
-    if self:shouldDropGarbage(garbage) then
-      if self:tryDropGarbage(garbage) then
+    if self:shouldDropGarbage() then
+      if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
         self.garbage_q:pop()
       end
     end
@@ -31,22 +37,37 @@ local function stackRunOverride(self)
 end
 
 local function stackShouldRunOverride(stack, runsSoFar)
+  -- always run frame at a time for precision
   return runsSoFar < 1
 end
 
-function GarbageQueueTestingUtils.createMatch(attackFile, stackHealth)
+function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
   local battleRoom = BattleRoom()
   local match = Match("vs", battleRoom)
-  match.attackEngine = AttackEngine.createFromSettings(readAttackFile(attackFile))
-  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=true, panels_dir=config.panels, level=1, character=config.character, inputMethod="controller"}
+  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, level=1, character=config.character, inputMethod="controller"}
   P1.health = stackHealth or 100000
   P1.run = stackRunOverride
   P1.shouldRun = stackShouldRunOverride
   match.P1 = P1
-  match.attackEngine:setTarget(P1)
+
+  if attackFile then
+    local trainingModeSettings = readAttackFile(attackFile)
+    match.attackEngine = AttackEngine.createFromSettings(trainingModeSettings)
+    match.attackEngine:setTarget(P1)
+    battleRoom.trainingModeSettings = trainingModeSettings
+  else
+    P1.garbage_target = P1
+  end
 
   P1:wait_for_random_character()
   P1:starting_state()
+  -- make some space for garbage to fall
+  GarbageQueueTestingUtils.reduceRowsTo(P1, 0)
+
+  -- cause telegraph is very global needy
+  GAME.battleRoom = battleRoom
+  GAME.match = match
+  return match
 end
 
 function GarbageQueueTestingUtils.runToFrame(match, frame)
@@ -58,9 +79,21 @@ end
 
 -- clears panels until only "count" rows are left
 function GarbageQueueTestingUtils.reduceRowsTo(stack, count)
-  for row = #stack.panels, count do
+  for row = #stack.panels, count + 1 do
     for col = 1, stack.width do
       stack.panels[row][col]:clear(true)
+    end
+  end
+end
+
+-- fill up panels with non-matching panels until "count" rows are filled
+function GarbageQueueTestingUtils.fillRowsTo(stack, count)
+  for row = 1, count do
+    if not stack.panels[row] then
+      stack.panels[row] = {}
+    end
+    for col = 1, stack.width do
+      stack.panels[row][col].color = 9
     end
   end
 end
@@ -71,6 +104,19 @@ end
 
 function GarbageQueueTestingUtils.simulateInactivity(stack)
   stack.hasActivePanels = function() return false end
+end
+
+function GarbageQueueTestingUtils.sendGarbage(stack, width, height, chain, metal, time)
+  -- -1 cause this will get called after the frame ended instead of during the frame
+  local frameEarned = time or stack.CLOCK - 1
+  local isChain = chain or false
+  local isMetal = metal or false
+
+  -- oddly enough telegraph accepts a time as a param for pushing garbage but asserts that time is equal to the stack
+  local realClock = stack.CLOCK
+  stack.CLOCK = frameEarned
+  stack.telegraph:push({width = width, height = height, isChain = isChain, isMetal = isMetal}, 1, 1, frameEarned)
+  stack.CLOCK = realClock
 end
 
 return GarbageQueueTestingUtils
