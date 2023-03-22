@@ -2198,6 +2198,8 @@ function Stack.new_row(self)
   -- the new row we created earlier at the top is now at row 0!
   -- while the former row 0 is at row 1 and in play
   -- therefore we need to override dimmed state in row 1
+  -- it is important to do this here because new_row runs before checkMatches which runs before updatePanels
+  -- due to this order, if the update were delayed until updatePanels, ghost matches would be detected one frame too late
   for col = 1, self.width do
     panels[1][col].state = "normal"
     panels[1][col].stateChanged = true
