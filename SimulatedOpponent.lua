@@ -52,9 +52,8 @@ end
 local healthBarXOffset = -56
 function SimulatedOpponent.render(self)
 
-  self:drawCharacter()
-
   if self.health then
+    self:drawCharacter()
     self.health:render(self.pos_x * GFX_SCALE + healthBarXOffset)
   end
 

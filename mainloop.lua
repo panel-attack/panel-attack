@@ -230,8 +230,8 @@ do
     }
 
     if config.debugShowServers then
-      table.insert(items, 7, {"Beta Server", main_net_vs_setup, {"betaserver.panelattack.com", 59569}})
-      table.insert(items, 8, {"Localhost Server", main_net_vs_setup, {"localhost"}})
+      table.insert(items, 8, {"Beta Server", main_net_vs_setup, {"betaserver.panelattack.com", 59569}})
+      table.insert(items, 9, {"Localhost Server", main_net_vs_setup, {"localhost"}})
     end
 
     if TESTS_ENABLED then
