@@ -1223,17 +1223,13 @@ function Stack.updatePanels(self)
   end
 end
 
-function Stack.shouldDropGarbage(self)
-  -- this is legit ugly, these should rather be returned in a parameter table
-  -- or even better in a dedicated garbage class table
-  local _, next_garbage_block_height, _, from_chain = unpack(self.garbage_q:peek())
-
+function Stack.shouldDropGarbage(self, garbage)
   -- new garbage can't drop if the stack is full
   -- new garbage always drops one by one
   if not self.panels_in_top_row and not self:has_falling_garbage() then
-    if next_garbage_block_height > 1 then
+    if garbage.height > 1 then
       -- drop chain garbage higher than 1 row immediately
-      return from_chain
+      return garbage.isChain
       -- there is a gap here for combo garbage higher than 1 but unless you implement a meme mode,
       -- that doesn't exist anyway
     else
@@ -1507,8 +1503,9 @@ function Stack.simulate(self)
     end
 
     if self.garbage_q:len() > 0 then
-      if self:shouldDropGarbage() then
-        if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
+      local garbage = self.garbage_q:peek()
+      if self:shouldDropGarbage(garbage) then
+        if self:tryDropGarbage(garbage) then
           self.garbage_q:pop()
         end
       end
@@ -2107,7 +2104,7 @@ function Stack.tryDropGarbage(self, garbage)
     logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
   end
 
-  self:dropGarbage(width, height, metal)
+  self:dropGarbage(garbage)
 
   return true
 end
@@ -2121,19 +2118,19 @@ function Stack.getGarbageSpawnColumn(self, garbageWidth)
   return spawnColumn
 end
 
-function Stack.dropGarbage(self, width, height, isMetal)
+function Stack.dropGarbage(self, garbage)
   -- garbage always drops in row 13
   local originRow = self.height + 1
   -- combo garbage will alternate it's spawn column
-  local originCol = self:getGarbageSpawnColumn(width)
+  local originCol = self:getGarbageSpawnColumn(garbage.width)
   local function isPartOfGarbage(column)
-    return column >= originCol and column < (originCol + width)
+    return column >= originCol and column < (originCol + garbage.width)
   end
 
   self.garbageCreatedCount = self.garbageCreatedCount + 1
-  local shakeTime = garbage_to_shake_time[width * height]
+  local shakeTime = garbage_to_shake_time[garbage.width * garbage.height]
 
-  for row = originRow, originRow + height - 1 do
+  for row = originRow, originRow + garbage.height - 1 do
     if not self.panels[row] then
       self.panels[row] = {}
       -- every row that will receive garbage needs to be fully filled up
@@ -2145,16 +2142,16 @@ function Stack.dropGarbage(self, width, height, isMetal)
           panel.garbageId = self.garbageCreatedCount
           panel.isGarbage = true
           panel.color = 9
-          panel.width = width
-          panel.height = height
+          panel.width = garbage.width
+          panel.height = garbage.height
           panel.y_offset = row - originRow
           panel.x_offset = col - originCol
           panel.shake_time = shakeTime
           panel.state = "falling"
           panel.row = row
           panel.column = col
-          if isMetal then
-            panel.metal = isMetal
+          if garbage.isMetal then
+            panel.metal = garbage.isMetal
           end
         end
       end
