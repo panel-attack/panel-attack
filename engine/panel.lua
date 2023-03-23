@@ -271,7 +271,6 @@ normalState.update = function(panel, panels)
             hoverTime = hoverTime + panel.frameTimes.HOVER
           end
           
-          hoverTime = hoverTime + hoverPanel.timer
           normalState.enterHoverState(panel, panelBelow, hoverTime)
         end
         -- all other transformations from normal state are actively set by stack routines:
