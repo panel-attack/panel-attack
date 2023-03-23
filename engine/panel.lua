@@ -260,9 +260,17 @@ normalState.update = function(panel, panels)
             hoverTime = hoverTime + hoverPanel.timer
             hoverPanel = getPanelBelow(hoverPanel, panels)
           end
-          assert(hoverPanel.state == "hovering", "normalState panel about to transform due to chainingPropagation has a panel with state " .. hoverPanel.state .. " below the swap(s)")
           -- and then add the timer of the hover panel
           -- we need to do it like this because the hover panel could hover with either normal hover time or garbage hover time
+          if hoverPanel.state == "hovering" then
+            hoverTime = hoverTime + hoverPanel.timer
+          else
+            -- there is no hovering panel below the the swapping panel
+            -- meaning the swapping panel is directly above the panels that just popped, meaning no garbage is involved
+            -- so we add regular hover time on top of swap time
+            hoverTime = hoverTime + panel.frameTimes.HOVER
+          end
+          
           hoverTime = hoverTime + hoverPanel.timer
           normalState.enterHoverState(panel, panelBelow, hoverTime)
         end
