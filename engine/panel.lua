@@ -275,24 +275,6 @@ normalState.update = function(panel, panels)
   end
 end
 
-local function getNormalStateHoverTime(panel, panelBelow)
-  if panelBelow.color ~= 0 then
-    if panelBelow.state == "swapping"
-      and panelBelow.propagatesChaining then
-      -- if the panel below is swapping but propagates chaining due to a pop further below,
-      --  the hovertime is the sum of remaining swap time and the hover time of the first hovering panel below that we can find
-      local hoverPanel = getPanelBelow(panelBelow)
-      return panelBelow.timer + panel.frameTimes.HOVER
-    else
-      -- normal panels inherit the hover time from the panel below
-      return panelBelow.timer
-    end
-  else
-    -- if the panel below does not have a color, full hover time is given
-    return panel.frameTimes.HOVER
-  end
-end
-
 normalState.enterHoverState = function(panel, panelBelow, hoverTime)
   clear_flags(panel, false)
   panel.state = "hovering"
