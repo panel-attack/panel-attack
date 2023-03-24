@@ -8,6 +8,7 @@ local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
+local consts = require("consts")
 
 --@module puzzleMenu
 -- Scene for the puzzle selection menu
@@ -80,7 +81,7 @@ function puzzleMenu:init()
   end
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menuOptions, maxItems = 10})
+  self.menu = Menu({menuItems = menuOptions})
   self.menu:setVisibility(false)
 end
 
@@ -89,6 +90,8 @@ function puzzleMenu:load()
   y = y + 20
   self.menu.x = x
   self.menu.y = y
+  self.menu.maxItems = math.max(math.ceil((consts.CANVAS_HEIGHT - y) / (self.menu.menuItems[1].height + Menu.BUTTON_VERTICAL_PADDING)) - 2, 1)
+  self.menu:resetMenuScroll()
   
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
