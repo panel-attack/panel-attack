@@ -235,19 +235,43 @@ normalState.update = function(panel, panels)
       local panelBelow = getPanelBelow(panel, panels)
       if panelBelow.stateChanged then
         if panelBelow.state == "hovering" then
-          normalState.enterHoverState(panel, panelBelow)
+          -- normal panels inherit the hover time from the panel below
+          normalState.enterHoverState(panel, panelBelow, panelBelow.timer)
         elseif panelBelow.color == 0 and panelBelow.state == "normal" then
           if panelBelow.propagatesFalling then
             -- the panel below is empty because garbage below dropped
             -- in that case, skip the hover and fall immediately with the garbage
             fall(panel, panels)
           else
-            normalState.enterHoverState(panel, panelBelow)
+            -- if the panel below does not have a color, full hover time is given
+            normalState.enterHoverState(panel, panelBelow, panel.frameTimes.HOVER)
           end
         elseif panelBelow.queuedHover == true
         and panelBelow.propagatesChaining
         and panelBelow.state == "swapping" then
-          normalState.enterHoverState(panel, panelBelow)
+          -- if the panel(s) below is/are swapping but propagate(s) chaining due to a pop further below,
+          -- the hovertime is the sum of remaining swap time(s) and the hover time of the first hovering panel below that we can find
+          -- so first add up all the timers of swapping panels (usually 1)
+          local hoverTime = panelBelow.timer
+          local hoverPanel = getPanelBelow(panelBelow, panels)
+          while hoverPanel and hoverPanel.state == "swapping" do
+            -- for every swapping panel below we add up the remaining time of the swap
+            -- this is how the old code did it, it is unclear whether that is actually correct behaviour confirmed in PdP/TA
+            hoverTime = hoverTime + hoverPanel.timer
+            hoverPanel = getPanelBelow(hoverPanel, panels)
+          end
+          -- and then add the timer of the hover panel
+          -- we need to do it like this because the hover panel could hover with either normal hover time or garbage hover time
+          if hoverPanel.state == "hovering" then
+            hoverTime = hoverTime + hoverPanel.timer
+          else
+            -- there is no hovering panel below the the swapping panel
+            -- meaning the swapping panel is directly above the panels that just popped, meaning no garbage is involved
+            -- so we add regular hover time on top of swap time
+            hoverTime = hoverTime + panel.frameTimes.HOVER
+          end
+          
+          normalState.enterHoverState(panel, panelBelow, hoverTime)
         end
         -- all other transformations from normal state are actively set by stack routines:
         -- swap
@@ -258,31 +282,13 @@ normalState.update = function(panel, panels)
   end
 end
 
-local function getNormalStateHoverTime(panel, panelBelow)
-  if panelBelow.color ~= 0 then
-    if panelBelow.state == "swapping"
-      and panelBelow.propagatesChaining then
-      -- if the panel below is swapping but propagates chaining due to a pop further below,
-      --  the hovertime is the sum of remaining swap time and max hover time
-      return panelBelow.timer + panel.frameTimes.HOVER
-    else
-      -- normal panels inherit the hover time from the panel below
-      return panelBelow.timer
-    end
-  else
-    -- if the panel below does not have a color, full hover time is given
-    return panel.frameTimes.HOVER
-  end
-end
-
-normalState.enterHoverState = function(panel, panelBelow)
-  
+normalState.enterHoverState = function(panel, panelBelow, hoverTime)
   clear_flags(panel, false)
   panel.state = "hovering"
   panel.chaining = panel.chaining or panelBelow.propagatesChaining
   panel.propagatesChaining = panelBelow.propagatesChaining
 
-  panel.timer = getNormalStateHoverTime(panel, panelBelow)
+  panel.timer = hoverTime
   panel.stateChanged = true
 end
 
