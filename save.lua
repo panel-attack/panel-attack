@@ -152,24 +152,23 @@ function read_puzzles()
   )
 end
 
-function read_attack_file(current_path)
-  local file = love.filesystem.newFile(current_path)
-  file:open("r")
-  local teh_json = file:read(file:getSize())
-  assert(teh_json ~= nil)
-  local training_conf = {}
-  for k, w in pairs(json.decode(teh_json)) do
-    training_conf[k] = w
+function readAttackFile(path)
+  if love.filesystem.getInfo(path, "file") then
+    local jsonData = love.filesystem.read(path)
+    local trainingConf, position, errorMsg = json.decode(jsonData)
+    if trainingConf then
+      if not trainingConf.name or type(trainingConf.name) ~= "string" then
+        trainingConf.name = path:match(package.config:sub(1, 1) .. '(.*)$')
+        trainingConf.name = FileUtil.getFileNameWithoutExtension(trainingConf.name)
+      end
+      return trainingConf
+    else
+      error("Error deserializing " .. path .. ": " .. errorMsg .. " at position " .. position)
+    end
   end
-  if not training_conf.name or not type(training_conf.name) == "string" then
-    training_conf.name = v
-  end
-  file:close()
-
-  return training_conf
 end
 
-function read_attack_files(path)
+function readAttackFiles(path)
   local results = {}
   local lfs = love.filesystem
   local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
@@ -177,10 +176,12 @@ function read_attack_files(path)
     local current_path = path .. "/" .. v
     if lfs.getInfo(current_path) then
       if lfs.getInfo(current_path).type == "directory" then
-        read_attack_files(current_path)
+        readAttackFiles(current_path)
       else
-        local training_conf = read_attack_file(current_path)
-        results[#results+1] = training_conf
+        local training_conf = readAttackFile(current_path)
+        if training_conf ~= nil then
+          results[#results+1] = training_conf
+        end
       end
     end
   end

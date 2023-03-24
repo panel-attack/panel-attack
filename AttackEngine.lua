@@ -23,15 +23,16 @@ AttackEngine =
     self.attackPatterns = {}
     self.CLOCK = 0
     self.character = wait_for_random_character(character)
-    self.telegraph = Telegraph(sender) 
+    self.telegraph = Telegraph(sender)
+    self:setGarbageTargetStack(garbageTargetStack)
   end
 )
 
-function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, opponent, character)
+function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, garbageTargetStack, opponent, character)
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
+  local attackEngine = AttackEngine(garbageTargetStack, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
   for _, values in ipairs(trainingModeSettings.attackPatterns) do
     if values.chain then
       if type(values.chain) == "number" then
@@ -51,8 +52,6 @@ function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, 
       attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
     end
   end
-
-  attackEngine:setGarbageTargetStack(P1)
 
   return attackEngine
 end

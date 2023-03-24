@@ -86,7 +86,9 @@ function ChallengeMode:attackFilePath(difficulty, stageIndex)
 end
 
 function ChallengeMode:attackFile(difficulty, stageIndex)
-  return read_attack_file(self:attackFilePath(difficulty, stageIndex))
+  local attackFile = readAttackFile(self:attackFilePath(difficulty, stageIndex))
+  assert(attackFile ~= nil, "could not find attack file for challenge mode")
+  return attackFile
 end
 
 function ChallengeMode:beginStage()

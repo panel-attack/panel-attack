@@ -1903,7 +1903,7 @@ function Stack.game_ended(self)
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
   if self.match.mode == "vs" then
-    if self.match.simulatedOpponent and self.match.simulatedOpponent:isLost() then
+    if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
       return true
     end
 
@@ -1944,7 +1944,7 @@ function Stack.gameResult(self)
   if self.match.mode == "vs" then
     if self.opponentStack == nil then
       if self.match.simulatedOpponent then
-        if self.match.simulatedOpponent:isLost() then
+        if self.match.simulatedOpponent:isDefeated() then
           return 1
         end
       end

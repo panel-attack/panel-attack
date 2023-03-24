@@ -25,7 +25,7 @@ function SimulatedOpponent:run()
   if self.health then
     self.health:run()
   end
-  if not self:isLost() then
+  if not self:isDefeated() then
     if self.attackEngine then
       self.attackEngine:run()
     end
@@ -33,11 +33,11 @@ function SimulatedOpponent:run()
   end
 end
 
-function SimulatedOpponent:isLost()
+function SimulatedOpponent:isDefeated()
   if not self.health then
     return false
   end
-  return self.health:isLost()
+  return self.health:isFullyDepleted()
 end
 
 function SimulatedOpponent:drawCharacter()
@@ -64,7 +64,7 @@ function SimulatedOpponent.render(self)
 end
 
 function SimulatedOpponent:receiveGarbage(frameToReceive, garbageList)
-  if self.health and self.health:isLost() == false then
+  if self.health and self.health:isFullyDepleted() == false then
     self.health:receiveGarbage(frameToReceive, garbageList)
   end
 end

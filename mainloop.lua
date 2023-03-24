@@ -502,7 +502,7 @@ function training_setup()
   customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
   customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
   customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
-  for _, value in ipairs(read_attack_files("training")) do
+  for _, value in ipairs(readAttackFiles("training")) do
     customTrainingModes[#customTrainingModes+1] = {name = value.name, attackSettings = value}
   end
   

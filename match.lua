@@ -6,7 +6,6 @@ Match =
   function(self, mode, battleRoom)
     self.P1 = nil
     self.P2 = nil
-    self.attackEngine = nil
     self.engineVersion = VERSION
     self.mode = mode
     assert(mode ~= "vs" or battleRoom)
@@ -488,11 +487,7 @@ function Match.render(self)
       if P2 then
         P2:render()
       end
-
-      if self.attackEngine then
-        self.attackEngine:render()
-      end
-
+      
       if self.simulatedOpponent then
         self.simulatedOpponent:render()
       end

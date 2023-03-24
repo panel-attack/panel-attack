@@ -1,15 +1,6 @@
 local logger = require("logger")
 
--- https://docs.google.com/spreadsheets/d/1VedRmzk6MfVNFv74AopMOaWMsehL_qrwQYOS-uFrejo/pubhtml#
-
-local combo_to_damage = {0, 0, 0, 128, 170, 256, 304, 352, 400, 448, 496, 544, 768, 1024, 1280, 1536, 1792, 2048, 2304, 2560, 2816, 3072, 3328, 3584, 3840, 4096}
-
-local chain_to_damage = {0, 256, 512, 768, 1024, 1280, 1536, 1792, 2048, 2240, 2432, 2624, 2816, 3008, 3200, 3392, 3584, 3584, 3584, 4096}
-
--- (Does not include combo damage, combo damage is seperate)
-local metal_to_damage = {0, 0, 320, 640, 960, 1280, 1600, 1920, 2240, 2560, 2880, 3200, 3520, 3840, 4096, 3584, 3840, 4096}
-
-local barWidth = 50
+local HEALTH_BAR_WIDTH = 50
 
 Health =
   class(
@@ -72,28 +63,8 @@ function Health:receiveGarbage(frameToReceive, garbageList)
   end
 end
 
-function Health.take_combo_damage(self, combo_size)
-  if combo_size > 3 then
-    self.health = self.health - combo_to_damage[combo_size]
-    logger.info("New health is " .. self.health)
-  end
-end
 
-function Health.take_chain_damage(self, chain_size)
-  if chain_size > 1 then
-    self.health = self.health - chain_to_damage[chain_size]
-    logger.info("New health is " .. self.health)
-  end
-end
-
-function Health.take_metal_damage(self, metal_combo_size)
-  if metal_combo_size > 2 then
-    self.health = self.health - metal_to_damage[metal_combo_size] 
-    logger.info("New health is " .. self.health)
-  end
-end
-
-function Health:isLost()
+function Health:isFullyDepleted()
   return self.secondsToppedOutToLose <= 0
 end
 
@@ -112,22 +83,21 @@ function Health:renderPartialScaledImage(image, x, y, maxWidth, maxHeight, perce
   love.graphics.draw(image, quad, xPosition, yPosition, 0, scaleX, scaleY)
 end
 
-
 function Health:renderHealth(xPosition)
   local percentage = math.max(0, self.secondsToppedOutToLose) / self.maxSecondsToppedOutToLose
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, xPosition, 110, barWidth, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, xPosition, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
 end
 
 function Health:renderTopOut(xPosition)
   local percentage = math.max(0, self.currentLines) / self.height
-  local x = xPosition + barWidth
+  local x = xPosition + HEALTH_BAR_WIDTH
   local y = 110
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, barWidth, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
 
   local height = 4
   local grey = 0.8
   local alpha = 1
-  grectangle_color("fill", x / GFX_SCALE, y / GFX_SCALE, barWidth / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
+  grectangle_color("fill", x / GFX_SCALE, y / GFX_SCALE, HEALTH_BAR_WIDTH / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
 end
 
 function Health:render(xPosition)
