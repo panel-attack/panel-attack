@@ -8,6 +8,7 @@ local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
+local consts = require("consts")
 
 --@module puzzleMenu
 -- Scene for the puzzle selection menu
@@ -53,6 +54,7 @@ function puzzleMenu:init()
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
+      value = config.puzzle_level or 5,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
@@ -89,6 +91,8 @@ function puzzleMenu:load()
   y = y + 20
   self.menu.x = x
   self.menu.y = y
+  self.menu.maxItems = math.max(math.ceil((consts.CANVAS_HEIGHT - y) / (self.menu.menuItems[1].height + Menu.BUTTON_VERTICAL_PADDING)) - 2, 1)
+  self.menu:resetMenuScroll()
   
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
