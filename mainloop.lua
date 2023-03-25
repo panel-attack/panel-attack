@@ -79,7 +79,7 @@ function fmainloop()
     require("tests.utf8AdditionsTests")
     require("table_util_tests")
     require("utilTests")
-    --require("replayAnalyzer") -- TODO: Not really a unit test... generates attack files
+    --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
     -- Medium level tests (integration tests)
     require("tests.ReplayTests")
     require("tests.StackReplayTests")
