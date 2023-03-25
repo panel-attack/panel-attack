@@ -42,11 +42,7 @@ end
 
 function SimulatedOpponent:drawCharacter()
   local characterObject = characters[self.character]
-  local portraitImageName = characterObject:player2Portrait()
-  local portraitImage = characterObject.images[portraitImageName]
-  local portrait_w, portrait_h = portraitImage:getDimensions()
-
-  draw(portraitImage, self.pos_x, self.pos_y, 0, 96 / portrait_w, 192 / portrait_h)
+  characterObject:drawPortrait(2, self.pos_x, self.pos_y, 0)
 end
 
 local healthBarXOffset = -56

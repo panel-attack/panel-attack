@@ -271,16 +271,9 @@ function Stack.render(self)
   love.graphics.clear()
   love.graphics.stencil(frame_mask, "replace", 1)
   love.graphics.setStencilTest("greater", 0)
+  local characterObject = characters[self.character]
 
-  -- draw inside stack's frame canvas
-  local portrait_image = "portrait"
-  if not (self.which == 1) then
-    portrait_image = characters[self.character]:player2Portrait()
-  end
-
-  local portrait_w, portrait_h = characters[self.character].images[portrait_image]:getDimensions()
-
-  -- Draw the portrait (with fade and inversion if needed)
+  -- Update portrait fade if needed
   if self.do_countdown then
     -- self.portraitFade starts at 0 (no fade)
     if self.countdown_CLOCK then
@@ -295,12 +288,8 @@ function Stack.render(self)
       end
     end
   end
-  if self.which == 1 or portrait_image == "portrait2" then
-    draw(characters[self.character].images[portrait_image], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
-  else
-    draw(characters[self.character].images[portrait_image], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
-  end
-  grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
+
+  characterObject:drawPortrait(self.which, 4, 4, self.portraitFade)
 
   local metals
   if self.opponentStack then
@@ -327,7 +316,7 @@ function Stack.render(self)
           local imgs = {flash = metals.flash}
           if not panel.metal then
             if not self.garbageTarget then 
-              imgs = characters[self.character].images
+              imgs = characterObject.images
             else
               imgs = characters[self.garbageTarget.character].images
             end
