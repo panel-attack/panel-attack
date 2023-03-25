@@ -5,15 +5,15 @@ local HEALTH_BAR_WIDTH = 50
 Health =
   class(
   function(self, secondsToppedOutToLose, lineClearGPM, height, riseLevel)
-    self.secondsToppedOutToLose = secondsToppedOutToLose
-    self.maxSecondsToppedOutToLose = secondsToppedOutToLose
-    self.lineClearRate = lineClearGPM / 60
-    self.currentLines = 0
-    self.lastWasFourCombo = false
-    self.height = height
-    self.CLOCK = 0
-    self.riseLevel = riseLevel
-    self.currentRiseSpeed = level_to_starting_speed[self.riseLevel]
+    self.secondsToppedOutToLose = secondsToppedOutToLose -- Number of seconds currently remaining of being "topped" out before we are defeated.
+    self.maxSecondsToppedOutToLose = secondsToppedOutToLose -- Starting value of secondsToppedOutToLose
+    self.lineClearRate = lineClearGPM / 60 -- How many "lines" we clear per second. Essentially how fast we recover.
+    self.currentLines = 0 -- The current number of "lines" simulated
+    self.height = height -- How many "lines" need to be accumulated before we are "topped" out.
+    self.lastWasFourCombo = false -- Tracks if the last combo was a +4. If two +4s hit in a row, it only counts as 1 "line"
+    self.CLOCK = 0 -- Current clock time, this should match the opponent
+    self.riseLevel = riseLevel -- The current level used to simulate "rise speed"
+    self.currentRiseSpeed = level_to_starting_speed[self.riseLevel] -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
   end
 )
 

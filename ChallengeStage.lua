@@ -5,13 +5,16 @@ require("Health")
 ChallengeStage =
   class(
   function(self, stageNumber, secondsToppedOutToLose, lineClearGPM, lineHeightToKill, riseDifficulty, attackSettings)
-    self.stageNumber = stageNumber
+    self.stageNumber = stageNumber -- The index of the stage. Starts at 1
+
+    -- Health parameters, see Health.lua for more details
     self.secondsToppedOutToLose = secondsToppedOutToLose
     self.lineClearGPM = lineClearGPM
     self.lineHeightToKill = lineHeightToKill
     self.riseDifficulty = riseDifficulty
-    self.expendedTime = 0
-    self.attackSettings = attackSettings
+
+    self.expendedTime = 0 -- How much total time has been spent trying to beat this stage
+    self.attackSettings = attackSettings -- Attack settings used to configure the attack engine
   end
 )
 
