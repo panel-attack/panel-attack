@@ -189,6 +189,17 @@ function readAttackFiles(path)
   return results
 end
 
+function saveJSONToPath(data, state, path)
+  pcall(
+    function()
+      local file = love.filesystem.newFile(path)
+      file:open("w")
+      file:write(json.encode(data, state))
+      file:close()
+    end
+  )
+end
+
 function print_list(t)
   for i, v in ipairs(t) do
     print(v)

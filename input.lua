@@ -260,7 +260,7 @@ function love.keypressed(key, scancode, rep)
 
       if stack then
         local data, state = stack:getAttackPatternData()
-        stack:saveAttackPatternsToPath(data, state, "dumpAttackPattern.json")
+        saveJSONToPath(data, state, "dumpAttackPattern.json")
         return true
       end
     end

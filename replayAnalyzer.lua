@@ -45,7 +45,7 @@ local function saveStack(stack, match)
       "GPM" .. "-Level" .. level .. "-" .. data.extraInfo.matchLength .. "-" .. data.extraInfo.playerName .. ".json"
   savePath = savePath:gsub(":", "-"):gsub("%.", "-")
   love.filesystem.createDirectory("dumpedAttackPatterns")
-  stack:saveAttackPatternsToPath(data, state, savePath)
+  saveJSONToPath(data, state, savePath)
   --logger.info("Saved " .. savePath)
 end
 

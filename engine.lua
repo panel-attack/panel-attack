@@ -2633,7 +2633,10 @@ function Stack:getAttackPatternData()
 
   local data = {}
   data.extraInfo = {}
-  data.extraInfo.playerName = self.match.battleRoom.playerNames[self.which] or "Player"
+  data.extraInfo.playerName = "Player"
+  if self.match.battleRoom then
+    data.extraInfo.playerName = self.match.battleRoom.playerNames[self.which]
+  end
   data.extraInfo.gpm = self.analytic:getRoundedGPM(self.CLOCK) or 0
   data.extraInfo.matchLength = " "
   if self.game_stopwatch and tonumber(self.game_stopwatch) then
@@ -2681,17 +2684,6 @@ function Stack:getAttackPatternData()
   local state = {keyorder = {"extraInfo", "playerName", "gpm", "matchLength", "dateGenerated", "mergeComboMetalQueue", "delayBeforeStart", "delayBeforeRepeat", "attackPatterns"}}
 
   return data, state
-end
-
-function Stack:saveAttackPatternsToPath(data, state, path)
-  pcall(
-    function()
-      local file = love.filesystem.newFile(path)
-      file:open("w")
-      file:write(json.encode(data, state))
-      file:close()
-    end
-  )
 end
 
 -- creates a new panel at the specified row+column and adds it to the Stack's panels table
