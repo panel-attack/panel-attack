@@ -20,8 +20,8 @@ function ChallengeStage:createHealth()
   return Health(self.secondsToppedOutToLose, self.lineClearGPM, self.lineHeightToKill, self.riseDifficulty)
 end
 
-function ChallengeStage:createAttackEngine(garbageTargetStack, opponent, character)
-  local attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackSettings, garbageTargetStack, opponent, character)
+function ChallengeStage:createAttackEngine(garbageTarget, opponent, character)
+  local attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackSettings, garbageTarget, opponent, character)
   return attackEngine
 end
 

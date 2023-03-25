@@ -326,10 +326,10 @@ function Stack.render(self)
         if panel.isGarbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            if not self.garbageTargetStack then 
+            if not self.garbageTarget then 
               imgs = characters[self.character].images
             else
-              imgs = characters[self.garbageTargetStack.character].images
+              imgs = characters[self.garbageTarget.character].images
             end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then

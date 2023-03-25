@@ -77,11 +77,11 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
-function Telegraph:updatePositionForGarbageTargetStack(newGarbageTargetStack)
-  self.stackCanvasWidth = newGarbageTargetStack:stackCanvasWidth()
-  self.mirror_x = newGarbageTargetStack.mirror_x
-  self.pos_x = newGarbageTargetStack.pos_x - 4
-  self.pos_y = newGarbageTargetStack.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+function Telegraph:updatePositionForGarbageTarget(newGarbageTarget)
+  self.stackCanvasWidth = newGarbageTarget:stackCanvasWidth()
+  self.mirror_x = newGarbageTarget.mirror_x
+  self.pos_x = newGarbageTarget.pos_x - 4
+  self.pos_y = newGarbageTarget.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
 end
 
 function Telegraph.saveClone(toSave)

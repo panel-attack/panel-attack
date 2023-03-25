@@ -15,8 +15,7 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, garbageTargetStack, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender, character)
-    self.garbageTargetStack = garbageTargetStack
+  function(self, garbageTarget, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender, character)
     self.delayBeforeStart = delayBeforeStart
     self.delayBeforeRepeat = delayBeforeRepeat
     self.disableQueueLimit = disableQueueLimit
@@ -24,15 +23,15 @@ AttackEngine =
     self.CLOCK = 0
     self.character = wait_for_random_character(character)
     self.telegraph = Telegraph(sender)
-    self:setGarbageTargetStack(garbageTargetStack)
+    self:setGarbageTarget(garbageTarget)
   end
 )
 
-function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, garbageTargetStack, opponent, character)
+function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, garbageTarget, opponent, character)
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(garbageTargetStack, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
+  local attackEngine = AttackEngine(garbageTarget, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
   for _, values in ipairs(trainingModeSettings.attackPatterns) do
     if values.chain then
       if type(values.chain) == "number" then
@@ -56,10 +55,17 @@ function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, 
   return attackEngine
 end
 
-function AttackEngine:setGarbageTargetStack(garbageTargetStack)
-  self.garbageTargetStack = garbageTargetStack
+function AttackEngine:setGarbageTarget(garbageTarget)
+  assert(garbageTarget.stackCanvasWidth ~= nil)
+  assert(garbageTarget.mirror_x ~= nil)
+  assert(garbageTarget.pos_x ~= nil)
+  assert(garbageTarget.pos_y ~= nil)
+  assert(garbageTarget.garbage_q ~= nil)
+  assert(garbageTarget.receiveGarbage ~= nil)
+
+  self.garbageTarget = garbageTarget
   if self.telegraph then
-    self.telegraph:updatePositionForGarbageTargetStack(garbageTargetStack)
+    self.telegraph:updatePositionForGarbageTarget(garbageTarget)
   end
 end
 
@@ -82,7 +88,7 @@ function AttackEngine.addEndChainPattern(self, start, repeatDelay)
 end
 
 function AttackEngine.run(self)
-  assert(self.garbageTargetStack, "No target set on attack engine")
+  assert(self.garbageTarget, "No target set on attack engine")
   
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
 
@@ -95,7 +101,7 @@ function AttackEngine.run(self)
   local maxCombo = 0
   local hasMetal = false
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  if self.disableQueueLimit or self.garbageTargetStack.garbage_q:len() <= 72 then
+  if self.disableQueueLimit or self.garbageTarget.garbage_q:len() <= 72 then
     for i = 1, #self.attackPatterns do
       if self.CLOCK >= self.attackPatterns[i].startTime then
         local difference = self.CLOCK - self.attackPatterns[i].startTime
@@ -119,7 +125,7 @@ function AttackEngine.run(self)
     end
   end
 
-  self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTargetStack)
+  self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTarget)
 
   local metalCount = 0
   if hasMetal then

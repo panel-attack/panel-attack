@@ -244,7 +244,7 @@ Stack =
     s.analytic = AnalyticsInstance(s.is_local)
 
     s.opponentStack = nil -- the other stack you are playing against
-    s.garbageTargetStack = nil -- the target you are sending attacks to
+    s.garbageTarget = nil -- the target you are sending attacks to
 
     if s.match.mode == "vs" then
       s.telegraph = Telegraph(s) 
@@ -648,15 +648,15 @@ function Stack.saveForRollback(self)
 
   local opponentStack = self.opponentStack
   local prev_states = self.prev_states
-  local attackTarget = self.garbageTargetStack
+  local attackTarget = self.garbageTarget
   self.opponentStack = nil
-  self.garbageTargetStack = nil
+  self.garbageTarget = nil
   self.prev_states = nil
   self:remove_extra_rows()
   prev_states[self.CLOCK] = Stack.rollbackCopy(self)
   self.prev_states = prev_states
   self.opponentStack = opponentStack
-  self.garbageTargetStack = attackTarget
+  self.garbageTarget = attackTarget
   local deleteFrame = self.CLOCK - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
 end
@@ -686,16 +686,17 @@ end
 -- pos_y
 -- mirror_x
 -- stackCanvasWidth
-function Stack.setGarbageTargetStack(self, newGarbageTargetStack)
-  if newGarbageTargetStack ~= nil then
-    assert(newGarbageTargetStack.pos_x ~= nil)
-    assert(newGarbageTargetStack.pos_y ~= nil)
-    assert(newGarbageTargetStack.mirror_x ~= nil)
-    assert(newGarbageTargetStack.stackCanvasWidth ~= nil)
+function Stack.setGarbageTarget(self, newGarbageTarget)
+  if newGarbageTarget ~= nil then
+    assert(newGarbageTarget.pos_x ~= nil)
+    assert(newGarbageTarget.pos_y ~= nil)
+    assert(newGarbageTarget.mirror_x ~= nil)
+    assert(newGarbageTarget.stackCanvasWidth ~= nil)
+    assert(newGarbageTarget.receiveGarbage ~= nil)
   end
-  self.garbageTargetStack = newGarbageTargetStack
+  self.garbageTarget = newGarbageTarget
   if self.telegraph then
-    self.telegraph:updatePositionForGarbageTargetStack(newGarbageTargetStack)
+    self.telegraph:updatePositionForGarbageTarget(newGarbageTarget)
   end
 end
 
@@ -1491,7 +1492,7 @@ function Stack.simulate(self)
     self:updateActivePanels()
 
     if self.telegraph then
-      self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTargetStack)
+      self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTarget)
     end
     
     if self.later_garbage[self.CLOCK] then
@@ -2401,7 +2402,7 @@ function Stack.check_matches(self)
   end
 
   if (combo_size ~= 0) then
-    if self.garbageTargetStack and self.telegraph then
+    if self.garbageTarget and self.telegraph then
       if metal_count >= 3 then
         -- Give a shock garbage for every shock block after 2
         for i = 3, metal_count do
@@ -2427,7 +2428,7 @@ function Stack.check_matches(self)
       end
 
       self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.garbageTargetStack and self.telegraph then
+      if self.garbageTarget and self.telegraph then
         local combo_pieces = combo_garbage[combo_size]
         for i=1,#combo_pieces do
           -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
