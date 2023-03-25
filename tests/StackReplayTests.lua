@@ -8,7 +8,7 @@ local function teardown()
 end
 
 -- Swap finishing the frame chaining is applied should not apply to swapped panel
-local function garbageCantDropWhileSwapping()
+local function testChainingPropagationThroughSwap1()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v047-2023-03-20-03-39-20-PDR_Lava-L10-vs-JamBox-L8-Casual-INCOMPLETE.json")
 
   StackReplayTestingUtils:simulateMatchUntil(match, 3162)
@@ -16,10 +16,31 @@ local function garbageCantDropWhileSwapping()
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
   assert(match.mode == "vs")
   assert(match.P2.panels[4][5].chaining == nil)
+  assert(match.P2.panels[5][5].chaining == true)
   teardown()
 end
 
-garbageCantDropWhileSwapping()
+testChainingPropagationThroughSwap1()
+
+local function testHoverInheritanceOverSwapOverGarbageHover()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "swapOverGarbageHoverInheritance.json")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 9028)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P2.panels[8][4].state == "hovering")
+  -- hovering above garbage, timer should be GPHOVER (on level 8 -> 10 frames)
+  assert(match.P2.panels[8][4].timer == 10)
+  assert(match.P2.panels[9][4].state == "swapping")
+  assert(match.P2.panels[9][4].timer == 3)
+  assert(match.P2.panels[10][4].state == "hovering")
+  -- 10 frames GPHover + 3 frames left from the swap
+  assert(match.P2.panels[10][4].timer == 13)
+  teardown()
+end
+
+testHoverInheritanceOverSwapOverGarbageHover()
 
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
