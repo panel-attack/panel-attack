@@ -4,13 +4,14 @@ local replay_browser = require("replay_browser")
 local json = require("dkjson")
 local tableUtils = require("tableUtils")
 local inputManager = require("inputManager")
+local fileUtils = require("fileUtils")
+local logger = require("logger")
 
---- @module save
+-- @module save
 -- the save.lua file contains the read/write functions
 local save = {}
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
-local logger = require("logger")
 
 -- writes to the "keys.txt" file
 function write_key_file()
@@ -73,7 +74,7 @@ function save.read_key_file()
 end
 
 -- reads the .txt file of the given path and filename
-function read_txt_file(path_and_filename)
+function save.read_txt_file(path_and_filename)
   local s
   pcall(
     function()
@@ -146,120 +147,6 @@ function save.readConfigFile()
   return user_config
 end
 
--- reads the "replay.txt" file
-function save.read_replay_file()
-  local file = love.filesystem.newFile("replay.txt")
-  local ok, err = file:open("r")
-  
-  if not ok then
-    return nil
-  end
-  
-  local json_user_replays = file:read(file:getSize())
-  local user_replays = json.decode(json_user_replays)
-  
-  if type(user_replays.in_buf) == "table" then
-    user_replays.in_buf = table.concat(user_replays.in_buf)
-    save.write_replay_file()
-  end
-  return user_replays
-end
-
--- writes a replay file of the given path and filename
-function save.write_replay_file(path, filename)
-  pcall(
-    function()
-      local file
-      if path and filename then
-        love.filesystem.createDirectory(path)
-        file = love.filesystem.newFile(path .. "/" .. filename)
-        replay_browser.set_replay_browser_path(path)
-      else
-        file = love.filesystem.newFile("replay.txt")
-      end
-      file:open("w")
-      print("Writing to Replay File")
-      if replay.puzzle then
-        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
-        print("Compressed puzzle in_buf")
-        print(replay.puzzle.in_buf)
-      else
-        print("No Puzzle")
-      end
-      if replay.endless then
-        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
-        print("Compressed endless in_buf")
-        print(replay.endless.in_buf)
-      else
-        print("No Endless")
-      end
-      if replay.vs then
-        replay.vs.I = compress_input_string(replay.vs.I)
-        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
-        print("Compressed vs I/in_buf")
-      else
-        print("No vs")
-      end
-      file:write(json.encode(replay))
-      file:close()
-    end
-  )
-end
-
--- reads the "replay.txt" file
-function read_replay_file()
-  pcall(
-    function()
-      local file = love.filesystem.newFile("replay.txt")
-      file:open("r")
-      local teh_json = file:read(file:getSize())
-      replay = json.decode(teh_json)
-      if type(replay.in_buf) == "table" then
-        replay.in_buf = table.concat(replay.in_buf)
-        write_replay_file()
-      end
-    end
-  )
-end
-
--- writes a replay file of the given path and filename
-function write_replay_file(path, filename)
-  assert(path ~= nil)
-  assert(filename ~= nil)
-  pcall(
-    function()
-      love.filesystem.createDirectory(path)
-      local file = love.filesystem.newFile(path .. "/" .. filename)
-      set_replay_browser_path(path)
-      file:open("w")
-      logger.debug("Writing to Replay File")
-      if replay.puzzle then
-        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
-        logger.debug("Compressed puzzle in_buf")
-        logger.debug(replay.puzzle.in_buf)
-      else
-        logger.debug("No Puzzle")
-      end
-      if replay.endless then
-        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
-        logger.debug("Compressed endless in_buf")
-        logger.debug(replay.endless.in_buf)
-      else
-        logger.debug("No Endless")
-      end
-      if replay.vs then
-        replay.vs.I = compress_input_string(replay.vs.I)
-        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
-        logger.debug("Compressed vs I/in_buf")
-      else
-        logger.debug("No vs")
-      end
-      file:write(json.encode(replay))
-      file:close()
-    end
-  )
-end
-
 -- writes to the "user_id.txt" file of the directory of the connected ip
 function write_user_id_file()
   pcall(
@@ -290,7 +177,7 @@ end
 function write_puzzles()
   pcall(
     function()
-      local currentPuzzles = FileUtil.getFilteredDirectoryItems("puzzles") or {}
+      local currentPuzzles = fileUtils.getFilteredDirectoryItems("puzzles") or {}
       local customPuzzleExists = false
       for _, filename in pairs(currentPuzzles) do
         if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "stock (example).json" and filename ~= "README.txt" then
@@ -302,7 +189,7 @@ function write_puzzles()
       if customPuzzleExists == false then
         love.filesystem.createDirectory("puzzles")
 
-        recursive_copy("default_data/puzzles", "puzzles")
+        fileUtils.recursiveCopy("default_data/puzzles", "puzzles")
       end
     end
   )
@@ -316,7 +203,7 @@ function read_puzzles()
       -- replay.in_buf=table.concat(replay.in_buf)
       -- end
 
-      puzzle_packs = FileUtil.getFilteredDirectoryItems("puzzles") or {}
+      puzzle_packs = fileUtils.getFilteredDirectoryItems("puzzles") or {}
       logger.debug("loading custom puzzles...")
       for _, filename in pairs(puzzle_packs) do
         logger.trace(filename)
@@ -391,7 +278,7 @@ end
 
 function read_attack_files(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then
@@ -424,72 +311,5 @@ function print_list(t)
   end
 end
 
--- copies a file from the given source to the given destination
-function save.copy_file(source, destination)
-  local lfs = love.filesystem
-  local source_file = lfs.newFile(source)
-  source_file:open("r")
-  local source_size = source_file:getSize()
-  temp = source_file:read(source_size)
-  source_file:close()
-
-  local new_file = lfs.newFile(destination)
-  new_file:open("w")
-  local success, message = new_file:write(temp, source_size)
-  new_file:close()
-end
-
--- copies a file from the given source to the given destination
-function recursive_copy(source, destination)
-  local lfs = love.filesystem
-  local names = lfs.getDirectoryItems(source)
-  local temp
-  for i, name in ipairs(names) do
-    local info = lfs.getInfo(source .. "/" .. name)
-    if info and info.type == "directory" then
-      logger.trace("calling recursive_copy(source" .. "/" .. name .. ", " .. destination .. "/" .. name .. ")")
-      recursive_copy(source .. "/" .. name, destination .. "/" .. name)
-    elseif info and info.type == "file" then
-      local destination_info = lfs.getInfo(destination)
-      if not destination_info or destination_info.type ~= "directory" then
-        love.filesystem.createDirectory(destination)
-      end
-      logger.trace("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
-
-      local source_file = lfs.newFile(source .. "/" .. name)
-      source_file:open("r")
-      local source_size = source_file:getSize()
-      temp = source_file:read(source_size)
-      source_file:close()
-
-      local new_file = lfs.newFile(destination .. "/" .. name)
-      new_file:open("w")
-      local success, message = new_file:write(temp, source_size)
-      new_file:close()
-
-      if not success then
-        logger.warn(message)
-      end
-    else
-      logger.warn("name:  " .. name .. " isn't a directory or file?")
-    end
-  end
-end
--- Deletes any file matching the target name from the file tree recursively
-function recursiveRemoveFiles(folder, targetName)
-  local lfs = love.filesystem
-  local filesTable = lfs.getDirectoryItems(folder)
-  for _, fileName in ipairs(filesTable) do
-    local file = folder .. "/" .. fileName
-    local info = lfs.getInfo(file)
-    if info then
-      if info.type == "directory" then
-        recursiveRemoveFiles(file, targetName)
-      elseif info.type == "file" and fileName == targetName then
-        love.filesystem.remove(file)
-      end
-    end
-  end
-end
 
 return save

@@ -1,5 +1,6 @@
 local consts = require("consts")
 --@module transitionUtils
+-- Helper functions for scene transition animations
 local transitionUtils = {}
 
 function transitionUtils.fade(alphaStart, alphaEnd, duration)

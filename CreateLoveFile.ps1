@@ -1,4 +1,6 @@
 ﻿#This file may need to be unblocked on your computer in order to run. Go to your file properties to do this.
+#Note this script is out of date and needs to be updated to exclude lots of files from the love archive.
+#See build.sh for the full list of files to exclude
 
 if (Test-Path "$($PSScriptRoot)\main.lua") {
     $Time = Get-Date 

@@ -6,6 +6,7 @@ Sound
 local logger = require("logger")
 local GraphicsUtil = require("graphics_util")
 local tableUtils = require("tableUtils")
+local fileUtils = require("fileUtils")
 
 local default_character = nil -- holds default assets fallbacks
 
@@ -34,7 +35,7 @@ Character =
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
     self.music_style = "normal"
-    self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return FileUtil.getFileNameWithoutExtension(file) end)
+    self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return fileUtils.getFileNameWithoutExtension(file) end)
   end
 )
 
@@ -333,7 +334,7 @@ function Character.sound_init(self, full, yields)
         self.musics[music]:setLooping(false)
       end
     elseif not self.musics[music] and defaulted_musics[music] and not self:is_bundle() then
-      self.musics[music] = default_character.musics[music] or zero_sound
+      self.musics[music] = default_character.musics[music] or themes[config.theme].zero_sound
     end
 
     if yields then
@@ -384,11 +385,11 @@ function Character.reassignLegacySfx(self)
     end
     
     self:fillInMissingSounds(self.sounds.chain, "chain", maxIndex)
+  end
 
-    if #self.sounds.shock > 0 then
-      -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
-      self.sounds.combo_echo = nil
-    end
+  if #self.sounds.shock > 0 then
+    -- combo_echo won't get used if shock is present, so it shouldn't show up in sound test any longer
+    self.sounds.combo_echo = {}
   end
 end
 
@@ -596,14 +597,18 @@ function Character.playAttackSfx(self, attack)
         stopIfPlaying(v[i])
       end
     end
-    for i = 1, #self.sounds.combo_echo do
-      stopIfPlaying(self.sounds.combo_echo[i])
-    end
-    for _, v in pairs(self.sounds.shock) do
-      for i = 1, #v do
-        stopIfPlaying(v[i])
+    if tableUtils.length(self.sounds.shock) > 0 then
+      for _, v in pairs(self.sounds.shock) do
+        for i = 1, #v do
+          stopIfPlaying(v[i])
+        end
+      end
+    else
+      for i = 1, #self.sounds.combo_echo do
+        stopIfPlaying(self.sounds.combo_echo[i])
       end
     end
+
     for _, v in pairs(self.sounds.chain) do
       for i = 1, #v do
         stopIfPlaying(v[i])

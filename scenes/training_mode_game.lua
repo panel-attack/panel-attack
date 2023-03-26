@@ -41,8 +41,8 @@ end
 
 function training_mode_game:customGameOverSetup()
   self.winner_SFX = GAME.match.P1:pick_win_sfx()
-  self.next_scene = "training_mode_character_select"
-  self.next_scene_params = nil
+  self.nextScene = "training_mode_character_select"
+  self.nextSceneParams = nil
 end
 
 function training_mode_game:processGameResults(gameResult)

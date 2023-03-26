@@ -15,6 +15,8 @@ local input = require("inputManager")
 local util = require("util")
 local save = require("save")
 local GraphicsUtil = require("graphics_util")
+local fileUtils = require("fileUtils")
+local Replay = require("replay")
 
 --@module MainMenu
 local replay_menu = Scene("replay_menu")
@@ -79,43 +81,11 @@ local function replay_browser_update(new_path)
     end
     current_path = new_path
   end
-  path_contents = FileUtil.getFilteredDirectoryItems(base_path .. current_path)
+  path_contents = fileUtils.getFilteredDirectoryItems(base_path .. current_path)
 end
-
+  
 local function replay_browser_go_up()
   replay_browser_update(current_path:gsub("(.*/).*/$", "%1"))
-end
-
-local function replay_browser_load_details(path)
-  filename = path
-  local file, error_msg = love.filesystem.read(filename)
-
-  if file == nil then
-    --print(loc("rp_browser_error_loading", error_msg))
-    return false
-  end
-
-  replay = {}
-  replay = json.decode(file)
-  if not replay.engineVersion then
-    replay.engineVersion = "045"
-  end
-
-  -- Old versions saved replays with extra data, prefer vs and endless in that case
-  if replay.vs and replay.endless then
-    replay.endless = nil
-  end
-  if replay.vs and replay.puzzle then
-    replay.puzzle = nil
-  end
-  if replay.endless and replay.puzzle then
-    replay.puzzle = nil
-  end
-
-  if type(replay.in_buf) == "table" then
-    replay.in_buf = table.concat(replay.in_buf)
-  end
-  return true
 end
 
 local function replay_browser_select()
@@ -126,7 +96,8 @@ local function replay_browser_select()
     local file_info = love.filesystem.getInfo(selection)
     if file_info then
       if file_info.type == "file" then
-        return replay_browser_load_details(selection)
+        filename = selection
+        return Replay.loadFromPath(selection)
       elseif file_info.type == "directory" then
         replay_browser_update(current_path .. path_contents[cursor_pos] .. "/")
       else
@@ -163,39 +134,35 @@ function replay_menu:update()
     gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
     replay_browser_menu()
 
-    if input.allKeys.isDown["escape"] then
+    if input.allKeys.isDown["MenuEsc"] then
       sceneManager:switchToScene("mainMenu")
     end
-    if input.isDown["Swap1"] then
+    if input.isDown["MenuSelect"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       if replay_browser_select() then
         state = "info"
       end
     end
-    if input.isDown["Swap2"] then
+    if input.isDown["MenuBack"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       replay_browser_go_up()
     end
-    if input.isDown["Up"] then
+    if input.isDown["MenuUp"] then
       play_optional_sfx(themes[config.theme].sounds.menu_move)
       replay_browser_cursor(-1)
     end
-    if input.isDown["Down"] then
+    if input.isDown["MenuDown"] then
       play_optional_sfx(themes[config.theme].sounds.menu_move)
       replay_browser_cursor(1)
     end
-    
   elseif state == "info" then
     local next_func = nil
-
-    if replay.engineVersion ~= VERSION then
+    if Replay.replayCanBeViewed(replay) == false then
       gprint(loc("rp_browser_wrong_version"), menu_x - 150, menu_y - 80 + menu_h)
     end
     
     gprint(loc("rp_browser_info_header"), menu_x + 170, menu_y - 40)
     gprint(filename, menu_x - 150, menu_y - 40 + menu_h)
-
-    replay.type = "UNKNOWN"
     if replay.vs then
       -- This used to be calculated based on the length of "O", but that no longer always exists.
       -- "I" will always exist for two player vs
@@ -206,7 +173,6 @@ function replay_menu:update()
       else
         modeText = loc("rp_browser_info_1p_vs")
       end
-
       gprint(modeText, menu_x + 220, menu_y + 20)
 
       gprint(loc("rp_browser_info_1p"), menu_x, menu_y + 50)
@@ -224,10 +190,7 @@ function replay_menu:update()
           gprint(loc("rp_browser_info_ranked"), menu_x + 200, menu_y + 120)
         end
       end
-
-      replay.type = "VS"
     elseif replay.endless or replay.time then
-      replay.type = "ENDLESS/TIME_ATTACK"
       if replay.time then
         gprint(loc("rp_browser_info_time"), menu_x + 220, menu_y + 20)
       else
@@ -237,29 +200,24 @@ function replay_menu:update()
       local replay = replay.endless or replay.time
       gprint(loc("rp_browser_info_speed", replay.speed), menu_x + 150, menu_y + 50)
       gprint(loc("rp_browser_info_difficulty", replay.difficulty), menu_x + 150, menu_y + 65)
-
-      
     elseif replay.puzzle then
       gprint(loc("rp_browser_info_puzzle"), menu_x + 220, menu_y + 20)
 
       gprint(loc("rp_browser_no_info"), menu_x + 150, menu_y + 50)
-
-      replay.type = "PUZZLE"
     else
       gprint(loc("rp_browser_error_unknown_replay_type"), menu_x + 220, menu_y + 20)
     end
-
-    if replay.engineVersion == VERSION and not replay.puzzle then
+    if Replay.replayCanBeViewed(replay) then
       gprint(loc("rp_browser_watch"), menu_x + 75, menu_y + 150)
     end
 
-    if input.isDown["Swap2"] then
+    if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       state = "browser"
     end
-    if input.isDown["Swap1"] and replay.type ~= "UNKNOWN" and replay.engineVersion == VERSION and not replay.puzzle then
+    if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(replay) then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene("replay_game")
+      sceneManager:switchToScene("replay_game", {})
     end
   end
 end

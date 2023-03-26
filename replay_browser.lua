@@ -1,3 +1,6 @@
+local fileUtils = require("fileUtils")
+local Replay = require("replay")
+
 --@module replay_browser
 local replay_browser = {
   selection = nil,
@@ -11,7 +14,6 @@ local replay_browser = {
   menu_y = 280,
   menu_h = 14,
   menu_cursor_offset = 16,
-
   cursor_pos = 0,
 
   replay_id_top = 0,
@@ -63,7 +65,7 @@ function replay_browser.main()
       end
       replay_browser.current_path = new_path
     end
-    replay_browser.path_contents = FileUtil.getFilteredDirectoryItems(replay_browser.base_path .. replay_browser.current_path)
+    replay_browser.path_contents = fileUtils.getFilteredDirectoryItems(replay_browser.base_path .. replay_browser.current_path)
   end
 
   local function replay_browser_go_up()
@@ -133,7 +135,7 @@ function replay_browser.main()
     elseif replay_browser.state == "info" then
       local next_func = nil
 
-      if replay.engineVersion ~= VERSION then
+      if Replay.replayCanBeViewed(replay) == false then
         gprint(loc("rp_browser_wrong_version"), replay_browser.menu_x - 150, replay_browser.menu_y - 80 + replay_browser.menu_h)
       end
       
@@ -192,7 +194,7 @@ function replay_browser.main()
         gprint(loc("rp_browser_error_unknown_replay_type"), replay_browser.menu_x + 220, replay_browser.menu_y + 20)
       end
 
-      if replay.engineVersion == VERSION and not replay.puzzle then
+      if Replay.replayCanBeViewed(replay) then
         gprint(loc("rp_browser_watch"), replay_browser.menu_x + 75, replay_browser.menu_y + 150)
       end
 
@@ -200,7 +202,7 @@ function replay_browser.main()
         function()
           if menu_backspace() or menu_escape() then
             replay_browser.state = "browser"
-          elseif menu_enter() and replay.engineVersion == VERSION and not replay.puzzle then
+          elseif menu_enter() and Replay.replayCanBeViewed(replay) then
             if next_func then
               ret = {next_func}
             end

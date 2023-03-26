@@ -1,6 +1,7 @@
 local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
+local Replay = require("replay")
 
 --@module vs_self_game
 local vs_self_game = GameBase("vs_self_game", {})
@@ -18,13 +19,13 @@ end
 
 function vs_self_game:customGameOverSetup()
   self.winner_SFX = GAME.match.P1:pick_win_sfx()
-  self.next_scene = "vs_self_menu"
-  self.next_scene_params = nil
+  self.nextScene = "vs_self_menu"
+  self.nextSceneParams = nil
 end
 
 function vs_self_game:processGameResults(gameResult)
   GAME.scores:saveVsSelfScoreForLevel(GAME.match.P1.analytic.data.sent_garbage_lines, GAME.match.P1.level)
-  self:finalizeAndWriteVsReplay(nil, nil)
+  Replay.finalizeAndWriteVsReplay(nil, nil, false, GAME.match, replay)
 end
 
 return vs_self_game

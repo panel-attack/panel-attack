@@ -1,0 +1,13 @@
+{
+"matchtypeLabel_Pos": [-110, 365],
+"matchtypeLabel_Scale": 1.5,
+"timeLabel_Pos": [0, 426],
+"timeLabel_Scale": 1,
+"time_Pos": [-37, 445],
+"time_Scale": 1,
+"multibar_frame_Pos": [110, 1100],
+"multibar_frame_Scale": 1,
+"multibar_Pos": [-17, 93],
+"multibar_Scale": 1,
+"bg_main_is_tiled": true
+}

@@ -1,5 +1,6 @@
 local util = require("util")
 local consts = require("consts")
+require("Theme") -- needed for directory location
 
 ---@module config
 -- Default configuration values
@@ -61,7 +62,7 @@ local config = {
   maximizeOnStartup             = true,
   gameScaleType                 = "auto",
   gameScaleFixedValue           = 2,
-  
+
   -- Love configuration variables
   windowWidth                   = consts.CANVAS_WIDTH,
   windowHeight                  = consts.CANVAS_HEIGHT,
@@ -70,6 +71,7 @@ local config = {
   display                       = 1,
   windowX                       = nil,
   windowY                       = nil,
+  inputMethod                   = nil -- "touch"
 }
 
 return config

@@ -1,6 +1,7 @@
 local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local fileUtils = require("fileUtils")
 
 -- The class representing the panel image data
 -- Not to be confused with "Panel" which is one individual panel in the game stack model
@@ -35,7 +36,7 @@ end
 -- Recursively load all panel images from the given directory
 local function add_panels_from_dir_rec(path)
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
     local current_path = path .. "/" .. v
     if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
@@ -65,7 +66,7 @@ function panels_init()
   add_panels_from_dir_rec("panels")
   if #panels_ids == 0 or (config and not config.defaultPanelsCopied) then
     config.defaultPanelsCopied = true
-    recursive_copy("default_data/panels", "panels")
+    fileUtils.recursiveCopy("default_data/panels", "panels")
     add_panels_from_dir_rec("panels")
   end
 

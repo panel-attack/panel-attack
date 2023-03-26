@@ -90,8 +90,8 @@ function ServerQueue:pop_next_with(...)
   end
 end
 
--- pop all messages containing any specified keys...
-function ServerQueue:pop_all_with(...)
+-- Pop all messages where any of the keys in their dictionary match the specified keys
+function ServerQueue.pop_all_with(self, ...)
   local ret = {}
 
   if self.first <= self.last then

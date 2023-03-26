@@ -27,7 +27,6 @@ require("match")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
-require("FileUtil")
 
 require("globals")
 require("character_loader") -- after globals!
@@ -60,6 +59,8 @@ require("Theme")
 require("dump")
 local utf8 = require("utf8")
 require("computerPlayers.computerPlayer")
+
+local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
 
 if PROFILING_ENABLED then
   GAME.profiler = require("profiler")
@@ -179,23 +180,13 @@ function love.update(dt)
   buttonManager.update()
   inputFieldManager.update()
 
-  if config.show_fps and config.debug_mode then
-    if runTimeGraph == nil then
-      runTimeGraph = RunTimeGraph()
-    end
-  else
-    runTimeGraph = nil
-  end
-  
   GAME:update(dt)
 end
 
 -- Called whenever the game needs to draw.
 function love.draw()
   if config ~= nil and config.show_fps then
-    if runTimeGraph then
-      runTimeGraph:draw()
-    end
+    gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
   end
 
   GAME:draw()

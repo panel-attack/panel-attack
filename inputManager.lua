@@ -63,6 +63,7 @@ local menuReservedKeysMap = {
   MenuPrevPage = {{"pagedown"}, "Raise2"}, 
   MenuBack = {{"backspace"}, ""}, 
   MenuSelect = {{"return", "kpenter", "z"}, "Swap1"},
+  MenuPause = {{"return", "kpenter"}, "Start"},
 }
 
 -- useful alternate representations of the above information

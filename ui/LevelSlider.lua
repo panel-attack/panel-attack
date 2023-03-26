@@ -8,6 +8,7 @@ local LevelSlider = class(
   function(self, options)
     self.min = 1
     self.max = #themes[config.theme].images.IMG_levels
+    self.value = options.value and util.bound(self.min, options.value, self.max) or 5
     -- pixels per value change
     self.tickLength = 11
     self.value = 5
@@ -29,7 +30,6 @@ function LevelSlider:draw()
     local img = i <= self.value and 
       themes[config.theme].images.IMG_levels[i] or 
       themes[config.theme].images.IMG_levels_unfocus[i]
-    local width = img:getWidth()
     GAME.gfx_q:push({love.graphics.draw, {img, screenX + (i - 1) * self.tickLength, screenY, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0}})
   end
   local cursor_image = themes[config.theme].images.IMG_level_cursor

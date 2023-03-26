@@ -1,7 +1,7 @@
-local save = require("save")
-local ffi = require("ffi")
+local ffi = require "ffi"
+local fileUtils = require("fileUtils")
 
-save.copy_file("rich_presence/discord-rpc_x64.dll","discord-rpc_x64.dll")
+fileUtils.copyFile("rich_presence/discord-rpc_x64.dll","discord-rpc_x64.dll")
 local dll_path = love.filesystem.getSaveDirectory() .. "/discord-rpc_x64"
 local discordRPClib = ffi.load(dll_path)
 

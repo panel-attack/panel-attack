@@ -3,6 +3,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local consts = require("consts")
 local util = require("util")
+local Replay = require("replay")
 
 --@module replay_game
 local replay_game = GameBase("replay_game", {})
@@ -56,8 +57,8 @@ function replay_game:abortGame()
 end
 
 function replay_game:customGameOverSetup()
-  self.next_scene = "replay_menu"
-  self.next_scene_params = nil
+  self.nextScene = "replay_menu"
+  self.nextSceneParams = nil
 
   if GAME.match.P2 and GAME.match.battleRoom:matchOutcome() then
     self.text = matchOutcome["end_text"]

@@ -1,3 +1,4 @@
+local fileUtils = require("fileUtils")
 local analytics = require("analytics")
 local util = require("util")
 local ClickMenu = require("ClickMenu")
@@ -405,7 +406,7 @@ local function audio_menu(button_idx)
 
         -- disable the menu_validate sound and keep a copy of it to restore later
         local menu_validate_sound = themes[config.theme].sounds.menu_validate
-        themes[config.theme].sounds.menu_validate = zero_sound
+        themes[config.theme].sounds.menu_validate = themes[config.theme].zero_sound
 
         gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
         wait()
@@ -977,25 +978,25 @@ local function about_menu(button_idx)
   end
 
   local function show_themes_readme()
-    if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
+    if not love.filesystem.getInfo(Theme.themeDirectoryPath .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
       --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
       gprint(loc("op_copy_files"), 280, 280)
       wait()
-      recursive_copy("themes/" .. consts.DEFAULT_THEME_DIRECTORY, "themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY)
+      fileUtils.recursiveCopy(Theme.themeDirectoryPath .. consts.DEFAULT_THEME_DIRECTORY, Theme.themeDirectoryPath .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY)
 
       -- Android can't easily copy into the save dir, so do it for them to help.
-      recursive_copy("default_data/themes", "themes")
+      fileUtils.recursiveCopy("default_data/themes", "themes")
     end
 
-    ret = {show_readme, {"readme_themes.txt", 1}}
+    ret = {show_readme, {"readme_themes.md", 1}}
   end
 
   local function show_characters_readme()
-    ret = {show_readme, {"readme_characters.txt", 2}}
+    ret = {show_readme, {"readme_characters.md", 2}}
   end
 
   local function show_stages_readme()
-    ret = {show_readme, {"readme_stages.txt", 3}}
+    ret = {show_readme, {"readme_stages.md", 3}}
   end
 
   local function show_panels_readme()
@@ -1004,6 +1005,10 @@ local function about_menu(button_idx)
 
   local function show_attack_readme()
     ret = {show_readme, {"readme_training.txt", 5}}
+  end
+
+  local function show_installMods_readme()
+    ret = {show_readme, {"readme_installmods.md"}}
   end
 
   local function show_system_info()
@@ -1065,6 +1070,7 @@ local function about_menu(button_idx)
   aboutMenu:add_button(loc("op_about_stages"), show_stages_readme, goEscape)
   aboutMenu:add_button(loc("op_about_panels"), show_panels_readme, goEscape)
   aboutMenu:add_button("About Attack Files", show_attack_readme, goEscape)
+  aboutMenu:add_button("Installing Mods", show_installMods_readme, goEscape)
   aboutMenu:add_button("System Info", show_system_info, goEscape)
   aboutMenu:add_button(loc("back"), exitSettings, exitSettings)
 
@@ -1157,7 +1163,12 @@ function options.main(button_idx)
 
     write_conf_file()
 
-    if config.theme ~= memory_before_options_menu.theme then
+    local themeChanged = true
+    if memory_before_options_menu ~= nil and config.theme == memory_before_options_menu.theme then
+      themeChanged = false
+    end
+
+    if themeChanged then
       gprint(loc("op_reload_theme"), unpack(previousMenuPosition))
       wait()
       stop_the_music()
@@ -1166,22 +1177,18 @@ function options.main(button_idx)
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
       end
-    end
 
-    -- stages before characters since they are part of their loading
-    if config.theme ~= memory_before_options_menu.theme then
+      -- stages before characters since they are part of their loading
       gprint(loc("op_reload_stages"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       stages_init()
-    end
 
-    if config.theme ~= memory_before_options_menu.theme then
       gprint(loc("op_reload_characters"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       characters_init()
     end
 
-    if config.enable_analytics ~= memory_before_options_menu.enable_analytics then
+    if memory_before_options_menu == nil or config.enable_analytics ~= memory_before_options_menu.enable_analytics then
       gprint(loc("op_reload_analytics"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
       analytics.init()
@@ -1190,7 +1197,6 @@ function options.main(button_idx)
     apply_config_volume()
 
     memory_before_options_menu = nil
-    normal_music_for_sound_option = nil
     ret = {main_select_mode}
   end
 
@@ -1208,14 +1214,17 @@ function options.main(button_idx)
     optionsMenu:set_active_idx(button_idx)
   else
     found_themes = {}
-    for _, v in ipairs(FileUtil.getFilteredDirectoryItems("themes")) do
-      if love.filesystem.getInfo("themes/" .. v) and love.filesystem.getInfo("themes/" .. v .. "/config.json") then
+    for _, v in ipairs(fileUtils.getFilteredDirectoryItems("themes")) do
+      if love.filesystem.getInfo(Theme.themeDirectoryPath .. v) and love.filesystem.getInfo(Theme.themeDirectoryPath .. v .. "/config.json") then
         found_themes[#found_themes + 1] = v
         if config.theme == v then
           theme_index = #found_themes
         end
       end
     end
+  end
+
+  if memory_before_options_menu == nil then 
     memory_before_options_menu = {
       theme = config.theme,
       --this one is actually updated with the menu and change upon leaving, be careful!

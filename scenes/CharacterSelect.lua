@@ -122,7 +122,7 @@ function CharacterSelect:onReady()
   GAME.match = Match("vs", GAME.battleRoom)
   GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=self.cursor_data[1].state.panels_dir, level=self.cursor_data[1].state.level, character=self.cursor_data[1].state.character}
   
-  sceneManager:switchToScene(self.next_scene)
+  sceneManager:switchToScene(self.next_scene, {})
 end
 
 -- Sets the state object to a new stage based on the increment
