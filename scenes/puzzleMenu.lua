@@ -54,6 +54,7 @@ function puzzleMenu:init()
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
+      value = config.puzzle_level or 5,
       onValueChange = function(s)
         play_optional_sfx(themes[config.theme].sounds.menu_move)
       end
