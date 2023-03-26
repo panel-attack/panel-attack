@@ -13,6 +13,8 @@ local save = {}
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
+local save = {}
+
 -- writes to the "keys.txt" file
 function write_key_file()
   pcall(

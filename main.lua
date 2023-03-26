@@ -30,6 +30,7 @@ require("util")
 
 require("globals")
 require("character_loader") -- after globals!
+local CustomRun = require("CustomRun")
 require("stage") -- after globals!
 
 require("localization")
