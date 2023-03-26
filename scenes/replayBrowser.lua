@@ -214,6 +214,7 @@ function replayBrowser:update()
 end
 
 function replayBrowser:unload()
+  stop_the_music()
 end
 
 return replayBrowser

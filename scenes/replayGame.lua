@@ -24,7 +24,7 @@ function replayGame:customRun()
   end
 
   -- Advance one frame
-  if input.isDown["Swap1"] and not self.frameAdvance then
+  if input:isPressedWithRepeat("Swap1", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
     self.frameAdvance = true
     GAME.gameIsPaused = false
     if GAME.match.P1 then
@@ -61,6 +61,7 @@ function replayGame:customGameOverSetup()
   self.nextSceneParams = nil
 
   if GAME.match.P2 and GAME.match.battleRoom:matchOutcome() then
+    local matchOutcome = GAME.match.battleRoom:matchOutcome()
     self.text = matchOutcome["end_text"]
     self.winner_SFX = matchOutcome["winSFX"]
   else
