@@ -115,6 +115,10 @@ end
 
 function replay_menu:load()
   reset_filters()
+  
+  if Replay.lastPath then
+    current_path = string.sub(Replay.lastPath, (string.len(base_path) + 1)) .. "/"
+  end
 
   state = "browser"
   replay_browser_update()
@@ -134,7 +138,7 @@ function replay_menu:update()
     gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
     replay_browser_menu()
 
-    if input.allKeys.isDown["MenuEsc"] then
+    if input.isDown["MenuEsc"] then
       sceneManager:switchToScene("mainMenu")
     end
     if input.isDown["MenuSelect"] then
