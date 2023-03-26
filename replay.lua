@@ -303,6 +303,7 @@ function Replay.writeReplayFile(path, filename, replayJSON)
   assert(filename ~= nil)
   assert(replayJSON ~= nil)
   Replay.lastPath = path
+  pcall(
     function()
       love.filesystem.createDirectory(path)
       local file = love.filesystem.newFile(path .. "/" .. filename)
