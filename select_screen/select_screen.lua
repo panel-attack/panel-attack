@@ -945,6 +945,9 @@ end
 
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  self.roomInitializationMessage = roomInitializationMessage
+  self:initialize(character_select_mode)
+
   -- 2p vs local needs to have its input properly divided in select screen already
   -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
   -- for all others, the player can hold their decision until game start
@@ -952,8 +955,6 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     GAME.input:allowAllInputConfigurations()
   end
 
-  self.roomInitializationMessage = roomInitializationMessage
-  self:initialize(character_select_mode)
   self:loadThemeAssets()
 
   self:prepareDrawMap()
