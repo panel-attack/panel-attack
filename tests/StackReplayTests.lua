@@ -3,6 +3,45 @@ local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
+local function teardown()
+  GAME:clearMatch()
+end
+
+-- Swap finishing the frame chaining is applied should not apply to swapped panel
+local function testChainingPropagationThroughSwap1()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v047-2023-03-20-03-39-20-PDR_Lava-L10-vs-JamBox-L8-Casual-INCOMPLETE.json")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 3162)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P2.panels[4][5].chaining == nil)
+  assert(match.P2.panels[5][5].chaining == true)
+  teardown()
+end
+
+testChainingPropagationThroughSwap1()
+
+local function testHoverInheritanceOverSwapOverGarbageHover()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "swapOverGarbageHoverInheritance.json")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 9028)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P2.panels[8][4].state == "hovering")
+  -- hovering above garbage, timer should be GPHOVER (on level 8 -> 10 frames)
+  assert(match.P2.panels[8][4].timer == 10)
+  assert(match.P2.panels[9][4].state == "swapping")
+  assert(match.P2.panels[9][4].timer == 3)
+  assert(match.P2.panels[10][4].state == "hovering")
+  -- 10 frames GPHover + 3 frames left from the swap
+  assert(match.P2.panels[10][4].timer == 13)
+  teardown()
+end
+
+testHoverInheritanceOverSwapOverGarbageHover()
+
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
   assert(match ~= nil)
@@ -12,6 +51,7 @@ local function basicEndlessTest()
   assert(match.P1.max_health == 1)
   assert(match.P1.score == 37)
   assert(match.P1.difficulty == 3)
+  teardown()
 end
 
 basicEndlessTest()
@@ -29,6 +69,7 @@ local function basicTimeAttackTest()
   assert(match.P1.difficulty == 1)
   assert(table.length(match.P1.chains) == 8)
   assert(table.length(match.P1.combos) == 4)
+  teardown()
 end
 
 basicTimeAttackTest()
@@ -49,6 +90,7 @@ local function basicVsTest()
   assert(table.length(match.P2.chains) == 4)
   assert(table.length(match.P2.combos) == 4)
   assert(match.P1:gameResult() == -1)
+  teardown()
 end
 
 basicVsTest()
@@ -89,6 +131,7 @@ local function noInputsInVsIsDrawTest()
   assert(table.length(match.P2.chains) == 0)
   assert(table.length(match.P2.combos) == 0)
   assert(match.P1:gameResult() == 0)
+  teardown()
 end
 
 noInputsInVsIsDrawTest()
@@ -125,6 +168,7 @@ local function catchAndSyncTest()
   assert(table.length(match.P2.chains) == 2)
   assert(table.length(match.P2.combos) == 2)
   assert(match.P1:gameResult() == 1)
+  teardown()
 end
 
 catchAndSyncTest()
@@ -170,6 +214,7 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   StackReplayTestingUtils:simulateMatchUntil(match, 60)
   assert(match.P1.cur_row == 6)
   assert(match.P1.cur_col == 3)
+  teardown()
 end
 
 movingBeforeInPositionDisallowedPriorToTouch()
