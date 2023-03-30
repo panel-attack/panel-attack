@@ -1643,7 +1643,10 @@ function Stack.simulate(self)
         SFX_Go_Play = 0
       end
       if self.combo_chain_play then
+        -- stop ongoing landing sound
         themes[config.theme].sounds.land:stop()
+        -- and cancel it because an attack is performed on the exact same frame (takes priority)
+        self.sfx_land = false
         themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
