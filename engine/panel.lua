@@ -39,6 +39,12 @@ local function clear_flags(panel, clearChaining)
   -- panels will check if this is set on the panel below to update their chaining state
   -- in combination with their own state
   panel.propagatesChaining = false
+
+  -- a flag to determine if a hovering panel can be matched or not
+  -- this is necessary due to the update process of nintendo games being different than PA's
+  -- likely nintendo first updates swapping panels, then checks for matches and then updates everything else
+  -- whereas PA checks matches and then updates everything at once
+  panel.matchAnyway = false
 end
 
 -- Sets all variables to the default settings
@@ -283,6 +289,10 @@ normalState.enterHoverState = function(panel, panelBelow, hoverTime)
   panel.state = "hovering"
   panel.chaining = panel.chaining or panelBelow.propagatesChaining
   panel.propagatesChaining = panelBelow.propagatesChaining
+  if panelBelow.propagatesChaining or panelBelow.matchAnyway then
+    -- panels are matchable for 1 frame right after entering hoverstate
+    panel.matchAnyway = true
+  end
 
   panel.timer = hoverTime
   panel.stateChanged = true
@@ -342,6 +352,7 @@ swappingState.enterHoverState = function(panel, panelBelow)
   --panel.chaining = panel.chaining
   -- all panels above may still get the chaining flag though if it is currently propagating
   panel.propagatesChaining = panelBelow.propagatesChaining
+  panel.matchAnyway = panelBelow.matchAnyway
 
   -- swapping panels always get full hover time
   panel.timer = panel.frameTimes.HOVER
@@ -428,6 +439,9 @@ end
 
 hoverState.update = function(panel, panels)
   decrementTimer(panel)
+  if panel.matchAnyway then
+    panel.matchAnyway = false
+  end
   if panel.timer == 0 then
     hoverState.changeState(panel, panels)
   end
@@ -535,7 +549,8 @@ function Panel.canMatch(self)
     return false
   else
     if self.state == "normal"
-    or self.state == "landing" then
+    or self.state == "landing"
+    or (self.matchAnyway and self.state == "hovering") then
       return true
     else
       -- swapping, matched, popping, popped, hover, falling, dimmed, dead

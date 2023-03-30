@@ -487,7 +487,7 @@ function Stack:clearChainingFlags()
     for column = 1, self.width do
       local panel = self.panels[row][column]
       -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
-      if not panel.matching and panel.chaining and panel:canMatch() then
+      if not panel.matching and panel.chaining and not panel.matchAnyway and panel:canMatch() then
         if row > 1 then
           -- no swapping panel below so this panel loses its chain flag
           if self.panels[row - 1][column].state ~= "swapping" then
