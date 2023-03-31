@@ -55,6 +55,7 @@ local function testFirstHoverFrameMatch()
   assert(match.P1.panels[4][4].chaining ~= true)
   -- for this specific replay, the match combines with another one to form a +6
   assert(match.P1.combos[4269][1].width == 5)
+  teardown()
 end
 
 testFirstHoverFrameMatch()
