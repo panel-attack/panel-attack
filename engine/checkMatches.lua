@@ -41,9 +41,13 @@ local function isNewChainLink(matchingPanels)
 end
 
 local function getOnScreenCount(stackHeight, panels)
-  return table.count(panels, function(p)
-    return p.row <= stackHeight
-  end)
+  local count = 0
+  for i = 1, #panels do
+    if panels[i].row <= stackHeight then
+      count = count + 1
+    end
+  end
+  return count
 end
 
 function Stack:checkMatches()
