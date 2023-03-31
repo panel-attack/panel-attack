@@ -68,13 +68,11 @@ function BattleRoom.matchOutcome(self)
     results["winSFX"] = P2:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[2])
     -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
     results["outcome_claim"] = P2.player_number
   elseif gameResult == 1 then -- P1 wins
     results["winSFX"] = P1:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
     -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
     results["outcome_claim"] = P1.player_number
   else
     error("No win result")

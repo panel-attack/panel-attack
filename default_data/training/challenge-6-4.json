@@ -1,0 +1,131 @@
+{
+    "extraInfo": {
+        "playerName": "Newsy",
+        "gpm": "17.8",
+        "matchLength": "1:06",
+        "dateGenerated": "2022-11-26-22-48-45"
+    },
+    "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 619,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 968,
+            "chain": [
+                696,
+                765,
+                832,
+                899
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1615,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1722,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 1868,
+            "chain": [
+                1799
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1926,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2070,
+            "chain": [
+                2003
+            ]
+        },
+        {
+            "chainEndTime": 2304,
+            "chain": [
+                2235
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2389,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2667,
+            "chain": [
+                2608
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2777,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "chainEndTime": 3260,
+            "chain": [
+                3150,
+                3151
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3489,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3616,
+            "chain": [
+                3544
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3655,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 4027,
+            "chain": [
+                3735,
+                3802,
+                3871,
+                3938
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3938,
+            "metal": false,
+            "width": 5
+        }
+    ]
+}

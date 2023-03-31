@@ -156,7 +156,7 @@ Stack =
     end
     s:moveForPlayerNumber(which)
 
-    s.CLOCK = 0
+    s.clock = 0
     s.game_stopwatch = 0
     s.game_stopwatch_running = true -- set to false if countdown starts
     s.do_countdown = true
@@ -242,18 +242,23 @@ Stack =
 
     s.analytic = AnalyticsInstance(s.is_local)
 
+    s.opponentStack = nil -- the other stack you are playing against
+    s.garbageTarget = nil -- the target you are sending attacks to
+
     if s.match.mode == "vs" then
-      s.telegraph = Telegraph(s, s) -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
-      -- NOTE: this is the telegraph above this stack, so the opponents puts garbage in this stack.
+      s.telegraph = Telegraph(s) 
+      -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
+      -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
+      -- .sender = us
     end
 
     s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
     s.chains = {} -- Tracks the chains made throughout the whole game
     --[[
-        Key - CLOCK time the chain started
+        Key - clock time the chain started
         Value -
-	        starts - array of CLOCK times for the start of each match in the chain
-	        finish - CLOCK time the chain finished
+	        starts - array of clock times for the start of each match in the chain
+	        finish - clock time the chain finished
 	        size - the chain size 2, 3, etc
     ]]
     s.currentChainStartFrame = nil -- The start frame of the current active chain or nil if no chain is active
@@ -412,7 +417,7 @@ function Stack.divergenceString(stackToTest)
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
   result = result .. "Displacement " .. stackToTest.displacement .. "\n"
-  result = result .. "Clock " .. stackToTest.CLOCK .. "\n"
+  result = result .. "Clock " .. stackToTest.clock .. "\n"
   result = result .. "Panel Buffer " .. stackToTest.panel_buffer .. "\n"
 
   return result
@@ -483,9 +488,9 @@ function Stack.rollbackCopy(source, other)
     other.panels[i] = nil
   end
 
-  other.countdown_CLOCK = source.countdown_CLOCK
+  other.countdown_clock = source.countdown_clock
   other.countdown_timer = source.countdown_timer
-  other.CLOCK = source.CLOCK
+  other.clock = source.clock
   other.game_stopwatch = source.game_stopwatch
   other.game_stopwatch_running = source.game_stopwatch_running
   other.prev_rise_lock = source.prev_rise_lock
@@ -530,24 +535,23 @@ end
 function Stack.restoreFromRollbackCopy(self, other)
   Stack.rollbackCopy(other, self)
   if self.telegraph then
-    self.telegraph.owner = self.garbage_target
     self.telegraph.sender = self
   end
   -- The remaining inputs is the confirmed inputs not processed yet for this clock time
-  -- We have processed CLOCK time number of inputs when we are at CLOCK, so we only want to process the CLOCK+1 input on
+  -- We have processed clock time number of inputs when we are at clock, so we only want to process the clock+1 input on
   self.input_buffer = {}
-  for i = self.CLOCK + 1, #self.confirmedInput do
+  for i = self.clock + 1, #self.confirmedInput do
     self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
   end
 end
 
 function Stack.rollbackToFrame(self, frame) 
-  local currentFrame = self.CLOCK
+  local currentFrame = self.clock
   local difference = currentFrame - frame
   local safeToRollback = difference <= MAX_LAG
   if not safeToRollback then
-    if self.garbage_target then
-      self.garbage_target.tooFarBehindError = true
+    if self.opponentStack then
+      self.opponentStack.tooFarBehindError = true
     end
     return false -- EARLY RETURN
   end
@@ -562,15 +566,15 @@ function Stack.rollbackToFrame(self, frame)
       self:deleteRollbackCopy(f)
     end
 
-    if self.garbage_target and self.garbage_target.later_garbage then
+    if self.opponentStack and self.opponentStack.later_garbage then
       -- The garbage that we send this time might (rarely) not be the same
       -- as the garbage we sent before.  Wipe out the garbage we sent before...
       local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
-      for k, v in pairs(self.garbage_target.later_garbage) do
+      for k, _ in pairs(self.opponentStack.later_garbage) do
         -- The time we actually affected the target was garbage delay away,
         -- so we only need to remove it if its at least that far away
         if k >= targetFrame then
-          self.garbage_target.later_garbage[k] = nil
+          self.opponentStack.later_garbage[k] = nil
         end
       end
     end
@@ -619,13 +623,14 @@ function Stack:shouldSaveRollback()
     return true
   end
 
+  local opponentStack = self.opponentStack
   -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
-  if not self.garbage_target then
+  if not opponentStack then
     return false
   -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
   -- don't save the rollback info for performance reasons
   -- this also includes local play and single player, since the clocks are <= 1 difference
-  elseif self.garbage_target.CLOCK + GARBAGE_DELAY_LAND_TIME > self.CLOCK then
+  elseif opponentStack.clock + GARBAGE_DELAY_LAND_TIME > self.clock then
     return false
   end
 
@@ -633,22 +638,25 @@ function Stack:shouldSaveRollback()
 end
 
 -- Saves state in backups in case its needed for rollback
--- NOTE: the CLOCK time is the save state for simulating right BEFORE that clock time is simulated
+-- NOTE: the clock time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
 
   if self:shouldSaveRollback() == false then
     return
   end
 
+  local opponentStack = self.opponentStack
   local prev_states = self.prev_states
-  local garbage_target = self.garbage_target
-  self.garbage_target = nil
+  local attackTarget = self.garbageTarget
+  self.opponentStack = nil
+  self.garbageTarget = nil
   self.prev_states = nil
   self:remove_extra_rows()
-  prev_states[self.CLOCK] = Stack.rollbackCopy(self)
+  prev_states[self.clock] = Stack.rollbackCopy(self)
   self.prev_states = prev_states
-  self.garbage_target = garbage_target
-  local deleteFrame = self.CLOCK - MAX_LAG - 1
+  self.opponentStack = opponentStack
+  self.garbageTarget = attackTarget
+  local deleteFrame = self.clock - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
 end
 
@@ -664,12 +672,39 @@ function Stack.deleteRollbackCopy(self, frame)
   end
 end
 
-function Stack.set_garbage_target(self, new_target)
-  self.garbage_target = new_target
-  if self.telegraph then
-    self.telegraph.owner = new_target
-    self.telegraph:updatePosition()
+-- Sets the opponent stack we are playing against.
+-- This object must be a full stack object, it is used to determine who is winning, clock value and more.
+function Stack.setOpponent(self, newOpponent)
+  self.opponentStack = newOpponent
+end
+
+-- Target must be able to take calls of
+-- receiveGarbage(frameToReceive, garbageList)
+-- and provide
+-- pos_x
+-- pos_y
+-- mirror_x
+-- stackCanvasWidth
+function Stack.setGarbageTarget(self, newGarbageTarget)
+  if newGarbageTarget ~= nil then
+    assert(newGarbageTarget.pos_x ~= nil)
+    assert(newGarbageTarget.pos_y ~= nil)
+    assert(newGarbageTarget.mirror_x ~= nil)
+    assert(newGarbageTarget.stackCanvasWidth ~= nil)
+    assert(newGarbageTarget.receiveGarbage ~= nil)
   end
+  self.garbageTarget = newGarbageTarget
+  if self.telegraph then
+    self.telegraph:updatePositionForGarbageTarget(newGarbageTarget)
+  end
+end
+
+function Stack:stackCanvasWidth()
+  local stackCanvasWidth = 0
+  if self.canvas then 
+    stackCanvasWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
+  end
+  return stackCanvasWidth
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -996,11 +1031,11 @@ function Stack.shouldRun(self, runsSoFar)
   if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
     if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
       -- Don't fall behind if the game is over for the other player
-      if self.garbage_target and self.garbage_target:game_ended() == false then
+      if self.opponentStack and self.opponentStack:game_ended() == false then
         -- If we are at the end of the replay we want to catch up
-        if network_connected() or #self.garbage_target.input_buffer > 0 then
+        if network_connected() or #self.opponentStack.input_buffer > 0 then
           local framesBehind = math.abs(config.debug_vsFramesBehind)
-          if self.CLOCK >= self.garbage_target.CLOCK - framesBehind then
+          if self.clock >= self.opponentStack.clock - framesBehind then
             return false
           end
         end
@@ -1086,6 +1121,10 @@ function Stack.enqueue_card(self, chain, x, y, n)
     card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
   end
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
+end
+
+function Stack:wait_for_random_character()
+  self.character = wait_for_random_character(self.character)
 end
 
 -- Enqueue a pop animation
@@ -1274,7 +1313,7 @@ function Stack.simulate(self)
     -- Increase the speed if applicable
     if self.speedIncreaseMode == 1 then
       -- increase per interval
-      if self.CLOCK == self.nextSpeedIncreaseClock then
+      if self.clock == self.nextSpeedIncreaseClock then
         self.speed = min(self.speed + 1, 99)
         self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
       end
@@ -1425,7 +1464,7 @@ function Stack.simulate(self)
 
     -- if at the end of the routine there are no chain panels, the chain ends.
     if self.chain_counter ~= 0 and not self:hasChainingPanels() then
-      self.chains[self.currentChainStartFrame].finish = self.CLOCK
+      self.chains[self.currentChainStartFrame].finish = self.clock
       self.chains[self.currentChainStartFrame].size = self.chain_counter
       self.currentChainStartFrame = nil
       if self:shouldChangeSoundEffects() then
@@ -1434,8 +1473,9 @@ function Stack.simulate(self)
       self.analytic:register_chain(self.chain_counter)
       self.chain_counter = 0
 
-      if self.garbage_target and self.garbage_target.telegraph then
-        self.telegraph:chainingEnded(self.CLOCK)
+      if self.telegraph then
+        logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
+        self.telegraph:chainingEnded(self.clock)
       end
     end
 
@@ -1447,18 +1487,12 @@ function Stack.simulate(self)
     self:updateActivePanels()
 
     if self.telegraph then
-      local to_send = self.telegraph:pop_all_ready_garbage(self.CLOCK)
-      if to_send and to_send[1] then
-        -- Right now the training attacks are put on the players telegraph, 
-        -- but they really should be a seperate telegraph since the telegraph on the player's stack is for sending outgoing attacks.
-        local receiver = self.garbage_target or self 
-        receiver:receiveGarbage(self.CLOCK + GARBAGE_DELAY_LAND_TIME, to_send)
-      end
+      self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
     end
     
-    if self.later_garbage[self.CLOCK] then
-      self.garbage_q:push(self.later_garbage[self.CLOCK])
-      self.later_garbage[self.CLOCK] = nil
+    if self.later_garbage[self.clock] then
+      self.garbage_q:push(self.later_garbage[self.clock])
+      self.later_garbage[self.clock] = nil
     end
 
     self:remove_extra_rows()
@@ -1544,7 +1578,7 @@ function Stack.simulate(self)
         end
 
         local wantsDangerMusic = self.danger_music
-        if self.garbage_target and self.garbage_target.danger_music then
+        if self.opponentStack and self.opponentStack.danger_music then
           wantsDangerMusic = true
         end
 
@@ -1700,21 +1734,21 @@ function Stack.simulate(self)
         SFX_Pop_Play = nil
         SFX_Garbage_Pop_Play = nil
       end
-      if self.game_over or (self.garbage_target and self.garbage_target.game_over) then
+      if self.game_over or (self.opponentStack and self.opponentStack.game_over) then
         if self:shouldChangeSoundEffects() then
           SFX_GameOver_Play = 1
         end
       end
     end
 
-    self.CLOCK = self.CLOCK + 1
+    self.clock = self.clock + 1
 
-    if self.garbage_target and self.CLOCK > self.garbage_target.CLOCK + MAX_LAG then
-      self.garbage_target.tooFarBehindError = true
+    if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
+      self.opponentStack.tooFarBehindError = true
     end
 
     local gameEndedClockTime = self.match:gameEndedClockTime()
-    if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.CLOCK <= gameEndedClockTime) then
+    if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.clock <= gameEndedClockTime) then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
     end
   end
@@ -1727,8 +1761,8 @@ function Stack:runCountDownIfNeeded()
   if self.do_countdown then
     self.game_stopwatch_running = false
     self.rise_lock = true
-    if not self.countdown_CLOCK then
-      self.countdown_CLOCK = self.CLOCK
+    if not self.countdown_clock then
+      self.countdown_clock = self.clock
       self.animatingCursorDuringCountdown = true
       if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
         self.cursorLock = true
@@ -1740,7 +1774,7 @@ function Stack:runCountDownIfNeeded()
       end
     end
     local COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
-    if self.countdown_CLOCK == 8 then
+    if self.countdown_clock == 8 then
       self.countdown_timer = COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
@@ -1766,7 +1800,7 @@ function Stack:runCountDownIfNeeded()
         --we are done counting down
         self.do_countdown = false
         self.countdown_timer = nil
-        self.countdown_CLOCK = nil
+        self.countdown_clock = nil
         self.animatingCursorDuringCountdown = nil
         self.game_stopwatch_running = true
         if self.which == 1 and self:shouldChangeSoundEffects() then
@@ -1782,8 +1816,8 @@ function Stack:runCountDownIfNeeded()
         self.countdown_timer = self.countdown_timer - 1
       end
     end
-    if self.countdown_CLOCK then
-      self.countdown_CLOCK = self.countdown_CLOCK + 1
+    if self.countdown_clock then
+      self.countdown_clock = self.countdown_clock + 1
     end
   end
 end
@@ -1798,7 +1832,7 @@ end
 function Stack:receiveGarbage(frameToReceive, garbageList)
 
   -- If we are past the frame the attack would be processed we need to rollback
-  if self.CLOCK > frameToReceive then
+  if self.clock > frameToReceive then
     self:rollbackToFrame(frameToReceive)
   end
 
@@ -1810,17 +1844,17 @@ function Stack:receiveGarbage(frameToReceive, garbageList)
 end
 
 function Stack:updateFramesBehind()
-  if self.garbage_target and self.garbage_target ~= self then
-    if not self.framesBehindArray[self.CLOCK] then
-      local framesBehind = math.max(0, self.garbage_target.CLOCK - self.CLOCK)
-      self.framesBehindArray[self.CLOCK] = framesBehind
+  if self.opponentStack then
+    if not self.framesBehindArray[self.clock] then
+      local framesBehind = math.max(0, self.opponentStack.clock - self.clock)
+      self.framesBehindArray[self.clock] = framesBehind
       self.totalFramesBehind = self.totalFramesBehind + framesBehind
     end
   end
 end
 
 function Stack.behindRollback(self)
-  if self.lastRollbackFrame > self.CLOCK then
+  if self.lastRollbackFrame > self.clock then
     return true
   end
 
@@ -1844,7 +1878,7 @@ function Stack.shouldChangeMusic(self)
       result = false
     end
 
-    if self.garbage_target and self.garbage_target.play_to_end then
+    if self.opponentStack and self.opponentStack.play_to_end then
       result = false
     end
   end
@@ -1860,7 +1894,7 @@ function Stack.shouldChangeSoundEffects(self)
 end
 
 function Stack:averageFramesBehind()
-  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.CLOCK, 1)), 1))
+  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.clock, 1)), 1))
   return average
 end
 
@@ -1870,13 +1904,17 @@ function Stack.game_ended(self)
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
   if self.match.mode == "vs" then
+    if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
+      return true
+    end
+
     -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
     -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
-    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
+    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return true
     end
   elseif self.match.mode == "time" then
-    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
+    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return true
     elseif self.game_stopwatch then
       if self.game_stopwatch > time_attack_time * 60 then
@@ -1884,7 +1922,7 @@ function Stack.game_ended(self)
       end
     end
   elseif self.match.mode == "endless" then
-    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
+    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return true
     end
   elseif self.match.mode == "puzzle" then
@@ -1905,21 +1943,25 @@ function Stack.gameResult(self)
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
   if self.match.mode == "vs" then
-    local otherPlayer = self.garbage_target
-    if otherPlayer == self or otherPlayer == nil then
+    if self.opponentStack == nil then
+      if self.match.simulatedOpponent then
+        if self.match.simulatedOpponent:isDefeated() then
+          return 1
+        end
+      end
       return -1
     -- We can't call it until someone has lost and everyone has played up to that point in time.
-    elseif otherPlayer:game_ended() then
-      if self.game_over_clock == gameEndedClockTime and otherPlayer.game_over_clock == gameEndedClockTime then
+    elseif self.opponentStack:game_ended() then
+      if self.game_over_clock == gameEndedClockTime and self.opponentStack.game_over_clock == gameEndedClockTime then
         return 0
       elseif self.game_over_clock == gameEndedClockTime then
         return -1
-      elseif otherPlayer.game_over_clock == gameEndedClockTime then
+      elseif self.opponentStack.game_over_clock == gameEndedClockTime then
         return 1
       end
     end
   elseif self.match.mode == "time" then
-    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
+    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return -1
     elseif self.game_stopwatch then
       if self.game_stopwatch > time_attack_time * 60 then
@@ -1927,7 +1969,7 @@ function Stack.gameResult(self)
       end
     end
   elseif self.match.mode == "endless" then
-    if gameEndedClockTime > 0 and self.CLOCK > gameEndedClockTime then
+    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return -1
     end
   elseif self.match.mode == "puzzle" then
@@ -1950,7 +1992,7 @@ function Stack.set_game_over(self)
   end
   
   self.game_over = true
-  self.game_over_clock = self.CLOCK
+  self.game_over_clock = self.clock
 
   if self.canvas then
     local popsize = "small"
@@ -1987,7 +2029,7 @@ function Stack.canSwap(self, row, column)
     panels[row][column + 1]:canSwap() and -- also, neither space above us can be hovering.
     (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
     not self.do_countdown and --also, don't swap on the first frame
-    not (self.CLOCK and self.CLOCK <= 1)
+    not (self.clock and self.clock <= 1)
   -- If you have two pieces stacked vertically, you can't move
   -- both of them to the right or left by swapping with empty space.
   -- TODO: This might be wrong if something lands on a swapping panel?
@@ -2083,7 +2125,7 @@ end
 -- returns true if garbage was dropped, false otherwise
 function Stack.tryDropGarbage(self, width, height, metal)
 
-  logger.debug("trying to drop garbage at frame "..self.CLOCK)
+  logger.debug("trying to drop garbage at frame "..self.clock)
 
   -- Do one last check for panels in the way.
   for i = self.height + 1, #self.panels do
@@ -2199,8 +2241,8 @@ function Stack.new_row(self)
 
   if string.len(self.panel_buffer) <= 10 * self.width then
     local opponentLevel = nil
-    if self.garbage_target then
-      opponentLevel = self.garbage_target.level
+    if self.opponentStack then
+      opponentLevel = self.opponentStack.level
     end
     self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
     logger.debug("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
@@ -2245,7 +2287,19 @@ end
 function Stack:getAttackPatternData()
 
   local data = {}
-  data.name = "Player " .. self.which
+  data.extraInfo = {}
+  data.extraInfo.playerName = "Player"
+  if self.match.battleRoom then
+    data.extraInfo.playerName = self.match.battleRoom.playerNames[self.which]
+  end
+  data.extraInfo.gpm = self.analytic:getRoundedGPM(self.clock) or 0
+  data.extraInfo.matchLength = " "
+  if self.game_stopwatch and tonumber(self.game_stopwatch) then
+    data.extraInfo.matchLength = frames_to_time_string(self.game_stopwatch)
+  end
+  local now = os.date("*t", to_UTC(os.time()))
+  data.extraInfo.dateGenerated = string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
@@ -2282,7 +2336,9 @@ function Stack:getAttackPatternData()
     end
   end
 
-  return data
+  local state = {keyorder = {"extraInfo", "playerName", "gpm", "matchLength", "dateGenerated", "mergeComboMetalQueue", "delayBeforeStart", "delayBeforeRepeat", "attackPatterns"}}
+
+  return data, state
 end
 
 -- creates a new panel at the specified row+column and adds it to the Stack's panels table

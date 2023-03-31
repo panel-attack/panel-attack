@@ -354,6 +354,45 @@ function Character.sound_uninit(self)
   end
 end
 
+--- Stack number 1 equals left side, 2 is right side
+function Character:portraitImage(stackNumber)
+  local portraitImageName = self:portraitName(stackNumber)
+  return self.images[portraitImageName]
+end
+
+function Character:portraitName(stackNumber)
+  local portrait_image = "portrait"
+  if stackNumber == 2 and self:portraitIsReversed(stackNumber) == false then
+    portrait_image = "portrait2"
+  end
+  return portrait_image
+end
+
+function Character:portraitIsReversed(stackNumber)
+  if stackNumber == 2 and self.images["portrait2"] == nil then
+    return true
+  end
+  return false
+end
+
+function Character:drawPortrait(stackNumber, x, y, fade)
+  local portraitImage = self:portraitImage(stackNumber)
+  local portraitImageWidth, portraitImageHeight = portraitImage:getDimensions()
+
+  local portraitImageX = x
+  local portraitMirror = 1
+  local portraitWidth = 96
+  local portraitHeight = 192
+  if self:portraitIsReversed(stackNumber) then
+    portraitImageX = portraitImageX + portraitWidth
+    portraitMirror = -1
+  end
+  draw(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
+  if fade > 0 then
+    grectangle_color("fill", x, y, portraitWidth, portraitHeight, 0, 0, 0, fade)
+  end
+end
+
 function Character.reassignLegacySfx(self)
   if self.chain_style == chainStyle.classic then
     local maxIndex = -1

@@ -271,40 +271,29 @@ function Stack.render(self)
   love.graphics.clear()
   love.graphics.stencil(frame_mask, "replace", 1)
   love.graphics.setStencilTest("greater", 0)
+  local characterObject = characters[self.character]
 
-  -- draw inside stack's frame canvas
-  local portrait_image = "portrait"
-  if not (self.which == 1) and characters[self.character].images["portrait2"] then
-    portrait_image = "portrait2"
-  end
-
-  local portrait_w, portrait_h = characters[self.character].images[portrait_image]:getDimensions()
-
-  -- Draw the portrait (with fade and inversion if needed)
+  -- Update portrait fade if needed
   if self.do_countdown then
     -- self.portraitFade starts at 0 (no fade)
-    if self.countdown_CLOCK then
+    if self.countdown_clock then
       local desiredFade = config.portrait_darkness / 100
       local startFrame = 50
       local fadeDuration = 30
-      if self.countdown_CLOCK <= 50 then
+      if self.countdown_clock <= 50 then
         self.portraitFade = 0
-      elseif self.countdown_CLOCK > 50 and self.countdown_CLOCK <= startFrame + fadeDuration then
-        local percent = (self.countdown_CLOCK - startFrame) / fadeDuration
+      elseif self.countdown_clock > 50 and self.countdown_clock <= startFrame + fadeDuration then
+        local percent = (self.countdown_clock - startFrame) / fadeDuration
         self.portraitFade = desiredFade * percent
       end
     end
   end
-  if self.which == 1 or portrait_image == "portrait2" then
-    draw(characters[self.character].images[portrait_image], 4, 4, 0, 96 / portrait_w, 192 / portrait_h)
-  else
-    draw(characters[self.character].images[portrait_image], 100, 4, 0, (96/portrait_w)*-1, 192/portrait_h)
-  end
-  grectangle_color("fill", 4, 4, 96, 192, 0, 0, 0, self.portraitFade)
+
+  characterObject:drawPortrait(self.which, 4, 4, self.portraitFade)
 
   local metals
-  if self.garbage_target then
-    metals = panels[self.garbage_target.panels_dir].images.metals
+  if self.opponentStack then
+    metals = panels[self.opponentStack.panels_dir].images.metals
   else
     metals = panels[self.panels_dir].images.metals
   end
@@ -326,10 +315,10 @@ function Stack.render(self)
         if panel.isGarbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            if not self.garbage_target then 
-              imgs = characters[self.character].images
+            if not self.garbageTarget then 
+              imgs = characterObject.images
             else
-              imgs = characters[self.garbage_target.character].images
+              imgs = characters[self.garbageTarget.character].images
             end
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
@@ -830,10 +819,9 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- GPM
-    if analytic.lastGPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
-      if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
-        local garbagePerMinute = analytic.data.sent_garbage_lines / (self.CLOCK / 60 / 60)
-        analytic.lastGPM = string.format("%0.1f", round(garbagePerMinute, 1))
+    if analytic.lastGPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
+      if self.clock > 0 and (analytic.data.sent_garbage_lines > 0) then
+        analytic.lastGPM = analytic:getRoundedGPM(self.clock)
       end
     end
     icon_width, icon_height = themes[config.theme].images.IMG_gpm:getDimensions()
@@ -859,9 +847,9 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- APM
-    if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
-      if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
-        local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
+    if analytic.lastAPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
+      if self.clock > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
+        local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.clock / 60 / 60)
         analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
       end
     end
@@ -975,7 +963,7 @@ function Stack.render_cursor(self)
     end
   end
 
-  local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
+  local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   local desiredCursorWidth = 40
@@ -985,7 +973,7 @@ function Stack.render_cursor(self)
 
   local renderCursor = true
   if self.countdown_timer then
-    if self.CLOCK % 2 ~= 0 then
+    if self.clock % 2 ~= 0 then
       renderCursor = false
     end
   end
@@ -1000,16 +988,16 @@ end
 
 -- Draw the stacks countdown timer
 function Stack.render_countdown(self)
-  if self.do_countdown and self.countdown_CLOCK then
+  if self.do_countdown and self.countdown_clock then
     local ready_x = 16
     local initial_ready_y = 4
     local ready_y_drop_speed = 6
-    local ready_y = initial_ready_y + (math.min(8, self.countdown_CLOCK) - 1) * ready_y_drop_speed
+    local ready_y = initial_ready_y + (math.min(8, self.countdown_clock) - 1) * ready_y_drop_speed
     local countdown_x = 44
     local countdown_y = 68
-    if self.countdown_CLOCK <= 8 then
+    if self.countdown_clock <= 8 then
       draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
-    elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
+    elseif self.countdown_clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
         draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end

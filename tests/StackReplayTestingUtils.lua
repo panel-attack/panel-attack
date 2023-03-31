@@ -33,18 +33,18 @@ function StackReplayTestingUtils:fullySimulateMatch(match)
 end
 
 function StackReplayTestingUtils:simulateStack(stack, clockGoal)
-  while stack.CLOCK < clockGoal do
+  while stack.clock < clockGoal do
     stack:run()
     stack:saveForRollback()
   end
-  assert(stack.CLOCK == clockGoal)
+  assert(stack.clock == clockGoal)
 end
 
 function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
-  while match.P1.CLOCK < clockGoal do
+  while match.P1.clock < clockGoal do
       match:run()
   end
-  assert(match.P1.CLOCK == clockGoal)
+  assert(match.P1.clock == clockGoal)
 end
 
 -- Runs the given clock time both with and without rollback
