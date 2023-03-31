@@ -15,10 +15,18 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, garbageTarget, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, sender, character)
-    self.delayBeforeStart = delayBeforeStart
+  function(self, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, sender, character)
+    -- The number of frames before the first attack starts. Note if this is changed after attack patterns are added their times won't be updated.
+    self.delayBeforeStart = delayBeforeStart 
+
+    -- The number of frames at the end until the whole attack engine repeats.
     self.delayBeforeRepeat = delayBeforeRepeat
+
+    -- Attack patterns that put out a crazy amount of garbage can slow down the game, so by default we don't queue more than 72 attacks
+    -- This flag can be optionally set to disable that.
     self.disableQueueLimit = disableQueueLimit
+
+    -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
     self.clock = 0
     self.character = wait_for_random_character(character)
@@ -31,28 +39,31 @@ function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, 
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(garbageTarget, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, opponent, character)
-  for _, values in ipairs(trainingModeSettings.attackPatterns) do
+  local attackEngine = AttackEngine(delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, opponent, character)
+  attackEngine:addAttackPatternsFromTable(trainingModeSettings.attackPatterns)
+  return attackEngine
+end
+
+function AttackEngine:addAttackPatternsFromTable(attackPatternsTable)
+  for _, values in ipairs(attackPatternsTable) do
     if values.chain then
       if type(values.chain) == "number" then
         for i = 1, values.height do
-          attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
+          self:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
         end
-        attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
+        self:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
       elseif type(values.chain) == "table" then
         for i, chainTime in ipairs(values.chain) do
-          attackEngine:addAttackPattern(6, i, chainTime, false, true)
+          self:addAttackPattern(6, i, chainTime, false, true)
         end
-        attackEngine:addEndChainPattern(values.chainEndTime)
+        self:addEndChainPattern(values.chainEndTime)
       else
         error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
       end
     else
-      attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
+      self:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
     end
   end
-
-  return attackEngine
 end
 
 function AttackEngine:setGarbageTarget(garbageTarget)
