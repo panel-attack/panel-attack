@@ -9,7 +9,7 @@ SimulatedOpponent =
     self.pos_x = positionX / GFX_SCALE
     self.pos_y = positionY / GFX_SCALE
     self.mirror_x = mirror
-    self.CLOCK = 0
+    self.clock = 0
   end
 )
 
@@ -29,7 +29,7 @@ function SimulatedOpponent:run()
     if self.attackEngine then
       self.attackEngine:run()
     end
-    self.CLOCK = self.CLOCK + 1
+    self.clock = self.clock + 1
   end
 end
 

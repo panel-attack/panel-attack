@@ -95,13 +95,13 @@ function Match:debugRollbackAndCaptureState(clockGoal)
   local P1 = self.P1
   local P2 = self.P2
 
-  if P1.CLOCK <= clockGoal then
+  if P1.clock <= clockGoal then
     return
   end
 
-  self.savedStackP1 = P1.prev_states[P1.CLOCK]
+  self.savedStackP1 = P1.prev_states[P1.clock]
   if P2 then
-    self.savedStackP2 = P2.prev_states[P2.CLOCK]
+    self.savedStackP2 = P2.prev_states[P2.clock]
   end
 
   local rollbackResult = P1:rollbackToFrame(clockGoal)
@@ -143,14 +143,14 @@ end
 
 function Match:debugCheckDivergence()
 
-  if not self.savedStackP1 or self.savedStackP1.CLOCK ~= self.P1.CLOCK then
+  if not self.savedStackP1 or self.savedStackP1.clock ~= self.P1.clock then
     return
   end
 
   self:debugAssertDivergence(self.P1, self.savedStackP1)
   self.savedStackP1 = nil
 
-  if not self.savedStackP2 or self.savedStackP2.CLOCK ~= self.P2.CLOCK then
+  if not self.savedStackP2 or self.savedStackP2.clock ~= self.P2.clock then
     return
   end
 
@@ -168,11 +168,11 @@ function Match:run()
 
   local startTime = love.timer.getTime()
 
-  -- We need to save CLOCK 0 as a base case
-  if P1.CLOCK == 0 then  
+  -- We need to save clock 0 as a base case
+  if P1.clock == 0 then  
     P1:saveForRollback()
   end
-  if P2 and P2.CLOCK == 0 then  
+  if P2 and P2.clock == 0 then  
     P2:saveForRollback()
   end
 
@@ -265,7 +265,7 @@ function Match.render(self)
 
     local P1Behind = P1:averageFramesBehind()
     local P2Behind = P2:averageFramesBehind()
-    local behind = math.abs(P1.CLOCK - P2.CLOCK)
+    local behind = math.abs(P1.clock - P2.clock)
 
     if P1Behind > 0 then
       gprint("P1 Average Latency: " .. P1Behind, 1, 23)
@@ -339,7 +339,7 @@ function Match.render(self)
 
     grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
     
-    gprintf("Clock " .. P1.CLOCK, drawX, drawY)
+    gprintf("Clock " .. P1.clock, drawX, drawY)
 
 
     drawY = drawY + padding
@@ -433,10 +433,10 @@ function Match.render(self)
       drawY = 10 - padding
 
       drawY = drawY + padding
-      gprintf("Clock " .. P2.CLOCK, drawX, drawY)
+      gprintf("Clock " .. P2.clock, drawX, drawY)
 
       drawY = drawY + padding
-      local framesAhead = P1.CLOCK - P2.CLOCK
+      local framesAhead = P1.clock - P2.clock
       gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding

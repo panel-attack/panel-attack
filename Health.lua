@@ -11,7 +11,7 @@ Health =
     self.currentLines = 0 -- The current number of "lines" simulated
     self.height = height -- How many "lines" need to be accumulated before we are "topped" out.
     self.lastWasFourCombo = false -- Tracks if the last combo was a +4. If two +4s hit in a row, it only counts as 1 "line"
-    self.CLOCK = 0 -- Current clock time, this should match the opponent
+    self.clock = 0 -- Current clock time, this should match the opponent
     self.riseLevel = riseLevel -- The current level used to simulate "rise speed"
     self.currentRiseSpeed = level_to_starting_speed[self.riseLevel] -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
   end
@@ -20,7 +20,7 @@ Health =
 function Health:run()
 
   -- Increment rise speed if needed
-  if self.CLOCK > 0 and self.CLOCK % (15 * 60) == 0 then
+  if self.clock > 0 and self.clock % (15 * 60) == 0 then
     self.currentRiseSpeed = math.min(self.currentRiseSpeed + 1, 99)
   end
 
@@ -28,13 +28,13 @@ function Health:run()
   self.currentLines = self.currentLines + risenLines
 
   -- Harder to survive over time, simulating "stamina"
-  local staminaPercent = math.max(0.5, 1 - ((self.CLOCK / 60) * (0.01 / 10)))
+  local staminaPercent = math.max(0.5, 1 - ((self.clock / 60) * (0.01 / 10)))
   local decrementLines = (self.lineClearRate * (1/60.0)) * staminaPercent
   self.currentLines = math.max(0, self.currentLines - decrementLines)
   if self.currentLines >= self.height then
     self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))
   end
-  self.CLOCK = self.CLOCK + 1
+  self.clock = self.clock + 1
 end
 
 function Health:receiveGarbage(frameToReceive, garbageList)

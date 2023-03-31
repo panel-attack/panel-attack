@@ -7,10 +7,10 @@ local TELEGRAPH_BLOCK_WIDTH = 26
 
 local clone_pool = {}
 
--- Sender is the sender of these attacks, must implement CLOCK, pos_x, pos_y, and character
+-- Sender is the sender of these attacks, must implement clock, pos_x, pos_y, and character
 Telegraph = class(function(self, sender)
 
-  assert(sender.CLOCK ~= nil, "telegraph sender invalid")
+  assert(sender.clock ~= nil, "telegraph sender invalid")
   assert(sender.pos_x ~= nil, "telegraph sender invalid")
   assert(sender.pos_y ~= nil, "telegraph sender invalid")
   assert(sender.character ~= nil, "telegraph sender invalid")
@@ -116,7 +116,7 @@ end
 -- Adds a piece of garbage to the queue
 function Telegraph:push(garbage, attackOriginCol, attackOriginRow, frameEarned)
   assert(self.sender ~= nil, "telegraph needs sender set")
-  assert(frameEarned == self.sender.CLOCK, "expected sender clock to equal attack")
+  assert(frameEarned == self.sender.clock, "expected sender clock to equal attack")
 
   -- the attack only starts interacting with the telegraph on the next frame, not the same it was earned
   self:privatePush(garbage, attackOriginCol, attackOriginRow, frameEarned + 1)
@@ -157,7 +157,7 @@ end
 
 function Telegraph:chainingEnded(frameEnded)
   if not GAME.battleRoom.trainingModeSettings then
-    assert(frameEnded == self.sender.CLOCK, "expected sender clock to equal attack")
+    assert(frameEnded == self.sender.clock, "expected sender clock to equal attack")
   end
 
   self.senderCurrentlyChaining = false
@@ -342,7 +342,7 @@ function Telegraph:render()
     local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
 
     for timeAttackInteracts, attacks_this_frame in pairs(telegraph_to_render.attacks) do
-      local frames_since_earned = telegraph_to_render.sender.CLOCK - timeAttackInteracts
+      local frames_since_earned = telegraph_to_render.sender.clock - timeAttackInteracts
       if frames_since_earned <= self:attackStartFrame() then
         --don't draw anything yet, card animation is still in progress.
       elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
@@ -410,7 +410,7 @@ function Telegraph:render()
 
     local currentIndex = 0
     while current_block do
-      if telegraph_to_render.sender.CLOCK - current_block.timeAttackInteracts >= attackAnimationLength then
+      if telegraph_to_render.sender.clock - current_block.timeAttackInteracts >= attackAnimationLength then
         local draw_x = self:telegraphRenderXPosition(currentIndex)
         if not current_block[3]--[[is_metal]] then
           local height = math.min(current_block[2], 14)

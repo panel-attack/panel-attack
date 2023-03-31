@@ -20,7 +20,7 @@ AttackEngine =
     self.delayBeforeRepeat = delayBeforeRepeat
     self.disableQueueLimit = disableQueueLimit
     self.attackPatterns = {}
-    self.CLOCK = 0
+    self.clock = 0
     self.character = wait_for_random_character(character)
     self.telegraph = Telegraph(sender)
     self:setGarbageTarget(garbageTarget)
@@ -72,7 +72,7 @@ end
 -- Adds an attack pattern that happens repeatedly on a timer.
 -- width - the width of the attack
 -- height - the height of the attack
--- start -- the CLOCK frame these attacks should start being sent
+-- start -- the clock frame these attacks should start being sent
 -- repeatDelay - the amount of time in between each attack after start
 -- metal - if this is a metal block
 -- chain - if this is a chain attack
@@ -103,12 +103,12 @@ function AttackEngine.run(self)
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
   if self.disableQueueLimit or self.garbageTarget.garbage_q:len() <= 72 then
     for i = 1, #self.attackPatterns do
-      if self.CLOCK >= self.attackPatterns[i].startTime then
-        local difference = self.CLOCK - self.attackPatterns[i].startTime
+      if self.clock >= self.attackPatterns[i].startTime then
+        local difference = self.clock - self.attackPatterns[i].startTime
         local remainder = difference % totalAttackTimeBeforeRepeat
         if remainder == 0 then
           if self.attackPatterns[i].endsChain then
-            self.telegraph:chainingEnded(self.CLOCK)
+            self.telegraph:chainingEnded(self.clock)
           else
             local garbage = self.attackPatterns[i].garbage
             if garbage.isChain then
@@ -118,14 +118,14 @@ function AttackEngine.run(self)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
             end
             hasMetal = garbage.isMetal or hasMetal
-            self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.CLOCK)
+            self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.clock)
           end
         end
       end
     end
   end
 
-  self.telegraph:popAllAndSendToTarget(self.CLOCK, self.garbageTarget)
+  self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
 
   local metalCount = 0
   if hasMetal then
@@ -136,7 +136,7 @@ function AttackEngine.run(self)
     characters[self.character]:playAttackSfx(newComboChainInfo)
   end
 
-  self.CLOCK = self.CLOCK + 1
+  self.clock = self.clock + 1
 end
 
 function AttackEngine.render(self)

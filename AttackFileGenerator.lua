@@ -23,8 +23,8 @@ local function finishedMatchForPath(path)
     local match = GAME.match
     local matchOutcome = match.battleRoom:matchOutcome()
     local lastClock = -1
-    while matchOutcome == nil and lastClock ~= match.P1.CLOCK do
-      lastClock = match.P1.CLOCK
+    while matchOutcome == nil and lastClock ~= match.P1.clock do
+      lastClock = match.P1.clock
       match:run()
       matchOutcome = match.battleRoom:matchOutcome()
     end

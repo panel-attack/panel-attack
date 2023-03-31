@@ -276,14 +276,14 @@ function Stack.render(self)
   -- Update portrait fade if needed
   if self.do_countdown then
     -- self.portraitFade starts at 0 (no fade)
-    if self.countdown_CLOCK then
+    if self.countdown_clock then
       local desiredFade = config.portrait_darkness / 100
       local startFrame = 50
       local fadeDuration = 30
-      if self.countdown_CLOCK <= 50 then
+      if self.countdown_clock <= 50 then
         self.portraitFade = 0
-      elseif self.countdown_CLOCK > 50 and self.countdown_CLOCK <= startFrame + fadeDuration then
-        local percent = (self.countdown_CLOCK - startFrame) / fadeDuration
+      elseif self.countdown_clock > 50 and self.countdown_clock <= startFrame + fadeDuration then
+        local percent = (self.countdown_clock - startFrame) / fadeDuration
         self.portraitFade = desiredFade * percent
       end
     end
@@ -819,9 +819,9 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- GPM
-    if analytic.lastGPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
-      if self.CLOCK > 0 and (analytic.data.sent_garbage_lines > 0) then
-        analytic.lastGPM = analytic:getRoundedGPM(self.CLOCK)
+    if analytic.lastGPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
+      if self.clock > 0 and (analytic.data.sent_garbage_lines > 0) then
+        analytic.lastGPM = analytic:getRoundedGPM(self.clock)
       end
     end
     icon_width, icon_height = themes[config.theme].images.IMG_gpm:getDimensions()
@@ -847,9 +847,9 @@ function Stack.render(self)
     y = y + nextIconIncrement
   
     -- APM
-    if analytic.lastAPM == 0 or math.fmod(self.CLOCK, 60) < self.max_runs_per_frame then
-      if self.CLOCK > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
-        local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.CLOCK / 60 / 60)
+    if analytic.lastAPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
+      if self.clock > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
+        local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.clock / 60 / 60)
         analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
       end
     end
@@ -963,7 +963,7 @@ function Stack.render_cursor(self)
     end
   end
 
-  local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.CLOCK / 16) % 2) + 1]
+  local cursorImage = themes[config.theme].images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   local desiredCursorWidth = 40
@@ -973,7 +973,7 @@ function Stack.render_cursor(self)
 
   local renderCursor = true
   if self.countdown_timer then
-    if self.CLOCK % 2 ~= 0 then
+    if self.clock % 2 ~= 0 then
       renderCursor = false
     end
   end
@@ -988,16 +988,16 @@ end
 
 -- Draw the stacks countdown timer
 function Stack.render_countdown(self)
-  if self.do_countdown and self.countdown_CLOCK then
+  if self.do_countdown and self.countdown_clock then
     local ready_x = 16
     local initial_ready_y = 4
     local ready_y_drop_speed = 6
-    local ready_y = initial_ready_y + (math.min(8, self.countdown_CLOCK) - 1) * ready_y_drop_speed
+    local ready_y = initial_ready_y + (math.min(8, self.countdown_clock) - 1) * ready_y_drop_speed
     local countdown_x = 44
     local countdown_y = 68
-    if self.countdown_CLOCK <= 8 then
+    if self.countdown_clock <= 8 then
       draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
-    elseif self.countdown_CLOCK >= 9 and self.countdown_timer and self.countdown_timer > 0 then
+    elseif self.countdown_clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
         draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end
