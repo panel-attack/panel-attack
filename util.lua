@@ -277,6 +277,9 @@ function uncompress_input_string(inputs)
   local inputChunks = {}
   local numberString = nil
   local characterCodePoint = nil
+  if inputs == nil then
+    local phi = 5
+  end
   -- Go through the characters one by one, saving character and then the number sequence and after passing it writing out that many characters
   for p, codePoint in utf8.codes(inputs) do
     if p > 1 then

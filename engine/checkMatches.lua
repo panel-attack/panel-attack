@@ -174,6 +174,13 @@ function Stack:getMatchingPanels()
     end
   end
 
+  for i = 1, #matchingPanels do
+    if matchingPanels[i].state == "hovering" then
+      -- hovering panels that match can never chain (see Panel.matchAnyway for an explanation)
+      matchingPanels[i].chaining = false
+    end
+  end
+
   return matchingPanels
 end
 
@@ -343,9 +350,7 @@ end
 function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   for i = 3, metalCount do
     if self.garbage_target and self.telegraph then
-      -- width, height, isMetal, isChain
-      local garbage = {6, 1, true, false}
-      self.telegraph:push(garbage, coordinate.column, coordinate.row, self.CLOCK)
+      self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.CLOCK)
     end
     self:recordComboHistory(self.CLOCK, 6, 1, true)
   end
@@ -353,10 +358,8 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   local combo_pieces = combo_garbage[comboSize]
   for i = 1, #combo_pieces do
     if self.garbage_target and self.telegraph then
-      -- Give out combo garbage based on the lookup table, even if we already made shock garbage
-      -- width, height, isMetal, isChain
-      local garbage = {combo_pieces[i], 1, false, false}
-      self.telegraph:push(garbage, coordinate.column, coordinate.row,
+      -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
+      self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, coordinate.column, coordinate.row,
                           self.CLOCK)
     end
     self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
@@ -364,9 +367,7 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
 
   if isChain then
     if self.garbage_target and self.telegraph then
-      -- width, height, isMetal, isChain
-      local garbage = {6, self.chain_counter - 1, false, true}
-      self.telegraph:push(garbage, coordinate.column, coordinate.row,
+      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, coordinate.column, coordinate.row,
                           self.CLOCK)
     end
     self:recordChainHistory()
