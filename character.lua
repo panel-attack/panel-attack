@@ -406,21 +406,6 @@ self.sounds["win"] = { win, win2, win3}
 The level of sound loading is determined via "mayHaveSubSfx"
 ]]--
 
--- a function to eliminate gaps that would otherwise lead to crashes
--- #table may yield erroneous (too large) results for tables with gaps 
--- Character:playRandomSfx() relies on #table being accurate so we redo the table here if it has gaps
-local function eliminateGaps(sfxTable)
-  -- it's not possible to guarantee that the evaluation of #sfxTable won't change, even if we never alter the table
-  -- so construct a new gapless table regardless
-  local reducedTable = {}
-  local i = 1
-  for _, v in pairs(sfxTable) do
-    reducedTable[i] = v
-    i = i + 1
-  end
-  return reducedTable
-end
-
 local perSizeSfxStart = { chain = 2, combo = 4, shock = 3}
 
 function Character.loadSfx(self, name, yields)
@@ -466,7 +451,9 @@ function Character.loadSfx(self, name, yields)
   if perSizeSfxStart[name] then
     self:fillInMissingSounds(sfx, name, maxIndex)
   else
-    sfx = eliminateGaps(sfx)
+    -- #table may yield erroneous (too large) results for tables with gaps 
+    -- Character:playRandomSfx() relies on #table being accurate so we redo the table here if it has gaps
+    sfx = table.toContinuouslyIndexedTable(sfx)
   end
 
   return sfx
