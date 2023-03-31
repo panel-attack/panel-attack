@@ -448,7 +448,7 @@ Recommended size per frame: 32x32px
 Allowed formats are .mp3, .ogg, .wav, .it, .flac.
 
 Most SFX allow you to provide multiple variations. If multiple files are present for the same SFX, selection between the available files is random.  
-It is important to name your SFX continuously, e.g. garbage_land, garbage_land2, garbage_land3.  
+It is important to number your SFX continuously, e.g. garbage_land, garbage_land2, garbage_land3.  
 If you leave gaps, some of your sounds may not load!
 
 ### Attack SFX

@@ -406,6 +406,21 @@ self.sounds["win"] = { win, win2, win3}
 The level of sound loading is determined via "mayHaveSubSfx"
 ]]--
 
+-- a function to eliminate gaps that would otherwise lead to crashes
+-- #table may yield erroneous (too large) results for tables with gaps 
+-- Character:playRandomSfx() relies on #table being accurate so we redo the table here if it has gaps
+local function eliminateGaps(sfxTable)
+  -- it's not possible to guarantee that the evaluation of #sfxTable won't change, even if we never alter the table
+  -- so construct a new gapless table regardless
+  local reducedTable = {}
+  local i = 1
+  for _, v in pairs(sfxTable) do
+    reducedTable[i] = v
+    i = i + 1
+  end
+  return reducedTable
+end
+
 local perSizeSfxStart = { chain = 2, combo = 4, shock = 3}
 
 function Character.loadSfx(self, name, yields)
@@ -451,18 +466,7 @@ function Character.loadSfx(self, name, yields)
   if perSizeSfxStart[name] then
     self:fillInMissingSounds(sfx, name, maxIndex)
   else
-    -- for not understood reasons, Lua may consider a table with indexes 1, 2, 3, 4, 5, 7, 8 to have a length of 8
-    -- if unchecked the game will crash upon randomizing the sound selection based on #table and landing on a nil index
-    local i = 1
-    while i < #sfx do
-      if not sfx[i] then
-        -- so remove indexes until #sfx == i
-        -- this may actually result in some high indexed sounds ending up higher than #sfx, effectively disabling them
-        -- still better than a crash
-        table.remove(sfx, i)
-      end
-      i = i + 1
-    end
+    sfx = eliminateGaps(sfx)
   end
 
   return sfx
