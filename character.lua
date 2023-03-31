@@ -450,6 +450,19 @@ function Character.loadSfx(self, name, yields)
 
   if perSizeSfxStart[name] then
     self:fillInMissingSounds(sfx, name, maxIndex)
+  else
+    -- for not understood reasons, Lua may consider a table with indexes 1, 2, 3, 4, 5, 7, 8 to have a length of 8
+    -- if unchecked the game will crash upon randomizing the sound selection based on #table and landing on a nil index
+    local i = 1
+    while i < #sfx do
+      if not sfx[i] then
+        -- so remove indexes until #sfx == i
+        -- this may actually result in some high indexed sounds ending up higher than #sfx, effectively disabling them
+        -- still better than a crash
+        table.remove(sfx, i)
+      end
+      i = i + 1
+    end
   end
 
   return sfx
@@ -531,7 +544,8 @@ end
 local function playRandomSfx(sfxTable, fallback)
   if not GAME.muteSoundEffects then
     if sfxTable and #sfxTable > 0 then
-      table.getRandomElement(sfxTable):play()
+      local sfx = table.getRandomElement(sfxTable)
+      sfx:play()
     elseif fallback then
       playRandomSfx(fallback)
     end
