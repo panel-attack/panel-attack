@@ -1,0 +1,158 @@
+{
+    "extraInfo": {
+        "playerName": "Galadic97",
+        "gpm": "16.4",
+        "matchLength": "1:17",
+        "dateGenerated": "2022-11-26-23-17-56"
+    },
+    "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 282,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "chainEndTime": 642,
+            "chain": [
+                372,
+                441,
+                508,
+                575
+            ]
+        },
+        {
+            "chainEndTime": 778,
+            "chain": [
+                711
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1441,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1566,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1764,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1964,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "chainEndTime": 2585,
+            "chain": [
+                2413
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2413,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2626,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2879,
+            "chain": [
+                2803
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3081,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3215,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "chainEndTime": 3365,
+            "chain": [
+                3298
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3397,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3758,
+            "chain": [
+                3480,
+                3557,
+                3624,
+                3691
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3480,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 4371,
+            "chain": [
+                4302
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4326,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4746,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 4891,
+            "chain": [
+                4821
+            ]
+        }
+    ]
+}

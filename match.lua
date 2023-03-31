@@ -6,7 +6,6 @@ Match =
   function(self, mode, battleRoom)
     self.P1 = nil
     self.P2 = nil
-    self.attackEngine = nil
     self.engineVersion = VERSION
     self.mode = mode
     assert(mode ~= "vs" or battleRoom)
@@ -41,11 +40,9 @@ Match =
 function Match:deinit()
   if self.P1 then
     self.P1:deinit()
-    self.P1 = nil
   end
   if self.P2 then
     self.P2:deinit()
-    self.P2 = nil
   end
 end
 
@@ -53,8 +50,8 @@ function Match:gameEndedClockTime()
 
   local result = self.P1.game_over_clock
   
-  if self.P1.garbage_target and self.P1.garbage_target ~= self then
-    local otherPlayer = self.P1.garbage_target
+  if self.P1.opponentStack then
+    local otherPlayer = self.P1.opponentStack
     if otherPlayer.game_over_clock > 0 then
       if result == 0 or otherPlayer.game_over_clock < result then
         result = otherPlayer.game_over_clock
@@ -81,13 +78,11 @@ function Match.matchOutcome(self)
     results["winSFX"] = self.P2:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[2])
     -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[P2.player_number] = GAME.battleRoom.playerWinCounts[P2.player_number] + 1
     results["outcome_claim"] = P2.player_number
   elseif P2.game_over_clock == self.gameEndedClock then -- client wins
     results["winSFX"] = self.P1:pick_win_sfx()
     results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
     -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[P1.player_number] = GAME.battleRoom.playerWinCounts[P1.player_number] + 1
     results["outcome_claim"] = P1.player_number
   else
     error("No win result")
@@ -100,13 +95,13 @@ function Match:debugRollbackAndCaptureState(clockGoal)
   local P1 = self.P1
   local P2 = self.P2
 
-  if P1.CLOCK <= clockGoal then
+  if P1.clock <= clockGoal then
     return
   end
 
-  self.savedStackP1 = P1.prev_states[P1.CLOCK]
+  self.savedStackP1 = P1.prev_states[P1.clock]
   if P2 then
-    self.savedStackP2 = P2.prev_states[P2.CLOCK]
+    self.savedStackP2 = P2.prev_states[P2.clock]
   end
 
   local rollbackResult = P1:rollbackToFrame(clockGoal)
@@ -148,14 +143,14 @@ end
 
 function Match:debugCheckDivergence()
 
-  if not self.savedStackP1 or self.savedStackP1.CLOCK ~= self.P1.CLOCK then
+  if not self.savedStackP1 or self.savedStackP1.clock ~= self.P1.clock then
     return
   end
 
   self:debugAssertDivergence(self.P1, self.savedStackP1)
   self.savedStackP1 = nil
 
-  if not self.savedStackP2 or self.savedStackP2.CLOCK ~= self.P2.CLOCK then
+  if not self.savedStackP2 or self.savedStackP2.clock ~= self.P2.clock then
     return
   end
 
@@ -173,11 +168,11 @@ function Match:run()
 
   local startTime = love.timer.getTime()
 
-  -- We need to save CLOCK 0 as a base case
-  if P1.CLOCK == 0 then  
+  -- We need to save clock 0 as a base case
+  if P1.clock == 0 then  
     P1:saveForRollback()
   end
-  if P2 and P2.CLOCK == 0 then  
+  if P2 and P2.clock == 0 then  
     P2:saveForRollback()
   end
 
@@ -213,8 +208,10 @@ function Match:run()
       ranP2 = true
     end
 
-    if ranP1 and self.attackEngine then
-      self.attackEngine:run()
+    if ranP1 and P1:gameResult() == nil then
+      if self.simulatedOpponent then
+        self.simulatedOpponent:run()
+      end
     end
 
     -- Since the stacks can affect each other, don't save rollback until after both have run
@@ -268,7 +265,7 @@ function Match.render(self)
 
     local P1Behind = P1:averageFramesBehind()
     local P2Behind = P2:averageFramesBehind()
-    local behind = math.abs(P1.CLOCK - P2.CLOCK)
+    local behind = math.abs(P1.clock - P2.clock)
 
     if P1Behind > 0 then
       gprint("P1 Average Latency: " .. P1Behind, 1, 23)
@@ -342,7 +339,7 @@ function Match.render(self)
 
     grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
     
-    gprintf("Clock " .. P1.CLOCK, drawX, drawY)
+    gprintf("Clock " .. P1.clock, drawX, drawY)
 
 
     drawY = drawY + padding
@@ -436,10 +433,10 @@ function Match.render(self)
       drawY = 10 - padding
 
       drawY = drawY + padding
-      gprintf("Clock " .. P2.CLOCK, drawX, drawY)
+      gprintf("Clock " .. P2.clock, drawX, drawY)
 
       drawY = drawY + padding
-      local framesAhead = P1.CLOCK - P2.CLOCK
+      local framesAhead = P1.clock - P2.clock
       gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
 
       drawY = drawY + padding
@@ -489,6 +486,15 @@ function Match.render(self)
       end
       if P2 then
         P2:render()
+      end
+      
+      if self.simulatedOpponent then
+        self.simulatedOpponent:render()
+      end
+
+      local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
+      if challengeMode then
+        challengeMode:render()
       end
 
       if self.battleRoom then
