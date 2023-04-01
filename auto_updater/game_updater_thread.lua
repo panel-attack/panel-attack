@@ -24,7 +24,7 @@ function download_available_versions(server_url, timeout, max_size, timestamp_fi
     end
   }
 
-  if body ~= "" then
+  if body and body ~= "" then
     for w in body:gmatch('<a href="([/%w_-]+)%.love">') do
       all_versions[#all_versions+1] = w:gsub("^/[/%w_-]+/", "")
     end
@@ -45,10 +45,16 @@ function download_available_versions(server_url, timeout, max_size, timestamp_fi
 end
 
 function download_file(server_filepath, local_filepath)
-  local body = http.request(server_filepath)
-  love.filesystem.write(local_filepath, body)
-
-  love.thread.getChannel("download_file"):push(true)
+  local body, statusCode = http.request(server_filepath)
+  -- body may be nil if the host doesn't exist from the client's perspective
+  -- this can happen if the client's internet bricked during the download after successfully retrieving the version list
+  if body and statusCode == 200 then
+    love.filesystem.write(local_filepath, body)
+    love.thread.getChannel("download_file"):push(true)
+  else
+    -- status ~= 200 means the game file is not in the body, the download failed (even if it's a different 2## code)
+    love.thread.getChannel("download_file"):push(false)
+  end
 end
 
 function download_lastest_version(server_url, local_path, version_file, local_version)
