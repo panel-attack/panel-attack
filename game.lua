@@ -176,9 +176,9 @@ function Game:createScenes()
     require("scenes.training_mode_character_select"),
     require("scenes.training_mode_game"),
     require("scenes.lobby"),
+    require("scenes.replayBrowser"),
+    require("scenes.replayGame"),
     require("scenes.inputConfigMenu"),
-    require("scenes.replay_menu"),
-    require("scenes.replay_game"),
     require("scenes.setNameMenu"),
     require("scenes.optionsMenu"),
     require("scenes.soundTest")

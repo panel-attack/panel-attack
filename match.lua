@@ -1,5 +1,6 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local GraphicsUtil = require("graphics_util")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =

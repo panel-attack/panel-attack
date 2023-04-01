@@ -45,7 +45,7 @@ local menuItems = {
   {createMainMenuButton("mm_1_training", function() switchToScene("training_mode_menu") end)},
   {createMainMenuButton("mm_2_vs_online", function() play_optional_sfx(themes[config.theme].sounds.menu_validate) sceneManager:switchToScene("lobby", {ip = "18.188.43.50"}) end, {""})},
   {createMainMenuButton("mm_2_vs_local", genLegacyMainloopFn(main_local_vs_setup))},
-  {createMainMenuButton("mm_replay_browser", function() switchToScene("replay_menu") end)},
+  {createMainMenuButton("mm_replay_browser", function() switchToScene("replayBrowser") end)},
   {createMainMenuButton("mm_configure", function() switchToScene("inputConfigMenu") end)},
   {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("setNameMenu", {prevScene = "mainMenu"}) end)},
   {createMainMenuButton("mm_options", function() switchToScene("optionsMenu") end)},
