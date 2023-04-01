@@ -1637,7 +1637,7 @@ function main_replay()
       end
     end
 
-    if playbackSpeed == -1 then
+    if playbackSpeed == -1 and not GAME.gameIsPaused then
       if P1 and P1.clock > 0 and P1.prev_states[P1.clock-1] then
         P1:rollbackToFrame(P1.clock-1)
         P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
