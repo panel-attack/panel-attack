@@ -353,26 +353,26 @@ end
 
 function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   for i = 3, metalCount do
-    if self.garbage_target and self.telegraph then
-      self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.CLOCK)
+    if self.garbageTarget and self.telegraph then
+      self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.clock)
     end
-    self:recordComboHistory(self.CLOCK, 6, 1, true)
+    self:recordComboHistory(self.clock, 6, 1, true)
   end
 
   local combo_pieces = combo_garbage[comboSize]
   for i = 1, #combo_pieces do
-    if self.garbage_target and self.telegraph then
+    if self.garbageTarget and self.telegraph then
       -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
       self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, coordinate.column, coordinate.row,
-                          self.CLOCK)
+                          self.clock)
     end
-    self:recordComboHistory(self.CLOCK, combo_pieces[i], 1, false)
+    self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
   end
 
   if isChain then
-    if self.garbage_target and self.telegraph then
+    if self.garbageTarget and self.telegraph then
       self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, coordinate.column, coordinate.row,
-                          self.CLOCK)
+                          self.clock)
     end
     self:recordChainHistory()
   end
@@ -388,12 +388,12 @@ end
 
 function Stack:recordChainHistory()
   if self.chain_counter == 2 then
-    self.currentChainStartFrame = self.CLOCK
+    self.currentChainStartFrame = self.clock
     self.chains[self.currentChainStartFrame] = {starts = {}}
   end
   local currentChainData = self.chains[self.currentChainStartFrame]
   currentChainData.size = self.chain_counter
-  currentChainData.starts[#currentChainData.starts + 1] = self.CLOCK
+  currentChainData.starts[#currentChainData.starts + 1] = self.clock
 end
 
 function Stack:awardStopTime(isChain, comboSize)

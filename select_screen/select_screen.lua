@@ -941,8 +941,8 @@ function select_screen.start1pCpuMatch(self)
   GAME.match.P2 = P2
   GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
 
-  P1.garbage_target = P2
-  P2.garbage_target = P1
+  P1.garbageTarget = P2
+  P2.garbageTarget = P1
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
