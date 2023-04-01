@@ -1373,13 +1373,6 @@ function Stack.simulate(self)
 
     -- Look for matches.
     self:check_matches()
-    -- Clean up the value we're using to match newly hovering panels
-    -- This is pretty dirty :(
-    for row = 1, #panels do
-      for col = 1, self.width do
-        panels[row][col].match_anyway = nil
-      end
-    end
 
     self:updatePanels()
 
@@ -2243,7 +2236,9 @@ function Stack.check_matches(self)
             combo_size = combo_size + 1
             panel.matching = true
           end
-          if panel.match_anyway and panel.chaining then
+          if panel.matchAnyway and panel.chaining then
+            -- a freshly hovering channel over a match got matched
+            -- before falling, this panel should not produce a chain so we need to clear the chaining flag
             panel.chaining = nil
           end
           is_chain = is_chain or panel.chaining
@@ -2262,7 +2257,9 @@ function Stack.check_matches(self)
             combo_size = combo_size + 1
             panel.matching = true
           end
-          if panel.match_anyway and panel.chaining then
+          if panel.matchAnyway and panel.chaining then
+            -- a freshly hovering channel over a match got matched
+            -- before falling, this panel should not produce a chain so we need to clear the chaining flag
             panel.chaining = nil
           end
           is_chain = is_chain or panel.chaining
@@ -2386,7 +2383,7 @@ function Stack.check_matches(self)
           -- we might have to remove its chain flag...!
           -- It can't actually chain the first frame it hovers,
           -- so it can keep its chaining flag in that case.
-          if panel.chaining and not (panel.match_anyway or panel:exclude_match()) then
+          if panel.chaining and not (panel.matchAnyway or panel:exclude_match()) then
             if row ~= 1 then
               -- a panel landed on the bottom row, so it surely
               -- loses its chain flag.

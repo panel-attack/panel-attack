@@ -483,8 +483,8 @@ function Stack.render(self)
         if mouseX >= self.pos_x * GFX_SCALE and mouseX <= (self.pos_x + self.width * 16) * GFX_SCALE then
           if not (panel.color == 0 and panel.state == "normal") then
             gprint(panel.state, draw_x, draw_y)
-            if panel.match_anyway ~= nil then
-              gprint(tostring(panel.match_anyway), draw_x, draw_y + 10)
+            if panel.matchAnyway then
+              gprint(tostring(panel.matchAnyway), draw_x, draw_y + 10)
               if panel.debug_tag then
                 gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
               end

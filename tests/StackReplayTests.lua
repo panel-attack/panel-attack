@@ -42,6 +42,24 @@ end
 
 testHoverInheritanceOverSwapOverGarbageHover()
 
+local function testFirstHoverFrameMatch()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "firstHoverFrameMatchReplay.json")
+  StackReplayTestingUtils:simulateMatchUntil(match, 4269)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P1.panels[4][4].state == "hovering")
+  assert(match.P1.panels[4][4].chaining == true)
+  StackReplayTestingUtils:simulateMatchUntil(match, 4270)
+  assert(match.P1.panels[4][4].state == "matched")
+  assert(match.P1.panels[4][4].chaining ~= true)
+  -- for this specific replay, the match combines with another one to form a +6
+  assert(match.P1.combos[4269][1].width == 5)
+  teardown()
+end
+
+testFirstHoverFrameMatch()
+
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
   assert(match ~= nil)

@@ -41,6 +41,12 @@ local function clear_flags(panel, clearChaining)
   -- panels will check if this is set on the panel below to update their chaining state
   -- in combination with their own state
   panel.propagatesChaining = false
+
+  -- a flag to determine if a hovering panel can be matched or not
+  -- PA always checks matches and then updates everything at once
+  -- that's a historical thing based on the original implementation
+  -- if we first updated swapping panels, then checked matches and then updated all panels we might be able to get rid of this flag
+  panel.matchAnyway = false
 end
 
 -- Sets all variables to the default settings
@@ -85,8 +91,6 @@ local function clear(panel, clearChaining, clearColor)
 
   -- garbage panels and regular panels behave differently in about any scenario
   panel.isGarbage = false
-
-  panel.match_anyway = nil
 
   -- Also flags
   clear_flags(panel, clearChaining)
@@ -287,6 +291,10 @@ normalState.enterHoverState = function(panel, panelBelow, hoverTime)
   panel.state = "hovering"
   panel.chaining = panel.chaining or panelBelow.propagatesChaining
   panel.propagatesChaining = panelBelow.propagatesChaining
+  if panelBelow.propagatesChaining or panelBelow.matchAnyway then
+    -- panels are matchable for 1 frame right after entering hoverstate
+    panel.matchAnyway = true
+  end
 
   panel.timer = hoverTime
   panel.stateChanged = true
@@ -346,6 +354,7 @@ swappingState.enterHoverState = function(panel, panelBelow)
   --panel.chaining = panel.chaining
   -- all panels above may still get the chaining flag though if it is currently propagating
   panel.propagatesChaining = panelBelow.propagatesChaining
+  panel.matchAnyway = panelBelow.matchAnyway
 
   -- swapping panels always get full hover time
   panel.timer = panel.frameTimes.HOVER
@@ -432,6 +441,9 @@ end
 
 hoverState.update = function(panel, panels)
   decrementTimer(panel)
+  if panel.matchAnyway then
+    panel.matchAnyway = false
+  end
   if panel.timer == 0 then
     hoverState.changeState(panel, panels)
   end
@@ -537,12 +549,10 @@ function Panel.exclude_match(self)
   -- panels without colors can't match
   if self.color == 0 or self.color == 9 then
     return true
-  -- i'm still figuring out how exactly that match_anyway flag works
-  elseif self.state == "hovering" and not self.match_anyway then
-    return true
   else
     if self.state == "normal"
-    or self.state == "landing" then
+    or self.state == "landing"
+    or (self.matchAnyway and self.state == "hovering")  then
       return false
     else
       -- swapping, matched, popping, popped, hover, falling, dimmed, dead
