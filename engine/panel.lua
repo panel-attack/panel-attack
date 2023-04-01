@@ -45,9 +45,9 @@ local function clear_flags(panel, clearChaining)
   panel.propagatesChaining = false
 
   -- a flag to determine if a hovering panel can be matched or not
-  -- this is necessary due to the update process of nintendo games being different than PA's
-  -- likely nintendo first updates swapping panels, then checks for matches and then updates everything else
-  -- whereas PA checks matches and then updates everything at once
+  -- PA always checks matches and then updates everything at once
+  -- that's a historical thing based on the original implementation
+  -- if we first updated swapping panels, then checked matches and then updated all panels we might be able to get rid of this flag
   panel.matchAnyway = false
 end
 
