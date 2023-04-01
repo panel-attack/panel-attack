@@ -24,7 +24,7 @@ function download_available_versions(server_url, timeout, max_size, timestamp_fi
     end
   }
 
-  if body and body ~= "" then
+  if body ~= "" then
     for w in body:gmatch('<a href="([/%w_-]+)%.love">') do
       all_versions[#all_versions+1] = w:gsub("^/[/%w_-]+/", "")
     end
