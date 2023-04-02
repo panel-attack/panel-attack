@@ -175,6 +175,14 @@ function Stack:getMatchingPanels()
         end
       end
     end
+    
+    -- Clear out the tables for the next iteration
+    for k, _ in ipairs(verticallyConnected) do 
+      verticallyConnected[k] = nil 
+    end
+    for k, _ in ipairs(horizontallyConnected) do 
+      horizontallyConnected[k] = nil 
+    end
   end
 
   for i = 1, #matchingPanels do
