@@ -67,7 +67,7 @@ function Stack:checkMatches()
     -- interrupt any ongoing manual raise
     self.manual_raise = false
 
-    local attackGfxOrigin = self:matchMatchingPanels(matchingPanels, isChainLink, comboSize)
+    local attackGfxOrigin = self:applyMatchToPanels(matchingPanels, isChainLink, comboSize)
     local garbagePanels = self:getConnectedGarbagePanels(matchingPanels)
     local garbagePanelCountOnScreen = 0
     if #garbagePanels > 0 then
@@ -82,7 +82,7 @@ function Stack:checkMatches()
 
     if isChainLink or comboSize > 3 or metalCount > 0 then
       self:pushGarbage(attackGfxOrigin, isChainLink, comboSize, metalCount)
-      self:queueSfx(isChainLink, comboSize, metalCount)
+      self:queueAttackSoundEffect(isChainLink, comboSize, metalCount)
     end
 
     self.analytic:register_destroyed_panels(comboSize)
@@ -208,7 +208,7 @@ function Stack:incrementChainCounter()
   end
 end
 
-function Stack:matchMatchingPanels(matchingPanels, isChain, comboSize)
+function Stack:applyMatchToPanels(matchingPanels, isChain, comboSize)
   matchingPanels = sortByPopOrder(matchingPanels, false)
 
   for i = 1, comboSize do
@@ -443,7 +443,7 @@ function Stack:awardStopTime(isChain, comboSize)
   end
 end
 
-function Stack:queueSfx(isChainLink, comboSize, metalCount)
+function Stack:queueAttackSoundEffect(isChainLink, comboSize, metalCount)
   if self:shouldChangeSoundEffects() then
     if metalCount > 0 then
       -- override SFX with shock sound
