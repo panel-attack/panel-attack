@@ -214,8 +214,11 @@ local function run()
 
   if GAME_UPDATER.config.force_version ~= "" then
     if containsForcedVersion(all_versions) then
-      awaitGameDownload(GAME_UPDATER.config.force_version)
-      setGameStartVersion(GAME_UPDATER.config.force_version)
+      if awaitGameDownload(GAME_UPDATER.config.force_version) then
+        setGameStartVersion(GAME_UPDATER.config.force_version)
+      else
+        error("Failed to download forced version " .. GAME_UPDATER.config.force_version)
+      end
     else
       local err = 'Could not find online version: "'..GAME_UPDATER.config.force_version..'" (force_version)\nAvailable versions are:\n'
         for _, v in pairs(all_versions) do err = err..v.."\n" end
@@ -235,8 +238,12 @@ local function run()
         setEmbeddedAsGameStartVersion()
       else
         logMessage("A new version of the game has been found!")
-        awaitGameDownload(all_versions[1])
-        setGameStartVersion(all_versions[1])
+        if awaitGameDownload(all_versions[1]) then
+          logMessage("New version downloaded successfully!")
+          setGameStartVersion(all_versions[1])
+        else
+          logMessage("Download of new version failed!")
+        end
       end
     else
       logMessage("No online version found for " .. UPDATER_NAME)
