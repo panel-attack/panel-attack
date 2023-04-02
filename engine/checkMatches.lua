@@ -98,7 +98,9 @@ function Stack:getMatchingPanels()
   local panels = self.panels
   local candidatePanels = {}
 
-  for row = 1, self.height do
+  -- we can match panels up to including row 13! 
+  -- matchable row 13 panels are possible by garbage chaining chain garbage at the top of the stack
+  for row = 1, math.min(self.height + 1, #panels) do
     for col = 1, self.width do
       local panel = panels[row][col]
       if panel.stateChanged and panel:canMatch() then
