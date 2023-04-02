@@ -15,7 +15,9 @@ local function puzzleTest()
   stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
   match:run()
   match:run()
-  assert(stack:canSwap(1, 4), "should be able to swap")
+  local leftPanel = stack.panels[1][4]
+  local rightPanel = stack.panels[1][5]
+  assert(stack:canSwap(leftPanel, rightPanel), "should be able to swap")
 
   reset_filters()
   stop_the_music()
@@ -39,7 +41,9 @@ local function clearPuzzleTest()
   stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
   match:run()
   match:run()
-  assert(stack:canSwap(1, 4), "should be able to swap")
+  local leftPanel = stack.panels[1][4]
+  local rightPanel = stack.panels[1][5]
+  assert(stack:canSwap(leftPanel, rightPanel), "should be able to swap")
 
   reset_filters()
   stop_the_music()
