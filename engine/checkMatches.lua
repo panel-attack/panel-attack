@@ -110,10 +110,12 @@ function Stack:getMatchingPanels()
   end
 
   local matchingPanels = {}
-  local verticallyConnected = {}
-  local horizontallyConnected = {}
+  local verticallyConnected
+  local horizontallyConnected
   local panel
   for i = 1, #candidatePanels do
+    verticallyConnected = {}
+    horizontallyConnected = {}
     -- check in all 4 directions until we found a panel of a different color
     -- below
     for row = candidatePanels[i].row - 1, 1, -1 do
@@ -152,43 +154,36 @@ function Stack:getMatchingPanels()
       end
     end
 
-    -- if there is a match actually add the panels to the matchingPanels table
-    if #verticallyConnected >= 2 or #horizontallyConnected >= 2 then
-      if not candidatePanels[i].matching then
-        -- the panel could already be matching if it was matched with a previous candidate panel
-        matchingPanels[#matchingPanels + 1] = candidatePanels[i]
-        candidatePanels[i].matching = true
-      end
+    if (#verticallyConnected >= 2 or #horizontallyConnected >= 2) and not candidatePanels[i].matching then
+      matchingPanels[#matchingPanels + 1] = candidatePanels[i]
+      candidatePanels[i].matching = true
+    end
 
-      if #verticallyConnected >= 2 then
-        -- vertical match
-        for j = #verticallyConnected, 1, -1 do
-          if not verticallyConnected[j].matching then
-            verticallyConnected[j].matching = true
-            matchingPanels[#matchingPanels + 1] = verticallyConnected[j]
-          end
-          verticallyConnected[j] = nil
+    if #verticallyConnected >= 2 then
+      -- vertical match
+      for j = 1, #verticallyConnected do
+        if not verticallyConnected[j].matching then
+          verticallyConnected[j].matching = true
+          matchingPanels[#matchingPanels + 1] = verticallyConnected[j]
         end
-      elseif verticallyConnected[1] then
-        verticallyConnected[1] = nil
-      --else
-        -- table is already empty!
       end
-
-      if #horizontallyConnected >= 2 then
-        -- horizontal match
-        for j = #horizontallyConnected, 1, -1 do
-          if not horizontallyConnected[j].matching then
-            horizontallyConnected[j].matching = true
-            matchingPanels[#matchingPanels + 1] = horizontallyConnected[j]
-          end
-          horizontallyConnected[j] = nil
+    end
+    if #horizontallyConnected >= 2 then
+      -- horizontal match
+      for j = 1, #horizontallyConnected do
+        if not horizontallyConnected[j].matching then
+          horizontallyConnected[j].matching = true
+          matchingPanels[#matchingPanels + 1] = horizontallyConnected[j]
         end
-      elseif horizontallyConnected[1] then
-        horizontallyConnected[1] = nil
-      --else
-        -- table is already empty!
       end
+    end
+    
+    -- Clear out the tables for the next iteration
+    for k, _ in ipairs(verticallyConnected) do 
+      verticallyConnected[k] = nil 
+    end
+    for k, _ in ipairs(horizontallyConnected) do 
+      horizontallyConnected[k] = nil 
     end
   end
 
