@@ -457,16 +457,15 @@ function Stack:queueAttackSoundEffect(isChainLink, comboSize, metalCount)
 end
 
 function Stack:enqueueCards(attackGfxOrigin, isChainLink, comboSize)
-  if comboSize > 3 then
+  if comboSize > 3 and isChainLink then
+    -- we did a combo AND a chain; cards should not overlap so offset the attack origin to one row above for the chain
     self:enqueue_card(false, attackGfxOrigin.column, attackGfxOrigin.row, comboSize)
-
-    if isChainLink then
-      -- increment so the chain card is shown 1 panel above in case we also did a chain
-      attackGfxOrigin.row = attackGfxOrigin.row + 1
-    end
-  end
-
-  if isChainLink then
+    self:enqueue_card(true, attackGfxOrigin.column, attackGfxOrigin.row + 1, self.chain_counter)
+  elseif comboSize > 3 then
+    -- only a combo
+    self:enqueue_card(false, attackGfxOrigin.column, attackGfxOrigin.row, comboSize)
+  elseif isChainLink then
+    -- only a chain
     self:enqueue_card(true, attackGfxOrigin.column, attackGfxOrigin.row, self.chain_counter)
   end
 end
