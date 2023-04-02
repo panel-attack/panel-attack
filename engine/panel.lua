@@ -9,6 +9,8 @@ local function clear_flags(panel, clearChaining)
   -- combo fields
   -- index compared against size determines the pop timing
   panel.combo_index = nil
+  -- size compared against index determines the pop timing
+  -- also used for determining popFX size
   panel.combo_size = nil
 
   -- number of the chain link if this panel got matched as part of a chain (I think)
@@ -545,41 +547,41 @@ end
 
 -- returns false if this panel can be matched
 -- true if it cannot be matched
-function Panel.exclude_match(self)
+function Panel.canMatch(self)
   -- panels without colors can't match
   if self.color == 0 or self.color == 9 then
-    return true
+    return false
   else
     if self.state == "normal"
     or self.state == "landing"
     or (self.matchAnyway and self.state == "hovering")  then
-      return false
+      return true
     else
       -- swapping, matched, popping, popped, hover, falling, dimmed, dead
-      return true
+      return false
     end
   end
 end
 
 -- returns false if this panel can be swapped
 -- true if it can not be swapped
-function Panel.exclude_swap(self)
+function Panel.canSwap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
   if self.dont_swap then
-    return true
+    return false
   -- can't swap garbage panels or even garbage to start with
   elseif self.isGarbage then
-    return true
+    return false
   else
     if self.state == "normal"
     or self.state == "swapping"
     or self.state == "falling"
     or self.state == "landing" then
-      return false
+      return true
     else
       -- matched, popping, popped, hovering, dimmed, dead
-      return true
+      return false
     end
   end
 end
@@ -618,6 +620,12 @@ function Panel.update(self, panels)
   self.stateChanged = false
   self.propagatesChaining = false
   self.propagatesFalling = false
+
+  -- the flags for indicating a (possible garbage) match during the checkMatch process
+  -- clear it here to not have to make an extra iteration through all panels during checkMatches
+  self.matching = false
+  self.matchesMetal = false
+  self.matchesGarbage = false
 
   if self.state == "normal" then
     normalState.update(self, panels)
@@ -692,4 +700,24 @@ function Panel.dangerous(self)
   else
     return self.color ~= 0
   end
+end
+
+-- puts a non-garbage panel into the matched state
+-- isChainLink: true if the match the panel is part of forms a new chain link
+-- comboIndex: index for determining pop order among all panels of the match
+-- comboSize: used for popFX and calculation of timers related to popping/popped state
+--
+-- garbagePanels have to process by row due to color generation and have their extra logic in checkMatches
+function Panel:match(isChainLink, comboIndex, comboSize)
+  self.state = "matched"
+  -- +1 because match always occurs before the timer decrements on the frame
+  self:setTimer(self.frameTimes.MATCH + 1)
+  if isChainLink then
+    self.chaining = true
+  end
+  if self.fell_from_garbage then
+    self.fell_from_garbage = nil
+  end
+  self.combo_index = comboIndex
+  self.combo_size = comboSize
 end

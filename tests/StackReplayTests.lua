@@ -86,7 +86,7 @@ local function basicTimeAttackTest()
   assert(match.P1.score == 10353)
   assert(match.P1.difficulty == 1)
   assert(table.length(match.P1.chains) == 8)
-  assert(table.length(match.P1.combos) == 0)
+  assert(table.length(match.P1.combos) == 4)
   teardown()
 end
 
@@ -113,6 +113,27 @@ end
 
 basicVsTest()
 
+--the above replay did not succeed in throwing errors for some of the bugs I coded in during the checkMatches refactor
+--namely a color override issue where the transforming garbage panel had colors assigned more than once, leading to different panels
+--secondly an issue where the y_offset for offscreen chain garbage wasn't updated causing the bottom line of chain garbage to not convert into panels
+local function basicVsTest2()
+  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-02-26-02-44-49-Endaris-L10-vs-z26PingMeDiscord-L10-Casual-P1wins.json")
+  assert(match ~= nil)
+  assert(match.mode == "vs")
+  assert(match.seed == 9285831)
+  assert(match.P1.game_over_clock == 3394)
+  assert(match.P1.level == 10)
+  assert(table.length(match.P1.chains) == 7)
+  assert(table.length(match.P1.combos) == 8)
+  assert(match.P2.game_over_clock == 0)
+  assert(match.P2.level == 10)
+  assert(table.length(match.P2.chains) == 5)
+  assert(table.length(match.P2.combos) == 8)
+  assert(match.P1:gameResult() == -1)
+  teardown()
+end
+
+basicVsTest2()
 
 local function noInputsInVsIsDrawTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-22-27-36-Player 1-L10-vs-Player 2-L10-draw.txt")
@@ -145,7 +166,7 @@ local function frameTricksTest()
   assert(match.P1.game_over_clock == 10032)
   assert(match.P1.difficulty == 3)
   assert(table.length(match.P1.chains) == 13)
-  assert(table.length(match.P1.combos) == 0)
+  assert(table.length(match.P1.combos) == 7)
 end
 
 frameTricksTest()

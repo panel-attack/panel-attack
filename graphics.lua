@@ -473,7 +473,7 @@ function Stack.render(self)
   if config.debug_mode then
     local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
 
-    for row = 0, self.height do
+    for row = 0, math.min(self.height + 1, #self.panels) do
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.pos_x + (col - 1) * 16) * GFX_SCALE

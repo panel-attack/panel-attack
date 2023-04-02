@@ -15,7 +15,6 @@ require("table_util")
 --  . the matches-checking routine
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
-local garbage_bounce_time = #garbage_bounce_table
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
 local COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
@@ -1372,7 +1371,7 @@ function Stack.simulate(self)
     end
 
     -- Look for matches.
-    self:check_matches()
+    self:checkMatches()
 
     self:updatePanels()
 
@@ -1678,7 +1677,12 @@ function Stack.simulate(self)
         SFX_Go_Play = 0
       end
       if self.combo_chain_play then
-        self:playComboChainSoundInfo(self.combo_chain_play)
+        -- stop ongoing landing sound
+        themes[config.theme].sounds.land:stop()
+        -- and cancel it because an attack is performed on the exact same frame (takes priority)
+        self.sfx_land = false
+        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
       end
       if SFX_garbage_match_play then
@@ -2021,8 +2025,8 @@ function Stack.canSwap(self, row, column)
   -- the cursor must not be a non-panel.
   local do_swap =
     (panels[row][column].color ~= 0 or panels[row][column + 1].color ~= 0) and -- also, both spaces must be swappable.
-    (not panels[row][column]:exclude_swap()) and
-    (not panels[row][column + 1]:exclude_swap()) and -- also, neither space above us can be hovering.
+    panels[row][column]:canSwap() and
+    panels[row][column + 1]:canSwap() and -- also, neither space above us can be hovering.
     (row == #panels or (panels[row + 1][column].state ~= "hovering" and panels[row + 1][column + 1].state ~= "hovering")) and --also, we can't swap if the game countdown isn't finished
     not self.do_countdown and --also, don't swap on the first frame
     not (self.clock and self.clock <= 1)
@@ -2196,358 +2200,6 @@ function Stack.dropGarbage(self, width, height, isMetal)
   end
 end
 
--- Goes through whole stack checking for matches and updating chains etc based on matches.
-function Stack.check_matches(self)
-  if self.do_countdown then
-    return
-  end
-
-  local panels = self.panels
-
-  for col = 1, self.width do
-    for row = 1, self.height do
-      panels[row][col].matching = nil
-    end
-  end
-
-  -- Record whether each panel excludes matching once to prevent duplicated work.
-  local excludeMatchTable = {}
-  for row = 1, self.height do
-    excludeMatchTable[row] = {}
-    for col = 1, self.width do
-      excludeMatchTable[row][col] = panels[row][col]:exclude_match()
-    end
-  end
-
-  local is_chain = false
-  local combo_size = 0
-  local floodQueue = Queue()
-  for row = 1, self.height do
-    for col = 1, self.width do
-      if
-        row ~= 1 and row ~= self.height and --check vertical match centered here.
-          (not (excludeMatchTable[row - 1][col] or excludeMatchTable[row][col] or excludeMatchTable[row + 1][col])) and
-          panels[row][col].color == panels[row - 1][col].color and
-          panels[row][col].color == panels[row + 1][col].color
-       then
-        for m_row = row - 1, row + 1 do
-          local panel = panels[m_row][col]
-          if not panel.matching then
-            combo_size = combo_size + 1
-            panel.matching = true
-          end
-          if panel.matchAnyway and panel.chaining then
-            -- a freshly hovering channel over a match got matched
-            -- before falling, this panel should not produce a chain so we need to clear the chaining flag
-            panel.chaining = nil
-          end
-          is_chain = is_chain or panel.chaining
-        end
-        floodQueue:push({row, col, true, true})
-      end
-      if
-        col ~= 1 and col ~= self.width and --check horiz match centered here.
-          (not (excludeMatchTable[row][col - 1] or excludeMatchTable[row][col] or excludeMatchTable[row][col + 1])) and
-          panels[row][col].color == panels[row][col - 1].color and
-          panels[row][col].color == panels[row][col + 1].color
-       then
-        for m_col = col - 1, col + 1 do
-          local panel = panels[row][m_col]
-          if not panel.matching then
-            combo_size = combo_size + 1
-            panel.matching = true
-          end
-          if panel.matchAnyway and panel.chaining then
-            -- a freshly hovering channel over a match got matched
-            -- before falling, this panel should not produce a chain so we need to clear the chaining flag
-            panel.chaining = nil
-          end
-          is_chain = is_chain or panel.chaining
-        end
-        floodQueue:push({row, col, true, true})
-      end
-    end
-  end
-
-  -- This is basically two flood fills at the same time.
-  -- One for clearing normal garbage, one for metal.
-  local garbage = {}
-  local seen, seenm = {}, {}
-  local garbage_size = 0
-  while floodQueue:len() ~= 0 do
-    local y, x, normal, metal = unpack(floodQueue:pop())
-    local panel = panels[y][x]
-
-    -- We found a new panel we haven't handled yet that we should
-    if ((panel.isGarbage and panel.state == "normal") or panel.matching) and ((normal and not seen[panel]) or (metal and not seenm[panel])) then
-      -- We matched a new garbage
-      if ((metal and panel.metal) or (normal and not panel.metal)) and panel.isGarbage and not garbage[panel] then
-        garbage[panel] = true
-        if self:shouldChangeSoundEffects() then
-          SFX_garbage_match_play = true
-        end
-        if y <= self.height then
-          garbage_size = garbage_size + 1
-        end
-      end
-      seen[panel] = seen[panel] or normal
-      seenm[panel] = seenm[panel] or metal
-      if panel.isGarbage then
-        normal = normal and not panel.metal
-        metal = metal and panel.metal
-      end
-      if normal or metal then
-        if y ~= 1 then
-          floodQueue:push({y - 1, x, normal, metal})
-        end
-        if y ~= #panels then
-          floodQueue:push({y + 1, x, normal, metal})
-        end
-        if x ~= 1 then
-          floodQueue:push({y, x - 1, normal, metal})
-        end
-        if x ~= self.width then
-          floodQueue:push({y, x + 1, normal, metal})
-        end
-      end
-    end
-  end
-
-  if is_chain then
-    if self.chain_counter ~= 0 then
-      self.chain_counter = self.chain_counter + 1
-    else
-      self.chain_counter = 2
-    end
-  end
-
-  local first_panel_row = 0
-  local first_panel_col = 0
-  local metal_count = 0
-  local pre_stop_time = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (combo_size + garbage_size)
-  local garbage_match_time = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (combo_size + garbage_size)
-  local garbage_index = garbage_size - 1
-  local combo_index = combo_size
-  for row = 1, #panels do
-    local gpan_row = nil
-    for col = self.width, 1, -1 do
-      local panel = panels[row][col]
-      if garbage[panel] then
-        panel.state = "matched"
-        panel:setTimer(garbage_match_time + 1)
-        panel.initial_time = garbage_match_time
-        panel.pop_time = self.FRAMECOUNTS.POP * garbage_index
-        panel.pop_index = min(max(garbage_size - garbage_index, 1), 10)
-        panel.y_offset = panel.y_offset - 1
-        panel.height = panel.height - 1
-        if panel.y_offset == -1 then
-          if gpan_row == nil then
-            if string.len(self.gpanel_buffer) <= 10 * self.width then
-              local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer, self.match.mode, self.level)
-              self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-              logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
-              self.garbageGenCount = self.garbageGenCount + 1
-            end
-            gpan_row = string.sub(self.gpanel_buffer, 1, 6)
-            self.gpanel_buffer = string.sub(self.gpanel_buffer, 7)
-          end
-          panel.color = string.sub(gpan_row, col, col) + 0
-          if is_chain then
-            panel.chaining = true
-          end
-        end
-        garbage_index = garbage_index - 1
-      elseif row <= self.height then
-        if panel.matching then
-          if panel.color == 8 then
-            metal_count = metal_count + 1
-          end
-          panel.state = "matched"
-          panel:setTimer(self.FRAMECOUNTS.MATCH + 1)
-          if is_chain and not panel.chaining then
-            panel.chaining = true
-          end
-          panel.combo_index = combo_index
-          panel.combo_size = combo_size
-          panel.chain_index = self.chain_counter
-          if panel.fell_from_garbage then
-            panel.fell_from_garbage = nil
-          end
-          combo_index = combo_index - 1
-          if combo_index == 0 then
-            first_panel_col = col
-            first_panel_row = row
-          end
-        else
-          -- if a panel wasn't matched but was eligible,
-          -- we might have to remove its chain flag...!
-          -- It can't actually chain the first frame it hovers,
-          -- so it can keep its chaining flag in that case.
-          if panel.chaining and not (panel.matchAnyway or panel:exclude_match()) then
-            if row ~= 1 then
-              -- a panel landed on the bottom row, so it surely
-              -- loses its chain flag.
-              -- no swapping panel below
-              -- so this panel loses its chain flag
-              if panels[row - 1][col].state ~= "swapping" then
-                panel.chaining = nil
-              end
-            else
-              panel.chaining = nil
-            end
-          end
-        end
-      end
-    end
-  end
-
-  if (combo_size ~= 0) then
-    if self.garbageTarget and self.telegraph then
-      if metal_count >= 3 then
-        -- Give a shock garbage for every shock block after 2
-        for i = 3, metal_count do
-          self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, first_panel_col, first_panel_row, self.clock)
-          self:recordComboHistory(self.clock, 6, 1, true)
-        end
-      end
-    end
-
-    self.analytic:register_destroyed_panels(combo_size)
-    if (combo_size > 3) then
-      if (score_mode == SCOREMODE_TA) then
-        if (combo_size > 30) then
-          combo_size = 30
-        end
-        self.score = self.score + score_combo_TA[combo_size]
-      elseif (score_mode == SCOREMODE_PDP64) then
-        if (combo_size < 41) then
-          self.score = self.score + score_combo_PdP64[combo_size]
-        else
-          self.score = self.score + 20400 + ((combo_size - 40) * 800)
-        end
-      end
-
-      self:enqueue_card(false, first_panel_col, first_panel_row, combo_size)
-      if self.garbageTarget and self.telegraph then
-        local combo_pieces = combo_garbage[combo_size]
-        for i=1,#combo_pieces do
-          -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
-          -- OP! Too bad its hard to get shock panels in vs. :)
-          self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, first_panel_col, first_panel_row, self.clock)
-          self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
-        end
-      end
-      first_panel_row = first_panel_row + 1 -- offset chain cards
-    end
-    if (is_chain) then
-      if self.chain_counter == 2 then
-        self.currentChainStartFrame = self.clock
-        self.chains[self.currentChainStartFrame] = {starts = {}}
-      end
-      local currentChainData = self.chains[self.currentChainStartFrame]
-      currentChainData.size = self.chain_counter
-      currentChainData.starts[#currentChainData.starts+1] = self.clock
-      self:enqueue_card(true, first_panel_col, first_panel_row, self.chain_counter)
-    --EnqueueConfetti(first_panel_col<<4+P1StackPosX+4,
-    --          first_panel_row<<4+P1StackPosY+self.displacement-9);
-      if self.telegraph then
-        self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, first_panel_col, first_panel_row, self.clock)
-      end
-    end
-    local chain_bonus = self.chain_counter
-    if (score_mode == SCOREMODE_TA) then
-      if (self.chain_counter > 13) then
-        chain_bonus = 0
-      end
-      self.score = self.score + score_chain_TA[chain_bonus]
-    end
-    if ((combo_size > 3) or is_chain) then
-      local stop_time
-      if self.panels_in_top_row and is_chain then
-        if self.level then
-          local length = (self.chain_counter > 4) and 6 or self.chain_counter
-          stop_time = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
-        else
-          stop_time = stop_time_danger[self.difficulty]
-        end
-      elseif self.panels_in_top_row then
-        if self.level then
-          local length = (combo_size < 9) and 2 or 3
-          stop_time = self.chain_coefficient * length + self.chain_constant
-        else
-          stop_time = stop_time_danger[self.difficulty]
-        end
-      elseif is_chain then
-        if self.level then
-          local length = min(self.chain_counter, 13)
-          stop_time = self.chain_coefficient * length + self.chain_constant
-        else
-          stop_time = stop_time_chain[self.difficulty]
-        end
-      else
-        if self.level then
-          stop_time = self.combo_coefficient * combo_size + self.combo_constant
-        else
-          stop_time = stop_time_combo[self.difficulty]
-        end
-      end
-      self.stop_time = max(self.stop_time, stop_time)
-      self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
-      --MrStopState=1;
-      --MrStopTimer=MrStopAni[self.stop_time];
-      --TODO: Mr Stop ^
-      self.sfx_land = false
-    end
-    --if garbage_size > 0 then
-    self.pre_stop_time = max(self.pre_stop_time, pre_stop_time)
-    --end
-
-    self.manual_raise = false
-
-    -- Calculate Attack Sound Effects
-    if self:shouldChangeSoundEffects() then
-      local chainSize = 0
-      if is_chain then
-        chainSize = self.chain_counter
-      end
-      local newComboChainInfo = Stack.comboChainSoundInfo(combo_size, chainSize, metal_count)
-      if newComboChainInfo then
-        self.combo_chain_play = newComboChainInfo
-      end
-    end
-  end
-end
-
-function Stack.comboChainSoundInfo(comboSize, chainCounter, metalCount)
-  local result = nil
-  if (comboSize > 3 or chainCounter > 0) then
-    if chainCounter > 0 then
-      result = {type = e_chain_or_combo.chain, size = chainCounter}
-    elseif comboSize > 3 then
-      result = {type = e_chain_or_combo.combo, size = comboSize}
-    end
-  end
-  if metalCount > 2 then
-    result = {type = e_chain_or_combo.shock, size = metalCount}
-  end
-  return result
-end
-
-function Stack:playComboChainSoundInfo(comboChainSoundInfo)
-  themes[config.theme].sounds.land:stop()
-  themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-  characters[self.character]:playAttackSfx(comboChainSoundInfo)
-end
-
-function Stack:recordComboHistory(time, width, height, metal)
-
-  if self.combos[time] == nil then 
-    self.combos[time] = {} 
-  end
-  
-  self.combos[time][#self.combos[time]+1] = {width = width, height = height, metal = metal}
-end
-
 -- Adds a new row to the play field
 function Stack.new_row(self)
   local panels = self.panels
@@ -2580,8 +2232,11 @@ function Stack.new_row(self)
   -- the new row we created earlier at the top is now at row 0!
   -- while the former row 0 is at row 1 and in play
   -- therefore we need to override dimmed state in row 1
+  -- this cannot happen in the regular updatePanels routine as checkMatches is called after
+  -- meaning the panels already need to be eligible for matches!
   for col = 1, self.width do
     panels[1][col].state = "normal"
+    panels[1][col].stateChanged = true
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
