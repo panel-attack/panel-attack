@@ -219,14 +219,18 @@ Available options are "classic" and "per_chain".
 
 ##### classic
 
-The default option if not specified. Also deprecated, please use per_chain style for new characters instead.
+The default option if not specified. Also deprecated, please use per_chain style for new characters instead.  
 	x2/3 plays "chain",   
 	x4 plays "chain2",  
 	x5 plays "chain_echo",   
 	x6+ plays "chain2_echo"  
 Due to backwards compatibility reason the classic system remains as the default.  
 If you wish to use classic style chain sounds, you can use the per_chain system.  
-Simply rename the classic system's "chain" as "chain2", "chain2" as "chain4", "chain_echo" as "chain5" and "chain2_echo" as "chain6".
+Simply rename the classic system's  
+"chain" as "chain2",  
+"chain2" as "chain4",  
+"chain_echo" as "chain5"    
+"chain2_echo" as "chain6"
 
 ##### per_chain
 
@@ -234,11 +238,11 @@ Provide a SFX for each chain length. More than one variation may be provided for
 If no file is provided for a certain chain length the first available lower chain SFX will be played instead. This means the minimum of per_chain style SFX consists of only a single "chain" or "chain2" SFX.  
 It also means you can leave gaps if you want the same chain sound to play for 2 consecutive chain sizes.
 Example: 	
-	x2 plays "chain2"(, "chain2_2", "chain2_3"...), 
-	x3 plays "chain3"(, "chain3_2", "chain3_3"...), 
-	..., 
-	x13 plays "chain13"(, "chain13_2", ...), 
-	x13+ plays "chain0"(, ...)
+	x2 plays "chain2"(, "chain2_2", "chain2_3"...),  
+	x3 plays "chain3"(, "chain3_2", "chain3_3"...),  
+	...,  
+	x13 plays "chain13"(, "chain13_2", ...),  
+	x13+ plays "chain0"(, ...) 
 
 
 #### combo_style
@@ -256,12 +260,12 @@ For combos of any size this will play the SFX "combo" (,"combo2", "combo3", ...)
 Provide a SFX for each combo size. More than one variation may be provided for each size by appending _# to the filename where # is a number.  
 If no file is provided for a certain combo size the first available lower combo SFX will be played instead. This means the minimum of per_combo style SFX consists of only a single "combo4" SFX.  
 It also means you can leave gaps if you want the same chain sound to play for 2 consecutive combo sizes.  
-Example: 	
-		+4 "combo4"(, "combo4_2", "combo4_3"...), 
-		+5 "combo5"(, "combo5_2, "combo5_3"...), 
-		...,
-		+20 "combo20"(, "combo20_2", ...)
-		+27 "combo27"(, "combo27_2", ...)
+Example:  
+		+4 "combo4"(, "combo4_2", "combo4_3"...),  
+		+5 "combo5"(, "combo5_2, "combo5_3"...),  
+		...,   
+		+20 "combo20"(, "combo20_2", ...)  
+		+27 "combo27"(, "combo27_2", ...)  
 While the combo size you may provide files for is not limited, combos above +27 will not send any more garbage, having no added value as a sound cue.
 
 
@@ -377,8 +381,9 @@ Recommended size: 48px wide
 
 #### Corners
 
-These will get drawn on top of filler / side sprites
+These will get drawn on top of filler / side sprites  
 
+Aspect Ratio: 8:3
 Recommended size: 48x18px  
 "topleft", "botleft", "topright", "botright"  
 The names say everything.
@@ -442,7 +447,7 @@ Recommended size per frame: 32x32px
 
 Allowed formats are .mp3, .ogg, .wav, .it, .flac.
 
-Most SFX allow you to provide multiple variations. If multiple files are present for the same SFX, selection between the available files is random.
+Most SFX allow you to provide multiple variations. If multiple files are present for the same SFX, selection between the available files is random.  
 
 ### Attack SFX
 

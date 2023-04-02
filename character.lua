@@ -489,6 +489,10 @@ function Character.loadSfx(self, name, yields)
 
   if perSizeSfxStart[name] then
     self:fillInMissingSounds(sfx, name, maxIndex)
+  else
+    -- #table may yield erroneous (too large) results for tables with gaps 
+    -- Character:playRandomSfx() relies on #table being accurate so we redo the table here if it has gaps
+    sfx = table.toContinuouslyIndexedTable(sfx)
   end
 
   return sfx
@@ -570,7 +574,8 @@ end
 local function playRandomSfx(sfxTable, fallback)
   if not GAME.muteSoundEffects then
     if sfxTable and #sfxTable > 0 then
-      table.getRandomElement(sfxTable):play()
+      local sfx = table.getRandomElement(sfxTable)
+      sfx:play()
     elseif fallback then
       playRandomSfx(fallback)
     end
