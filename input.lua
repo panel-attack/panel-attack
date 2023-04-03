@@ -314,6 +314,7 @@ function love.keypressed(key, scancode, rep)
   local function toggleDebugMode()
     if key == "d" and smashDown() then
       config.debug_mode = not config.debug_mode
+      return true
     end
   end
 
@@ -321,25 +322,29 @@ function love.keypressed(key, scancode, rep)
     if smashDown() then
       if key == "c" then
         characters_reload_graphics()
+        return true
       elseif key == "p" then
         panels_init()
+        return true
       elseif key == "s" then
         stages_reload_graphics()
+        return true
       elseif key == "t" then
         themes[config.theme]:json_init()
         themes[config.theme]:graphics_init()
         themes[config.theme]:final_init()
+        return true
       end
     end
   end
 
   if handleFullscreenToggle() or
      handleScreenshot() or
+     reloadMods() or 
      handleCopy() or
      handleDumpAttackPattern() or
      modifyWinCounts() or
-     toggleDebugMode() or
-     reloadMods() then
+     toggleDebugMode() then
     return
   end
 
