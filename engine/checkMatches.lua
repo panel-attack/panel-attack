@@ -82,7 +82,7 @@ function Stack:checkMatches()
 
     if isChainLink or comboSize > 3 or metalCount > 0 then
       self:pushGarbage(attackGfxOrigin, isChainLink, comboSize, metalCount)
-      self:queueAttackSoundEffect(isChainLink, comboSize, metalCount)
+      self:queueAttackSoundEffect(isChainLink, self.chain_counter, comboSize, metalCount)
     end
 
     self.analytic:register_destroyed_panels(comboSize)
@@ -438,17 +438,22 @@ function Stack:awardStopTime(isChain, comboSize)
   end
 end
 
-function Stack:queueAttackSoundEffect(isChainLink, comboSize, metalCount)
+function Stack:queueAttackSoundEffect(isChainLink, chainSize, comboSize, metalCount)
   if self:shouldChangeSoundEffects() then
-    if metalCount > 0 then
-      -- override SFX with shock sound
-      self.combo_chain_play = {type = e_chain_or_combo.shock, size = metalCount}
-    elseif isChainLink then
-      self.combo_chain_play = {type = e_chain_or_combo.chain, size = self.chain_counter}
-    elseif comboSize > 3 then
-      self.combo_chain_play = {type = e_chain_or_combo.combo, size = comboSize}
-    end
+    self.combo_chain_play = Stack.attackSoundInfoForMatch(isChainLink, chainSize, comboSize, metalCount)
   end
+end
+
+function Stack.attackSoundInfoForMatch(isChainLink, chainSize, comboSize, metalCount)
+  if metalCount > 0 then
+    -- override SFX with shock sound
+    return {type = e_chain_or_combo.shock, size = metalCount}
+  elseif isChainLink then
+    return {type = e_chain_or_combo.chain, size = chainSize}
+  elseif comboSize > 3 then
+    return {type = e_chain_or_combo.combo, size = comboSize}
+  end
+  return nil
 end
 
 function Stack:enqueueCards(attackGfxOrigin, isChainLink, comboSize)
