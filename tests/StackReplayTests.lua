@@ -16,7 +16,9 @@ local function testChainingPropagationThroughSwap1()
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
   assert(match.mode == "vs")
   assert(match.P2.panels[4][5].chaining == nil)
+  assert(not match.P2.panels[4][5].matchAnyway)
   assert(match.P2.panels[5][5].chaining == true)
+  assert(match.P2.panels[5][5].matchAnyway == true)
   teardown()
 end
 
