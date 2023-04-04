@@ -293,9 +293,10 @@ normalState.enterHoverState = function(panel, panelBelow, hoverTime)
   panel.state = "hovering"
   panel.chaining = panel.chaining or panelBelow.propagatesChaining
   panel.propagatesChaining = panelBelow.propagatesChaining
-  if panelBelow.propagatesChaining or panelBelow.matchAnyway then
-    -- panels are matchable for 1 frame right after entering hoverstate
+  if (panelBelow.propagatesChaining and panelBelow.color == 0) or panelBelow.matchAnyway then
+    -- panels above a match that just finished popping are matchable for 1 frame right after entering hoverstate
     panel.matchAnyway = true
+    -- panels above cleared garbage are NOT
   end
 
   panel.timer = hoverTime
