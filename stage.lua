@@ -6,8 +6,7 @@ require("UpdatingImage")
 --  . the data structure that store a stage's data
 
 local basic_images = {"thumbnail"}
-local backgroundImageName = "background"
-local other_images = {backgroundImageName}
+local allImages = {"thumbnail", "background"}
 local defaulted_images = {thumbnail = true, background = true} -- those images will be defaulted if missing
 local basic_musics = {}
 local other_musics = {"normal_music", "danger_music", "normal_music_start", "danger_music_start"}
@@ -216,6 +215,11 @@ function stages_reload_graphics()
   -- reload the current stage graphics immediately
   if stages[current_stage] then
     stages[current_stage]:graphics_init(true, false)
+    if GAME and GAME.match then
+      -- for reasons, this is not drawn directly from the stage but from background image
+      -- so override this while in a match
+      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
+    end
   end
   -- lazy load the rest
   for _, stage in pairs(stages) do
@@ -232,7 +236,7 @@ end
 
 -- initalizes stage graphics
 function Stage.graphics_init(self, full, yields)
-  local stage_images = full and other_images or basic_images
+  local stage_images = full and allImages or basic_images
   for _, image_name in ipairs(stage_images) do
     self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
@@ -249,8 +253,10 @@ end
 
 -- uninits stage graphics
 function Stage.graphics_uninit(self)
-  for _, image_name in ipairs(other_images) do
-    self.images[image_name] = nil
+  for imageName, _ in pairs(self.images) do
+    if not table.contains(basic_images, imageName) then
+      self.images[imageName] = nil
+    end
   end
 end
 

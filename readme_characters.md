@@ -312,7 +312,9 @@ You may use .png or .jpg/.jpeg for these.
 .gif files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.
 
 Assets will get scaled and stretched if they don't match the recommended size or aspect ratio.  
-The per-file recommendations below are given for a resolution of 2560x1440. Using 1.5x/2x the size may look better at higher resolutions while 0.5x the size may look better on lower resolutions.
+The per-file recommendations below are given for a resolution of 2560x1440. Using 1.5x/2x the size may look better at higher resolutions while 0.5x the size may look better on lower resolutions.  
+
+You can use the Ctrl+Shift+Alt+C shortcut to reload character graphics in the game.
 
 ### Garbage assets
 
