@@ -1,3 +1,6 @@
+local table = table
+local love = love
+
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local Button = require("ui.Button")
@@ -40,6 +43,11 @@ Menu.BUTTON_VERTICAL_PADDING = 4 -- increase this when we have scrolling menus 8
 local font = love.graphics.getFont()
 local arrow = love.graphics.newText(font, ">")
 
+-- Sets the menu items for this menu
+-- menuItems: a list of UIElement tuples of the form:
+--   {{Label/Button, ButtonGroup/Stepper/Slider}, ...}
+-- the actual self.menuItems list is formated slightly differently, consisting of a list of Labels or Buttons
+-- each of which may have a ButtonGroup, Stepper, or Slider child element which controls the action for that item
 function Menu:setMenuItems(menuItems)
   self.selectedIndex = 1
   if self.menuItems then
@@ -61,6 +69,51 @@ function Menu:setMenuItems(menuItems)
     self.menuItemContainer:addChild(menuItem[1])
     self.menuItems[#self.menuItems + 1] = menuItem[1]
   end
+end
+
+function Menu:updateMenuItemPositions(index)
+  index = index or 1
+
+  for i, menuItem in ipairs(self.menuItems) do
+    if i >= index then
+      if i == 1 then 
+        menuItem.y = 0
+      else
+        menuItem.y = self.menuItems[i - 1].y + self.menuItems[i - 1].height + Menu.BUTTON_VERTICAL_PADDING
+      end
+    end
+  end
+end
+
+function Menu:addMenuItem(index, menuItem)
+  if menuItem[2] then
+    menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
+    menuItem[1]:addChild(menuItem[2])
+  end
+  table.insert(self.menuItems, index, menuItem[1]) 
+  self.menuItemContainer:addChild(menuItem[1])
+  
+  self:updateMenuItemPositions(index)
+end
+
+function Menu:removeMenuItem(menuItemId)
+  local menuItemIndex = nil
+  for i, menuItem in ipairs(self.menuItems) do
+    if menuItemId == menuItem.id then
+      menuItemIndex = i
+      break
+    end
+  end
+
+  local menuItem = {table.remove(self.menuItems, menuItemIndex)}
+  if menuItem[1].children[1] then
+    menuItem[2] = menuItem[1].children[1]
+    menuItem[2]:detach()
+  end
+  menuItem[1]:detach()
+  
+  self:updateMenuItemPositions(menuItemIndex)
+  return menuItem
 end
 
 -- Updates the visibility state of each menu items based on the current scroll state.
