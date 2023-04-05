@@ -41,6 +41,22 @@ CREATE TABLE IF NOT EXISTS PlayerELOHistory(
   gameID INTEGER NOT NULL,
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );
+
+CREATE TABLE IF NOT EXISTS PlayerMessageList(
+  messageID INTEGER PRIMARY KEY NOT NULL,
+  privatePlayerID INTEGER NOT NULL,
+  message REAL NOT NULL,
+  messageSeen BOOLEAN NOT NULL CHECK (messageSeen IN (0, 1)) DEFAULT 0,
+  FOREIGN KEY(privatePlayerID) REFERENCES Player(privatePlayerID)
+);
+
+CREATE TABLE IF NOT EXISTS PlayerBanList(
+  banID INTEGER PRIMARY KEY NOT NULL,
+  privatePlayerID INTEGER NOT NULL,
+  reason REAL NOT NULL,
+  duration INTEGER,
+  FOREIGN KEY(privatePlayerID) REFERENCES Player(privatePlayerID)
+);
 ]]
 
 local selectPlayerRecordValuesStatement = assert(db:prepare("SELECT * FROM Player where privatePlayerID = ?"))
@@ -119,6 +135,19 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
     return false
   end
   return true
+end
+
+local selectPlayerMessagesStatement = assert(db:prepare("SELECT messageID, message FROM PlayerMessageList WHERE privatePlayerID = ? AND messageSeen = 0"))
+function PADatabase.getPlayerMessages(self, privatePlayerID)
+  selectPlayerMessagesStatement:bind_values(privatePlayerID)
+  local playerMessages = {}
+  for row in selectPlayerMessagesStatement:nrows() do
+    playerMessages[row.messageID + 1] = row.message
+  end
+  if selectPlayerMessagesStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+  end
+  return playerMessages
 end
 
 -- Stop statements from being committed until commitTransaction is called
