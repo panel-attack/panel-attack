@@ -136,6 +136,8 @@ function SimpleGameSetupMenu:init()
     {Button({label = "back", onClick = exitMenu})},
   }
   
+  -- WARNING: the first element of modernMenuOption breaks the parent child structure for the classicMenuOptions's first element
+  -- either make a unique element for each menu or update the parent child structure to allow for multiple parents.
   self.classicMenu = Menu({menuItems = classicMenuOptions})
   self.modernMenu = Menu({menuItems = modernMenuOptions})
   self.classicMenu:setVisibility(false)
