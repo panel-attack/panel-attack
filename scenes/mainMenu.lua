@@ -14,6 +14,8 @@ require("mainloop")
 -- Scene for the main menu
 local mainMenu = Scene("mainMenu")
 
+local showDebugServers = config.debugShowServers
+
 local function genLegacyMainloopFn(myFunction, args)
   local onClick = function()
     func = myFunction
@@ -24,7 +26,7 @@ local function genLegacyMainloopFn(myFunction, args)
   return onClick
 end
 
-local switchToScene = function(scene)
+local function switchToScene(scene)
   Menu.playValidationSfx()
   sceneManager:switchToScene(scene)
 end
@@ -53,15 +55,31 @@ local menuItems = {
   {createMainMenuButton("mm_quit", love.event.quit)}
 }
 
-if config.debugShowServers then
-  table.insert(menuItems, 7, {createMainMenuButton("Beta Server", genLegacyMainloopFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569}),  {""}, false)})
-  table.insert(menuItems, 8, {createMainMenuButton("Localhost Server", genLegacyMainloopFn(main_net_vs_setup, {"localhost"}),  {""}, false)})
+local debugMenuItems = {
+  {createMainMenuButton("Beta Server", genLegacyMainloopFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569}),  {""}, false)},
+  {createMainMenuButton("Localhost Server", genLegacyMainloopFn(main_net_vs_setup, {"localhost"}),  {""}, false)}
+}
+
+function mainMenu:addDebugMenuItems()
+  for i, menuItem in ipairs(debugMenuItems) do
+    self.menu:addMenuItem(i + 7, menuItem)
+  end
+end
+
+function mainMenu:removeDebugMenuItems()
+  for i, menuItem in ipairs(debugMenuItems) do
+    self.menu:removeMenuItem(menuItem[1].id)
+  end
 end
 
 function mainMenu:init()
   sceneManager:addScene(self)
   self.menu = Menu({menuItems = menuItems})
   self.menu:setVisibility(false)
+  
+  if showDebugServers then
+    self:addDebugMenuItems()
+  end
 end
 
 function mainMenu:load()
@@ -81,6 +99,16 @@ function mainMenu:load()
   GAME.input:requestPlayerInputConfigurationAssignments(1)
   reset_filters()
   match_type_message = ""
+  
+  if showDebugServers ~= config.debugShowServers then
+    if config.debugShowServers then
+      self:addDebugMenuItems()
+    else
+      self:removeDebugMenuItems()
+    end
+    showDebugServers = config.debugShowServers
+  end
+  
   self.menu:updateLabel()
   self.menu:setVisibility(true)
 end
