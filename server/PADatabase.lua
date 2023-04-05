@@ -142,7 +142,7 @@ function PADatabase.getPlayerMessages(self, privatePlayerID)
   selectPlayerMessagesStatement:bind_values(privatePlayerID)
   local playerMessages = {}
   for row in selectPlayerMessagesStatement:nrows() do
-    playerMessages[row.messageID + 1] = row.message
+    playerMessages[row.messageID] = row.message
   end
   if selectPlayerMessagesStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
