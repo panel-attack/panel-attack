@@ -150,6 +150,17 @@ function PADatabase.getPlayerMessages(self, privatePlayerID)
   return playerMessages
 end
 
+local updatePlayerMessageSeenStatement = assert(db:prepare("UPDATE PlayerMessageList SET messageSeen = 1 WHERE messageID = ?"))
+function PADatabase.playerMessageSeen(self, messageID)
+  updatePlayerMessageSeenStatement:bind_values(messageID)
+  updatePlayerUsernameStatement:step()
+  if updatePlayerMessageSeenStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return true
+end
+
 -- Stop statements from being committed until commitTransaction is called
 function PADatabase.beginTransaction(self)
   if db:exec("BEGIN;") ~= sqlite3.OK then
