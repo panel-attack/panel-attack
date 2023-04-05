@@ -302,14 +302,19 @@ normalState.enterHoverState = function(panel, panelBelow, hoverTime, panels)
       -- panels above cleared garbage are NOT
     else
       -- the simple propagation of matchAnyway may be inhibited by panels that are swapping or just finished their swap
-      -- swapping panels will never get the matchAnyway flag and won't chain when entering hover so that is how we can distinguish them
-      -- so we drill down to the next panel below that isn't considered swapping
+      -- swapping panels will never get the matchAnyway flag
+      -- so we drill down to the next panel below that definitely isn't considered swapping
       while panelBelow.state == "swapping"
-      or (panelBelow.stateChanged and panelBelow.state == "hovering" and not panelBelow.matchAnyway and not panelBelow.chaining) do
+      -- this second condition also applies to panels newly hovering over a garbage hover
+      or (panelBelow.stateChanged and panelBelow.propagatesChaining and not panelBelow.matchAnyway and panelBelow.state == "hovering") do
         panelBelow = getPanelBelow(panelBelow, panels)
       end
 
-      panel.matchAnyway = panelBelow.color == 0 or panelBelow.matchAnyway
+      -- if the hover was initiated by a garbage hover, then the panel we should have arrived at, doesn't propagate chaining
+      -- so we won't match anyway
+      if panelBelow.propagatesChaining then
+        panel.matchAnyway = panelBelow.color == 0 or panelBelow.matchAnyway
+      end
     end
   end
 
