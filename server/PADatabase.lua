@@ -153,7 +153,7 @@ end
 local updatePlayerMessageSeenStatement = assert(db:prepare("UPDATE PlayerMessageList SET messageSeen = 1 WHERE messageID = ?"))
 function PADatabase.playerMessageSeen(self, messageID)
   updatePlayerMessageSeenStatement:bind_values(messageID)
-  updatePlayerUsernameStatement:step()
+  updatePlayerMessageSeenStatement:step()
   if updatePlayerMessageSeenStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return false

@@ -82,7 +82,7 @@ function Connection.login(self, user_id)
     if #serverNotices > 0 then
       local noticeString = "NOTICE:"
       for messageID, message in pairs(serverNotices) do
-        noticeString = noticeString + "\n\n" + message
+        noticeString = noticeString .. "\n\n" .. message
         self.server.database:playerMessageSeen(messageID)
       end
       self:send({login_successful = true, server_notice = noticeString})
