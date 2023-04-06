@@ -974,7 +974,7 @@ function main_net_vs_lobby()
             login_status_message = loc("lb_welcome_back", config.name)
           end
           if msg.server_notice then
-            main_dumb_transition(nil, msg.server_notice, 300, -1)
+            main_dumb_transition(nil, msg.server_notice, 180, -1)
           end
         elseif msg.login_denied then
           current_server_supports_ranking = true
