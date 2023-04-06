@@ -78,7 +78,17 @@ function Connection.login(self, user_id)
     end
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
-    self:send({login_successful = true})
+    local serverNotices = self.server.database:getPlayerMessages(self.user_id)
+    if #serverNotices > 0 then
+      local noticeString = "NOTICE:"
+      for messageID, message in pairs(serverNotices) do
+        noticeString = noticeString + "\n\n" + message
+        self.server.database:playerMessageSeen(messageID)
+      end
+      self:send({login_successful = true, server_notice = noticeString})
+    else
+      self:send({login_successful = true})
+    end
   else
     deny_login(self, "Unknown")
   end
