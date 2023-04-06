@@ -44,18 +44,10 @@ CREATE TABLE IF NOT EXISTS PlayerELOHistory(
 
 CREATE TABLE IF NOT EXISTS PlayerMessageList(
   messageID INTEGER PRIMARY KEY NOT NULL,
-  privatePlayerID INTEGER NOT NULL,
+  publicPlayerID INTEGER NOT NULL,
   message REAL NOT NULL,
-  messageSeen BOOLEAN NOT NULL CHECK (messageSeen IN (0, 1)) DEFAULT 0,
-  FOREIGN KEY(privatePlayerID) REFERENCES Player(privatePlayerID)
-);
-
-CREATE TABLE IF NOT EXISTS PlayerBanList(
-  banID INTEGER PRIMARY KEY NOT NULL,
-  privatePlayerID INTEGER NOT NULL,
-  reason REAL NOT NULL,
-  duration INTEGER,
-  FOREIGN KEY(privatePlayerID) REFERENCES Player(privatePlayerID)
+  messageSeen TIME TIMESTAMP,
+  FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
 ]]
 
@@ -137,7 +129,7 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
   return true
 end
 
-local selectPlayerMessagesStatement = assert(db:prepare("SELECT messageID, message FROM PlayerMessageList WHERE privatePlayerID = ? AND messageSeen = 0"))
+local selectPlayerMessagesStatement = assert(db:prepare("SELECT messageID, message FROM PlayerMessageList WHERE (SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?) AND messageSeen IS NULL"))
 function PADatabase.getPlayerMessages(self, privatePlayerID)
   selectPlayerMessagesStatement:bind_values(privatePlayerID)
   local playerMessages = {}
@@ -150,7 +142,7 @@ function PADatabase.getPlayerMessages(self, privatePlayerID)
   return playerMessages
 end
 
-local updatePlayerMessageSeenStatement = assert(db:prepare("UPDATE PlayerMessageList SET messageSeen = 1 WHERE messageID = ?"))
+local updatePlayerMessageSeenStatement = assert(db:prepare("UPDATE PlayerMessageList SET messageSeen = strftime('%s', 'now') WHERE messageID = ?"))
 function PADatabase.playerMessageSeen(self, messageID)
   updatePlayerMessageSeenStatement:bind_values(messageID)
   updatePlayerMessageSeenStatement:step()
