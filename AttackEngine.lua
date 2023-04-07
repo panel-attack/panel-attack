@@ -142,7 +142,7 @@ function AttackEngine.run(self)
   if hasMetal then
     metalCount = 3
   end
-  local newComboChainInfo = Stack.comboChainSoundInfo(maxCombo, maxChain, metalCount)    
+  local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)    
   if newComboChainInfo then
     characters[self.character]:playAttackSfx(newComboChainInfo)
   end

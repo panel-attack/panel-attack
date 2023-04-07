@@ -116,7 +116,7 @@ function ChallengeMode.render(self)
   local drawX = 614
   local drawY = 440
   local limit = 400
-  gprintf("Difficulty", drawX - limit/2, drawY, limit, "center", nil, nil, 10)
+  gprintf(loc("difficulty"), drawX - limit/2, drawY, limit, "center", nil, nil, 10)
   gprintf(self.difficultyName, drawX - limit/2, drawY + 26, limit, "center", nil, nil, 10)
 
   drawY = 520

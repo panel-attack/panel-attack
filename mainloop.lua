@@ -649,7 +649,7 @@ function challenge_mode_setup()
 
   
   challengeModeMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  challengeModeMenu:add_button("Difficulty", goToStart, goEscape, custom_left, custom_right)
+  challengeModeMenu:add_button(loc("difficulty"), goToStart, goEscape, custom_left, custom_right)
   challengeModeMenu:add_button(loc("go_"), start_challenge, goEscape)
   challengeModeMenu:add_button(loc("back"), exitSettings, exitSettings)
   challengeModeMenu:set_button_setting(1, difficultySettings[customModeID].name)
