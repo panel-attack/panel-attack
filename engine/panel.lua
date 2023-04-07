@@ -576,8 +576,8 @@ function Panel.canMatch(self)
     return false
   else
     if self.state == "normal"
-    or self.state == "landing"
-    or (self.matchAnyway and self.state == "hovering")  then
+      or self.state == "landing"
+      or (self.matchAnyway and self.state == "hovering")  then
       return true
     else
       -- swapping, matched, popping, popped, hover, falling, dimmed, dead
