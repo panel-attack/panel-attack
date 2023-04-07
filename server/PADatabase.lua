@@ -73,6 +73,17 @@ function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   return true
 end
 
+local selectPublicPlayerIDStatement = assert(db:prepare("SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?"))
+function PADatabase.getPublicPlayerID(self, privatePlayerID)
+  selectPublicPlayerIDStatement:bind_values(privatePlayerID)
+  selectPublicPlayerIDStatement:step() --TODO: Needs to be corrected to return value
+  if selectPublicPlayerIDStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return true
+end
+
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
 function PADatabase.updatePlayerUsername(self, privatePlayerID, username)
   updatePlayerUsernameStatement:bind_values(username, privatePlayerID)
