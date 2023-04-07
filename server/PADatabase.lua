@@ -150,6 +150,7 @@ function PADatabase.getPlayerMessages(self, publicPlayerID)
   end
   if selectPlayerMessagesStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
+    return {}
   end
   return playerMessages
 end
