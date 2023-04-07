@@ -76,12 +76,13 @@ end
 local selectPublicPlayerIDStatement = assert(db:prepare("SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?"))
 function PADatabase.getPublicPlayerID(self, privatePlayerID)
   selectPublicPlayerIDStatement:bind_values(privatePlayerID)
-  selectPublicPlayerIDStatement:step() --TODO: Needs to be corrected to return value
+  selectPublicPlayerIDStatement:step() 
+  local publicPlayerID = selectPublicPlayerIDStatement:get_value(0) -- this is the row count.
   if selectPublicPlayerIDStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
-    return false
+    return nil
   end
-  return true
+  return publicPlayerID 
 end
 
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
@@ -140,9 +141,9 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
   return true
 end
 
-local selectPlayerMessagesStatement = assert(db:prepare("SELECT messageID, message FROM PlayerMessageList WHERE (SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?) AND messageSeen IS NULL"))
-function PADatabase.getPlayerMessages(self, privatePlayerID)
-  selectPlayerMessagesStatement:bind_values(privatePlayerID)
+local selectPlayerMessagesStatement = assert(db:prepare("SELECT messageID, message FROM PlayerMessageList WHERE publicPlayerID = ? AND messageSeen IS NULL"))
+function PADatabase.getPlayerMessages(self, publicPlayerID)
+  selectPlayerMessagesStatement:bind_values(publicPlayerID)
   local playerMessages = {}
   for row in selectPlayerMessagesStatement:nrows() do
     playerMessages[row.messageID] = row.message

@@ -79,7 +79,8 @@ function Connection.login(self, user_id)
     end
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
-    local serverNotices = self.server.database:getPlayerMessages(self.user_id)
+    self.player = Player(self.user_id)
+    local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     if #serverNotices > 0 then
       local noticeString = "NOTICE:"
       for messageID, message in pairs(serverNotices) do
