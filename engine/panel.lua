@@ -242,7 +242,7 @@ normalState.update = function(panel, panels)
       if panelBelow.stateChanged then
         if panelBelow.state == "hovering" then
           -- normal panels inherit the hover time from the panel below
-          normalState.enterHoverState(panel, panelBelow, panelBelow.timer)
+          normalState.enterHoverState(panel, panelBelow, panelBelow.timer, panels)
         elseif panelBelow.color == 0 and panelBelow.state == "normal" then
           if panelBelow.propagatesFalling then
             -- the panel below is empty because garbage below dropped
@@ -250,7 +250,7 @@ normalState.update = function(panel, panels)
             fall(panel, panels)
           else
             -- if the panel below does not have a color, full hover time is given
-            normalState.enterHoverState(panel, panelBelow, panel.frameTimes.HOVER)
+            normalState.enterHoverState(panel, panelBelow, panel.frameTimes.HOVER, panels)
           end
         elseif panelBelow.queuedHover == true
         and panelBelow.propagatesChaining
@@ -277,7 +277,7 @@ normalState.update = function(panel, panels)
             hoverTime = hoverTime + panel.frameTimes.HOVER
           end
           
-          normalState.enterHoverState(panel, panelBelow, hoverTime)
+          normalState.enterHoverState(panel, panelBelow, hoverTime, panels)
         end
         -- all other transformations from normal state are actively set by stack routines:
         -- swap
@@ -288,14 +288,34 @@ normalState.update = function(panel, panels)
   end
 end
 
-normalState.enterHoverState = function(panel, panelBelow, hoverTime)
+normalState.enterHoverState = function(panel, panelBelow, hoverTime, panels)
   clear_flags(panel, false)
   panel.state = "hovering"
-  panel.chaining = panel.chaining or panelBelow.propagatesChaining
-  panel.propagatesChaining = panelBelow.propagatesChaining
-  if panelBelow.propagatesChaining or panelBelow.matchAnyway then
-    -- panels are matchable for 1 frame right after entering hoverstate
-    panel.matchAnyway = true
+  if panelBelow.propagatesChaining then
+    panel.propagatesChaining = true
+    panel.chaining = true
+
+    if panelBelow.color == 0
+    or panelBelow.matchAnyway then
+      -- panels above a match that just finished popping are matchable for 1 frame right after entering hoverstate
+      panel.matchAnyway = true
+      -- panels above cleared garbage are NOT
+    else
+      -- the simple propagation of matchAnyway may be inhibited by panels that are swapping or just finished their swap
+      -- swapping panels will never get the matchAnyway flag
+      -- so we drill down to the next panel below that definitely isn't considered swapping
+      while panelBelow.state == "swapping"
+      -- this second condition also applies to panels newly hovering over a garbage hover
+      or (panelBelow.stateChanged and panelBelow.propagatesChaining and not panelBelow.matchAnyway and panelBelow.state == "hovering") do
+        panelBelow = getPanelBelow(panelBelow, panels)
+      end
+
+      -- if the hover was initiated by a garbage hover, then the panel we should have arrived at, doesn't propagate chaining
+      -- so we won't match anyway
+      if panelBelow.propagatesChaining then
+        panel.matchAnyway = panelBelow.color == 0 or panelBelow.matchAnyway
+      end
+    end
   end
 
   panel.timer = hoverTime
@@ -356,7 +376,10 @@ swappingState.enterHoverState = function(panel, panelBelow)
   --panel.chaining = panel.chaining
   -- all panels above may still get the chaining flag though if it is currently propagating
   panel.propagatesChaining = panelBelow.propagatesChaining
-  panel.matchAnyway = panelBelow.matchAnyway
+  -- panels that just finished their swap NEVER match anyway
+  -- by preventing matches with other panels starting to hover on that frame the match is delayed until all panels entered a matchable state again
+  -- this should be how hover chains work in general
+  panel.matchAnyway = false
 
   -- swapping panels always get full hover time
   panel.timer = panel.frameTimes.HOVER
@@ -553,8 +576,8 @@ function Panel.canMatch(self)
     return false
   else
     if self.state == "normal"
-    or self.state == "landing"
-    or (self.matchAnyway and self.state == "hovering")  then
+      or self.state == "landing"
+      or (self.matchAnyway and self.state == "hovering")  then
       return true
     else
       -- swapping, matched, popping, popped, hover, falling, dimmed, dead
