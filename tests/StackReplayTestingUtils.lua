@@ -42,7 +42,8 @@ end
 
 function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
   while match.P1.clock < clockGoal do
-      match:run()
+    assert(match:gameEndedClockTime() == 0)
+    match:run()
   end
   assert(match.P1.clock == clockGoal)
 end

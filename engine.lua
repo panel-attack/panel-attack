@@ -806,6 +806,13 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
     panel.color = 9
     panel.state = "dimmed"
   end
+
+  -- We need to mark all panels as state changed in case they need to match for clear puzzles / active puzzles.
+  for row = 1, self.height do
+    for col = 1, self.width do
+      panels[row][col].stateChanged = true
+    end
+  end
 end
 
 function Stack.toPuzzleInfo(self)
@@ -1244,6 +1251,10 @@ function Stack.shouldPlayDangerMusic(self)
 end
 
 function Stack.updatePanels(self)
+  if self.do_countdown then
+    return
+  end
+  
   self.shake_time_on_frame = 0
   self.popSizeThisFrame = "small"
   for row = 1, #self.panels do
@@ -1283,7 +1294,6 @@ function Stack.simulate(self)
   if self:game_ended() == false then
     self:prep_first_row()
     local panels = self.panels
-    local panel = nil
     local swapped_this_frame = nil
     self.garbageLandedThisFrame = {}
     self:runCountDownIfNeeded()
