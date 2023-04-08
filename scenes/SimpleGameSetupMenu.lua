@@ -136,8 +136,8 @@ function SimpleGameSetupMenu:init()
     {Button({label = "back", onClick = exitMenu})},
   }
   
-  self.classicMenu = Menu({menuItems = classicMenuOptions})
-  self.modernMenu = Menu({menuItems = modernMenuOptions})
+  self.classicMenu = Menu({menuItems = classicMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  self.modernMenu = Menu({menuItems = modernMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   self.classicMenu:setVisibility(false)
   self.modernMenu:setVisibility(false)
 end

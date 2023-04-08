@@ -74,7 +74,7 @@ end
 
 function mainMenu:init()
   sceneManager:addScene(self)
-  self.menu = Menu({menuItems = menuItems})
+  self.menu = Menu({menuItems = menuItems, maxHeight = themes[config.theme].main_menu_max_height})
   self.menu:setVisibility(false)
   
   if showDebugServers then

@@ -21,7 +21,12 @@ local Menu = class(
     -- the actual self.menuItems list is formated slightly differently, consisting of a list of Labels or Buttons
     -- each of which may have a ButtonGroup, Stepper, or Slider child element which controls the action for that item
     self.menuItems = nil
-    self.maxItems = options.maxItems or math.max(math.ceil((consts.CANVAS_HEIGHT - self.y) / (options.menuItems[1][1].height + self.BUTTON_VERTICAL_PADDING)) - 2, 1)
+    assert(options.maxHeight == nil or options.maxItems == nil, "Can't set max items and max height at the same time on menus")
+    self.maxItems = options.maxItems or 999999
+    if options.maxHeight ~= nil and #options.menuItems and options.menuItems[1][1].height then
+      local itemHeight = options.menuItems[1][1].height + self.BUTTON_VERTICAL_PADDING
+      self.maxItems = math.max(math.floor(options.maxHeight / itemHeight) - 2, 1)
+    end
     self.firstActiveIndex = 1
     self.menuItemContainer = UIElement({})
     self:addChild(self.menuItemContainer)

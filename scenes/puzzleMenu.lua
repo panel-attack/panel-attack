@@ -82,7 +82,7 @@ function puzzleMenu:init()
   end
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menuOptions})
+  self.menu = Menu({menuItems = menuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   self.menu:setVisibility(false)
 end
 
