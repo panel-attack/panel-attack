@@ -6,6 +6,7 @@ easy,,Easy,Facile,Fácil,EASY,Fácil,Leicht,Facile
 hard,,Hard,Difficile,Difícil,HARD,Difícil,Schwer,Difficile
 level,,Level,Niveau,Nível,LV,Nivel,Level,Livello
 randomColors,Option to randomize panel colors,Random Colors,Couleurs aléatoires,Cores aleatórias,ランダムな色,Colores al azar,Zufällige Farben,Colori casuali
+randomHorizontalFlipped,Option to randomly flip the puzzle horizontally,Randomly Flip,Flip au hasard,Vire aleatoriamente,ランダムにフリップ,Voltear al azar,Zufällig flip,Capovolgere casualmente
 normal,,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
 speed,,Speed,Vitesse,Velocidade,スピード,Velocidad,Geschwindigkeit,Velocità
 factory,Training mode that drops multiple tiers of chain garbage,Factory,Usine,Fábrica,工場,Fábrica,Fabrik,Fabbrica

@@ -237,6 +237,7 @@ Stack =
     s.player_number = player_number --player number according to the multiplayer server, for game outcome reporting
 
     s.shake_time = 0
+    s.shake_time_on_frame = 0
 
     s.prev_states = {}
 
@@ -721,16 +722,10 @@ function Stack.taunt(self, taunt_type)
 end
 
 function Stack.set_puzzle_state(self, puzzle)
-  -- Copy the puzzle into our state
-  local boardSizeInPanels = self.width * self.height
-  while string.len(puzzle.stack) < boardSizeInPanels do
-    puzzle.stack = "0" .. puzzle.stack
-  end
-
-  local puzzleString = puzzle.stack
+  puzzle.stack = Puzzle.fillMissingPanelsInPuzzleString(puzzle.stack, self.width, self.height)
 
   self.puzzle = puzzle
-  self:setPanelsForPuzzleString(puzzleString)
+  self:setPanelsForPuzzleString(puzzle.stack)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 

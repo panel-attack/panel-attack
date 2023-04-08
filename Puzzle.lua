@@ -20,20 +20,51 @@ function Puzzle.getLegalCharacters()
   return { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "[", "]", "{", "}", "=" }
 end
 
-function Puzzle.randomizeColorString(colorString)
+function Puzzle.fillMissingPanelsInPuzzleString(puzzleString, width, height)
+  local boardSizeInPanels = width * height
+  while string.len(puzzleString) < boardSizeInPanels do
+    puzzleString = "0" .. puzzleString
+  end
+
+  return puzzleString
+end
+
+function Puzzle.randomizeColorsInPuzzleString(puzzleString)
   local colorArray = Panel.regularColorsArray()
-  if colorString:find("7") then
+  if puzzleString:find("7") then
     colorArray = Panel.extendedRegularColorsArray()
   end
   local newColorOrder = {}
 
   for i = 1, #colorArray, 1 do
-    newColorOrder[tostring(table.length(newColorOrder)+1)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
+    newColorOrder[tostring(table.length(newColorOrder)+1)] = tostring(table.remove(colorArray, love.math.random(1, #colorArray)))
   end
   
-  colorString = colorString:gsub("%d", newColorOrder)
+  puzzleString = puzzleString:gsub("%d", newColorOrder)
 
-  return colorString
+  return puzzleString
+end
+
+function Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  local rowWidth = 6
+  local height = 12
+  puzzleString = Puzzle.fillMissingPanelsInPuzzleString(puzzleString, rowWidth, height)
+  local result = ""
+  local unreverseMap = {}
+  unreverseMap["{"] = "}"
+  unreverseMap["}"] = "{"
+  unreverseMap["["] = "]"
+  unreverseMap["]"] = "["
+  for i = 1, puzzleString:len(), rowWidth do
+    local rowString = string.sub(puzzleString, i, i+rowWidth-1)
+    if string.find(rowString, "%d") then
+      rowString = string.reverse(rowString)
+      rowString = string.gsub(rowString, "[%{%}%[%]]", unreverseMap)
+    end
+    result = result .. rowString
+  end
+
+  return result
 end
 
 function Puzzle.validate(self)
