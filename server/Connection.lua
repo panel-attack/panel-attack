@@ -2,6 +2,7 @@ require("class")
 local logger = require("logger")
 local NetworkProtocol = require("NetworkProtocol")
 
+require("table_util")
 local time = os.time
 local utf8 = require("utf8Additions")
 require("tests.utf8AdditionsTests")
@@ -81,10 +82,10 @@ function Connection.login(self, user_id)
     self.logged_in = true
     self.player = Player(self.user_id)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
-    if #serverNotices > 0 then
-      local noticeString = "NOTICE:"
+    if table.length(serverNotices) > 0 then
+      local noticeString = ""
       for messageID, message in pairs(serverNotices) do
-        noticeString = noticeString .. "\n\n" .. message
+        noticeString = noticeString .. message .. "\n\n"
         self.server.database:playerMessageSeen(messageID)
       end
       self:send({login_successful = true, server_notice = noticeString})
