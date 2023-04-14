@@ -901,7 +901,7 @@ function select_screen.start1pLocalMatch(self)
       character_loader_wait()
     end
 
-    local xPosition = 760
+    local xPosition = 796
     local yPosition = 120
     local mirror = -1
     local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)

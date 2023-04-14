@@ -113,7 +113,7 @@ local stageQuads = {}
 function ChallengeMode.render(self)
   self:drawTimeSplits()
 
-  local drawX = 614
+  local drawX = canvas_width / 2
   local drawY = 440
   local limit = 400
   gprintf(loc("difficulty"), drawX - limit/2, drawY, limit, "center", nil, nil, 10)
@@ -131,13 +131,12 @@ end
 
 function ChallengeMode:drawTimeSplits()
   local totalTime = 0
-  local xPosition = 1160
+  local xPosition = 1180
   local yPosition = 120
   local yOffset = 30
-  local backgroundPadding = 6
   local row = 0
   local padding = 6
-  local width = 200
+  local width = 180
   local height = yOffset * (#self.stages + 1) + padding * 2
 
   -- Background

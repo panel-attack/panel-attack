@@ -541,30 +541,26 @@ function Stack.render(self)
   end
 
   local function drawTimer()
+    if self == nil or self.which ~= 1 or self.game_stopwatch == nil or tonumber(self.game_stopwatch) == nil then
+      -- Only draw for one of the players, we will base our time on player 1
+      -- Also make sure we have a valid time to base off of
+      return
+    end
+
     -- Draw the timer for time attack
-    if self.match.mode == "time" then
-      local time_left = time_attack_time - ((self.game_stopwatch or (time_attack_time * 60)) / 60) -- time left in seconds
-      if time_left < 0 then
-        time_left = 0
-      end
-      local mins = math.floor(time_left / 60)
-      local secs = math.ceil(time_left % 60)
-      if secs == 60 then
-        secs = 0
-        mins = mins + 1
-      end
-      --gprint(loc("pl_time", string.format("%01d:%02d",mins,secs)), self.score_x, self.score_y+60)
-      draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-      GraphicsUtil.draw_time(string.format("%01d:%02d", mins, secs), self.time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], themes[config.theme].time_Scale)
-    elseif self.match.mode == "puzzle" then
+    if self.match.mode == "puzzle" then
       -- puzzles don't have a timer...yet?
     else
-      -- Draw the time for non time attack modes
-      if self and self.which == 1 and self.game_stopwatch and tonumber(self.game_stopwatch) then
-        --gprint(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), main_infos_screen_pos.x+10, main_infos_screen_pos.y+6)
-        draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-        GraphicsUtil.draw_time(frames_to_time_string(self.game_stopwatch, self.match.mode == "endless"), self.time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], themes[config.theme].time_Scale)
+      local frames = self.game_stopwatch
+      if self.match.mode == "time" then
+        frames = (time_attack_time * 60) - self.game_stopwatch
+        if frames < 0 then
+          frames = 0
+        end
       end
+      local timeString = frames_to_time_string(frames, self.match.mode == "endless")
+      draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
+      GraphicsUtil.draw_time(timeString, self.time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], themes[config.theme].time_Scale)
     end
   end
 
