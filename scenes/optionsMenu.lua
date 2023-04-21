@@ -344,6 +344,7 @@ function optionsMenu:init()
   local debugMenuOptions = {
     {Label({width = LABEL_WIDTH, label = "op_debug"}), createToggleButtonGroup("debug_mode")},
     {Label({width = LABEL_WIDTH, label = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", -200, 200)},
+    {Label({width = LABEL_WIDTH, label = "Show Debug Servers", translate = false}), createToggleButtonGroup("debugShowServers")},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
@@ -357,13 +358,13 @@ function optionsMenu:init()
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
-  menus["baseMenu"] = Menu({menuItems = baseMenuOptions})
-  menus["generalMenu"] = Menu({menuItems = generalMenuOptions})
-  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions})
-  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions})
-  menus["audioMenu"] = Menu({menuItems = audioMenuOptions})
-  menus["debugMenu"] = Menu({menuItems = debugMenuOptions})
-  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions})
+  menus["baseMenu"] = Menu({menuItems = baseMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["generalMenu"] = Menu({menuItems = generalMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["audioMenu"] = Menu({menuItems = audioMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["debugMenu"] = Menu({menuItems = debugMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
 
   for _, menu in pairs(menus) do
     menu:setVisibility(false)

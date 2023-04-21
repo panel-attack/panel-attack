@@ -202,7 +202,7 @@ function soundTest:init()
     {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("optionsMenu") end})},
   }
   
-  soundTestMenu = Menu({menuItems = soundTestMenuOptions})
+  soundTestMenu = Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   soundTestMenu:setVisibility(false)
 end
 
