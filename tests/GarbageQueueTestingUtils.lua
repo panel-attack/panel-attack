@@ -1,11 +1,5 @@
+require("save")
 local GarbageQueueTestingUtils = {}
-
-local function readAttackFile(path)
-  if love.filesystem.getInfo(path, "file") then
-    local fileContent = love.filesystem.read(path)
-    return json.decode(fileContent)
-  end
-end
 
 -- a reduced version of stackRun that skips on stuff like raise, health sfx, etc. as it's only meant to be on the receiving end of garbage
 local function stackRunOverride(self)
