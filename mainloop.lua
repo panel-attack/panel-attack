@@ -649,7 +649,7 @@ function challenge_mode_setup()
 
   
   challengeModeMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  challengeModeMenu:add_button("Difficulty", goToStart, goEscape, custom_left, custom_right)
+  challengeModeMenu:add_button(loc("difficulty"), goToStart, goEscape, custom_left, custom_right)
   challengeModeMenu:add_button(loc("go_"), start_challenge, goEscape)
   challengeModeMenu:add_button(loc("back"), exitSettings, exitSettings)
   challengeModeMenu:set_button_setting(1, difficultySettings[customModeID].name)
@@ -972,6 +972,10 @@ function main_net_vs_lobby()
             login_status_message_duration = 5
           else
             login_status_message = loc("lb_welcome_back", config.name)
+          end
+          if msg.server_notice then
+            msg.server_notice = msg.server_notice:gsub("\\n", "\n")
+            main_dumb_transition(nil, msg.server_notice, 180, -1)
           end
         elseif msg.login_denied then
           current_server_supports_ranking = true
@@ -1637,7 +1641,7 @@ function main_replay()
       end
     end
 
-    if playbackSpeed == -1 then
+    if playbackSpeed == -1 and not GAME.gameIsPaused then
       if P1 and P1.clock > 0 and P1.prev_states[P1.clock-1] then
         P1:rollbackToFrame(P1.clock-1)
         P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup

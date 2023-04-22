@@ -217,8 +217,25 @@ function joystick_ax()
 end
 
 function love.keypressed(key, scancode, rep)
+
+  local function altDown()
+    return love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")
+  end
+
+  local function ctrlDown()
+    return love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")
+  end
+
+  local function shiftDown()
+    return love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+  end
+
+  local function smashDown()
+    return ctrlDown() and altDown() and shiftDown()
+  end
+
   local function handleFullscreenToggle()
-    if key == "return" and not rep and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+    if key == "return" and not rep and altDown() then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
       return true
     end
@@ -235,7 +252,7 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function handleCopy()
-    if key == "c" and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+    if key == "c" and not rep and ctrlDown() then
       local stacks = {}
       if P1 then
         stacks["P1"] = P1:toPuzzleInfo()
@@ -251,7 +268,7 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function handleDumpAttackPattern()
-    if (key == "1" or key == "2") and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+    if (key == "1" or key == "2") and not rep and ctrlDown() then
       local stack = P1
 
       if key == "2" then
@@ -267,7 +284,7 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function modifyWinCounts()
-    if GAME.battleRoom and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+    if GAME.battleRoom and altDown() then
       if key == "1" then -- Add to P1's win count
         GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] + 1)
       end
@@ -288,13 +305,35 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function toggleDebugMode()
-    if key == "d" and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) and (love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")) then
+    if key == "d" and smashDown() then
       config.debug_mode = not config.debug_mode
+      return true
     end
   end
-  
+
+  local function reloadMods()
+    if smashDown() then
+      if key == "c" then
+        characters_reload_graphics()
+        return true
+      elseif key == "p" then
+        panels_init()
+        return true
+      elseif key == "s" then
+        stages_reload_graphics()
+        return true
+      elseif key == "t" then
+        themes[config.theme]:json_init()
+        themes[config.theme]:graphics_init()
+        themes[config.theme]:final_init()
+        return true
+      end
+    end
+  end
+
   if handleFullscreenToggle() or
      handleScreenshot() or
+     reloadMods() or 
      handleCopy() or
      handleDumpAttackPattern() or
      modifyWinCounts() or

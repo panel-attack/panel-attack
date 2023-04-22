@@ -2,10 +2,11 @@ require("class")
 local logger = require("logger")
 local NetworkProtocol = require("NetworkProtocol")
 
+require("table_util")
 local time = os.time
 local utf8 = require("utf8Additions")
 require("tests.utf8AdditionsTests")
-
+local Player = require("server.Player")
 -- Represents a connection to a specific player. Responsible for sending and receiving messages
 Connection =
   class(
@@ -22,6 +23,7 @@ Connection =
     s.wants_ranked_match = false
     s.server = server
     s.inputMethod = "controller"
+    s.player = nil
   end
 )
 
@@ -78,7 +80,18 @@ function Connection.login(self, user_id)
     end
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
-    self:send({login_successful = true})
+    self.player = Player(self.user_id)
+    local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
+    if table.length(serverNotices) > 0 then
+      local noticeString = ""
+      for messageID, message in pairs(serverNotices) do
+        noticeString = noticeString .. message .. "\n\n"
+        self.server.database:playerMessageSeen(messageID)
+      end
+      self:send({login_successful = true, server_notice = noticeString})
+    else
+      self:send({login_successful = true})
+    end
   else
     deny_login(self, "Unknown")
   end
