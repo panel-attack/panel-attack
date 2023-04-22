@@ -9,6 +9,8 @@ local function clear_flags(panel, clearChaining)
   -- combo fields
   -- index compared against size determines the pop timing
   panel.combo_index = nil
+  -- size compared against index determines the pop timing
+  -- also used for determining popFX size
   panel.combo_size = nil
 
   -- number of the chain link if this panel got matched as part of a chain (I think)
@@ -41,6 +43,12 @@ local function clear_flags(panel, clearChaining)
   -- panels will check if this is set on the panel below to update their chaining state
   -- in combination with their own state
   panel.propagatesChaining = false
+
+  -- a flag to determine if a hovering panel can be matched or not
+  -- PA always checks matches and then updates everything at once
+  -- that's a historical thing based on the original implementation
+  -- if we first updated swapping panels, then checked matches and then updated all panels we might be able to get rid of this flag
+  panel.matchAnyway = false
 end
 
 -- Sets all variables to the default settings
@@ -86,8 +94,6 @@ local function clear(panel, clearChaining, clearColor)
   -- garbage panels and regular panels behave differently in about any scenario
   panel.isGarbage = false
 
-  panel.match_anyway = nil
-
   -- Also flags
   clear_flags(panel, clearChaining)
 end
@@ -124,59 +130,6 @@ local function getPanelBelow(panel, panels)
   -- else
     return panels[panel.row - 1][panel.column]
   -- end
-end
-
--- the panel enters hover state
--- hover state is the most complex in terms of different timers and garbage vs non-garbage
--- it also propagates chain state
-local function enterHoverState(panel, panelBelow)
-  if panel.isGarbage then
-    -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
-    -- clear resets its garbage flag to false, turning it into a normal panel!
-    clear(panel, false, false)
-    panel.chaining = true
-    panel.timer = panel.frameTimes.GPHOVER
-    panel.fell_from_garbage = 12
-    panel.state = "hovering"
-    panel.propagatesChaining = true
-  else
-    local hoverTime = nil
-    if panel.state == "falling" then
-      -- falling panels inherit the hover time from the panel below
-      hoverTime = panelBelow.timer
-    elseif panel.state == "swapping" then
-      -- panels coming out of a swap always receive full hovertime
-      -- even when swapped on top of another hovering panel
-      hoverTime = panel.frameTimes.HOVER
-    elseif panel.state == "normal"
-        or panel.state == "landing" then
-      -- normal panels inherit the hover time from the panel below
-      if panelBelow.color ~= 0 then
-        if panelBelow.state == "swapping"
-          and panelBelow.propagatesChaining then
-          -- if the panel below is swapping but propagates chaining due to a pop further below,
-          --  the hovertime is the sum of remaining swap time and max hover time
-          hoverTime = panelBelow.timer + panel.frameTimes.HOVER
-        else
-          hoverTime = panelBelow.timer
-        end
-      else
-      -- if the panel below does not have a color, full hover time is given
-        hoverTime = panel.frameTimes.HOVER
-      end
-    else
-      error("Panel in state " .. panel.state .. " is trying to hover")
-    end
-
-    clear_flags(panel, false)
-    panel.state = "hovering"
-    panel.chaining = panel.chaining or panelBelow.propagatesChaining
-    panel.propagatesChaining = panelBelow.propagatesChaining
-
-    panel.timer = hoverTime
-  end
-
-  panel.stateChanged = true
 end
 
 -- returns true if there are "stable" panels below that keep it from falling down
@@ -288,19 +241,43 @@ normalState.update = function(panel, panels)
       local panelBelow = getPanelBelow(panel, panels)
       if panelBelow.stateChanged then
         if panelBelow.state == "hovering" then
-          enterHoverState(panel, panelBelow)
+          -- normal panels inherit the hover time from the panel below
+          normalState.enterHoverState(panel, panelBelow, panelBelow.timer, panels)
         elseif panelBelow.color == 0 and panelBelow.state == "normal" then
           if panelBelow.propagatesFalling then
             -- the panel below is empty because garbage below dropped
             -- in that case, skip the hover and fall immediately with the garbage
             fall(panel, panels)
           else
-            enterHoverState(panel, panelBelow)
+            -- if the panel below does not have a color, full hover time is given
+            normalState.enterHoverState(panel, panelBelow, panel.frameTimes.HOVER, panels)
           end
         elseif panelBelow.queuedHover == true
         and panelBelow.propagatesChaining
         and panelBelow.state == "swapping" then
-          enterHoverState(panel, panelBelow)
+          -- if the panel(s) below is/are swapping but propagate(s) chaining due to a pop further below,
+          -- the hovertime is the sum of remaining swap time(s) and the hover time of the first hovering panel below that we can find
+          -- so first add up all the timers of swapping panels (usually 1)
+          local hoverTime = panelBelow.timer
+          local hoverPanel = getPanelBelow(panelBelow, panels)
+          while hoverPanel and hoverPanel.state == "swapping" do
+            -- for every swapping panel below we add up the remaining time of the swap
+            -- this is how the old code did it, it is unclear whether that is actually correct behaviour confirmed in PdP/TA
+            hoverTime = hoverTime + hoverPanel.timer
+            hoverPanel = getPanelBelow(hoverPanel, panels)
+          end
+          -- and then add the timer of the hover panel
+          -- we need to do it like this because the hover panel could hover with either normal hover time or garbage hover time
+          if hoverPanel.state == "hovering" then
+            hoverTime = hoverTime + hoverPanel.timer
+          else
+            -- there is no hovering panel below the the swapping panel
+            -- meaning the swapping panel is directly above the panels that just popped, meaning no garbage is involved
+            -- so we add regular hover time on top of swap time
+            hoverTime = hoverTime + panel.frameTimes.HOVER
+          end
+          
+          normalState.enterHoverState(panel, panelBelow, hoverTime, panels)
         end
         -- all other transformations from normal state are actively set by stack routines:
         -- swap
@@ -311,38 +288,71 @@ normalState.update = function(panel, panels)
   end
 end
 
+normalState.enterHoverState = function(panel, panelBelow, hoverTime, panels)
+  clear_flags(panel, false)
+  panel.state = "hovering"
+  if panelBelow.propagatesChaining then
+    panel.propagatesChaining = true
+    panel.chaining = true
+
+    if panelBelow.color == 0
+    or panelBelow.matchAnyway then
+      -- panels above a match that just finished popping are matchable for 1 frame right after entering hoverstate
+      panel.matchAnyway = true
+      -- panels above cleared garbage are NOT
+    else
+      -- the simple propagation of matchAnyway may be inhibited by panels that are swapping or just finished their swap
+      -- swapping panels will never get the matchAnyway flag
+      -- so we drill down to the next panel below that definitely isn't considered swapping
+      while panelBelow.state == "swapping"
+      -- this second condition also applies to panels newly hovering over a garbage hover
+      or (panelBelow.stateChanged and panelBelow.propagatesChaining and not panelBelow.matchAnyway and panelBelow.state == "hovering") do
+        panelBelow = getPanelBelow(panelBelow, panels)
+      end
+
+      -- if the hover was initiated by a garbage hover, then the panel we should have arrived at, doesn't propagate chaining
+      -- so we won't match anyway
+      if panelBelow.propagatesChaining then
+        panel.matchAnyway = panelBelow.color == 0 or panelBelow.matchAnyway
+      end
+    end
+  end
+
+  panel.timer = hoverTime
+  panel.stateChanged = true
+end
+
 swappingState.update = function(panel, panels)
   decrementTimer(panel)
   if panel.timer == 0 then
-    if panel.queuedHover then
-      enterHoverState(panel, getPanelBelow(panel, panels))
-    else
-      swappingState.changeState(panel, panels)
-    end
+    swappingState.changeState(panel, panels)
   else
     swappingState.propagateChaining(panel, panels)
   end
 end
 
+local function swappingStateFinishSwap(panel)
+  panel.state = "normal"
+  panel.dont_swap = nil
+  panel.isSwappingFromLeft = nil
+  panel.stateChanged = true
+end
+
 swappingState.changeState = function(panel, panels)
-  local function finishSwap()
-    panel.state = "normal"
-    panel.dont_swap = nil
-    panel.isSwappingFromLeft = nil
-    panel.stateChanged = true
-  end
 
   local panelBelow = getPanelBelow(panel, panels)
 
   if panel.color == 0 then
-    finishSwap()
+    swappingStateFinishSwap(panel)
   else
-    if panelBelow and panelBelow.color == 0 then
-      enterHoverState(panel, panelBelow)
-    elseif panelBelow and panelBelow.state == "hovering" then
-      enterHoverState(panel, panelBelow)
+    if panelBelow then
+      if panelBelow.color == 0 or panelBelow.state == "hovering" or panel.queuedHover then
+        swappingState.enterHoverState(panel, panelBelow)
+      else
+        swappingStateFinishSwap(panel)
+      end
     else
-      finishSwap()
+      swappingStateFinishSwap(panel)
     end
   end
 end
@@ -357,6 +367,25 @@ swappingState.propagateChaining = function(panel, panels)
     panel.stateChanged = true
     panel.propagatesChaining = true
   end
+end
+
+swappingState.enterHoverState = function(panel, panelBelow)
+  clear_flags(panel, false)
+  panel.state = "hovering"
+  -- swapping panels do NOT get the chaining flag if the panelBelow propagates chaining when the swap ends 
+  --panel.chaining = panel.chaining
+  -- all panels above may still get the chaining flag though if it is currently propagating
+  panel.propagatesChaining = panelBelow.propagatesChaining
+  -- panels that just finished their swap and enter hover may match on the next frame depending on the other hoverblocks below
+  if panelBelow.color ~= 0 and panelBelow.state == "hovering" then
+    panel.matchAnyway = panelBelow.matchAnyway
+  else
+    panel.matchAnyway = false
+  end
+
+  -- swapping panels always get full hover time
+  panel.timer = panel.frameTimes.HOVER
+  panel.stateChanged = true
 end
 
 matchedState.update = function(panel, panels)
@@ -375,7 +404,7 @@ matchedState.changeState = function(panel, panels)
     if panel.y_offset == -1 then
       -- this means the matched garbage panel is part of the bottom row of the garbage
       -- so it will actually convert itself into a non-garbage panel and start to hover
-      enterHoverState(panel)
+      matchedState.enterHoverState(panel)
     else
       -- upper rows of chain type garbage just return to being unmatched garbage
       panel.state = "normal"
@@ -387,6 +416,18 @@ matchedState.changeState = function(panel, panels)
     panel.timer = panel.combo_index * panel.frameTimes.POP
     panel.stateChanged = true
   end
+end
+
+matchedState.enterHoverState = function(panel)
+  -- this is the hover enter after garbage match that converts the garbage panel into a regular panel
+  -- clear resets its garbage flag to false, turning it into a normal panel!
+  clear(panel, false, false)
+  panel.chaining = true
+  panel.propagatesChaining = true
+  panel.timer = panel.frameTimes.GPHOVER
+  panel.fell_from_garbage = 12
+  panel.state = "hovering"
+  panel.stateChanged = true
 end
 
 poppingState.update = function(panel, panels)
@@ -427,6 +468,9 @@ end
 
 hoverState.update = function(panel, panels)
   decrementTimer(panel)
+  if panel.matchAnyway then
+    panel.matchAnyway = false
+  end
   if panel.timer == 0 then
     hoverState.changeState(panel, panels)
   end
@@ -467,7 +511,7 @@ fallingState.update = function(panel, panels)
       local panelBelow = getPanelBelow(panel, panels)
       -- no need to nil check because the panel would always get landed at row 1 before getting here
       if panelBelow.state == "hovering" then
-        enterHoverState(panel, panelBelow)
+        fallingState.enterHoverState(panel, panelBelow)
       else
         land(panel)
       end
@@ -481,6 +525,16 @@ fallingState.update = function(panel, panels)
   if not panel.stateChanged and panel.fell_from_garbage then
     panel.fell_from_garbage = panel.fell_from_garbage - 1
   end
+end
+
+fallingState.enterHoverState = function(panel, panelBelow)
+  clear_flags(panel, false)
+  panel.state = "hovering"
+  panel.stateChanged = true
+  panel.chaining = panel.chaining or panelBelow.propagatesChaining
+  panel.propagatesChaining = panelBelow.propagatesChaining
+-- falling panels inherit the hover time from the panel below
+  panel.timer = panelBelow.timer
 end
 
 landingState.update = function(panel, panels)
@@ -518,43 +572,41 @@ end
 
 -- returns false if this panel can be matched
 -- true if it cannot be matched
-function Panel.exclude_match(self)
+function Panel.canMatch(self)
   -- panels without colors can't match
   if self.color == 0 or self.color == 9 then
-    return true
-  -- i'm still figuring out how exactly that match_anyway flag works
-  elseif self.state == "hovering" and not self.match_anyway then
-    return true
+    return false
   else
     if self.state == "normal"
-    or self.state == "landing" then
-      return false
+      or self.state == "landing"
+      or (self.matchAnyway and self.state == "hovering")  then
+      return true
     else
       -- swapping, matched, popping, popped, hover, falling, dimmed, dead
-      return true
+      return false
     end
   end
 end
 
 -- returns false if this panel can be swapped
 -- true if it can not be swapped
-function Panel.exclude_swap(self)
+function Panel.canSwap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
   if self.dont_swap then
-    return true
+    return false
   -- can't swap garbage panels or even garbage to start with
   elseif self.isGarbage then
-    return true
+    return false
   else
     if self.state == "normal"
     or self.state == "swapping"
     or self.state == "falling"
     or self.state == "landing" then
-      return false
+      return true
     else
       -- matched, popping, popped, hovering, dimmed, dead
-      return true
+      return false
     end
   end
 end
@@ -593,6 +645,12 @@ function Panel.update(self, panels)
   self.stateChanged = false
   self.propagatesChaining = false
   self.propagatesFalling = false
+
+  -- the flags for indicating a (possible garbage) match during the checkMatch process
+  -- clear it here to not have to make an extra iteration through all panels during checkMatches
+  self.matching = false
+  self.matchesMetal = false
+  self.matchesGarbage = false
 
   if self.state == "normal" then
     normalState.update(self, panels)
@@ -667,4 +725,24 @@ function Panel.dangerous(self)
   else
     return self.color ~= 0
   end
+end
+
+-- puts a non-garbage panel into the matched state
+-- isChainLink: true if the match the panel is part of forms a new chain link
+-- comboIndex: index for determining pop order among all panels of the match
+-- comboSize: used for popFX and calculation of timers related to popping/popped state
+--
+-- garbagePanels have to process by row due to color generation and have their extra logic in checkMatches
+function Panel:match(isChainLink, comboIndex, comboSize)
+  self.state = "matched"
+  -- +1 because match always occurs before the timer decrements on the frame
+  self:setTimer(self.frameTimes.MATCH + 1)
+  if isChainLink then
+    self.chaining = true
+  end
+  if self.fell_from_garbage then
+    self.fell_from_garbage = nil
+  end
+  self.combo_index = comboIndex
+  self.combo_size = comboSize
 end

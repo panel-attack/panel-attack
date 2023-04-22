@@ -38,4 +38,6 @@ File 3: Shape is shifted 4 pixels up
 File 4: Bottom is shifted down 2 pixels, top is squished down 9 pixels, sides are squished out 2 pixels
 File 5: Inverted: Middle color shape is about 20% darker, White is 208, 208, 208, outside is same color as inside
 File 6: Dead: Add a silly / broken / dead version this is shown at the end of popping and at game over.
-File 7: everything is 50% darker
+File 7: everything is 50% darker  
+
+You can use the Ctrl+Shift+Alt+P shortcut to reload all panel graphics in the game.

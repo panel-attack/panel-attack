@@ -110,8 +110,10 @@ function Replay.loadFromFile(replay, wantsCanvas)
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
       P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
       
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
+      P1:setGarbageTarget(P2)
+      P1:setOpponent(P2)
+      P2:setGarbageTarget(P1)
+      P2:setOpponent(P1)
       P2:moveForPlayerNumber(2)
 
       if replayDetails.P1_win_count then
@@ -119,7 +121,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
         GAME.match.battleRoom.playerWinCounts[2] = replayDetails.P2_win_count
       end
     else
-      P1:set_garbage_target(P1)
+      P1:setGarbageTarget(P1)
     end
 
     GAME.battleRoom.playerNames[1] = replayDetails.P1_name or loc("player_n", "1")

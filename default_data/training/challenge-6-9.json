@@ -1,0 +1,179 @@
+{
+    "extraInfo": {
+        "playerName": "Dyalon",
+        "gpm": "18.6",
+        "matchLength": "1:28",
+        "dateGenerated": "2022-11-26-23-08-16"
+    },
+    "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+        {
+            "chainEndTime": 552,
+            "chain": [
+                468
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 468,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 578,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 962,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 1112,
+            "chain": [
+                1043
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1165,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 1316,
+            "chain": [
+                1242
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1242,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1444,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2063,
+            "chain": [
+                1920,
+                1994
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1920,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2243,
+            "chain": [
+                2174
+            ]
+        },
+        {
+            "chainEndTime": 2730,
+            "chain": [
+                2537,
+                2604,
+                2671
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2718,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2923,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "chainEndTime": 3080,
+            "chain": [
+                3013
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3105,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3351,
+            "chain": [
+                3282
+            ]
+        },
+        {
+            "chainEndTime": 3799,
+            "chain": [
+                3732
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3796,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4333,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 4598,
+            "chain": [
+                4488,
+                4489
+            ]
+        },
+        {
+            "chainEndTime": 5357,
+            "chain": [
+                4950,
+                5018,
+                5085,
+                5154,
+                5221,
+                5290
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 5373,
+            "metal": false,
+            "width": 5
+        }
+    ]
+}
