@@ -3,7 +3,8 @@ local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
-local function teardown()
+local function test(func)
+  func()
   GAME:clearMatch()
 end
 
@@ -19,10 +20,9 @@ local function testChainingPropagationThroughSwap1()
   assert(not match.P2.panels[4][5].matchAnyway)
   assert(match.P2.panels[5][5].chaining == true)
   assert(match.P2.panels[5][5].matchAnyway == true)
-  teardown()
 end
 
-testChainingPropagationThroughSwap1()
+test(testChainingPropagationThroughSwap1)
 
 local function testHoverInheritanceOverSwapOverGarbageHover()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "swapOverGarbageHoverInheritance.json")
@@ -39,10 +39,9 @@ local function testHoverInheritanceOverSwapOverGarbageHover()
   assert(match.P2.panels[10][4].state == "hovering")
   -- 10 frames GPHover + 3 frames left from the swap
   assert(match.P2.panels[10][4].timer == 13)
-  teardown()
 end
 
-testHoverInheritanceOverSwapOverGarbageHover()
+test(testHoverInheritanceOverSwapOverGarbageHover)
 
 local function testFirstHoverFrameMatch()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "firstHoverFrameMatchReplay.json")
@@ -57,10 +56,9 @@ local function testFirstHoverFrameMatch()
   assert(match.P1.panels[4][4].chaining ~= true)
   -- for this specific replay, the match combines with another one to form a +6
   assert(match.P1.combos[4269][1].width == 5)
-  teardown()
 end
 
-testFirstHoverFrameMatch()
+test(testFirstHoverFrameMatch)
 
 local function testHoverChainOverGarbageClear()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "hoverChainOverGarbageClearReplay.json")
@@ -85,10 +83,36 @@ local function testHoverChainOverGarbageClear()
   assert(match.P1.combos[3080][1] ~= nil and match.P1.combos[3080][1].width == 3, "We should've gotten a +4 x3 on this frame")
   StackReplayTestingUtils:simulateMatchUntil(match, 3272)
   assert(match.P2.game_over == true, "P2 should have died here")
-  teardown()
 end
 
-testHoverChainOverGarbageClear()
+test(testHoverChainOverGarbageClear)
+
+local function horizontalSwapIntoHoverTest()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "sideBySideSwapIntoHoverReplay.json")
+  StackReplayTestingUtils:simulateMatchUntil(match, 4220)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P2.panels[4][4].state == "hovering")
+  assert(match.P2.panels[4][4].chaining)
+  assert(match.P2.panels[5][4].state == "hovering")
+  assert(not match.P2.panels[5][4].chaining, "panel just finished a swap on the same frame hover was applied, therefore it should not be chaining")
+  assert(match.P2.panels[6][4].state == "hovering")
+  assert(match.P2.panels[6][4].chaining)
+  StackReplayTestingUtils:simulateMatchUntil(match, 4221)
+  -- matching on the first hover frame, chaining flag should get reset without increasing chain counter
+  assert(match.P2.panels[4][4].state == "matched")
+  assert(not match.P2.panels[4][4].chaining)
+  assert(match.P2.panels[5][4].state == "matched")
+  assert(not match.P2.panels[5][4].chaining)
+  assert(match.P2.panels[6][4].state == "matched")
+  assert(not match.P2.panels[6][4].chaining)
+  assert(match.P2.chain_counter == 2)
+  StackReplayTestingUtils:simulateMatchUntil(match, 4228)
+  assert(match.P2.chain_counter == 0, "chain counter should reset here as all other falling panels lost their chaining status by now")
+end
+
+test(horizontalSwapIntoHoverTest)
 
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
@@ -99,14 +123,13 @@ local function basicEndlessTest()
   assert(match.P1.max_health == 1)
   assert(match.P1.score == 37)
   assert(match.P1.difficulty == 3)
-  teardown()
 end
 
-basicEndlessTest()
+test(basicEndlessTest)
 
 
 local function basicTimeAttackTest()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2022-09-12-04-02-30-Spd11-Dif1-timeattack.txt")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2022-09-12-04-02-30-Spd11-Dif1-timeattack.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "time")
@@ -117,14 +140,13 @@ local function basicTimeAttackTest()
   assert(match.P1.difficulty == 1)
   assert(table.length(match.P1.chains) == 8)
   assert(table.length(match.P1.combos) == 4)
-  teardown()
 end
 
-basicTimeAttackTest()
+test(basicTimeAttackTest)
 
 
 local function basicVsTest()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "vs")
@@ -138,16 +160,15 @@ local function basicVsTest()
   assert(table.length(match.P2.chains) == 4)
   assert(table.length(match.P2.combos) == 4)
   assert(match.P1:gameResult() == -1)
-  teardown()
 end
 
-basicVsTest()
+test(basicVsTest)
 
 --the above replay did not succeed in throwing errors for some of the bugs I coded in during the checkMatches refactor
 --namely a color override issue where the transforming garbage panel had colors assigned more than once, leading to different panels
 --secondly an issue where the y_offset for offscreen chain garbage wasn't updated causing the bottom line of chain garbage to not convert into panels
 local function basicVsTest2()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-02-26-02-44-49-Endaris-L10-vs-z26PingMeDiscord-L10-Casual-P1wins.json")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-02-26-02-44-49-Endaris-L10-vs-z26PingMeDiscord-L10-Casual-P1wins.json")
   assert(match ~= nil)
   assert(match.mode == "vs")
   assert(match.seed == 9285831)
@@ -160,13 +181,12 @@ local function basicVsTest2()
   assert(table.length(match.P2.chains) == 5)
   assert(table.length(match.P2.combos) == 8)
   assert(match.P1:gameResult() == -1)
-  teardown()
 end
 
-basicVsTest2()
+test(basicVsTest2)
 
 local function noInputsInVsIsDrawTest()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-22-27-36-Player 1-L10-vs-Player 2-L10-draw.txt")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-22-27-36-Player 1-L10-vs-Player 2-L10-draw.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "vs")
@@ -180,15 +200,14 @@ local function noInputsInVsIsDrawTest()
   assert(table.length(match.P2.chains) == 0)
   assert(table.length(match.P2.combos) == 0)
   assert(match.P1:gameResult() == 0)
-  teardown()
 end
 
-noInputsInVsIsDrawTest()
+test(noInputsInVsIsDrawTest)
 
 -- Tests a bunch of different frame specific tricks and makes sure we still end at the expected time.
 -- In the future we should probably expand this to testing each specific trick and making sure the board changes correctly.
 local function frameTricksTest()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-07-16-37-02-Spd10-Dif3-endless.txt")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-07-16-37-02-Spd10-Dif3-endless.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "endless")
@@ -199,11 +218,11 @@ local function frameTricksTest()
   assert(table.length(match.P1.combos) == 7)
 end
 
-frameTricksTest()
+test(frameTricksTest)
 
 -- Tests a catch that also did a "sync" (two separate matches on the same frame)
 local function catchAndSyncTest()
-  match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-31-08-57-51-Galadic97-L10-vs-iTSMEJASOn-L8-Casual-P1wins.txt")
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-31-08-57-51-Galadic97-L10-vs-iTSMEJASOn-L8-Casual-P1wins.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
   assert(match.mode == "vs")
@@ -217,10 +236,9 @@ local function catchAndSyncTest()
   assert(table.length(match.P2.chains) == 2)
   assert(table.length(match.P2.combos) == 2)
   assert(match.P1:gameResult() == 1)
-  teardown()
 end
 
-catchAndSyncTest()
+test(catchAndSyncTest)
 
 -- Moving the cursor before ready is done
 -- Prior to the touch builds, you couldn't move the cursor before it was in position
@@ -263,7 +281,6 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   StackReplayTestingUtils:simulateMatchUntil(match, 60)
   assert(match.P1.cur_row == 6)
   assert(match.P1.cur_col == 3)
-  teardown()
 end
 
-movingBeforeInPositionDisallowedPriorToTouch()
+test(movingBeforeInPositionDisallowedPriorToTouch)
