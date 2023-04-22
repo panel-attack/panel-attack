@@ -92,6 +92,9 @@ function GarbageQueueTestingUtils.fillRowsTo(stack, count)
   for row = 1, count do
     if not stack.panels[row] then
       stack.panels[row] = {}
+      for col = 1, stack.width do
+        stack.createPanelAt(row, col)
+      end
     end
     for col = 1, stack.width do
       stack.panels[row][col].color = 9
