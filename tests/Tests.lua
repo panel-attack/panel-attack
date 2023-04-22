@@ -1,4 +1,5 @@
 -- In Development (move to correct location later)
+require("tests.GarbageQueueTests")
 
 -- Small tests (unit tests)
 require("PuzzleTests")
@@ -16,4 +17,3 @@ require("tests.ReplayTests")
 require("tests.StackReplayTests")
 require("tests.StackRollbackReplayTests")
 require("tests.StackTouchReplayTests")
-require("tests.GarbageQueueTests")
