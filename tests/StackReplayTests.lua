@@ -90,6 +90,33 @@ end
 
 testHoverChainOverGarbageClear()
 
+local function horizontalSwapIntoHoverTest()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "sideBySideSwapIntoHoverReplay.json")
+  StackReplayTestingUtils:simulateMatchUntil(match, 4220)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.P2.panels[4][4].state == "hovering")
+  assert(match.P2.panels[4][4].chaining)
+  assert(match.P2.panels[5][4].state == "hovering")
+  assert(not match.P2.panels[5][4].chaining, "panel just finished a swap on the same frame hover was applied, therefore it should not be chaining")
+  assert(match.P2.panels[6][4].state == "hovering")
+  assert(match.P2.panels[6][4].chaining)
+  StackReplayTestingUtils:simulateMatchUntil(match, 4221)
+  -- matching on the first hover frame, chaining flag should get reset without increasing chain counter
+  assert(match.P2.panels[4][4].state == "matched")
+  assert(not match.P2.panels[4][4].chaining)
+  assert(match.P2.panels[5][4].state == "matched")
+  assert(not match.P2.panels[5][4].chaining)
+  assert(match.P2.panels[6][4].state == "matched")
+  assert(not match.P2.panels[6][4].chaining)
+  assert(match.P2.chain_counter == 2)
+  StackReplayTestingUtils:simulateMatchUntil(match, 4228)
+  assert(match.P2.chain_counter == 0, "chain counter should reset here as all other falling panels lost their chaining status by now")
+end
+
+horizontalSwapIntoHoverTest()
+
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
   assert(match ~= nil)
