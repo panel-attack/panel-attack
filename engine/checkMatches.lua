@@ -364,6 +364,7 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
       self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.clock)
     end
     self:recordComboHistory(self.clock, 6, 1, true)
+    self.analytic:registerShock()
   end
 
   local combo_pieces = combo_garbage[comboSize]
