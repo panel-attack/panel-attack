@@ -376,10 +376,12 @@ swappingState.enterHoverState = function(panel, panelBelow)
   --panel.chaining = panel.chaining
   -- all panels above may still get the chaining flag though if it is currently propagating
   panel.propagatesChaining = panelBelow.propagatesChaining
-  -- panels that just finished their swap NEVER match anyway
-  -- by preventing matches with other panels starting to hover on that frame the match is delayed until all panels entered a matchable state again
-  -- this should be how hover chains work in general
-  panel.matchAnyway = false
+  -- panels that just finished their swap and enter hover may match on the next frame depending on the other hoverblocks below
+  if panelBelow.color ~= 0 and panelBelow.state == "hovering" then
+    panel.matchAnyway = panelBelow.matchAnyway
+  else
+    panel.matchAnyway = false
+  end
 
   -- swapping panels always get full hover time
   panel.timer = panel.frameTimes.HOVER
