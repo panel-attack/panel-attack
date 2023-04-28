@@ -426,6 +426,8 @@ end
 -- param source the stack to copy from
 -- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
+  local restoringStack = getmetatable(other) ~= nil
+
   if other == nil then
     if #source.clonePool == 0 then
       other = {}
@@ -463,8 +465,13 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
-        other.panels[i][j] = {}
+        if restoringStack then
+          other:createPanelAt(i, j, 0) -- the panel ID will be overwritten below
+        else
+          -- We don't need to "create" a panel, since we are just backing up the key values
+          -- and when we restore we will usually have a panel to restore into.
+          other.panels[i][j] = {}
+        end
       end
     end
     for j = 1, width do
@@ -2341,9 +2348,12 @@ function Stack:getAttackPatternData()
 end
 
 -- creates a new panel at the specified row+column and adds it to the Stack's panels table
-function Stack.createPanelAt(self, row, column)
-  self.panelsCreatedCount = self.panelsCreatedCount + 1
-  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
+function Stack.createPanelAt(self, row, column, panelID)
+  if panelID == nil then
+    self.panelsCreatedCount = self.panelsCreatedCount + 1
+    panelID = self.panelsCreatedCount
+  end
+  local panel = Panel(panelID, row, column, self.FRAMECOUNTS)
   panel.onPop = function(panel)
     self:onPop(panel)
   end
@@ -2357,6 +2367,7 @@ function Stack.createPanelAt(self, row, column)
     self:onGarbageLand(panel)
   end
   self.panels[row][column] = panel
+  assert(getmetatable(panel) ~= nil)
   return panel
 end
 
