@@ -159,20 +159,20 @@ function round(positive_decimal_number, number_of_decimal_places)
 end
 
 -- Returns a time string for the number of frames
-function frames_to_time_string(frame_count, include_milliseconds)
+function frames_to_time_string(frame_count, include_centiseconds)
   local min_sec_sep = ":"
   local sec_60th_sep = "'"
   local ret = ""
 
-  --minutes with only one digit if only one digit if needed
+  --minutes with only one digit if only one digit is needed
   ret = ret .. math.floor(frame_count / 3600 % 3600)
 
   --seconds
   ret = ret .. min_sec_sep .. string.format("%02d", math.floor(frame_count / 60 % 60))
   
-  if include_milliseconds then
+  if include_centiseconds then
     --also include milliseconds
-    ret = ret .. sec_60th_sep .. string.format("%03d", ((1000 / 60) * (frame_count % 60)))
+    ret = ret .. sec_60th_sep .. string.format("%02d", ((100 / 60) * (frame_count % 60)))
   end
   
   return ret
