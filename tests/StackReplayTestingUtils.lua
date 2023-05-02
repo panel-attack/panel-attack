@@ -1,3 +1,5 @@
+local logger = require("logger")
+
 local StackReplayTestingUtils = {}
 
 function StackReplayTestingUtils:simulateReplayWithPath(path)
@@ -43,6 +45,7 @@ end
 function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
   assert(match.P1.is_local == false, "Don't use 'local' for tests, we might simulate the clock time too much if local")
   while match.P1.clock < clockGoal do
+      assert(match:matchOutcome() == nil, "Game isn't expected to end yet")
       assert(#match.P1.input_buffer > 0)
       match:run()
   end

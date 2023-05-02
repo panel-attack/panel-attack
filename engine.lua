@@ -426,6 +426,8 @@ end
 -- param source the stack to copy from
 -- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
+  local restoringStack = getmetatable(other) ~= nil
+
   if other == nil then
     if #source.clonePool == 0 then
       other = {}
@@ -463,8 +465,13 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
-        other.panels[i][j] = {}
+        if restoringStack then
+          other:createPanelAt(i, j) -- the panel ID will be overwritten below
+        else
+          -- We don't need to "create" a panel, since we are just backing up the key values
+          -- and when we restore we will usually have a panel to restore into.
+          other.panels[i][j] = {}
+        end
       end
     end
     for j = 1, width do

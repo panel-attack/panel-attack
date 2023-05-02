@@ -285,6 +285,35 @@ end
 
 test(movingBeforeInPositionDisallowedPriorToTouch)
 
+-- Test that down stacking under garbage makes everything fall even if panels are sandwiched between.
+local function downStackDropsSandwichedGarbageAllTogether()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "downStackDropsSandwichedGarbageAllTogether.txt")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 4668)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.seed == 1123596)
+  assert(match.P1.level == 8)
+  assert(match.P2.level == 8)
+  assert(match.P2.panels[4][4].state == "normal")
+  assert(match.P2.panels[4][4].isGarbage == false)
+  assert(match.P2.panels[5][4].state == "normal")
+  assert(match.P2.panels[5][4].isGarbage == true)
+  assert(match.P2.panels[9][4].state == "normal")
+  assert(match.P2.panels[9][4].isGarbage == true)
+  
+  -- After swapping out the panel, the garbage, panels and more garbage should all drop
+  StackReplayTestingUtils:simulateMatchUntil(match, 4669)
+  assert(match.P2.panels[4][4].state == "falling")
+  assert(match.P2.panels[4][4].isGarbage == true)
+  assert(match.P2.panels[5][4].state == "falling")
+  assert(match.P2.panels[5][4].isGarbage == false)
+  assert(match.P2.panels[8][4].state == "falling")
+  assert(match.P2.panels[8][4].isGarbage == true)
+end
+
+test(downStackDropsSandwichedGarbageAllTogether)
 -- Test that a match that touches metal and a garbage block that also matches the metal still clears the whole metal
 local function matchMetalAndGarbageClearsAllMetalTest()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "matchMetalAndGarbageClearsAllMetal.txt")
