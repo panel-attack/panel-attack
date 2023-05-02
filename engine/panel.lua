@@ -531,7 +531,8 @@ fallingState.enterHoverState = function(panel, panelBelow)
   clear_flags(panel, false)
   panel.state = "hovering"
   panel.stateChanged = true
-  panel.chaining = panel.chaining or panelBelow.propagatesChaining
+  -- NOTE: specifically don't add "chaining" if we don't already have it
+  -- since we didn't finish falling when the hover started
   panel.propagatesChaining = panelBelow.propagatesChaining
 -- falling panels inherit the hover time from the panel below
   panel.timer = panelBelow.timer

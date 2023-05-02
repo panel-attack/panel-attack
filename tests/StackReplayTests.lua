@@ -284,3 +284,34 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
 end
 
 test(movingBeforeInPositionDisallowedPriorToTouch)
+
+-- Test that a panel that is still falling when it starts hovering doesn't get the chain flag.
+-- I believe the reasoning behind this is it wasn't "established" enough to count as a chain.
+local function fallingWhileHoverBeginsDoesNotChain()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "fallingWhileHoverBeginsDoesNotChain.txt")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, 5571)
+  assert(match ~= nil)
+  assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
+  assert(match.mode == "vs")
+  assert(match.seed == 5439756)
+  assert(match.P1.level == 10)
+  assert(match.P2.level == 10)
+  assert(match.P2.panels[8][3].state == "falling")
+  assert(match.P2.panels[8][3].isGarbage == false)
+  assert(match.P2.panels[8][3].chaining == nil)
+  assert(match.P2.panels[7][3].state == "normal")
+  assert(match.P2.panels[7][3].isGarbage == false)
+  assert(match.P2.panels[7][3].chaining == nil)
+  
+  -- if panels started hovering while a panel was still falling, it doesn't get the chain flag
+  StackReplayTestingUtils:simulateMatchUntil(match, 5572)
+  assert(match.P2.panels[8][3].state == "hovering")
+  assert(match.P2.panels[8][3].isGarbage == false)
+  assert(match.P2.panels[8][3].chaining == nil)
+  assert(match.P2.panels[7][3].state == "hovering")
+  assert(match.P2.panels[7][3].isGarbage == false)
+  assert(match.P2.panels[7][3].chaining == true)
+end
+
+test(fallingWhileHoverBeginsDoesNotChain)
