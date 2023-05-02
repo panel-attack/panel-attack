@@ -243,13 +243,17 @@ normalState.update = function(panel, panels)
         if panelBelow.state == "hovering" then
           -- normal panels inherit the hover time from the panel below
           normalState.enterHoverState(panel, panelBelow, panelBelow.timer, panels)
-        elseif panelBelow.propagatesFalling then
-          -- the panel below is empty because garbage below dropped
-          -- in that case, skip the hover and fall immediately with the garbage
-          fall(panel, panels)
-        elseif panelBelow.color == 0 and panelBelow.state == "normal" then
-          -- if the panel below does not have a color, full hover time is given
-          normalState.enterHoverState(panel, panelBelow, panel.frameTimes.HOVER, panels)
+        elseif panelBelow.color == 0 then
+          if panelBelow.propagatesFalling then
+            -- the panel below is empty because garbage below dropped
+            -- in that case, skip the hover and fall immediately with the garbage
+            fall(panel, panels)
+          elseif panelBelow.state == "normal" then
+            -- this is a normal fall, give full hover time
+            normalState.enterHoverState(panel, panelBelow, panel.frameTimes.HOVER, panels)
+          end
+          -- else
+          -- if the color 0 panel is not in normal state it means that it's swapping so we just do nothing until the swap finished and then run into the one above
         elseif panelBelow.queuedHover == true
           and panelBelow.propagatesChaining
           and panelBelow.state == "swapping" then
