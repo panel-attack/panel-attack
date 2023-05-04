@@ -227,9 +227,15 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
         panelToCheck.matchesMetal = true
         panelToCheck.matchesGarbage = true
       else
-        panelToCheck.matchesMetal = matchingPanel.metal
-        panelToCheck.matchesGarbage = not matchingPanel.metal
+        -- We need to "OR" in these flags in case a different path caused a match too
+        if matchingPanel.metal then
+          panelToCheck.matchesMetal = true
+        else
+          panelToCheck.matchesGarbage = true
+        end
       end
+
+      -- We may add a panel multiple times but it will be "matching" after the first time and skip any work in the loop.
       panelsToCheck:push(panelToCheck)
     end
   end

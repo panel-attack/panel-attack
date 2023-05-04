@@ -1,3 +1,5 @@
+local consts = require("consts")
+local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 
 local function puzzleTest()
   local match = Match("puzzle") -- to stop rising
@@ -48,19 +50,16 @@ end
 clearPuzzleTest()
 
 local function basicSwapTest()
-  local match = Match("endless")
-  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match.P1 = stack
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
+  match.seed = 1 -- so we consistently have a panel to swap
+  local stack = match.P1
+
   stack.do_countdown = false
-  stack:wait_for_random_character()
 
-  assert(characters ~= nil, "no characters")
+  stack:receiveConfirmedInput("AA") -- can't swap on first two frames
+  StackReplayTestingUtils:simulateMatchUntil(match, 2)
 
-
-  stack:receiveConfirmedInput("AA") -- can't swap on first two frames ?!
-  match:run()
-  match:run()
-
+  assert(stack:canSwap(1, 1), "should be able to swap")
   stack:setQueuedSwapPosition(1, 1)
   assert(stack.queuedSwapRow == 1)
   stack:new_row()
@@ -71,3 +70,26 @@ local function basicSwapTest()
 end
 
 basicSwapTest()
+
+local function moveAfterCountdownV46Test()
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
+  match.seed = 1 -- so we consistently have a panel to swap
+  match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
+  local stack = match.P1
+  stack.do_countdown = true
+  stack:wait_for_random_character()
+  assert(characters ~= nil, "no characters")
+  local lastBlockedCursorMovementFrame = 33
+  stack:receiveConfirmedInput(string.rep(stack:idleInput(), lastBlockedCursorMovementFrame + 1))
+
+  StackReplayTestingUtils:simulateMatchUntil(match, lastBlockedCursorMovementFrame)
+  assert(stack.cursorLock ~= nil, "Cursor should be locked up to last frame of countdown")
+
+  StackReplayTestingUtils:simulateMatchUntil(match, lastBlockedCursorMovementFrame + 1)
+  assert(stack.cursorLock == nil, "Cursor should not be locked after countdown")
+
+  reset_filters()
+  stop_the_music()
+end
+
+moveAfterCountdownV46Test()

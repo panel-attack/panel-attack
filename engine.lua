@@ -17,7 +17,6 @@ local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
-local COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 
 -- Represents the full panel stack for one player
 Stack =
@@ -428,6 +427,8 @@ end
 -- param source the stack to copy from
 -- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
+  local restoringStack = getmetatable(other) ~= nil
+
   if other == nil then
     if #source.clonePool == 0 then
       other = {}
@@ -465,8 +466,13 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
-        other.panels[i][j] = {}
+        if restoringStack then
+          other:createPanelAt(i, j) -- the panel ID will be overwritten below
+        else
+          -- We don't need to "create" a panel, since we are just backing up the key values
+          -- and when we restore we will usually have a panel to restore into.
+          other.panels[i][j] = {}
+        end
       end
     end
     for j = 1, width do
@@ -1778,27 +1784,28 @@ function Stack:runCountDownIfNeeded()
         self.cur_col = self.width
       end
     end
-    local COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
     if self.countdown_clock == 8 then
-      self.countdown_timer = COUNTDOWN_LENGTH
+      self.countdown_timer = consts.COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
-      local countDownFrame = COUNTDOWN_LENGTH - self.countdown_timer
-      if countDownFrame > 0 and countDownFrame % COUNTDOWN_CURSOR_SPEED == 0 then
-        local moveIndex = math.floor(countDownFrame / COUNTDOWN_CURSOR_SPEED)
+      local countDownFrame = consts.COUNTDOWN_LENGTH - self.countdown_timer
+      if countDownFrame > 0 and countDownFrame % consts.COUNTDOWN_CURSOR_SPEED == 0 then
+        local moveIndex = math.floor(countDownFrame / consts.COUNTDOWN_CURSOR_SPEED)
         if moveIndex <= 4 then
           self:moveCursorInDirection("down")
         elseif moveIndex <= 6 then
           self:moveCursorInDirection("left")
-          if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE and moveIndex == 6 then
-            self.cursorLock = nil
-          end
+
         elseif moveIndex == 10 then
-          self.animatingCursorDuringCountdown = false
+          self.animatingCursorDuringCountdown = nil
           if self.inputMethod == "touch" then
             self.cur_row = 0
             self.cur_col = 0
           end
+        end
+      elseif countDownFrame == 6 * consts.COUNTDOWN_CURSOR_SPEED + 1 then
+        if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
+          self.cursorLock = nil
         end
       end
       if self.countdown_timer == 0 then
@@ -1806,7 +1813,6 @@ function Stack:runCountDownIfNeeded()
         self.do_countdown = false
         self.countdown_timer = nil
         self.countdown_clock = nil
-        self.animatingCursorDuringCountdown = nil
         self.game_stopwatch_running = true
         if self.which == 1 and self:shouldChangeSoundEffects() then
           SFX_Go_Play = 1

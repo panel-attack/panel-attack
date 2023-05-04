@@ -158,8 +158,10 @@ function readAttackFile(path)
     local trainingConf, position, errorMsg = json.decode(jsonData)
     if trainingConf then
       if not trainingConf.name or type(trainingConf.name) ~= "string" then
-        trainingConf.name = path:match(package.config:sub(1, 1) .. '(.*)$')
-        trainingConf.name = FileUtil.getFileNameWithoutExtension(trainingConf.name)
+        local filenameOnly = path:match('%' .. sep .. '?(.*)$')
+        if filenameOnly ~= nil then
+          trainingConf.name = FileUtil.getFileNameWithoutExtension(filenameOnly)
+        end
       end
       return trainingConf
     else

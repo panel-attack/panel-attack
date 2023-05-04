@@ -581,7 +581,7 @@ function select_screen.sendMenuState(self)
   menuState.level = self.players[self.my_player_number].level
   menuState.inputMethod = self.players[self.my_player_number].inputMethod
   for k, v in pairs(menuState) do
-    if type(k) == "function" or type(v) == "function" then
+    if type(k) == "function" or type(v) == "function" or type(k) == "table" or type(v) == "table" then
       error("Trying to send an illegal object to the server\n" .. table_to_string(menuState))
     end
   end
@@ -901,7 +901,7 @@ function select_screen.start1pLocalMatch(self)
       character_loader_wait()
     end
 
-    local xPosition = 760
+    local xPosition = 796
     local yPosition = 120
     local mirror = -1
     local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
