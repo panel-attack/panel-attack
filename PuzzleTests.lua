@@ -158,3 +158,11 @@ function PuzzleTests.testHorizontallyFlippedBigGarbagePuzzle()
 end
 
 PuzzleTests.testHorizontallyFlippedBigGarbagePuzzle()
+
+function PuzzleTests.testHorizontallyFlippedSmallGarbagePuzzle()
+  local puzzleString = "[============================]00[==]632620[==]00200042543641322141354544463636"
+  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  assert(flippedString == "[============================][==]0002623600[==]240002146345141223445453636364")
+end
+
+PuzzleTests.testHorizontallyFlippedSmallGarbagePuzzle()
