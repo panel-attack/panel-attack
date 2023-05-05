@@ -1684,11 +1684,19 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
   awesome_idx = awesome_idx or 1
 
   local function setupPuzzles()
+    puzzleSet = deepcpy(puzzleSet)
+
     if config.puzzle_randomColors then
-      puzzleSet = deepcpy(puzzleSet)
-  
       for _, puzzle in pairs(puzzleSet.puzzles) do
-        puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+        puzzle.stack = Puzzle.randomizeColorsInPuzzleString(puzzle.stack)
+      end
+    end
+
+    if config.puzzle_randomFlipped then
+      for _, puzzle in pairs(puzzleSet.puzzles) do
+        if math.random(2) == 1 then
+          puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+        end
       end
     end
 
@@ -1777,13 +1785,17 @@ function main_select_puzz()
   local ret = nil
   local level = config.puzzle_level
   local randomColors = config.puzzle_randomColors or false
+  local randomHorizontalFlipped = config.puzzle_randomFlipped or false
 
   local function selectFunction(myFunction, args)
     local function constructedFunction()
       puzzle_menu_last_index = puzzleMenu.active_idx
-      if config.puzzle_level ~= level or config.puzzle_randomColors ~= randomColors then
+      if config.puzzle_level ~= level or 
+         config.puzzle_randomColors ~= randomColors or 
+         config.puzzle_randomFlipped ~= randomHorizontalFlipped then
         config.puzzle_level = level
         config.puzzle_randomColors = randomColors
+        config.puzzle_randomFlipped = randomHorizontalFlipped
         logger.debug("saving settings...")
         wait()
         write_conf_file()
@@ -1835,6 +1847,13 @@ function main_select_puzz()
     puzzleMenu:set_button_setting(2, randomColors and loc("op_on") or loc("op_off"))
   end
 
+  local function update_randomFlipped(noToggle)
+    if not noToggle then
+      randomHorizontalFlipped = not randomHorizontalFlipped
+    end
+    puzzleMenu:set_button_setting(3, randomHorizontalFlipped and loc("op_on") or loc("op_off"))
+  end
+
   local function nextMenu()
     puzzleMenu:selectNextIndex()
   end
@@ -1843,12 +1862,15 @@ function main_select_puzz()
   puzzleMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, puzzle_menu_last_index)
   puzzleMenu:add_button(loc("level"), nextMenu, goEscape, decreaseLevel, increaseLevel)
   puzzleMenu:add_button(loc("randomColors"), update_randomColors, goEscape, update_randomColors, update_randomColors)
+  puzzleMenu:add_button(loc("randomHorizontalFlipped"), update_randomFlipped, goEscape, update_randomFlipped, update_randomFlipped)
+  
   for i = 1, #items do
     puzzleMenu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
   end
   puzzleMenu:add_button(loc("back"), exitSettings, exitSettings)
   updateMenuLevel()
   update_randomColors(true)
+  update_randomFlipped(true)
 
   while true do
     puzzleMenu:draw()

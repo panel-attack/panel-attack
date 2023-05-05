@@ -188,7 +188,7 @@ function Stack:getMatchingPanels()
   for i = 1, #matchingPanels do
     if matchingPanels[i].state == "hovering" then
       -- hovering panels that match can never chain (see Panel.matchAnyway for an explanation)
-      matchingPanels[i].chaining = false
+      matchingPanels[i].chaining = nil
     end
   end
 
