@@ -2,6 +2,7 @@ local logger = require("logger")
 require("ChallengeMode")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
+local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local options = require("options")
 local utf8 = require("utf8Additions")
 local analytics = require("analytics")
@@ -1598,7 +1599,46 @@ function main_replay()
 
   commonGameSetup()
 
-  Replay.loadFromFile(replay, true)
+  local match, _ = StackReplayTestingUtils:simulateReplayWithPath(replay_browser.selection)
+
+  local useP2 = false
+  local matchResult = match.P1:gameResult()
+  if matchResult ~= nil then
+    local stack = match.P1
+    if matchResult == 1 then
+      stack = match.P2
+      useP2 = true
+    end
+    local lastSafeClearFrame = 0
+    for garbageClearFrame, _ in pairs(stack.garbageClears) do
+      if garbageClearFrame > lastSafeClearFrame then
+        lastSafeClearFrame = garbageClearFrame
+      end
+    end
+
+    Replay.loadFromPath(replay_browser.selection)
+    Replay.loadFromFile(replay, true)
+
+    GAME.muteSoundEffects = true
+    StackReplayTestingUtils:simulateMatchUntil(GAME.match, lastSafeClearFrame)
+    GAME.muteSoundEffects = false
+    
+    stack = GAME.match.P1
+    if useP2 then
+      stack = GAME.match.P2
+    end
+    stack.is_local = true
+    stack.input_buffer = {}
+    for i = stack.clock + 1, #stack.confirmedInput do
+      stack.confirmedInput[i] = nil
+    end
+  else
+    Replay.loadFromFile(replay, true)
+  end
+
+  GAME.renderDuringPause = true
+  GAME.gameIsPaused = true
+  leftover_time = 0
 
   local function update()
   end
@@ -1607,50 +1647,7 @@ function main_replay()
   local playbackSpeed = 1
   local maximumSpeed = 20
   local function variableStep()
-    -- If we just finished a frame advance, pause again
-    if frameAdvance then
-      frameAdvance = false
-      GAME.gameIsPaused = true
-    end
-
-    -- Advance one frame
-    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then
-      frameAdvance = true
-      GAME.gameIsPaused = false
-      if P1 then
-        P1.max_runs_per_frame = 1
-      end
-      if P2 then
-        P2.max_runs_per_frame = 1
-      end
-    elseif menu_right() then
-      playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
-      if P1 then
-        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
-      end
-      if P2 then
-        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
-      end
-    elseif menu_left() then
-      playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
-      if P1 then
-        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
-      end
-      if P2 then
-        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
-      end
-    end
-
-    if playbackSpeed == -1 and not GAME.gameIsPaused then
-      if P1 and P1.clock > 0 and P1.prev_states[P1.clock-1] then
-        P1:rollbackToFrame(P1.clock-1)
-        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-      end
-      if P2 and P2.clock > 0 and P2.prev_states[P2.clock-1] then
-        P2:rollbackToFrame(P2.clock-1)
-        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-      end
-    end
+    
   end
 
   local function abortGame() 

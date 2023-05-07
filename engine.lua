@@ -252,6 +252,7 @@ Stack =
       -- .sender = us
     end
 
+    s.garbageClears = {} -- Tracks the times garbage clears were made.
     s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
     s.chains = {} -- Tracks the chains made throughout the whole game
     --[[
@@ -611,6 +612,12 @@ function Stack.rollbackToFrame(self, frame)
     for comboFrame, _ in pairs(self.combos) do
       if comboFrame >= frame then
         self.combos[comboFrame] = nil
+      end
+    end
+
+    for garbageClearFrame, _ in pairs(self.garbageClears) do
+      if garbageClearFrame >= frame then
+        self.garbageClears[garbageClearFrame] = nil
       end
     end
 

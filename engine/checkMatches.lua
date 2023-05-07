@@ -314,6 +314,7 @@ function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onSc
   if self:shouldChangeSoundEffects() then
     SFX_garbage_match_play = true
   end
+  self:recordGarbageClearHistory(self.clock)
   
   for i = 1, #garbagePanels do
     local panel = garbagePanels[i]
@@ -392,6 +393,12 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
                           self.clock)
     end
     self:recordChainHistory()
+  end
+end
+
+function Stack:recordGarbageClearHistory(time)
+  if self.garbageClears[time] == nil then
+    self.garbageClears[time] = true
   end
 end
 
