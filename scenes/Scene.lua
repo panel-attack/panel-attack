@@ -3,9 +3,10 @@ local class = require("class")
 --@module Scene
 -- Base class for a container representing a single screen of PanelAttack.
 -- Each scene needs to be registered in Game.lua 
+-- Each scene also needs to add a field called <Scene>.name = <Scene>
+-- and call sceneManager.addScene(<Scene>)
 local Scene = class(
-  function (self, name)
-    self.name = name
+  function (self, sceneParams)
   end
 )
 

@@ -4,10 +4,20 @@ local consts = require("consts")
 local input = require("inputManager")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
+local class = require("class")
 
 --@module titleScreen
 -- The title screen scene
-local titleScreen = Scene("titleScreen")
+local TitleScreen = class(
+  function (self, sceneParams)
+    self.backgroundImg = themes[config.theme].images.bg_title
+  end,
+  Scene
+)
+
+TitleScreen.name = "TitleScreen"
+sceneManager:addScene(TitleScreen)
+
 
 local function titleDrawPressStart(percent) 
   local textMaxWidth = consts.CANVAS_WIDTH - 40
@@ -17,31 +27,21 @@ local function titleDrawPressStart(percent)
   gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
 end
 
-local backgroundImg = nil
-
-function titleScreen:init()
-  sceneManager:addScene(titleScreen)
+function TitleScreen:drawBackground()
+  self.backgroundImg:draw()
 end
 
-function titleScreen:load() 
-  backgroundImg = themes[config.theme].images.bg_title
-end
-
-function titleScreen:drawBackground()
-  backgroundImg:draw()
-end
-
-function titleScreen:update(dt)
-  backgroundImg:update(dt)
+function TitleScreen:update(dt)
+  self.backgroundImg:update(dt)
   titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then
     Menu.playValidationSfx()
-    sceneManager:switchToScene("mainMenu")
+    sceneManager:switchToScene("MainMenu")
   end
 end
 
-function titleScreen:unload()
+function TitleScreen:unload()
 end
 
-return titleScreen
+return TitleScreen

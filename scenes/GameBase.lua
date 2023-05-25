@@ -14,15 +14,15 @@ local Replay = require("replay")
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
 local GameBase = class(
-  function (self, name, options)
-    self.name = name
+  function (self, sceneParams)
+    print(dump(sceneParams))
     self.shouldAbortGame = false
     self.text = ""
     self.winnerSFX = nil
     self.keepMusic = false
     self.currentStage = config.stage
     self.loadStageAndMusic = true
-    self.backgroundImage = nil
+    backgroundImage = nil
     
     self.frameInfo = {
       frameCount = nil,
@@ -58,8 +58,9 @@ function GameBase:customGameOverSetup() end
 
 -- end abstract functions
 
+local backgroundImage = nil
+
 function GameBase:init()
-  sceneManager:addScene(self)
 end
 
 function GameBase:pickRandomStage()
@@ -77,7 +78,7 @@ function GameBase:useCurrentStage()
   
   stage_loader_load(self.currentStage)
   stage_loader_wait()
-  self.backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
+  backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
 end
 
 local function pickUseMusicFrom()
@@ -129,7 +130,7 @@ function GameBase:drawForeground()
 end
 
 function GameBase:drawBackground()
-  self.backgroundImage:draw()
+  backgroundImage:draw()
   local backgroundOverlay = themes[config.theme].images.bg_overlay
   if backgroundOverlay then
     local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio

@@ -1,28 +1,38 @@
 local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
-local replay = require("replay")
+local Replay = require("replay")
+local class = require("class")
 
 --@module endlessGame
 -- Scene for an endless mode instance of the game
-local endlessGame = GameBase("endlessGame", {})
+local EndlessGame = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  GameBase
+)
 
-function endlessGame:processGameResults(gameResult) 
+EndlessGame.name = "EndlessGame"
+sceneManager:addScene(EndlessGame)
+
+function EndlessGame:processGameResults(gameResult) 
   local extraPath, extraFilename
   if GAME.match.P1.level == nil then
     GAME.scores:saveEndlessScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
     extraPath = "Endless"
     extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-endless"
-    replay.finalizeAndWriteReplay(extraPath, extraFilename)
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
   end
 end
 
-function endlessGame:abortGame()
-  sceneManager:switchToScene("endlessMenu")
+function EndlessGame:abortGame()
+  sceneManager:switchToScene("EndlessMenu")
 end
 
-function endlessGame:customGameOverSetup()
+function EndlessGame:customGameOverSetup()
   self.winnerSFX = GAME.match.P1:pick_win_sfx()
-  self.nextScene = "endlessMenu"
+  self.nextScene = "EndlessMenu"
 end
 
-return endlessGame
+return EndlessGame

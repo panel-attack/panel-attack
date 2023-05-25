@@ -1,28 +1,38 @@
 local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
-local replay = require("replay")
+local Replay = require("replay")
+local class = require("class")
 
 --@module timeAttackGame
 -- Scene for an time attack mode instance of the game
-local timeAttackGame = GameBase("timeAttackGame", {})
+local TimeAttackGame = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  GameBase
+)
 
-function timeAttackGame:processGameResults(gameResult) 
+TimeAttackGame.name = "TimeAttackGame"
+sceneManager:addScene(TimeAttackGame)
+
+function TimeAttackGame:processGameResults(gameResult) 
   local extraPath, extraFilename
   if GAME.match.P1.level == nil then
     GAME.scores:saveTimeAttack1PScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
     extraPath = "Time Attack"
     extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-timeattack"
-    replay.finalizeAndWriteReplay(extraPath, extraFilename)
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
   end
 end
 
-function timeAttackGame:abortGame()
-  sceneManager:switchToScene("timeAttackMenu")
+function TimeAttackGame:abortGame()
+  sceneManager:switchToScene("TimeAttackMenu")
 end
 
-function timeAttackGame:customGameOverSetup()
+function TimeAttackGame:customGameOverSetup()
   self.winnerSFX = GAME.match.P1:pick_win_sfx()
-  self.nextScene = "timeAttackMenu"
+  self.nextScene = "TimeAttackMenu"
 end
 
-return timeAttackGame
+return TimeAttackGame

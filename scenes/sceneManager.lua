@@ -4,7 +4,7 @@ local transitionUtils = require("scenes.transitionUtils")
 -- Contains all initialized scenes and handles scene transitions 
 local sceneManager = {
   activeScene = nil,
-  nextScene = nil,
+  nextSceneName = nil,
   isTransitioning = false
 }
 
@@ -26,7 +26,7 @@ local transitions = {
 function sceneManager:switchToScene(sceneName, sceneParams, transition)
   transitionType = transition or defaultTransition
   transitionCo = coroutine.create(function() self:transitionFn(sceneParams) end)
-  self.nextScene = scenes[sceneName]
+  self.nextSceneName = sceneName
   self.isTransitioning = true
 end
 
@@ -37,10 +37,9 @@ function sceneManager:transitionFn(sceneParams)
     self.activeScene:unload()
   end
   
-  if self.nextScene then
-    self.nextScene:load(sceneParams)
-    self.activeScene = self.nextScene
-    GAME.rich_presence:setPresence(nil, self.nextScene.name, true)
+  if self.nextSceneName then
+    self.activeScene = scenes[self.nextSceneName](sceneParams or {})
+    GAME.rich_presence:setPresence(nil, self.nextSceneName, true)
   else
     self.activeScene = nil
   end
@@ -55,6 +54,7 @@ function sceneManager:transition()
 end
 
 function sceneManager:addScene(scene)
+  print(scene.name)
   scenes[scene.name] = scene
 end
 

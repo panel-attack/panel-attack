@@ -9,16 +9,26 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
+local class = require("class")
 
 --@module puzzleMenu
 -- Scene for the puzzle selection menu
-local puzzleMenu = Scene("puzzleMenu")
+local PuzzleMenu = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  Scene
+)
+
+PuzzleMenu.name = "PuzzleMenu"
+sceneManager:addScene(PuzzleMenu)
 
 local BUTTON_WIDTH = 60
 local BUTTON_HEIGHT = 25
 local font = GraphicsUtil.getGlobalFont()
   
-function puzzleMenu:startGame(puzzleSet)
+function PuzzleMenu:startGame(puzzleSet)
   current_stage = config.stage
   if current_stage == random_stage_special_value then
     current_stage = nil
@@ -33,7 +43,7 @@ function puzzleMenu:startGame(puzzleSet)
   end
   
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("puzzleGame", {puzzleSet = puzzleSet, puzzleIndex = 1})
+  sceneManager:switchToScene("PuzzleGame", {puzzleSet = puzzleSet, puzzleIndex = 1})
   
   if config.puzzle_level ~= self.levelSlider.value or config.puzzle_randomColors ~= self.randomColorsButtons.value then
     config.puzzle_level = self.levelSlider.value
@@ -45,12 +55,10 @@ end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("mainMenu")
+  sceneManager:switchToScene("MainMenu")
 end
 
-function puzzleMenu:init()
-  sceneManager:addScene(puzzleMenu)
-
+function PuzzleMenu:init()
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
@@ -86,7 +94,7 @@ function puzzleMenu:init()
   self.menu:setVisibility(false)
 end
 
-function puzzleMenu:load()
+function PuzzleMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 20
   self.menu.x = x
@@ -102,20 +110,20 @@ function puzzleMenu:load()
   self.menu:setVisibility(true)
 end
 
-function puzzleMenu:drawBackground()
+function PuzzleMenu:drawBackground()
   themes[config.theme].images.bg_main:draw()
 end
 
-function puzzleMenu:update()
+function PuzzleMenu:update()
   gprint(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
       
   self.menu:update()
   self.menu:draw()
 end
 
-function puzzleMenu:unload()
+function PuzzleMenu:unload()
   self.menu:setVisibility(false)
   stop_the_music()
 end
 
-return puzzleMenu
+return PuzzleMenu

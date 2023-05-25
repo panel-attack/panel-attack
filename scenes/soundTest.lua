@@ -6,10 +6,20 @@ local Button = require("ui.Button")
 local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
 local tableUtils = require("tableUtils")
+local class = require("class")
 
 --@module soundTest
 -- Scene for the sound test
-local soundTest = Scene("soundTest")
+local SoundTest = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  Scene
+)
+
+SoundTest.name = "SoundTest"
+sceneManager:addScene(SoundTest)
 
 local BUTTON_WIDTH = 70
 local BUTTON_HEIGHT = 25
@@ -72,9 +82,7 @@ local function createSfxMenuInfo(characterId)
   return sfxLabels, sfxValues
 end
 
-function soundTest:init()
-  sceneManager:addScene(self)
-  
+function SoundTest:init()
   local characterLabels = {}
   local characterIds = {}
   for _, character in pairs(characters) do
@@ -199,14 +207,14 @@ function soundTest:init()
     {Label({width = menuLabelWidth, label = "op_music_type"}), musicTypeButtonGroup},
     {Label({width = menuLabelWidth, label = "Background", translate = false}), playButtonGroup},
     {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = playCharacterSFXFn}), sfxStepper},
-    {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("optionsMenu") end})},
+    {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("OptionsMenu") end})},
   }
   
   soundTestMenu = Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   soundTestMenu:setVisibility(false)
 end
 
-function soundTest:load()
+function SoundTest:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   soundTestMenu.x = x - 20
   soundTestMenu.y = y + 10
@@ -224,21 +232,21 @@ function soundTest:load()
   soundTestMenu:setVisibility(true)
 end
 
-function soundTest:drawBackground()
+function SoundTest:drawBackground()
   backgroundImg:draw()
 end
 
-function soundTest:update(dt)
+function SoundTest:update(dt)
   soundTestMenu:update()
   soundTestMenu:draw()
   backgroundImg:update(dt)
 end
 
 --fallback to main theme if nothing is playing or if dynamic music is playing, dynamic music cannot cleanly be "carried out" of the sound test due to the master volume reapplication in the audio options menu
-function soundTest:unload()
+function SoundTest:unload()
   stop_all_audio()
   themes[config.theme].sounds.menu_validate = menuValidateSound
   soundTestMenu:setVisibility(false)
 end
 
-return soundTest
+return SoundTest

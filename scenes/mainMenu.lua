@@ -6,13 +6,23 @@ local sceneManager = require("scenes.sceneManager")
 local replay_browser = require("replay_browser")
 local options = require("options")
 local GraphicsUtil = require("graphics_util")
+local class = require("class")
 
 -- need to load the existing global scene functions until they get ported to scenes
 require("mainloop")
 
 --@module MainMenu
 -- Scene for the main menu
-local mainMenu = Scene("mainMenu")
+local MainMenu = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  Scene
+)
+
+MainMenu.name = "MainMenu"
+sceneManager:addScene(MainMenu)
 
 local showDebugServers = config.debugShowServers
 
@@ -40,17 +50,17 @@ local function createMainMenuButton(label, onClick, extra_labels, translate)
 end
 
 local menuItems = {
-  {createMainMenuButton("mm_1_endless", function() switchToScene("endlessMenu") end)},
-  {createMainMenuButton("mm_1_puzzle", function() switchToScene("puzzleMenu") end)},
-  {createMainMenuButton("mm_1_time", function() switchToScene("timeAttackMenu") end)},
+  {createMainMenuButton("mm_1_endless", function() switchToScene("EndlessMenu") end)},
+  {createMainMenuButton("mm_1_puzzle", function() switchToScene("PuzzleMenu") end)},
+  {createMainMenuButton("mm_1_time", function() switchToScene("TimeAttackMenu") end)},
   {createMainMenuButton("mm_1_vs", genLegacyMainloopFn(main_local_vs_yourself_setup))},
   {createMainMenuButton("mm_1_training", genLegacyMainloopFn(training_setup))},
   {createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
   {createMainMenuButton("mm_2_vs_local", genLegacyMainloopFn(main_local_vs_setup))},
   {createMainMenuButton("mm_replay_browser", genLegacyMainloopFn(replay_browser.main))},
-  {createMainMenuButton("mm_configure", function() switchToScene("inputConfigMenu") end)},
-  {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("setNameMenu", {prevScene = "mainMenu"}) end)},
-  {createMainMenuButton("mm_options", function() switchToScene("optionsMenu") end)},
+  {createMainMenuButton("mm_configure", function() switchToScene("InputConfigMenu") end)},
+  {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("SetNameMenu", {prevScene = "MainMenu"}) end)},
+  {createMainMenuButton("mm_options", function() switchToScene("OptionsMenu") end)},
   {createMainMenuButton("mm_fullscreen", function() Menu.playValidationSfx() fullscreen() end, {"\n(LAlt+Enter)"})},
   {createMainMenuButton("mm_quit", love.event.quit)}
 }
@@ -60,20 +70,19 @@ local debugMenuItems = {
   {createMainMenuButton("Localhost Server", genLegacyMainloopFn(main_net_vs_setup, {"localhost"}),  {""}, false)}
 }
 
-function mainMenu:addDebugMenuItems()
+function MainMenu:addDebugMenuItems()
   for i, menuItem in ipairs(debugMenuItems) do
     self.menu:addMenuItem(i + 7, menuItem)
   end
 end
 
-function mainMenu:removeDebugMenuItems()
+function MainMenu:removeDebugMenuItems()
   for i, menuItem in ipairs(debugMenuItems) do
     self.menu:removeMenuItem(menuItem[1].id)
   end
 end
 
-function mainMenu:init()
-  sceneManager:addScene(self)
+function MainMenu:init()
   self.menu = Menu({menuItems = menuItems, maxHeight = themes[config.theme].main_menu_max_height})
   self.menu:setVisibility(false)
   
@@ -82,7 +91,7 @@ function mainMenu:init()
   end
 end
 
-function mainMenu:load()
+function MainMenu:load(sceneParams)
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.menu.x = (consts.CANVAS_WIDTH / 2) - BUTTON_WIDTH / 2
   self.menu.y = y
@@ -113,11 +122,11 @@ function mainMenu:load()
   self.menu:setVisibility(true)
 end
 
-function mainMenu:drawBackground()
+function MainMenu:drawBackground()
   self.backgroundImg:draw()
 end
 
-function mainMenu:update(dt)
+function MainMenu:update(dt)
   if wait_game_update ~= nil then
     has_game_update = wait_game_update:pop()
     if has_game_update ~= nil and has_game_update then
@@ -148,8 +157,8 @@ function mainMenu:update(dt)
   self.menu:draw()
 end
 
-function mainMenu:unload()
+function MainMenu:unload()
   self.menu:setVisibility(false)
 end
 
-return mainMenu
+return MainMenu

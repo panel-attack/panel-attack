@@ -10,14 +10,24 @@ local input = require("inputManager")
 local joystickManager = require("joystickManager")
 local util = require("util")
 local GraphicsUtil = require("graphics_util")
+local class = require("class")
 
 --@module inputConfigMenu
 -- Scene for configuring input
-local inputConfigMenu = Scene("inputConfigMenu")
+local InputConfigMenu = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  Scene
+)
 
-inputConfigMenu.settingKey = false
-inputConfigMenu.menu = nil -- set in load
-inputConfigMenu.backgroundImg = nil -- set in load
+InputConfigMenu.name = "InputConfigMenu"
+sceneManager:addScene(InputConfigMenu)
+
+InputConfigMenu.settingKey = false
+InputConfigMenu.menu = nil -- set in load
+InputConfigMenu.backgroundImg = nil -- set in load
 
 local KEY_NAME_LABEL_WIDTH = 200
 local font = GraphicsUtil.getGlobalFont()
@@ -40,13 +50,13 @@ end
 -- This is only used within this file, external users should simply treat isDown/isUp as a boolean
 local KEY_SETTING_STATE = { NOT_SETTING = nil, SETTING_KEY_TRANSITION = 1, SETTING_KEY = 2, SETTING_ALL_KEYS_TRANSITION = 3, SETTING_ALL_KEYS = 4 }
 
-function inputConfigMenu:setSettingKeyState(keySettingState)
+function InputConfigMenu:setSettingKeyState(keySettingState)
   self.settingKey = keySettingState ~= KEY_SETTING_STATE.NOT_SETTING
   self.settingKeyState = keySettingState
   self.menu:setEnabled(not self.settingKey)
 end
 
-function inputConfigMenu:getKeyDisplayName(key)
+function InputConfigMenu:getKeyDisplayName(key)
   local keyDisplayName = key
   if key and string.match(key, ":") then
     local controllerKeySplit = util.split(key, ":")
@@ -56,24 +66,24 @@ function inputConfigMenu:getKeyDisplayName(key)
   return keyDisplayName or loc("op_none")
 end
 
-function inputConfigMenu:updateInputConfigMenuLabels(index)
+function InputConfigMenu:updateInputConfigMenuLabels(index)
   configIndex = index
   Menu.playMoveSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
-    local keyDisplayName = inputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
+    local keyDisplayName = InputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
     self.menu.menuItems[i + 1].children[1]:updateLabel(keyDisplayName)
   end
 end
 
-function inputConfigMenu:updateKey(key, pressedKey, index)
+function InputConfigMenu:updateKey(key, pressedKey, index)
   Menu.playValidationSfx()
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
-  local keyDisplayName = inputConfigMenu:getKeyDisplayName(pressedKey)
+  local keyDisplayName = InputConfigMenu:getKeyDisplayName(pressedKey)
   self.menu.menuItems[index + 1].children[1]:updateLabel(keyDisplayName)
   write_key_file()
 end
 
-function inputConfigMenu:setKey(key, index)
+function InputConfigMenu:setKey(key, index)
   local pressedKey = next(input.allKeys.isDown)
   if pressedKey then
     self:updateKey(key, pressedKey, index)
@@ -81,10 +91,10 @@ function inputConfigMenu:setKey(key, index)
   end
 end
 
-function inputConfigMenu:setAllKeys()
+function InputConfigMenu:setAllKeys()
   local pressedKey = next(input.allKeys.isDown)
   if pressedKey then
-    inputConfigMenu:updateKey(consts.KEY_NAMES[self.index], pressedKey, self.index)
+    InputConfigMenu:updateKey(consts.KEY_NAMES[self.index], pressedKey, self.index)
     if self.index < #consts.KEY_NAMES then
       self.index = self.index + 1
       self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
@@ -96,7 +106,7 @@ function inputConfigMenu:setAllKeys()
   end
 end
 
-function inputConfigMenu:setKeyStart(key)
+function InputConfigMenu:setKeyStart(key)
   Menu.playValidationSfx()
   self.key = key
   self.index = nil
@@ -111,7 +121,7 @@ function inputConfigMenu:setKeyStart(key)
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY_TRANSITION)
 end
 
-function inputConfigMenu:setAllKeysStart()
+function InputConfigMenu:setAllKeysStart()
   Menu.playValidationSfx()
   self.index = 1
   self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
@@ -131,12 +141,10 @@ end
 
 local function exitMenu()
   Menu.playValidationSfx()
-  sceneManager:switchToScene("mainMenu")
+  sceneManager:switchToScene("MainMenu")
 end
 
-function inputConfigMenu:init()
-  sceneManager:addScene(inputConfigMenu)
-  
+function InputConfigMenu:init()
   local menuOptions = {}
   menuOptions[1] = {
       Label({label = "configuration"}), 
@@ -145,10 +153,10 @@ function inputConfigMenu:init()
           max = GAME.input.maxConfigurations,
           value = 1,
           tickLength = 10,
-          onValueChange = function(slider) inputConfigMenu:updateInputConfigMenuLabels(slider.value) end})
+          onValueChange = function(slider) InputConfigMenu:updateInputConfigMenuLabels(slider.value) end})
     }
   for i, key in ipairs(consts.KEY_NAMES) do
-    local keyName = inputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
+    local keyName = InputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
     local label = Label({label = keyName, translate = false, width = KEY_NAME_LABEL_WIDTH})
     menuOptions[#menuOptions + 1] = {
       Button({
@@ -163,7 +171,7 @@ function inputConfigMenu:init()
   end
   menuOptions[#menuOptions + 1] = {
     Button({label = "op_all_keys",
-    onClick = function() inputConfigMenu:setAllKeysStart() end})}
+    onClick = function() InputConfigMenu:setAllKeysStart() end})}
   menuOptions[#menuOptions + 1] = {
     Button({label = "Clear All Inputs", translate = false,
     onClick = function() clearAllInputs(menuOptions) end})}
@@ -173,7 +181,7 @@ function inputConfigMenu:init()
   self.menu:setVisibility(false)
 end
 
-function inputConfigMenu:load()
+function InputConfigMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.menu.x = x
   self.menu.y = y
@@ -188,11 +196,11 @@ function inputConfigMenu:load()
   self.menu:setVisibility(true)
 end
 
-function inputConfigMenu:drawBackground()
+function InputConfigMenu:drawBackground()
   themes[config.theme].images.bg_main:draw()
 end
 
-function inputConfigMenu:update(dt)
+function InputConfigMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update()
   self.menu:draw()
@@ -208,14 +216,14 @@ function inputConfigMenu:update(dt)
       self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS)
     end
   elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_KEY then
-    inputConfigMenu:setKey(self.key, self.index)
+    InputConfigMenu:setKey(self.key, self.index)
   elseif self.settingKeyState == KEY_SETTING_STATE.SETTING_ALL_KEYS then
-    inputConfigMenu:setAllKeys()
+    InputConfigMenu:setAllKeys()
   end
 end
 
-function inputConfigMenu:unload()  
+function InputConfigMenu:unload()  
   self.menu:setVisibility(false)
 end
 
-return inputConfigMenu
+return InputConfigMenu

@@ -13,10 +13,11 @@ local GraphicsUtil = require("graphics_util")
 --@module SimpleGameSetupMenu
 -- A Scene that contains menus for basic game configuation (speed, difficulty, level, etc.)
 local SimpleGameSetupMenu = class(
-  function (self, name, options)
-    self.name = name
-    self.gameMode = options.gameMode
-    self.gameScene = options.gameScene
+  function (self, sceneParams)
+    print(dump(sceneParams))
+    -- must be set in child classes
+    self.gameMode = nil
+    self.gameScene = nil
   end,
   Scene
 )
@@ -66,12 +67,10 @@ end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("mainMenu")
+  sceneManager:switchToScene("MainMenu")
 end
 
 function SimpleGameSetupMenu:init()
-  sceneManager:addScene(self)
-  
   self.speedSlider = Slider({
     min = 1, 
     max = 99, 

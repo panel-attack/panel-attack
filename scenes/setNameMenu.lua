@@ -10,10 +10,20 @@ local input = require("inputManager")
 local save = require("save")
 local tableUtils = require("tableUtils")
 local utf8 = require("utf8")
+local class = require("class")
 
 --@module setNameMenu
 -- Scene for setting the username
-local setNameMenu = Scene("setNameMenu")
+local SetNameMenu = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  Scene
+)
+
+SetNameMenu.name = "SetNameMenu"
+sceneManager:addScene(SetNameMenu)
 
 local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
 local nameField = InputField({
@@ -29,11 +39,10 @@ local nameField = InputField({
 local warningText = ""
 local backgroundImg = nil -- set in load
 
-function setNameMenu:init()
-  sceneManager:addScene(self)
+function SetNameMenu:init()
 end
 
-function setNameMenu:load(sceneParams)
+function SetNameMenu:load(sceneParams)
   backgroundImg = themes[config.theme].images.bg_main
   nameField:setVisibility(true)
   nameField:setFocus(0, 0)
@@ -41,11 +50,11 @@ function setNameMenu:load(sceneParams)
   self.prevScene = sceneParams.prevScene
 end
 
-function setNameMenu:drawBackground()
+function SetNameMenu:drawBackground()
   backgroundImg:draw()
 end
 
-function setNameMenu:update(dt)
+function SetNameMenu:update(dt)
   backgroundImg:update(dt)
   if not input.allKeys.isDown["return"] and tableUtils.trueForAny(input.allKeys.isDown, function(val) return val end) then
     warningText = ""
@@ -66,15 +75,15 @@ function setNameMenu:update(dt)
   end
   if input.allKeys.isDown["escape"] then
     Menu.playCancelSfx()
-    sceneManager:switchToScene("mainMenu")
+    sceneManager:switchToScene("MainMenu")
   end
   
   nameField:draw()
 end
 
-function setNameMenu:unload()  
+function SetNameMenu:unload()  
   nameField:setVisibility(false)
   nameField:unfocus()
 end
 
-return setNameMenu
+return SetNameMenu

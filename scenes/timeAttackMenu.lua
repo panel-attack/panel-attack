@@ -1,11 +1,25 @@
 local SimpleGameSetupMenu = require("scenes.SimpleGameSetupMenu")
+local sceneManager = require("scenes.sceneManager")
+local class = require("class")
 
 --@module timeAttackMenu
 -- Scene for the time attack game setup menu
-local timeAttackMenu = SimpleGameSetupMenu("timeAttackMenu", {gameMode = "time", gameScene = "timeAttackGame"})
+local TimeAttackMenu = class(
+  function(self, sceneParams)
+    self.gameMode = "time"
+    self.gameScene = "TimeAttackGame"
+    
+    self:init()
+    self:load(sceneParams)
+  end,
+  SimpleGameSetupMenu
+)
 
-function timeAttackMenu:getScores(difficulty)
+TimeAttackMenu.name = "TimeAttackMenu"
+sceneManager:addScene(TimeAttackMenu)
+
+function TimeAttackMenu:getScores(difficulty)
   return {tostring(GAME.scores:lastTimeAttack1PForLevel(difficulty)), tostring(GAME.scores:recordTimeAttack1PForLevel(difficulty))}
 end
 
-return timeAttackMenu
+return TimeAttackMenu

@@ -157,22 +157,19 @@ function Game:createScenes()
 
   -- must be here until globally initiallized structures get resolved into local requires
   scenes = {
-    require("scenes.titleScreen"),
-    require("scenes.mainMenu"),
-    require("scenes.endlessMenu"),
-    require("scenes.endlessGame"),
-    require("scenes.puzzleMenu"),
-    require("scenes.puzzleGame"),
-    require("scenes.timeAttackMenu"),
-    require("scenes.timeAttackGame"),
-    require("scenes.inputConfigMenu"),
-    require("scenes.optionsMenu"),
-    require("scenes.soundTest"),
-    require("scenes.setNameMenu")
+    require("scenes.TitleScreen"),
+    require("scenes.MainMenu"),
+    require("scenes.EndlessMenu"),
+    require("scenes.EndlessGame"),
+    require("scenes.PuzzleMenu"),
+    require("scenes.PuzzleGame"),
+    require("scenes.TimeAttackMenu"),
+    require("scenes.TimeAttackGame"),
+    require("scenes.InputConfigMenu"),
+    require("scenes.SetNameMenu"),
+    require("scenes.OptionsMenu"),
+    require("scenes.SoundTest")
   }
-  for i, scene in ipairs(scenes) do
-    scene:init()
-  end
 end
 
 function Game:runUnitTests()
@@ -286,9 +283,9 @@ end
 
 function Game:switchToStartScene()
   if themes[config.theme].images.bg_title then
-    sceneManager:switchToScene("titleScreen")
+    sceneManager:switchToScene("TitleScreen")
   else
-    sceneManager:switchToScene("mainMenu")
+    sceneManager:switchToScene("MainMenu")
   end
 end
 
