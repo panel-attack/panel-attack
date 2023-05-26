@@ -24,7 +24,7 @@ function replayGame:customRun()
   end
 
   -- Advance one frame
-  if input:isPressedWithRepeat("Swap1", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
+  if input:isPressedWithRepeat("FrameAdvance", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
     self.frameAdvance = true
     GAME.gameIsPaused = false
     if GAME.match.P1 then
