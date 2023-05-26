@@ -50,8 +50,8 @@ default_input_repeat_delay = 20
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+KEY_NAMES = {"up", "down", "left", "right", "swap1",  "swap2",  "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+KEYS      = {"up", "down", "left", "right", "z",      "x",      "y",        "u",          "c",      "v",      "p"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
