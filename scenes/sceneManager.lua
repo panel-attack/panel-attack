@@ -54,7 +54,6 @@ function sceneManager:transition()
 end
 
 function sceneManager:addScene(scene)
-  print(scene.name)
   scenes[scene.name] = scene
 end
 

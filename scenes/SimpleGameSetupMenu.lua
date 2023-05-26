@@ -14,7 +14,6 @@ local GraphicsUtil = require("graphics_util")
 -- A Scene that contains menus for basic game configuation (speed, difficulty, level, etc.)
 local SimpleGameSetupMenu = class(
   function (self, sceneParams)
-    print(dump(sceneParams))
     -- must be set in child classes
     self.gameMode = nil
     self.gameScene = nil

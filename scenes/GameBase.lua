@@ -15,7 +15,6 @@ local Replay = require("replay")
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
 local GameBase = class(
   function (self, sceneParams)
-    print(dump(sceneParams))
     self.shouldAbortGame = false
     self.text = ""
     self.winnerSFX = nil
