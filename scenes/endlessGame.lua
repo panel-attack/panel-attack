@@ -1,6 +1,6 @@
 local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
-local replay = require("replay")
+local Replay = require("replay")
 
 --@module endlessGame
 -- Scene for an endless mode instance of the game
@@ -12,7 +12,7 @@ function endlessGame:processGameResults(gameResult)
     GAME.scores:saveEndlessScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
     extraPath = "Endless"
     extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-endless"
-    replay.finalizeAndWriteReplay(extraPath, extraFilename)
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
   end
 end
 

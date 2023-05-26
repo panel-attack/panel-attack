@@ -301,11 +301,11 @@ function Replay.writeReplayFile(path, filename, replayJSON)
   assert(path ~= nil)
   assert(filename ~= nil)
   assert(replayJSON ~= nil)
+  Replay.lastPath = path
   pcall(
     function()
       love.filesystem.createDirectory(path)
       local file = love.filesystem.newFile(path .. "/" .. filename)
-      set_replay_browser_path(path)
       file:open("w")
       file:write(replayJSON)
       file:close()
