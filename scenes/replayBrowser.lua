@@ -4,9 +4,19 @@ local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 local fileUtils = require("fileUtils")
 local Replay = require("replay")
+local class = require("class")
 
 --@module replayBrowser
-local replayBrowser = Scene("replayBrowser")
+local ReplayBrowser = class(
+  function (self, sceneParams)
+    self:init()
+    self:load(sceneParams)
+  end,
+  Scene
+)
+
+ReplayBrowser.name = "ReplayBrowser"
+sceneManager:addScene(ReplayBrowser)
 
 local font = GraphicsUtil.getGlobalFont()
 local selection = nil
@@ -96,11 +106,10 @@ local function selectMenuItem()
   end
 end
 
-function replayBrowser:init()
-  sceneManager:addScene(self)
+function ReplayBrowser:init()
 end
 
-function replayBrowser:load()
+function ReplayBrowser:load()
   reset_filters()
   
   if Replay.lastPath then
@@ -113,11 +122,11 @@ function replayBrowser:load()
   GAME.renderDuringPause = true
 end
 
-function replayBrowser:drawBackground()
+function ReplayBrowser:drawBackground()
   themes[config.theme].images.bg_main:draw()
 end
 
-function replayBrowser:update()
+function ReplayBrowser:update()
   local ret = nil
 
   if state == "browser" then
@@ -208,13 +217,13 @@ function replayBrowser:update()
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(replay) then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene("replayGame", {})
+      sceneManager:switchToScene("ReplayGame", {})
     end
   end
 end
 
-function replayBrowser:unload()
+function ReplayBrowser:unload()
   stop_the_music()
 end
 
-return replayBrowser
+return ReplayBrowser

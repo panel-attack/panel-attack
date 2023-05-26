@@ -57,7 +57,7 @@ local menuItems = {
   {createMainMenuButton("mm_1_training", genLegacyMainloopFn(training_setup))},
   {createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
   {createMainMenuButton("mm_2_vs_local", genLegacyMainloopFn(main_local_vs_setup))},
-  {createMainMenuButton("mm_replay_browser", function() switchToScene("replayBrowser") end)},
+  {createMainMenuButton("mm_replay_browser", function() switchToScene("ReplayBrowser") end)},
   {createMainMenuButton("mm_configure", function() switchToScene("InputConfigMenu") end)},
   {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("SetNameMenu", {prevScene = "MainMenu"}) end)},
   {createMainMenuButton("mm_options", function() switchToScene("OptionsMenu") end)},
