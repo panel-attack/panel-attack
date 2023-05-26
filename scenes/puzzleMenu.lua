@@ -82,7 +82,7 @@ function puzzleMenu:init()
   end
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menuOptions})
+  self.menu = Menu({menuItems = menuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   self.menu:setVisibility(false)
 end
 
@@ -91,7 +91,6 @@ function puzzleMenu:load()
   y = y + 20
   self.menu.x = x
   self.menu.y = y
-  self.menu.maxItems = math.max(math.ceil((consts.CANVAS_HEIGHT - y) / (self.menu.menuItems[1].height + Menu.BUTTON_VERTICAL_PADDING)) - 2, 1)
   self.menu:resetMenuScroll()
   
   if themes[config.theme].musics.main then
