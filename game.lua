@@ -165,6 +165,8 @@ function Game:createScenes()
     require("scenes.PuzzleGame"),
     require("scenes.TimeAttackMenu"),
     require("scenes.TimeAttackGame"),
+    --require("scenes.replayBrowser"),
+    --require("scenes.replayGame"),
     require("scenes.InputConfigMenu"),
     require("scenes.SetNameMenu"),
     require("scenes.OptionsMenu"),

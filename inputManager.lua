@@ -64,6 +64,7 @@ local menuReservedKeysMap = {
   MenuBack = {{"backspace"}, ""}, 
   MenuSelect = {{"return", "kpenter", "z"}, "Swap1"},
   MenuPause = {{"return", "kpenter"}, "Start"},
+  FrameAdvance = {{"\\"}, "TauntUp"},
 }
 
 -- useful alternate representations of the above information

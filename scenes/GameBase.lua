@@ -115,8 +115,9 @@ function GameBase:load(sceneParams)
     pickUseMusicFrom()
   end
   self:customLoad(sceneParams)
-  replay = Replay.createNewReplay(GAME.match)
   
+  -- TODO: move replay creation to child classes of GameBase
+  replay = Replay.createNewReplay(GAME.match)
   
   self:initializeFrameInfo()
 end

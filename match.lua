@@ -293,7 +293,9 @@ function Match.render(self)
   -- Draw VS HUD
   if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
     -- P1 username
-    gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
+    if P1 then
+      gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
+    end
     if P2 then
       -- P1 win count graphics
       draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
