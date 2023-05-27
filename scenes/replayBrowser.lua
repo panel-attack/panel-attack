@@ -135,7 +135,7 @@ function ReplayBrowser:update()
     replayMenu()
 
     if input.isDown["MenuEsc"] then
-      sceneManager:switchToScene("mainMenu")
+      sceneManager:switchToScene("MainMenu")
     end
     if input.isDown["MenuSelect"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
