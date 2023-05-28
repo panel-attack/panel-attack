@@ -38,6 +38,7 @@ function sceneManager:transitionFn(sceneParams)
   end
   
   if self.nextSceneName then
+    -- Looks up the class for {self.nextSceneName} and call it's constructor
     self.activeScene = scenes[self.nextSceneName](sceneParams or {})
     GAME.rich_presence:setPresence(nil, self.nextSceneName, true)
   else
