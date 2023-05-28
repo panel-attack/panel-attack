@@ -16,7 +16,8 @@ local class = require("class")
 -- Scene for configuring input
 local InputConfigMenu = class(
   function (self, sceneParams)
-    self:init()
+    self.backgroundImg = themes[config.theme].images.bg_main
+    
     self:load(sceneParams)
   end,
   Scene
@@ -144,7 +145,7 @@ local function exitMenu()
   sceneManager:switchToScene("MainMenu")
 end
 
-function InputConfigMenu:init()
+function InputConfigMenu:load()
   local menuOptions = {}
   menuOptions[1] = {
       Label({label = "configuration"}), 
@@ -153,7 +154,7 @@ function InputConfigMenu:init()
           max = GAME.input.maxConfigurations,
           value = 1,
           tickLength = 10,
-          onValueChange = function(slider) InputConfigMenu:updateInputConfigMenuLabels(slider.value) end})
+          onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end})
     }
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyName = InputConfigMenu:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
@@ -177,23 +178,18 @@ function InputConfigMenu:init()
     onClick = function() clearAllInputs(menuOptions) end})}
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  self.menu:setVisibility(false)
-end
-
-function InputConfigMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  self.menu.x = x
-  self.menu.y = y
+  self.menu = Menu({
+    x = x,
+    y = y,
+    menuItems = menuOptions, 
+    maxHeight = themes[config.theme].main_menu_max_height
+  })
 
   reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  
-  self.backgroundImg = themes[config.theme].images.bg_main
-  self.menu:updateLabel()
-  self.menu:setVisibility(true)
 end
 
 function InputConfigMenu:drawBackground()

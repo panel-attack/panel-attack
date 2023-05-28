@@ -9,7 +9,6 @@ local EndlessMenu = class(
     self.gameMode = "endless"
     self.gameScene = "EndlessGame"
     
-    self:init()
     self:load(sceneParams)
   end,
   SimpleGameSetupMenu

@@ -19,7 +19,6 @@ local class = require("class")
 -- Scene for the options menu
 local OptionsMenu = class(
   function (self, sceneParams)
-    self:init()
     self:load(sceneParams)
   end,
   Scene
@@ -204,7 +203,27 @@ local function drawInfo(text)
   end
 end
 
-function OptionsMenu:init()
+function OptionsMenu:repositionMenus()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  x = x - 20
+  y = y + 10
+  menus["baseMenu"].x = x
+  menus["baseMenu"].y = y
+  menus["generalMenu"].x = x
+  menus["generalMenu"].y = y
+  menus["graphicsMenu"].x = x
+  menus["graphicsMenu"].y = y
+  menus["soundTestMenu"].x = x
+  menus["soundTestMenu"].y = y
+  menus["audioMenu"].x = x
+  menus["audioMenu"].y = y
+  menus["debugMenu"].x = x
+  menus["debugMenu"].y = y
+  menus["aboutMenu"].x = x
+  menus["aboutMenu"].y = y
+end
+
+function OptionsMenu:load()
   aboutText["themes"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_themes.txt"))
   aboutText["characters"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_characters.txt"))
   aboutText["stages"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_stages.txt"))
@@ -378,29 +397,7 @@ function OptionsMenu:init()
   for _, menu in pairs(menus) do
     menu:setVisibility(false)
   end
-end
-
-function OptionsMenu:repositionMenus()
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 20
-  y = y + 10
-  menus["baseMenu"].x = x
-  menus["baseMenu"].y = y
-  menus["generalMenu"].x = x
-  menus["generalMenu"].y = y
-  menus["graphicsMenu"].x = x
-  menus["graphicsMenu"].y = y
-  menus["soundTestMenu"].x = x
-  menus["soundTestMenu"].y = y
-  menus["audioMenu"].x = x
-  menus["audioMenu"].y = y
-  menus["debugMenu"].x = x
-  menus["debugMenu"].y = y
-  menus["aboutMenu"].x = x
-  menus["aboutMenu"].y = y
-end
-
-function OptionsMenu:load()
+  
   self:repositionMenus()
   
   backgroundImage = themes[config.theme].images.bg_main

@@ -15,13 +15,17 @@ local Replay = require("replay")
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
 local GameBase = class(
   function (self, sceneParams)
+    -- must be set in child class
+    self.nextScene = nil
+    self.nextSceneParams = {}
+    
+    -- set in load
     self.shouldAbortGame = false
     self.text = ""
     self.winnerSFX = nil
     self.keepMusic = false
     self.currentStage = config.stage
     self.loadStageAndMusic = true
-    backgroundImage = nil
     
     self.frameInfo = {
       frameCount = nil,
@@ -58,9 +62,6 @@ function GameBase:customGameOverSetup() end
 -- end abstract functions
 
 local backgroundImage = nil
-
-function GameBase:init()
-end
 
 function GameBase:pickRandomStage()
   self.currentStage = tableUtils.getRandomElement(stages_ids_for_current_theme)

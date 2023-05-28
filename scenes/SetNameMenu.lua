@@ -16,7 +16,6 @@ local class = require("class")
 -- Scene for setting the username
 local SetNameMenu = class(
   function (self, sceneParams)
-    self:init()
     self:load(sceneParams)
   end,
   Scene
@@ -38,9 +37,6 @@ local nameField = InputField({
 
 local warningText = ""
 local backgroundImg = nil -- set in load
-
-function SetNameMenu:init()
-end
 
 function SetNameMenu:load(sceneParams)
   backgroundImg = themes[config.theme].images.bg_main

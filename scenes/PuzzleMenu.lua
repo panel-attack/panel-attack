@@ -15,7 +15,11 @@ local class = require("class")
 -- Scene for the puzzle selection menu
 local PuzzleMenu = class(
   function (self, sceneParams)
-    self:init()
+    -- set in load
+    self.levelSlider = nil
+    self.randomColorButtons = nil
+    self.menu = nil
+
     self:load(sceneParams)
   end,
   Scene
@@ -58,7 +62,7 @@ local function exitMenu()
   sceneManager:switchToScene("MainMenu")
 end
 
-function PuzzleMenu:init()
+function PuzzleMenu:load()
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
@@ -90,24 +94,19 @@ function PuzzleMenu:init()
   end
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
-  self.menu = Menu({menuItems = menuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  self.menu:setVisibility(false)
-end
-
-function PuzzleMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 20
-  self.menu.x = x
-  self.menu.y = y
-  self.menu:resetMenuScroll()
+  self.menu = Menu({
+    x = x,
+    y = y,
+    menuItems = menuOptions,
+    maxHeight = themes[config.theme].main_menu_max_height
+  })
   
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
   reset_filters()
-  
-  self.menu:updateLabel()
-  self.menu:setVisibility(true)
 end
 
 function PuzzleMenu:drawBackground()

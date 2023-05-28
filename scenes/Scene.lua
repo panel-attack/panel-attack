@@ -12,13 +12,9 @@ local Scene = class(
 
 -- abstract functions to be implemented per scene
 
--- Ran once per instance of PanelAttack
--- used to create objects once per scene to be reused for the lifetime of the game
-function Scene:init() end
-
 -- Ran every time the scene is started
 -- used to setup the state of the scene before running
-function Scene:load() end
+function Scene:load(sceneParams) end
 
 -- Ran every frame while the scene is active
 function Scene:update() end

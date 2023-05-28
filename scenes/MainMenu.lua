@@ -15,7 +15,8 @@ require("mainloop")
 -- Scene for the main menu
 local MainMenu = class(
   function (self, sceneParams)
-    self:init()
+    self.menu = nil -- set in load
+    self.backgroundImg = themes[config.theme].images.bg_main
     self:load(sceneParams)
   end,
   Scene
@@ -23,8 +24,6 @@ local MainMenu = class(
 
 MainMenu.name = "MainMenu"
 sceneManager:addScene(MainMenu)
-
-local showDebugServers = config.debugShowServers
 
 local function genLegacyMainloopFn(myFunction, args)
   local onClick = function()
@@ -82,21 +81,20 @@ function MainMenu:removeDebugMenuItems()
   end
 end
 
-function MainMenu:init()
-  self.menu = Menu({menuItems = menuItems, maxHeight = themes[config.theme].main_menu_max_height})
-  self.menu:setVisibility(false)
-  
-  if showDebugServers then
-    self:addDebugMenuItems()
-  end
-end
-
 function MainMenu:load(sceneParams)
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  self.menu.x = (consts.CANVAS_WIDTH / 2) - BUTTON_WIDTH / 2
-  self.menu.y = y
+  self.menu = Menu({
+    x = (consts.CANVAS_WIDTH / 2) - BUTTON_WIDTH / 2, 
+    y = y, 
+    menuItems = menuItems, 
+    maxHeight = themes[config.theme].main_menu_max_height
+  })
+  self.menu:setVisibility(true)
   
-  self.backgroundImg = themes[config.theme].images.bg_main
+  if config.debugShowServers then
+    self:addDebugMenuItems()
+  end
+
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -108,18 +106,6 @@ function MainMenu:load(sceneParams)
   GAME.input:requestPlayerInputConfigurationAssignments(1)
   reset_filters()
   match_type_message = ""
-  
-  if showDebugServers ~= config.debugShowServers then
-    if config.debugShowServers then
-      self:addDebugMenuItems()
-    else
-      self:removeDebugMenuItems()
-    end
-    showDebugServers = config.debugShowServers
-  end
-  
-  self.menu:updateLabel()
-  self.menu:setVisibility(true)
 end
 
 function MainMenu:drawBackground()

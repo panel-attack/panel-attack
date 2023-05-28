@@ -9,7 +9,6 @@ local TimeAttackMenu = class(
     self.gameMode = "time"
     self.gameScene = "TimeAttackGame"
     
-    self:init()
     self:load(sceneParams)
   end,
   SimpleGameSetupMenu

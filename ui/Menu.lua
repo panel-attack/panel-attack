@@ -34,6 +34,7 @@ local Menu = class(
     
     self.upButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "/\\", translate = false, onClick = function() self:scrollUp() end})
     self.downButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "\\/", translate = false, onClick = function() self:scrollDown() end})
+    self:setVisibility(self.isVisible)
     
     self:updateNavButtonPos()
     self.menuItemContainer:addChild(self.upButton)

@@ -9,7 +9,6 @@ local class = require("class")
 --@module replayBrowser
 local ReplayBrowser = class(
   function (self, sceneParams)
-    self:init()
     self:load(sceneParams)
   end,
   Scene
@@ -104,9 +103,6 @@ local function selectMenuItem()
       --print(loc("rp_browser_error_file_not_found", selection))
     end
   end
-end
-
-function ReplayBrowser:init()
 end
 
 function ReplayBrowser:load()

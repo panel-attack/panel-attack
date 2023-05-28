@@ -7,7 +7,9 @@ local class = require("class")
 -- Scene for an time attack mode instance of the game
 local TimeAttackGame = class(
   function (self, sceneParams)
-    self:init()
+    self.winnerSFX = GAME.match.P1:pick_win_sfx()
+    self.nextScene = "TimeAttackMenu"
+  
     self:load(sceneParams)
   end,
   GameBase
@@ -28,11 +30,6 @@ end
 
 function TimeAttackGame:abortGame()
   sceneManager:switchToScene("TimeAttackMenu")
-end
-
-function TimeAttackGame:customGameOverSetup()
-  self.winnerSFX = GAME.match.P1:pick_win_sfx()
-  self.nextScene = "TimeAttackMenu"
 end
 
 return TimeAttackGame

@@ -7,7 +7,10 @@ local class = require("class")
 -- Scene for a puzzle mode instance of the game
 local PuzzleGame = class(
   function (self, sceneParams)
-    self:init()
+    self.nextScene = nil -- set in customGameOverSetup
+    self.puzzleSet = sceneParams.puzzleSet
+    self.puzzleIndex = sceneParams.puzzleIndex
+    
     self:load(sceneParams)
   end,
   GameBase
@@ -22,9 +25,6 @@ function PuzzleGame:customLoad(sceneParams)
   GAME.match.P1:wait_for_random_character()
   GAME.match.P1.do_countdown = config.ready_countdown_1P or false
   GAME.match.P2 = nil
-  
-  self.puzzleSet = sceneParams.puzzleSet
-  self.puzzleIndex = sceneParams.puzzleIndex
 
   local puzzle = self.puzzleSet.puzzles[self.puzzleIndex]
   local isValid, validationError = puzzle:validate()

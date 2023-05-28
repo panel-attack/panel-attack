@@ -7,7 +7,9 @@ local class = require("class")
 -- Scene for an endless mode instance of the game
 local EndlessGame = class(
   function (self, sceneParams)
-    self:init()
+    self.nextScene = "EndlessMenu"
+    self.winnerSFX = GAME.match.P1:pick_win_sfx()
+    
     self:load(sceneParams)
   end,
   GameBase
@@ -28,11 +30,6 @@ end
 
 function EndlessGame:abortGame()
   sceneManager:switchToScene("EndlessMenu")
-end
-
-function EndlessGame:customGameOverSetup()
-  self.winnerSFX = GAME.match.P1:pick_win_sfx()
-  self.nextScene = "EndlessMenu"
 end
 
 return EndlessGame

@@ -9,7 +9,10 @@ local class = require("class")
 --@module replayGame
 local ReplayGame = class(
   function (self, sceneParams)
-    self:init()
+    self.frameAdvance = false
+    self.playbackSpeed = 1
+    self.maximumSpeed = 20
+  
     self:load(sceneParams)
   end,
   GameBase
@@ -19,10 +22,6 @@ ReplayGame.name = "ReplayGame"
 sceneManager:addScene(ReplayGame)
 
 function ReplayGame:customLoad(scene_params)
-  self.frameAdvance = false
-  self.playbackSpeed = 1
-  self.maximumSpeed = 20
-
   Replay.loadFromFile(replay)
 end
 

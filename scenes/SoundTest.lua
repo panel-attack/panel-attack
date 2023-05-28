@@ -12,7 +12,6 @@ local class = require("class")
 -- Scene for the sound test
 local SoundTest = class(
   function (self, sceneParams)
-    self:init()
     self:load(sceneParams)
   end,
   Scene
@@ -82,8 +81,8 @@ local function createSfxMenuInfo(characterId)
   return sfxLabels, sfxValues
 end
 
-function SoundTest:init()
-  local characterLabels = {}
+function SoundTest:load()
+    local characterLabels = {}
   local characterIds = {}
   for _, character in pairs(characters) do
     characterLabels[#characterLabels + 1] = Label({
@@ -210,14 +209,13 @@ function SoundTest:init()
     {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("OptionsMenu") end})},
   }
   
-  soundTestMenu = Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  soundTestMenu:setVisibility(false)
-end
-
-function SoundTest:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  soundTestMenu.x = x - 20
-  soundTestMenu.y = y + 10
+  soundTestMenu = Menu({
+    x = x - 20,
+    y = y + 10,
+    menuItems = soundTestMenuOptions, 
+    maxHeight = themes[config.theme].main_menu_max_height
+  })
   
   backgroundImg = themes[config.theme].images.bg_main
 
@@ -229,7 +227,6 @@ function SoundTest:load()
   themes[config.theme].sounds.menu_validate = zero_sound
 
   gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
-  soundTestMenu:setVisibility(true)
 end
 
 function SoundTest:drawBackground()
