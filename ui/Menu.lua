@@ -96,8 +96,9 @@ function Menu:addMenuItem(index, menuItem)
     menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
     menuItem[1]:addChild(menuItem[2])
   end
-  table.insert(self.menuItems, index, menuItem[1]) 
+  table.insert(self.menuItems, index, menuItem[1])
   self.menuItemContainer:addChild(menuItem[1])
+  menuItem[1]:setVisibility(self.isVisible)
   
   self:updateMenuItemPositions(index)
 end
