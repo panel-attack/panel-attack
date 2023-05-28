@@ -13,10 +13,19 @@ local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
 local fileUtils = require("fileUtils")
 local analytics = require("analytics")
+local class = require("class")
 
 --@module optionsMenu
 -- Scene for the options menu
-local optionsMenu = Scene("optionsMenu")
+local OptionsMenu = class(
+  function (self, sceneParams)
+    self:load(sceneParams)
+  end,
+  Scene
+)
+
+OptionsMenu.name = "OptionsMenu"
+sceneManager:addScene(OptionsMenu)
 
 local ret = nil
 local languageNumber
@@ -55,7 +64,7 @@ local font = GraphicsUtil.getGlobalFont()
 
 local function exitMenu()
   Menu.playValidationSfx()
-  sceneManager:switchToScene("mainMenu")
+  sceneManager:switchToScene("MainMenu")
 end
 
 local function updateMenuLanguage()
@@ -194,8 +203,27 @@ local function drawInfo(text)
   end
 end
 
-function optionsMenu:init()
-  sceneManager:addScene(self)
+function OptionsMenu:repositionMenus()
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  x = x - 20
+  y = y + 10
+  menus["baseMenu"].x = x
+  menus["baseMenu"].y = y
+  menus["generalMenu"].x = x
+  menus["generalMenu"].y = y
+  menus["graphicsMenu"].x = x
+  menus["graphicsMenu"].y = y
+  menus["soundTestMenu"].x = x
+  menus["soundTestMenu"].y = y
+  menus["audioMenu"].x = x
+  menus["audioMenu"].y = y
+  menus["debugMenu"].x = x
+  menus["debugMenu"].y = y
+  menus["aboutMenu"].x = x
+  menus["aboutMenu"].y = y
+end
+
+function OptionsMenu:load()
   aboutText["themes"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_themes.txt"))
   aboutText["characters"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_characters.txt"))
   aboutText["stages"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_stages.txt"))
@@ -226,7 +254,7 @@ function optionsMenu:init()
       end
     }
   )
-  
+
   local baseMenuOptions = {
     {Label({width = LABEL_WIDTH, label = "op_language"}), languageStepper},
     {Button({width = LABEL_WIDTH, label = "op_general", onClick = function() switchMenu("generalMenu") end})},
@@ -266,6 +294,7 @@ function optionsMenu:init()
 
   local themeIndex
   local themeLabels = {}
+  foundThemes = {}
   for i, v in ipairs(fileUtils.getFilteredDirectoryItems("themes")) do
     foundThemes[#foundThemes + 1] = v
     themeLabels[#themeLabels + 1] = Label({label = v, translate = false})
@@ -273,7 +302,6 @@ function optionsMenu:init()
       themeIndex = #foundThemes
     end
   end
-  
   local themeStepper = Stepper(
     {
       labels = themeLabels,
@@ -290,11 +318,11 @@ function optionsMenu:init()
         if themes[config.theme].musics["main"] then
           find_and_add_music(themes[config.theme].musics, "main")
         end
-        optionsMenu:repositionMenus()
+        OptionsMenu:repositionMenus()
       end
     }
   )
-  
+
   local graphicsMenuOptions = {
     {Label({width = LABEL_WIDTH, label = "op_theme"}), themeStepper},
     {Label({width = LABEL_WIDTH, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
@@ -303,7 +331,7 @@ function optionsMenu:init()
     {Label({width = LABEL_WIDTH, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
-  
+
   local soundTestMenuOptions = {
     {Label({width = LABEL_WIDTH, label = "character"})},
     {Label({width = LABEL_WIDTH, label = "op_music_type"})},
@@ -311,7 +339,7 @@ function optionsMenu:init()
     {Label({width = LABEL_WIDTH, label = "op_music_sfx"})},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("audioMenu") end})},
   }
-        
+
   local musicFrequencyIndexMap = {["stage"] = 1, ["often_stage"] = 2, ["either"] = 3, ["often_characters"] = 4, ["characters"] = 5}
   local musicFrequencyStepper = Stepper(
     {
@@ -330,14 +358,14 @@ function optionsMenu:init()
       end
     }
   )
-  
+
   local audioMenuOptions = {
     {Label({width = LABEL_WIDTH, label = "op_vol"}), createConfigSlider("master_volume", 0, 100, function() apply_config_volume() end)},
     {Label({width = LABEL_WIDTH, label = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function() apply_config_volume() end)},
     {Label({width = LABEL_WIDTH, label = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
     {Label({width = LABEL_WIDTH, label = "op_use_music_from"}), musicFrequencyStepper},
     {Label({width = LABEL_WIDTH, label = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
-    {Button({width = LABEL_WIDTH, label = "mm_music_test", onClick = function() sceneManager:switchToScene("soundTest") end})},
+    {Button({width = LABEL_WIDTH, label = "mm_music_test", onClick = function() sceneManager:switchToScene("SoundTest") end})},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
   
@@ -369,29 +397,7 @@ function optionsMenu:init()
   for _, menu in pairs(menus) do
     menu:setVisibility(false)
   end
-end
-
-function optionsMenu:repositionMenus()
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 20
-  y = y + 10
-  menus["baseMenu"].x = x
-  menus["baseMenu"].y = y
-  menus["generalMenu"].x = x
-  menus["generalMenu"].y = y
-  menus["graphicsMenu"].x = x
-  menus["graphicsMenu"].y = y
-  menus["soundTestMenu"].x = x
-  menus["soundTestMenu"].y = y
-  menus["audioMenu"].x = x
-  menus["audioMenu"].y = y
-  menus["debugMenu"].x = x
-  menus["debugMenu"].y = y
-  menus["aboutMenu"].x = x
-  menus["aboutMenu"].y = y
-end
-
-function optionsMenu:load()
+  
   self:repositionMenus()
   
   backgroundImage = themes[config.theme].images.bg_main
@@ -402,11 +408,11 @@ function optionsMenu:load()
   menus[activeMenuName]:setVisibility(true)
 end
 
-function optionsMenu:drawBackground()
+function OptionsMenu:drawBackground()
   backgroundImage:draw()
 end
 
-function optionsMenu:update(dt)
+function OptionsMenu:update(dt)
   backgroundImage:update(dt)
   if optionsState == "menus" then
     menus[activeMenuName]:update()
@@ -418,8 +424,8 @@ function optionsMenu:update(dt)
   end
 end
 
-function optionsMenu:unload()
+function OptionsMenu:unload()
   menus[activeMenuName]:setVisibility(false)
 end
 
-return optionsMenu
+return OptionsMenu

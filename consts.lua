@@ -14,6 +14,7 @@ local consts = {
   FRAME_RATE = 1 / 60,
   KEY_DELAY = .25,
   KEY_REPEAT_PERIOD = .05,
+  MENU_PADDING = 10
 }
 
 -- TODO: Move all values below to the above table

@@ -21,8 +21,8 @@ local Menu = class(
     -- the actual self.menuItems list is formated slightly differently, consisting of a list of Labels or Buttons
     -- each of which may have a ButtonGroup, Stepper, or Slider child element which controls the action for that item
     self.menuItems = nil
-    assert(options.maxHeight == nil or options.maxItems == nil, "Can't set max items and max height at the same time on menus")
-    self.maxItems = options.maxItems or 999999
+    local itemHeight = options.menuItems[1][1].height + self.BUTTON_VERTICAL_PADDING
+    self.maxItems = options.maxItems or math.max(math.floor((consts.CANVAS_HEIGHT - (self.y + consts.MENU_PADDING)) / itemHeight) - 2, 1)
     if options.maxHeight ~= nil and #options.menuItems and options.menuItems[1][1].height then
       local itemHeight = options.menuItems[1][1].height + self.BUTTON_VERTICAL_PADDING
       self.maxItems = math.max(math.floor(options.maxHeight / itemHeight) - 2, 1)
@@ -34,6 +34,7 @@ local Menu = class(
     
     self.upButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "/\\", translate = false, onClick = function() self:scrollUp() end})
     self.downButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "\\/", translate = false, onClick = function() self:scrollDown() end})
+    self:setVisibility(self.isVisible)
     
     self:updateNavButtonPos()
     self.menuItemContainer:addChild(self.upButton)
@@ -95,8 +96,9 @@ function Menu:addMenuItem(index, menuItem)
     menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
     menuItem[1]:addChild(menuItem[2])
   end
-  table.insert(self.menuItems, index, menuItem[1]) 
+  table.insert(self.menuItems, index, menuItem[1])
   self.menuItemContainer:addChild(menuItem[1])
+  menuItem[1]:setVisibility(self.isVisible)
   
   self:updateMenuItemPositions(index)
 end

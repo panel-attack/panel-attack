@@ -4,19 +4,28 @@ local input = require("inputManager")
 local consts = require("consts")
 local util = require("util")
 local Replay = require("replay")
+local class = require("class")
 
 --@module replayGame
-local replayGame = GameBase("replayGame", {})
+local ReplayGame = class(
+  function (self, sceneParams)
+    self.frameAdvance = false
+    self.playbackSpeed = 1
+    self.maximumSpeed = 20
+  
+    self:load(sceneParams)
+  end,
+  GameBase
+)
 
-function replayGame:customLoad(scene_params)
-  self.frameAdvance = false
-  self.playbackSpeed = 1
-  self.maximumSpeed = 20
+ReplayGame.name = "ReplayGame"
+sceneManager:addScene(ReplayGame)
 
+function ReplayGame:customLoad(scene_params)
   Replay.loadFromFile(replay)
 end
 
-function replayGame:customRun()
+function ReplayGame:customRun()
   -- If we just finished a frame advance, pause again
   if self.frameAdvance then
     self.frameAdvance = false
@@ -63,12 +72,12 @@ function replayGame:customRun()
   end
 end
 
-function replayGame:abortGame()
-  sceneManager:switchToScene("replayBrowser")
+function ReplayGame:abortGame()
+  sceneManager:switchToScene("ReplayBrowser")
 end
 
-function replayGame:customGameOverSetup()
-  self.nextScene = "replayBrowser"
+function ReplayGame:customGameOverSetup()
+  self.nextScene = "ReplayBrowser"
   self.nextSceneParams = nil
 
   if GAME.match.P2 and GAME.match.battleRoom:matchOutcome() then
@@ -80,4 +89,4 @@ function replayGame:customGameOverSetup()
   end
 end
 
-return replayGame
+return ReplayGame
