@@ -15,7 +15,7 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, sender, character)
+  function(self, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, sender, character, shouldPlayAttackSfx)
     -- The number of frames before the first attack starts. Note if this is changed after attack patterns are added their times won't be updated.
     self.delayBeforeStart = delayBeforeStart 
 
@@ -32,14 +32,15 @@ AttackEngine =
     self.character = wait_for_random_character(character)
     self.telegraph = Telegraph(sender)
     self:setGarbageTarget(garbageTarget)
+    self.shouldPlayAttackSfx = shouldPlayAttackSfx
   end
 )
 
-function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, garbageTarget, opponent, character)
+function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, garbageTarget, opponent, character, shouldPlayAttackSfx)
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, opponent, character)
+  local attackEngine = AttackEngine(delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, opponent, character, shouldPlayAttackSfx)
   attackEngine:addAttackPatternsFromTable(trainingModeSettings.attackPatterns)
   return attackEngine
 end
@@ -143,7 +144,7 @@ function AttackEngine.run(self)
     metalCount = 3
   end
   local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)    
-  if newComboChainInfo then
+  if newComboChainInfo and self.shouldPlayAttackSfx then
     characters[self.character]:playAttackSfx(newComboChainInfo)
   end
 
