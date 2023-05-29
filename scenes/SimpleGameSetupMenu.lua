@@ -43,7 +43,6 @@ local BUTTON_HEIGHT = 25
 
 function SimpleGameSetupMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  
   config.endless_speed = self.speedSlider.value
   config.endless_difficulty = self.difficultyButtons.value
   if self.typeButtons.value == "Classic" then
@@ -52,25 +51,20 @@ function SimpleGameSetupMenu:startGame()
     config.endless_level = self.levelSlider.value
   end
   write_conf_file()
-  
   GAME.match = Match(self.gameMode)
-
   current_stage = config.stage
   if current_stage == random_stage_special_value then
     current_stage = nil
   end
-
   if self.typeButtons.value == "Classic" then
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character}
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character, inputMethod=config.inputMethod}
   else
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character}
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character, inputMethod=config.inputMethod}
   end
   GAME.match.P1:wait_for_random_character()
   GAME.match.P1.do_countdown = config.ready_countdown_1P or false
   GAME.match.P2 = nil
-
   GAME.match.P1:starting_state()
-  
   sceneManager:switchToScene(self.gameScene, {})
 end
 

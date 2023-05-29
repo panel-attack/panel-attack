@@ -55,6 +55,14 @@ function PuzzleMenu:startGame(puzzleSet)
     logger.debug("saving settings...")
     write_conf_file()
   end
+  
+  if config.puzzle_randomFlipped ~= self.randomlyFlipPuzzleButtons.value then
+    for _, puzzle in pairs(puzzleSet.puzzles) do
+      if math.random(2) == 1 then
+        puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+      end
+    end
+  end
 end
 
 local function exitMenu()
@@ -84,9 +92,22 @@ function PuzzleMenu:load()
     }
   )
   
+  self.randomlyFlipPuzzleButtons = ButtonGroup(
+    {
+      buttons = {
+        Button({label = "op_off", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        Button({label = "op_on", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+      },
+      values = {false, true},
+      selectedIndex = config.puzzle_randomFlipped and 2 or 1,
+      onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
+    }
+  )
+  
   local menuOptions = {
     {Label({label = "level", isVisible = false}), self.levelSlider},
     {Label({label = "randomColors", isVisible = false}), self.randomColorsButtons},
+    {Label({label = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons}
   }
 
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do

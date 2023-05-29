@@ -104,21 +104,17 @@ end
 function GameBase:load(sceneParams)
   leftover_time = 1 / 120
   self.shouldAbortGame = false
-
   self.loadStageAndMusic = true
   if sceneParams.loadStageAndMusic ~= nil then
     self.loadStageAndMusic = sceneParams.loadStageAndMusic
   end
-
   if self.loadStageAndMusic then
     self:useCurrentStage()
     pickUseMusicFrom()
   end
   self:customLoad(sceneParams)
-  
   -- TODO: move replay creation to child classes of GameBase
   replay = Replay.createNewReplay(GAME.match)
-  
   self:initializeFrameInfo()
 end
 

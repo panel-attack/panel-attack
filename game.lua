@@ -8,6 +8,7 @@ local sound = require("sound")
 local analytics = require("analytics")
 local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
+local input = require("inputManager")
 local save = require("save")
 local fileUtils = require("fileUtils")
 local scenes = nil
@@ -137,7 +138,7 @@ function Game:createDirectoriesIfNeeded()
   if #fileUtils.getFilteredDirectoryItems("training") == 0 then
     fileUtils.recursiveCopy("default_data/training", "training")
   end
-  read_attack_files("training")
+  readAttackFiles("training")
   
   if love.system.getOS() ~= "OS X" then
     fileUtils.recursiveRemoveFiles(".", ".DS_Store")
@@ -201,6 +202,40 @@ function Game:runUnitTests()
   end
 end
 
+local function runSystemCommands()
+  -- toggle debug mode
+  if input.allKeys.isDown["d"] then
+    config.debug_mode = not config.debug_mode
+    return true
+  -- reload characters
+  elseif input.allKeys.isDown["c"] then
+    characters_reload_graphics()
+    return true
+  -- reload panels
+  elseif input.allKeys.isDown["p"] then
+    panels_init()
+    return true
+  -- reload stages
+  elseif input.allKeys.isDown["s"] then
+    stages_reload_graphics()
+    return true
+  -- reload themes
+  elseif input.allKeys.isDown["t"] then
+    themes[config.theme]:json_init()
+    themes[config.theme]:graphics_init()
+    themes[config.theme]:final_init()
+    return true
+  end
+end
+
+local function takeScreenshot()
+  local now = os.date("*t", to_UTC(os.time()))
+  local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
+  love.filesystem.createDirectory("screenshots")
+  love.graphics.captureScreenshot("screenshots/" .. filename)
+  return true
+end
+
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function Game:update(dt)
@@ -244,6 +279,14 @@ function Game:update(dt)
     self.showGameScale = true
   end
   
+  if input.isDown["f2"] or input.isDown["printscreen"] then
+    takeScreenshot()
+  end
+
+  if input.isPressed["SystemKey"] then
+    runSystemCommands()
+  end
+  
   local status, err = nil, nil
   if coroutine.status(self.setupCoroutineObject) ~= "dead" then
     status, err = coroutine.resume(self.setupCoroutineObject)
@@ -253,6 +296,8 @@ function Game:update(dt)
     elseif not status then
       self.crashTrace = debug.traceback(self.setupCoroutineObject)
     end
+  elseif input.isDown["return"] and input.isDown["Alt"] then
+      love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
   elseif sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
     -- update transition to use draw priority queue
@@ -305,10 +350,6 @@ function Game:draw()
   love.graphics.setCanvas(self.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
-
-  if STONER_MODE then
-    gprintf("STONER", 1, 1 + (11 * 4))
-  end
 
   self.isDrawing = true
   for i = self.gfx_q.first, self.gfx_q.last do

@@ -1,0 +1,157 @@
+{
+    "extraInfo": {
+        "playerName": "PDR_Lava",
+        "gpm": "19.4",
+        "matchLength": "1:05",
+        "dateGenerated": "2022-11-26-23-06-26"
+    },
+    "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 295,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 578,
+            "chain": [
+                377,
+                444,
+                519
+            ]
+        },
+        {
+            "chainEndTime": 1054,
+            "chain": [
+                909,
+                976
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1231,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1347,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "chainEndTime": 1504,
+            "chain": [
+                1435
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1521,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1803,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1854,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 1943,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2362,
+            "chain": [
+                2211
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2389,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2389,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2690,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2889,
+            "chain": [
+                2816,
+                2817
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3109,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "chainEndTime": 3353,
+            "chain": [
+                3294
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3588,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "chainEndTime": 3738,
+            "chain": [
+                3671
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3782,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4085,
+            "metal": false,
+            "width": 5
+        }
+    ]
+}

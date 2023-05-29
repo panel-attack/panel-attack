@@ -140,6 +140,23 @@ local function clearAllInputs(menuOptions)
   write_key_file()
 end
 
+local function resetToDefault(menuOptions) 
+  Menu.playValidationSfx() 
+  local i = 1 
+  for keyName, key in pairs(input.defaultKeys) do 
+    GAME.input.inputConfigurations[1][keyName] = key 
+    menuOptions[i + 1][2]:updateLabel(GAME.input.inputConfigurations[1][keyName]) 
+    i = i + 1 
+  end
+  for i = 2, input.maxConfigurations do
+    for i, key in ipairs(consts.KEY_NAMES) do
+      GAME.input.inputConfigurations[configIndex][key] = nil
+    end
+  end
+  self:updateInputConfigMenuLabels(1)
+  write_key_file() 
+end
+
 local function exitMenu()
   Menu.playValidationSfx()
   sceneManager:switchToScene("MainMenu")
@@ -151,7 +168,7 @@ function InputConfigMenu:load()
       Label({label = "configuration"}), 
       Slider({
           min = 1,
-          max = GAME.input.maxConfigurations,
+          max = input.maxConfigurations,
           value = 1,
           tickLength = 10,
           onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end})
@@ -176,6 +193,9 @@ function InputConfigMenu:load()
   menuOptions[#menuOptions + 1] = {
     Button({label = "Clear All Inputs", translate = false,
     onClick = function() clearAllInputs(menuOptions) end})}
+  menuOptions[#menuOptions + 1] = { 
+    Button({label = "Reset Keys To Default", translate = false, 
+    onClick = function() resetToDefault(menuOptions) end})} 
   menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)

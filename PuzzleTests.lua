@@ -100,3 +100,69 @@ PuzzleTests.validationGarbageCoherence2()
 PuzzleTests.validationGarbageCoherence3()
 PuzzleTests.validationGarbageCoherence4()
 PuzzleTests.validationValid()
+
+function PuzzleTests.testFilledPuzzleString()
+  local puzzleString = "123"
+  local filledString = Puzzle.fillMissingPanelsInPuzzleString(puzzleString, 6, 12)
+  assert(filledString ~= puzzleString)
+  assert(filledString:len() == 72)
+  assert(filledString == "000000000000000000000000000000000000000000000000000000000000000000000123")
+end
+
+PuzzleTests.testFilledPuzzleString()
+
+function PuzzleTests.testRandomizeColors()
+  local puzzleString = "{====}929999[====]040000224999949999"
+  -- Technically its correct that sometimes we will get the same colors.
+  -- Pick a constant seed that we found gives a different color set then the original
+  love.math.setRandomSeed(1)
+  local randomizedString = Puzzle.randomizeColorsInPuzzleString(puzzleString)
+  assert(randomizedString:len() == puzzleString:len())
+  assert(randomizedString ~= puzzleString)
+end
+
+PuzzleTests.testRandomizeColors()
+
+function PuzzleTests.testRandomizeColorsSometimesSameColors()
+  local puzzleString = "{====}929999[====]040000224999949999"
+  -- Technically its correct that sometimes we will get the same colors.
+  -- Pick a constant seed that we found gives the same colors
+  love.math.setRandomSeed(9)
+  local randomizedString = Puzzle.randomizeColorsInPuzzleString(puzzleString)
+  assert(randomizedString:len() == puzzleString:len())
+  assert(randomizedString == puzzleString)
+end
+
+PuzzleTests.testRandomizeColorsSometimesSameColors()
+
+function PuzzleTests.testHorizontallyFlippedPuzzle()
+  local puzzleString = "{====}929999[====]040000224999949999"
+  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  assert(flippedString == "000000000000000000000000000000000000{====}999929[====]000040999422999949")
+end
+
+PuzzleTests.testHorizontallyFlippedPuzzle()
+
+function PuzzleTests.testHorizontallyFlippedSmallPuzzle()
+  local puzzleString = "123"
+  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  assert(flippedString == "000000000000000000000000000000000000000000000000000000000000000000321000")
+end
+
+PuzzleTests.testHorizontallyFlippedSmallPuzzle()
+
+function PuzzleTests.testHorizontallyFlippedBigGarbagePuzzle()
+  local puzzleString = "[============================][====]632620[====]200042543641322141354544463636"
+  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  assert(flippedString == "[============================][====]026236[====]240002146345141223445453636364")
+end
+
+PuzzleTests.testHorizontallyFlippedBigGarbagePuzzle()
+
+function PuzzleTests.testHorizontallyFlippedSmallGarbagePuzzle()
+  local puzzleString = "[============================]00[==]632620[==]00200042543641322141354544463636"
+  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  assert(flippedString == "[============================][==]0002623600[==]240002146345141223445453636364")
+end
+
+PuzzleTests.testHorizontallyFlippedSmallGarbagePuzzle()

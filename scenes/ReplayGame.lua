@@ -22,7 +22,7 @@ ReplayGame.name = "ReplayGame"
 sceneManager:addScene(ReplayGame)
 
 function ReplayGame:customLoad(scene_params)
-  Replay.loadFromFile(replay)
+  Replay.loadFromFile(replay, true)
 end
 
 function ReplayGame:customRun()

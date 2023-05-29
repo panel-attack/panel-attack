@@ -32,7 +32,8 @@ local inputManager = {
     x = 0,
     y = 0
   },
-  maxConfigurations = 8 
+  maxConfigurations = 8,
+  defaultKeys = {Up="up", Down="down", Left="left", Right="right", Swap1="z", Swap2="x", TauntUp="y", TauntDown="u", Raise1="c", Raise2="v", Start="p"}
 } 
 
 -- Represents the state of love.run while the key in isDown/isUp is active
@@ -180,6 +181,40 @@ function inputManager:aliasKey(key, keyAlias)
   end 
 end
 
+function inputManager:mergePressedKeys(key1, key2)
+  local maxPressedTime = math.max(self.allKeys.isPressed[key1] or 0, self.allKeys.isPressed[key2] or 0)
+  if maxPressedTime == 0 then
+    return nil
+  else
+    return maxPressedTime
+  end
+end
+
+function inputManager:updateSystemKeys()
+  -- alt
+  self.isDown["Alt"] = self.allKeys.isDown["lalt"] or self.allKeys.isDown["ralt"]
+  self.isUp["Alt"] = self.allKeys.isUp["lalt"] and self.allKeys.isUp["ralt"]
+  self.isPressed["Alt"] = self:mergePressedKeys("lalt", "ralt")
+
+  -- ctrl
+  self.isDown["Ctrl"] = self.allKeys.isDown["lctrl"] or self.allKeys.isDown["rctrl"]
+  self.isUp["Ctrl"] = self.allKeys.isUp["lctrl"] and self.allKeys.isUp["rctrl"]
+  self.isPressed["Ctrl"] = self:mergePressedKeys("lctrl", "rctrl")
+  
+  -- shift
+  self.isDown["Shift"] = self.allKeys.isDown["lshift"] or self.allKeys.isDown["rshift"]
+  self.isUp["Shift"] = self.allKeys.isUp["lshift"] and self.allKeys.isUp["rshift"]
+  self.isPressed["Shift"] = self:mergePressedKeys("lshift", "rshift")
+  
+  -- systemKey
+  self.isDown["SystemKey"] = self.isDown["Alt"] and self.isDown["Ctrl"] and self.isDown["Shift"]
+  self.isUp["SystemKey"] = self.isUp["Alt"] and self.isUp["Ctrl"] and self.isUp["Shift"]
+  self.isPressed["SystemKey"] = math.min(self.isPressed["Alt"] or 0xFFFFFFFF, self.isPressed["Ctrl"] or 0xFFFFFFFF, self.isPressed["Shift"] or 0xFFFFFFFF)
+  if self.isPressed["SystemKey"] == 0xFFFFFFFF then
+    self.isPressed["SystemKey"] = nil
+  end
+end
+
 -- copy over specific raw key states into the custom input structures defined in the header
 function inputManager:updateKeyMaps()
   -- set the reserved key aliases
@@ -219,6 +254,7 @@ function inputManager:update(dt)
   self:updateKeyStates(dt, self.allKeys)
   self:updateKeyStates(dt, self.mouse)
   self:updateKeyMaps()
+  self:updateSystemKeys()
 end 
 
 function inputManager:mousePressed(x, y, button)

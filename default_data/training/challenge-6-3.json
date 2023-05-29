@@ -1,0 +1,147 @@
+{
+    "extraInfo": {
+        "playerName": "CoreyBLD",
+        "gpm": "17.6",
+        "matchLength": "1:23",
+        "dateGenerated": "2022-11-26-23-36-30"
+    },
+    "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+        {
+            "chainEndTime": 577,
+            "chain": [
+                358,
+                425,
+                494
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 494,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 728,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 876,
+            "chain": [
+                807
+            ]
+        },
+        {
+            "chainEndTime": 2136,
+            "chain": [
+                1310,
+                1311,
+                1627,
+                1902
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2341,
+            "metal": false,
+            "width": 4
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2409,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2688,
+            "chain": [
+                2555,
+                2629
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2555,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3087,
+            "chain": [
+                2999
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2999,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "chainEndTime": 3312,
+            "chain": [
+                3253
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3309,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "chainEndTime": 3799,
+            "chain": [
+                3660,
+                3730
+            ]
+        },
+        {
+            "chainEndTime": 4470,
+            "chain": [
+                4243,
+                4315,
+                4382
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4382,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4525,
+            "metal": false,
+            "width": 5
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4634,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4781,
+            "metal": false,
+            "width": 3
+        }
+    ]
+}
