@@ -14,6 +14,7 @@ local consts = {
   FRAME_RATE = 1 / 60,
   KEY_DELAY = .25,
   KEY_REPEAT_PERIOD = .05,
+  MENU_PADDING = 10
 }
 
 -- TODO: Move all values below to the above table
@@ -28,6 +29,8 @@ consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
 VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
+consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
+consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
 canvas_width = 1280
 canvas_height = 720
 
@@ -61,8 +64,6 @@ default_input_repeat_delay = 20
 
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
-
-key_names = {"Up", "Down", "Left", "Right", "Swap1", "Swap2", "TauntUp", "TauntDown", "Raise1", "Raise2", "Start"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,

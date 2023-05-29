@@ -3,6 +3,7 @@ local Replay = require("replay")
 local graphics = require("select_screen.select_screen_graphics")
 local tableUtils = require("tableUtils")
 local util = require("util")
+require("SimulatedOpponent")
 
 local select_screen = {}
 
@@ -282,13 +283,24 @@ function select_screen.getTemplateMap(self)
       {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
     }
   else
-    return {
-      {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
-      {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
-      {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
-    }
+    local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+    if challengeMode then
+      return {
+        {"__Panels", "__Panels", "__Stage", "__Stage", "__Ready", "__Ready", "__Ready", "__Ready", "__Ready"},
+        {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    else
+      return {
+        {"__Panels", "__Panels", "__Stage", "__Stage", "__Stage", "__Level", "__Level", "__Level", "__Ready"},
+        {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
+        {"__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Leave"}
+      }
+    end
   end
 end
 
@@ -536,6 +548,7 @@ function select_screen.setUpOpponentPlayer(self)
       self.players[self.op_player_number].selectedCharacter = global_op_state.character
       self.players[self.op_player_number].character = global_op_state.character
       self.players[self.op_player_number].stage = global_op_state.stage
+      self.players[self.op_player_number].panels_dir = global_op_state.panels_dir
     end
   end
 
@@ -570,7 +583,7 @@ function select_screen.sendMenuState(self)
   menuState.level = self.players[self.my_player_number].level
   menuState.inputMethod = self.players[self.my_player_number].inputMethod
   for k, v in pairs(menuState) do
-    if type(k) == "function" or type(v) == "function" then
+    if type(k) == "function" or type(v) == "function" or type(k) == "table" or type(v) == "table" then
       error("Trying to send an illegal object to the server\n" .. table_to_string(menuState))
     end
   end
@@ -783,6 +796,8 @@ function select_screen.getSeed(self, msg)
 end
 
 function select_screen.startNetPlayMatch(self, msg)
+  local P1 = GAME.match.P1 
+  local P2 = GAME.match.P2
   logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
   refreshBasedOnOwnMods(msg.opponent_settings)
   refreshBasedOnOwnMods(msg.player_settings)
@@ -811,8 +826,10 @@ function select_screen.startNetPlayMatch(self, msg)
   GAME.match.P2 = P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
-  P1:set_garbage_target(P2)
-  P2:set_garbage_target(P1)
+  P1:setOpponent(P2)
+  P1:setGarbageTarget(P2)
+  P2:setOpponent(P1)
+  P2:setGarbageTarget(P1)
   P2:moveForPlayerNumber(2)
   replay = Replay.createNewReplay(GAME.match)
 
@@ -844,14 +861,18 @@ end
 
 -- returns transition to local vs screen
 function select_screen.start2pLocalMatch(self)
+  local P1 = GAME.match.P1 
+  local P2 = GAME.match.P2
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match.P1 = P1
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
   --note: local P2 not currently allowed to use "touch" input method
   GAME.match.P2 = P2
-  P1:set_garbage_target(P2)
-  P2:set_garbage_target(P1)
+  P1:setOpponent(P2)
+  P1:setGarbageTarget(P2)
+  P2:setOpponent(P1)
+  P2:setGarbageTarget(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
@@ -864,14 +885,48 @@ end
 
 -- returns transition to local_vs_yourself screen
 function select_screen.start1pLocalMatch(self)
+  local P1 = GAME.match.P1 
+  local P2 = GAME.match.P2
+  local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
+  local challengeStage = nil
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
-  if GAME.battleRoom.trainingModeSettings then
-    self:initializeAttackEngine()
+  local stackLevel = self.players[self.my_player_number].level
+  if challengeMode then
+    challengeMode:beginStage()
+    challengeStage = challengeMode.stages[challengeMode.currentStageIndex]
+    stackLevel = challengeStage.riseDifficulty
   end
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = stackLevel, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
+  if GAME.battleRoom.trainingModeSettings then
+    local character = P1.character
+    local health = nil
+    local attackEngine = nil
+    if challengeMode then
+      health = challengeStage:createHealth()
+      character = challengeStage:characterForStageNumber(P1.character)
+      character_loader_load(character)
+      character_loader_wait()
+    end
+
+    local xPosition = 796
+    local yPosition = 120
+    local mirror = -1
+    local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
+    if challengeStage then
+      attackEngine = challengeStage:createAttackEngine(P1, simulatedOpponent, character)
+    else
+      attackEngine = AttackEngine.createEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings.attackSettings, P1, simulatedOpponent, character)
+    end
+    simulatedOpponent:setAttackEngine(attackEngine)
+
+    GAME.match.simulatedOpponent = simulatedOpponent
+  end
+  
   GAME.match.P1 = P1
-  if not GAME.battleRoom.trainingModeSettings then
-    P1:set_garbage_target(P1)
+  if not GAME.match.simulatedOpponent then
+    P1:setGarbageTarget(P1)
+  else
+    P1:setGarbageTarget(GAME.match.simulatedOpponent)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
@@ -885,6 +940,8 @@ function select_screen.start1pLocalMatch(self)
 end
 
 function select_screen.start1pCpuMatch(self)
+  local P1 = GAME.match.P1 
+  local P2 = GAME.match.P2
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match.P1 = P1
@@ -893,8 +950,8 @@ function select_screen.start1pCpuMatch(self)
   GAME.match.P2 = P2
   GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
 
-  P1.garbage_target = P2
-  P2.garbage_target = P1
+  P1.garbageTarget = P2
+  P2.garbageTarget = P1
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()
@@ -905,33 +962,6 @@ function select_screen.start1pCpuMatch(self)
   P1:starting_state()
   P2:starting_state()
   return main_dumb_transition, {main_local_vs, "", 0, 0}
-end
-
-function select_screen.initializeAttackEngine(self)
-  local trainingModeSettings = GAME.battleRoom.trainingModeSettings
-  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
-  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  GAME.match.attackEngine = AttackEngine(P1, delayBeforeStart, delayBeforeRepeat, disableQueueLimit)
-  for _, values in ipairs(trainingModeSettings.attackPatterns) do
-    if values.chain then
-      if type(values.chain) == "number" then
-        for i = 1, values.height do
-          GAME.match.attackEngine:addAttackPattern(6, i, values.startTime + ((i-1) * values.chain), false, true)
-        end
-        GAME.match.attackEngine:addEndChainPattern(values.startTime + ((values.height - 1) * values.chain) + values.chainEndDelta)
-      elseif type(values.chain) == "table" then
-        for i, chainTime in ipairs(values.chain) do
-          GAME.match.attackEngine:addAttackPattern(6, i, chainTime, false, true)
-        end
-        GAME.match.attackEngine:addEndChainPattern(values.chainEndTime)
-      else
-        error("The 'chain' field in your attack file is invalid. It should either be a number or a list of numbers.")
-      end
-    else
-      GAME.match.attackEngine:addAttackPattern(values.width, values.height or 1, values.startTime, values.metal or false, false)
-    end
-  end
 end
 
 function select_screen.initialize(self, character_select_mode)
@@ -946,6 +976,9 @@ end
 
 -- The main screen for selecting characters and settings for a match
 function select_screen.main(self, character_select_mode, roomInitializationMessage)
+  self.roomInitializationMessage = roomInitializationMessage
+  self:initialize(character_select_mode)
+
   -- 2p vs local needs to have its input properly divided in select screen already
   -- meaning we do NOT want to reset to player 1 reacting to inputs from all configurations
   -- for all others, the player can hold their decision until game start
@@ -953,8 +986,6 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
     GAME.input:allowAllInputConfigurations()
   end
 
-  self.roomInitializationMessage = roomInitializationMessage
-  self:initialize(character_select_mode)
   self:loadThemeAssets()
 
   self:prepareDrawMap()

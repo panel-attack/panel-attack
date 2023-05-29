@@ -14,15 +14,18 @@ local Replay = require("replay")
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
 local GameBase = class(
-  function (self, name, options)
-    self.name = name
+  function (self, sceneParams)
+    -- must be set in child class
+    self.nextScene = nil
+    self.nextSceneParams = {}
+    
+    -- set in load
     self.shouldAbortGame = false
     self.text = ""
     self.winnerSFX = nil
     self.keepMusic = false
     self.currentStage = config.stage
     self.loadStageAndMusic = true
-    self.backgroundImage = nil
     
     self.frameInfo = {
       frameCount = nil,
@@ -58,9 +61,7 @@ function GameBase:customGameOverSetup() end
 
 -- end abstract functions
 
-function GameBase:init()
-  sceneManager:addScene(self)
-end
+local backgroundImage = nil
 
 function GameBase:pickRandomStage()
   self.currentStage = tableUtils.getRandomElement(stages_ids_for_current_theme)
@@ -77,7 +78,7 @@ function GameBase:useCurrentStage()
   
   stage_loader_load(self.currentStage)
   stage_loader_wait()
-  self.backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
+  backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
 end
 
 local function pickUseMusicFrom()
@@ -103,21 +104,17 @@ end
 function GameBase:load(sceneParams)
   leftover_time = 1 / 120
   self.shouldAbortGame = false
-
   self.loadStageAndMusic = true
   if sceneParams.loadStageAndMusic ~= nil then
     self.loadStageAndMusic = sceneParams.loadStageAndMusic
   end
-
   if self.loadStageAndMusic then
     self:useCurrentStage()
     pickUseMusicFrom()
   end
   self:customLoad(sceneParams)
-  
   -- TODO: move replay creation to child classes of GameBase
   replay = Replay.createNewReplay(GAME.match)
-  
   self:initializeFrameInfo()
 end
 
@@ -130,7 +127,7 @@ function GameBase:drawForeground()
 end
 
 function GameBase:drawBackground()
-  self.backgroundImage:draw()
+  backgroundImage:draw()
   local backgroundOverlay = themes[config.theme].images.bg_overlay
   if backgroundOverlay then
     local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio

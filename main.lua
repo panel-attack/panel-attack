@@ -33,6 +33,7 @@ gfx_q = GAME.gfx_q
 require("engine/GarbageQueue")
 require("engine/telegraph")
 require("engine")
+require("engine.checkMatches")
 require("AttackEngine")
 
 require("graphics")
@@ -47,7 +48,7 @@ require("timezones")
 require("gen_panels")
 require("panels")
 require("Theme")
-local utf8 = require("utf8")
+local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
@@ -229,12 +230,6 @@ end
 
 -- Called whenever the game needs to draw.
 function love.draw()
-  if config ~= nil and config.show_fps then
-    if not CustomRun.runTimeGraph then
-      gprintf("FPS: " .. love.timer.getFPS(), 1, 1)
-    end
-  end
-
   GAME:draw()
 end
 

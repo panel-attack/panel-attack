@@ -13,10 +13,20 @@ local GraphicsUtil = require("graphics_util")
 --@module SimpleGameSetupMenu
 -- A Scene that contains menus for basic game configuation (speed, difficulty, level, etc.)
 local SimpleGameSetupMenu = class(
-  function (self, name, options)
-    self.name = name
-    self.gameMode = options.gameMode
-    self.gameScene = options.gameScene
+  function (self, sceneParams)
+    -- must be set in child classes
+    self.gameMode = nil
+    self.gameScene = nil
+    
+    -- set in load
+    self.speedSlider = nil
+    self.difficultyButtons = nil
+    self.typeButtons = nil
+    self.levelSlider = nil
+    self.gameMode = nil
+    self.gameScene = nil
+    self.modernMenu = nil
+    self.classicMenu = nil
   end,
   Scene
 )
@@ -33,7 +43,6 @@ local BUTTON_HEIGHT = 25
 
 function SimpleGameSetupMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  
   config.endless_speed = self.speedSlider.value
   config.endless_difficulty = self.difficultyButtons.value
   if self.typeButtons.value == "Classic" then
@@ -42,37 +51,30 @@ function SimpleGameSetupMenu:startGame()
     config.endless_level = self.levelSlider.value
   end
   write_conf_file()
-  
   GAME.match = Match(self.gameMode)
-
   current_stage = config.stage
   if current_stage == random_stage_special_value then
     current_stage = nil
   end
-
   if self.typeButtons.value == "Classic" then
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character}
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character, inputMethod=config.inputMethod}
   else
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character}
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character, inputMethod=config.inputMethod}
   end
   GAME.match.P1:wait_for_random_character()
   GAME.match.P1.do_countdown = config.ready_countdown_1P or false
   GAME.match.P2 = nil
-
   GAME.match.P1:starting_state()
-  
   sceneManager:switchToScene(self.gameScene, {})
 end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("mainMenu")
+  sceneManager:switchToScene("MainMenu")
 end
 
-function SimpleGameSetupMenu:init()
-  sceneManager:addScene(self)
-  
-  self.speedSlider = Slider({
+function SimpleGameSetupMenu:load()
+    self.speedSlider = Slider({
     min = 1, 
     max = 99, 
     value = GAME.config.endless_speed or 1, 
@@ -136,22 +138,27 @@ function SimpleGameSetupMenu:init()
     {Button({label = "back", onClick = exitMenu})},
   }
   
-  self.classicMenu = Menu({menuItems = classicMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  self.modernMenu = Menu({menuItems = modernMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  self.classicMenu:setVisibility(false)
-  self.modernMenu:setVisibility(false)
-end
-
-function SimpleGameSetupMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 100
-  self.classicMenu.x = x
-  self.classicMenu.y = y
-  self.modernMenu.x = x
-  self.modernMenu.y = y
-  
-  self.classicMenu:updateLabel()
-  self.modernMenu:updateLabel()
+  self.classicMenu = Menu({
+    x = x,
+    y = y,
+    menuItems = classicMenuOptions, 
+    maxHeight = themes[config.theme].main_menu_max_height
+  })
+  self.modernMenu = Menu({
+    x = x,
+    y = y,
+    menuItems = modernMenuOptions,
+    maxHeight = themes[config.theme].main_menu_max_height
+  })
+  if self.typeButtons.value == "Classic" then
+    self.modernMenu:setVisibility(false)
+    self.classicMenu:setVisibility(true)
+  else
+    self.classicMenu:setVisibility(false)
+    self.modernMenu:setVisibility(true)
+  end
   
   reset_filters()
   if themes[config.theme].musics["main"] then
@@ -161,12 +168,6 @@ function SimpleGameSetupMenu:load()
   for i, button in ipairs(self.difficultyButtons.buttons) do
     button.width = BUTTON_WIDTH
     button.height = BUTTON_HEIGHT
-  end
-  
-  if self.typeButtons.value == "Classic" then
-    self.classicMenu:setVisibility(true)
-  else
-    self.modernMenu:setVisibility(true)
   end
 end
 

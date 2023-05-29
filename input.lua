@@ -225,31 +225,30 @@ function love.keypressed(key, scancode, rep)
     inputManager:keyPressed(key, scancode, rep)
   end
 
-  local function handleFullscreenToggle()
-    if key == "return" and not rep and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
-      love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
-      return true
-    end
+  local function altDown()
+    return love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")
   end
 
-  local function handleScreenshot()
-    if key == "f2" or key == "printscreen" then
-      local now = os.date("*t", to_UTC(os.time()))
-      local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
-      love.filesystem.createDirectory("screenshots")
-      love.graphics.captureScreenshot("screenshots/" .. filename)
-      return true
-    end
+  local function ctrlDown()
+    return love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")
+  end
+
+  local function shiftDown()
+    return love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")
+  end
+
+  local function smashDown()
+    return ctrlDown() and altDown() and shiftDown()
   end
 
   local function handleCopy()
-    if key == "c" and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
+    if key == "c" and not rep and ctrlDown() then
       local stacks = {}
-      if P1 then
-        stacks["P1"] = P1:toPuzzleInfo()
+      if GAME.match.P1 then
+        stacks["P1"] = GAME.match.P1:toPuzzleInfo()
       end
-      if P2 then
-        stacks["P2"] = P2:toPuzzleInfo()
+      if GAME.match.P2 then
+        stacks["P2"] = GAME.match.P2:toPuzzleInfo()
       end
       if tableUtils.length(stacks) > 0 then
         love.system.setClipboardText(json.encode(stacks))
@@ -259,30 +258,23 @@ function love.keypressed(key, scancode, rep)
   end
 
   local function handleDumpAttackPattern()
-    if (key == "1" or key == "2") and not rep and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) then
-      local stack = P1
+    if (key == "1" or key == "2") and not rep and ctrlDown() then
+      local stack = GAME.match.P1
 
       if key == "2" then
-        stack = P2
+        stack = GAME.match.P2
       end
 
       if stack then
-        local data = stack:getAttackPatternData()
-        pcall(
-          function()
-            local file = love.filesystem.newFile("dumpAttackPattern.json")
-            file:open("w")
-            file:write(json.encode(data))
-            file:close()
-          end
-        )
+        local data, state = stack:getAttackPatternData()
+        saveJSONToPath(data, state, "dumpAttackPattern.json")
         return true
       end
     end
   end
 
   local function modifyWinCounts()
-    if GAME.battleRoom and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) then
+    if GAME.battleRoom and altDown() then
       if key == "1" then -- Add to P1's win count
         GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] + 1)
       end
@@ -302,18 +294,9 @@ function love.keypressed(key, scancode, rep)
     end
   end
 
-  local function toggleDebugMode()
-    if key == "d" and (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) and (love.keyboard.isDown("lalt") or love.keyboard.isDown("ralt")) and (love.keyboard.isDown("lshift") or love.keyboard.isDown("rshift")) then
-      config.debug_mode = not config.debug_mode
-    end
-  end
-  
-  if handleFullscreenToggle() or
-     handleScreenshot() or
-     handleCopy() or
+  if handleCopy() or
      handleDumpAttackPattern() or
-     modifyWinCounts() or
-     toggleDebugMode() then
+     modifyWinCounts() then
     return
   end
 

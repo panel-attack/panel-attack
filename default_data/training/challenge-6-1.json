@@ -1,0 +1,117 @@
+{
+    "extraInfo": {
+        "playerName": "JamBox",
+        "gpm": "15.1",
+        "matchLength": "1:22",
+        "dateGenerated": "2022-11-26-22-46-33"
+    },
+    "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+        {
+            "chainEndTime": 530,
+            "chain": [
+                461
+            ]
+        },
+        {
+            "chainEndTime": 851,
+            "chain": [
+                640,
+                717,
+                784
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 640,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 1769,
+            "chain": [
+                1428,
+                1497,
+                1566,
+                1633,
+                1702
+            ]
+        },
+        {
+            "chainEndTime": 2323,
+            "chain": [
+                2264
+            ]
+        },
+        {
+            "chainEndTime": 2491,
+            "chain": [
+                2422
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 2610,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 2975,
+            "chain": [
+                2834,
+                2908
+            ]
+        },
+        {
+            "chainEndTime": 3135,
+            "chain": [
+                3061
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3061,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3561,
+            "chain": [
+                3494
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 3684,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 3860,
+            "chain": [
+                3801
+            ]
+        },
+        {
+            "height": 1,
+            "chain": false,
+            "startTime": 4436,
+            "metal": false,
+            "width": 3
+        },
+        {
+            "chainEndTime": 4906,
+            "chain": [
+                4753,
+                4754,
+                4755
+            ]
+        }
+    ]
+}

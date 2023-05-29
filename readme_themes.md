@@ -15,7 +15,9 @@ Various files in fact do not have a specific size or aspect ratio but merely a c
 Due to this, it is required for theme assets that you specify in the configuration how a graphic should be scaled.  
 If no configuration is given, standard values from the default theme will be used.  
 You can find the default configuration at  
-https://github.com/panel-attack/panel-attack/blob/beta/themes/Panel%20Attack%20Modern/config.json
+https://github.com/panel-attack/panel-attack/blob/beta/themes/Panel%20Attack%20Modern/config.json  
+
+You can use the Ctrl+Shift+Alt+T shortcut to reload your theme configuration and graphics in the game.
 
 
 -----------------------------------------------------------
@@ -31,7 +33,7 @@ For this reason the "id" of the theme is always the foldername.
 You may use .png or .jpg/.jpeg for these.
 .gif files are not supported by the framework Panel Attack uses so please refrain from asking devs to support that.  
 All file names are case sensitive and the extension *always* has to be lowercase!  
-While an incorrectly cased file may load on Windows, it will not on other operating systems!
+While an incorrectly cased file may load on Windows, it will not on other operating systems!  
 
 ### Default image
 

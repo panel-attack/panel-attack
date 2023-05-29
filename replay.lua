@@ -79,7 +79,7 @@ function Replay.loadFromPath(path)
     return true
 end
 
-function Replay.loadFromFile(replay)
+function Replay.loadFromFile(replay, wantsCanvas)
   assert(replay ~= nil)
   local replayDetails
   if replay.vs then
@@ -103,27 +103,29 @@ function Replay.loadFromFile(replay)
   if replay.vs then
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
-    P1 = Stack{which=1, match=GAME.match, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
+    GAME.match.P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
 
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
-      P2 = Stack{which=2, match=GAME.match, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
+      GAME.match.P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
       
-      P1:set_garbage_target(P2)
-      P2:set_garbage_target(P1)
-      P2:moveForPlayerNumber(2)
+      GAME.match.P1:setGarbageTarget(GAME.match.P2)
+      GAME.match.P1:setOpponent(GAME.match.P2)
+      GAME.match.P2:setGarbageTarget(GAME.match.P1)
+      GAME.match.P2:setOpponent(GAME.match.P1)
+      GAME.match.P2:moveForPlayerNumber(2)
 
       if replayDetails.P1_win_count then
         GAME.match.battleRoom.playerWinCounts[1] = replayDetails.P1_win_count
         GAME.match.battleRoom.playerWinCounts[2] = replayDetails.P2_win_count
       end
     else
-      P1:set_garbage_target(P1)
+      GAME.match.P1:setGarbageTarget(GAME.match.P1)
     end
 
     GAME.battleRoom.playerNames[1] = replayDetails.P1_name or loc("player_n", "1")
-    if P2 then
+    if GAME.match.P2 then
       GAME.battleRoom.playerNames[2] = replayDetails.P2_name or loc("player_n", "2")
     end
 
@@ -135,37 +137,35 @@ function Replay.loadFromFile(replay)
 
   elseif replay.endless or replay.time then
     local inputMethod = (replayDetails.inputMethod) or "controller"
-    P1 = Stack{which=1, match=GAME.match, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
-    GAME.match.P1 = P1
-    P1:wait_for_random_character()
+    GAME.match.P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
+    GAME.match.P1 = GAME.match.P1
+    GAME.match.P1:wait_for_random_character()
   end
 
-  P1:receiveConfirmedInput(uncompress_input_string(replayDetails.in_buf))
-  GAME.match.P1 = P1
-  P1.do_countdown = replayDetails.do_countdown or false
-  P1.max_runs_per_frame = 1
-  P1.cur_wait_time = replayDetails.cur_wait_time or default_input_repeat_delay
+  GAME.match.P1:receiveConfirmedInput(uncompress_input_string(replayDetails.in_buf))
+  GAME.match.P1.do_countdown = replayDetails.do_countdown or false
+  GAME.match.P1.max_runs_per_frame = 1
+  GAME.match.P1.cur_wait_time = replayDetails.cur_wait_time or default_input_repeat_delay
 
-  refreshBasedOnOwnMods(P1)
+  refreshBasedOnOwnMods(GAME.match.P1)
 
-  if P2 then
-    P2:receiveConfirmedInput(uncompress_input_string(replayDetails.I))
+  if GAME.match.P2 then
+    GAME.match.P2:receiveConfirmedInput(uncompress_input_string(replayDetails.I))
 
-    GAME.match.P2 = P2
-    P2.do_countdown = replayDetails.do_countdown or false
-    P2.max_runs_per_frame = 1
-    P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
+    GAME.match.P2.do_countdown = replayDetails.do_countdown or false
+    GAME.match.P2.max_runs_per_frame = 1
+    GAME.match.P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
     refreshBasedOnOwnMods(P2)
+    refreshBasedOnOwnMods(GAME.match.P2)
   end
   character_loader_wait()
 
-  P1:starting_state()
+  GAME.match.P1:starting_state()
 
-  if P2 then
-    P2:starting_state()
+  if GAME.match.P2 then
+    GAME.match.P2:starting_state()
   end
 end
-
 
 local function addReplayStatisticsToReplay(match, replay)
   local r = replay[match.mode]
@@ -194,12 +194,12 @@ local function addReplayStatisticsToReplay(match, replay)
   end
 
   if match.P2 then
-    r.playerStats[P2.which] = {}
-    r.playerStats[P2.which].number = P2.which
-    r.playerStats[P2.which] = P2.analytic.data
-    r.playerStats[P2.which].score = P2.score
+    r.playerStats[match.P2.which] = {}
+    r.playerStats[match.P2.which].number = match.P2.which
+    r.playerStats[match.P2.which] = match.P2.analytic.data
+    r.playerStats[match.P2.which].score = match.P2.score
     if match.mode == "vs" and match.room_ratings then
-      r.playerStats[P2.which].rating = match.room_ratings[P2.which]
+      r.playerStats[match.P2.which].rating = match.room_ratings[match.P2.which]
     end
   end
 
@@ -233,8 +233,8 @@ function Replay.finalizeReplay(match, replay)
   replay = addReplayStatisticsToReplay(match, replay)
   replay[match.mode].in_buf = table.concat(match.P1.confirmedInput)
   replay[match.mode].stage = current_stage
-  if P2 then
-    replay[match.mode].I = table.concat(P2.confirmedInput)
+  if match.P2 then
+    replay[match.mode].I = table.concat(match.P2.confirmedInput)
   end
   Replay.compressReplay(replay)
 end
@@ -249,7 +249,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     extraFilename = extraFilename .. "-WARNING-OCCURRED"
   end
 
-  if P2 then
+  if GAME.match.P2 then
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
     if rep_b_name < rep_a_name then
@@ -257,7 +257,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. P1.level .. "-vs-" .. rep_b_name .. "-L" .. P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. GAME.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. GAME.match.P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
@@ -272,7 +272,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     end
   else -- vs Self
     extraPath = "Vs Self"
-    extraFilename = extraFilename .. "vsSelf-" .. "L" .. P1.level
+    extraFilename = extraFilename .. "vsSelf-" .. "L" .. GAME.match.P1.level
   end
 
   Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)
