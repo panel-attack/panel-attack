@@ -12,7 +12,7 @@ assert(defaultTheme.version == 2)
 assert(defaultTheme.images.bg_main ~= nil)
 assert(defaultTheme.multibar_is_absolute == true)
 
-fileUtils.recursive_copy("tests/ThemeTestData/", Theme.themeDirectoryPath)
+fileUtils.recursiveCopy("tests/ThemeTestData/", Theme.themeDirectoryPath)
 
 -- Deletes an entire directory. BE VERY CAREFUL
 local function recursiveRemoveDirectory(folder)
@@ -39,7 +39,7 @@ assert(v2Theme.version == 2)
 assert(v2Theme.images.bg_main ~= nil)
 assert(v2Theme.multibar_is_absolute == true)
 assert(v2Theme.bg_main_is_tiled == true)
-fileUtils.recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2Theme.name)
+recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2Theme.name)
 
 local v1Theme = Theme("V1Test")
 assert(v1Theme ~= nil)
@@ -48,11 +48,11 @@ assert(v1Theme.version == 2) -- it was upgraded
 assert(v1Theme.images.bg_main ~= nil)
 assert(v1Theme.multibar_is_absolute == false) -- old v1 default
 assert(v1Theme.bg_main_is_tiled == true) -- override from v1 default
-fileUtils.recursiveRemoveDirectory(Theme.themeDirectoryPath .. v1Theme.name)
+recursiveRemoveDirectory(Theme.themeDirectoryPath .. v1Theme.name)
 
 local v2AbsoluteTheme = Theme("V2AbsoluteTheme")
 assert(v2AbsoluteTheme ~= nil)
 assert(v2AbsoluteTheme.name == "V2AbsoluteTheme")
 assert(v2AbsoluteTheme.version == 2)
 assert(v2AbsoluteTheme.multibar_is_absolute == false) -- override
-fileUtils.recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2AbsoluteTheme.name)
+recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2AbsoluteTheme.name)

@@ -42,7 +42,7 @@ function PuzzleMenu:startGame(puzzleSet)
     puzzleSet = deepcpy(puzzleSet)
 
     for _, puzzle in pairs(puzzleSet.puzzles) do
-      puzzle.stack = Puzzle.randomizeColorString(puzzle.stack)
+      puzzle.stack = Puzzle.randomizeColorsInPuzzleString(puzzle.stack)
     end
   end
   

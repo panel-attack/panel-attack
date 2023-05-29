@@ -233,8 +233,8 @@ function Replay.finalizeReplay(match, replay)
   replay = addReplayStatisticsToReplay(match, replay)
   replay[match.mode].in_buf = table.concat(match.P1.confirmedInput)
   replay[match.mode].stage = current_stage
-  if GAME.match.P2 then
-    replay[match.mode].I = table.concat(P2.confirmedInput)
+  if match.P2 then
+    replay[match.mode].I = table.concat(match.P2.confirmedInput)
   end
   Replay.compressReplay(replay)
 end

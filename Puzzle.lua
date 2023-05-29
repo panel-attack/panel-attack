@@ -39,7 +39,7 @@ function Puzzle.randomizeColorsInPuzzleString(puzzleString)
   local newColorOrder = {}
 
   for i = 1, #colorArray, 1 do
-    newColorOrder[tostring(tableUtils.length(newColorOrder)+1)] = tostring(table.remove(colorArray, math.random(1, #colorArray)))
+    newColorOrder[tostring(tableUtils.length(newColorOrder)+1)] = tostring(table.remove(colorArray, love.math.random(1, #colorArray)))
   end
   
   puzzleString = puzzleString:gsub("%d", newColorOrder)
