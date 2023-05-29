@@ -257,7 +257,6 @@ Stack =
     s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
     s.chains = {} -- Tracks the chains made throughout the whole game
     --[[
-
         Key - clock time the chain started
         Value -
 	        starts - array of clock times for the start of each match in the chain
