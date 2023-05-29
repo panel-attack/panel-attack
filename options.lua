@@ -1108,13 +1108,13 @@ local function userIDMenu(button_idx)
         local id = read_user_id_file(userIDDirectories[currentButton])
         love.keyboard.setTextInput(true) -- enables user to type
         while true do
-          local to_print = "Enter User ID"
+          local to_print = "Enter User ID (or paste from clipboard)"
           local line2 = id
           if (love.timer.getTime() * 3) % 2 > 1 then
             line2 = line2 .. "| "
           end
           gprintf(to_print, 0, canvas_height / 2, canvas_width, "center")
-          gprintf(line2, (canvas_width / 2) - 60, (canvas_height / 2) + 20)
+          gprintf(line2, (canvas_width / 2) - 120, (canvas_height / 2) + 20)
           wait()
           variable_step(
             function()
@@ -1134,9 +1134,14 @@ local function userIDMenu(button_idx)
                 end
               end
               for _, v in ipairs(this_frame_unicodes) do
-                -- Don't add more characters than the server char limit
-                if id:len() < NAME_LENGTH_LIMIT and v ~= " " then
+                if v:match("%d") then
                   id = id .. v
+                end
+              end
+              if (love.keyboard.isDown("rctrl") or love.keyboard.isDown("lctrl")) and keys["v"] then
+                local clipboardText = love.system.getClipboardText()
+                if clipboardText:match("%d") then
+                  id = clipboardText
                 end
               end
             end
@@ -1169,6 +1174,7 @@ local function userIDMenu(button_idx)
   end
 
   while true do
+    gprintf("These are private. This menu should only be used when you have lost your User ID and the devs have given you your old one.", 0, menu_y, nil, "center")
     userIDClickMenu:draw()
     wait()
     variable_step(
@@ -1301,7 +1307,7 @@ function options.main(button_idx)
   optionsMenu:add_button(loc("op_audio"), enter_audio_menu, goEscape)
   optionsMenu:add_button(loc("op_debug"), enter_debug_menu, goEscape)
   optionsMenu:add_button(loc("op_about"), enter_about_menu, goEscape)
-  optionsMenu:add_button("user id's", enterUserIDMenu, goEscape)
+  optionsMenu:add_button("Modify User ID", enterUserIDMenu, goEscape)
   optionsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_language()
 
