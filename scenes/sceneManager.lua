@@ -37,6 +37,11 @@ function sceneManager:transitionFn(sceneParams)
     self.activeScene:unload()
   end
   
+  -- clear any remaining draws from previous scene
+  -- TODO: remove once scenes stop using gfx_q
+  GAME.gfx_q = Queue()
+  gfx_q = GAME.gfx_q
+  
   if self.nextSceneName then
     -- Looks up the class for {self.nextSceneName} and call it's constructor
     self.activeScene = scenes[self.nextSceneName](sceneParams or {})

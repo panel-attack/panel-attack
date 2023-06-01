@@ -414,8 +414,6 @@ function Game:reset()
   self.preventSounds = false
   self.currently_paused_tracks = {}
   self.muteSoundEffects = false
-  P1 = nil
-  P2 = nil
 end
 
 function Game.errorData(errorString, traceBack)

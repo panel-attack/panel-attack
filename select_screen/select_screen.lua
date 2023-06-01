@@ -796,8 +796,6 @@ function select_screen.getSeed(self, msg)
 end
 
 function select_screen.startNetPlayMatch(self, msg)
-  local P1 = GAME.match.P1 
-  local P2 = GAME.match.P2
   logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
   refreshBasedOnOwnMods(msg.opponent_settings)
   refreshBasedOnOwnMods(msg.player_settings)
@@ -819,11 +817,11 @@ function select_screen.startNetPlayMatch(self, msg)
   if GAME.battleRoom.spectating then
     is_local = false
   end
-  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
-  GAME.match.P1 = P1
+  GAME.match.P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
+  local P1 = GAME.match.P1
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
-  GAME.match.P2 = P2
+  GAME.match.P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
+  local P2 = GAME.match.P2
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
   P1:setOpponent(P2)
@@ -885,8 +883,6 @@ end
 
 -- returns transition to local_vs_yourself screen
 function select_screen.start1pLocalMatch(self)
-  local P1 = GAME.match.P1 
-  local P2 = GAME.match.P2
   local challengeMode = GAME.battleRoom.trainingModeSettings and GAME.battleRoom.trainingModeSettings.challengeMode
   local challengeStage = nil
   GAME.match = Match("vs", GAME.battleRoom)
@@ -896,7 +892,9 @@ function select_screen.start1pLocalMatch(self)
     challengeStage = challengeMode.stages[challengeMode.currentStageIndex]
     stackLevel = challengeStage.riseDifficulty
   end
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = stackLevel, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
+  GAME.match.P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = stackLevel, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
+  GAME.match.P2 = nil
+  local P1 = GAME.match.P1
   if GAME.battleRoom.trainingModeSettings then
     local character = P1.character
     local health = nil
@@ -922,13 +920,11 @@ function select_screen.start1pLocalMatch(self)
     GAME.match.simulatedOpponent = simulatedOpponent
   end
   
-  GAME.match.P1 = P1
   if not GAME.match.simulatedOpponent then
     P1:setGarbageTarget(P1)
   else
     P1:setGarbageTarget(GAME.match.simulatedOpponent)
   end
-  P2 = nil
   current_stage = self.players[self.my_player_number].stage
   stage_loader_load(current_stage)
   stage_loader_wait()

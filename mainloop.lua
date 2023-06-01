@@ -310,7 +310,8 @@ local function handle_pause(self)
 end
 
 local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFunction, processGameResultsFunction)
-
+  local P1 = GAME.match.P1
+  local P2 = GAME.match.P2
   local returnFunction = nil
   while true do
     -- Uncomment this to cripple your game :D
