@@ -1306,7 +1306,7 @@ function main_net_vs()
 
     local function handleGameEndAsSpectator()
       -- if the game already ended before we caught up, abort trying to catch up to it early in order to get into the next game instead
-      if GAME.battleRoom.spectating and (P1.play_to_end or P2.play_to_end) then
+      if GAME.battleRoom.spectating and (GAME.match.P1.play_to_end or GAME.match.P2.play_to_end) then
         local message = server_queue:pop_next_with("create_room", "character_select")
         if message then
           -- shove the message back in for select_screen to handle
@@ -1336,7 +1336,7 @@ function main_net_vs()
     process_all_data_messages() -- Receive game play inputs from the network
 
     if not GAME.battleRoom.spectating then
-      if P1.tooFarBehindError or P2.tooFarBehindError then
+      if GAME.match.P1.tooFarBehindError or GAME.match.P2.tooFarBehindError then
         Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true, GAME.match, replay)
         GAME:clearMatch()
         json_send({leave_room = true})
@@ -2046,7 +2046,7 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
             stop_the_music()
           end
           SFX_GameOver_Play = 0
-          analytics.game_ends(P1.analytic)
+          analytics.game_ends(GAME.match.P1.analytic)
           ret = {next_func, args}
         end
         t = t + 1

@@ -123,6 +123,17 @@ function Menu:removeMenuItem(menuItemId)
   return menuItem
 end
 
+-- Updates the selected index of the menu
+-- Also updates the scroll state to show the button if off screen
+function Menu:setSelectedIndex(index)
+  self.selectedIndex = index
+  if self.selectedIndex < self.firstActiveIndex or self.selectedIndex > self.firstActiveIndex + self.maxItems then
+    local maxScroll = #self.menuItems - math.min(self.maxItems, #self.menuItems) + 1
+    self.firstActiveIndex = math.min(self.selectedIndex, maxScroll)
+    self:resetMenuScroll()
+  end
+end
+
 -- Updates the visibility state of each menu items based on the current scroll state.
 -- Use when adding new items to the menu or when the menu wraps.
 function Menu:resetMenuScroll()
@@ -242,7 +253,7 @@ function Menu:update()
   
   if input.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
-      self.selectedIndex = #self.menuItems
+      self:setSelectedIndex(#self.menuItems)
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     else
       self.menuItems[self.selectedIndex].onClick()
