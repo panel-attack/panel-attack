@@ -404,6 +404,8 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   end
 
   local function processGameResults(gameResult) 
+    local P1 = GAME.match.P1
+    local P2 = GAME.match.P2
     local extraPath, extraFilename
     local stack = P1
     if stack.level == nil then
@@ -1261,6 +1263,8 @@ function main_net_vs()
   local function update()
     local function handleTaunt()
       local function getCharacter(playerNumber)
+        local P1 = GAME.match.P1
+        local P2 = GAME.match.P2
         if P1.player_number == playerNumber then
           return characters[P1.character]
         elseif P2.player_number == playerNumber then
@@ -1423,6 +1427,8 @@ function main_local_vs()
   replay = Replay.createNewReplay(GAME.match)
   
   local function update() 
+    local P1 = GAME.match.P1
+    local P2 = GAME.match.P2
     assert((P1.clock == P2.clock), "should run at same speed: " .. P1.clock .. " - " .. P2.clock)
   end
   
@@ -1511,7 +1517,9 @@ function main_local_vs_yourself()
     }}
   end
   
-  local function processGameResults(gameResult) 
+  local function processGameResults(gameResult)
+    local P1 = GAME.match.P1
+    local P2 = GAME.match.P2
     if not GAME.battleRoom.trainingModeSettings then
       GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
       Replay.finalizeAndWriteVsReplay(nil, nil, false, GAME.match, replay)
@@ -1566,10 +1574,13 @@ function main_replay()
       GAME.gameIsPaused = true
     end
 
+    local P1 = (GAME.match and GAME.match.P1) or nil
+    local P2 = (GAME.match and GAME.match.P2) or nil
     -- Advance one frame
     if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then
       frameAdvance = true
       GAME.gameIsPaused = false
+      
       if P1 then
         P1.max_runs_per_frame = 1
       end
@@ -1611,7 +1622,8 @@ function main_replay()
   end
 
   local function processGameResults(gameResult) 
-
+    local P1 = (GAME.match and GAME.match.P1) or nil
+    local P2 = (GAME.match and GAME.match.P2) or nil
     if P2 then
       local matchOutcome = GAME.match.battleRoom:matchOutcome()
       if matchOutcome then
@@ -1670,14 +1682,15 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     end
 
     GAME.match = Match("puzzle")
-    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
-    GAME.match.P1 = P1
+    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
+    local P1 = GAME.match.P1
     P1:wait_for_random_character()
     if not character then
       character = P1.character
     end
     P1.do_countdown = config.ready_countdown_1P or false
-    P2 = nil
+    GAME.match.P2 = nil
+    local P2 = GAME.match.P2
     if awesome_idx == nil then
       awesome_idx = math.random(#puzzleSet.puzzles)
     end
