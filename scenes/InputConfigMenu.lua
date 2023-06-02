@@ -202,8 +202,7 @@ function InputConfigMenu:load()
   self.menu = Menu({
     x = x,
     y = y,
-    menuItems = menuOptions, 
-    maxHeight = themes[config.theme].main_menu_max_height
+    menuItems = menuOptions,
   })
 
   reset_filters()

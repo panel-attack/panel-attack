@@ -242,14 +242,13 @@ local maxQuadPool = 100
 -- Creates a new quad, recycling one if one exists in the pool to reduce memory.
 function GraphicsUtil:newRecycledQuad(x, y, width, height, sw, sh)
   local result = nil
-  -- TODO: figure out why reusing quads is broken in puzzle mode
-  --if #self.quadPool == 0 then
+  if #self.quadPool == 0 then
     result = love.graphics.newQuad(x, y, width, height, sw, sh)
-  --else
-  --  result = self.quadPool[#self.quadPool]
-  --  self.quadPool[#self.quadPool] = nil
-  --  result:setViewport(x, y, width, height, sw, sh)
-  --end
+  else
+    result = self.quadPool[#self.quadPool]
+    self.quadPool[#self.quadPool] = nil
+    result:setViewport(x, y, width, height, sw, sh)
+  end
   
   return result
 end
