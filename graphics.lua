@@ -553,7 +553,7 @@ function Stack.render(self)
     else
       local frames = self.game_stopwatch
       if self.match.mode == "time" then
-        frames = (time_attack_time * 60) - self.game_stopwatch
+        frames = (TIME_ATTACK_TIME * 60) - self.game_stopwatch
         if frames < 0 then
           frames = 0
         end

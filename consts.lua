@@ -119,7 +119,7 @@ stop_time_danger = {600, 420, 240, 180}
 difficulty_to_ncolors_endless = {5,6,6,6}
 difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
-time_attack_time = 120
+TIME_ATTACK_TIME = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
 speed_to_rise_time = table.map(
    {942, 983, 838, 790, 755, 695, 649, 604, 570, 515,
