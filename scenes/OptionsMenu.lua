@@ -224,11 +224,12 @@ function OptionsMenu:repositionMenus()
 end
 
 function OptionsMenu:load()
-  aboutText["themes"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_themes.txt"))
-  aboutText["characters"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_characters.txt"))
-  aboutText["stages"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_stages.txt"))
+  aboutText["themes"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_themes.md"))
+  aboutText["characters"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_characters.md"))
+  aboutText["stages"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_stages.md"))
   aboutText["panels"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_panels.txt"))
   aboutText["attackFiles"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_training.txt"))
+  aboutText["installingMods"] = love.graphics.newText(GraphicsUtil.getGlobalFont(), save.read_txt_file("readme_installmods.md"))
 
   local languageLabels = {}
   for k, v in ipairs(languageName) do
@@ -382,6 +383,7 @@ function OptionsMenu:load()
     {Button({width = LABEL_WIDTH, label = "op_about_stages", onClick = function() setupInfo("stages") end})},
     {Button({width = LABEL_WIDTH, label = "op_about_panels", onClick = function() setupInfo("panels") end})},
     {Button({width = LABEL_WIDTH, label = "About Attack Files", translate = false, onClick = function() setupInfo("attackFiles") end})},
+    {Button({width = LABEL_WIDTH, label = "Installing Mods", translate = false, onClick = function() setupInfo("installingMods") end})},
     {Button({width = LABEL_WIDTH, label = "System Info", translate = false, onClick = setupSystemInfo})},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }

@@ -60,7 +60,7 @@ local menuItems = {
   {createMainMenuButton("mm_configure", function() switchToScene("InputConfigMenu") end)},
   {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("SetNameMenu", {prevScene = "MainMenu"}) end)},
   {createMainMenuButton("mm_options", function() switchToScene("OptionsMenu") end)},
-  {createMainMenuButton("mm_fullscreen", function() Menu.playValidationSfx() fullscreen() end, {"\n(LAlt+Enter)"})},
+  {createMainMenuButton("mm_fullscreen", function() Menu.playValidationSfx() love.window.setFullscreen(not love.window.getFullscreen(), "desktop") end, {"\n(Alt+Enter)"})},
   {createMainMenuButton("mm_quit", love.event.quit)}
 }
 

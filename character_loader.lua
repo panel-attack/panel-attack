@@ -3,6 +3,7 @@ require("globals")
 require("character")
 local logger = require("logger")
 local fileUtils = require("fileUtils")
+local tableUtils = require("tableUtils")
 
 local loading_queue = Queue()
 
@@ -69,6 +70,18 @@ function character_loader_clear()
       character:unload()
     end
   end
+end
+
+function wait_for_random_character(character)
+  local resolvedCharacter = character
+  if character == random_character_special_value then
+    resolvedCharacter = tableUtils.getRandomElement(characters_ids_for_current_theme)
+  elseif characters[character]:is_bundle() then -- may have picked a bundle
+    resolvedCharacter = tableUtils.getRandomElement(characters[character].sub_characters)
+  end
+  character_loader_load(resolvedCharacter)
+  character_loader_wait()
+  return resolvedCharacter
 end
 
 -- Adds all the characters recursively in a folder to the global characters variable

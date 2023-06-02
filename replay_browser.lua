@@ -1,6 +1,5 @@
 local fileUtils = require("fileUtils")
 local Replay = require("replay")
-
 local replay_browser = {}
 replay_browser.selection = nil
 replay_browser.base_path = "replays"

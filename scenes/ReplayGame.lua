@@ -22,7 +22,7 @@ ReplayGame.name = "ReplayGame"
 sceneManager:addScene(ReplayGame)
 
 function ReplayGame:customLoad(scene_params)
-  Replay.loadFromFile(replay)
+  Replay.loadFromFile(replay, true)
 end
 
 function ReplayGame:customRun()
@@ -61,12 +61,12 @@ function ReplayGame:customRun()
   end
   
   if self.playbackSpeed == -1 then
-    if GAME.match.P1 and GAME.match.P1.CLOCK > 0 and GAME.match.P1.prev_states[GAME.match.P1.CLOCK-1] then
-      GAME.match.P1:rollbackToFrame(GAME.match.P1.CLOCK-1)
+    if GAME.match.P1 and GAME.match.P1.clock > 0 and GAME.match.P1.prev_states[GAME.match.P1.clock-1] then
+      GAME.match.P1:rollbackToFrame(GAME.match.P1.clock-1)
       GAME.match.P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
     end
-    if GAME.match.P2 and GAME.match.P2.CLOCK > 0 and GAME.match.P2.prev_states[P2.CLOCK-1] then
-      GAME.match.P2:rollbackToFrame(GAME.match.P2.CLOCK-1)
+    if GAME.match.P2 and GAME.match.P2.clock > 0 and GAME.match.P2.prev_states[GAME.match.P2.clock-1] then
+      GAME.match.P2:rollbackToFrame(GAME.match.P2.clock-1)
       GAME.match.P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
     end
   end

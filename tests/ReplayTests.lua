@@ -1,4 +1,3 @@
-require("tableUtils")
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local Replay = require("replay")
@@ -6,6 +5,7 @@ local Replay = require("replay")
 
 local function endlessSaveTest()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
+  match.P1:receiveConfirmedInput(string.rep(match.P1:idleInput(), 909))
   local replay = Replay.createNewReplay(match)
   StackReplayTestingUtils:fullySimulateMatch(match)
 
