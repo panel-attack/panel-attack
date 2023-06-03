@@ -127,7 +127,7 @@ end
 -- Also updates the scroll state to show the button if off screen
 function Menu:setSelectedIndex(index)
   self.selectedIndex = index
-  if self.selectedIndex < self.firstActiveIndex or self.selectedIndex > self.firstActiveIndex + self.maxItems then
+  if self.selectedIndex < self.firstActiveIndex or self.selectedIndex >= self.firstActiveIndex + self.maxItems then
     local maxScroll = #self.menuItems - math.min(self.maxItems, #self.menuItems) + 1
     self.firstActiveIndex = math.min(self.selectedIndex, maxScroll)
     self:resetMenuScroll()
