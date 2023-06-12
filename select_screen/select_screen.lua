@@ -906,9 +906,9 @@ function select_screen.start1pLocalMatch(self)
     local mirror = -1
     local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
     if challengeStage then
-      attackEngine = challengeStage:createAttackEngine(P1, simulatedOpponent, character)
+      attackEngine = challengeStage:createAttackEngine(P1, simulatedOpponent, character, true)
     else
-      attackEngine = AttackEngine.createEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings.attackSettings, P1, simulatedOpponent, character)
+      attackEngine = AttackEngine.createEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings.attackSettings, P1, simulatedOpponent, character, false)
     end
     simulatedOpponent:setAttackEngine(attackEngine)
 
