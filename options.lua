@@ -1160,7 +1160,7 @@ local function userIDMenu(button_idx)
   end
 
   local function exitSettings()
-    ret = {options.main, {6}}
+    ret = {options.main, {7}}
   end
 
   userIDClickMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
@@ -1174,7 +1174,7 @@ local function userIDMenu(button_idx)
   end
 
   while true do
-    gprintf("These are private. This menu should only be used when you have lost your User ID and the devs have given you your old one.", 0, menu_y, nil, "center")
+    gprintf("Keep these numbers secret, they are your password to the server. Only change this number if you have a previous number backed up or a developer recovered it for you.", 0, menu_y, nil, "center")
     userIDClickMenu:draw()
     wait()
     variable_step(
