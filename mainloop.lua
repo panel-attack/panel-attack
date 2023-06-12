@@ -931,7 +931,7 @@ function main_net_vs_lobby()
   local leaderboard_string = ""
   local my_rank
   --attempt login
-  read_user_id_file()
+  local my_user_id = read_user_id_file(GAME.connected_server_ip)
   if not my_user_id then
     my_user_id = "need a new user id"
   end
@@ -965,7 +965,7 @@ function main_net_vs_lobby()
           if msg.new_user_id then
             my_user_id = msg.new_user_id
             logger.trace("about to write user id file")
-            write_user_id_file()
+            write_user_id_file(my_user_id, GAME.connected_server_ip)
             login_status_message = loc("lb_user_new", config.name)
           elseif msg.name_changed then
             login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
