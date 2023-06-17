@@ -41,6 +41,14 @@ CREATE TABLE IF NOT EXISTS PlayerELOHistory(
   gameID INTEGER NOT NULL,
   FOREIGN KEY(gameID) REFERENCES Game(gameID)
 );
+
+CREATE TABLE IF NOT EXISTS PlayerMessageList(
+  messageID INTEGER PRIMARY KEY NOT NULL,
+  publicPlayerID INTEGER NOT NULL,
+  message REAL NOT NULL,
+  messageSeen TIME TIMESTAMP,
+  FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
+);
 ]]
 
 local selectPlayerRecordValuesStatement = assert(db:prepare("SELECT * FROM Player where privatePlayerID = ?"))
@@ -63,6 +71,18 @@ function PADatabase.insertNewPlayer(self, privatePlayerID, username)
     return false
   end
   return true
+end
+
+local selectPublicPlayerIDStatement = assert(db:prepare("SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?"))
+function PADatabase.getPublicPlayerID(self, privatePlayerID)
+  selectPublicPlayerIDStatement:bind_values(privatePlayerID)
+  selectPublicPlayerIDStatement:step() 
+  local publicPlayerID = selectPublicPlayerIDStatement:get_value(0) -- this is the row count.
+  if selectPublicPlayerIDStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return nil
+  end
+  return publicPlayerID 
 end
 
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
@@ -115,6 +135,31 @@ function PADatabase.insertPlayerGameResult(self, privatePlayerID, gameID, level,
   insertPlayerGameResultStatement:bind_values(privatePlayerID, gameID, level, placement)
   insertPlayerGameResultStatement:step()
   if insertPlayerGameResultStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return true
+end
+
+local selectPlayerMessagesStatement = assert(db:prepare("SELECT messageID, message FROM PlayerMessageList WHERE publicPlayerID = ? AND messageSeen IS NULL"))
+function PADatabase.getPlayerMessages(self, publicPlayerID)
+  selectPlayerMessagesStatement:bind_values(publicPlayerID)
+  local playerMessages = {}
+  for row in selectPlayerMessagesStatement:nrows() do
+    playerMessages[row.messageID] = row.message
+  end
+  if selectPlayerMessagesStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return {}
+  end
+  return playerMessages
+end
+
+local updatePlayerMessageSeenStatement = assert(db:prepare("UPDATE PlayerMessageList SET messageSeen = strftime('%s', 'now') WHERE messageID = ?"))
+function PADatabase.playerMessageSeen(self, messageID)
+  updatePlayerMessageSeenStatement:bind_values(messageID)
+  updatePlayerMessageSeenStatement:step()
+  if updatePlayerMessageSeenStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return false
   end

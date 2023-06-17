@@ -6,6 +6,7 @@ easy,,Easy,Facile,Fácil,EASY,Fácil,Leicht,Facile
 hard,,Hard,Difficile,Difícil,HARD,Difícil,Schwer,Difficile
 level,,Level,Niveau,Nível,LV,Nivel,Level,Livello
 randomColors,Option to randomize panel colors,Random Colors,Couleurs aléatoires,Cores aleatórias,ランダムな色,Colores al azar,Zufällige Farben,Colori casuali
+randomHorizontalFlipped,Option to randomly flip the puzzle horizontally,Randomly Flip,Flip au hasard,Vire aleatoriamente,ランダムにフリップ,Voltear al azar,Zufällig flip,Capovolgere casualmente
 normal,,Normal,Normal,Normal,NORMAL,Normal,Normal,Normale
 speed,,Speed,Vitesse,Velocidade,スピード,Velocidad,Geschwindigkeit,Velocità
 factory,Training mode that drops multiple tiers of chain garbage,Factory,Usine,Fábrica,工場,Fábrica,Fabrik,Fabbrica
@@ -191,6 +192,7 @@ mm_1_endless,,1P endless,1J infini,1J infinito,1P エンドレス,1J interminabl
 mm_1_puzzle,,1P puzzle,1J puzzle,1J quebra-cabeça,1P パズル,1J Puzzle,1P Puzzle,1P puzzle
 mm_1_time,,1P time attack,1J contre la montre,1J contra o tempo,1P スコアアタック,1J Contrareloj,1P Time Attack,1P a tempo
 mm_1_training,Vs training mode,1P training,Formation 1P,treinamento 1P,1P トレーニング,entrenamiento 1P,1P Training,Allenamento 1P
+mm_1_challenge_mode,Challenge Mode,Challenge Mode,Mode Défi,Modo desafio,チャレンジモード,Modo Desafío,Herausforderungsmodus,Modalità sfida
 mm_1_vs,,1P vs yourself,1J vs soi-même,1J vs você mesmo,1P じぶんとのたたかい,1J vs Tú,1P gegen dich selbst,1P vs te stesso
 mm_2_vs_local,,2P vs local game,2J vs en local,2J vs jogo local,2P ローカルVS,2J vs partida local,2P lokal,2P vs in locale
 mm_2_vs_online,,2P vs online %1,2J vs en ligne %1,2J vs online %1,2P オンラインVS %1,2J vs partida en línea %1,2P online %1,2P vs online %1
@@ -486,4 +488,13 @@ player_press_key,,Player %1 press any key,Le joueur %1 appuie sur n'importe quel
 config_input_welcome,Shown on the configure input screen,Set a input configuration for each keyboard / controller you want to be able to use.,Définissez une configuration d'entrée pour chaque clavier/contrôleur que vous souhaitez pouvoir utiliser.,Defina uma configuração de entrada para cada teclado / controlador que deseja usar.,使用するキーボード/コントローラーごとにキーコンフィグを設定して下さい。,Establezca una configuración de entrada para cada teclado / controlador que desee poder utilizar.,Gib eine Eingabekonfiguration für deinen Kontroller oder deine Tastaturen an.,Imposta una configurazione di input per ogni tastiera/controller che desideri utilizzare.
 configuration,Configuration for controller / keyboard setup,Configuration,Configuration,Configuração,キーコンフィグ,Configuración,Konfiguration,Configurazione
 love_version_warning,Warning shown to users using love 11.3,"You are using an outdated version of Panel Attack which uses an old LOVE version, please download the latest version from the website / discord.","Vous utilisez une version obsolète de l'attaque de panneau qui utilise une ancienne version d'amour, veuillez télécharger la dernière version du site Web / Discord.","Você está usando uma versão desatualizada do painel de ataque que usa uma versão antiga do amor, faça o download da versão mais recente do site / discórdia.",古いLoveバージョンを使用する古いバージョンのパネル攻撃を使用しています。ウェブサイト / Discordから最新バージョンをダウンロードしてください。,"Está utilizando una versión obsoleta de Panel Attack que utiliza una vieja versión de amor, descargue la última versión del sitio web / discordia.","Du verwendest eine Version von Panel Attack, die eine veraltete LÖVE-Version verwendet. Bitte lade die neueste Version von der Website oder dem Discord herunter.","Stai usando una versione obsoleta dell'attacco del pannello che utilizza una vecchia versione d'amore, scarica l'ultima versione dal sito Web / discordia."
+challenge_difficulty_1,level 2 - very few attacks basically just surviving,Breezy (Easy),Breezy (facile),Breezy (fácil),さわやかな（簡単）,Breezy (fácil),Luftig (einfach),Breezy (facile)
+challenge_difficulty_2,level 4 - some attacks mostly just surviving,Windy (Normal),Windy (normal),Vento (normal),風が強い（通常）,Viento (normal),Windig (normal),Ventoso (normale)
+challenge_difficulty_3,level 6 - attacking and surviving,Gusty (Hard),À l'esprit (dur),Gusty (duro),gusty（ハード）,Gusty (duro),Böig (hart),Gusty (duro)
+challenge_difficulty_4,level 6 - learning to win while constantly under pressure,Stormy (Very Hard),Stormy (très dur),Stormy (muito difícil),ストーミー（とても難しい）,Stormy (muy duro),Stürmisch (sehr hart),Stormy (molto duro)
+challenge_difficulty_5,level 8 - an average level 8 online player,Turbulent,Turbulent,Turbulento,乱流,Turbulento,Turbulent,Turbolento
+challenge_difficulty_6,level 10 - a low level 10 online player,Whirlwind,Tourbillon,Turbilhão,旋風,Torbellino,Wirbelwind,Turbine
+challenge_difficulty_7,level 10 - an average level 10 online player,Tempest,Tempête,Tempestade,嵐,Tempestad,Sturm,Tempesta
+challenge_difficulty_8,level 10 - a great level 10 online player,Hurricane,Ouragan,Furacão,ハリケーン,Huracán,Hurrikan,Uragano
+challenge_difficulty_9,level 10 - an expert level 10 online player,Tornado,Tornade,Tornado,竜巻,Tornado,Tornado,Tornado
 auto_updater_version_warning,Warning shown to users with an old autoupdater,"New autoupdater available, please install from","Nouveau autoupdater disponible, veuillez installer à partir de","Novo autoupdater disponível, instale de",新しいautoupdaterを利用できます。からインストールしてください,"Nuevo autoupdater disponible, instale desde","Ein neuer Updater ist verfügbar, bitte lade ihn unter folgendem Link herunter:","Nuovo autoupdater disponibile, installa da"

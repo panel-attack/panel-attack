@@ -1,0 +1,68 @@
+{
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 100,
+    "mergeComboMetalQueue": false,
+    "attackPatterns": [
+        {
+            "height": 5,
+            "startTime": 590,
+            "chain": 120,
+            "chainEndDelta": 80
+        },
+        {
+            "chain": false,
+            "startTime": 910,
+            "metal": false,
+            "width": 4,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 960,
+            "metal": false,
+            "width": 5,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 1500,
+            "metal": false,
+            "width": 4,
+            "height": 1
+        },
+        {
+            "height": 4,
+            "startTime": 1900,
+            "chain": 120,
+            "chainEndDelta": 80
+        },
+        {
+            "chain": false,
+            "startTime": 2200,
+            "metal": false,
+            "width": 5,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 2800,
+            "metal": false,
+            "width": 4,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 3100,
+            "metal": false,
+            "width": 5,
+            "height": 1
+        },
+        {
+            "chain": false,
+            "startTime": 3500,
+            "metal": false,
+            "width": 6,
+            "height": 1
+        },
+    ]
+}

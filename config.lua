@@ -17,6 +17,7 @@ config = {
     stage                         = random_stage_special_value,
   
     ranked                        = true,
+    inputMethod                   = "controller",
   
     use_music_from                = "either",
     -- Level (2P modes / 1P vs yourself mode)
@@ -27,6 +28,7 @@ config = {
   
     puzzle_level                  = 5,
     puzzle_randomColors           = false,
+    puzzle_randomFlipped          = false,
   
     -- Player name
     name                          = "defaultname",
@@ -70,7 +72,6 @@ config = {
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
-    -- inputMethod                 = "touch"
   }
   
   -- writes to the "conf.json" file
@@ -128,6 +129,10 @@ config = {
           configTable.ranked = read_data.ranked
         end
   
+        if type(read_data.inputMethod) == "string" then
+          configTable.inputMethod = read_data.inputMethod
+        end
+
         if type(read_data.use_music_from) == "string" and use_music_from_values[read_data.use_music_from] then
           configTable.use_music_from = read_data.use_music_from
         end
@@ -149,6 +154,9 @@ config = {
         end
         if type(read_data.puzzle_randomColors) == "boolean" then
           configTable.puzzle_randomColors = read_data.puzzle_randomColors
+        end
+        if type(read_data.puzzle_randomFlipped) == "boolean" then
+          configTable.puzzle_randomFlipped = read_data.puzzle_randomFlipped
         end
   
         if type(read_data.name) == "string" then

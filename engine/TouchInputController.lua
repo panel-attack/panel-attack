@@ -239,7 +239,7 @@ end
 
 function TouchInputController:panelIsSelectable(row, column)
   local panel = self.stack.panels[row][column]
-  if not panel.garbage and
+  if not panel.isGarbage and
      (panel.state == "normal" or
       panel.state == "landing" or
       panel.state == "swapping") then
@@ -280,7 +280,7 @@ function TouchInputController:tryPerformTouchSwap(targetColumn)
         and self.stack.panels[swapDestination.row][swapDestination.col].color == 0) then
         --we tried to swap two empty panels.  Let's put the cursor on swap_destination
         return swapDestination.row, swapDestination.col
-      elseif self.stack.panels[swapDestination.row][swapDestination.col]:exclude_swap() then
+      elseif not self.stack.panels[swapDestination.row][swapDestination.col]:canSwap() then
         -- there are unswappable (likely clearing) panels in the way of the swap 
         -- let's set lingeringTouchCursor to the origin of the failed swap
         logger.trace("lingeringTouchCursor was set because destination panel was not swappable")

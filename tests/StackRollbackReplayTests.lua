@@ -6,7 +6,7 @@ local testReplayFolder = "tests/replays/"
 -- Vs rollback one player way behind
 -- We need to make sure we remove garbage sent "in the future" so its not duplicated
 local function rollbackPastAttackTest()
-  match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
   local startClock = 462
   local aheadTime = 500
   local garbageTelegraphPopTime = 463
@@ -49,7 +49,7 @@ rollbackPastAttackTest()
 -- Vs rollback just one frame on both stacks
 -- We need to make sure we don't remove garbage if we didn't rollback far enough to mess with it.
 local function rollbackNotPastAttackTest()
-  match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
   local startClock = 462
   local aheadTime = 500
   local garbageTelegraphPopTime = 463
@@ -89,7 +89,7 @@ rollbackNotPastAttackTest()
 -- Vs rollback before attack even happened
 -- Make sure the attack only happens once and only once if we rollback before it happened
 local function rollbackFullyPastAttack()
-  match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-01-05-38-16-vsSelf-L8.txt")
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-01-05-38-16-vsSelf-L8.txt")
 
   StackReplayTestingUtils:simulateMatchUntil(match, 360)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)

@@ -52,68 +52,33 @@ function read_txt_file(path_and_filename)
   return s or "Failed to read file"
 end
 
--- writes a replay file of the given path and filename
-function write_replay_file(path, filename)
-  assert(path ~= nil)
-  assert(filename ~= nil)
-  pcall(
-    function()
-      love.filesystem.createDirectory(path)
-      local file = love.filesystem.newFile(path .. "/" .. filename)
-      set_replay_browser_path(path)
-      file:open("w")
-      logger.debug("Writing to Replay File")
-      if replay.puzzle then
-        replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
-        logger.debug("Compressed puzzle in_buf")
-        logger.debug(replay.puzzle.in_buf)
-      else
-        logger.debug("No Puzzle")
-      end
-      if replay.endless then
-        replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
-        logger.debug("Compressed endless in_buf")
-        logger.debug(replay.endless.in_buf)
-      else
-        logger.debug("No Endless")
-      end
-      if replay.vs then
-        replay.vs.I = compress_input_string(replay.vs.I)
-        replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
-        logger.debug("Compressed vs I/in_buf")
-      else
-        logger.debug("No vs")
-      end
-      file:write(json.encode(replay))
-      file:close()
-    end
-  )
-end
-
 -- writes to the "user_id.txt" file of the directory of the connected ip
-function write_user_id_file()
+function write_user_id_file(userID, serverIP)
   pcall(
     function()
-      love.filesystem.createDirectory("servers/" .. GAME.connected_server_ip)
-      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
+      love.filesystem.createDirectory("servers/")
+      local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
       file:open("w")
-      file:write(tostring(my_user_id))
+      file:write(tostring(userID))
       file:close()
     end
   )
 end
 
 -- reads the "user_id.txt" file of the directory of the connected ip
-function read_user_id_file()
+function read_user_id_file(serverIP)
+  local userID
   pcall(
     function()
-      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
+      local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
       file:open("r")
-      my_user_id = file:read()
+      userID = file:read()
       file:close()
-      my_user_id = my_user_id:match("^%s*(.-)%s*$")
+      userID = userID:match("^%s*(.-)%s*$")
+      
     end
   )
+  return userID
 end
 
 -- writes the stock puzzles
@@ -190,33 +155,54 @@ function read_puzzles()
   )
 end
 
-function read_attack_files(path)
+function readAttackFile(path)
+  if love.filesystem.getInfo(path, "file") then
+    local jsonData = love.filesystem.read(path)
+    local trainingConf, position, errorMsg = json.decode(jsonData)
+    if trainingConf then
+      if not trainingConf.name or type(trainingConf.name) ~= "string" then
+        local filenameOnly = path:match('%' .. sep .. '?(.*)$')
+        if filenameOnly ~= nil then
+          trainingConf.name = FileUtil.getFileNameWithoutExtension(filenameOnly)
+        end
+      end
+      return trainingConf
+    else
+      error("Error deserializing " .. path .. ": " .. errorMsg .. " at position " .. position)
+    end
+  end
+end
+
+function readAttackFiles(path)
+  local results = {}
   local lfs = love.filesystem
   local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
-  for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) then
-        if lfs.getInfo(current_path).type == "directory" then
-          read_attack_files(current_path)
-        elseif v ~= ".DS_Store" then
-          local file = love.filesystem.newFile(current_path)
-          file:open("r")
-          local teh_json = file:read(file:getSize())
-          file:close()
-          local training_conf = {}
-          for k, w in pairs(json.decode(teh_json)) do
-            training_conf[k] = w
-          end
-          if not training_conf.name or not type(training_conf.name) == "string" then
-            training_conf.name = v
-          end
-          trainings[#trainings+1] = training_conf
+  for _, v in ipairs(raw_dir_list) do
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) then
+      if lfs.getInfo(current_path).type == "directory" then
+        readAttackFiles(current_path)
+      else
+        local training_conf = readAttackFile(current_path)
+        if training_conf ~= nil then
+          results[#results+1] = training_conf
         end
       end
     end
   end
+
+  return results
+end
+
+function saveJSONToPath(data, state, path)
+  pcall(
+    function()
+      local file = love.filesystem.newFile(path)
+      file:open("w")
+      file:write(json.encode(data, state))
+      file:close()
+    end
+  )
 end
 
 function print_list(t)

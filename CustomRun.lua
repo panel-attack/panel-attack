@@ -11,6 +11,10 @@ CustomRun.runMetrics.drawDuration = 0
 CustomRun.runMetrics.presentDuration = 0
 CustomRun.runMetrics.gcDuration = 0
 CustomRun.runMetrics.sleepDuration = 0
+CustomRun.runMetrics.updateMemAlloc = 0
+CustomRun.runMetrics.graphMemAlloc = 0
+CustomRun.runMetrics.drawMemAlloc = 0
+CustomRun.runMetrics.presentMemAlloc = 0
 
 CustomRun.runTimeGraph = nil
 
@@ -36,7 +40,7 @@ function CustomRun.sleep()
   local idleTime = targetTime - currentTime
   -- actively collecting garbage is very CPU intensive
   -- only do it while a match is on-going
-  if (GAME and GAME.match and GAME.focused and not GAME.gameIsPaused) then
+  if GAME and GAME.match and GAME.focused and not GAME.gameIsPaused then
     -- Spend as much time as necessary collecting garbage, but at least 0.1ms
     -- manualGc itself has a ceiling at which it will stop
     manualGc(math.max(0.0001, idleTime * 0.99))
@@ -67,6 +71,8 @@ end
 
 -- This is our custom version of run that uses a custom sleep and records metrics.
 local dt = 0
+local mem = 0
+local prevMem = 0
 function CustomRun.innerRun()
   -- Process events.
   if love.event then
@@ -81,6 +87,8 @@ function CustomRun.innerRun()
     end
   end
 
+  mem = collectgarbage("count")
+
   -- Update dt, as we'll be passing it to update
   if love.timer then
     dt = love.timer.step()
@@ -92,6 +100,9 @@ function CustomRun.innerRun()
     local preUpdateTime = love.timer.getTime()
     love.update(dt) -- will pass 0 if love.timer is disabled
     CustomRun.runMetrics.updateDuration = love.timer.getTime() - preUpdateTime
+    prevMem = mem
+    mem = collectgarbage("count")
+    CustomRun.runMetrics.updateMemAlloc = mem - prevMem
   end
 
   local graphicsActive = love.graphics and love.graphics.isActive()
@@ -103,6 +114,9 @@ function CustomRun.innerRun()
       local preDrawTime = love.timer.getTime()
       love.draw()
       CustomRun.runMetrics.drawDuration = love.timer.getTime() - preDrawTime
+      prevMem = mem
+      mem = collectgarbage("count")
+      CustomRun.runMetrics.drawMemAlloc = mem - prevMem
     end
 
     -- draw the RunTimeGraph here so it doesn't contribute to the love.draw load
@@ -110,21 +124,31 @@ function CustomRun.innerRun()
       local preGraphDrawTime = love.timer.getTime()
       CustomRun.runTimeGraph:draw()
       CustomRun.runMetrics.graphDuration = CustomRun.runMetrics.graphDuration + (love.timer.getTime() - preGraphDrawTime)
+      prevMem = mem
+      mem = collectgarbage("count")
+      CustomRun.runMetrics.graphMemAlloc = CustomRun.runMetrics.graphMemAlloc + mem - prevMem
     end
-    
+
     local prePresentTime = love.timer.getTime()
     love.graphics.present()
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
+    prevMem = mem
+    mem = collectgarbage("count")
+    CustomRun.runMetrics.presentMemAlloc = mem - prevMem
   end
 
   if love.timer then
     CustomRun.sleep()
+    mem = collectgarbage("count")
   end
 
   if CustomRun.runTimeGraph ~= nil then
     local preGraphUpdateTime = love.timer.getTime()
     CustomRun.runTimeGraph:updateWithMetrics(CustomRun.runMetrics)
     CustomRun.runMetrics.graphDuration = love.timer.getTime() - preGraphUpdateTime
+    prevMem = mem
+    mem = collectgarbage("count")
+    CustomRun.runMetrics.graphMemAlloc = mem - prevMem
   end
 end
 

@@ -14,6 +14,8 @@ consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
 VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
+consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
+consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
 canvas_width = 1280
 canvas_height = 720
 
@@ -48,8 +50,8 @@ default_input_repeat_delay = 20
 large_font = 10 -- large font base+10
 small_font = -3 -- small font base-3
 
-key_names = {"up", "down", "left", "right", "swap1",
-  "swap2", "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+KEY_NAMES = {"up", "down", "left", "right", "swap1",  "swap2",  "taunt_up", "taunt_down", "raise1", "raise2", "pause"}
+KEYS      = {"up", "down", "left", "right", "z",      "x",      "y",        "u",          "c",      "v",      "p"}
 
 -- frames to use for bounce animation
 bounce_table = {1, 1, 1, 1,
@@ -117,7 +119,7 @@ stop_time_danger = {600, 420, 240, 180}
 difficulty_to_ncolors_endless = {5,6,6,6}
 difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
-time_attack_time = 120
+TIME_ATTACK_TIME = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
 speed_to_rise_time = table.map(
    {942, 983, 838, 790, 755, 695, 649, 604, 570, 515,

@@ -158,7 +158,8 @@ end
 -- GRAPHICS
 
 local basic_images = {"icon"}
-local other_images = {
+local all_images = {
+  "icon",
   "topleft",
   "botleft",
   "topright",
@@ -217,7 +218,7 @@ function characters_reload_graphics()
 end
 
 function Character.graphics_init(self, full, yields)
-  local character_images = full and other_images or basic_images
+  local character_images = full and all_images or basic_images
   for _, image_name in ipairs(character_images) do
     self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
@@ -277,8 +278,10 @@ function Character.graphics_init(self, full, yields)
 end
 
 function Character.graphics_uninit(self)
-  for _, image_name in ipairs(other_images) do
-    self.images[image_name] = nil
+  for imageName, _ in pairs(self.images) do
+    if not table.contains(basic_images, imageName) then
+      self.images[imageName] = nil
+    end
   end
   self.telegraph_garbage_images = {}
 end
@@ -351,6 +354,45 @@ function Character.sound_uninit(self)
   -- music
   for _, music in ipairs(other_musics) do
     self.musics[music] = nil
+  end
+end
+
+--- Stack number 1 equals left side, 2 is right side
+function Character:portraitImage(stackNumber)
+  local portraitImageName = self:portraitName(stackNumber)
+  return self.images[portraitImageName]
+end
+
+function Character:portraitName(stackNumber)
+  local portrait_image = "portrait"
+  if stackNumber == 2 and self:portraitIsReversed(stackNumber) == false then
+    portrait_image = "portrait2"
+  end
+  return portrait_image
+end
+
+function Character:portraitIsReversed(stackNumber)
+  if stackNumber == 2 and self.images["portrait2"] == nil then
+    return true
+  end
+  return false
+end
+
+function Character:drawPortrait(stackNumber, x, y, fade)
+  local portraitImage = self:portraitImage(stackNumber)
+  local portraitImageWidth, portraitImageHeight = portraitImage:getDimensions()
+
+  local portraitImageX = x
+  local portraitMirror = 1
+  local portraitWidth = 96
+  local portraitHeight = 192
+  if self:portraitIsReversed(stackNumber) then
+    portraitImageX = portraitImageX + portraitWidth
+    portraitMirror = -1
+  end
+  draw(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
+  if fade > 0 then
+    grectangle_color("fill", x, y, portraitWidth, portraitHeight, 0, 0, 0, fade)
   end
 end
 
@@ -450,6 +492,10 @@ function Character.loadSfx(self, name, yields)
 
   if perSizeSfxStart[name] then
     self:fillInMissingSounds(sfx, name, maxIndex)
+  else
+    -- #table may yield erroneous (too large) results for tables with gaps 
+    -- Character:playRandomSfx() relies on #table being accurate so we redo the table here if it has gaps
+    sfx = table.toContinuouslyIndexedTable(sfx)
   end
 
   return sfx
@@ -531,7 +577,8 @@ end
 local function playRandomSfx(sfxTable, fallback)
   if not GAME.muteSoundEffects then
     if sfxTable and #sfxTable > 0 then
-      table.getRandomElement(sfxTable):play()
+      local sfx = table.getRandomElement(sfxTable)
+      sfx:play()
     elseif fallback then
       playRandomSfx(fallback)
     end

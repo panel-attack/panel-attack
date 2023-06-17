@@ -125,3 +125,17 @@ function table.indexOf(tab, element)
 
   return nil
 end
+
+-- inserts all values from tab into a newly created table using continuous integer keys in a non-deterministic order
+-- previous keys and order will be lost!
+-- use this if you need #tab to yield a reliable result and you don't care about keys/order
+-- avoid during update process as it throws away a table reference on every call!
+function table.toContinuouslyIndexedTable(tab)
+  local continuouslyIndexedTable = {}
+  local i = 1
+  for _, v in pairs(tab) do
+    continuouslyIndexedTable[i] = v
+    i = i + 1
+  end
+  return continuouslyIndexedTable
+end
