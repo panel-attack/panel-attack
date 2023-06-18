@@ -70,8 +70,8 @@ end
 function AttackEngine:setGarbageTarget(garbageTarget)
   assert(garbageTarget.stackCanvasWidth ~= nil)
   assert(garbageTarget.mirror_x ~= nil)
-  assert(garbageTarget.pos_x ~= nil)
-  assert(garbageTarget.pos_y ~= nil)
+  assert(garbageTarget.panelOriginX ~= nil)
+  assert(garbageTarget.panelOriginY ~= nil)
   assert(garbageTarget.garbage_q ~= nil)
   assert(garbageTarget.receiveGarbage ~= nil)
 

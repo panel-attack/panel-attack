@@ -83,16 +83,16 @@ end
 
 function TouchInputController:isMouseOverStack(mouseX, mouseY)
   return 
-    mouseX >= self.stack.pos_x * GFX_SCALE and mouseX <= (self.stack.pos_x * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
-    mouseY >= self.stack.pos_y * GFX_SCALE and mouseY <= (self.stack.pos_y * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE
+    mouseX >= self.stack.panelOriginX * GFX_SCALE and mouseX <= (self.stack.panelOriginX * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
+    mouseY >= self.stack.panelOriginY * GFX_SCALE and mouseY <= (self.stack.panelOriginY * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE
 end
 
 -- Returns the touched panel coordinate or nil if the stack isn't currently touched
 function TouchInputController:touchedPanelCoordinate(mouseX, mouseY)
   local stackHeight = self.stack.height
   local stackWidth = self.stack.width
-  local stackLeft = (self.stack.pos_x * GFX_SCALE)
-  local stackTop = (self.stack.pos_y * GFX_SCALE)
+  local stackLeft = (self.stack.panelOriginX * GFX_SCALE)
+  local stackTop = (self.stack.panelOriginY * GFX_SCALE)
   local panelSize = 16 * GFX_SCALE
   local stackRight = stackLeft + stackWidth * panelSize
   local stackBottom = stackTop + stackHeight * panelSize

@@ -211,17 +211,11 @@ function Theme.graphics_init(self)
   self.images.fade = self:load_theme_img("fade")
 
   self.images.IMG_number_atlas_1P = self:load_theme_img("numbers_1P")
-  self.images.numberWidth_1P = self.images.IMG_number_atlas_1P:getWidth() / 10
-  self.images.numberHeight_1P = self.images.IMG_number_atlas_1P:getHeight()
   self.images.IMG_number_atlas_2P = self:load_theme_img("numbers_2P")
-  self.images.numberWidth_2P = self.images.IMG_number_atlas_2P:getWidth() / 10
-  self.images.numberHeight_2P = self.images.IMG_number_atlas_2P:getHeight()
 
   self.images.IMG_time = self:load_theme_img("time")
 
   self.images.IMG_timeNumber_atlas = self:load_theme_img("time_numbers")
-  self.images.timeNumberWidth = self.images.IMG_timeNumber_atlas:getWidth() / 12
-  self.images.timeNumberHeight = self.images.IMG_timeNumber_atlas:getHeight()
 
   self.images.IMG_pixelFont_blue_atlas = self:load_theme_img("pixel_font_blue")
   self.images.IMG_pixelFont_grey_atlas = self:load_theme_img("pixel_font_grey")

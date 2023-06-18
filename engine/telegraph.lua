@@ -7,12 +7,12 @@ local TELEGRAPH_BLOCK_WIDTH = 26
 
 local clone_pool = {}
 
--- Sender is the sender of these attacks, must implement clock, pos_x, pos_y, and character
+-- Sender is the sender of these attacks, must implement clock, frameOriginX, frameOriginY, and character
 Telegraph = class(function(self, sender)
 
   assert(sender.clock ~= nil, "telegraph sender invalid")
-  assert(sender.pos_x ~= nil, "telegraph sender invalid")
-  assert(sender.pos_y ~= nil, "telegraph sender invalid")
+  assert(sender.frameOriginX ~= nil, "telegraph sender invalid")
+  assert(sender.frameOriginY ~= nil, "telegraph sender invalid")
   assert(sender.character ~= nil, "telegraph sender invalid")
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
@@ -80,8 +80,8 @@ end
 function Telegraph:updatePositionForGarbageTarget(newGarbageTarget)
   self.stackCanvasWidth = newGarbageTarget:stackCanvasWidth()
   self.mirror_x = newGarbageTarget.mirror_x
-  self.pos_x = newGarbageTarget.pos_x - 4
-  self.pos_y = newGarbageTarget.pos_y - 4 - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  self.originX = newGarbageTarget.frameOriginX
+  self.originY = newGarbageTarget.frameOriginY - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
 end
 
 function Telegraph.saveClone(toSave)
@@ -104,8 +104,8 @@ function Telegraph.rollbackCopy(source, other)
     other.attacks = deepcpy(source.attacks)
   end
   other.sender = source.sender
-  other.pos_x = source.pos_x
-  other.pos_y = source.pos_y
+  other.originX = source.originX
+  other.originY = source.originY
   other.senderCurrentlyChaining = source.senderCurrentlyChaining
 
   -- We don't want saved copies to hold on to stacks, up to the rollback restore to set these back up.
@@ -299,9 +299,9 @@ function Telegraph:telegraphRenderXPosition(index)
 
   local increment = -TELEGRAPH_BLOCK_WIDTH * self.mirror_x
 
-  local result = self.pos_x
+  local result = self.originX
   if self.mirror_x == 1 then
-    result = result + self.stackCanvasWidth + increment
+    result = result + self.stackCanvasWidth / GFX_SCALE + increment
   end
 
   result = result + (increment * index)
@@ -352,11 +352,11 @@ function Telegraph:render()
         for _, attack in ipairs(attacks_this_frame) do
           for _k, garbage_block in ipairs(attack.stuff_to_send) do
             garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
-            garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.pos_y - TELEGRAPH_PADDING)
+            garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.originY - TELEGRAPH_PADDING)
             
             if not garbage_block.origin_x or not garbage_block.origin_y then
-              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.pos_x
-              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.pos_y + (telegraph_to_render.sender.displacement or 0) - card_animation[#card_animation]
+              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.panelOriginX
+              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.panelOriginY + (telegraph_to_render.sender.displacement or 0) - card_animation[#card_animation]
               garbage_block.x = garbage_block.origin_x
               garbage_block.y = garbage_block.origin_y
               garbage_block.direction = garbage_block.direction or math.sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
@@ -395,13 +395,13 @@ function Telegraph:render()
       local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
       local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
   
-      draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.pos_y, 0, atk_scale, atk_scale)
+      draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.originY, 0, atk_scale, atk_scale)
     end
 
     --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
     local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
     local current_block = g_queue_to_draw:pop()
-    local draw_y = telegraph_to_render.pos_y
+    local draw_y = telegraph_to_render.originY
     local drewChain = false
     local attackAnimationLength = GARBAGE_TRANSIT_TIME
     if not config.renderAttacks then
@@ -458,7 +458,7 @@ function Telegraph:render()
     
     if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
       local draw_x = self:telegraphRenderXPosition(0)
-      local draw_y = telegraph_to_render.pos_y
+      local draw_y = telegraph_to_render.originY
       local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
       local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
       local grb_scale_x = 24 / orig_grb_w

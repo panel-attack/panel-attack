@@ -362,30 +362,39 @@ function Stack:deinit()
 end
 
 -- Positions the stack draw position for the given player
-function Stack.moveForPlayerNumber(stack, player_num)
+function Stack:moveForPlayerNumber(player_num)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  -- on 150% scale
   if player_num == 1 then
-    stack.pos_x = 80
-    stack.score_x = 546
-    stack.mirror_x = 1
-    stack.origin_x = stack.pos_x
-    stack.multiplication = 0
-    stack.id = "_1P"
-    stack.VAR_numbers = ""
+    self.mirror_x = 1
+    self.score_x = 546
+    self.multiplication = 0
+    self.id = "_1P"
   elseif player_num == 2 then
-    stack.pos_x = 248
-    stack.score_x = 642
-    stack.mirror_x = -1
-    stack.origin_x = stack.pos_x
-    if stack.canvas then
-      stack.origin_x = stack.origin_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
-    end
-    stack.multiplication = 1
-    stack.id = "_2P"
+    self.mirror_x = -1
+    self.score_x = 642
+    self.multiplication = 1
+    self.id = "_2P"
   end
-  stack.pos_y = 4 + (108) / GFX_SCALE
-  stack.score_y = 208
+  local centerX = (canvas_width / 2)
+  local stackWidth = self:stackCanvasWidth()
+  local innerStackXMovement = 100
+  local outerStackXMovement = stackWidth + innerStackXMovement
+  self.panelOriginXOffset = 4
+  self.panelOriginYOffset = 4
+
+  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
+  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+
+  local frameOriginNonScaled = outerNonScaled
+  if self.mirror_x == -1 then
+    frameOriginNonScaled = outerNonScaled - stackWidth
+  end
+  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
+  self.frameOriginY = 108 / GFX_SCALE
+
+  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
+  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
+  self.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)
@@ -688,14 +697,14 @@ end
 -- Target must be able to take calls of
 -- receiveGarbage(frameToReceive, garbageList)
 -- and provide
--- pos_x
--- pos_y
+-- frameOriginX
+-- frameOriginY
 -- mirror_x
 -- stackCanvasWidth
 function Stack.setGarbageTarget(self, newGarbageTarget)
   if newGarbageTarget ~= nil then
-    assert(newGarbageTarget.pos_x ~= nil)
-    assert(newGarbageTarget.pos_y ~= nil)
+    assert(newGarbageTarget.frameOriginX ~= nil)
+    assert(newGarbageTarget.frameOriginY ~= nil)
     assert(newGarbageTarget.mirror_x ~= nil)
     assert(newGarbageTarget.stackCanvasWidth ~= nil)
     assert(newGarbageTarget.receiveGarbage ~= nil)
@@ -709,7 +718,7 @@ end
 function Stack:stackCanvasWidth()
   local stackCanvasWidth = 0
   if self.canvas then 
-    stackCanvasWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
+    stackCanvasWidth = math.floor(self.canvas:getWidth())
   end
   return stackCanvasWidth
 end
