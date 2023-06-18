@@ -24,8 +24,9 @@ local flags = {
 Theme =
   class(
   function(self, name)
+    self.VERSIONS = { original = 1, two = 2, fixedOffsets = 3, current = 3}
     self.name = name
-    self.version = 1
+    self.version = self.VERSIONS.original
     self.images = {} -- theme images
     self.sounds = {} -- theme sfx
     self.musics = {} -- theme music
@@ -421,8 +422,8 @@ function Theme.sound_init(self)
 end
 
 function Theme.upgradeAndSaveVerboseConfig(self)
-  if self.version == 1 then
-    self.version = 2
+  if self.version == self.VERSIONS.original then
+    self.version = self.VERSIONS.current
     self:saveVerboseConfig()
   end
 end
@@ -459,7 +460,7 @@ function Theme.json_init(self)
   if self.name ~= consts.DEFAULT_THEME_DIRECTORY then
     local customData = self:getJSONDataForFile(Theme.themeDirectoryPath .. self.name .. "/config.json")
     local version = self:versionForJSONVersion(customData.version)
-    if version == 1 then
+    if version == self.VERSIONS.original then
       self:loadVersion1DefaultValues()
     end
     self:applyJSONData(customData)
@@ -472,7 +473,7 @@ function Theme:versionForJSONVersion(jsonVersion)
   if jsonVersion and type(jsonVersion) == "number" then
     return  jsonVersion
   else
-    return 1
+    return self.VERSIONS.original
   end
 end
 
@@ -534,6 +535,10 @@ function Theme:final_init()
   self.main_menu_max_height = (self.main_menu_y_max - self.main_menu_screen_pos[2])
   self.main_menu_y_center = self.main_menu_screen_pos[2] + (self.main_menu_max_height / 2)
 
+end
+
+function Theme:offsetsAreFixed()
+  return self.version >= self.VERSIONS.fixedOffsets
 end
 
 -- loads a theme into the game

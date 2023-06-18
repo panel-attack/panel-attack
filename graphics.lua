@@ -511,7 +511,6 @@ function Stack.render(self)
     end
   end
 
-  local main_infos_screen_pos = {x = 375 + (464) / 2, y = 118}
 
   local function drawMoveCount()
     -- draw outside of stack's frame canvas
@@ -556,8 +555,9 @@ function Stack.render(self)
         end
       end
       local timeString = frames_to_time_string(frames, self.match.mode == "endless")
-      draw_label(themes[config.theme].images.IMG_time, (main_infos_screen_pos.x + themes[config.theme].timeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].timeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].timeLabel_Scale)
-      GraphicsUtil.draw_time(timeString, self.time_quads, main_infos_screen_pos.x + themes[config.theme].time_Pos[1], main_infos_screen_pos.y + themes[config.theme].time_Pos[2], themes[config.theme].time_Scale)
+      
+      self.match:drawMatchLabel(themes[config.theme].images.IMG_time, themes[config.theme].timeLabel_Pos, themes[config.theme].timeLabel_Scale)
+      self.match:drawMatchTime(timeString, self.time_quads, themes[config.theme].time_Pos, themes[config.theme].time_Scale)
     end
   end
 
@@ -740,29 +740,6 @@ function Stack.render(self)
     end
   end
 
-  local function drawMatchType()
-    if match_type ~= "" then
-      local matchImage = nil
-      --gprint(match_type, main_infos_screen_pos.x, main_infos_screen_pos.y-50)
-      if match_type == "Ranked" then
-        matchImage = themes[config.theme].images.IMG_ranked
-      end
-      if match_type == "Casual" then
-        matchImage = themes[config.theme].images.IMG_casual
-      end
-      if matchImage then
-        draw_label(matchImage, (main_infos_screen_pos.x + themes[config.theme].matchtypeLabel_Pos[1]) / GFX_SCALE, (main_infos_screen_pos.y + themes[config.theme].matchtypeLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].matchtypeLabel_Scale)
-      end
-    end
-  end
-
-  local function drawCommunityMessage()
-    -- Draw the community message
-    if not config.debug_mode then
-      gprintf(join_community_msg or "", 0, main_infos_screen_pos.y + 550, canvas_width, "center")
-    end
-  end
-
   local function drawAnalyticData()
     if not config.enable_analytics or not self.drawsAnalytics then
       return
@@ -923,8 +900,6 @@ function Stack.render(self)
 
   drawTimer()
   drawLevel()
-  drawMatchType()
-  drawCommunityMessage()
   drawAnalyticData()
 end
 

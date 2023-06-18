@@ -249,6 +249,65 @@ function Match:run()
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
 end
 
+
+function Match:matchLabelDrawOriginX()
+  local x = 375 + (464) / 2
+  if themes[config.theme]:offsetsAreFixed() then
+    x = 0
+  end
+  return x
+end
+
+function Match:matchLabelDrawOriginY()
+  local y = 118
+  if themes[config.theme]:offsetsAreFixed() then
+    y = 0
+  end
+  return y
+end
+
+function Match:drawMatchLabel(drawable, themePositionOffset, scale)
+  local x = self:matchLabelDrawOriginX() + themePositionOffset[1]
+  local y = self:matchLabelDrawOriginY() + themePositionOffset[2]
+
+  local hAlign = "left"
+  local vAlign = "left"
+  if themes[config.theme]:offsetsAreFixed() then
+    hAlign = "center"
+    vAlign = "center"
+  end
+  menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
+end
+
+function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
+  local x = self:matchLabelDrawOriginX() + themePositionOffset[1]
+  local y = self:matchLabelDrawOriginY() + themePositionOffset[2]
+  GraphicsUtil.draw_time(timeString, quads, x, y, scale)
+end
+
+
+function Match:drawMatchType()
+  if match_type ~= "" then
+    local matchImage = nil
+    if match_type == "Ranked" then
+      matchImage = themes[config.theme].images.IMG_ranked
+    end
+    if match_type == "Casual" then
+      matchImage = themes[config.theme].images.IMG_casual
+    end
+    if matchImage then
+      self:drawMatchLabel(matchImage, themes[config.theme].matchtypeLabel_Pos, themes[config.theme].matchtypeLabel_Scale)
+    end
+  end
+end
+
+function Match:drawCommunityMessage()
+  -- Draw the community message
+  if not config.debug_mode then
+    gprintf(join_community_msg or "", 0, 668, canvas_width, "center")
+  end
+end
+
 local P1_win_quads = {}
 local P1_rating_quads = {}
 
@@ -313,7 +372,6 @@ function Match.render(self)
         if self.room_ratings[self.my_player_number].new > 0 then
           rating_to_print = self.room_ratings[self.my_player_number].new
         end
-        --gprint(rating_to_print, P1.score_x, P1.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         if type(rating_to_print) == "number" then
           GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
@@ -324,14 +382,17 @@ function Match.render(self)
         if self.room_ratings[self.op_player_number].new > 0 then
           op_rating_to_print = self.room_ratings[self.op_player_number].new
         end
-        --gprint(op_rating_to_print, P2.score_x, P2.score_y-30)
         draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
         if type(op_rating_to_print) == "number" then
           GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
         end
       end
     end
+
+    self:drawMatchType()
   end
+  
+  self:drawCommunityMessage()
 
   if config.debug_mode then
 
