@@ -276,7 +276,6 @@ Stack =
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
 
-    s.time_quads = {}
     s.move_quads = {}
     s.score_quads = {}
     s.speed_quads = {}
@@ -343,9 +342,6 @@ end
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
 function Stack:deinit()
-  for _, quad in ipairs(self.time_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
   for _, quad in ipairs(self.move_quads) do
     GraphicsUtil:releaseQuad(quad)
   end

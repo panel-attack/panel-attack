@@ -129,8 +129,15 @@ function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  local limit = canvas_width
-  gprintf(string, x - limit/2, y, limit, "center", nil, nil, 8)
+  
+  local limit = canvas_width - x
+  local alignment = "left"
+  if self.which == 1 then
+    limit = x
+    x = 0
+    alignment = "right"
+  end
+  gprintf(string, x, y, limit, alignment, nil, nil, 8)
 end
 
 -- Update all the card frames used for doing the card animation
@@ -692,31 +699,6 @@ function Stack.render(self)
     self:drawNumber(self.speed, self.speed_quads, self.theme.speed_Pos, self.theme.speed_Scale)
   end
 
-  local function drawTimer()
-    if self == nil or self.which ~= 1 or self.game_stopwatch == nil or tonumber(self.game_stopwatch) == nil then
-      -- Only draw for one of the players, we will base our time on player 1
-      -- Also make sure we have a valid time to base off of
-      return
-    end
-
-    -- Draw the timer for time attack
-    if self.match.mode == "puzzle" then
-      -- puzzles don't have a timer...yet?
-    else
-      local frames = self.game_stopwatch
-      if self.match.mode == "time" then
-        frames = (TIME_ATTACK_TIME * 60) - self.game_stopwatch
-        if frames < 0 then
-          frames = 0
-        end
-      end
-      local timeString = frames_to_time_string(frames, self.match.mode == "endless")
-      
-      self.match:drawMatchLabel(self.theme.images.IMG_time, self.theme.timeLabel_Pos, self.theme.timeLabel_Scale)
-      self.match:drawMatchTime(timeString, self.time_quads, self.theme.time_Pos, self.theme.time_Scale)
-    end
-  end
-
   local function drawLevel()
     if self.level then
       self:drawLabel(self.theme.images["IMG_level" .. self.id], self.theme.levelLabel_Pos, self.theme.levelLabel_Scale)
@@ -724,6 +706,7 @@ function Stack.render(self)
       local x = self:elementOriginXWithOffset(self.theme.level_Pos, false) / GFX_SCALE
       local y = self:elementOriginYWithOffset(self.theme.level_Pos, false) / GFX_SCALE
       local level_atlas = self.theme.images["IMG_levelNumber_atlas" .. self.id]
+      self.level_quad:setViewport(tonumber(self.level - 1) * (level_atlas:getWidth() / 11), 0, level_atlas:getWidth() / 11, level_atlas:getHeight(), level_atlas:getDimensions())
       qdraw(level_atlas, self.level_quad, x, y, 0, (28 / self.theme.images["levelNumberWidth" .. self.id] * self.theme.level_Scale) / GFX_SCALE, (26 / self.theme.images["levelNumberHeight" .. self.id] * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
     end
   end
@@ -1027,7 +1010,6 @@ function Stack.render(self)
     self:drawRating()
   end
 
-  drawTimer()
   drawLevel()
   drawAnalyticData()
 end
@@ -1049,6 +1031,11 @@ end
 function Stack:drawRating()
   local match = self.match
   local roomRatings = match.room_ratings
+  if config.debug_mode and roomRatings == nil then
+    roomRatings = {{new = 1337}, {new = 2042}}
+    match.my_player_number = 1
+    match.op_player_number = 2
+  end
   if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) then
     local playerNumber = match.my_player_number
     if self.which == 2 then
@@ -1122,7 +1109,7 @@ end
 -- Draw the pause menu
 function draw_pause()
   if not GAME.renderDuringPause then
-    local image = self.theme.images.pause
+    local image = themes[config.theme].images.pause
     local scale = canvas_width / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
     menu_drawf(image, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end

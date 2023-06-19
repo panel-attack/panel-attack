@@ -31,6 +31,8 @@ Match =
       nil,
       true)
     end
+
+    self.time_quads = {}
   end
 )
 
@@ -43,6 +45,9 @@ function Match:deinit()
   end
   if self.P2 then
     self.P2:deinit()
+  end
+  for _, quad in ipairs(self.time_quads) do
+    GraphicsUtil:releaseQuad(quad)
   end
 end
 
@@ -274,7 +279,6 @@ function Match:drawMatchLabel(drawable, themePositionOffset, scale)
   local vAlign = "left"
   if themes[config.theme]:offsetsAreFixed() then
     hAlign = "center"
-    vAlign = "center"
   end
   menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
 end
@@ -285,6 +289,31 @@ function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
   GraphicsUtil.draw_time(timeString, quads, x, y, scale)
 end
 
+function Match:drawTimer()
+  local stack = self.P1
+  if stack == nil or stack.game_stopwatch == nil or tonumber(stack.game_stopwatch) == nil then
+    -- Make sure we have a valid time to base off of
+    return
+  end
+
+  -- Draw the timer for time attack
+  if self.mode == "puzzle" then
+    -- puzzles don't have a timer...yet?
+  else
+    local frames = stack.game_stopwatch
+    if self.mode == "time" then
+      frames = (TIME_ATTACK_TIME * 60) - stack.game_stopwatch
+      if frames < 0 then
+        frames = 0
+      end
+    end
+    --frames = frames + 60 * 60 * 80 -- debug large timer rendering
+    local timeString = frames_to_time_string(frames, self.mode == "endless")
+    
+    self:drawMatchLabel(stack.theme.images.IMG_time, stack.theme.timeLabel_Pos, stack.theme.timeLabel_Scale)
+    self:drawMatchTime(timeString, self.time_quads, stack.theme.time_Pos, stack.theme.time_Scale)
+  end
+end
 
 function Match:drawMatchType()
   if match_type ~= "" then
@@ -347,6 +376,8 @@ function Match.render(self)
 
     self:drawMatchType()
   end
+  
+  self:drawTimer()
   
   self:drawCommunityMessage()
 
