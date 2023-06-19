@@ -423,7 +423,7 @@ end
 
 function Theme.upgradeAndSaveVerboseConfig(self)
   if self.version == self.VERSIONS.original then
-    self.version = self.VERSIONS.current
+    self.version = self.VERSIONS.two
     self:saveVerboseConfig()
   end
 end

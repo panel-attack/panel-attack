@@ -250,7 +250,7 @@ function Match:run()
 end
 
 
-function Match:matchLabelDrawOriginX()
+function Match:matchelementOriginX()
   local x = 375 + (464) / 2
   if themes[config.theme]:offsetsAreFixed() then
     x = 0
@@ -258,7 +258,7 @@ function Match:matchLabelDrawOriginX()
   return x
 end
 
-function Match:matchLabelDrawOriginY()
+function Match:matchelementOriginY()
   local y = 118
   if themes[config.theme]:offsetsAreFixed() then
     y = 0
@@ -267,8 +267,8 @@ function Match:matchLabelDrawOriginY()
 end
 
 function Match:drawMatchLabel(drawable, themePositionOffset, scale)
-  local x = self:matchLabelDrawOriginX() + themePositionOffset[1]
-  local y = self:matchLabelDrawOriginY() + themePositionOffset[2]
+  local x = self:matchelementOriginX() + themePositionOffset[1]
+  local y = self:matchelementOriginY() + themePositionOffset[2]
 
   local hAlign = "left"
   local vAlign = "left"
@@ -280,8 +280,8 @@ function Match:drawMatchLabel(drawable, themePositionOffset, scale)
 end
 
 function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
-  local x = self:matchLabelDrawOriginX() + themePositionOffset[1]
-  local y = self:matchLabelDrawOriginY() + themePositionOffset[2]
+  local x = self:matchelementOriginX() + themePositionOffset[1]
+  local y = self:matchelementOriginY() + themePositionOffset[2]
   GraphicsUtil.draw_time(timeString, quads, x, y, scale)
 end
 
