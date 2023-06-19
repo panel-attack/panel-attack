@@ -30,6 +30,86 @@ for i = 1, #shake_arr do
   shake_mult = shake_mult - shake_step
 end
 
+function Stack:labelDrawOriginX(cameFromLegacyScoreOffset)
+  local x = 546
+  if self.which == 2 then
+    x = 642
+  end
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    x = self.origin_x * GFX_SCALE
+  end
+  return x
+end
+
+function Stack:labelDrawOriginY(cameFromLegacyScoreOffset)
+  local y = 208
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    y = self.panelOriginY * GFX_SCALE
+  end
+  return y
+end
+
+function Stack:labelDrawX(themePositionOffset, cameFromLegacyScoreOffset)
+  local xOffset = themePositionOffset[1]
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    xOffset = xOffset * self.mirror_x * GFX_SCALE
+  end
+  local x = self:labelDrawOriginX(cameFromLegacyScoreOffset) + xOffset
+  return x
+end
+
+function Stack:labelDrawY(themePositionOffset, cameFromLegacyScoreOffset)
+  local yOffset = themePositionOffset[2]
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    yOffset = yOffset * GFX_SCALE
+  end
+  local y = self:labelDrawOriginY(cameFromLegacyScoreOffset) + yOffset
+  return y
+end
+
+function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+
+  local x = self:labelDrawX(themePositionOffset, cameFromLegacyScoreOffset)
+  local y = self:labelDrawY(themePositionOffset, cameFromLegacyScoreOffset)
+
+  local hAlign = "left"
+  local vAlign = "left"
+  if themes[config.theme]:offsetsAreFixed() then
+    hAlign = "center"
+    vAlign = "center"
+  end
+
+  -- If we are mirroring from the right, move the full width left
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    if self.multiplication > 0 then
+      x = x - math.floor((drawable:getWidth()*scale))
+    end
+  end
+
+  menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
+end
+
+function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+  local x = self:labelDrawX(themePositionOffset, cameFromLegacyScoreOffset)
+  local y = self:labelDrawY(themePositionOffset, cameFromLegacyScoreOffset)
+  GraphicsUtil.draw_number(number, themes[config.theme].images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
+end
+
+function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+  local x = self:labelDrawOriginX(cameFromLegacyScoreOffset) + themePositionOffset[1]
+  local y = self:labelDrawOriginY(cameFromLegacyScoreOffset) + themePositionOffset[2]
+  gprint(string, x, y)
+end
+
 -- Update all the card frames used for doing the card animation
 function Stack.update_cards(self)
   if self.canvas == nil then
@@ -251,6 +331,61 @@ local mask_shader = love.graphics.newShader [[
       return vec4(1.0);
    }
 ]]
+
+function Stack:drawDebug()
+  local x = self.origin_x + 480
+  local y = self.frameOriginY + 160
+
+  if config.debug_mode and self.danger then
+    gprint("danger", x, y + 135)
+  end
+  if config.debug_mode and self.danger_music then
+    gprint("danger music", x, y + 150)
+  end
+  if config.debug_mode then
+    gprint(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
+  end
+  if config.debug_mode then
+    gprint(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
+  end
+  if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
+    local iraise, iswap, iup, idown, ileft, iright
+    if self.inputMethod == "touch" then
+      iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
+    else 
+      iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+    end
+    local inputs_to_print = "inputs:"
+    if iraise then
+      inputs_to_print = inputs_to_print .. "\nraise"
+    end --◄▲▼►
+    if iswap then
+      inputs_to_print = inputs_to_print .. "\nswap"
+    end
+    if iup then
+      inputs_to_print = inputs_to_print .. "\nup"
+    end
+    if idown then
+      inputs_to_print = inputs_to_print .. "\ndown"
+    end
+    if ileft then
+      inputs_to_print = inputs_to_print .. "\nleft"
+    end
+    if iright then
+      inputs_to_print = inputs_to_print .. "\nright"
+    end
+    if self.taunt_down then
+      inputs_to_print = inputs_to_print .. "\ntaunt_down"
+    end
+    if self.taunt_up then
+      inputs_to_print = inputs_to_print .. "\ntaunt_up"
+    end
+    if self.inputMethod == "touch" then
+      inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
+    end
+    gprint(inputs_to_print, x, y + 195)
+  end
+end
 
 -- Renders the player's stack on screen
 function Stack.render(self)
@@ -515,24 +650,22 @@ function Stack.render(self)
   local function drawMoveCount()
     -- draw outside of stack's frame canvas
     if self.match.mode == "puzzle" then
-      draw_label(themes[config.theme].images.IMG_moves, (self.origin_x + themes[config.theme].moveLabel_Pos[1]) / GFX_SCALE, (self.panelOriginY + themes[config.theme].moveLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].moveLabel_Scale)
+      self:drawLabel(themes[config.theme].images.IMG_moves, themes[config.theme].moveLabel_Pos, themes[config.theme].moveLabel_Scale)
+      local moveNumber = math.abs(self.puzzle.remaining_moves)
       if self.puzzle.puzzleType == "moves" then
-        -- display moves left
-        GraphicsUtil.draw_number(self.puzzle.remaining_moves, themes[config.theme].images.IMG_number_atlas_1P, self.move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, "center")
-      else
-        -- display total amount of moves
-        GraphicsUtil.draw_number(math.abs(self.puzzle.remaining_moves), themes[config.theme].images.IMG_number_atlas_1P, self.move_quads, self.score_x + themes[config.theme].move_Pos[1], self.score_y + themes[config.theme].move_Pos[2], themes[config.theme].move_Scale, "center")
+        moveNumber = self.puzzle.remaining_moves
       end
+      self:drawNumber(moveNumber, self.move_quads, themes[config.theme].move_Pos, themes[config.theme].move_Scale, true)
     end
   end
 
   local function drawScore()
-    draw_label(themes[config.theme].images["IMG_score" .. self.id], self.origin_x + (themes[config.theme].scoreLabel_Pos[1] * self.mirror_x), self.panelOriginY + themes[config.theme].scoreLabel_Pos[2], 0, themes[config.theme].scoreLabel_Scale, self.multiplication)
+    self:drawLabel(themes[config.theme].images["IMG_score" .. self.id], themes[config.theme].scoreLabel_Pos, themes[config.theme].scoreLabel_Scale)
     GraphicsUtil.draw_number(self.score, themes[config.theme].images["IMG_number_atlas" .. self.id], self.score_quads, (self.origin_x + (themes[config.theme].score_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.panelOriginY + themes[config.theme].score_Pos[2]) * GFX_SCALE, themes[config.theme].score_Scale, "center")
   end
 
   local function drawSpeed()
-    draw_label(themes[config.theme].images["IMG_speed" .. self.id], self.origin_x + themes[config.theme].speedLabel_Pos[1] * self.mirror_x, (self.panelOriginY + themes[config.theme].speedLabel_Pos[2]), 0, themes[config.theme].speedLabel_Scale, self.multiplication)
+    self:drawLabel(themes[config.theme].images["IMG_speed" .. self.id], themes[config.theme].speedLabel_Pos, themes[config.theme].speedLabel_Scale)
     GraphicsUtil.draw_number(self.speed, themes[config.theme].images["IMG_number_atlas" .. self.id], self.speed_quads, (self.origin_x + (themes[config.theme].speed_Pos[1] * self.mirror_x)) * GFX_SCALE, (self.panelOriginY + themes[config.theme].speed_Pos[2]) * GFX_SCALE, themes[config.theme].speed_Scale, "center")
   end
 
@@ -563,8 +696,7 @@ function Stack.render(self)
 
   local function drawLevel()
     if self.level then
-      --gprint(loc("pl_level", self.level), self.score_x, self.score_y+70)
-      draw_label(themes[config.theme].images["IMG_level" .. self.id], self.origin_x + themes[config.theme].levelLabel_Pos[1] * self.mirror_x, self.panelOriginY + themes[config.theme].levelLabel_Pos[2], 0, themes[config.theme].levelLabel_Scale, self.multiplication)
+      self:drawLabel(themes[config.theme].images["IMG_level" .. self.id], themes[config.theme].levelLabel_Pos, themes[config.theme].levelLabel_Scale)
   
       local level_atlas = themes[config.theme].images["IMG_levelNumber_atlas" .. self.id]
       qdraw(level_atlas, self.level_quad, (self.origin_x + themes[config.theme].level_Pos[1] * self.mirror_x), (self.panelOriginY + themes[config.theme].level_Pos[2]), 0, (28 / themes[config.theme].images["levelNumberWidth" .. self.id] * themes[config.theme].level_Scale) / GFX_SCALE, (26 / themes[config.theme].images["levelNumberHeight" .. self.id] * themes[config.theme].level_Scale / GFX_SCALE), 0, 0, self.multiplication)
@@ -585,7 +717,7 @@ function Stack.render(self)
     -- If we have a healthbar frame draw it.
     -- (It may be the absolute version or the normal version)
     if themes[config.theme].images["IMG_healthbar_frame" .. self.id] then
-      draw_label(themes[config.theme].images["IMG_healthbar_frame" .. self.id], self.origin_x + themes[config.theme].healthbar_frame_Pos[1] * self.mirror_x, self.panelOriginY + themes[config.theme].healthbar_frame_Pos[2], 0, themes[config.theme].healthbar_frame_Scale, self.multiplication)
+      self:drawLabel(themes[config.theme].images["IMG_healthbar_frame" .. self.id], themes[config.theme].healthbar_frame_Pos, themes[config.theme].healthbar_frame_Scale)
     end
 
     if not themes[config.theme].multibar_is_absolute then
@@ -689,55 +821,7 @@ function Stack.render(self)
       draw(themes[config.theme].images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
     end
 
-    if config.debug_mode and self.danger then
-      gprint("danger", self.score_x, self.score_y + 135)
-    end
-    if config.debug_mode and self.danger_music then
-      gprint("danger music", self.score_x, self.score_y + 150)
-    end
-    if config.debug_mode then
-      gprint(loc("pl_cleared", (self.panels_cleared or 0)), self.score_x, self.score_y + 165)
-    end
-    if config.debug_mode then
-      gprint(loc("pl_metal", (self.metal_panels_queued or 0)), self.score_x, self.score_y + 180)
-    end
-    if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-      local iraise, iswap, iup, idown, ileft, iright
-      if self.inputMethod == "touch" then
-        iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
-      else 
-        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
-      end
-      local inputs_to_print = "inputs:"
-      if iraise then
-        inputs_to_print = inputs_to_print .. "\nraise"
-      end --◄▲▼►
-      if iswap then
-        inputs_to_print = inputs_to_print .. "\nswap"
-      end
-      if iup then
-        inputs_to_print = inputs_to_print .. "\nup"
-      end
-      if idown then
-        inputs_to_print = inputs_to_print .. "\ndown"
-      end
-      if ileft then
-        inputs_to_print = inputs_to_print .. "\nleft"
-      end
-      if iright then
-        inputs_to_print = inputs_to_print .. "\nright"
-      end
-      if self.taunt_down then
-        inputs_to_print = inputs_to_print .. "\ntaunt_down"
-      end
-      if self.taunt_up then
-        inputs_to_print = inputs_to_print .. "\ntaunt_up"
-      end
-      if self.inputMethod == "touch" then
-        inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
-      end
-      gprint(inputs_to_print, self.score_x, self.score_y + 195)
-    end
+    self:drawDebug()
   end
 
   local function drawAnalyticData()
@@ -746,13 +830,16 @@ function Stack.render(self)
     end
   
     local analytic = self.analytic
-    local x = self.score_x - 512
+    local backgroundPadding = 18
+    local paddingToAnalytics = 16
+    local width = 160
+    local height = 600
+    local x = paddingToAnalytics + backgroundPadding
     if self.which == 2 then
-      x = x + 990
+      x = canvas_width - paddingToAnalytics - width + backgroundPadding
     end
-    local y = self.score_y - 81
+    local y = self.frameOriginY * GFX_SCALE + backgroundPadding
   
-    local backgroundPadding = 6
     local iconToTextSpacing = 30
     local nextIconIncrement = 30
     local column2Distance = 70
@@ -763,7 +850,7 @@ function Stack.render(self)
     local icon_height
   
     -- Background
-    grectangle_color("fill", x / GFX_SCALE - backgroundPadding, y / GFX_SCALE - backgroundPadding, 160/GFX_SCALE, 600/GFX_SCALE, 0, 0, 0, 0.5)
+    grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
   
     -- Panels cleared
     icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
@@ -898,19 +985,48 @@ function Stack.render(self)
     drawMultibar()
   end
 
+  -- Draw VS HUD
+  if self.match.battleRoom then
+    self:drawPlayerName()
+    self:drawWinCount()
+    self:drawRating()
+  end
+
   drawTimer()
   drawLevel()
   drawAnalyticData()
 end
 
--- Calculates the proper dimensions to not stretch the game for various sizes
-function scale_letterbox(width, height, w_ratio, h_ratio)
-  if height / h_ratio > width / w_ratio then
-    local scaled_height = h_ratio * width / w_ratio
-    return 0, (height - scaled_height) / 2, width, scaled_height
+function Stack:drawPlayerName()
+  local username = (self.match.battleRoom.playerNames[self.which] or "")
+  self:drawString(username, themes[config.theme].name_Pos)
+end
+
+function Stack:drawWinCount()
+  if self.match.P2 == nil then 
+    return -- need multiple players for showing wins to make sense
   end
-  local scaled_width = w_ratio * height / h_ratio
-  return (width - scaled_width) / 2, 0, scaled_width, height
+
+  self:drawLabel(themes[config.theme].images.IMG_wins, themes[config.theme].winLabel_Pos, themes[config.theme].winLabel_Scale, true)
+  self:drawNumber(self.match.battleRoom:getPlayerWinCount(self.player_number), self.wins_quads, themes[config.theme].win_Pos, themes[config.theme].win_Scale, true)
+end
+
+function Stack:drawRating()
+  local match = self.match
+  local roomRatings = match.room_ratings
+  if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) then
+    local playerNumber = match.my_player_number
+    if self.which == 2 then
+      playerNumber = match.op_player_number
+    end
+    if roomRatings[playerNumber] and roomRatings[playerNumber].new then
+      local rating_to_print = roomRatings[playerNumber].new
+      if type(rating_to_print) == "number" and rating_to_print > 0 then
+        self:drawLabel(themes[config.theme].images["IMG_rating" .. self.id], themes[config.theme].ratingLabel_Pos, themes[config.theme].ratingLabel_Scale, true)
+        self:drawNumber(rating_to_print, self.rating_quads, themes[config.theme].rating_Pos, themes[config.theme].rating_Scale, true)
+      end
+    end
+  end
 end
 
 -- Draw the stacks cursor

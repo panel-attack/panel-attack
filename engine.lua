@@ -278,6 +278,8 @@ Stack =
     s.move_quads = {}
     s.score_quads = {}
     s.speed_quads = {}
+    s.wins_quads = {}
+    s.rating_quads = {}
     s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getHeight(), themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
     s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
@@ -351,6 +353,12 @@ function Stack:deinit()
   for _, quad in ipairs(self.speed_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
+  for _, quad in ipairs(self.wins_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.rating_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
   GraphicsUtil:releaseQuad(self.level_quad)
   GraphicsUtil:releaseQuad(self.healthQuad)
   GraphicsUtil:releaseQuad(self.multi_prestopQuad)
@@ -366,12 +374,10 @@ function Stack:moveForPlayerNumber(player_num)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
   if player_num == 1 then
     self.mirror_x = 1
-    self.score_x = 546
     self.multiplication = 0
     self.id = "_1P"
   elseif player_num == 2 then
     self.mirror_x = -1
-    self.score_x = 642
     self.multiplication = 1
     self.id = "_2P"
   end
@@ -394,7 +400,6 @@ function Stack:moveForPlayerNumber(player_num)
 
   self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
   self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
-  self.score_y = 208
 end
 
 function Stack.divergenceString(stackToTest)

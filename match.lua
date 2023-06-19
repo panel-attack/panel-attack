@@ -308,12 +308,6 @@ function Match:drawCommunityMessage()
   end
 end
 
-local P1_win_quads = {}
-local P1_rating_quads = {}
-
-local P2_rating_quads = {}
-local P2_win_quads = {}
-
 function Match.render(self)
   local P1 = self.P1
   local P2 = self.P2
@@ -345,48 +339,10 @@ function Match.render(self)
   end
   
 
-  -- Stack specific values for the HUD are drawn in Stack.render
-
   -- Draw VS HUD
   if self.battleRoom and (GAME.gameIsPaused == false or GAME.renderDuringPause) then
-    -- P1 username
-    gprint((GAME.battleRoom.playerNames[1] or ""), P1.score_x + themes[config.theme].name_Pos[1], P1.score_y + themes[config.theme].name_Pos[2])
-    if P2 then
-      -- P1 win count graphics
-      draw_label(themes[config.theme].images.IMG_wins, (P1.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P1.player_number), themes[config.theme].images.IMG_number_atlas_1P, P1_win_quads, P1.score_x + themes[config.theme].win_Pos[1], P1.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
-      -- P2 username
-      gprint((GAME.battleRoom.playerNames[2] or ""), P2.score_x + themes[config.theme].name_Pos[1], P2.score_y + themes[config.theme].name_Pos[2])
-      -- P2 win count graphics
-      draw_label(themes[config.theme].images.IMG_wins, (P2.score_x + themes[config.theme].winLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].winLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].winLabel_Scale)
-      GraphicsUtil.draw_number(GAME.battleRoom:getPlayerWinCount(P2.player_number), themes[config.theme].images.IMG_number_atlas_2P, P2_win_quads, P2.score_x + themes[config.theme].win_Pos[1], P2.score_y + themes[config.theme].win_Pos[2], themes[config.theme].win_Scale, "center")
-    end
-
     if not config.debug_mode then --this is printed in the same space as the debug details
       gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
-    end
-
-    if match_type == "Ranked" then
-      if self.room_ratings and self.room_ratings[self.my_player_number] and self.room_ratings[self.my_player_number].new then
-        local rating_to_print = loc("ss_rating") .. "\n"
-        if self.room_ratings[self.my_player_number].new > 0 then
-          rating_to_print = self.room_ratings[self.my_player_number].new
-        end
-        draw_label(themes[config.theme].images.IMG_rating_1P, (P1.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P1.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if type(rating_to_print) == "number" then
-          GraphicsUtil.draw_number(rating_to_print, themes[config.theme].images.IMG_number_atlas_1P, P1_rating_quads, P1.score_x + themes[config.theme].rating_Pos[1], P1.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
-        end
-      end
-      if self.room_ratings and self.room_ratings[self.op_player_number] and self.room_ratings[self.op_player_number].new then
-        local op_rating_to_print = loc("ss_rating") .. "\n"
-        if self.room_ratings[self.op_player_number].new > 0 then
-          op_rating_to_print = self.room_ratings[self.op_player_number].new
-        end
-        draw_label(themes[config.theme].images.IMG_rating_2P, (P2.score_x + themes[config.theme].ratingLabel_Pos[1]) / GFX_SCALE, (P2.score_y + themes[config.theme].ratingLabel_Pos[2]) / GFX_SCALE, 0, themes[config.theme].ratingLabel_Scale)
-        if type(op_rating_to_print) == "number" then
-          GraphicsUtil.draw_number(op_rating_to_print, themes[config.theme].images.IMG_number_atlas_2P, P2_rating_quads, P2.score_x + themes[config.theme].rating_Pos[1], P2.score_y + themes[config.theme].rating_Pos[2], themes[config.theme].rating_Scale, "center")
-        end
-      end
     end
 
     self:drawMatchType()
