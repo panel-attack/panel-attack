@@ -144,7 +144,7 @@ end
 function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
   logger.debug("Telegraph.add_combo_garbage "..(garbage.width or "nil").." "..(garbage.isMetal and "true" or "false"))
   local garbageToSend = {}
-  if garbage.isMetal and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
+  if garbage.isMetal and (GAME.battleRoom.trainingModeSettings == nil or GAME.battleRoom.trainingModeSettings.attackSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
     garbageToSend[#garbageToSend+1] = {garbage.width, garbage.height, true, false, timeAttackInteracts = timeAttackInteracts}
     self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   else
