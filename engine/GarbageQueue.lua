@@ -22,7 +22,7 @@ GarbageQueue = class(function(s)
       for k,v in pairs(garbage) do
         local width, height, metal, from_chain, finalized = unpack(v)
         if width and height then
-          if metal and (GAME.battleRoom.trainingModeSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
+          if metal and (GAME.battleRoom.trainingModeSettings == nil or GAME.battleRoom.trainingModeSettings.attackSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
             self.metal:push(v)
           elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then
             if not from_chain then
