@@ -19,6 +19,16 @@ https://github.com/panel-attack/panel-attack/blob/beta/themes/Panel%20Attack%20M
 
 You can use the Ctrl+Shift+Alt+T shortcut to reload your theme configuration and graphics in the game.
 
+## Version
+Themes have a "version" variable that specifies that last version they were upgraded to use. Whenever you improve a theme, you should change this value to the latest version and fix any problems to get the maximum value and bug fixes out of your theme.
+
+Version: unspecified or 1
+Lots of legacy values were used, scaling was broken etc. Exists only for backward compatibility.
+Version: 2
+Mostly worked, but had some positioning bugs and various offsets were in different coordinates and scales. Exists only for backward compatibility.
+Version: 3
+The current version. All on screen graphics that are associated with a player are positioned relative to the players stack in absolute screen coordinates.
+All non player screen elements are positioned in absolute screen coordinates relative to the top left.
 
 -----------------------------------------------------------
 

@@ -2010,11 +2010,10 @@ function main_dumb_transition(next_func, text, timemin, timemax, winnerSFX, keep
 end
 
 -- show game over screen, last frame of gameplay
-function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, args)
+function game_over_transition(next_func, gameResultText, winnerSFX, timemax, keepMusic, args)
   timemax = timemax or -1 -- negative values means the user needs to press enter/escape to continue
-  text = text or ""
+  gameResultText = gameResultText or ""
   keepMusic = keepMusic or false
-  local button_text = loc("continue_button") or ""
   local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
 
   local t = 0 -- the amount of frames that have passed since the game over screen was displayed
@@ -2035,10 +2034,16 @@ function game_over_transition(next_func, text, winnerSFX, timemax, keepMusic, ar
     initialMusicVolumes[v] = v:getVolume()
   end
 
+  local buttonText = loc("continue_button") or ""
+  local textX, textY = unpack(themes[config.theme].gameover_text_Pos)
+  local gameResultTextX = textX - font:getWidth(gameResultText) / 2
+  local buttonTextX = textX - font:getWidth(buttonText) / 2
+  local textHeight = font:getHeight()
+
   while true do
     gfx_q:push({Match.render, {GAME.match}})
-    gprint(text, (canvas_width - font:getWidth(text)) / 2, 10)
-    gprint(button_text, (canvas_width - font:getWidth(button_text)) / 2, 10 + 30)
+    gprint(gameResultText, gameResultTextX, textY)
+    gprint(buttonText, buttonTextX, math.floor(textY + textHeight * 1.2))
     wait()
     local ret = nil
     variable_step(

@@ -32,23 +32,33 @@ end
 
 -- Provides the X origin to draw an element of the stack
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginX(cameFromLegacyScoreOffset)
+function Stack:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  assert(cameFromLegacyScoreOffset ~= nil)
+  assert(legacyOffsetIsAlreadyScaled ~= nil)
   local x = 546
   if self.which == 2 then
     x = 642
   end
   if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    x = self.origin_x * GFX_SCALE
+    x = self.origin_x
+    if legacyOffsetIsAlreadyScaled == false or self.theme:offsetsAreFixed() then
+      x = x * GFX_SCALE
+    end
   end
   return x
 end
 
 -- Provides the Y origin to draw an element of the stack
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginY(cameFromLegacyScoreOffset)
+function Stack:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  assert(cameFromLegacyScoreOffset ~= nil)
+  assert(legacyOffsetIsAlreadyScaled ~= nil)
   local y = 208
   if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    y = self.panelOriginY * GFX_SCALE
+    y = self.panelOriginY
+    if legacyOffsetIsAlreadyScaled == false or self.theme:offsetsAreFixed() then
+      y = y * GFX_SCALE
+    end
   end
   return y
 end
@@ -56,27 +66,34 @@ end
 -- Provides the X position to draw an element of the stack, shifted by the given offset and mirroring
 -- themePositionOffset - the theme offset array
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, widthPercentageShift)
+-- legacyOffsetIsAlreadyScaled - set to true if the offset used to be already scaled in legacy themes
+function Stack:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if legacyOffsetIsAlreadyScaled == nil then
+    legacyOffsetIsAlreadyScaled = false
+  end
   local xOffset = themePositionOffset[1]
   if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
     xOffset = xOffset * self.mirror_x
   end
-  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false then
+  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
     xOffset = xOffset * GFX_SCALE
   end
-  local x = self:elementOriginX(cameFromLegacyScoreOffset) + xOffset
+  local x = self:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + xOffset
   return x
 end
 
 -- Provides the Y position to draw an element of the stack, shifted by the given offset and mirroring
 -- themePositionOffset - the theme offset array
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+function Stack:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if legacyOffsetIsAlreadyScaled == nil then
+    legacyOffsetIsAlreadyScaled = false
+  end
   local yOffset = themePositionOffset[2]
-  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false then
+  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
     yOffset = yOffset * GFX_SCALE
   end
-  local y = self:elementOriginY(cameFromLegacyScoreOffset) + yOffset
+  local y = self:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + yOffset
   return y
 end
 
@@ -85,8 +102,8 @@ end
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
 -- width - width of the drawable
 -- percentWidthShift - the percent of the width you want shifted left
-function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, percentWidthShift)
-  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, percentWidthShift, legacyOffsetIsAlreadyScaled)
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
 
   if percentWidthShift > 0 then
     x = x - math.floor((percentWidthShift * width * scale))
@@ -95,7 +112,7 @@ function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacy
   return x
 end
 
-function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset)
+function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
   if cameFromLegacyScoreOffset == nil then
     cameFromLegacyScoreOffset = false
   end
@@ -108,8 +125,8 @@ function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacySco
     end
   end
 
-  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift)
-  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
 
   menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
 end
@@ -132,10 +149,12 @@ function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset
   
   local limit = canvas_width - x
   local alignment = "left"
-  if self.which == 1 then
-    limit = x
-    x = 0
-    alignment = "right"
+  if self.theme:offsetsAreFixed() then
+    if self.which == 1 then
+      limit = x
+      x = 0
+      alignment = "right"
+    end
   end
   gprintf(string, x, y, limit, alignment, nil, nil, 8)
 end
@@ -680,7 +699,7 @@ function Stack.render(self)
   local function drawMoveCount()
     -- draw outside of stack's frame canvas
     if self.match.mode == "puzzle" then
-      self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale)
+      self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale, false, true)
       local moveNumber = math.abs(self.puzzle.remaining_moves)
       if self.puzzle.puzzleType == "moves" then
         moveNumber = self.puzzle.remaining_moves

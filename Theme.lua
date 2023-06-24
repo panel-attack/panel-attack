@@ -99,6 +99,7 @@ function Theme:configurableKeys()
   result["bg_main_is_tiled"] = "boolean"
   result["bg_select_screen_is_tiled"] = "boolean"
   result["bg_readme_is_tiled"] = "boolean"
+  result["gameover_text_Pos"] = "table"
 
   return result
 end
