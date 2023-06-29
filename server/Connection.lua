@@ -81,6 +81,7 @@ function Connection.login(self, user_id)
   elseif playerbase.players[self.user_id] then
     self.logged_in = true
     self.player = Player(self.user_id)
+    self.server.database:insertIPID(IP_logging_in, self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     if table.length(serverNotices) > 0 then
       local noticeString = ""
