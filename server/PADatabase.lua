@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS PlayerELOHistory(
 CREATE TABLE IF NOT EXISTS PlayerMessageList(
   messageID INTEGER PRIMARY KEY NOT NULL,
   publicPlayerID INTEGER NOT NULL,
-  message REAL NOT NULL,
+  message TEXT NOT NULL,
   messageSeen TIME TIMESTAMP,
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );

@@ -56,7 +56,7 @@ end
 function write_user_id_file(userID, serverIP)
   pcall(
     function()
-      love.filesystem.createDirectory("servers/")
+      love.filesystem.createDirectory("servers/" .. serverIP)
       local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
       file:open("w")
       file:write(tostring(userID))
