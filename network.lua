@@ -83,9 +83,16 @@ end
 
 -- Send a json message with the "J" type
 function json_send(obj)
-  local json = json.encode(obj)
-  logger.debug("Sending JSON: " .. json)
-  local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, json)
+  local jsonResult = nil
+  local status, errorString = pcall(
+    function()
+      jsonResult = json.encode(obj)
+    end
+  )
+  if status == false and error and type(errorString) == "string" then
+      error("Crash sending JSON: " .. table_to_string(obj) .. " with error: " .. errorString)
+  end
+  local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, jsonResult)
   return net_send(message)
 end
 
