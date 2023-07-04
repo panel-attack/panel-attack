@@ -134,7 +134,11 @@ function table_to_string(tab)
     if type(v) == "table" then
       ret = ret..k.." table:\n"..table_to_string(v).."\n"
     else
-      ret = ret..k.." "..tostring(v).."\n"
+      local keyString = k
+      if type(k) == "function" then
+        keyString = "Function"
+      end
+      ret = ret .. keyString .. " " .. tostring(v) .. "\n"
     end
   end
   return ret
