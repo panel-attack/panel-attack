@@ -26,10 +26,10 @@ local function testOriginalThemeStackGraphics()
 
   assert(match ~= nil)
   assert(stack.origin_x == 184)
-  assert(stack:elementOriginX(false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false) == stack.panelOriginY * GFX_SCALE)
-  assert(stack:elementOriginX(true) == legacyScoreX)
-  assert(stack:elementOriginY(true) == legacyScoreY)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(true, false) == legacyScoreX)
+  assert(stack:elementOriginY(true, false) == legacyScoreY)
 end
 
 test(testOriginalThemeStackGraphics)
@@ -41,10 +41,10 @@ local function testOriginalThemeStackGraphicsPlayer2()
 
   assert(match ~= nil)
   assert(stack.origin_x * GFX_SCALE == 728)
-  assert(stack:elementOriginX(false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false) == stack.panelOriginY * GFX_SCALE)
-  assert(stack:elementOriginX(true) == legacyScoreXP2)
-  assert(stack:elementOriginY(true) == legacyScoreY)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(true, false) == legacyScoreXP2)
+  assert(stack:elementOriginY(true, false) == legacyScoreY)
 end
 
 test(testOriginalThemeStackGraphicsPlayer2)
@@ -56,10 +56,10 @@ local function testNewThemeStackGraphics()
 
   assert(match ~= nil)
   assert(stack.origin_x == 184)
-  assert(stack:elementOriginX(false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false) == stack.panelOriginY * GFX_SCALE)
-  assert(stack:elementOriginX(true) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(true) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(true, false) == stack.origin_x * GFX_SCALE)
+  assert(stack:elementOriginY(true, false) == stack.panelOriginY * GFX_SCALE)
 end
 
 test(testNewThemeStackGraphics)
@@ -71,10 +71,10 @@ local function testNewThemeStackGraphicsPlayer2()
 
   assert(match ~= nil)
   assert(stack.origin_x * GFX_SCALE == 728)
-  assert(stack:elementOriginX(false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false) == stack.panelOriginY * GFX_SCALE)
-  assert(stack:elementOriginX(true) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(true) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(true, false) == stack.origin_x * GFX_SCALE)
+  assert(stack:elementOriginY(true, false) == stack.panelOriginY * GFX_SCALE)
 end
 
 test(testNewThemeStackGraphicsPlayer2)
