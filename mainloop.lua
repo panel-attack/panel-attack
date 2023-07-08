@@ -935,11 +935,13 @@ function main_net_vs_lobby()
   if not my_user_id then
     my_user_id = "need a new user id"
   end
+  if CUSTOM_USER_ID then
+    my_user_id = CUSTOM_USER_ID
+  end
   local login_status_message = "   " .. loc("lb_login")
   local noticeTextObject = nil
   local noticeLastText = nil
   local login_status_message_duration = 2
-  local login_denied = false
   local showing_leaderboard = false
   local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
   local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
@@ -948,8 +950,6 @@ function main_net_vs_lobby()
     json_send({login_request = true, user_id = my_user_id})
   end
   local lobby_menu = nil
-  local items = {}
-  local lastPlayerIndex = 0
   local updated = true -- need update when first entering
   local ret = nil
   local requestedSpectateRoom = nil

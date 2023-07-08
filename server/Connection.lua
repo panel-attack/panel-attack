@@ -34,25 +34,25 @@ function Connection.login(self, user_id)
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
-  if is_banned(IP_logging_in) then
-    deny_login(self, "Awaiting ban timeout")
+  if self.server:is_banned(IP_logging_in) then
+    self.server:deny_login(self, "Awaiting ban timeout")
   elseif not self.name then
-    deny_login(self, "Player has no name")
+    self.server:deny_login(self, "Player has no name")
     logger.warn("Login failure: Player has no name")
   elseif not self.user_id then
-    deny_login(self, "Client did not send a user_id in the login request")
+    self.server:deny_login(self, "Client did not send a user_id in the login request")
   elseif self.user_id == "need a new user id" and self.name then
 
-    if playerbase:nameTaken("", self.name) then
+    if self.server.playerbase:nameTaken("", self.name) then
       self:send({choose_another_name = {reason = "That player name is already taken"}})
       logger.warn("Login failure: Player tried to create a new user with an already taken name: " .. self.name)
     else 
       logger.debug(self.name .. " needs a new user id!")
       local their_new_user_id
-      while not their_new_user_id or playerbase.players[their_new_user_id] do
-        their_new_user_id = generate_new_user_id()
+      while not their_new_user_id or self.server.playerbase.players[their_new_user_id] do
+        their_new_user_id = self.server:generate_new_user_id()
       end
-      playerbase:update(their_new_user_id, self.name)
+      self.server.playerbase:update(their_new_user_id, self.name)
       self:send({login_successful = true, new_user_id = their_new_user_id})
       self.user_id = their_new_user_id
       self.logged_in = true
@@ -60,16 +60,16 @@ function Connection.login(self, user_id)
       self.server.database:insertNewPlayer(their_new_user_id, self.name)
       self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
-  elseif not playerbase.players[self.user_id] then
-    deny_login(self, "The user_id provided was not found on this server")
+  elseif not self.server.playerbase.players[self.user_id] then
+    self.server:deny_login(self, "The user_id provided was not found on this server")
     logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
-  elseif playerbase.players[self.user_id] ~= self.name then
-    if playerbase:nameTaken(self.user_id, self.name) then
+  elseif self.server.playerbase.players[self.user_id] ~= self.name then
+    if self.server.playerbase:nameTaken(self.user_id, self.name) then
       self:send({choose_another_name = {reason = "That player name is already taken"}})
       logger.warn("Login failure: Player (" .. self.user_id .. ") tried to use already taken name: " .. self.name)
     else 
-      local the_old_name = playerbase.players[self.user_id]
-      playerbase:update(self.user_id, self.name)
+      local the_old_name = self.server.playerbase.players[self.user_id]
+      self.server.playerbase:update(self.user_id, self.name)
       if leaderboard.players[self.user_id] then
         leaderboard.players[self.user_id].user_name = self.name
       end
@@ -78,7 +78,7 @@ function Connection.login(self, user_id)
       self.server.database:updatePlayerUsername(self.user_id, self.name)
       logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
     end
-  elseif playerbase.players[self.user_id] then
+  elseif self.server.playerbase.players[self.user_id] then
     self.logged_in = true
     self.player = Player(self.user_id)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
@@ -93,7 +93,7 @@ function Connection.login(self, user_id)
       self:send({login_successful = true})
     end
   else
-    deny_login(self, "Unknown")
+    self.server:deny_login(self, "Unknown")
   end
 
   if self.logged_in then
@@ -364,7 +364,7 @@ function Connection.J(self, message)
     self.room:send_to_spectators(message)
   elseif self.state == "playing" and message.game_over then
     self.room.game_outcome_reports[self.player_number] = message.outcome
-    if self.room:resolve_game_outcome(self.server.database) then
+    if self.room:resolve_game_outcome() then
       logger.debug("\n*******************************")
       logger.debug("***" .. self.room.a.name .. " " .. self.room.win_counts[1] .. " - " .. self.room.win_counts[2] .. " " .. self.room.b.name .. "***")
       logger.debug("*******************************\n")

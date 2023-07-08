@@ -8,15 +8,6 @@ leagues = { {league="Newcomer",     min_rating = -1000},
             {league="Master",       min_rating = 1875},
             {league="Grandmaster",  min_rating = 2025}
           }
---[[leagues = { {league="Newcomer",     min_rating = -1000},
-            {league="Bronze",       min_rating = 1},
-            {league="Silver",       min_rating = 1225},
-            {league="Gold",         min_rating = 1475},
-            {league="Platinum",     min_rating = 1725},
-            {league="Diamond",      min_rating = 1975},
-            {league="Master",       min_rating = 2225},
-            {league="Grandmaster",  min_rating = 2475}
-          }]]
 PLACEMENT_MATCH_COUNT_REQUIREMENT = 30
 DEFAULT_RATING = 1500
 RATING_SPREAD_MODIFIER = 400
