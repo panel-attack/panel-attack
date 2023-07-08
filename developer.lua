@@ -11,7 +11,9 @@ for _, value in pairs(arg) do
     PROFILING_ENABLED = 1
   elseif value == "performanceTests" then
     PERFORMANCE_TESTS_ENABLED = 1
-  elseif value ~= "love" and value ~= "embedded boot.lua" and value ~= "." then
-    CUSTOM_USER_ID = value
+  else
+    for match in string.gmatch(value, "user%-id=(.*)") do
+      CUSTOM_USER_ID = match
+    end
   end
 end
