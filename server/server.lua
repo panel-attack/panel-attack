@@ -323,29 +323,24 @@ function Server:generate_new_user_id()
 end
 
 --TODO: revisit this to determine whether it is good.
-function Server:deny_login(connection, reason)
-  local IP, port = connection.socket:getsockname()
-  if self:is_banned(IP) then
-    --don't adjust ban_list
-  elseif self.ban_list[IP] and reason == "The user_id provided was not found on this server" then
-    self.ban_list[IP].violation_count = self.ban_list[IP].violation_count + 1
-    self.ban_list[IP].unban_time = os.time() + 60 * self.ban_list[IP].violation_count
-  elseif reason == "The user_id provided was not found on this server" then
-    self.ban_list[IP] = {violation_count = 1, unban_time = os.time() + 60}
+function Server:deny_login(connection, reason, ban)
+  if ban then
+    connection:send(
+      {
+        login_denied = true,
+        reason = ban.reason,
+        ban_duration = math.floor((ban.completionTime - os.time()) / 60) .. "min" .. ((ban.completionTime - os.time()) % 60) .. "sec",
+      }
+    )
   else
-    self.ban_list[IP] = {violation_count = 0, unban_time = os.time()}
+    connection:send(
+      {
+        login_denied = true,
+        reason = reason,
+      }
+    )
   end
-  self.ban_list[IP].user_name = connection.name or ""
-  self.ban_list[IP].reason = reason
-  connection:send(
-    {
-      login_denied = true,
-      reason = reason,
-      ban_duration = math.floor((self.ban_list[IP].unban_time - os.time()) / 60) .. "min" .. ((self.ban_list[IP].unban_time - os.time()) % 60) .. "sec",
-      violation_count = self.ban_list[IP].violation_count
-    }
-  )
-  logger.warn("login denied.  Reason:  " .. reason)
+  logger.warn("login denied.  Reason:  " .. (reason or ban.reason))
 end
 
 function Server:unban(connection)

@@ -34,15 +34,15 @@ function Connection.login(self, user_id)
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
-  if self.server:is_banned(IP_logging_in) then
-    self.server:deny_login(self, "Awaiting ban timeout")
+  local ipBan = self.server.database:isPlayerBanned(IP_logging_in, nil)
+  if ipBan then
+    self.server:deny_login(self, nil, ipBan)
   elseif not self.name then
     self.server:deny_login(self, "Player has no name")
     logger.warn("Login failure: Player has no name")
   elseif not self.user_id then
     self.server:deny_login(self, "Client did not send a user_id in the login request")
   elseif self.user_id == "need a new user id" and self.name then
-
     if self.server.playerbase:nameTaken("", self.name) then
       self:send({choose_another_name = {reason = "That player name is already taken"}})
       logger.warn("Login failure: Player tried to create a new user with an already taken name: " .. self.name)
@@ -61,7 +61,7 @@ function Connection.login(self, user_id)
       self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
   elseif not self.server.playerbase.players[self.user_id] then
-    self.server:deny_login(self, "The user_id provided was not found on this server")
+    self.server:deny_login(self, nil, self.server.database:insertBan(IP_logging_in, "The user_id provided was not found on this server", os.time() + 60))
     logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
   elseif self.server.playerbase.players[self.user_id] ~= self.name then
     if self.server.playerbase:nameTaken(self.user_id, self.name) then

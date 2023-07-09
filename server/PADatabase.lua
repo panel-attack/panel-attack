@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS Game(
   timePlayed TIME TIMESTAMP NOT NULL DEFAULT (strftime('%s', 'now'))
 );
 
-INSERT INTO Game(gameID, ranked) VALUES (0, 1); -- Placeholder game for imported Elo history
+INSERT OR IGNORE INTO Game(gameID, ranked) VALUES (0, 1); -- Placeholder game for imported Elo history
 
 CREATE TABLE IF NOT EXISTS PlayerGameResult(
   publicPlayerID INTEGER NOT NULL,
@@ -59,9 +59,10 @@ CREATE TABLE IF NOT EXISTS IPID(
 
 CREATE TABLE IF NOT EXISTS PlayerBanList(
   banID INTEGER PRIMARY KEY NOT NULL,
-  publicPlayerID INTEGER NOT NULL,
+  ip TEXT, 
+  publicPlayerID INTEGER,
   reason TEXT NOT NULL,
-  duration INTEGER,
+  completionTime INTEGER,
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
 ]]
@@ -188,6 +189,18 @@ function PADatabase.playerMessageSeen(self, messageID)
   end
   return true
 end
+ 
+local insertBanStatement = assert(db:prepare("INSERT INTO PlayerBanList(ip, reason, completionTime) VALUES (?, ?, ?)"))
+-- Bans an IP address
+function PADatabase.insertBan(self, ip, reason, completionTime)
+  insertBanStatement:bind_values(ip, reason, completionTime)
+  insertBanStatement:step()
+  if insertBanStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return {banID = db:last_insert_rowid(), reason = reason, completionTime = completionTime}
+end
 
 local insertIPIDStatement = assert(db:prepare("INSERT OR IGNORE INTO IPID(ip, publicPlayerID) VALUES (?, ?)"))
 -- Maps an IP address to a publicPlayerID.
@@ -216,12 +229,28 @@ function PADatabase.getIPIDS(self, ip)
   return publicPlayerIDs
 end
 
-local selectIDBansStatement = assert(db:prepare("SELECT reason, duration FROM PlayerBanList WHERE publicPlayerID = ?"))
+local selectIPBansStatement = assert(db:prepare("SELECT banID, reason, completionTime FROM PlayerBanList WHERE ip = ?"))
+-- Selects all bans associated with the ip given.
+function PADatabase.getIPBans(self, ip)
+  selectIPBansStatement:bind_values(ip)
+  local bans = {}
+  for row in selectIPBansStatement:nrows() do
+    bans[#bans+1] = {banID = row.banID, reason = row.reason, completionTime = row.completionTime}
+  end
+  if selectIPBansStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return {}
+  end
+  return bans
+end
+
+local selectIDBansStatement = assert(db:prepare("SELECT banID, reason, completionTime FROM PlayerBanList WHERE publicPlayerID = ?"))
+-- Selects all bans associated with the publicPlayerID given.
 function PADatabase.getIDBans(self, publicPlayerID)
   selectIDBansStatement:bind_values(publicPlayerID)
   local bans = {}
   for row in selectIDBansStatement:nrows() do
-    bans[row.banID] = {reason = row.reason, duration = row.duration}
+    bans[#bans+1] = {banID = row.banID, reason = row.reason, completionTime = row.completionTime}
   end
   if selectIDBansStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
@@ -230,19 +259,32 @@ function PADatabase.getIDBans(self, publicPlayerID)
   return bans
 end
 
--- Checks if a logging in player is banned based off their IP.
-function PADatabase.isPlayerBanned(self, ip)
-  local publicPlayerIDs = self:getIPIDS(ip)
+-- Checks if a logging in player is banned based off their IP or publicPlayerID.
+function PADatabase.isPlayerBanned(self, ip, publicPlayerID)
+  -- all ids associated with the information given
+  local publicPlayerIDs = {}
+  if ip then
+    publicPlayerIDs = self:getIPIDS(ip)
+  end
+  if publicPlayerID then
+    publicPlayerIDs[#publicPlayerIDs+1] = publicPlayerID
+  end
+
   local bans = {}
-  local longestBan = nil
-  for id in publicPlayerIDs do
-    for ban in self:getIDBans(id) do
-      longestBan = ban
-      bans[#bans+1] = ban
+  local ipBans = self:getIPBans(ip)
+  for banID, ban in ipairs(ipBans) do
+    bans[banID] = ban
+  end
+
+  for _, id in pairs(publicPlayerIDs) do
+    for banID, ban in ipairs(self:getIDBans(id)) do
+      bans[banID] = ban
     end
   end
-  for ban in bans do
-    if ban.duration > longestBan.duration then
+
+  local longestBan = nil
+  for _, ban in pairs(bans) do
+    if (os.time() < ban.completionTime) and ((not longestBan) or (ban.completionTime > longestBan.completionTime)) then
       longestBan = ban
     end
   end
