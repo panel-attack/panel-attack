@@ -140,7 +140,7 @@ function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLeg
   GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
 end
 
-function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset)
+function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
   if cameFromLegacyScoreOffset == nil then
     cameFromLegacyScoreOffset = false
   end
@@ -156,7 +156,13 @@ function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset
       alignment = "right"
     end
   end
-  gprintf(string, x, y, limit, alignment, nil, nil, 8)
+
+  if fontSize == nil then
+    fontSize = GraphicsUtil.fontSize
+  end
+  local fontDelta = fontSize - GraphicsUtil.fontSize
+
+  gprintf(string, x, y, limit, alignment, nil, nil, fontDelta)
 end
 
 -- Update all the card frames used for doing the card animation
@@ -1035,7 +1041,7 @@ end
 
 function Stack:drawPlayerName()
   local username = (self.match.battleRoom.playerNames[self.which] or "")
-  self:drawString(username, self.theme.name_Pos, true)
+  self:drawString(username, self.theme.name_Pos, true, self.theme.name_Font_Size)
 end
 
 function Stack:drawWinCount()

@@ -1,3 +1,4 @@
+require("developer")
 require("graphics_util")
 require("sound_util")
 local consts = require("consts")
@@ -73,6 +74,7 @@ function Theme:configurableKeys()
   result["win_Pos"] = "table"
   result["win_Scale"] = "number"
   result["name_Pos"] = "table"
+  result["name_Font_Size"] = "number"
   result["ratingLabel_Pos"] = "table"
   result["ratingLabel_Scale"] = "number"
   result["rating_Pos"] = "table"
@@ -115,6 +117,7 @@ function Theme:loadVersion1DefaultValues()
   self.time_Pos = {26, 26} -- the position of the timer
   self.time_Scale = 2 -- the scale size of the timer
   self.name_Pos = {20, -30} -- the position of the name
+  self.name_Font_Size = 12 -- the font size of the name
   self.moveLabel_Pos = {468, 170} -- the position of the move label
   self.moveLabel_Scale = 2 -- the scale size of the move label
   self.move_Pos = {40, 34} -- the position of the move
@@ -160,6 +163,33 @@ function Theme:loadVersion1DefaultValues()
   self.bg_readme_is_tiled = false -- if the image should tile (default is stretch)
   self.bg_readme_speed_x = 0
   self.bg_readme_speed_y = 0
+end
+
+function Theme:loadVersion2DefaultValues()
+  -- Version 2 values
+  -- All of the default values below are legacy "version 2" values, the modern values are are loaded from the default theme config file
+  self.timeLabel_Pos = {-4, 2} -- the position of the timer label
+  self.time_Pos = {26, 26} -- the position of the timer
+  self.name_Pos = {20, -30} -- the position of the name
+  self.name_Font_Size = 12 -- the font size of the name
+  self.scoreLabel_Pos = {104, 25} -- the position of the score label
+  self.score_Pos = {116, 34} -- the position of the score
+  self.speedLabel_Pos = {104, 42} -- the position of the speed label
+  self.speed_Pos = {116, 50} -- the position of the speed
+  self.levelLabel_Scale = 1 -- the scale size of the level label
+  self.levelLabel_Pos = {105, 58} -- the position of the level label
+  self.level_Pos = {112, 66} -- the position of the level
+  self.level_Scale = 1 -- the scale size of the level
+  self.ratingLabel_Pos = {0, 140} -- the position of the rating label
+  self.rating_Pos = {38, 162} -- the position of the rating value
+  self.spectators_Pos = {547, 460} -- the position of the spectator list
+  self.winLabel_Pos = {10, 190} -- the position of the win label
+  self.win_Pos = {40, 212} -- the position of the win counter
+  self.moveLabel_Scale = 1 -- the scale size of the move label
+  self.moveLabel_Pos = {468, 170} -- the position of the move label
+  self.move_Scale = 1 -- the scale size of the move
+  self.move_Pos = {40, 34} -- the position of the move
+  self.healthbar_frame_Pos = {-17, -4} -- the position of the healthbar frame
 end
 
 Theme.themeDirectoryPath = "themes/"
@@ -463,6 +493,8 @@ function Theme.json_init(self)
     local version = self:versionForJSONVersion(customData.version)
     if version == self.VERSIONS.original then
       self:loadVersion1DefaultValues()
+    elseif version == self.VERSIONS.two then
+      self:loadVersion2DefaultValues()
     end
     self:applyJSONData(customData)
 
