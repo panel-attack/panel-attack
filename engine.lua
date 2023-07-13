@@ -40,9 +40,11 @@ Stack =
       wantsCanvas = true
     end
     local character = arguments.character or config.character
+    local theme = arguments.theme or themes[config.theme]
 
     s.match = match
     s.character = character
+    s.theme = theme
     s.max_health = 1
     s.panels_dir = panels_dir
     s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
@@ -274,21 +276,22 @@ Stack =
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
 
-    s.time_quads = {}
     s.move_quads = {}
     s.score_quads = {}
     s.speed_quads = {}
-    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getHeight(), themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
-    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-    s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
-    s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
-    s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+    s.wins_quads = {}
+    s.rating_quads = {}
+    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getHeight(), s.theme.images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
+    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight(), s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight())
+    s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
+    s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
+    s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
 
     s:createCursors()
   end)
 
 function Stack:createCursors()
-  local cursorImage = themes[config.theme].images.IMG_cursor[1]
+  local cursorImage = self.theme.images.IMG_cursor[1]
   local imageWidth = cursorImage:getWidth()
   local imageHeight = cursorImage:getHeight()
   self.cursorQuads = {}
@@ -339,9 +342,6 @@ end
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
 function Stack:deinit()
-  for _, quad in ipairs(self.time_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
   for _, quad in ipairs(self.move_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
@@ -349,6 +349,12 @@ function Stack:deinit()
     GraphicsUtil:releaseQuad(quad)
   end
   for _, quad in ipairs(self.speed_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.wins_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.rating_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
   GraphicsUtil:releaseQuad(self.level_quad)
@@ -362,30 +368,36 @@ function Stack:deinit()
 end
 
 -- Positions the stack draw position for the given player
-function Stack.moveForPlayerNumber(stack, player_num)
+function Stack:moveForPlayerNumber(player_num)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  -- on 150% scale
   if player_num == 1 then
-    stack.pos_x = 80
-    stack.score_x = 546
-    stack.mirror_x = 1
-    stack.origin_x = stack.pos_x
-    stack.multiplication = 0
-    stack.id = "_1P"
-    stack.VAR_numbers = ""
+    self.mirror_x = 1
+    self.multiplication = 0
+    self.id = "_1P"
   elseif player_num == 2 then
-    stack.pos_x = 248
-    stack.score_x = 642
-    stack.mirror_x = -1
-    stack.origin_x = stack.pos_x
-    if stack.canvas then
-      stack.origin_x = stack.origin_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
-    end
-    stack.multiplication = 1
-    stack.id = "_2P"
+    self.mirror_x = -1
+    self.multiplication = 1
+    self.id = "_2P"
   end
-  stack.pos_y = 4 + (108) / GFX_SCALE
-  stack.score_y = 208
+  local centerX = (canvas_width / 2)
+  local stackWidth = self:stackCanvasWidth()
+  local innerStackXMovement = 100
+  local outerStackXMovement = stackWidth + innerStackXMovement
+  self.panelOriginXOffset = 4
+  self.panelOriginYOffset = 4
+
+  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
+  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+
+  local frameOriginNonScaled = outerNonScaled
+  if self.mirror_x == -1 then
+    frameOriginNonScaled = outerNonScaled - stackWidth
+  end
+  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
+  self.frameOriginY = 108 / GFX_SCALE
+
+  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
+  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
 end
 
 function Stack.divergenceString(stackToTest)
@@ -688,14 +700,14 @@ end
 -- Target must be able to take calls of
 -- receiveGarbage(frameToReceive, garbageList)
 -- and provide
--- pos_x
--- pos_y
+-- frameOriginX
+-- frameOriginY
 -- mirror_x
 -- stackCanvasWidth
 function Stack.setGarbageTarget(self, newGarbageTarget)
   if newGarbageTarget ~= nil then
-    assert(newGarbageTarget.pos_x ~= nil)
-    assert(newGarbageTarget.pos_y ~= nil)
+    assert(newGarbageTarget.frameOriginX ~= nil)
+    assert(newGarbageTarget.frameOriginY ~= nil)
     assert(newGarbageTarget.mirror_x ~= nil)
     assert(newGarbageTarget.stackCanvasWidth ~= nil)
     assert(newGarbageTarget.receiveGarbage ~= nil)
@@ -709,7 +721,7 @@ end
 function Stack:stackCanvasWidth()
   local stackCanvasWidth = 0
   if self.canvas then 
-    stackCanvasWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
+    stackCanvasWidth = math.floor(self.canvas:getWidth())
   end
   return stackCanvasWidth
 end
@@ -1562,12 +1574,12 @@ function Stack.simulate(self)
     if self:shouldChangeMusic() then
       if self.do_countdown then
         if SFX_Go_Play == 1 then
-          themes[config.theme].sounds.go:stop()
-          themes[config.theme].sounds.go:play()
+          self.theme.sounds.go:stop()
+          self.theme.sounds.go:play()
           SFX_Go_Play = 0
         elseif SFX_Countdown_Play == 1 then
-          themes[config.theme].sounds.countdown:stop()
-          themes[config.theme].sounds.countdown:play()
+          self.theme.sounds.countdown:stop()
+          self.theme.sounds.countdown:play()
           SFX_Go_Play = 0
         end
       else
@@ -1673,42 +1685,42 @@ function Stack.simulate(self)
     -- Update Sound FX
     if self:shouldChangeSoundEffects() then
       if SFX_Swap_Play == 1 then
-        themes[config.theme].sounds.swap:stop()
-        themes[config.theme].sounds.swap:play()
+        self.theme.sounds.swap:stop()
+        self.theme.sounds.swap:play()
         SFX_Swap_Play = 0
       end
       if SFX_Cur_Move_Play == 1 then
-        if not (self.match.mode == "vs" and themes[config.theme].sounds.swap:isPlaying()) and not self.do_countdown then
-          themes[config.theme].sounds.cur_move:stop()
-          themes[config.theme].sounds.cur_move:play()
+        if not (self.match.mode == "vs" and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
+          self.theme.sounds.cur_move:stop()
+          self.theme.sounds.cur_move:play()
         end
         SFX_Cur_Move_Play = 0
       end
       if self.sfx_land then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.land:play()
+        self.theme.sounds.land:stop()
+        self.theme.sounds.land:play()
         self.sfx_land = false
       end
       if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-          themes[config.theme].sounds.countdown:stop()
-          themes[config.theme].sounds.countdown:play()
+          self.theme.sounds.countdown:stop()
+          self.theme.sounds.countdown:play()
         end
         SFX_Countdown_Play = 0
       end
       if SFX_Go_Play == 1 then
         if self.which == 1 then
-          themes[config.theme].sounds.go:stop()
-          themes[config.theme].sounds.go:play()
+          self.theme.sounds.go:stop()
+          self.theme.sounds.go:play()
         end
         SFX_Go_Play = 0
       end
       if self.combo_chain_play then
         -- stop ongoing landing sound
-        themes[config.theme].sounds.land:stop()
+        self.theme.sounds.land:stop()
         -- and cancel it because an attack is performed on the exact same frame (takes priority)
         self.sfx_land = false
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
       end
@@ -1719,25 +1731,25 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.fanfare3:play()
+        self.theme.sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.fanfare2:play()
+        self.theme.sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.fanfare1:play()
+        self.theme.sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
       if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i = 1, 3 do
-          if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-            themes[config.theme].sounds.garbage_thud[i]:stop()
+          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+            self.theme.sounds.garbage_thud[i]:stop()
             interrupted_thud = i
           end
         end
         if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+          self.theme.sounds.garbage_thud[interrupted_thud]:play()
         else
-          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
+          self.theme.sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
         if interrupted_thud == nil then
           characters[self.character]:playGarbageLandSfx()
@@ -1753,9 +1765,9 @@ function Stack.simulate(self)
           popIndex = min(self.poppedPanelIndex, 10)
         end
         --stop the previous pop sound
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
+        self.theme.sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil
@@ -2041,7 +2053,7 @@ function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.win ~= 0 then
     return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else
-    return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
+    return self.theme.sounds.fanfare1 -- TODO add a default win sound
   end
 end
 

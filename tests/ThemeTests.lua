@@ -8,7 +8,7 @@ local defaultTheme = Theme(consts.DEFAULT_THEME_DIRECTORY)
 
 assert(defaultTheme ~= nil)
 assert(defaultTheme.name ~= nil)
-assert(defaultTheme.version == 2)
+assert(defaultTheme.version == defaultTheme.VERSIONS.current)
 assert(defaultTheme.images.bg_main ~= nil)
 assert(defaultTheme.multibar_is_absolute == true)
 
@@ -44,7 +44,7 @@ recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2Theme.name)
 local v1Theme = Theme("V1Test")
 assert(v1Theme ~= nil)
 assert(v1Theme.name == "V1Test")
-assert(v1Theme.version == 2) -- it was upgraded
+assert(v1Theme.version == v1Theme.VERSIONS.two) -- it was upgraded
 assert(v1Theme.images.bg_main ~= nil)
 assert(v1Theme.multibar_is_absolute == false) -- old v1 default
 assert(v1Theme.bg_main_is_tiled == true) -- override from v1 default

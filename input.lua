@@ -326,6 +326,8 @@ function love.keypressed(key, scancode, rep)
         themes[config.theme]:json_init()
         themes[config.theme]:graphics_init()
         themes[config.theme]:final_init()
+        GAME.background_overlay = themes[config.theme].images.bg_overlay
+        GAME.foreground_overlay = themes[config.theme].images.fg_overlay
         return true
       end
     end

@@ -805,11 +805,9 @@ function select_screen.startNetPlayMatch(self, msg)
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
-  if match_type == "Ranked" then
-    GAME.match.room_ratings = self.currentRoomRatings
-    GAME.match.my_player_number = self.my_player_number
-    GAME.match.op_player_number = self.op_player_number
-  end
+  GAME.match.room_ratings = self.currentRoomRatings
+  GAME.match.my_player_number = self.my_player_number
+  GAME.match.op_player_number = self.op_player_number
 
   local is_local = true
   if GAME.battleRoom.spectating then
