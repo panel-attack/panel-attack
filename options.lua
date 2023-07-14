@@ -1165,7 +1165,11 @@ local function userIDMenu(button_idx)
 
   userIDClickMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   for i = 1, #userIDDirectories do
-    userIDClickMenu:add_button(userIDDirectories[i], updateID, goEscape)
+    if userIDDirectories[i] == "18.188.43.50" then
+      userIDClickMenu:add_button("Main Server ID", updateID, goEscape)
+    else
+      userIDClickMenu:add_button(userIDDirectories[i], updateID, goEscape)
+    end
   end
   userIDClickMenu:add_button(loc("back"), exitSettings, exitSettings)
 

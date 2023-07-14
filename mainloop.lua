@@ -54,6 +54,7 @@ function fmainloop()
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
+  love.filesystem.createDirectory("servers/18.188.43.50")
   if #FileUtil.getFilteredDirectoryItems("training") == 0 then
     recursive_copy("default_data/training", "training")
   end
