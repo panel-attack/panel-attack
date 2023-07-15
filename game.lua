@@ -118,6 +118,16 @@ function Game.loveVersionString()
   return loveVersionStringValue
 end
 
+-- Calculates the proper dimensions to not stretch the game for various sizes
+function scale_letterbox(width, height, w_ratio, h_ratio)
+  if height / h_ratio > width / w_ratio then
+    local scaled_height = h_ratio * width / w_ratio
+    return 0, (height - scaled_height) / 2, width, scaled_height
+  end
+  local scaled_width = w_ratio * height / h_ratio
+  return (width - scaled_width) / 2, 0, scaled_width, height
+end
+
 -- Updates the scale and position values to use up the right size of the window based on the user's settings.
 function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   local scaleIsUpdated = false
