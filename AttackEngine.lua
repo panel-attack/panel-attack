@@ -130,7 +130,7 @@ function AttackEngine.run(self)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
             end
             hasMetal = garbage.isMetal or hasMetal
-            self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.clock)
+            self.telegraph:push(garbage, math.random(1, 6), math.random(1, 11), self.clock)
           end
         end
       end

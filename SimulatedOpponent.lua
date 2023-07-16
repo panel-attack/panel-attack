@@ -6,8 +6,8 @@ SimulatedOpponent =
   function(self, health, character, positionX, positionY, mirror)
     self.health = health
     self.character = character
-    self.frameOriginX = positionX
-    self.frameOriginY = positionY
+    self.frameOriginX = positionX / GFX_SCALE
+    self.frameOriginY = positionY / GFX_SCALE
     self.mirror_x = mirror
     self.clock = 0
   end
@@ -42,7 +42,7 @@ end
 
 function SimulatedOpponent:drawCharacter()
   local characterObject = characters[self.character]
-  characterObject:drawPortrait(2, self.frameOriginX / GFX_SCALE, self.frameOriginY / GFX_SCALE, 0)
+  characterObject:drawPortrait(2, self.frameOriginX, self.frameOriginY, 0)
 end
 
 local healthBarXOffset = -56
@@ -50,7 +50,7 @@ function SimulatedOpponent.render(self)
 
   if self.health then
     self:drawCharacter()
-    self.health:render(self.frameOriginX + healthBarXOffset)
+    self.health:render(self.frameOriginX * GFX_SCALE + healthBarXOffset)
   end
 
   if self.attackEngine then
