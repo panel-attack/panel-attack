@@ -357,6 +357,7 @@ function Server:deny_login(connection, reason, ban)
         ban_duration = banRemainingString,
       }
     )
+    self.database:playerBanSeen(ban.banID)
   else
     connection:send(
       {

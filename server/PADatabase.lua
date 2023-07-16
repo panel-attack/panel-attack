@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS PlayerBanList(
   publicPlayerID INTEGER,
   reason TEXT NOT NULL,
   completionTime INTEGER,
+  banSeen TIME TIMESTAMP,
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
 ]]
@@ -289,6 +290,33 @@ function PADatabase.isPlayerBanned(self, ip, publicPlayerID)
     end
   end
   return longestBan
+end
+
+local selectPlayerUnseenBansStatement = assert(db:prepare("SELECT reason FROM PlayerBanList WHERE publicPlayerID = ? AND banSeen IS NULL"))
+-- Retrieves player messages that the player has not seen yet.
+function PADatabase.getPlayerUnseenBans(self, publicPlayerID)
+  selectPlayerUnseenBansStatement:bind_values(publicPlayerID)
+  local banReasons = {}
+  for row in selectPlayerUnseenBansStatement:nrows() do
+    banReasons[row.banID] = row.reason
+  end
+  if selectPlayerUnseenBansStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return {}
+  end
+  return banReasons
+end
+
+local updatePlayerBanSeenStatement = assert(db:prepare("UPDATE PlayerBanList SET banSeen = strftime('%s', 'now') WHERE banID = ?"))
+-- Marks a ban as seen by a player.
+function PADatabase.playerBanSeen(self, banID)
+  updatePlayerBanSeenStatement:bind_values(banID)
+  updatePlayerBanSeenStatement:step()
+  if updatePlayerBanSeenStatement:reset() ~= sqlite3.OK then
+    logger.error(db:errmsg())
+    return false
+  end
+  return true
 end
 
 -- Stop statements from being committed until commitTransaction is called

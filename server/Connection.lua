@@ -86,11 +86,16 @@ function Connection.login(self, user_id)
     self.server.database:insertIPID(IP_logging_in, self.player.publicPlayerID)
     logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
-    if table.length(serverNotices) > 0 then
+    local serverUnseenBans = self.server.database:getPlayerUnseenBans(self.player.publicPlayerID)
+    if table.length(serverNotices) > 0 or table.length(serverUnseenBans) > 0 then
       local noticeString = ""
       for messageID, message in pairs(serverNotices) do
         noticeString = noticeString .. message .. "\n\n"
         self.server.database:playerMessageSeen(messageID)
+      end
+      for banID, reason in pairs(serverUnseenBans) do
+        noticeString = noticeString .. "A ban was issued to you for: " .. reason .. "\n\n"
+        self.server.database:playerBanSeen(banID)
       end
       self:send({login_successful = true, server_notice = noticeString})
     else
