@@ -34,11 +34,15 @@ function Connection.login(self, user_id)
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
-  if self.server.playerbase.players[self.user_id] then -- TODO: Remove once we only use the database
+  if self.server.playerbase.players[self.user_id] then -- TODO: TEMPORARY Remove once we only use the database
     self.server.database:insertIPID(IP_logging_in, self.server.database:getPublicPlayerID(self.user_id))
   end
   local playerBan = self.server.database:isPlayerBanned(IP_logging_in, nil)
   if playerBan then
+    if self.server.playerbase.players[self.user_id] then -- TODO: TEMPORARY Remove once we only use the database
+      self.server.playerbase:update(self.user_id, "defaultname")
+      self.server.database:updatePlayerUsername(self.user_id, "defaultname")
+    end
     self.server:deny_login(self, nil, playerBan)
   elseif not self.name then
     self.server:deny_login(self, "Player has no name")
