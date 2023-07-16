@@ -292,7 +292,7 @@ function PADatabase.isPlayerBanned(self, ip, publicPlayerID)
   return longestBan
 end
 
-local selectPlayerUnseenBansStatement = assert(db:prepare("SELECT reason FROM PlayerBanList WHERE publicPlayerID = ? AND banSeen IS NULL"))
+local selectPlayerUnseenBansStatement = assert(db:prepare("SELECT banID, reason FROM PlayerBanList WHERE publicPlayerID = ? AND banSeen IS NULL"))
 -- Retrieves player messages that the player has not seen yet.
 function PADatabase.getPlayerUnseenBans(self, publicPlayerID)
   selectPlayerUnseenBansStatement:bind_values(publicPlayerID)
