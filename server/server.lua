@@ -323,29 +323,50 @@ function Server:generate_new_user_id()
 end
 
 --TODO: revisit this to determine whether it is good.
-function Server:deny_login(connection, reason)
-  local IP, port = connection.socket:getsockname()
-  if self:is_banned(IP) then
-    --don't adjust ban_list
-  elseif self.ban_list[IP] and reason == "The user_id provided was not found on this server" then
-    self.ban_list[IP].violation_count = self.ban_list[IP].violation_count + 1
-    self.ban_list[IP].unban_time = os.time() + 60 * self.ban_list[IP].violation_count
-  elseif reason == "The user_id provided was not found on this server" then
-    self.ban_list[IP] = {violation_count = 1, unban_time = os.time() + 60}
+function Server:deny_login(connection, reason, ban)
+  if ban then
+    local banRemainingString = "Ban Remaining: "
+    local secondsRemaining = (ban.completionTime - os.time())
+    local secondsPerDay = 60 * 60 * 24
+    local secondsPerHour = 60 * 60
+    local secondsPerMin = 60
+    local detailCount = 0
+    if secondsRemaining > secondsPerDay then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining / secondsPerDay) .. " days "
+      secondsRemaining = (secondsRemaining % secondsPerDay)
+      detailCount = detailCount + 1
+    end
+    if secondsRemaining > secondsPerHour then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining / secondsPerHour) .. " hours "
+      secondsRemaining = (secondsRemaining % secondsPerHour)
+      detailCount = detailCount + 1
+    end
+    if detailCount < 2 and secondsRemaining > secondsPerMin then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining / secondsPerMin) .. " minutes "
+      secondsRemaining = (secondsRemaining % secondsPerMin)
+      detailCount = detailCount + 1
+    end
+    if detailCount < 2 then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining) .. " seconds "
+    end
+
+    connection:send(
+      {
+        login_denied = true,
+        reason = ban.reason,
+        ban_duration = banRemainingString,
+      }
+    )
+    self.database:playerBanSeen(ban.banID)
   else
-    self.ban_list[IP] = {violation_count = 0, unban_time = os.time()}
+    connection:send(
+      {
+        login_denied = true,
+        reason = reason,
+      }
+    )
   end
-  self.ban_list[IP].user_name = connection.name or ""
-  self.ban_list[IP].reason = reason
-  connection:send(
-    {
-      login_denied = true,
-      reason = reason,
-      ban_duration = math.floor((self.ban_list[IP].unban_time - os.time()) / 60) .. "min" .. ((self.ban_list[IP].unban_time - os.time()) % 60) .. "sec",
-      violation_count = self.ban_list[IP].violation_count
-    }
-  )
-  logger.warn("login denied.  Reason:  " .. reason)
+  logger.warn("login denied.  Reason:  " .. (reason or ban.reason))
 end
 
 function Server:unban(connection)

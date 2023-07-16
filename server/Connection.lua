@@ -34,15 +34,15 @@ function Connection.login(self, user_id)
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
-  if self.server:is_banned(IP_logging_in) then
-    self.server:deny_login(self, "Awaiting ban timeout")
+  local ipBan = self.server.database:isPlayerBanned(IP_logging_in, nil)
+  if ipBan then
+    self.server:deny_login(self, nil, ipBan)
   elseif not self.name then
     self.server:deny_login(self, "Player has no name")
     logger.warn("Login failure: Player has no name")
   elseif not self.user_id then
     self.server:deny_login(self, "Client did not send a user_id in the login request")
   elseif self.user_id == "need a new user id" and self.name then
-
     if self.server.playerbase:nameTaken("", self.name) then
       self:send({choose_another_name = {reason = "That player name is already taken"}})
       logger.warn("Login failure: Player tried to create a new user with an already taken name: " .. self.name)
@@ -56,12 +56,13 @@ function Connection.login(self, user_id)
       self:send({login_successful = true, new_user_id = their_new_user_id})
       self.user_id = their_new_user_id
       self.logged_in = true
-      logger.info("New user: " .. self.name .. " was created")
       self.server.database:insertNewPlayer(their_new_user_id, self.name)
+      self.player = Player(self.user_id)
+      logger.info("New user: " .. self.name .. " was created")
       self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
   elseif not self.server.playerbase.players[self.user_id] then
-    self.server:deny_login(self, "The user_id provided was not found on this server")
+    self.server:deny_login(self, nil, self.server.database:insertBan(IP_logging_in, "The user_id provided was not found on this server", os.time() + 60))
     logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
   elseif self.server.playerbase.players[self.user_id] ~= self.name then
     if self.server.playerbase:nameTaken(self.user_id, self.name) then
@@ -74,6 +75,7 @@ function Connection.login(self, user_id)
         leaderboard.players[self.user_id].user_name = self.name
       end
       self.logged_in = true
+      self.player = Player(self.user_id)
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
       self.server.database:updatePlayerUsername(self.user_id, self.name)
       logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
@@ -81,12 +83,19 @@ function Connection.login(self, user_id)
   elseif self.server.playerbase.players[self.user_id] then
     self.logged_in = true
     self.player = Player(self.user_id)
+    self.server.database:insertIPID(IP_logging_in, self.player.publicPlayerID)
+    logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
-    if table.length(serverNotices) > 0 then
+    local serverUnseenBans = self.server.database:getPlayerUnseenBans(self.player.publicPlayerID)
+    if table.length(serverNotices) > 0 or table.length(serverUnseenBans) > 0 then
       local noticeString = ""
       for messageID, message in pairs(serverNotices) do
         noticeString = noticeString .. message .. "\n\n"
         self.server.database:playerMessageSeen(messageID)
+      end
+      for banID, reason in pairs(serverUnseenBans) do
+        noticeString = noticeString .. "A ban was issued to you for: " .. reason .. "\n\n"
+        self.server.database:playerBanSeen(banID)
       end
       self:send({login_successful = true, server_notice = noticeString})
     else
