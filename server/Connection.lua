@@ -34,9 +34,16 @@ function Connection.login(self, user_id)
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
-  local ipBan = self.server.database:isPlayerBanned(IP_logging_in, nil)
-  if ipBan then
-    self.server:deny_login(self, nil, ipBan)
+  if self.server.playerbase.players[self.user_id] then -- TODO: TEMPORARY Remove once we only use the database
+    self.server.database:insertIPID(IP_logging_in, self.server.database:getPublicPlayerID(self.user_id))
+  end
+  local playerBan = self.server.database:isPlayerBanned(IP_logging_in, nil)
+  if playerBan then
+    if self.server.playerbase.players[self.user_id] then -- TODO: TEMPORARY Remove once we only use the database
+      self.server.playerbase:update(self.user_id, "defaultname")
+      self.server.database:updatePlayerUsername(self.user_id, "defaultname")
+    end
+    self.server:deny_login(self, nil, playerBan)
   elseif not self.name then
     self.server:deny_login(self, "Player has no name")
     logger.warn("Login failure: Player has no name")
@@ -83,7 +90,6 @@ function Connection.login(self, user_id)
   elseif self.server.playerbase.players[self.user_id] then
     self.logged_in = true
     self.player = Player(self.user_id)
-    self.server.database:insertIPID(IP_logging_in, self.player.publicPlayerID)
     logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     local serverUnseenBans = self.server.database:getPlayerUnseenBans(self.player.publicPlayerID)
