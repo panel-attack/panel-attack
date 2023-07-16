@@ -56,8 +56,9 @@ function Connection.login(self, user_id)
       self:send({login_successful = true, new_user_id = their_new_user_id})
       self.user_id = their_new_user_id
       self.logged_in = true
-      logger.info("New user: " .. self.name .. " was created")
       self.server.database:insertNewPlayer(their_new_user_id, self.name)
+      self.player = Player(self.user_id)
+      logger.info("New user: " .. self.name .. " was created")
       self.server.database:insertPlayerELOChange(their_new_user_id, 0, 0)
     end
   elseif not self.server.playerbase.players[self.user_id] then
@@ -74,6 +75,7 @@ function Connection.login(self, user_id)
         leaderboard.players[self.user_id].user_name = self.name
       end
       self.logged_in = true
+      self.player = Player(self.user_id)
       self:send({login_successful = true, name_changed = true, old_name = the_old_name, new_name = self.name})
       self.server.database:updatePlayerUsername(self.user_id, self.name)
       logger.warn("Login successful and " .. self.user_id .. " changed name " .. the_old_name .. " to " .. self.name)
@@ -82,6 +84,7 @@ function Connection.login(self, user_id)
     self.logged_in = true
     self.player = Player(self.user_id)
     self.server.database:insertIPID(IP_logging_in, self.player.publicPlayerID)
+    logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     if table.length(serverNotices) > 0 then
       local noticeString = ""

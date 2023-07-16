@@ -325,11 +325,36 @@ end
 --TODO: revisit this to determine whether it is good.
 function Server:deny_login(connection, reason, ban)
   if ban then
+    local banRemainingString = "Ban Remaining: "
+    local secondsRemaining = (ban.completionTime - os.time())
+    local secondsPerDay = 60 * 60 * 24
+    local secondsPerHour = 60 * 60
+    local secondsPerMin = 60
+    local detailCount = 0
+    if secondsRemaining > secondsPerDay then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining / secondsPerDay) .. " days "
+      secondsRemaining = (secondsRemaining % secondsPerDay)
+      detailCount = detailCount + 1
+    end
+    if secondsRemaining > secondsPerHour then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining / secondsPerHour) .. " hours "
+      secondsRemaining = (secondsRemaining % secondsPerHour)
+      detailCount = detailCount + 1
+    end
+    if detailCount < 2 and secondsRemaining > secondsPerMin then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining / secondsPerMin) .. " minutes "
+      secondsRemaining = (secondsRemaining % secondsPerMin)
+      detailCount = detailCount + 1
+    end
+    if detailCount < 2 then
+      banRemainingString = banRemainingString .. math.floor(secondsRemaining) .. " seconds "
+    end
+
     connection:send(
       {
         login_denied = true,
         reason = ban.reason,
-        ban_duration = math.floor((ban.completionTime - os.time()) / 60) .. "min" .. ((ban.completionTime - os.time()) % 60) .. "sec",
+        ban_duration = banRemainingString,
       }
     )
   else

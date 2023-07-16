@@ -51,9 +51,9 @@ CREATE TABLE IF NOT EXISTS PlayerMessageList(
 );
 
 CREATE TABLE IF NOT EXISTS IPID(
-  ip TEXT PRIMARY KEY NOT NULL,
+  ip TEXT NOT NULL,
   publicPlayerID INTEGER NOT NULL,
-  UNIQUE(ip, publicPlayerID),
+  PRIMARY KEY (ip, publicPlayerID),
   FOREIGN KEY(publicPlayerID) REFERENCES Player(publicPlayerID)
 );
 
