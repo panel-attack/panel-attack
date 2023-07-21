@@ -474,6 +474,7 @@ While an incorrectly cased file may load on Windows, it will not on other operat
 
 All music has to be placed inside the `music` subdirectory.  
 
+`title_screen` and optionally `title_screen_start` for the title screen.  
 `main` and optionally `main_start` for all button menus.  
 `select_screen` and optionally `select_screen_start` for character selection.  
 If `main` exists but `select_screen` does not, `main` will play in character selection as well.

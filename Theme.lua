@@ -5,7 +5,7 @@ local consts = require("consts")
 require("class")
 local logger = require("logger")
 
-local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
+local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {

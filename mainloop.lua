@@ -146,7 +146,12 @@ function main_title()
   end
 
   GAME.backgroundImage = themes[config.theme].images.bg_title
-  
+
+  stop_the_music()
+  if themes[config.theme].musics["title_screen"] then
+    find_and_add_music(themes[config.theme].musics, "title_screen")
+  end
+
   local ret = nil
   local percent = 0
   local incrementAmount = 0.01
@@ -170,6 +175,7 @@ function main_title()
         percent =  bound(0, percent + increment, 1)
         
         if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (table.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
+          stop_the_music()
           ret = {main_select_mode}
         end
       end
