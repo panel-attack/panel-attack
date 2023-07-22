@@ -327,9 +327,17 @@ Configuration:
 
 ##### Player names
 
-Only the position is configurable here:
+The position and font size of the player names are configurable:
 ```
-"name_Pos": [20, -30],
+"name_Pos": [184, -108],
+"name_Font_Size": 20,
+```
+
+##### Game Over text
+
+The position of the "game over" text.
+```
+"gameover_text_Pos": [640, 620],
 ```
 
 ##### Score
