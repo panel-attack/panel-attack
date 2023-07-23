@@ -12,13 +12,13 @@ function(self, a, b, roomNumber, leaderboard, server)
   self.a = a --player a as a connection object
   self.b = b --player b as a connection object
   self.server = server
-  self.stage = nil
+  self.stage = nil -- stage for the game, randomly picked from both players
   self.name = a.name .. " vs " .. b.name
   self.roomNumber = roomNumber
   self.a.room = self
   self.b.room = self
-  self.spectators = {}
-  self.win_counts = {}
+  self.spectators = {} -- array of spectator connection objects
+  self.win_counts = {} -- win counts by player number
   self.win_counts[1] = 0
   self.win_counts[2] = 0
   local a_rating, b_rating
@@ -49,7 +49,7 @@ function(self, a, b, roomNumber, leaderboard, server)
     {old = b_rating or 0, new = b_rating or 0, difference = 0, league = self.server:get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
   }
 
-  self.game_outcome_reports = {}
+  self.game_outcome_reports = {} -- mapping of what each player reports the outcome of the game
 end
 )
 
@@ -84,18 +84,14 @@ function Room.prepare_character_select(self)
   -- end
 end
 
-function Room.state(self)
-if self.a.state == "character select" then
-  return "character select"
-elseif self.a.state == "playing" then
-  return "playing"
-else
-  return self.a.state
-end
-end
-
-function Room.is_spectatable(self)
-return self.a.state == "character select"
+function Room:state()
+  if self.a.state == "character select" then
+    return "character select"
+  elseif self.a.state == "playing" then
+    return "playing"
+  else
+    return self.a.state
+  end
 end
 
 function Room.add_spectator(self, new_spectator_connection)
@@ -174,7 +170,6 @@ function Room.close(self)
 end
 
 function Room.send_to_spectators(self, message)
-  --TODO: maybe try to do this in a different thread?
   for k, v in pairs(self.spectators) do
     if v then
       v:send(message)
