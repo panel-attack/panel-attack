@@ -20,7 +20,6 @@ local database = require("server.PADatabase")
 
 local pairs = pairs
 local ipairs = ipairs
-local lobby_changed = false
 local time = os.time
 
 -- Represents the full server object.
@@ -30,19 +29,19 @@ Server =
   function(self, databaseParam)
     self.connectionNumberIndex = 1 -- GLOBAL counter of the next available connection index
     self.roomNumberIndex = 1 -- the next available room number
-    self.rooms = {}
-    self.proposals = {}
-    self.ban_list = {}
-    self.connections = {} -- all connection objects
-    self.name_to_idx = {} -- mapping of player names to their unique connectionNumberIndex
-    self.socket_to_idx = {} -- mapping of sockets to their unique connectionNumberIndex
-    self.database = databaseParam
+    self.rooms = {} -- mapping of room number to room
+    self.proposals = {} -- mapping of player name to a mapping of the players they have challenged
+    self.connections = {} -- mapping of connection number to connection
+    self.nameToConnectionIndex = {} -- mapping of player names to their unique connectionNumberIndex
+    self.socketToConnectionIndex = {} -- mapping of sockets to their unique connectionNumberIndex
+    self.database = databaseParam -- the database object
     self.loaded_placement_matches = {
       incomplete = {},
       complete = {}
     }
-    self.prev_now = time()
-    self.lastFlushTime = self.prev_now
+    self.lastProcessTime = time()
+    self.lastFlushTime = self.lastProcessTime
+    self.lobbyChanged = false
 
     logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
     self.socket = socket.bind("*", SERVER_PORT or 49569)
@@ -50,6 +49,7 @@ Server =
     if TCP_NODELAY_ENABLED then
       self.socket:setoption("tcp-nodelay", true)
     end
+
     self.playerbase = Playerbase("playerbase")
     read_players_file(self.playerbase)
     leaderboard = Leaderboard("leaderboard", self)
@@ -160,7 +160,7 @@ local function addPublicPlayerData(players, playerName, player)
 end
 
 function Server:setLobbyChanged()
-  lobby_changed = true
+  self.lobbyChanged = true
 end
 
 function Server:lobby_state()
@@ -181,27 +181,27 @@ function Server:lobby_state()
   return {unpaired = names, spectatable = spectatableRooms, players = players}
 end
 
-function Server:propose_game(sender, receiver, message)
-  local s_c, r_c = self.name_to_idx[sender], self.name_to_idx[receiver]
-  if s_c then
-    s_c = self.connections[s_c]
+function Server:propose_game(senderName, receiverName, message)
+  local senderConnection, receiverConnection = self.nameToConnectionIndex[senderName], self.nameToConnectionIndex[receiverName]
+  if senderConnection then
+    senderConnection = self.connections[senderConnection]
   end
-  if r_c then
-    r_c = self.connections[r_c]
+  if receiverConnection then
+    receiverConnection = self.connections[receiverConnection]
   end
   local proposals = self.proposals
-  if s_c and s_c.state == "lobby" and r_c and r_c.state == "lobby" then
-    proposals[sender] = proposals[sender] or {}
-    proposals[receiver] = proposals[receiver] or {}
-    if proposals[sender][receiver] then
-      if proposals[sender][receiver][receiver] then
-        self:create_room(s_c, r_c)
+  if senderConnection and senderConnection.state == "lobby" and receiverConnection and receiverConnection.state == "lobby" then
+    proposals[senderName] = proposals[senderName] or {}
+    proposals[receiverName] = proposals[receiverName] or {}
+    if proposals[senderName][receiverName] then
+      if proposals[senderName][receiverName][receiverName] then
+        self:create_room(senderConnection, receiverConnection)
       end
     else
-      r_c:send(message)
-      local prop = {[sender] = true}
-      proposals[sender][receiver] = prop
-      proposals[receiver][sender] = prop
+      receiverConnection:send(message)
+      local prop = {[senderName] = true}
+      proposals[senderName][receiverName] = prop
+      proposals[receiverName][senderName] = prop
     end
   end
 end
@@ -367,21 +367,6 @@ function Server:deny_login(connection, reason, ban)
     )
   end
   logger.warn("login denied.  Reason:  " .. (reason or ban.reason))
-end
-
-function Server:unban(connection)
-  local IP, port = connection.socket:getsockname()
-  if self.ban_list[IP] then
-    self.ban_list[IP] = nil
-  end
-end
-
-function Server:is_banned(IP)
-  local is_banned = false
-  if self.ban_list[IP] and self.ban_list[IP].unban_time - os.time() > 0 then
-    is_banned = true
-  end
-  return is_banned
 end
 
 function Server:closeRoom(room)
@@ -659,83 +644,99 @@ function Server:get_league(rating)
   return "LeagueNotFound"
 end
 
-function Server:broadcast_lobby()
-  if lobby_changed then
-    for _, v in pairs(self.connections) do
-      if v.state == "lobby" then
-        v:send(self:lobby_state())
-      end
-    end
-    lobby_changed = false
-  end
-end
-
 local server = Server(database)
 
--- Called every few fractions of a second to update the game
--- dt is the amount of time in seconds that has passed.
 function Server:update()
   self.socket:settimeout(0)
   if TCP_NODELAY_ENABLED then
     self.socket:setoption("tcp-nodelay", true)
   end
 
-  -- Accept any new connections to the server
-  local new_conn = self.socket:accept()
-  if new_conn then
-    new_conn:settimeout(0)
-    if TCP_NODELAY_ENABLED then
-      new_conn:setoption("tcp-nodelay", true)
-    end
-    local connection = Connection(new_conn, self.connectionNumberIndex, server)
-    logger.debug("Accepted connection " .. self.connectionNumberIndex)
-    server.connections[self.connectionNumberIndex] = connection
-    server.socket_to_idx[new_conn] = self.connectionNumberIndex
-    self.connectionNumberIndex = self.connectionNumberIndex + 1
-  end
+  self:acceptNewConnections()
 
-  -- Read from all the active connections
-  local recvt = {self.socket}
-  for _, v in pairs(server.connections) do
-    recvt[#recvt + 1] = v.socket
-  end
-  local ready = socket.select(recvt, nil, 1)
-  assert(type(ready) == "table")
-  for _, v in ipairs(ready) do
-    if server.socket_to_idx[v] then
-      server.connections[server.socket_to_idx[v]]:read()
-    end
-  end
+  self:readSockets()
 
   -- Only check once a second to avoid over checking
   -- (we are relying on time() returning a number rounded to the second)
-  local now = time()
-  if now ~= self.prev_now then
-    -- Check all active connections to make sure they have responded timely
-    for _, v in pairs(server.connections) do
-      if now - v.last_read > 10 then
-        logger.debug("Closing connection for " .. (v.name or "nil") .. ". Connection timed out (>10 sec)")
-        v:close()
-      elseif now - v.last_read > 1 then
-        v:send(NetworkProtocol.serverMessageTypes.ping.prefix) -- Request a ping to make sure the connection is still active
-      end
-    end
+  local currentTime = time()
+  if currentTime ~= self.lastProcessTime then
+    self:pingConnections(currentTime)
     
-    -- Flush the log so we can see new info periodically. The default caches for huge amounts of time.
-    if now - self.lastFlushTime > 60 then
-      pcall(
-        function()
-          io.stdout:flush()
-        end
-      )
-      self.lastFlushTime = now
-    end
+    self:flushLogs(currentTime)
 
-    self.prev_now = now
+    self.lastProcessTime = currentTime
   end
 
   -- If the lobby changed tell everyone
-  server:broadcast_lobby()
+  self:broadCastLobbyIfChanged()
+end
+
+-- Accept any new connections to the server
+function Server:acceptNewConnections()
+  local newConnectionSocket = self.socket:accept()
+  if newConnectionSocket then
+    newConnectionSocket:settimeout(0)
+    if TCP_NODELAY_ENABLED then
+      newConnectionSocket:setoption("tcp-nodelay", true)
+    end
+    local connection = Connection(newConnectionSocket, self.connectionNumberIndex, self)
+    logger.debug("Accepted connection " .. self.connectionNumberIndex)
+    self.connections[self.connectionNumberIndex] = connection
+    self.socketToConnectionIndex[newConnectionSocket] = self.connectionNumberIndex
+    self.connectionNumberIndex = self.connectionNumberIndex + 1
+  end
+end
+
+function Server:readSockets()
+  -- Make a list of all the sockets to listen to
+  local socketsToCheck = {self.socket}
+  for _, v in pairs(self.connections) do
+    socketsToCheck[#socketsToCheck + 1] = v.socket
+  end
+
+  -- Wait for up to 1 second to see if there is any data to read on all the given sockets
+  local socketsWithData = socket.select(socketsToCheck, nil, 1)
+  assert(type(socketsWithData) == "table")
+  for _, currentSocket in ipairs(socketsWithData) do
+    if self.socketToConnectionIndex[currentSocket] then
+      self.connections[self.socketToConnectionIndex[currentSocket]]:read()
+    end
+  end
+end
+
+-- Check all active connections to make sure they have responded timely
+function Server:pingConnections(currentTime)
+  for _, connection in pairs(self.connections) do
+    if currentTime - connection.lastCommunicationTime > 10 then
+      logger.debug("Closing connection for " .. (connection.name or "nil") .. ". Connection timed out (>10 sec)")
+      connection:close()
+    elseif currentTime - connection.lastCommunicationTime > 1 then
+      connection:send(NetworkProtocol.serverMessageTypes.ping.prefix) -- Request a ping to make sure the connection is still active
+    end
+  end
+end
+  
+-- Flush the log so we can see new info periodically. The default caches for huge amounts of time.
+function Server:flushLogs(currentTime)
+  if currentTime - self.lastFlushTime > 60 then
+    pcall(
+      function()
+        io.stdout:flush()
+      end
+    )
+    self.lastFlushTime = currentTime
+  end
+end
+
+function Server:broadCastLobbyIfChanged()
+  if self.lobbyChanged then
+    for _, connection in pairs(self.connections) do
+      if connection.state == "lobby" then
+        connection:send(self:lobby_state())
+      end
+    end
+    self.lobbyChanged = false
+  end
 end
 
 return server

@@ -257,8 +257,8 @@ function do_messages()
   return true
 end
 
-function request_game(name)
-  json_send({game_request = {sender = config.name, receiver = name}})
+function request_game(opponentName)
+  json_send({game_request = {sender = config.name, receiver = opponentName}})
 end
 
 function request_spectate(roomNr)
