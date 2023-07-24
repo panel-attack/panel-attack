@@ -1,5 +1,8 @@
 -- We must launch the server from the root directory so all the requires are the right path relatively.
-local server = require("server.server")
+local database = require("server.PADatabase")
+local Server = require("server.server")
+
+local currentServer = Server(database)
 while true do
-  server:update()
+  currentServer:update()
 end

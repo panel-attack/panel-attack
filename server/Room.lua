@@ -53,12 +53,12 @@ function(self, a, b, roomNumber, leaderboard, server)
 end
 )
 
-function Room.character_select(self)
+function Room:character_select()
   self:prepare_character_select()
   self:send({character_select = true, create_room = true, rating_updates = true, ratings = self.ratings, a_menu_state = self.a:menu_state(), b_menu_state = self.b:menu_state()})
 end
 
-function Room.prepare_character_select(self)
+function Room:prepare_character_select()
   logger.debug("Called Server.lua Room.character_select")
   self.a.state = "character select"
   self.b.state = "character select"
@@ -78,10 +78,6 @@ function Room.prepare_character_select(self)
   self.b.cursor = "__Ready"
   self.a.ready = false
   self.b.ready = false
-  -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
-  -- for k,v in ipairs(self.spectators) do
-  -- self.spectators[k]:send(msg)
-  -- end
 end
 
 function Room:state()
@@ -94,7 +90,7 @@ function Room:state()
   end
 end
 
-function Room.add_spectator(self, new_spectator_connection)
+function Room:add_spectator(new_spectator_connection)
   new_spectator_connection.state = "spectating"
   new_spectator_connection.room = self
   self.spectators[#self.spectators + 1] = new_spectator_connection
@@ -124,7 +120,7 @@ function Room.add_spectator(self, new_spectator_connection)
   self:send(msg)
 end
 
-function Room.spectator_names(self)
+function Room:spectator_names()
   local list = {}
   for k, v in pairs(self.spectators) do
     list[#list + 1] = v.name
@@ -132,7 +128,7 @@ function Room.spectator_names(self)
   return list
 end
 
-function Room.remove_spectator(self, connection)
+function Room:remove_spectator(connection)
   local lobbyChanged = false
   for k, v in pairs(self.spectators) do
     if v.name == connection.name then
@@ -149,7 +145,7 @@ function Room.remove_spectator(self, connection)
   return lobbyChanged
 end
 
-function Room.close(self)
+function Room:close()
   if self.a then
     self.a.player_number = 0
     self.a.state = "lobby"
@@ -169,7 +165,7 @@ function Room.close(self)
   self:send_to_spectators({leave_room = true})
 end
 
-function Room.send_to_spectators(self, message)
+function Room:send_to_spectators(message)
   for k, v in pairs(self.spectators) do
     if v then
       v:send(message)
@@ -177,7 +173,7 @@ function Room.send_to_spectators(self, message)
   end
 end
 
-function Room.send(self, message)
+function Room:send(message)
   if self.a then
     self.a:send(message)
   end
@@ -187,7 +183,7 @@ function Room.send(self, message)
   self:send_to_spectators(message)
 end
 
-function Room.resolve_game_outcome(self)
+function Room:resolve_game_outcome()
   --Note: return value is whether the outcome could be resolved
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
@@ -308,7 +304,7 @@ function Room.resolve_game_outcome(self)
   end
 end
 
-function Room.rating_adjustment_approved(self)
+function Room:rating_adjustment_approved()
   --returns whether both players in the room have game states such that rating adjustment should be approved
   local players = {self.a, self.b}
   local reasons = {}
@@ -365,9 +361,6 @@ function Room.rating_adjustment_approved(self)
     reasons[#reasons + 1] = "Touch input is not currently allowed in ranked matches."
   end
   for player_number = 1, 2 do
-    if not self.server.playerbase.players[players[player_number].user_id] or not players[player_number].logged_in then
-      reasons[#reasons + 1] = players[player_number].name .. " didn't log in"
-    end
     if not players[player_number].wants_ranked_match then
       reasons[#reasons + 1] = players[player_number].name .. " doesn't want ranked"
     end

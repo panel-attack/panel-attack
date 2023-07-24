@@ -1,6 +1,7 @@
 local lfs = require("lfs")
 local logger = require("logger")
 local csvfile = require("simplecsv")
+require("table_util")
 
 function makeDirectory(path) 
   local status, error = pcall(
@@ -40,7 +41,10 @@ function read_players_file(playerbase)
     function()
       local f = assert(io.open("players.txt", "r"))
       io.input(f)
-      playerbase.players = json.decode(io.read("*all"))
+      local data = io.read("*all")
+      logger.info(data .. " data")
+      playerbase.players = json.decode(data)
+      logger.info(table.length(playerbase.players) .. " players loaded")
       io.close(f)
     end
   )
@@ -125,7 +129,6 @@ function read_leaderboard_file()
     end
   )
   if not status then
-    logger.error("Failed to read leaderboard file with error: " .. error)
   elseif csv_table[2] then
     logger.debug("loading leaderboard.csv")
     for row = 2, #csv_table do
@@ -253,21 +256,20 @@ function read_csprng_seed_file()
         csprng_seed = io.read("*all")
         io.close(f)
       else
-        print("csprng_seed.txt could not be read.  Writing a new default (2000) csprng_seed.txt")
+        csprng_seed = math.random(1,99999)
+        print("csprng_seed.txt could not be read.  Writing a new csprng_seed.txt")
         local new_file = io.open("csprng_seed.txt", "w")
         if new_file then
           io.output(new_file)
-          io.write("2000")
+          io.write(csprng_seed)
           io.close(new_file)
         end
-        csprng_seed = "2000"
       end
       if tonumber(csprng_seed) then
         local tempvar = tonumber(csprng_seed)
         csprng_seed = tempvar
       else
-        print("ERROR: csprng_seed.txt content is not numeric.  Using default (2000) as csprng_seed")
-        csprng_seed = 2000
+        error("ERROR: csprng_seed.txt content is not numeric.")
       end
     end
   )

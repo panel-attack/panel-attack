@@ -34,6 +34,7 @@ Server =
     self.connections = {} -- mapping of connection number to connection
     self.nameToConnectionIndex = {} -- mapping of player names to their unique connectionNumberIndex
     self.socketToConnectionIndex = {} -- mapping of sockets to their unique connectionNumberIndex
+    assert(databaseParam ~= nil)
     self.database = databaseParam -- the database object
     self.loaded_placement_matches = {
       incomplete = {},
@@ -43,7 +44,7 @@ Server =
     self.lastFlushTime = self.lastProcessTime
     self.lobbyChanged = false
 
-    logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
+    logger.info("Starting up server with port: " .. (SERVER_PORT or 49569))
     self.socket = socket.bind("*", SERVER_PORT or 49569)
     self.socket:settimeout(0)
     if TCP_NODELAY_ENABLED then
@@ -71,9 +72,6 @@ Server =
     logger.debug("playerbase: " .. json.encode(self.playerbase.players))
     logger.debug("leaderboard report: " .. json.encode(leaderboard:get_report()))
     read_csprng_seed_file()
-    if csprng_seed == 2000 then
-      logger.warn("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
-    end
     initialize_mt_generator(csprng_seed)
     seed_from_mt(extract_mt())
     --timezone testing
@@ -182,6 +180,7 @@ function Server:lobby_state()
 end
 
 function Server:propose_game(senderName, receiverName, message)
+  logger.debug("propose game: " .. senderName .. " " .. receiverName)
   local senderConnection, receiverConnection = self.nameToConnectionIndex[senderName], self.nameToConnectionIndex[receiverName]
   if senderConnection then
     senderConnection = self.connections[senderConnection]
@@ -316,14 +315,32 @@ function Server:roomNumberToRoom(roomNr)
   end
 end
 
+function Server:createNewUser(name)
+  local user_id = nil
+  while not user_id or self.playerbase.players[user_id] do
+    user_id = self:generate_new_user_id()
+  end
+  self.playerbase:update(user_id, name)
+  self.database:insertNewPlayer(user_id, name)
+  self.database:insertPlayerELOChange(user_id, 0, 0)
+  return user_id
+end
+
+function Server:changeUsername(privateUserID, username)
+  self.playerbase:update(privateUserID, self.name)
+  if leaderboard.players[privateUserID] then
+    leaderboard.players[privateUserID].user_name = self.name
+  end
+  self.database:updatePlayerUsername(privateUserID, self.name)
+end
+
 function Server:generate_new_user_id()
   local new_user_id = cs_random()
-  logger.debug("new_user_id: " .. new_user_id)
   return tostring(new_user_id)
 end
 
---TODO: revisit this to determine whether it is good.
-function Server:deny_login(connection, reason, ban)
+function Server:denyLogin(connection, reason, ban)
+  local message = {login_denied = true, reason = reason }
   if ban then
     local banRemainingString = "Ban Remaining: "
     local secondsRemaining = (ban.completionTime - os.time())
@@ -349,24 +366,14 @@ function Server:deny_login(connection, reason, ban)
     if detailCount < 2 then
       banRemainingString = banRemainingString .. math.floor(secondsRemaining) .. " seconds "
     end
+    message.reason = ban.reason
+    message.ban_duration = banRemainingString
 
-    connection:send(
-      {
-        login_denied = true,
-        reason = ban.reason,
-        ban_duration = banRemainingString,
-      }
-    )
     self.database:playerBanSeen(ban.banID)
-  else
-    connection:send(
-      {
-        login_denied = true,
-        reason = reason,
-      }
-    )
+    logger.warn("Login denied because of ban: " .. ban.reason)
   end
-  logger.warn("login denied.  Reason:  " .. (reason or ban.reason))
+
+  connection:send(message)
 end
 
 function Server:closeRoom(room)
@@ -644,13 +651,7 @@ function Server:get_league(rating)
   return "LeagueNotFound"
 end
 
-local server = Server(database)
-
 function Server:update()
-  self.socket:settimeout(0)
-  if TCP_NODELAY_ENABLED then
-    self.socket:setoption("tcp-nodelay", true)
-  end
 
   self:acceptNewConnections()
 
@@ -739,4 +740,4 @@ function Server:broadCastLobbyIfChanged()
   end
 end
 
-return server
+return Server
