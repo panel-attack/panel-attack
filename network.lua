@@ -36,7 +36,6 @@ function resetNetwork()
   connection_up_time = 0
   GAME.connected_server_ip = ""
   GAME.connected_network_port = nil
-  current_server_supports_ranking = false
   match_type = ""
   if TCP_sock then
     TCP_sock:close()

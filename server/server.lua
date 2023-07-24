@@ -327,11 +327,11 @@ function Server:createNewUser(name)
 end
 
 function Server:changeUsername(privateUserID, username)
-  self.playerbase:update(privateUserID, self.name)
+  self.playerbase:update(privateUserID, username)
   if leaderboard.players[privateUserID] then
-    leaderboard.players[privateUserID].user_name = self.name
+    leaderboard.players[privateUserID].user_name = username
   end
-  self.database:updatePlayerUsername(privateUserID, self.name)
+  self.database:updatePlayerUsername(privateUserID, username)
 end
 
 function Server:generate_new_user_id()
