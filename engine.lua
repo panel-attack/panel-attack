@@ -1643,7 +1643,11 @@ function Stack.simulate(self)
           end
 
           local fadePercentage = self.fade_music_clock / fadeLength
-          if wantsDangerMusic then
+          -- Don't play danger music at the start of the match.
+          if self.game_stopwatch < fadeLength then
+            setFadePercentageForGivenTracks(1, normalMusic)
+            setFadePercentageForGivenTracks(0, dangerMusic)
+          elseif wantsDangerMusic then
             setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
             setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
           else
