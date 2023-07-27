@@ -318,6 +318,8 @@ function Theme.graphics_init(self)
   end
   -- mystery chain
   self.images.IMG_cards[true][0] = self:load_theme_img("chain/chain00")
+  -- mystery combo
+  self.images.IMG_cards[false][0] = self:load_theme_img("combo/combo00")
   for i = 2, 13 do
     -- with backup from default theme
     self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
