@@ -1623,10 +1623,16 @@ function main_replay()
   local playbackSpeed = 1
   local maximumSpeed = 20
   local function variableStep()
-    -- If we just finished a frame advance, pause again
+    -- If we just finished a frame advance, pause again and restore the value of max_runs
     if frameAdvance then
       frameAdvance = false
       GAME.gameIsPaused = true
+      if P1 then
+        P1.max_runs_per_frame = playbackSpeed
+      end
+      if P2 then
+        P2.max_runs_per_frame = playbackSpeed
+      end
     end
 
     -- Advance one frame
@@ -1634,26 +1640,26 @@ function main_replay()
       frameAdvance = true
       GAME.gameIsPaused = false
       if P1 then
-        P1.max_runs_per_frame = 1
+        P1.max_runs_per_frame = math.sign(playbackSpeed)
       end
       if P2 then
-        P2.max_runs_per_frame = 1
+        P2.max_runs_per_frame = math.sign(playbackSpeed)
       end
     elseif menu_right() then
       playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P1.max_runs_per_frame = playbackSpeed
       end
       if P2 then
-        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P2.max_runs_per_frame = playbackSpeed
       end
     elseif menu_left() then
       playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
       if P1 then
-        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P1.max_runs_per_frame = playbackSpeed
       end
       if P2 then
-        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P2.max_runs_per_frame = playbackSpeed
       end
     end
 
