@@ -313,7 +313,7 @@ function Theme.graphics_init(self)
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
-  for i = 4, 66 do
+  for i = 4, 72 do
     self.images.IMG_cards[false][i] = self:load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
   -- mystery chain
@@ -324,7 +324,7 @@ function Theme.graphics_init(self)
     -- with backup from default theme
     self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
-  -- load as many more chain cards as there are available until 99, we will substitue in the mystery card if a card is missing
+  -- load as many more chain cards as there are available until 99, we will substitute in the mystery card if a card is missing
   self.chainCardLimit = 99
   for i = 14, 99 do
     -- without backup from default theme
@@ -574,6 +574,22 @@ end
 
 function Theme:offsetsAreFixed()
   return self.version >= self.VERSIONS.fixedOffsets
+end
+
+function Theme:chainImage(chainAmount)
+  local cardImage = self.images.IMG_cards[true][chainAmount]
+  if cardImage == nil then
+   cardImage = self.images.IMG_cards[true][0]
+  end
+  return cardImage
+end
+
+function Theme:comboImage(comboAmount)
+  local cardImage = self.images.IMG_cards[false][comboAmount]
+  if cardImage == nil then
+   cardImage = self.images.IMG_cards[false][0]
+  end
+  return cardImage
 end
 
 -- loads a theme into the game
