@@ -15,10 +15,9 @@ Match =
     self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
-    self.current_music_is_casual = true
+    self.currentMusicIsDanger = false
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
-    self.current_music_is_casual = true
     self.startTimestamp = os.time(os.date("*t"))
     if (P2 or mode == "vs") and GAME.battleRoom then
       GAME.rich_presence:setPresence(
