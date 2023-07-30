@@ -1620,50 +1620,51 @@ function main_replay()
   end
 
   local frameAdvance = false
-  local playbackSpeed = 1
-  local maximumSpeed = 20
+  local playbackSpeeds = {-1,0,1,2,3,4,8,16} --anyone has ideas for a better naming convention?
+  local selected = 3 --index of the selected speed
   local function variableStep()
     -- If we just finished a frame advance, pause again and restore the value of max_runs
     if frameAdvance then
       frameAdvance = false
       GAME.gameIsPaused = true
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = playbackSpeeds[selected]
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = playbackSpeeds[selected]
       end
     end
 
     -- Advance one frame
-    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then
+    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then --I wonder what is the intent behind the "\\" thing
       frameAdvance = true
       GAME.gameIsPaused = false
       if P1 then
-        P1.max_runs_per_frame = math.sign(playbackSpeed)
+        --I didn't include the *1 after math.sign, like endaris suggested. Does multiplying by 1 serve a purpose?
+        P1.max_runs_per_frame = math.sign(playbackSpeeds[selected])
       end
       if P2 then
-        P2.max_runs_per_frame = math.sign(playbackSpeed)
+        P2.max_runs_per_frame = math.sign(playbackSpeeds[selected])
       end
     elseif menu_right() then
-      playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
+      selected = bound(1, selected + 1, #playbackSpeeds)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = playbackSpeeds[selected]
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = playbackSpeeds[selected]
       end
     elseif menu_left() then
-      playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
+      selected = bound(1, selected - 1, #playbackSpeeds)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeed
+        P1.max_runs_per_frame = playbackSpeeds[selected]
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeed
+        P2.max_runs_per_frame = playbackSpeeds[selected]
       end
     end
 
-    if playbackSpeed == -1 and not GAME.gameIsPaused then
+    if playbackSpeeds[selected] == -1 and not GAME.gameIsPaused then --hardcoded to work with -1.0x speed only
       if P1 and P1.clock > 0 and P1.prev_states[P1.clock-1] then
         P1:rollbackToFrame(P1.clock-1)
         P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
