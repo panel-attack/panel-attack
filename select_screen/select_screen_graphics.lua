@@ -308,6 +308,11 @@ function select_screen_graphics.draw_character(self, character)
     local scale = self.button_width / math.max(orig_w, orig_h) -- keep image ratio
     menu_drawf(icon_to_use, self.render_x + 0.5 * self.button_width, self.render_y + 0.5 * self.button_height, "center", "center", 0, scale, scale)
     if str ~= "P1" and str ~= "P2" then
+      -- For debugging which characters are loaded
+      -- if not character.fully_loaded then
+      --   local scaleX = self.button_width / themes[config.theme].images.IMG_loading:getWidth()
+      --   menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center", 0, scaleX, scaleX)
+      -- end
       if character.stage then
         local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
         menu_drawf(stages[character.stage].images.thumbnail, self.render_x + 10, self.render_y + self.button_height - 7, "center", "center", 0, 16 / orig_w, 9 / orig_h)

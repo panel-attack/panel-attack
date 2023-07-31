@@ -268,7 +268,7 @@ function Connection.J(self, message)
 end
 
 function Connection:handleErrorReport(errorReport)
-  logger.warn("Recieved an error report.")
+  logger.warn("Received an error report.")
   if not write_error_report(errorReport) then
     logger.error("The error report was either too large or had an I/O failure when attempting to write the file.")
   end
