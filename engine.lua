@@ -1615,7 +1615,7 @@ function Stack.simulate(self)
           local fadeLength = 60
           if not self.fade_music_clock then
             self.fade_music_clock = fadeLength -- start fully faded in
-            self.match.current_music_is_casual = true
+            self.match.currentMusicIsDanger = false
           end
 
           local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
@@ -1627,8 +1627,8 @@ function Stack.simulate(self)
           end
 
           -- Do we need to switch music?
-          if self.match.current_music_is_casual ~= wantsDangerMusic then
-            self.match.current_music_is_casual = not self.match.current_music_is_casual
+          if self.match.currentMusicIsDanger ~= wantsDangerMusic then
+            self.match.currentMusicIsDanger = not self.match.currentMusicIsDanger
 
             if self.fade_music_clock >= fadeLength then
               self.fade_music_clock = 0 -- Do a full fade
@@ -1652,20 +1652,20 @@ function Stack.simulate(self)
           end
         else -- classic music
           if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-            if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+            if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
               stop_the_music()
               find_and_add_music(musics_to_use, "danger_music")
-              self.match.current_music_is_casual = false
+              self.match.currentMusicIsDanger = true
             elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
               stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              self.match.current_music_is_casual = true
+              self.match.currentMusicIsDanger = false
             end
           else --we should be playing normal_music or normal_music_start
-            if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+            if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
               stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              self.match.current_music_is_casual = true
+              self.match.currentMusicIsDanger = false
             end
           end
         end
