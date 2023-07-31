@@ -214,15 +214,19 @@ function Stack.draw_cards(self)
       end
       -- draw card
       local iconSize = 48 / GFX_SCALE
-      local cardImage = self.theme.images.IMG_cards[card.chain][card.n]
-      if cardImage == nil then
-       cardImage = self.theme.images.IMG_cards[card.chain][0]
+      local cardImage = nil
+      if card.chain then
+        cardImage = self.theme:chainImage(card.n)
+      else
+        cardImage = self.theme:comboImage(card.n)
       end
-      local icon_width, icon_height = cardImage:getDimensions()
-      local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
-      set_color(1, 1, 1, fade)
-      draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
-      set_color(1, 1, 1, 1)
+      if cardImage then
+        local icon_width, icon_height = cardImage:getDimensions()
+        local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
+        set_color(1, 1, 1, fade)
+        draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
+        set_color(1, 1, 1, 1)
+      end
     end
   end
 end
@@ -978,14 +982,13 @@ function Stack.render(self)
     for i = 2, self.theme.chainCardLimit + 1 do
       local chain_amount = chainData[i]
       if chain_amount and chain_amount > 0 then
-        local cardImage = self.theme.images.IMG_cards[true][i]
-        if cardImage == nil then
-          cardImage = self.theme.images.IMG_cards[true][0]
+        local cardImage = self.theme:chainImage(i)
+        if cardImage then
+          icon_width, icon_height = cardImage:getDimensions()
+          draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+          gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+          y = y + nextIconIncrement
         end
-        icon_width, icon_height = cardImage:getDimensions()
-        draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-        gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
-        y = y + nextIconIncrement
       end
     end
   
@@ -1010,10 +1013,13 @@ function Stack.render(self)
     local xCombo = x + column2Distance
     for i, combo_amount in pairs(comboData) do
       if combo_amount and combo_amount > 0 then
-        icon_width, icon_height = self.theme.images.IMG_cards[false][i]:getDimensions()
-        draw(self.theme.images.IMG_cards[false][i], xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-        gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
-        yCombo = yCombo + nextIconIncrement
+        local cardImage = self.theme:comboImage(i)
+        if cardImage then
+          icon_width, icon_height = cardImage:getDimensions()
+          draw(cardImage, xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+          gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
+          yCombo = yCombo + nextIconIncrement
+        end
       end
     end
   end
