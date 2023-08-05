@@ -16,6 +16,11 @@ VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest ver
 
 consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
+
+consts.SERVER_SAVE_DIRECTORY = "servers/"
+consts.LEGACY_SERVER_LOCATION = "18.188.43.50"
+consts.SERVER_LOCATION = "panelattack.com"
+
 canvas_width = 1280
 canvas_height = 720
 
