@@ -143,7 +143,6 @@ function queue_message(type, data)
       error(loc("nt_msg_err", (data or "nil")))
     end
     if current_message.spectators then
-      spectator_list = current_message.spectators
       spectators_string = spectator_list_string(current_message.spectators)
       return
     end

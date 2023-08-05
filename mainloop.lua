@@ -19,7 +19,6 @@ GAME.connected_network_port = nil -- the port of the server you are connected to
 my_user_id = nil -- your user id
 leaderboard_report = nil
 replay_of_match_so_far = nil -- current replay of spectatable replay
-spectator_list = nil
 spectators_string = ""
 leftover_time = 0
 local wait_game_update = nil
@@ -1033,7 +1032,9 @@ function main_net_vs_lobby()
           love.window.requestAttention()
           play_optional_sfx(themes[config.theme].sounds.notification)
         end
-        lobby_menu:remove_self()
+        if lobby_menu then
+          lobby_menu:remove_self()
+        end
         return select_screen.main, {select_screen, "2p_net_vs", msg}
       end
       if msg.players then
@@ -1080,11 +1081,9 @@ function main_net_vs_lobby()
     local function toggleLeaderboard()
       updated = true
       if not showing_leaderboard then
-        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
         showing_leaderboard = true
         json_send({leaderboard_request = true})
       else
-        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
         showing_leaderboard = false
         lobby_menu.x = lobby_menu_x[showing_leaderboard]
       end
@@ -1092,7 +1091,6 @@ function main_net_vs_lobby()
 
     -- If we got an update to the lobby, refresh the menu
     if updated then
-      spectator_list = {}
       spectators_string = ""
       local oldLobbyMenu = nil
       if lobby_menu then
@@ -1101,19 +1099,16 @@ function main_net_vs_lobby()
         lobby_menu = nil
       end
 
-      local function commonSelectLobby()
-        updated = true
-        spectator_list = {}
-        spectators_string = ""
-        lobby_menu:remove_self()
-      end
-
       local function goEscape()
         lobby_menu:set_active_idx(#lobby_menu.buttons)
       end
 
       local function exitLobby()
-        commonSelectLobby()
+        updated = true
+        spectators_string = ""
+        if lobby_menu then
+          lobby_menu:remove_self()
+        end
         ret = {main_select_mode}
       end
 
