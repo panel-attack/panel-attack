@@ -78,6 +78,8 @@ function fmainloop()
     require("tests.ThemeTests")
     require("tests.TouchDataEncodingTests")
     require("tests.utf8AdditionsTests")
+    require("tests.QueueTests")
+    require("tests.TimeQueueTests")
     require("table_util_tests")
     require("utilTests")
     --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
@@ -2108,7 +2110,7 @@ function game_over_transition(next_func, gameResultText, winnerSFX, timemax, kee
         local left_select_menu = false -- Whether a message has been sent that indicates a match has started or the room has closed
         if this_frame_messages then
           for _, msg in ipairs(this_frame_messages) do
-            -- if a new match has started or the room is being closed, flag the left select menu variavle
+            -- if a new match has started or the room is being closed, flag the left select menu variable
             if msg.match_start or replay_of_match_so_far or msg.leave_room then
               left_select_menu = true
             end

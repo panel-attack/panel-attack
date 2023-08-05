@@ -123,16 +123,16 @@ function refreshBasedOnOwnMods(player)
   end
 end
 
--- Updates the ready state for all players
+-- Each player sends "wants_ready" when they have selected the ready button.
+-- Each player is "loaded" when the character and stage are fully loaded
+-- The player isn't actually ready to start though until both players have selected "wants_ready" and are loaded.
+-- After that happens each player sends "ready"
+-- When the server gets the "ready" it tells both players to start the game.
+-- Its important to not send "ready" before both players want ready and are loaded so the server doesn't tell you 
+-- to start before everything is for sure not going to change and everything is loaded.
 function select_screen.refreshReadyStates(self)
   for playerNumber = 1, #self.players do
-    if self:isNetPlay() then
-      self.players[playerNumber].ready =
-          self.players[playerNumber].wants_ready and
-          table.trueForAll(self.players, function(pc) return pc.loaded end)
-    else
-      self.players[playerNumber].ready = self.players[playerNumber].wants_ready and self.players[playerNumber].loaded
-    end
+    self.players[playerNumber].ready = table.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
   end
 end
 
@@ -184,7 +184,10 @@ function select_screen.on_select(self, player, super)
       -- load stage even if hidden!
       stage_loader_load(player.stage)
     end
-    player.cursor.selected = not player.cursor.selected
+    -- Don't let the player stop ready if both players have already told the server to start the game
+    if player.cursor.positionId ~= "__Ready" or player.ready == false then 
+      player.cursor.selected = not player.cursor.selected
+    end
   elseif player.cursor.positionId == "__Leave" then
     return true
   elseif player.cursor.positionId == "__Random" then
@@ -233,7 +236,7 @@ function select_screen.isMultiplayer(self)
   -- vs cpu is not really multiplayer but it has 2 stacks so we need to set both "players" up
 end
 
--- Makes sure all the client data is up to date and ready
+-- Marks when the player's stage and character are loaded
 function select_screen.refreshLoadingState(self, playerNumber)
   self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
 end
