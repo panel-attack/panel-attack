@@ -4,6 +4,7 @@ local logger = require("logger")
 Match =
   class(
   function(self, mode, battleRoom)
+    self.players = {}
     self.P1 = nil
     self.P2 = nil
     self.engineVersion = VERSION
@@ -49,6 +50,16 @@ function Match:deinit()
   for _, quad in ipairs(self.time_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
+end
+
+function Match:addPlayer(stack)
+  if stack.which == 1 then
+    self.P1 = stack
+  elseif stack.which == 2 then
+    self.P2 = stack
+  end
+  assert(#self.players == stack.which-1, "Player was added to match before previous player")
+  self.players[#self.players+1] = stack
 end
 
 function Match:gameEndedClockTime()

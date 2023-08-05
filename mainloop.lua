@@ -432,7 +432,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
   P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod=config.inputMethod}
 
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
@@ -1616,62 +1616,64 @@ function main_replay()
 
   Replay.loadFromFile(replay, true)
 
+  local playbackSpeeds = {-1,0,1,2,3,4,8,16}
+  local selectedSpeedIndex = 3 --index of the selected speed
+
   local function update()
+    local textY = unpack(themes[config.theme].gameover_text_Pos)
+    local playbackText = playbackSpeeds[selectedSpeedIndex] .. "x"
+    gprintf(playbackText, 0, textY, canvas_width, "center", nil, 1, large_font)
   end
 
   local frameAdvance = false
-  local playbackSpeeds = {-1,0,1,2,3,4,8,16} --anyone has ideas for a better naming convention?
-  local selected = 3 --index of the selected speed
   local function variableStep()
     -- If we just finished a frame advance, pause again and restore the value of max_runs
     if frameAdvance then
       frameAdvance = false
       GAME.gameIsPaused = true
       if P1 then
-        P1.max_runs_per_frame = playbackSpeeds[selected]
+        P1.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeeds[selected]
+        P2.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
     end
 
     -- Advance one frame
-    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then --I wonder what is the intent behind the "\\" thing
+    if (menu_advance_frame() or this_frame_keys["\\"]) and not frameAdvance then
       frameAdvance = true
       GAME.gameIsPaused = false
       if P1 then
-        --I didn't include the *1 after math.sign, like endaris suggested. Does multiplying by 1 serve a purpose?
-        P1.max_runs_per_frame = math.sign(playbackSpeeds[selected])
+        P1.max_runs_per_frame = math.sign(playbackSpeeds[selectedSpeedIndex])
       end
       if P2 then
-        P2.max_runs_per_frame = math.sign(playbackSpeeds[selected])
+        P2.max_runs_per_frame = math.sign(playbackSpeeds[selectedSpeedIndex])
       end
     elseif menu_right() then
-      selected = bound(1, selected + 1, #playbackSpeeds)
+      selectedSpeedIndex = bound(1, selectedSpeedIndex + 1, #playbackSpeeds)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeeds[selected]
+        P1.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeeds[selected]
+        P2.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
     elseif menu_left() then
-      selected = bound(1, selected - 1, #playbackSpeeds)
+      selectedSpeedIndex = bound(1, selectedSpeedIndex - 1, #playbackSpeeds)
       if P1 then
-        P1.max_runs_per_frame = playbackSpeeds[selected]
+        P1.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
       if P2 then
-        P2.max_runs_per_frame = playbackSpeeds[selected]
+        P2.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
     end
 
-    if playbackSpeeds[selected] == -1 and not GAME.gameIsPaused then --hardcoded to work with -1.0x speed only
-      if P1 and P1.clock > 0 and P1.prev_states[P1.clock-1] then
-        P1:rollbackToFrame(P1.clock-1)
-        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-      end
-      if P2 and P2.clock > 0 and P2.prev_states[P2.clock-1] then
-        P2:rollbackToFrame(P2.clock-1)
-        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+    -- If playback is negative than we need to rollback to "rewind"
+    if playbackSpeeds[selectedSpeedIndex] == -1 and not GAME.gameIsPaused then
+      for _, stack in ipairs(GAME.match.players) do
+        if stack.clock > 0 and stack.prev_states[stack.clock-1] then
+          stack:rollbackToFrame(stack.clock-1)
+          stack.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+        end
       end
     end
   end
@@ -1741,7 +1743,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
 
     GAME.match = Match("puzzle")
     P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
-    GAME.match.P1 = P1
+    GAME.match:addPlayer(P1)
     P1:wait_for_random_character()
     if not character then
       character = P1.character

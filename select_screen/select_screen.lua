@@ -814,10 +814,10 @@ function select_screen.startNetPlayMatch(self, msg)
     is_local = false
   end
   P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
   P1:setOpponent(P2)
@@ -857,10 +857,10 @@ end
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
   --note: local P2 not currently allowed to use "touch" input method
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   P1:setOpponent(P2)
   P1:setGarbageTarget(P2)
   P2:setOpponent(P1)
@@ -913,7 +913,7 @@ function select_screen.start1pLocalMatch(self)
     GAME.match.simulatedOpponent = simulatedOpponent
   end
   
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   if not GAME.match.simulatedOpponent then
     P1:setGarbageTarget(P1)
   else
@@ -933,10 +933,10 @@ end
 function select_screen.start1pCpuMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
   P2.max_runs_per_frame = 1
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
 
   P1.garbageTarget = P2

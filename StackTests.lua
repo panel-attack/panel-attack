@@ -4,7 +4,7 @@ local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local function puzzleTest()
   local match = Match("puzzle") -- to stop rising
   local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match.P1 = stack
+  match:addPlayer(stack)
   stack.do_countdown = false
   stack:wait_for_random_character()
 
@@ -28,7 +28,7 @@ puzzleTest()
 local function clearPuzzleTest()
   local match = Match("puzzle") -- to stop rising
   local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match.P1 = stack
+  match:addPlayer(stack)
   stack.do_countdown = false
   stack:wait_for_random_character()
 
