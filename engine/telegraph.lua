@@ -355,8 +355,8 @@ function Telegraph:render()
             garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.originY - TELEGRAPH_PADDING)
             
             if not garbage_block.origin_x or not garbage_block.origin_y then
-              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.panelOriginX
-              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.panelOriginY + (telegraph_to_render.sender.displacement or 0) - card_animation[#card_animation]
+              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.frameOriginX
+              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.frameOriginY + (telegraph_to_render.sender.displacement or 0) - card_animation[#card_animation]
               garbage_block.x = garbage_block.origin_x
               garbage_block.y = garbage_block.origin_y
               garbage_block.direction = garbage_block.direction or math.sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right

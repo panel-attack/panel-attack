@@ -1,4 +1,5 @@
 local consts = require("consts")
+require("TimeQueue")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
@@ -26,8 +27,14 @@ Game =
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
+    self.sendNetworkQueue = TimeQueue()
+    self.receiveNetworkQueue = TimeQueue()
   end
 )
+
+function Game:update(dt) 
+  updateNetwork(dt)
+end
 
 function Game.clearMatch(self)
   if self.match then

@@ -327,9 +327,17 @@ Configuration:
 
 ##### Player names
 
-Only the position is configurable here:
+The position and font size of the player names are configurable:
 ```
-"name_Pos": [20, -30],
+"name_Pos": [184, -108],
+"name_Font_Size": 20,
+```
+
+##### Game Over text
+
+The position of the "game over" text.
+```
+"gameover_text_Pos": [640, 620],
 ```
 
 ##### Score
@@ -474,6 +482,7 @@ While an incorrectly cased file may load on Windows, it will not on other operat
 
 All music has to be placed inside the `music` subdirectory.  
 
+`title_screen` and optionally `title_screen_start` for the title screen.  
 `main` and optionally `main_start` for all button menus.  
 `select_screen` and optionally `select_screen_start` for character selection.  
 If `main` exists but `select_screen` does not, `main` will play in character selection as well.

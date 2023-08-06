@@ -125,6 +125,8 @@ function love.update(dt)
 
   leftover_time = leftover_time + dt
 
+  GAME:update(dt)
+  
   if GAME.backgroundImage then
     GAME.backgroundImage:update(dt)
   end
@@ -192,7 +194,7 @@ function love.draw()
   end
 
   if STONER_MODE then 
-    gprintf("STONER", 1, 1 + (11 * 4))
+    gprintf("Lag Mode On, S:" .. GAME.sendNetworkQueue:length() .. " R:" .. GAME.receiveNetworkQueue:length(), 1, 1 + (11 * 4))
   end
 
   love.graphics.setCanvas() -- render everything thats been added

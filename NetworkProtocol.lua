@@ -73,7 +73,7 @@ function NetworkProtocol.getMessageFromString(messageBuffer, isServerMessage)
       local remainingBuffer = string.sub(messageBuffer, finishEnd+1)
       return type, message, remainingBuffer
     else
-      logger.trace("not all UTF8 data recieved, waiting: " .. messageBuffer)
+      logger.trace("not all UTF8 data received, waiting: " .. messageBuffer)
       return nil
     end
   else
