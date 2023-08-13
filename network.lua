@@ -1,3 +1,4 @@
+local consts = require("consts")
 local logger = require("logger")
 local NetworkProtocol = require("NetworkProtocol")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
@@ -219,7 +220,7 @@ end
 function send_error_report(errorData)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect("18.188.43.50", 59569) then --for official server
+  if not TCP_sock:connect(consts.SERVER_LOCATION, 59569) then
     return false
   end
   TCP_sock:settimeout(0)

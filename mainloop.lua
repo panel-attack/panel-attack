@@ -1,3 +1,4 @@
+local consts = require("consts")
 local logger = require("logger")
 require("ChallengeMode")
 local select_screen = require("select_screen.select_screen")
@@ -47,15 +48,8 @@ function fmainloop()
   wait()
   analytics.init()
   apply_config_volume()
-  -- create folders in appdata for those who don't have them already
-  love.filesystem.createDirectory("characters")
-  love.filesystem.createDirectory("panels")
-  love.filesystem.createDirectory("themes")
-  love.filesystem.createDirectory("stages")
-  love.filesystem.createDirectory("training")
-  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
-    recursive_copy("default_data/training", "training")
-  end
+
+  GAME:setupFileSystem()
 
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
@@ -229,7 +223,7 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
       {loc("mm_1_challenge_mode"), challenge_mode_setup},
-      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {consts.SERVER_LOCATION}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -238,7 +232,7 @@ do
     }
 
     if config.debugShowServers then
-      table.insert(items, 8, {"Beta Server", main_net_vs_setup, {"betaserver.panelattack.com", 59569}})
+      table.insert(items, 8, {"Beta Server", main_net_vs_setup, {"betaserver." .. consts.SERVER_LOCATION, 59569}})
       table.insert(items, 9, {"Localhost Server", main_net_vs_setup, {"localhost"}})
     end
 
@@ -285,9 +279,9 @@ do
       local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
       local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
       if runningFromAutoUpdater and autoUpdaterOutOfDate then
-        local downloadLink = "panelattack.com/panel.zip"
+        local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
         if GAME_UPDATER.name == "panel-beta" then
-          downloadLink = "panelattack.com/panel-beta.zip"
+          downloadLink = consts.SERVER_LOCATION .. "/panel-beta.zip"
         end
         gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
         infoYPosition = infoYPosition - fontHeight

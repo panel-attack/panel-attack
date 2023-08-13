@@ -1,3 +1,4 @@
+local consts = require("consts")
 require("TimeQueue")
 
 -- The main game object for tracking everything in Panel Attack.
@@ -223,6 +224,31 @@ function Game:drawLoadingString(loadingString)
   local backgroundPadding = 10
   grectangle_color("fill", (canvas_width / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
   gprintf(loadingString, x, y, canvas_width, "center", nil, nil, 10)
+end
+
+function Game:setupFileSystem()
+  -- create folders in appdata for those who don't have them already
+  love.filesystem.createDirectory("characters")
+  love.filesystem.createDirectory("panels")
+  love.filesystem.createDirectory("themes")
+  love.filesystem.createDirectory("stages")
+  love.filesystem.createDirectory("training")
+
+  local oldServerDirectory = consts.SERVER_SAVE_DIRECTORY .. consts.LEGACY_SERVER_LOCATION
+  local newServerDirectory = consts.SERVER_SAVE_DIRECTORY .. consts.SERVER_LOCATION
+  if not love.filesystem.getInfo(newServerDirectory) then
+    love.filesystem.createDirectory(newServerDirectory)
+
+    -- Move the old user ID spot to the new folder (we won't delete the old one for backwards compatibility and safety)
+    if love.filesystem.getInfo(oldServerDirectory) then
+      local userID = read_user_id_file(consts.LEGACY_SERVER_LOCATION)
+      write_user_id_file(userID, consts.SERVER_LOCATION)
+    end
+  end
+
+  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
+    recursive_copy("default_data/training", "training")
+  end
 end
 
 local game = Game()
