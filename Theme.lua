@@ -313,28 +313,30 @@ function Theme.graphics_init(self)
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
+  -- Combo card loading
   for i = 4, 72 do
-    self.images.IMG_cards[false][i] = self:load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
+    self.images.IMG_cards[false][i] = self:load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", true)
+  end
+
+  -- Chain card loading
+  -- load as many chain cards as there are available until 99
+  -- we assume if the theme provided any chains, they want to control all of them so don't load backups
+  local hasChainCards = love.filesystem.getInfo(Theme.themeDirectoryPath .. self.name .. "/chain")
+  local wantsBackupChainCards = hasChainCards == nil
+  self.chainCardLimit = 99
+  for i = 2, 99 do
+    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
+    if self.images.IMG_cards[true][i] == nil then
+      if wantsBackupChainCards then
+        self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", true)
+      else 
+        self.chainCardLimit = i - 1
+        break
+      end
+    end
   end
   -- mystery chain
   self.images.IMG_cards[true][0] = self:load_theme_img("chain/chain00")
-  -- mystery combo
-  self.images.IMG_cards[false][0] = self:load_theme_img("combo/combo00")
-  for i = 2, 13 do
-    -- with backup from default theme
-    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
-  end
-  -- load as many more chain cards as there are available until 99, we will substitute in the mystery card if a card is missing
-  self.chainCardLimit = 99
-  for i = 14, 99 do
-    -- without backup from default theme
-    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
-    if self.images.IMG_cards[true][i] == nil then
-      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
-      self.chainCardLimit = i - 1
-      break
-    end
-  end
 
   local MAX_SUPPORTED_PLAYERS = 2
   self.images.IMG_char_sel_cursors = {}
