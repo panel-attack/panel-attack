@@ -3,7 +3,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 local fileUtils = require("fileUtils")
-local Replay = require("replay")
+local Replay = require("Replay")
 local class = require("class")
 
 --@module replayBrowser

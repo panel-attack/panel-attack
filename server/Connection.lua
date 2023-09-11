@@ -29,7 +29,7 @@ Connection =
 
 function Connection.login(self, user_id)
   --returns whether the login was successful
-  --print("Connection.login was called!")
+  print("Connection.login was called!")
   self.user_id = user_id
   self.logged_in = false
   local IP_logging_in, port = self.socket:getpeername()

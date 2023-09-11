@@ -103,6 +103,10 @@ function Menu:addMenuItem(index, menuItem)
   self:updateMenuItemPositions(index)
 end
 
+function Menu:removeMenuItemAtIndex(index)
+  return self:removeMenuItem(self.menuItems[index].id)
+end
+
 function Menu:removeMenuItem(menuItemId)
   local menuItemIndex = nil
   for i, menuItem in ipairs(self.menuItems) do

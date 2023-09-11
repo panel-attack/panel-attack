@@ -9,7 +9,7 @@ local save = require("save")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
-local Replay = require("replay")
+local Replay = require("Replay")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
@@ -27,12 +27,18 @@ local GameBase = class(
     self.currentStage = config.stage
     self.loadStageAndMusic = true
     
+    self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
+    self.maxDisplayTime = -1 -- the maximum amount of seconds the game over screen will be displayed for, -1 means no max time
+    self.winnerTime = 1
+    
     self.frameInfo = {
       frameCount = nil,
       startTime = nil,
       currentTime = nil,
       expectedFrameCount = nil
     }
+    
+    self.transition = false
   end,
   Scene
 )
@@ -152,18 +158,15 @@ function GameBase:handlePause()
   end
 end
 
-local t = 0 -- the amount of frames that have passed since the game over screen was displayed
 local font = GraphicsUtil.getGlobalFont()
-local timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
-local timemax = -1
-local winnerTime = 60
+local gameOverStartTime = nil -- timestamp for when game over screen was first displayed
 local initialMusicVolumes = {}
 
 function GameBase:setupGameOver()
-  t = 0 -- the amount of frames that have passed since the game over screen was displayed
-  timemin = 60 -- the minimum amount of frames the game over screen will be displayed for
-  timemax = -1
-  winnerTime = 60
+  gameOverStartTime = love.timer.getTime() 
+  self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
+  self.maxDisplayTime = -1
+  self.winnerTime = 60
   initialMusicVolumes = {}
   
   self:customGameOverSetup()
@@ -172,7 +175,7 @@ function GameBase:setupGameOver()
     themes[config.theme].sounds.game_over:play()
     SFX_GameOver_Play = 0
   else
-    winnerTime = 0
+    self.winnerTime = 0
   end
 
   -- The music may have already been partially faded due to dynamic music or something else,
@@ -186,27 +189,28 @@ function GameBase:runGameOver()
   gprint(self.text, (canvas_width - font:getWidth(self.text)) / 2, 10)
   gprint(loc("continue_button"), (canvas_width - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
-  local ret = nil
+  local displayTime = love.timer.getTime() - gameOverStartTime
   if not self.keepMusic then
     -- Fade the music out over time
-    local fadeMusicLength = 3 * 60
-    if t <= fadeMusicLength then
-      local percentage = (fadeMusicLength - t) / fadeMusicLength
+    local fadeMusicLength = 3
+    if displayTime <= fadeMusicLength then
+      local percentage = (fadeMusicLength - displayTime) / fadeMusicLength
       for k, v in pairs(initialMusicVolumes) do
         local volume = v * percentage
         setFadePercentageForGivenTracks(volume, {k}, true)
       end
     else
-      if t == fadeMusicLength + 1 then
+      if displayTime > fadeMusicLength then
         setMusicFadePercentage(1) -- reset the music back to normal config volume
         stop_the_music()
       end
     end
   end
 
+  
   -- Play the winner sound effect after a delay
   if not SFX_mute then
-    if t >= winnerTime then
+    if displayTime >= self.winnerTime then
       if self.winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
         self.winnerSFX:play()
         self.winnerSFX = nil
@@ -233,16 +237,17 @@ function GameBase:runGameOver()
 
   -- if conditions are met, leave the game over screen
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
-  if t >= timemin and ((t >= timemax and timemax >= 0) or keyPressed) or leftSelectMenu then
+  
+  if not self.transitioning and ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed) or leftSelectMenu) then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     setMusicFadePercentage(1) -- reset the music back to normal config volume
     if not self.keepMusic then
       stop_the_music()
     end
     SFX_GameOver_Play = 0
+    self.transitioning = true
     sceneManager:switchToScene(self.nextScene, self.nextSceneParams)
   end
-  t = t + 1
   
   GAME.gfx_q:push({GAME.match.render, {GAME.match}})
 end
@@ -255,12 +260,20 @@ function GameBase:runGame(dt)
   local framesRun = 0
   self.frameInfo.currentTime = love.timer.getTime()
   self.frameInfo.expectedFrameCount = math.ceil((self.frameInfo.currentTime - self.frameInfo.startTime) * 60)
+  local abort = false
   repeat 
     self.frameInfo.frameCount = self.frameInfo.frameCount + 1
     framesRun = framesRun + 1
+    if self:customRun() then
+      abort = true
+      break
+    end
     GAME.match:run()
-    self:customRun()
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
+  if abort then
+    return
+  end
+  
   if framesRun > 1 then
     GAME.droppedFrames = GAME.droppedFrames + framesRun - 1
   end

@@ -166,6 +166,15 @@ function Game:createScenes()
     require("scenes.PuzzleGame"),
     require("scenes.TimeAttackMenu"),
     require("scenes.TimeAttackGame"),
+    require("scenes.CharacterSelectVsSelf"),
+    require("scenes.TrainingMenu"),
+    require("scenes.CharacterSelectTraining"),
+    require("scenes.ChallengeModeMenu"),
+    require("scenes.CharacterSelectChallenge"),
+    require("scenes.Lobby"),
+    require("scenes.CharacterSelectOnline"),
+    require("scenes.OnlineVsGame"),
+    require("scenes.CharacterSelectLocal2p"),
     require("scenes.ReplayBrowser"),
     require("scenes.ReplayGame"),
     require("scenes.InputConfigMenu"),
@@ -312,6 +321,7 @@ function Game:update(dt)
     status, err = coroutine.resume(mainloop)
     if not status then
       self.crashTrace = debug.traceback(mainloop)
+      error(errorString)
     end
   end
   if not status then

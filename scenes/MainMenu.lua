@@ -35,27 +35,29 @@ local function genLegacyMainloopFn(myFunction, args)
   return onClick
 end
 
-local function switchToScene(scene)
+local function switchToScene(scene, sceneParams)
   Menu.playValidationSfx()
-  sceneManager:switchToScene(scene)
+  sceneManager:switchToScene(scene, sceneParams)
 end
 
 local BUTTON_WIDTH = 140
-local function createMainMenuButton(label, onClick, extra_labels, translate)
+local function createMainMenuButton(label, onClick, extraLabels, translate)
   if translate == nil then
     translate = true
   end
-  return Button({label = label, extra_labels = extra_labels, translate = translate, onClick = onClick, width = BUTTON_WIDTH})
+  return Button({label = label, extraLabels = extraLabels, translate = translate, onClick = onClick, width = BUTTON_WIDTH})
 end
 
 local menuItems = {
   {createMainMenuButton("mm_1_endless", function() switchToScene("EndlessMenu") end)},
   {createMainMenuButton("mm_1_puzzle", function() switchToScene("PuzzleMenu") end)},
   {createMainMenuButton("mm_1_time", function() switchToScene("TimeAttackMenu") end)},
-  {createMainMenuButton("mm_1_vs", genLegacyMainloopFn(main_local_vs_yourself_setup))},
-  {createMainMenuButton("mm_1_training", genLegacyMainloopFn(training_setup))},
-  {createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
-  {createMainMenuButton("mm_2_vs_local", genLegacyMainloopFn(main_local_vs_setup))},
+  {createMainMenuButton("mm_1_vs", function() switchToScene("VsSelfMenu") end)},
+  {createMainMenuButton("mm_1_training", function() switchToScene("TrainingMenu") end)},
+  {createMainMenuButton("mm_1_challenge_mode", function() switchToScene("ChallengeModeMenu") end)},
+  {createMainMenuButton("mm_2_vs_online", function() switchToScene("Lobby", {serverIp = "18.188.43.50"}) end,  {""})},
+  --{createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
+  {createMainMenuButton("mm_2_vs_local", function() switchToScene("CharacterSelectLocal2p") end)},
   {createMainMenuButton("mm_replay_browser", function() switchToScene("ReplayBrowser") end)},
   {createMainMenuButton("mm_configure", function() switchToScene("InputConfigMenu") end)},
   {createMainMenuButton("mm_set_name", function() Menu.playValidationSfx() sceneManager:switchToScene("SetNameMenu", {prevScene = "MainMenu"}) end)},

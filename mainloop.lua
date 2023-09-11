@@ -12,7 +12,7 @@ local tableUtils = require("tableUtils")
 local Game = require("Game")
 local util = require("util")
 local GraphicsUtil = require("graphics_util")
-local Replay = require("replay")
+local Replay = require("Replay")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -910,6 +910,7 @@ function main_net_vs_lobby()
   local requestedSpectateRoom = nil
   local playerData = nil
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
+
   while true do
     if connection_up_time <= login_status_message_duration then
       local messages = server_queue:pop_all_with("login_successful", "login_denied")
@@ -1450,7 +1451,8 @@ function main_local_vs()
   
   
   local function processGameResults(gameResult) 
-
+    local P1 = GAME.match.P1
+    local P2 = GAME.match.P2
     assert((P1.clock == P2.clock), "should run at same speed: " .. P1.clock .. " - " .. P2.clock)
 
     local matchOutcome = GAME.match.battleRoom:matchOutcome()

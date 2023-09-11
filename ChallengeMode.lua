@@ -1,8 +1,9 @@
 local logger = require("logger")
 require("ChallengeStage")
+local class = require("class")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
-ChallengeMode =
+local ChallengeMode =
   class(
   function(self, difficulty)
     self.currentStageIndex = 0
@@ -74,6 +75,7 @@ ChallengeMode =
   end
 )
 
+ChallengeMode.numDifficulties = 6
 function ChallengeMode:attackFilePath(difficulty, stageIndex)
   for i = stageIndex, 1, -1 do
     local path = "default_data/training/challenge-" .. difficulty .. "-" .. i .. ".json"
@@ -171,3 +173,5 @@ function ChallengeMode:drawTimeSplits()
   GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), self.totalTimeQuads, xPosition, yPosition + yOffset * row, themes[config.theme].time_Scale)
   set_color(1,1,1,1)
 end
+
+return ChallengeMode
