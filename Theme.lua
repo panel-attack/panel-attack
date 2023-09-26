@@ -320,6 +320,12 @@ function Theme.graphics_init(self)
   self.images.IMG_cards[true][0] = self:load_theme_img("chain/chain00")
   -- mystery combo
   self.images.IMG_cards[false][0] = self:load_theme_img("combo/combo00")
+
+  -- Chain card loading
+  -- load as many chain cards as there are available until 99
+  -- we assume if the theme provided any chains, they want to control all of them so don't load backups
+  local hasChainCards = love.filesystem.getInfo(Theme.themeDirectoryPath .. self.name .. "/chain")
+  local wantsBackupChainCards = hasChainCards == nil
   for i = 2, 13 do
     -- with backup from default theme
     self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
@@ -328,9 +334,8 @@ function Theme.graphics_init(self)
   self.chainCardLimit = 99
   for i = 14, 99 do
     -- without backup from default theme
-    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
+    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", wantsBackupChainCards)
     if self.images.IMG_cards[true][i] == nil then
-      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
       self.chainCardLimit = i - 1
       break
     end
