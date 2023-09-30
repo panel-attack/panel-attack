@@ -95,8 +95,8 @@ local function testOriginalThemeOffset()
   assert(stack:elementOriginYWithOffset({100, 100}, true) == legacyScoreY + 100)
 
   -- player 1 doesn't offset by width
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 0) == stack.origin_x * GFX_SCALE + 100 * GFX_SCALE - 0)
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 0) == legacyScoreX + 100 - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100) == stack.origin_x * GFX_SCALE + 100 * GFX_SCALE - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100) == legacyScoreX + 100 - 0)
 end
 
 test(testOriginalThemeOffset)
@@ -115,8 +115,9 @@ local function testOriginalThemeOffsetPlayer2()
   assert(stack:elementOriginYWithOffset({100, 100}, true) == legacyScoreY + 100)
 
   -- player 2 offsets by width in absolute coordinates
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 1) == stack.origin_x * GFX_SCALE - 100 * GFX_SCALE - 100)
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 1) == legacyScoreXP2 + 100 - 100)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100) == stack.origin_x * GFX_SCALE - 100 * GFX_SCALE - 100)
+  -- legacy score offset didn't offset by width
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100) == legacyScoreXP2 + 100 - 0)
 end
 
 test(testOriginalThemeOffsetPlayer2)
@@ -135,8 +136,8 @@ local function testNewThemeOffset()
   assert(stack:elementOriginYWithOffset({100, 100}, true) == stack.panelOriginY * GFX_SCALE + 100)
 
   -- player 1 doesn't offset by width
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 0) == stack.origin_x * GFX_SCALE + 100 - 0)
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 0) == stack.origin_x * GFX_SCALE + 100 - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100) == stack.origin_x * GFX_SCALE + 100 - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100) == stack.origin_x * GFX_SCALE + 100 - 0)
 end
 
 test(testNewThemeOffset)
@@ -155,8 +156,8 @@ local function testNewThemeOffsetPlayer2()
   assert(stack:elementOriginYWithOffset({100, 100}, true) == stack.panelOriginY * GFX_SCALE + 100)
 
   -- player 2 offsets by width in absolute coordinates
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 1) == stack.origin_x * GFX_SCALE - 100 - 100)
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 1) == stack.origin_x * GFX_SCALE - 100 - 100)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100) == stack.origin_x * GFX_SCALE - 100 - 100)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100) == stack.origin_x * GFX_SCALE - 100 - 100)
 end
 
 test(testNewThemeOffsetPlayer2)

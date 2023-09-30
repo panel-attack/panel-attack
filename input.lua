@@ -316,6 +316,15 @@ function love.keypressed(key, scancode, rep)
       if key == "c" then
         characters_reload_graphics()
         return true
+      elseif key == "a" then
+        local absolute = themes[config.theme].multibar_is_absolute
+        themes[config.theme]:json_init()
+        themes[config.theme].multibar_is_absolute = not absolute
+        themes[config.theme]:graphics_init()
+        themes[config.theme]:final_init()
+        GAME.background_overlay = themes[config.theme].images.bg_overlay
+        GAME.foreground_overlay = themes[config.theme].images.fg_overlay
+        return true
       elseif key == "p" then
         panels_init()
         return true
@@ -323,9 +332,7 @@ function love.keypressed(key, scancode, rep)
         stages_reload_graphics()
         return true
       elseif key == "t" then
-        themes[config.theme]:json_init()
-        themes[config.theme]:graphics_init()
-        themes[config.theme]:final_init()
+        theme_init()
         GAME.background_overlay = themes[config.theme].images.bg_overlay
         GAME.foreground_overlay = themes[config.theme].images.fg_overlay
         return true

@@ -68,6 +68,9 @@ end
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
 -- legacyOffsetIsAlreadyScaled - set to true if the offset used to be already scaled in legacy themes
 function Stack:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
   if legacyOffsetIsAlreadyScaled == nil then
     legacyOffsetIsAlreadyScaled = false
   end
@@ -86,6 +89,9 @@ end
 -- themePositionOffset - the theme offset array
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
 function Stack:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
   if legacyOffsetIsAlreadyScaled == nil then
     legacyOffsetIsAlreadyScaled = false
   end
@@ -102,7 +108,15 @@ end
 -- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
 -- width - width of the drawable
 -- percentWidthShift - the percent of the width you want shifted left
-function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, percentWidthShift, legacyOffsetIsAlreadyScaled)
+function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, legacyOffsetIsAlreadyScaled)
+  local percentWidthShift = 0
+  -- If we are mirroring from the right, move the full width left
+  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
+    if self.multiplication > 0 then
+      percentWidthShift = 1
+    end
+  end
+
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
 
   if percentWidthShift > 0 then
@@ -113,37 +127,33 @@ function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacy
 end
 
 function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-  if cameFromLegacyScoreOffset == nil then
-    cameFromLegacyScoreOffset = false
-  end
-
-  local percentWidthShift = 0
-  -- If we are mirroring from the right, move the full width left
-  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    if self.multiplication > 0 then
-      percentWidthShift = 1
-    end
-  end
-
-  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
+  -- Note "labels" are the only graphics that shift by the width because numbers are centered and strings are left or right aligned.
+  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), legacyOffsetIsAlreadyScaled)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
 
   menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
 end
 
-function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
-  if cameFromLegacyScoreOffset == nil then
-    cameFromLegacyScoreOffset = false
+function Stack:drawBar(image, quad, x, y, height, rotate, scale)
+  local imageWidth = image:getWidth()
+  local imageHeight = image:getHeight()
+  local barYScale = height / imageHeight
+  local quadY = 0
+  if barYScale < 1 then
+    barYScale = 1
+    quadY = imageHeight - height
   end
+  quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
+  qdraw(image, quad, x / GFX_SCALE, (y - height) / GFX_SCALE, rotate, scale, scale * barYScale)
+end
+
+function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
 end
 
 function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
-  if cameFromLegacyScoreOffset == nil then
-    cameFromLegacyScoreOffset = false
-  end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   
@@ -751,21 +761,6 @@ function Stack.render(self)
       shake_time = self.puzzle.shake_time
     end
 
-    -- If we have a healthbar frame draw it.
-    -- (It may be the absolute version or the normal version)
-    if self.theme.images["IMG_healthbar_frame" .. self.id] then
-      self:drawLabel(self.theme.images["IMG_healthbar_frame" .. self.id], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
-    end
-
-    if not self.theme.multibar_is_absolute then
-      -- Healthbar
-      local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.max_health)
-      self.healthQuad:setViewport(0, self.theme.images.IMG_healthbar:getHeight() - healthbar, self.theme.images.IMG_healthbar:getWidth(), healthbar)
-      local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / GFX_SCALE
-      local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / GFX_SCALE
-      qdraw(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
-    end
-
     -- Prestop bar
     if self.pre_stop_time == 0 or self.maxPrestop == nil then
       self.maxPrestop = 0
@@ -790,42 +785,106 @@ function Stack.render(self)
       self.maxShake = shake_time
     end
 
-    -- Scaled Multibar
-    if not self.theme.multibar_is_absolute then
-      local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
-      if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-        multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
-      end
-      if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
-        multi_stop_bar = stop_time * (self.theme.images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
-      end
-      if self.maxPrestop > 0 and shake_time < self.pre_stop_time + stop_time then
-        multi_prestop_bar = self.pre_stop_time * (self.theme.images.IMG_multibar_prestop_bar:getHeight() / self.maxPrestop) * 1.5
-      end
-      self.multi_shakeQuad:setViewport(0, self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar, self.theme.images.IMG_multibar_shake_bar:getWidth(), multi_shake_bar)
-      self.multi_stopQuad:setViewport(0, self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, self.theme.images.IMG_multibar_stop_bar:getWidth(), multi_stop_bar)
-      self.multi_prestopQuad:setViewport(0, self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, self.theme.images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
 
-      --Shake
-      local x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
-      local y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
-      if self.theme.images.IMG_multibar_shake_bar then
-        qdraw(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, (y + ((self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      end
-      --Stop
-      if self.theme.images.IMG_multibar_stop_bar then
-        qdraw(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, ((y - (multi_shake_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      end
-      -- Prestop
-      if self.theme.images.IMG_multibar_prestop_bar then
-        qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, ((y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      end
-    else -- Absolute Multibar
+    -- Show X pixels per stop / shake / prestop
+    -- In "absolute" the health bar is stacked with the other bars and shows how much health you have. All the multipliers are the same
+    -- in "classic" the health bar is in its own position and fills the whole bar. The multipliers are different for health, stop/pre and shake
+
+    -- Set the multipliers
+    local multiBarFrameScale = 3 -- how many pixels per "1" health / stop time
+    local healthFrameScale = multiBarFrameScale
+    local preStopFrameScale = multiBarFrameScale
+    local stopFrameScale = multiBarFrameScale
+    local shakeFrameScale = multiBarFrameScale
+    if not self.theme.multibar_is_absolute then
+      healthFrameScale = 1
+      preStopFrameScale = 1.5
+      stopFrameScale = 1.5
+      shakeFrameScale = 3
+    end
+
+    local healthBarImageHeight = self.theme.images.IMG_healthbar:getHeight()
+    local shakeBarImageHeight = self.theme.images.IMG_multibar_shake_bar:getHeight()
+    local stopBarImageHeight = self.theme.images.IMG_multibar_stop_bar:getHeight()
+    local preStopBarImageHeight = self.theme.images.IMG_multibar_prestop_bar:getHeight()
+    
+    local multiBarMaxHeight = shakeBarImageHeight
+    local multiBarframeImage = self.theme.images["IMG_healthbar_frame" .. self.id]
+    if multiBarframeImage then
+      local multiBarFrameImageHeight = multiBarframeImage:getHeight()
+      local multiBarFramePosition = self:elementOriginYWithOffset(self.theme.healthbar_frame_Pos, false)
+      local multiBarPosition = self:elementOriginYWithOffset(self.theme.multibar_Pos, false)
+      local offset = (multiBarPosition - multiBarFramePosition)
+      multiBarMaxHeight = multiBarFrameImageHeight - (offset * 2)
+
+      -- If we have a healthbar frame draw it.
+      -- (It may be the absolute version or the normal version)
+      self:drawLabel(multiBarframeImage, self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
+    end
+
+    -- Calculate how many pixels each bar should be based on the multipliers
+    local shakeBarHeight, stopBarHeight, preStopBarHeight = 0, 0, 0
+    local healthBarHeight = self.health * healthFrameScale
+    if not self.theme.multibar_is_absolute then
+      healthBarHeight = self.health / self.max_health * healthBarImageHeight 
+    end
+    if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
+      shakeBarHeight = shake_time * self.maxShake * shakeFrameScale
+    end
+    if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
+      stopBarHeight = stop_time * self.maxStop * stopFrameScale
+    end
+    if self.maxPrestop > 0 and shake_time < self.pre_stop_time + stop_time then
+      preStopBarHeight = self.pre_stop_time / self.maxPrestop * preStopFrameScale
+    end
+
+    -- Set the quads to use up to that many pixels / the full bar
+    self.healthQuad:setViewport(0, math.max(0, healthBarImageHeight - healthBarHeight), self.theme.images.IMG_healthbar:getWidth(), healthBarHeight)
+    self.multi_shakeQuad:setViewport(0, shakeBarImageHeight - shakeBarHeight, self.theme.images.IMG_multibar_shake_bar:getWidth(), shakeBarHeight)
+    self.multi_stopQuad:setViewport(0, stopBarImageHeight - stopBarHeight, self.theme.images.IMG_multibar_stop_bar:getWidth(), stopBarHeight)
+    self.multi_prestopQuad:setViewport(0, preStopBarImageHeight - preStopBarHeight, self.theme.images.IMG_multibar_prestop_bar:getWidth(), preStopBarHeight)
+
+    -- Calculate the Y position of each bar
+
+    -- Draw
+    local multiBarBottomY = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) + multiBarMaxHeight
+
+    local healthBarX, healthBarY = 0, 0
+    if self.theme.multibar_is_absolute then
+      healthBarX = self:elementOriginXWithOffset(self.theme.multibar_Pos, false)
+      healthBarY = multiBarBottomY
+    else
+      healthBarX = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false)
+      healthBarY = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + healthBarImageHeight
+    end
+    self:drawBar(self.theme.images.IMG_healthbar, self.healthQuad, healthBarX, healthBarY, healthBarHeight, self.theme.healthbar_Rotate, self.theme.healthbar_Scale)
+
+    --Shake
+    x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
+    y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
+    if self.theme.images.IMG_multibar_shake_bar then
+      local yShake = (y + ((shakeBarImageHeight - shakeBarHeight) / GFX_SCALE))
+      qdraw(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, yShake, 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    end
+    --Stop
+    if self.theme.images.IMG_multibar_stop_bar then
+      local yStop = ((y - (shakeBarHeight / GFX_SCALE)) + ((stopBarImageHeight - stopBarHeight) / GFX_SCALE))
+      qdraw(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, yStop, 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    end
+    -- Prestop
+    if self.theme.images.IMG_multibar_prestop_bar then
+      local yPreStop = ((y - (shakeBarHeight / GFX_SCALE + stopBarHeight / GFX_SCALE)) + ((preStopBarImageHeight - preStopBarHeight) / GFX_SCALE))
+      qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, yPreStop, 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    end
+    if false then -- Absolute Multibar
       -- Healthbar
-      local iconX = (self.origin_x + self.theme.multibar_Pos[1] * self.mirror_x) * GFX_SCALE
-      local iconY = 709
-      local multiBarMaxHeight = 590
-      local multiBarFrameScale = 3
+
+      local multiBarFrameScale = 3 -- how many pixels per "1" health / stop time
+      local multiBarMaxHeight = 590 -- TODO: make this the difference of the start and end of the offset from the frame
+      local iconX = self:elementOriginXWithOffset(self.theme.multibar_Pos, false)
+      local iconY = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) + multiBarMaxHeight
+      -- local iconX = (self.origin_x + self.theme.multibar_Pos[1] * self.mirror_x) * GFX_SCALE
+      -- local iconY = 709
 
       local healthBar = self.health * multiBarFrameScale
       local shakeTimeBar, stopTimeBar, preStopBar = 0, 0, 0
