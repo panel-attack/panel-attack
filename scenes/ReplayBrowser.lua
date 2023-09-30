@@ -2,7 +2,7 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local Replay = require("Replay")
 local class = require("class")
 

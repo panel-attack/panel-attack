@@ -3,7 +3,7 @@ require("sound_util")
 local consts = require("consts")
 require("class")
 local logger = require("logger")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
 

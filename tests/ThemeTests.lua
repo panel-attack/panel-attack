@@ -1,5 +1,5 @@
 local consts = require("consts")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 require("Theme")
 
 assert(Theme ~= nil)

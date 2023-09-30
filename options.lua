@@ -1,4 +1,4 @@
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local analytics = require("analytics")
 local util = require("util")
 local options = {}
