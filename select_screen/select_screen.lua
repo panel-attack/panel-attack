@@ -89,7 +89,7 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomStage()
       player.stage_display_name = stages[player.stage].stage_display_name
-      stage_loader_load(player.stage)
+      StageLoader.load(player.stage)
     end
 
     -- character
@@ -118,7 +118,7 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomCharacter()
       player.character_display_name = characters[player.character].character_display_name
-      character_loader_load(player.character)
+      CharacterLoader.load(player.character)
     end
   end
 end
@@ -182,7 +182,7 @@ function select_screen.on_select(self, player, super)
   if selectable[player.cursor.positionId] then
     if player.cursor.selected and player.cursor.positionId == "__Stage" then
       -- load stage even if hidden!
-      stage_loader_load(player.stage)
+      StageLoader.load(player.stage)
     end
     -- Don't let the player stop ready if both players have already told the server to start the game
     if player.cursor.positionId ~= "__Ready" or player.ready == false then 
@@ -803,8 +803,8 @@ function select_screen.startNetPlayMatch(self, msg)
   refreshBasedOnOwnMods(msg) -- for stage only, other data are meaningless to us
   -- mainly for spectator mode, those characters have already been loaded otherwise
   current_stage = msg.stage
-  character_loader_wait()
-  stage_loader_wait()
+  CharacterLoader.wait()
+  StageLoader.wait()
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
@@ -869,8 +869,8 @@ function select_screen.start2pLocalMatch(self)
   P2:setOpponent(P1)
   P2:setGarbageTarget(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   P1:starting_state()
@@ -898,8 +898,8 @@ function select_screen.start1pLocalMatch(self)
     if challengeMode then
       health = challengeStage:createHealth()
       character = challengeStage:characterForStageNumber(P1.character)
-      character_loader_load(character)
-      character_loader_wait()
+      CharacterLoader.load(character)
+      CharacterLoader.wait()
     end
 
     local xPosition = 796
@@ -924,8 +924,8 @@ function select_screen.start1pLocalMatch(self)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
 
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
@@ -945,8 +945,8 @@ function select_screen.start1pCpuMatch(self)
   P1.garbageTarget = P2
   P2.garbageTarget = P1
   current_stage = self.players[self.my_player_number].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
@@ -1031,8 +1031,8 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
       function()
         self.menu_clock = self.menu_clock + 1
 
-        character_loader_update()
-        stage_loader_update()
+        CharacterLoader.update()
+        StageLoader.update()
         self:refreshLoadingState(self.my_player_number)
         if self:isMultiplayer() then
           self:refreshLoadingState(self.op_player_number)
