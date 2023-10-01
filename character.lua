@@ -5,7 +5,7 @@ Sound
 ]]--
 local logger = require("logger")
 local tableUtils = require("tableUtils")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 
 local default_character = nil -- holds default assets fallbacks
 

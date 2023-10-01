@@ -1,5 +1,5 @@
 local ffi = require "ffi"
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 
 fileUtils.copyFile("rich_presence/discord-rpc.dll","discord-rpc.dll")
 local dll_path = love.filesystem.getSaveDirectory() .. "/discord-rpc"

@@ -11,7 +11,7 @@ local inputManager = require("inputManager")
 local save = require("save")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local analytics = require("analytics")
 local class = require("class")
 

@@ -2,7 +2,7 @@ require("queue")
 require("globals")
 require("character")
 local logger = require("logger")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local tableUtils = require("tableUtils")
 
 local loading_queue = Queue()

@@ -1,4 +1,4 @@
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local Replay = require("Replay")
 local replay_browser = {}
 replay_browser.selection = nil

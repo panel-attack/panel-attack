@@ -10,7 +10,7 @@ local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local save = require("save")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local scenes = nil
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
