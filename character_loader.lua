@@ -2,6 +2,7 @@ require("queue")
 require("globals")
 require("character")
 local logger = require("logger")
+local tableUtils = require("table_util")
 
 CharacterLoader = {}
 
@@ -65,18 +66,6 @@ function CharacterLoader.clear()
       character:unload()
     end
   end
-end
-
-function wait_for_random_character(character)
-  local resolvedCharacter = character
-  if character == random_character_special_value then
-    resolvedCharacter = table.getRandomElement(characters_ids_for_current_theme)
-  elseif characters[character]:is_bundle() then -- may have picked a bundle
-    resolvedCharacter = table.getRandomElement(characters[character].sub_characters)
-  end
-  CharacterLoader.load(resolvedCharacter)
-  CharacterLoader.wait()
-  return resolvedCharacter
 end
 
 -- Adds all the characters recursively in a folder to the global characters variable
@@ -204,4 +193,23 @@ function CharacterLoader.initCharacters()
     CharacterLoader.load(config.character)
     CharacterLoader.wait()
   end
+end
+
+function CharacterLoader.resolveCharacterSelection(characterId)
+  if characterId and characters[characterId] then
+    characterId = CharacterLoader.resolveBundle(characterId)
+  else
+    -- resolve via random selection
+    characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
+  end
+
+  return characterId
+end
+
+function CharacterLoader.resolveBundle(characterId)
+  while characters[characterId]:is_bundle() do
+    characterId = tableUtils.getRandomElement(characters[characterId].sub_characters)
+  end
+
+  return characterId
 end
