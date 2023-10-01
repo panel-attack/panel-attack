@@ -40,8 +40,8 @@ function OnlineVsGame:customLoad(sceneParams)
   --refreshBasedOnOwnMods(msg) -- for stage only, other data are meaningless to us
   -- mainly for spectator mode, those characters have already been loaded otherwise
   --current_stage = msg.stage
-  --character_loader_wait()
-  --stage_loader_wait()
+  --CharacterLoader.wait()
+  --StageLoader.wait()
   GAME.match = Match("vs", GAME.battleRoom)
   GAME.match.supportsPause = false
   local msg = sceneParams.msg

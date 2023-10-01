@@ -1182,7 +1182,7 @@ function options.main(button_idx)
 
       gprint(loc("op_reload_characters"), unpack(themes[config.theme].main_menu_screen_pos))
       wait()
-      characters_init()
+      CharacterLoader.initCharacters()
     end
 
     if memory_before_options_menu == nil or config.enable_analytics ~= memory_before_options_menu.enable_analytics then

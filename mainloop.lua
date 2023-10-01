@@ -128,8 +128,8 @@ do
         find_and_add_music(themes[config.theme].musics, "main")
       end
     end
-    character_loader_clear()
-    stage_loader_clear()
+    CharacterLoader.clear()
+    StageLoader.clear()
     resetNetwork()
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
@@ -243,8 +243,8 @@ local function use_current_stage()
   if current_stage == nil then
     pick_random_stage()
   else
-    stage_loader_load(current_stage)
-    stage_loader_wait()
+    StageLoader.load(current_stage)
+    StageLoader.wait()
     GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
     GAME.background_overlay = themes[config.theme].images.bg_overlay
     GAME.foreground_overlay = themes[config.theme].images.fg_overlay
@@ -272,17 +272,6 @@ local function pick_use_music_from()
   else
     current_use_music_from = percent == 1 and "stage" or "characters"
   end
-end
-
-function Stack.wait_for_random_character(self)
-  if self.character == random_character_special_value then
-    self.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
-  end
-  if characters[self.character]:is_bundle() then -- may have picked a bundle
-    self.character = tableUtils.getRandomElement(characters[self.character].sub_characters)
-  end
-  character_loader_load(self.character)
-  character_loader_wait()
 end
 
 local function commonGameSetup()
@@ -870,8 +859,8 @@ function main_net_vs_lobby()
   GAME.battleRoom = nil
   undo_stonermode()
   reset_filters()
-  character_loader_clear()
-  stage_loader_clear()
+  CharacterLoader.clear()
+  StageLoader.clear()
   local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set

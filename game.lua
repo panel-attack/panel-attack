@@ -104,7 +104,7 @@ function Game:setupCoroutine()
   
   self:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
-  characters_init()
+  CharacterLoader.initCharacters()
   
   self:drawLoadingString(loc("ld_analytics"))
   coroutine.yield()

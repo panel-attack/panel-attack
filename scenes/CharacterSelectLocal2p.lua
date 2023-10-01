@@ -31,8 +31,8 @@ function CharacterSelectLocal2p:start2pLocalMatch()
   P2:setOpponent(P1)
   P2:setGarbageTarget(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   P1:starting_state()

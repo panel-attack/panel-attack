@@ -314,7 +314,7 @@ function OptionsMenu:load()
         stop_the_music()
         theme_init()
         stages_init()
-        characters_init()
+        CharacterLoader.initCharacters()
         backgroundImage = themes[config.theme].images.bg_main
         if themes[config.theme].musics["main"] then
           find_and_add_music(themes[config.theme].musics, "main")
