@@ -89,7 +89,8 @@ Additionally there exists a special notation for representing connected garbage 
 
 This allows us to lay out our text representation of the puzzle how it would look in the game, like this:
 
-[====]
+[=====
+=====]
 001200
 002100
 002100
