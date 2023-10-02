@@ -12,18 +12,18 @@ The contents of each puzzle file should be formatted something like this:
 {
   "Version": 2,
   "Puzzle Sets": [
-    [
+    {
       "Set Name": "Name of Puzzle Set",
       "Puzzles": [
-        [
+        {
           "Puzzle Type": "chain",
           "Do Countdown": true,
           "Moves": 0,
           "Stack": 
             "040000
              111440",
-        ],
-        [
+        },
+        {
           "Puzzle Type": "clear",
           "Do Countdown": false,
           "Moves": 0,
@@ -43,9 +43,9 @@ The contents of each puzzle file should be formatted something like this:
 		   325363",
 		   "Stop": 60,
            "Shake": 0
-        ],
+        },
       ]
-    ],
+    },
   ]
 }
 
