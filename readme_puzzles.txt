@@ -75,10 +75,11 @@ Note: carriage returns and spaces in your file are very helpful for readability,
  but are not necessary.
  
 Be sure to use the correct delimiters in the right places, i.e: 
-curly braces {} to start and end the file,
-square brackets [] around individual puzzles and around puzzle sets,
+curly braces {} to start and end the file and around individual puzzles and puzzle sets,
+square brackets [] around the list of puzzle sets and each list of puzzles,
 quotes "" around set names and panel maps
 commas between elements
+Try and use a JSON validator if Panel Attack cannot read your puzzle file!
 
 About the numbers mapping out each puzzle now:
 
