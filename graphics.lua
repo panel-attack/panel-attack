@@ -752,18 +752,8 @@ function Stack.render(self)
     end
 
     -- If we have a healthbar frame draw it.
-    -- (It may be the absolute version or the normal version)
     if self.theme.images["IMG_healthbar_frame" .. self.id] then
       self:drawLabel(self.theme.images["IMG_healthbar_frame" .. self.id], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
-    end
-
-    if not self.theme.multibar_is_absolute then
-      -- Healthbar
-      local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.max_health)
-      self.healthQuad:setViewport(0, self.theme.images.IMG_healthbar:getHeight() - healthbar, self.theme.images.IMG_healthbar:getWidth(), healthbar)
-      local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / GFX_SCALE
-      local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / GFX_SCALE
-      qdraw(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
     end
 
     -- Prestop bar
@@ -790,83 +780,51 @@ function Stack.render(self)
       self.maxShake = shake_time
     end
 
-    -- Scaled Multibar
-    if not self.theme.multibar_is_absolute then
-      local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
-      if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-        multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
-      end
-      if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
-        multi_stop_bar = stop_time * (self.theme.images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
-      end
-      if self.maxPrestop > 0 and shake_time < self.pre_stop_time + stop_time then
-        multi_prestop_bar = self.pre_stop_time * (self.theme.images.IMG_multibar_prestop_bar:getHeight() / self.maxPrestop) * 1.5
-      end
-      self.multi_shakeQuad:setViewport(0, self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar, self.theme.images.IMG_multibar_shake_bar:getWidth(), multi_shake_bar)
-      self.multi_stopQuad:setViewport(0, self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, self.theme.images.IMG_multibar_stop_bar:getWidth(), multi_stop_bar)
-      self.multi_prestopQuad:setViewport(0, self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, self.theme.images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
+    -- Healthbar
+    local iconX = (self.origin_x + self.theme.multibar_Pos[1] * self.mirror_x) * GFX_SCALE
+    local iconY = 709
+    local multiBarMaxHeight = 590
+    local multiBarFrameScale = 3
 
-      --Shake
-      local x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
-      local y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
-      if self.theme.images.IMG_multibar_shake_bar then
-        qdraw(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, (y + ((self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      end
-      --Stop
-      if self.theme.images.IMG_multibar_stop_bar then
-        qdraw(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, ((y - (multi_shake_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      end
-      -- Prestop
-      if self.theme.images.IMG_multibar_prestop_bar then
-        qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, ((y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-      end
-    else -- Absolute Multibar
-      -- Healthbar
-      local iconX = (self.origin_x + self.theme.multibar_Pos[1] * self.mirror_x) * GFX_SCALE
-      local iconY = 709
-      local multiBarMaxHeight = 590
-      local multiBarFrameScale = 3
-
-      local healthBar = self.health * multiBarFrameScale
-      local shakeTimeBar, stopTimeBar, preStopBar = 0, 0, 0
-      if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-        shakeTimeBar = math.min(shake_time * multiBarFrameScale, multiBarMaxHeight - healthBar)
-      end
-      if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
-        stopTimeBar = math.min(stop_time * multiBarFrameScale, multiBarMaxHeight - shakeTimeBar - healthBar)
-      end
-      if self.maxPrestop > 0 and shake_time < self.pre_stop_time + stop_time then
-        preStopBar = math.min(self.pre_stop_time * multiBarFrameScale, multiBarMaxHeight - stopTimeBar - shakeTimeBar - healthBar)
-      end
-
-      local desiredWidth, _ = self.theme.images.IMG_multibar_shake_bar:getDimensions()
-      local iconXScale, iconYScale, icon_width, icon_height
-      icon_width, icon_height = self.theme.images.IMG_healthbar:getDimensions()
-      iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-      iconYScale = -(healthBar / icon_height) / GFX_SCALE
-      draw(self.theme.images.IMG_healthbar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
-
-      iconY = iconY - healthBar
-
-      --Shake
-      icon_width, icon_height = self.theme.images.IMG_multibar_shake_bar:getDimensions()
-      iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-      iconYScale = -(shakeTimeBar / icon_height) / GFX_SCALE
-      draw(self.theme.images.IMG_multibar_shake_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
-
-      --Stop
-      icon_width, icon_height = self.theme.images.IMG_multibar_stop_bar:getDimensions()
-      iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-      iconYScale = -(stopTimeBar / icon_height) / GFX_SCALE
-      draw(self.theme.images.IMG_multibar_stop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
-
-      -- Prestop
-      icon_width, icon_height = self.theme.images.IMG_multibar_prestop_bar:getDimensions()
-      iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-      iconYScale = -(preStopBar / icon_height) / GFX_SCALE
-      iconY = iconY - math.max(shakeTimeBar, stopTimeBar)
-      draw(self.theme.images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+    local healthBar = self.health * multiBarFrameScale
+    local shakeTimeBar, stopTimeBar, preStopBar = 0, 0, 0
+    if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
+      shakeTimeBar = math.min(shake_time * multiBarFrameScale, multiBarMaxHeight - healthBar)
     end
+    if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
+      stopTimeBar = math.min(stop_time * multiBarFrameScale, multiBarMaxHeight - shakeTimeBar - healthBar)
+    end
+    if self.maxPrestop > 0 and shake_time < self.pre_stop_time + stop_time then
+      preStopBar = math.min(self.pre_stop_time * multiBarFrameScale, multiBarMaxHeight - stopTimeBar - shakeTimeBar - healthBar)
+    end
+
+    local desiredWidth, _ = self.theme.images.IMG_multibar_shake_bar:getDimensions()
+    local iconXScale, iconYScale, icon_width, icon_height
+    icon_width, icon_height = self.theme.images.IMG_healthbar:getDimensions()
+    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+    iconYScale = -(healthBar / icon_height) / GFX_SCALE
+    draw(self.theme.images.IMG_healthbar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+    iconY = iconY - healthBar
+
+    --Shake
+    icon_width, icon_height = self.theme.images.IMG_multibar_shake_bar:getDimensions()
+    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+    iconYScale = -(shakeTimeBar / icon_height) / GFX_SCALE
+    draw(self.theme.images.IMG_multibar_shake_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+    --Stop
+    icon_width, icon_height = self.theme.images.IMG_multibar_stop_bar:getDimensions()
+    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+    iconYScale = -(stopTimeBar / icon_height) / GFX_SCALE
+    draw(self.theme.images.IMG_multibar_stop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+    -- Prestop
+    icon_width, icon_height = self.theme.images.IMG_multibar_prestop_bar:getDimensions()
+    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+    iconYScale = -(preStopBar / icon_height) / GFX_SCALE
+    iconY = iconY - math.max(shakeTimeBar, stopTimeBar)
+    draw(self.theme.images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
 
     self:drawDebug()
   end

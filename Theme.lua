@@ -283,13 +283,9 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = self:load_theme_img("random_stage")
   self.images.IMG_random_character = self:load_theme_img("random_character")
 
-  if self.multibar_is_absolute then
-    self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P_absolute")
-    self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P_absolute")
-  else
-    self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
-    self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
-  end
+  self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P_absolute")
+  self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P_absolute")
+  
   self.images.IMG_healthbar = self:load_theme_img("healthbar")
 
   self.images.IMG_multibar_frame = self:load_theme_img("multibar_frame")
