@@ -415,12 +415,12 @@ function Stack:recordChainHistory()
 end
 
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings
-function Stack:calculateStopTime(isChain, comboSize, toppedOut)
+function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
   local stopTime = 0
   if comboSize > 3 or isChain then
     if toppedOut and isChain then
       if self.level then
-        local length = (self.chain_counter > 4) and 6 or self.chain_counter
+        local length = (chainCounter > 4) and 6 or chainCounter
         stopTime = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
       else
         stopTime = stop_time_danger[self.difficulty]
@@ -434,7 +434,7 @@ function Stack:calculateStopTime(isChain, comboSize, toppedOut)
       end
     elseif isChain then
       if self.level then
-        local length = math.min(self.chain_counter, 13)
+        local length = math.min(chainCounter, 13)
         stopTime = self.chain_coefficient * length + self.chain_constant
       else
         stopTime = stop_time_chain[self.difficulty]
@@ -452,7 +452,7 @@ function Stack:calculateStopTime(isChain, comboSize, toppedOut)
 end
 
 function Stack:awardStopTime(isChain, comboSize)
-  local stopTime = self:calculateStopTime(isChain, comboSize, self.panels_in_top_row)
+  local stopTime = self:calculateStopTime(comboSize, self.panels_in_top_row, isChain, self.chain_counter)
   if stopTime > self.stop_time then
     self.stop_time = stopTime
   end
