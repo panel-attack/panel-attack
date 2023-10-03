@@ -414,9 +414,10 @@ function Stack:recordChainHistory()
   currentChainData.starts[#currentChainData.starts + 1] = self.clock
 end
 
-function Stack:awardStopTime(isChain, comboSize)
+-- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings
+function Stack:calculateStopTime(isChain, comboSize)
+  local stopTime = 0
   if comboSize > 3 or isChain then
-    local stopTime
     if self.panels_in_top_row and isChain then
       if self.level then
         local length = (self.chain_counter > 4) and 6 or self.chain_counter
@@ -445,7 +446,15 @@ function Stack:awardStopTime(isChain, comboSize)
         stopTime = stop_time_combo[self.difficulty]
       end
     end
-    self.stop_time = math.max(self.stop_time, stopTime)
+  end
+
+  return stopTime
+end
+
+function Stack:awardStopTime(isChain, comboSize)
+  local stopTime = self:calculateStopTime(isChain, comboSize)
+  if stopTime > self.stop_time then
+    self.stop_time = stopTime
   end
 end
 
