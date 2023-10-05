@@ -745,22 +745,25 @@ function Stack.render(self)
     -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
     -- for a realistic max stop, compare
     -- 27 combo while not topped out - combo stop is theoretically uncapped; 27 is a high cutoff for maximum garbage sent via combos
-    local maxStop = self:calculateStopTime(27, false, false)
+    local maxStop = 0--self:calculateStopTime(20, false, false)
     -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
-    maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
+    local maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
     -- x13 chain while not topped out (bonus stop from extra chain links is capped at x13)
-    maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
+    --maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
     -- while topped out, combos use the same formular as chains while not topped out but with a much lower cap
     -- so we don't need to calculate that
+    -- 10 combo while topped out
+    maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
 
     local minFrameCount = maxStop + level_to_hang_time[self.level]
 
     -- prestop does not need to be represented fully as there is visual representation via popping panels
     -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
     -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
-    local preStopFrameCount = 120 + (10 - self.level) * 12
+    --local preStopFrameCount = 120 + (10 - self.level) * 5
 
-    return minFrameCount + preStopFrameCount
+    --return minFrameCount + preStopFrameCount
+    return math.max(240, minFrameCount)
   end
 
   -- Draw the stop time and healthbars
@@ -782,7 +785,7 @@ function Stack.render(self)
     local multiBarFrameCount = calculateMultibarFrameCount()
     -- the shake bar img is used as a reference for the width of our bars
     -- all other bars will be scaled to use the same width
-    local desiredWidth, _ = self.theme.images.IMG_multibar_shake_bar:getDimensions()
+    local desiredWidth = self.theme.images.IMG_multibar_shake_bar:getWidth() * self.theme.multibar_Scale
     local iconX = (self.origin_x + self.theme.multibar_Pos[1] * self.mirror_x) * GFX_SCALE
     local iconY = 709
     local multiBarMaxHeight = 590 * self.theme.multibar_Scale
@@ -811,21 +814,34 @@ function Stack.render(self)
     else
       -- stop/prestop are only drawn if greater than shake
       if stop_time > 0 then
-        -- stop is always guaranteed to fit
-        stopHeight = (stop_time / multiBarFrameCount) * multiBarMaxHeight
+        stopHeight = math.min(stop_time, multiBarFrameCount - self.health) / multiBarFrameCount * multiBarMaxHeight
         icon_width, icon_height = self.theme.images.IMG_multibar_stop_bar:getDimensions()
-    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-    iconYScale = -(stopHeight / icon_height) / GFX_SCALE
-    draw(self.theme.images.IMG_multibar_stop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+        iconYScale = -(stopHeight / icon_height) / GFX_SCALE
+        draw(self.theme.images.IMG_multibar_stop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
       end
       if self.pre_stop_time > 0 then
+        local totalInvincibility = self.health + self.stop_time + self.pre_stop_time
+        local remainingSeconds = 0
+        if totalInvincibility > multiBarFrameCount then
+          -- total invincibility exceeds what the multibar can display -> fill only the remaining space with prestop
+          preStopHeight = 1 - (self.health + stop_time) / multiBarFrameCount * multiBarMaxHeight
+          remainingSeconds = (totalInvincibility - multiBarFrameCount) / 60
+        else
+          preStopHeight = self.pre_stop_time / multiBarFrameCount * multiBarMaxHeight
+        end
+
         -- prestop may be truncated at the top if there is not enough space
         preStopHeight = math.min(self.pre_stop_time / multiBarFrameCount, 1 - (self.health + stop_time) / multiBarFrameCount) * multiBarMaxHeight
         icon_width, icon_height = self.theme.images.IMG_multibar_prestop_bar:getDimensions()
-    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-    iconYScale = -(preStopHeight / icon_height) / GFX_SCALE
-    iconY = iconY - stopHeight
-    draw(self.theme.images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
+        iconYScale = -(preStopHeight / icon_height) / GFX_SCALE
+        iconY = iconY - stopHeight
+        draw(self.theme.images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+
+        if remainingSeconds > 0 then
+          self:drawString(tostring(math.floor(remainingSeconds)), {-19, 5}, false, 20)
+        end
       end
     end
 
