@@ -71,7 +71,11 @@ function panels_init()
 
   -- fix config panel set if it's missing
   if not config.panels or not panels[config.panels] then
-    config.panels = table.getRandomElement(panels_ids)
+    if panels["pacci"] then
+      config.panels = "pacci"
+    else
+      config.panels = table.getRandomElement(panels_ids)
+    end
   end
 
   for _, panel in pairs(panels) do
