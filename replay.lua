@@ -158,7 +158,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
     refreshBasedOnOwnMods(P2)
     refreshBasedOnOwnMods(GAME.match.P2)
   end
-  character_loader_wait()
+  CharacterLoader.wait()
 
   GAME.match.P1:starting_state()
 

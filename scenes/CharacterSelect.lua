@@ -138,8 +138,8 @@ function CharacterSelect:refreshBasedOnOwnMods(player)
 
       player.stage = resolveRandomStage(player.stage, player.selectedStage)
       player.stage_display_name = stages[player.stage].stage_display_name
-      stage_loader_load(player.stage)
-      stage_loader_wait()
+      StageLoader.load(player.stage)
+      StageLoader.wait()
     end
 
     -- character
@@ -168,8 +168,8 @@ function CharacterSelect:refreshBasedOnOwnMods(player)
 
       player.character = resolveRandomCharacter(player.character, player.selectedCharacter)
       player.character_display_name = characters[player.character].character_display_name
-      character_loader_load(player.character)
-      character_loader_wait()
+      CharacterLoader.load(player.character)
+      CharacterLoader.wait()
       
     end
   end

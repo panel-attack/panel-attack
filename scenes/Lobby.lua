@@ -185,8 +185,8 @@ print("lobby2")
   print("lobby4")
   GAME.battleRoom = nil
   reset_filters()
-  character_loader_clear()
-  stage_loader_clear()
+  CharacterLoader.clear()
+  StageLoader.clear()
   
   -- reset player ids and match type
   -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room

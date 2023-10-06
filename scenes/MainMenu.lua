@@ -100,8 +100,8 @@ function MainMenu:load(sceneParams)
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  character_loader_clear()
-  stage_loader_clear()
+  CharacterLoader.clear()
+  StageLoader.clear()
   resetNetwork()
   GAME.battleRoom = nil
   GAME.input:clearInputConfigurationsForPlayers()

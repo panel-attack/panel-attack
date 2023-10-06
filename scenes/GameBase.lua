@@ -82,8 +82,8 @@ function GameBase:useCurrentStage()
   end
   current_stage = self.currentStage
   
-  stage_loader_load(self.currentStage)
-  stage_loader_wait()
+  StageLoader.load(self.currentStage)
+  StageLoader.wait()
   backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
 end
 
