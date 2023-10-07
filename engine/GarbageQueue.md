@@ -10,10 +10,8 @@ Generally garbage delivery is divided into 3 phase:
 3. Delay
 
 ### Staging
-
-The staging process is implemented in engine.telegraph.  
-A telegraph is owned by the sender of garbage but also has a reference to the target.  
-Upon achieving a chain or combo during the check for matches, a stack will push a new piece of garbage to its telegraph which then manages the staging process on its own.  
+ 
+Upon achieving a chain or combo during the check for matches, a stack will push a new piece of garbage to its staging area. The staging process always runs fully on the sender's side.
 
 #### In detail
 
@@ -38,12 +36,9 @@ The other rules differ depending on chain or combo garbage.
 
 ### Delivery
 
-On every frame, the owning stack asks its telegraph whether there is any garbage ready for delivery.  
-If so, the garbage is released from the telegraph/staging phase.  
-At this point, the actual time the garbage is scheduled to drop at the earliest is determined as the time the garbage left staging + a constant delay of 60 frames.  
-The now scheduled garbage is saved in a table on the garbage target.  
-The receiving stack checks this table every frame to see if any garbage inside that table is scheduled to drop.  
-If so, it gets added to the stack's own garbage queue which is equivalent to entering the final Delay phase.
+On every frame, the sending stack checks whether there is any garbage ready for delivery in the staging area.  
+If so, the garbage is released from the staging phase and enters delivery which is a static 60 frame delay before the garbage can be dropped on its target.  
+After the delay has passed, the garbage is added to the receiver's own garbage queue which is equivalent to entering the final Delay phase.
 
 ### Delay
 
@@ -65,4 +60,4 @@ If this is not the case, garbage will drop if it fulfills either of the followin
 1. If it originates from a chain and has a height of more than 1  
 2. If there haven't been active panels on the last and the current frame  
 
-Upon dropping, the garbage enters its target stack in the form of panels and is removed from the stack's queue.
+Upon dropping, the garbage enters its target stack in the form of panels and is removed from the receiver's queue.
