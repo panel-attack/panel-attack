@@ -1,4 +1,6 @@
 --[[
+Source: https://nocurve.com/2014/03/05/simple-csv-read-and-write-using-lua/
+No explicit license granted
 -------------------------------
 Save this file as simplecsv.lua
 -------------------------------
