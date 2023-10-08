@@ -1,4 +1,4 @@
-local json = require("dkjson")
+local json = require("libraries.dkjson")
 
 local function testEncodingDecoding(data)
   local encoded = json.encode(data)

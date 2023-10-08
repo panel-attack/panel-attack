@@ -3,7 +3,7 @@ SERVER_MODE = true -- global to know the server is running the process
 local socket = require("socket")
 local logger = require("logger")
 require("class")
-json = require("dkjson")
+json = require("libraries.dkjson")
 require("server.stridx")
 require("gen_panels")
 require("csprng")
