@@ -740,32 +740,6 @@ function Stack.render(self)
     end
   end
 
-  -- calculates at how many frames the stack's multibar tops out
-  local function calculateMultibarFrameCount()
-    -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
-    -- for a realistic max stop, compare
-    -- 27 combo while not topped out - combo stop is theoretically uncapped; 27 is a high cutoff for maximum garbage sent via combos
-    local maxStop = 0--self:calculateStopTime(20, false, false)
-    -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
-    local maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
-    -- x13 chain while not topped out (bonus stop from extra chain links is capped at x13)
-    --maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
-    -- while topped out, combos use the same formular as chains while not topped out but with a much lower cap
-    -- so we don't need to calculate that
-    -- 10 combo while topped out
-    maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
-
-    local minFrameCount = maxStop + level_to_hang_time[self.level]
-
-    -- prestop does not need to be represented fully as there is visual representation via popping panels
-    -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
-    -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
-    --local preStopFrameCount = 120 + (10 - self.level) * 5
-
-    --return minFrameCount + preStopFrameCount
-    return math.max(240, minFrameCount)
-  end
-
   -- Draw the stop time and healthbars
   local function drawMultibar()
     local stop_time = self.stop_time
@@ -782,7 +756,7 @@ function Stack.render(self)
       self:drawLabel(self.theme.images["IMG_healthbar_frame" .. self.id], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
     end
 
-    local multiBarFrameCount = calculateMultibarFrameCount()
+    local multiBarFrameCount = self.multiBarFrameCount
     -- the shake bar img is used as a reference for the width of our bars
     -- all other bars will be scaled to use the same width
     local desiredWidth = self.theme.images.IMG_multibar_shake_bar:getWidth() * self.theme.multibar_Scale
