@@ -11,6 +11,7 @@ local class = require("class")
 local TitleScreen = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_title
+    self:load(sceneParams)
   end,
   Scene
 )
@@ -37,7 +38,15 @@ function TitleScreen:update(dt)
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then
     Menu.playValidationSfx()
+    stop_the_music()
     sceneManager:switchToScene("MainMenu")
+  end
+end
+
+function TitleScreen:load(sceneParams)
+  stop_the_music()
+  if themes[config.theme].musics["title_screen"] then
+    find_and_add_music(themes[config.theme].musics, "title_screen")
   end
 end
 
