@@ -574,7 +574,7 @@ function Match.render(self)
     local y = 5
     draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
-  elseif P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
+  elseif P2 and P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
     -- let the player know that rollback is active
     local iconSize = 20
     local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
