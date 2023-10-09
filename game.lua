@@ -1,3 +1,6 @@
+local consts = require("consts")
+require("TimeQueue")
+
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
 local consts = require("consts")
@@ -56,6 +59,8 @@ local Game = class(
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
+    self.sendNetworkQueue = TimeQueue()
+    self.receiveNetworkQueue = TimeQueue()
 
     self.crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
     
@@ -134,12 +139,24 @@ function Game:createDirectoriesIfNeeded()
   love.filesystem.createDirectory("themes")
   love.filesystem.createDirectory("stages")
   love.filesystem.createDirectory("training")
-  
+
+  local oldServerDirectory = consts.SERVER_SAVE_DIRECTORY .. consts.LEGACY_SERVER_LOCATION
+  local newServerDirectory = consts.SERVER_SAVE_DIRECTORY .. consts.SERVER_LOCATION
+  if not love.filesystem.getInfo(newServerDirectory) then
+    love.filesystem.createDirectory(newServerDirectory)
+
+    -- Move the old user ID spot to the new folder (we won't delete the old one for backwards compatibility and safety)
+    if love.filesystem.getInfo(oldServerDirectory) then
+      local userID = read_user_id_file(consts.LEGACY_SERVER_LOCATION)
+      write_user_id_file(userID, consts.SERVER_LOCATION)
+    end
+  end
+
   if #fileUtils.getFilteredDirectoryItems("training") == 0 then
     fileUtils.recursiveCopy("default_data/training", "training")
   end
   readAttackFiles("training")
-  
+
   if love.system.getOS() ~= "OS X" then
     fileUtils.recursiveRemoveFiles(".", ".DS_Store")
   end
@@ -184,11 +201,14 @@ function Game:runUnitTests()
   require("PuzzleTests")
   require("ServerQueueTests")
   require("StackTests")
+  require("tests.StackGraphicsTests")
   require("tests.JsonEncodingTests")
   require("tests.NetworkProtocolTests")
   require("tests.ThemeTests")
   require("tests.TouchDataEncodingTests")
   require("tests.utf8AdditionsTests")
+  require("tests.QueueTests")
+  require("tests.TimeQueueTests")
   require("tableUtilsTest")
   require("utilTests")
   -- Medium level tests (integration tests)
@@ -257,6 +277,8 @@ function Game:update(dt)
       love.mouse.setVisible(true)
     end
   end
+
+  updateNetwork(dt)
 
   if sceneManager.activeScene == nil then
     leftover_time = leftover_time + dt
@@ -486,6 +508,16 @@ function Game.loveVersionString()
   local major, minor, revision, codename = love.getVersion()
   loveVersionStringValue = string.format("%d.%d.%d", major, minor, revision)
   return loveVersionStringValue
+end
+
+-- Calculates the proper dimensions to not stretch the game for various sizes
+function scale_letterbox(width, height, w_ratio, h_ratio)
+  if height / h_ratio > width / w_ratio then
+    local scaled_height = h_ratio * width / w_ratio
+    return 0, (height - scaled_height) / 2, width, scaled_height
+  end
+  local scaled_width = w_ratio * height / h_ratio
+  return (width - scaled_width) / 2, 0, scaled_width, height
 end
 
 -- Updates the scale and position values to use up the right size of the window based on the user's settings.

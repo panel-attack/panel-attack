@@ -19,6 +19,16 @@ https://github.com/panel-attack/panel-attack/blob/beta/themes/Panel%20Attack%20M
 
 You can use the Ctrl+Shift+Alt+T shortcut to reload your theme configuration and graphics in the game.
 
+## Version
+Themes have a "version" variable that specifies that last version they were upgraded to use. Whenever you improve a theme, you should change this value to the latest version and fix any problems to get the maximum value and bug fixes out of your theme.
+
+Version: unspecified or 1
+Lots of legacy values were used, scaling was broken etc. Exists only for backward compatibility.
+Version: 2
+Mostly worked, but had some positioning bugs and various offsets were in different coordinates and scales. Exists only for backward compatibility.
+Version: 3
+The current version. All on screen graphics that are associated with a player are positioned relative to the players stack in absolute screen coordinates.
+All non player screen elements are positioned in absolute screen coordinates relative to the top left.
 
 -----------------------------------------------------------
 
@@ -317,9 +327,17 @@ Configuration:
 
 ##### Player names
 
-Only the position is configurable here:
+The position and font size of the player names are configurable:
 ```
-"name_Pos": [20, -30],
+"name_Pos": [184, -108],
+"name_Font_Size": 20,
+```
+
+##### Game Over text
+
+The position of the "game over" text.
+```
+"gameover_text_Pos": [640, 620],
 ```
 
 ##### Score
@@ -464,6 +482,7 @@ While an incorrectly cased file may load on Windows, it will not on other operat
 
 All music has to be placed inside the `music` subdirectory.  
 
+`title_screen` and optionally `title_screen_start` for the title screen.  
 `main` and optionally `main_start` for all button menus.  
 `select_screen` and optionally `select_screen_start` for character selection.  
 If `main` exists but `select_screen` does not, `main` will play in character selection as well.

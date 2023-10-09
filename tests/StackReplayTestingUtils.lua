@@ -7,14 +7,27 @@ function StackReplayTestingUtils:simulateReplayWithPath(path)
   return self:fullySimulateMatch(match)
 end
 
-function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level)
+function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wantsCanvas, playerCount, theme)
+  if wantsCanvas == nil then
+    wantsCanvas = false
+  end
+  if playerCount == nil then
+    playerCount = 1
+  end
   local match = Match("endless")
   match.seed = 1
-  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod="controller"}
+  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, theme=theme, inputMethod="controller"}
   P1.max_runs_per_frame = 1
-  match.P1 = P1
+  match:addPlayer(P1)
   P1:wait_for_random_character()
   P1:starting_state()
+  if playerCount == 2 then
+    local P2 = Stack{which=2, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, theme=theme, inputMethod="controller"}
+    P2.max_runs_per_frame = 1
+    match:addPlayer(P2)
+    P2:wait_for_random_character()
+    P2:starting_state()
+  end
 
   return match
 end
