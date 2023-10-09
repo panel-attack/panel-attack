@@ -131,6 +131,19 @@ function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacySco
   menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
 end
 
+function Stack:drawBar(image, quad, x, y, height, rotate, scale)
+  local imageWidth = image:getWidth()
+  local imageHeight = image:getHeight()
+  local barYScale = height / imageHeight
+  local quadY = 0
+  if barYScale < 1 then
+    barYScale = 1
+    quadY = imageHeight - height
+  end
+  quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
+  qdraw(image, quad, x / GFX_SCALE, (y - height) / GFX_SCALE, rotate, scale, scale * barYScale)
+end
+
 function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
   if cameFromLegacyScoreOffset == nil then
     cameFromLegacyScoreOffset = false
@@ -757,22 +770,14 @@ function Stack.render(self)
     end
 
     local multiBarFrameCount = self.multiBarFrameCount
-    -- the shake bar img is used as a reference for the width of our bars
-    -- all other bars will be scaled to use the same width
-    local desiredWidth = self.theme.images.IMG_multibar_shake_bar:getWidth() * self.theme.multibar_Scale
-    local iconX = (self.origin_x + self.theme.multibar_Pos[1] * self.mirror_x) * GFX_SCALE
-    local iconY = 709
     local multiBarMaxHeight = 590 * self.theme.multibar_Scale
+    local multiBarX = self:elementOriginXWithOffset(self.theme.multibar_Pos, false)
+    local multiBarBottomY = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) + multiBarMaxHeight
 
     local healthHeight = (self.health / multiBarFrameCount) * multiBarMaxHeight
+    self:drawBar(self.theme.images.IMG_healthbar, self.healthQuad, multiBarX, multiBarBottomY - healthHeight, healthHeight, 0, self.theme.multibar_Scale)
 
-    local iconXScale, iconYScale, icon_width, icon_height
-    icon_width, icon_height = self.theme.images.IMG_healthbar:getDimensions()
-    iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-    iconYScale = -(healthHeight / icon_height) / GFX_SCALE
-    draw(self.theme.images.IMG_healthbar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
-
-    iconY = iconY - healthHeight
+    multiBarBottomY = multiBarBottomY - healthHeight
 
     local stopHeight = 0
     local preStopHeight = 0
@@ -781,18 +786,12 @@ function Stack.render(self)
       -- shake is only drawn if it is greater than prestop + stop
       -- shake is always guaranteed to fit
       local shakeHeight = (shake_time / multiBarFrameCount) * multiBarMaxHeight
-      icon_width, icon_height = self.theme.images.IMG_multibar_shake_bar:getDimensions()
-      iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-      iconYScale = -(shakeHeight / icon_height) / GFX_SCALE
-      draw(self.theme.images.IMG_multibar_shake_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+      self:drawBar(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, multiBarX, multiBarBottomY - shakeHeight, shakeHeight, 0, self.theme.multibar_Scale)
     else
       -- stop/prestop are only drawn if greater than shake
       if stop_time > 0 then
         stopHeight = math.min(stop_time, multiBarFrameCount - self.health) / multiBarFrameCount * multiBarMaxHeight
-        icon_width, icon_height = self.theme.images.IMG_multibar_stop_bar:getDimensions()
-        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-        iconYScale = -(stopHeight / icon_height) / GFX_SCALE
-        draw(self.theme.images.IMG_multibar_stop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+        self:drawBar(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, multiBarX, multiBarBottomY - stopHeight, stopHeight, 0, self.theme.multibar_Scale)
       end
       if self.pre_stop_time > 0 then
         local totalInvincibility = self.health + self.stop_time + self.pre_stop_time
@@ -805,13 +804,7 @@ function Stack.render(self)
           preStopHeight = self.pre_stop_time / multiBarFrameCount * multiBarMaxHeight
         end
 
-        -- prestop may be truncated at the top if there is not enough space
-        preStopHeight = math.min(self.pre_stop_time / multiBarFrameCount, 1 - (self.health + stop_time) / multiBarFrameCount) * multiBarMaxHeight
-        icon_width, icon_height = self.theme.images.IMG_multibar_prestop_bar:getDimensions()
-        iconXScale = (desiredWidth / GFX_SCALE) / icon_width * self.mirror_x
-        iconYScale = -(preStopHeight / icon_height) / GFX_SCALE
-        iconY = iconY - stopHeight
-        draw(self.theme.images.IMG_multibar_prestop_bar, iconX / GFX_SCALE, iconY / GFX_SCALE, 0, iconXScale, iconYScale)
+        self:drawBar(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, multiBarX, multiBarBottomY - preStopHeight, preStopHeight, 0, self.theme.multibar_Scale)
 
         if remainingSeconds > 0 then
           self:drawString(tostring(math.floor(remainingSeconds)), {-19, 5}, false, 20)
