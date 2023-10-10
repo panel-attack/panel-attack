@@ -132,8 +132,7 @@ function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacySco
 end
 
 function Stack:drawBar(image, quad, themePositionOffset, height, yOffset, rotate, scale)
-  local imageWidth = image:getWidth()
-  local imageHeight = image:getHeight()
+  local imageWidth, imageHeight = image:getDimensions()
   local barYScale = height / imageHeight
   local quadY = 0
   if barYScale < 1 then
@@ -143,7 +142,7 @@ function Stack:drawBar(image, quad, themePositionOffset, height, yOffset, rotate
   local x = self:elementOriginXWithOffset(themePositionOffset, false)
   local y = self:elementOriginYWithOffset(themePositionOffset, false)
   quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
-  qdraw(image, quad, x / GFX_SCALE, (y - height) / GFX_SCALE - yOffset, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
+  qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
 end
 
 function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
@@ -771,12 +770,12 @@ function Stack.render(self)
 
     local multiBarFrameCount = self.multiBarFrameCount
     local multiBarMaxHeight = 590 * self.theme.multibar_Scale
-    local multiBarBottomY = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) + multiBarMaxHeight
+    local bottomOffset = 0
 
     local healthHeight = (self.health / multiBarFrameCount) * multiBarMaxHeight
     self:drawBar(self.theme.images.IMG_healthbar, self.healthQuad, self.theme.multibar_Pos, healthHeight, 0, 0, self.theme.multibar_Scale)
 
-    multiBarBottomY = multiBarBottomY - healthHeight
+    bottomOffset = healthHeight
 
     local stopHeight = 0
     local preStopHeight = 0
@@ -785,14 +784,14 @@ function Stack.render(self)
       -- shake is only drawn if it is greater than prestop + stop
       -- shake is always guaranteed to fit
       local shakeHeight = (shake_time / multiBarFrameCount) * multiBarMaxHeight
-      self:drawBar(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, self.theme.multibar_Pos, shakeHeight, 0, 0, self.theme.multibar_Scale)
+      self:drawBar(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, self.theme.multibar_Pos, shakeHeight, bottomOffset, 0, self.theme.multibar_Scale)
     else
       -- stop/prestop are only drawn if greater than shake
       if stop_time > 0 then
         stopHeight = math.min(stop_time, multiBarFrameCount - self.health) / multiBarFrameCount * multiBarMaxHeight
-        self:drawBar(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, self.theme.multibar_Pos, stopHeight, 0, 0, self.theme.multibar_Scale)
+        self:drawBar(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, self.theme.multibar_Pos, stopHeight, bottomOffset, 0, self.theme.multibar_Scale)
 
-        multiBarBottomY = multiBarBottomY - stopHeight
+        bottomOffset = bottomOffset + stopHeight
       end
       if self.pre_stop_time > 0 then
         local totalInvincibility = self.health + self.stop_time + self.pre_stop_time
@@ -805,7 +804,7 @@ function Stack.render(self)
           preStopHeight = self.pre_stop_time / multiBarFrameCount * multiBarMaxHeight
         end
 
-        self:drawBar(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, self.theme.multibar_Pos, preStopHeight, 0, 0, self.theme.multibar_Scale)
+        self:drawBar(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, self.theme.multibar_Pos, preStopHeight, bottomOffset, 0, self.theme.multibar_Scale)
 
         if remainingSeconds > 0 then
           self:drawString(tostring(math.floor(remainingSeconds)), {-19, 5}, false, 20)
