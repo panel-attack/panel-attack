@@ -90,7 +90,7 @@ function Panels.load(self)
   local function load_panel_img(name)
     local img = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. name)
     if not img then
-      img = GraphicsUtil.loadImageFromSupportedExtensions("panels/pacci/" .. name)
+      img = GraphicsUtil.loadImageFromSupportedExtensions("panels/__default/" .. name)
       if not img then
         error("Could not find default panel image")
       end
