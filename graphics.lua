@@ -769,7 +769,7 @@ function Stack.render(self)
     self:drawLabel(self.theme.images["IMG_healthbar_frame" .. self.id], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
 
     local multiBarFrameCount = self.multiBarFrameCount
-    local multiBarMaxHeight = 590 * self.theme.multibar_Scale
+    local multiBarMaxHeight = 589 * self.theme.multibar_Scale
     local bottomOffset = 0
 
     local healthHeight = (self.health / multiBarFrameCount) * multiBarMaxHeight
@@ -798,7 +798,7 @@ function Stack.render(self)
         local remainingSeconds = 0
         if totalInvincibility > multiBarFrameCount then
           -- total invincibility exceeds what the multibar can display -> fill only the remaining space with prestop
-          preStopHeight = 1 - (self.health + stop_time) / multiBarFrameCount * multiBarMaxHeight
+          preStopHeight = (1 - (self.health + stop_time) / multiBarFrameCount) * multiBarMaxHeight
           remainingSeconds = (totalInvincibility - multiBarFrameCount) / 60
         else
           preStopHeight = self.pre_stop_time / multiBarFrameCount * multiBarMaxHeight

@@ -36,7 +36,7 @@
 "gameover_text_Pos": [640, 620],
 "healthbar_frame_Pos": [-52, -12],
 "healthbar_frame_Scale": 1,
-"multibar_Pos": [-13, 582],
+"multibar_Pos": [-13, 588],
 "multibar_Scale": 1,
 "bg_title_is_tiled": false,
 "bg_title_speed_x": 0,
