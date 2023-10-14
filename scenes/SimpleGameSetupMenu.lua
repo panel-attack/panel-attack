@@ -57,13 +57,12 @@ function SimpleGameSetupMenu:startGame()
     current_stage = nil
   end
   if self.typeButtons.value == "Classic" then
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character, inputMethod=config.inputMethod}
+    GAME.match:addPlayer(Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character, inputMethod=config.inputMethod})
   else
-    GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character, inputMethod=config.inputMethod}
+    GAME.match:addPlayer(Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character, inputMethod=config.inputMethod})
   end
   GAME.match.P1:wait_for_random_character()
   GAME.match.P1.do_countdown = config.ready_countdown_1P or false
-  GAME.match.P2 = nil
   GAME.match.P1:starting_state()
   sceneManager:switchToScene(self.gameScene, {})
 end
