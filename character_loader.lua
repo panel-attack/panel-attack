@@ -2,7 +2,6 @@ require("queue")
 require("globals")
 require("character")
 local logger = require("logger")
-local tableUtils = require("table_util")
 
 CharacterLoader = {}
 
@@ -200,7 +199,7 @@ function CharacterLoader.resolveCharacterSelection(characterId)
     characterId = CharacterLoader.resolveBundle(characterId)
   else
     -- resolve via random selection
-    characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
+    characterId = table.getRandomElement(characters_ids_for_current_theme)
   end
 
   return characterId
@@ -208,7 +207,7 @@ end
 
 function CharacterLoader.resolveBundle(characterId)
   while characters[characterId]:is_bundle() do
-    characterId = tableUtils.getRandomElement(characters[characterId].sub_characters)
+    characterId = table.getRandomElement(characters[characterId].sub_characters)
   end
 
   return characterId
