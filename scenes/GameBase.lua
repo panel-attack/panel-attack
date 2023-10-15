@@ -55,6 +55,8 @@ function GameBase:abortGame() end
 -- called during runGame()
 function GameBase:customRun() end
 
+-- Game mode specific behaviour for drawing on top of what match:render draws
+-- called during runGame()
 function GameBase:customDraw() end
 
 -- Game mode specific state setup for a game over
