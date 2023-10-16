@@ -38,6 +38,7 @@
 "healthbar_frame_Scale": 1,
 "multibar_Pos": [-13, 588],
 "multibar_Scale": 1,
+"multibar_LeftoverTime_Pos": [-19, 5],
 "bg_title_is_tiled": false,
 "bg_title_speed_x": 0,
 "bg_title_speed_y": 0,
