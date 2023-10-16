@@ -294,17 +294,23 @@ Stack =
 -- calculates at how many frames the stack's multibar tops out
 function Stack:calculateMultibarFrameCount()
   -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
-  -- for a realistic max stop, compare
-  -- 27 combo while not topped out - combo stop is theoretically uncapped; 27 is a high cutoff for maximum garbage sent via combos
-  local maxStop = 0--self:calculateStopTime(20, false, false)
+  local maxStop = 0
+
+  -- for a realistic max stop, let's only compare obtainable stop while topped out - while not topped out, stop doesn't matter after all
   -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
   maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
-  -- x13 chain while not topped out (bonus stop from extra chain links is capped at x13)
-  --maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
-  -- while topped out, combos use the same formular as chains while not topped out but with a much lower cap
-  -- so we don't need to calculate that
-  -- 10 combo while topped out
+
+  -- while topped out, stop from combos is capped at 10 combo
   maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
+
+  -- if we wanted to include stop in non-topped out states:
+  -- combo stop is linear with combosize but +27 is a reasonable cutoff (garbage cap for combos)
+  -- maxStop = math.max(maxStop, self:calculateStopTime(27, false, false))
+  -- ...but this would produce insanely high values on low levels
+
+  -- bonus stop from extra chain links caps out at x13
+  -- maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
+  -- this too produces insanely high values on low levels
 
   local minFrameCount = maxStop + level_to_hang_time[self.level]
 
