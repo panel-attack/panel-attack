@@ -248,7 +248,7 @@ Width of this image always gets scaled to fit the stack width
 #### Multibar 
 
 The multibar is being drawn to the side of the stack to indicate remaining invincibility frames
-The multihbar supports two different display modes, configured in the theme's config.json:
+The multibar supports two different display modes, configured in the theme's config.json:
 ```
 "multibar_is_absolute": true,
 ```
