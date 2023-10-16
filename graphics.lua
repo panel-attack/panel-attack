@@ -926,6 +926,7 @@ function Stack.render(self)
 
   drawLevel()
   drawAnalyticData()
+  self:drawDebug()
 end
 
 function Stack:drawPlayerName()
@@ -1037,8 +1038,6 @@ function Stack:drawMultibar()
   else
     self:drawRelativeMultibar(stop_time, shake_time)
   end
-
-  self:drawDebug()
 end
 
 function Stack:drawRelativeMultibar(stop_time, shake_time)
