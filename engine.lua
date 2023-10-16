@@ -298,7 +298,7 @@ function Stack:calculateMultibarFrameCount()
   -- 27 combo while not topped out - combo stop is theoretically uncapped; 27 is a high cutoff for maximum garbage sent via combos
   local maxStop = 0--self:calculateStopTime(20, false, false)
   -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
-  local maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
+  maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
   -- x13 chain while not topped out (bonus stop from extra chain links is capped at x13)
   --maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
   -- while topped out, combos use the same formular as chains while not topped out but with a much lower cap
