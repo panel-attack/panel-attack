@@ -312,12 +312,12 @@ function Stack:calculateMultibarFrameCount()
   -- maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
   -- this too produces insanely high values on low levels
 
-  local minFrameCount = maxStop + level_to_hang_time[self.level]
-
   -- prestop does not need to be represented fully as there is visual representation via popping panels
   -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
   -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
-  --local preStopFrameCount = 120 + (10 - self.level) * 5
+  --local preStopFrameCount = 30 + (10 - self.level) * 5
+
+  local minFrameCount = maxStop + level_to_hang_time[self.level] --+ preStopFrameCount
 
   --return minFrameCount + preStopFrameCount
   return math.max(240, minFrameCount)
