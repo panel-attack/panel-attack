@@ -286,9 +286,42 @@ Stack =
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
+    s.multiBarFrameCount = s:calculateMultibarFrameCount()
 
     s:createCursors()
   end)
+
+-- calculates at how many frames the stack's multibar tops out
+function Stack:calculateMultibarFrameCount()
+  -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
+  local maxStop = 0
+
+  -- for a realistic max stop, let's only compare obtainable stop while topped out - while not topped out, stop doesn't matter after all
+  -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
+  maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
+
+  -- while topped out, stop from combos is capped at 10 combo
+  maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
+
+  -- if we wanted to include stop in non-topped out states:
+  -- combo stop is linear with combosize but +27 is a reasonable cutoff (garbage cap for combos)
+  -- maxStop = math.max(maxStop, self:calculateStopTime(27, false, false))
+  -- ...but this would produce insanely high values on low levels
+
+  -- bonus stop from extra chain links caps out at x13
+  -- maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
+  -- this too produces insanely high values on low levels
+
+  -- prestop does not need to be represented fully as there is visual representation via popping panels
+  -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
+  -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
+  --local preStopFrameCount = 30 + (10 - self.level) * 5
+
+  local minFrameCount = maxStop + level_to_hang_time[self.level] --+ preStopFrameCount
+
+  --return minFrameCount + preStopFrameCount
+  return math.max(240, minFrameCount)
+end
 
 function Stack:createCursors()
   local cursorImage = self.theme.images.IMG_cursor[1]
