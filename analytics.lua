@@ -15,7 +15,8 @@ local function create_blank_data()
     -- sparse dictionary with a count of each chain reached, mystery chains are recorded as whatever chain they were, 1 is obviously meaningless
     reached_chains = {},
     -- sparse dictionary with a count of each combo reached, 1 to 3 being meaningless
-    used_combos = {}
+    used_combos = {},
+    shockGarbageCount = 0
   }
 end
 
@@ -46,6 +47,7 @@ local function analytic_clear(analytic)
   analytic.swap_count = 0
   analytic.reached_chains = {}
   analytic.used_combos = {}
+  analytic.shockGarbageCount = 0
 end
 
 local amount_of_garbages_lines_per_combo = {0, 0, 0, 0.5, 1, 1, 1, 2, 2, 2, 2, 2, 3, 4, [20] = 6, [27] = 8}
@@ -78,6 +80,7 @@ local function refresh_sent_garbage_lines(analytic)
   end
   local chain_above_13 = compute_above_chain_card_limit(analytics.last_game)
   sent_garbage_lines_count = sent_garbage_lines_count + 13 * chain_above_13
+  sent_garbage_lines_count = sent_garbage_lines_count + analytic.shockGarbageCount
   analytic.sent_garbage_lines = sent_garbage_lines_count
 end
 
@@ -255,6 +258,16 @@ function AnalyticsInstance.register_move(self)
   local analytics_filters = self:data_update_list()
   for _, analytic in pairs(analytics_filters) do
     analytic.move_count = analytic.move_count + 1
+  end
+end
+
+function AnalyticsInstance:registerShock()
+  -- we don't track shock garbage sent in all-time analytics - for now
+  self.data.shockGarbageCount = self.data.shockGarbageCount
+
+  local analytics_filters = self:data_update_list()
+  for _, analytic in pairs(analytics_filters) do
+    analytic.sent_garbage_lines = analytic.sent_garbage_lines + 1
   end
 end
 

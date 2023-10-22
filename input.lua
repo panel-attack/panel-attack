@@ -294,6 +294,7 @@ function love.keypressed(key, scancode, rep)
     end
   end
 
+  -- TODO: Implement these in Game as they access game data
   if handleCopy() or
      handleDumpAttackPattern() or
      modifyWinCounts() then

@@ -500,6 +500,7 @@ function Character.loadSfx(self, name, yields)
     sfx = tableUtils.toContinuouslyIndexedTable(sfx)
   end
 
+  assert(sfx ~= nil)
   return sfx
 end
 

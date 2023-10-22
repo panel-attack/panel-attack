@@ -55,6 +55,10 @@ function GameBase:abortGame() end
 -- called during runGame()
 function GameBase:customRun() end
 
+-- Game mode specific behaviour for drawing on top of what match:render draws
+-- called during runGame()
+function GameBase:customDraw() end
+
 -- Game mode specific state setup for a game over
 -- called during setupGameOver()
 function GameBase:customGameOverSetup() end
@@ -288,6 +292,7 @@ function GameBase:runGame(dt)
   -- Render only if we are not catching up to a current spectate match
   if not (GAME.match.P1 and GAME.match.P1.play_to_end) and not (GAME.match.P2 and GAME.match.P2.play_to_end) then
     GAME.gfx_q:push({GAME.match.render, {GAME.match}})
+    self:customDraw()
   end
 end
 

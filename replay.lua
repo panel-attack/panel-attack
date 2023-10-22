@@ -103,12 +103,12 @@ function Replay.loadFromFile(replay, wantsCanvas)
   if replay.vs then
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
-    GAME.match.P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
+    GAME.match:addPlayer(Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1})
 
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
-      GAME.match.P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
+      GAME.match:addPlayer(Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2})
       
       GAME.match.P1:setGarbageTarget(GAME.match.P2)
       GAME.match.P1:setOpponent(GAME.match.P2)
@@ -137,8 +137,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
 
   elseif replay.endless or replay.time then
     local inputMethod = (replayDetails.inputMethod) or "controller"
-    GAME.match.P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
-    GAME.match.P1 = GAME.match.P1
+    GAME.match:addPlayer(Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod})
     GAME.match.P1:wait_for_random_character()
   end
 
@@ -151,11 +150,9 @@ function Replay.loadFromFile(replay, wantsCanvas)
 
   if GAME.match.P2 then
     GAME.match.P2:receiveConfirmedInput(uncompress_input_string(replayDetails.I))
-
     GAME.match.P2.do_countdown = replayDetails.do_countdown or false
     GAME.match.P2.max_runs_per_frame = 1
     GAME.match.P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
-    refreshBasedOnOwnMods(P2)
     refreshBasedOnOwnMods(GAME.match.P2)
   end
   character_loader_wait()

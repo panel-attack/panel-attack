@@ -21,10 +21,9 @@ sceneManager:addScene(PuzzleGame)
 
 function PuzzleGame:customLoad(sceneParams)
   GAME.match = Match("puzzle")
-  GAME.match.P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=sceneParams.character, inputMethod=config.inputMethod}
+  GAME.match:addPlayer(Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=sceneParams.character, inputMethod=config.inputMethod})
   GAME.match.P1:wait_for_random_character()
   GAME.match.P1.do_countdown = config.ready_countdown_1P or false
-  GAME.match.P2 = nil
 
   local puzzle = self.puzzleSet.puzzles[self.puzzleIndex]
   local isValid, validationError = puzzle:validate()

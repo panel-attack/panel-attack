@@ -24,7 +24,7 @@ function ChallengeStage:createHealth()
 end
 
 function ChallengeStage:createAttackEngine(garbageTarget, opponent, character)
-  local attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackSettings, garbageTarget, opponent, character)
+  local attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackSettings, garbageTarget, opponent, character, true)
   return attackEngine
 end
 
