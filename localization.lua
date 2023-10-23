@@ -42,7 +42,7 @@ function Localization.set_language(self, lang_code)
   elseif config.language_code == "JP" then
     set_global_font("jp.ttf", 14)
   elseif config.language_code == "TH" then
-    set_global_font("th.ttf", 12)
+    set_global_font("th.otf", 14)
   else
     set_global_font(nil, 12)
   end
