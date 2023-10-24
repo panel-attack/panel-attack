@@ -33,6 +33,11 @@ LuaFileSystem
   Copyright © 2003 - 2010 Kepler Project.
   Copyright © 2010 - 2022 The LuaFileSystem authors.
 
+lua-discordRPC
+  Website: https://github.com/pfirsich/lua-discordRPC
+  License: MIT/Expat
+  Copyright (c) 2018 Joel Schumacher
+
 Apple Computer Osaka-UI (jp.ttf)
   No formal license, usage according to the embedding permission
   Copyright © 1990-1999 Apple Computer, Inc.
