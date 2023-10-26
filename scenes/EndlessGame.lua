@@ -1,6 +1,6 @@
 local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
-local Replay = require("replay")
+local Replay = require("Replay")
 local class = require("class")
 
 --@module endlessGame

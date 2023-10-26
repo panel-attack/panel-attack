@@ -10,7 +10,7 @@ local sceneManager = {
 
 local scenes = {}
 local transitionCo = nil
-local defaultTransition = "none"
+local defaultTransition = "fade"
 local transitionType = "none"
 local transitions = {
   none = {

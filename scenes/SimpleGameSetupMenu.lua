@@ -14,6 +14,8 @@ local GraphicsUtil = require("graphics_util")
 -- A Scene that contains menus for basic game configuation (speed, difficulty, level, etc.)
 local SimpleGameSetupMenu = class(
   function (self, sceneParams)
+    self.backgroundImg = themes[config.theme].images.bg_main
+
     -- must be set in child classes
     self.gameMode = nil
     self.gameScene = nil
@@ -73,7 +75,7 @@ local function exitMenu()
 end
 
 function SimpleGameSetupMenu:load()
-    self.speedSlider = Slider({
+  self.speedSlider = Slider({
     min = 1, 
     max = 99, 
     value = GAME.config.endless_speed or 1, 
@@ -171,10 +173,12 @@ function SimpleGameSetupMenu:load()
 end
 
 function SimpleGameSetupMenu:drawBackground() 
-  themes[config.theme].images.bg_main:draw() 
+  self.backgroundImg:draw() 
 end
 
-function SimpleGameSetupMenu:update()
+function SimpleGameSetupMenu:update(dt)
+  self.backgroundImg:update(dt)
+
   if self.typeButtons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
   

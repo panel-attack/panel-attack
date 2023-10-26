@@ -3,7 +3,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local consts = require("consts")
 local util = require("util")
-local Replay = require("replay")
+local Replay = require("Replay")
 local class = require("class")
 
 --@module replayGame

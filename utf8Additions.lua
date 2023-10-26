@@ -1,9 +1,13 @@
 local utf8
 if SERVER_MODE then
   utf8 = require("lua-utf8")
+  require("dump")
+  print(dump(utf8))
 else
   utf8 = require("utf8")
 end
+
+
 
 assert(utf8.len ~= nil)
 assert(utf8.offset ~= nil)

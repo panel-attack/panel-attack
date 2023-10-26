@@ -191,10 +191,16 @@ end
 
 -- setup the network connection on the given IP and port
 function network_init(ip, network_port)
+  print("network_init")
   TCP_sock = socket.tcp()
+  print("network_init1")
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect(ip, network_port or 49569) then
-    return false
+  print("network_init2")
+  local result, err = TCP_sock:connect(ip, network_port or 49569)
+  print("network_init3")
+  if not result then
+    print("network_init EARLY END")
+    return err == "already connected"
   end
   TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)
@@ -215,6 +221,7 @@ function network_init(ip, network_port)
   }
   sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name
   json_send(sent_json)
+  print("network_init END")
   return true
 end
 
