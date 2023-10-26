@@ -37,7 +37,7 @@ require("engine.checkMatches")
 require("AttackEngine")
 
 require("graphics")
-require("Replay")
+require("replay")
 require("network")
 require("Puzzle")
 require("PuzzleSet")
