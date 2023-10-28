@@ -317,15 +317,15 @@ function Game:update(dt)
   if input.isPressed["SystemKey"] then
     runSystemCommands()
   end
-  
-  local status, err = nil, nil
+
   if coroutine.status(self.setupCoroutineObject) ~= "dead" then
-    status, err = coroutine.resume(self.setupCoroutineObject)
+    local status, err = coroutine.resume(self.setupCoroutineObject)
     -- loading bar setup finished
     if status and coroutine.status(self.setupCoroutineObject) == "dead" then
       self:switchToStartScene()
     elseif not status then
       self.crashTrace = debug.traceback(self.setupCoroutineObject)
+      error(err)
     end
   elseif input.isDown["return"] and input.isDown["Alt"] then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -335,20 +335,12 @@ function Game:update(dt)
     if sceneManager.isTransitioning then
       sceneManager:transition()
     end
-    status = true
   elseif sceneManager.isTransitioning then
     sceneManager:transition()
-    status = true
   else
-    status, err = coroutine.resume(mainloop)
-    if not status then
-      self.crashTrace = debug.traceback(mainloop)
-      error(errorString)
-    end
+    error("No active scene and no active transition")
   end
-  if not status then
-    error(err)
-  end
+
   if self.server_queue and self.server_queue:size() > 0 then
     logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
   end
@@ -356,7 +348,7 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
-  
+
   manualGC(0.0001, nil, nil)
 end
 

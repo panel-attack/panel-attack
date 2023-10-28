@@ -42,7 +42,6 @@ require("network")
 require("Puzzle")
 require("PuzzleSet")
 require("puzzles")
-require("mainloop")
 require("sound")
 require("timezones")
 require("gen_panels")
@@ -96,7 +95,6 @@ function love.load(args)
   GAME.rich_presence:initialize("902897593049301004")
   -- TODO: pull game updater from from args
   GAME:load(GAME_UPDATER)
-  mainloop = coroutine.create(fmainloop)
 
   GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
 end

@@ -138,7 +138,7 @@ If you are running locally you can go into the client settings -> debug -> show 
 
 If you want to access your server from an IP you need to add your ip to the client's menus.
 
-Change mainloop.lua, around where it says something like
+Change MainMenu.lua, around where it says something like
 
 {loc("mm_2_vs_online", ""), main_net_vs_setup, {"panelattack.com"}},
 
