@@ -1,3 +1,5 @@
+spectators_string = ""
+
 -- quits the game
 function exit_game(...)
   love.event.quit()
