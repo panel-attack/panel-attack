@@ -63,8 +63,6 @@ if GAME_UPDATER == nil then
   love.run = CustomRun.run
 end
 
-local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
-
 if PROFILING_ENABLED then
   GAME.profiler = require("profiler")
 end
