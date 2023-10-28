@@ -56,7 +56,11 @@ function sceneManager:transitionFn(sceneParams)
 end
 
 function sceneManager:transition()
-  coroutine.resume(transitionCo)
+  local status, err = coroutine.resume(transitionCo)
+  if not status then
+    GAME.crashTrace = debug.traceback(transitionCo)
+    error(err)
+  end
 end
 
 function sceneManager:addScene(scene)

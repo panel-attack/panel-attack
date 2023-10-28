@@ -317,7 +317,7 @@ function Game:update(dt)
   if input.isPressed["SystemKey"] then
     runSystemCommands()
   end
-  
+
   local status, err = nil, nil
   if coroutine.status(self.setupCoroutineObject) ~= "dead" then
     status, err = coroutine.resume(self.setupCoroutineObject)
