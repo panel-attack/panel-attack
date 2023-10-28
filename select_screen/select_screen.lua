@@ -91,7 +91,7 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomStage()
       player.stage_display_name = stages[player.stage].stage_display_name
-      stage_loader_load(player.stage)
+      StageLoader.load(player.stage)
     end
 
     -- character
@@ -120,7 +120,7 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomCharacter()
       player.character_display_name = characters[player.character].character_display_name
-      character_loader_load(player.character)
+      CharacterLoader.load(player.character)
     end
   end
 end

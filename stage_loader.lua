@@ -1,5 +1,6 @@
 require("queue")
 require("globals")
+require("stage")
 local tableUtils = require("tableUtils")
 
 StageLoader = {}

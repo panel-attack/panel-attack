@@ -1,4 +1,3 @@
-require("stage_loader")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
