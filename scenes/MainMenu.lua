@@ -3,13 +3,8 @@ local Button = require("ui.Button")
 local consts = require("consts")
 local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
-local replay_browser = require("replay_browser")
-local options = require("options")
 local GraphicsUtil = require("graphics_util")
 local class = require("class")
-
--- need to load the existing global scene functions until they get ported to scenes
-require("mainloop")
 
 --@module MainMenu
 -- Scene for the main menu
@@ -24,16 +19,6 @@ local MainMenu = class(
 
 MainMenu.name = "MainMenu"
 sceneManager:addScene(MainMenu)
-
-local function genLegacyMainloopFn(myFunction, args)
-  local onClick = function()
-    func = myFunction
-    arg = args
-    Menu.playValidationSfx()
-    sceneManager:switchToScene(nil)
-  end
-  return onClick
-end
 
 local function switchToScene(scene, sceneParams)
   Menu.playValidationSfx()
@@ -55,8 +40,7 @@ local menuItems = {
   {createMainMenuButton("mm_1_vs", function() switchToScene("VsSelfMenu") end)},
   {createMainMenuButton("mm_1_training", function() switchToScene("TrainingMenu") end)},
   {createMainMenuButton("mm_1_challenge_mode", function() switchToScene("ChallengeModeMenu") end)},
-  {createMainMenuButton("mm_2_vs_online", function() switchToScene("Lobby", {serverIp = "18.188.43.50"}) end,  {""})},
-  --{createMainMenuButton("mm_2_vs_online", genLegacyMainloopFn(main_net_vs_setup, {"18.188.43.50"}),  {""})},
+  {createMainMenuButton("mm_2_vs_online", function() switchToScene("Lobby", {"panelattack.com"}) end,  {""})},
   {createMainMenuButton("mm_2_vs_local", function() switchToScene("CharacterSelectLocal2p") end)},
   {createMainMenuButton("mm_replay_browser", function() switchToScene("ReplayBrowser") end)},
   {createMainMenuButton("mm_configure", function() switchToScene("InputConfigMenu") end)},
@@ -67,8 +51,8 @@ local menuItems = {
 }
 
 local debugMenuItems = {
-  {createMainMenuButton("Beta Server", genLegacyMainloopFn(main_net_vs_setup, {"betaserver.panelattack.com", 59569}),  {""}, false)},
-  {createMainMenuButton("Localhost Server", genLegacyMainloopFn(main_net_vs_setup, {"localhost"}),  {""}, false)}
+  {createMainMenuButton("Beta Server", switchToScene("Lobby", {"betaserver.panelattack.com", 59569}),  {""}, false)},
+  {createMainMenuButton("Localhost Server", switchToScene("Lobby", {"Localhost"}),  {""}, false)}
 }
 
 function MainMenu:addDebugMenuItems()
