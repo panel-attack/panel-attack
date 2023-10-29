@@ -25,16 +25,22 @@ end, UiElement)
 -- id is a string identificator to indiate what kind of uiElement resides here
 -- uiElement is the actual element on display that will perform user interaction when selected
 function Grid:createElementAt(x, y, width, height, description, uiElement)
-  local gridElement = GridElement({width = width * self.unitSize, height = height * self.unitSize, description = description, content = uiElement})
+  local gridElement = GridElement({
+    x = (x - 1) * self.unitSize + self.unitPadding,
+    y = (y - 1) * self.unitSize + self.unitPadding,
+    width = width * self.unitSize - self.unitPadding * 2,
+    height = height * self.unitSize - self.unitPadding * 2,
+    description = description,
+    content = uiElement
+  })
   self:addChild(gridElement)
-  gridElement.x = (x - 1) * self.unitSize
-  gridElement.y = (y - 1) * self.unitSize
 
   for row = y, y + (height - 1) do
     for col = x, x + (width - 1) do
       -- ensure the area is still free
       if tableUtils.length(self.grid[row][col]) > 0 then
-        error("Error trying to create a grid element:\n" .. "There is already element " .. self.grid[row][col].id .. " at coordinate " .. row .. "|" .. col)
+        error("Error trying to create a grid element:\n" .. "There is already element " .. self.grid[row][col].id .. " at coordinate " ..
+                  row .. "|" .. col)
       else
         -- assign the gridElement to the respective areas to make sure they are blocked
         self.grid[row][col] = gridElement

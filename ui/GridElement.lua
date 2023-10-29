@@ -15,12 +15,12 @@ end, UiElement)
 
 function GridElement:getScreenPos()
   local x, y = self.parent:getScreenPos()
-  return x + self.x + self.parent.unitPadding, y + self.y + self.parent.unitPadding
+  return x + self.x, y + self.y
 end
 
 function GridElement:drawBorders()
   local x, y = self:getScreenPos()
-  grectangle("line", x, y, self.width - self.parent.unitPadding * 2, self.height - self.parent.unitPadding * 2)
+  grectangle("line", x, y, self.width, self.height)
 end
 
 function GridElement:draw()

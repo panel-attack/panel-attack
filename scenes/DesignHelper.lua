@@ -4,6 +4,7 @@ local sceneManager = require("scenes.sceneManager")
 local Grid = require("ui.Grid")
 local GridElement = require("ui.GridElement")
 local Carousel = require("ui.Carousel")
+local LevelSlider = require("ui.LevelSlider")
 local input = require("inputManager")
 
 local DesignHelper = class(function (self, sceneParams)
@@ -22,7 +23,8 @@ function DesignHelper:load()
   self.grid:createElementAt(1, 2, 2, 1, "panelSelection")
   self:loadStages()
   self.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.stageCarousel)
-  self.grid:createElementAt(6, 2, 3, 1, "levelSelection")
+  self:loadLevels()
+  self.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.levelSlider)
   self.grid:createElementAt(9, 2, 1, 1, "readySelection")
   self.grid:createElementAt(1, 3, 9, 3, "characterSelection")
   self.grid:createElementAt(9, 6, 1, 1, "leaveSelection")
@@ -40,6 +42,20 @@ function DesignHelper:loadStages()
   self.stageCarousel:addPassenger(randomStage)
 
   self.stageCarousel:setPassenger(config.character)
+end
+
+function DesignHelper:loadLevels()
+  self.levelSlider = LevelSlider({
+    tickLength = 20,
+    -- (gridElement width - tickLength * #levels) / 2
+    x = 37,
+    -- 10 is tickLength / 2, level images are forced into squares
+    y = (self.grid.unitSize) / 2 - 10 - self.grid.unitPadding,
+    value = config.level or 5,
+    onValueChange = function(s)
+      play_optional_sfx(themes[config.theme].sounds.menu_move)
+    end
+  })
 end
 
 function DesignHelper:drawBackground()
