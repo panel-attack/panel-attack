@@ -70,7 +70,6 @@ local Game = class(
     self.last_x = 0
     self.last_y = 0
     self.input_delta = 0.0
-    self.mainloop = nil
 
     -- coroutines
     self.setupCoroutineObject = coroutine.create(function() self:setupCoroutine() end)
