@@ -51,8 +51,6 @@ local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 
-require("dump")
-
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.pa_runInternal = CustomRun.innerRun

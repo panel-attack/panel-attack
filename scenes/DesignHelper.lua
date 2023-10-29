@@ -17,7 +17,7 @@ sceneManager:addScene(DesignHelper)
 
 function DesignHelper:load()
   self.backgroundImg = themes[config.theme].images.bg_main
-  self.grid = Grid({x = 60, y = 20, unitSize = 34, gridWidth = 9, gridHeight = 6, unitPadding = 2})
+  self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
   self.grid:createElementAt(1, 1, 1, 1, "selectedCharacter")
   self.grid:createElementAt(1, 2, 2, 1, "panelSelection")
   self:loadStages()
@@ -29,7 +29,7 @@ function DesignHelper:load()
 end
 
 function DesignHelper:loadStages()
-  self.stageCarousel = Carousel({x = 0, y = 0, width = 102, height = 34})
+  self.stageCarousel = Carousel({width = 294, height = 90})
   for i = 1, #stages_ids_for_current_theme do
     local stage = stages[stages_ids_for_current_theme[i]]
     local passenger = Carousel.createPassenger(stage.id, stage.images.thumbnail, stage.display_name)
@@ -44,7 +44,7 @@ end
 
 function DesignHelper:drawBackground()
   self.backgroundImg:draw()
-  self.grid:draw()
+  GAME.gfx_q:push({self.grid.draw, {self.grid}})
 end
 
 function DesignHelper:update()

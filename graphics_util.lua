@@ -341,15 +341,15 @@ function grectangle_color(mode, x, y, w, h, r, g, b, a)
   end
 end
 
-function gline_color(x1, y1, x2, y2, r, g, b, a)
+function drawStraightLine(x1, y1, x2, y2, r, g, b, a)
   a = a or 1
   if GAME.isDrawing then
     love.graphics.setColor(r, g, b, a)
-    love.graphics.line(x1 * GFX_SCALE, y1 * GFX_SCALE, x2 * GFX_SCALE, y2 * GFX_SCALE)
+    love.graphics.line(x1, y1, x2, y2)
     love.graphics.setColor(1, 1, 1, 1)
   else
     gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-    gfx_q:push({love.graphics.line, {x1 * GFX_SCALE, y1 * GFX_SCALE, x2 * GFX_SCALE, y2 * GFX_SCALE}})
+    gfx_q:push({love.graphics.line, {x1, y1, x2, y2}})
     gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
   end
 end
@@ -383,17 +383,22 @@ end
 function GraphicsUtil.printText(text, x, y, align)
   align = align or "left"
 
-  if align == "left" then
-    GAME.gfx_q:push({love.graphics.draw, {text, x, y, 0, 1, 1, 0, 0}})
-  else
+  local xOffset = x
+
+  if align ~= "left" then
     local width = text:getWidth()
     if align == "center" then
-      GAME.gfx_q:push({love.graphics.draw, {text, x - width / 2, y, 0, 1, 1, 0, 0}})
+      xOffset = x - width / 2
     elseif align == "right" then
-      GAME.gfx_q:push({love.graphics.draw, {text, x - width, y, 0, 1, 1, 0, 0}})
+      xOffset = x - width
     else
       error(align .. " is not a valid alignment")
     end
+  end
+  if GAME.isDrawing then
+    love.graphics.draw(text, xOffset, y, 0, 1, 1, 0, 0)
+  else
+    GAME.gfx_q:push({love.graphics.draw, {text, xOffset, y, 0, 1, 1, 0, 0}})
   end
 end
 
@@ -518,15 +523,27 @@ end
 -- ox: Origin offset (x-axis).
 -- oy: Origin offset (y-axis).
 function GraphicsUtil.drawClearText(text, x, y, ox, oy)
-  GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
-  GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y - 1, 0, 1, 1, ox, oy}})
-  GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y + 1, 0, 1, 1, ox, oy}})
-  GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y - 1, 0, 1, 1, ox, oy}})
-  GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y + 1, 0, 1, 1, ox, oy}})
+  if GAME.isDrawing then
+    love.graphics.setColor(0, 0, 0, 1)
+    love.graphics.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
+    love.graphics.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
+    love.graphics.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
+    love.graphics.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
+  
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
+    love.graphics.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
+  else
+    GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
+    GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y - 1, 0, 1, 1, ox, oy}})
+    GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y + 1, 0, 1, 1, ox, oy}})
+    GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y - 1, 0, 1, 1, ox, oy}})
+    GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y + 1, 0, 1, 1, ox, oy}})
 
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  GAME.gfx_q:push({love.graphics.draw, {text, x + 0, y + 0, 0, 1, 1, ox, oy}})
-  GAME.gfx_q:push({love.graphics.draw, {text, x + 1, y + 0, 0, 1, 1, ox, oy}})
+    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+    GAME.gfx_q:push({love.graphics.draw, {text, x + 0, y + 0, 0, 1, 1, ox, oy}})
+    GAME.gfx_q:push({love.graphics.draw, {text, x + 1, y + 0, 0, 1, 1, ox, oy}})
+  end
 end
 
 return GraphicsUtil

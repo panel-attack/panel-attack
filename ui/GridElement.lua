@@ -20,8 +20,7 @@ end
 
 function GridElement:drawBorders()
   local x, y = self:getScreenPos()
-  grectangle("line", x * GFX_SCALE, y * GFX_SCALE, (self.width - self.parent.unitPadding * 2) * GFX_SCALE,
-             (self.height - self.parent.unitPadding * 2) * GFX_SCALE)
+  grectangle("line", x, y, self.width - self.parent.unitPadding * 2, self.height - self.parent.unitPadding * 2)
 end
 
 function GridElement:draw()

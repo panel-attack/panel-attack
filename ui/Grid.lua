@@ -66,7 +66,9 @@ end
 
 function Grid:draw()
   if DEBUG_ENABLED then
-    grectangle_color("line", self.x, self.y, self.width, self.height, 1, 1, 1, 0.5)
+    love.graphics.setColor(1, 1, 1, 0.5)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(1, 1, 1, 1)
     -- draw all units
     local left = self.x
     local right = self.x + self.width
@@ -74,11 +76,11 @@ function Grid:draw()
     local bottom = self.y + self.height
     for i = 1, self.gridHeight - 1 do
       local y = top + self.unitSize * i
-      gline_color(left, y, right, y, 1, 1, 1, 0.5)
+      drawStraightLine(left, y, right, y, 1, 1, 1, 0.5)
     end
     for i = 1, self.gridWidth - 1 do
       local x = left + self.unitSize * i
-      gline_color(x, top, x, bottom, 1, 1, 1, 0.5)
+      drawStraightLine(x, top, x, bottom, 1, 1, 1, 0.5)
     end
   end
 

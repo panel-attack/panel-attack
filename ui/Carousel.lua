@@ -7,7 +7,7 @@ local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 
 local function calculateFontSize(height)
-  return math.floor(height / 2) + 1
+  return math.floor(height / 5) + 1
 end
 
 local Carousel = class(function(carousel, options)
@@ -106,14 +106,14 @@ function Carousel:draw()
   local imgWidth, imgHeight = passenger.image:getDimensions()
   local x, y = self:getScreenPos()
   -- draw the image centered
-  menu_drawf(passenger.image, (x + self.width / 2) * GFX_SCALE, (y + self.height / 2) * GFX_SCALE, "center", "center", 0, aspectRatio.x / imgWidth, aspectRatio.y / imgHeight)
+  menu_drawf(passenger.image, (x + self.width / 2), (y + self.height * 0.4), "center", "center", 0, aspectRatio.x / imgWidth, aspectRatio.y / imgHeight)
 
   -- text below
   -- Sankyr might tell me this should be a label but it's kinda bleh
   if not passenger.fontText then
     passenger.fontText = love.graphics.newText(self.font, passenger.text)
   end
-  GraphicsUtil.printText(passenger.fontText, (x + self.width / 2) * GFX_SCALE, (y + self.height * 0.85) * GFX_SCALE, "center")
+  GraphicsUtil.printText(passenger.fontText, (x + self.width / 2), (y + self.height * 0.75), "center")
 
   if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
     self.leftButton:draw()
