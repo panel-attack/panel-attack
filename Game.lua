@@ -201,7 +201,8 @@ function Game:createScenes()
     require("scenes.InputConfigMenu"),
     require("scenes.SetNameMenu"),
     require("scenes.OptionsMenu"),
-    require("scenes.SoundTest")
+    require("scenes.SoundTest"),
+    require("scenes.DesignHelper")
   }
 end
 
@@ -314,8 +315,16 @@ function Game:update(dt)
     self.showGameScale = true
   end
   
-  if input.isDown["f2"] or input.isDown["printscreen"] then
+  if input.allKeys.isDown["f2"] or input.allKeys.isDown["printscreen"] then
     takeScreenshot()
+  end
+
+  if DEBUG_ENABLED and input.allKeys.isDown["f5"] then
+    if sceneManager.activeScene.name == "DesignHelper" then
+      package.loaded["scenes.DesignHelper"] = nil
+      sceneManager.activeScene = require("scenes.DesignHelper")
+      sceneManager.activeScene:load()
+    end
   end
 
   if input.isPressed["SystemKey"] then

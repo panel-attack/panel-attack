@@ -341,6 +341,19 @@ function grectangle_color(mode, x, y, w, h, r, g, b, a)
   end
 end
 
+function gline_color(x1, y1, x2, y2, r, g, b, a)
+  a = a or 1
+  if GAME.isDrawing then
+    love.graphics.setColor(r, g, b, a)
+    love.graphics.line(x1 * GFX_SCALE, y1 * GFX_SCALE, x2 * GFX_SCALE, y2 * GFX_SCALE)
+    love.graphics.setColor(1, 1, 1, 1)
+  else
+    gfx_q:push({love.graphics.setColor, {r, g, b, a}})
+    gfx_q:push({love.graphics.line, {x1 * GFX_SCALE, y1 * GFX_SCALE, x2 * GFX_SCALE, y2 * GFX_SCALE}})
+    gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  end
+end
+
 -- Draws text at the given spot
 function gprint(str, x, y, color, scale)
   x = x or 0

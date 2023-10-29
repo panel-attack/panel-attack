@@ -65,9 +65,8 @@ function MainMenu:addDebugMenuItems()
     end
   end
   if config.debugShowDesignHelper then
-    require("scenes.DesignHelper")
     self.menu:addMenuItem(#self.menu.menuItems,
-      {createMainMenuButton("Design Helper", switchToScene("DesignHelper"))})
+      {createMainMenuButton("Design Helper", function() switchToScene("DesignHelper") end)})
   end
 end
 
