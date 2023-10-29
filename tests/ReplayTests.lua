@@ -1,6 +1,6 @@
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local Replay = require("replay")
+local Replay = require("Replay")
 
 
 local function endlessSaveTest()

@@ -21,7 +21,7 @@ local UIElement = class(
     self.label = options.label
     -- list of parameters for translating the label
     if self.label then
-      self.extraLabels = options.extra_labels or {}
+      self.extraLabels = options.extraLabels or {}
     end
     -- whether we should traslante the label or not
     self.translate = options.translate or options.translate == nil and true

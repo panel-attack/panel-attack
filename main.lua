@@ -17,8 +17,8 @@ require("util")
 
 require("globals")
 require("character_loader") -- after globals!
+require("stage_loader") -- after globals!
 local CustomRun = require("CustomRun")
-require("stage") -- after globals!
 
 require("localization")
 require("queue")
@@ -53,6 +53,8 @@ require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
 
+require("dump")
+
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.pa_runInternal = CustomRun.innerRun
@@ -61,8 +63,6 @@ if GAME_UPDATER == nil then
   -- In the autoupdater case run will already have been overridden and be running
   love.run = CustomRun.run
 end
-
-local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
 
 if PROFILING_ENABLED then
   GAME.profiler = require("profiler")

@@ -11,7 +11,7 @@ local inputManager = require("inputManager")
 local save = require("save")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
-local fileUtils = require("fileUtils")
+local fileUtils = require("FileUtils")
 local analytics = require("analytics")
 local class = require("class")
 
@@ -314,7 +314,7 @@ function OptionsMenu:load()
         stop_the_music()
         theme_init()
         stages_init()
-        characters_init()
+        CharacterLoader.initCharacters()
         backgroundImage = themes[config.theme].images.bg_main
         if themes[config.theme].musics["main"] then
           find_and_add_music(themes[config.theme].musics, "main")

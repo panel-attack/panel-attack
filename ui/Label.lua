@@ -11,6 +11,8 @@ local Label = class(
     local textWidth, textHeight = self.text:getDimensions()
     self.width = math.max(textWidth + TEXT_WIDTH_PADDING, self.width)
     self.height = math.max(textHeight + TEXT_HEIGHT_PADDING, self.height)
+    self.color = {.5, .5, 1, .7}
+    self.borderColor = {.7, .7, 1, .7}
     self.TYPE = "Label"
   end,
   UIElement
@@ -23,12 +25,9 @@ function Label:draw()
 
   local screenX, screenY = self:getScreenPos()
   
-  local darkGray = .5
-  local lightGray = .7
-  local alpha = .7
-  GAME.gfx_q:push({love.graphics.setColor, {darkGray, darkGray, 1, alpha}})
+  GAME.gfx_q:push({love.graphics.setColor, self.color})
   GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, {lightGray, lightGray, 1, alpha}})
+  GAME.gfx_q:push({love.graphics.setColor, self.borderColor})
   GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
   

@@ -155,7 +155,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
     GAME.match.P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
     refreshBasedOnOwnMods(GAME.match.P2)
   end
-  character_loader_wait()
+  CharacterLoader.wait()
 
   GAME.match.P1:starting_state()
 

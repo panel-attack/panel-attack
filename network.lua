@@ -193,8 +193,9 @@ end
 function network_init(ip, network_port)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect(ip, network_port or 49569) then
-    return false
+  local result, err = TCP_sock:connect(ip, network_port or 49569)
+  if not result then
+    return err == "already connected"
   end
   TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)

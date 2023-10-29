@@ -5,6 +5,8 @@ else
   utf8 = require("utf8")
 end
 
+
+
 assert(utf8.len ~= nil)
 assert(utf8.offset ~= nil)
 
