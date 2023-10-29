@@ -379,6 +379,24 @@ function gprint(str, x, y, color, scale)
   set_color(1,1,1,1)
 end
 
+-- draws a readymade Text object at a specific coordinate
+function GraphicsUtil.printText(text, x, y, align)
+  align = align or "left"
+
+  if align == "left" then
+    GAME.gfx_q:push({love.graphics.draw, {text, x, y, 0, 1, 1, 0, 0}})
+  else
+    local width = text:getWidth()
+    if align == "center" then
+      GAME.gfx_q:push({love.graphics.draw, {text, x - width / 2, y, 0, 1, 1, 0, 0}})
+    elseif align == "right" then
+      GAME.gfx_q:push({love.graphics.draw, {text, x - width, y, 0, 1, 1, 0, 0}})
+    else
+      error(align .. " is not a valid alignment")
+    end
+  end
+end
+
 local function privateMakeFont(fontPath, size)
   local f
   local hinting = "normal"

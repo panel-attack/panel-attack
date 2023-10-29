@@ -39,6 +39,8 @@ local UIElement = class(
     -- private members
     if self.label then
       self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
+    else
+      self.text = options.text
     end
     
     self.id = uniqueId

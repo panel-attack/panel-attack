@@ -7,6 +7,7 @@ local directsFocus = require("ui.FocusDirector")
 local Grid = class(function(self, options)
   directsFocus(self)
   self.unitSize = options.unitSize
+  self.unitPadding = options.unitPadding or 0
   self.gridHeight = options.gridHeight
   self.gridWidth = options.gridWidth
   self.width = self.gridWidth * self.unitSize
@@ -23,12 +24,14 @@ end, UiElement)
 -- width and height are sizes relative to the unitSize of the grid
 -- id is a string identificator to indiate what kind of uiElement resides here
 -- uiElement is the actual element on display that will perform user interaction when selected
-function Grid:createElementAt(x, y, width, height, id, uiElement)
-  local gridElement = GridElement({width = width * self.unitSize, height = height * self.unitSize, id = id, content = uiElement})
+function Grid:createElementAt(x, y, width, height, description, uiElement)
+  local gridElement = GridElement({width = width * self.unitSize, height = height * self.unitSize, description = description, content = uiElement})
   self:addChild(gridElement)
+  gridElement.x = (x - 1) * self.unitSize
+  gridElement.y = (y - 1) * self.unitSize
 
-  for row = y, y + height do
-    for col = x, x + width do
+  for row = y, y + (height - 1) do
+    for col = x, x + (width - 1) do
       -- ensure the area is still free
       if tableUtils.length(self.grid[row][col]) > 0 then
         error("Error trying to create a grid element:\n" .. "There is already element " .. self.grid[row][col].id .. " at coordinate " .. row .. "|" .. col)
@@ -62,8 +65,8 @@ function Grid.onBack()
 end
 
 function Grid:draw()
-  grectangle_color("line", self.x, self.y, self.width, self.height, 1, 1, 1, 1)
   if DEBUG_ENABLED then
+    grectangle_color("line", self.x, self.y, self.width, self.height, 1, 1, 1, 0.5)
     -- draw all units
     local left = self.x
     local right = self.x + self.width
@@ -78,6 +81,7 @@ function Grid:draw()
       gline_color(x, top, x, bottom, 1, 1, 1, 0.5)
     end
   end
+
   for _, gridElement in ipairs(self.children) do
     if gridElement.isVisible then
       gridElement:draw()
