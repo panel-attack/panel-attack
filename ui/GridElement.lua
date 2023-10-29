@@ -7,6 +7,8 @@ local input = require("inputManager")
 local GridElement = class(function(gridElement, options)
   if options.content then
     gridElement.content = options.content
+    gridElement.content.width = options.width
+    gridElement.content.height = options.height
     -- we still need to add it for the relative offset
     gridElement:addChild(gridElement.content)
   end

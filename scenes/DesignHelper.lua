@@ -3,9 +3,10 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Grid = require("ui.Grid")
 local GridElement = require("ui.GridElement")
-local Carousel = require("ui.Carousel")
+local StageCarousel = require("ui.StageCarousel")
 local LevelSlider = require("ui.LevelSlider")
 local input = require("inputManager")
+local PanelCarousel = require("ui.PanelCarousel")
 
 local DesignHelper = class(function (self, sceneParams)
     self:load(sceneParams)
@@ -20,7 +21,8 @@ function DesignHelper:load()
   self.backgroundImg = themes[config.theme].images.bg_main
   self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
   self.grid:createElementAt(1, 1, 1, 1, "selectedCharacter")
-  self.grid:createElementAt(1, 2, 2, 1, "panelSelection")
+  self:loadPanels()
+  self.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.panelCarousel)
   self:loadStages()
   self.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.stageCarousel)
   self:loadLevels()
@@ -30,18 +32,14 @@ function DesignHelper:load()
   self.grid:createElementAt(9, 6, 1, 1, "leaveSelection")
 end
 
+function DesignHelper:loadPanels()
+  self.panelCarousel = PanelCarousel({})
+  self.panelCarousel:loadPanels()
+end
+
 function DesignHelper:loadStages()
-  self.stageCarousel = Carousel({width = 294, height = 90})
-  for i = 1, #stages_ids_for_current_theme do
-    local stage = stages[stages_ids_for_current_theme[i]]
-    local passenger = Carousel.createPassenger(stage.id, stage.images.thumbnail, stage.display_name)
-    self.stageCarousel:addPassenger(passenger)
-  end
-
-  local randomStage = Carousel.createPassenger(random_stage_special_value, themes[config.theme].images.IMG_random_stage, loc("random"))
-  self.stageCarousel:addPassenger(randomStage)
-
-  self.stageCarousel:setPassenger(config.character)
+  self.stageCarousel = StageCarousel({})
+  self.stageCarousel:loadCurrentStages()
 end
 
 function DesignHelper:loadLevels()

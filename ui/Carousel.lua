@@ -1,15 +1,17 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
-local ArrowButton = require("ui.ArrowButton")
+local CarouselButton = require("ui.CarouselButton")
 local GraphicsUtil = require("graphics_util")
 local Util = require("util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 
 local function calculateFontSize(height)
-  return math.floor(height / 5) + 1
+  return math.floor(height / 2) + 1
 end
 
+-- A carousel with arrow touch buttons that allows to spin a selection of elements around in both directions
+-- This is an "abstract" class, classes should inherit this and overwrite createPassenger and drawPassenger
 local Carousel = class(function(carousel, options)
   canBeFocused(carousel)
 
@@ -32,25 +34,13 @@ local Carousel = class(function(carousel, options)
 end, UiElement)
 
 function Carousel.createPassenger(id, image, text)
-  local passenger = {}
-  passenger.id = id
-  if image then
-    passenger.image = image
-  else
-    passenger.image = themes[config.theme].images.IMG_random_stage
-  end
-  passenger.text = text
-  assert(id and text, "A carousel passenger needs to have an id, an image and a text!")
-  return passenger
+  error("Each specific carousel needs to implement its own passenger")
 end
 
 function Carousel.createNavigationButtons(self)
   self.leftButton =
-    ArrowButton({
-      x = - (self.width * 0.05),
-      y = self.height * 0.25,
-      width = self.width * 0.3,
-      height = self.height * 0.5,
+    CarouselButton({
+      direction = "left",
       onClick = function()
         self:moveToNextPassenger(-1)
       end,
@@ -58,11 +48,8 @@ function Carousel.createNavigationButtons(self)
       parent = self
     })
   self.rightButton =
-    ArrowButton({
-      x = self.width * 0.75,
-      y = self.height * 0.25,
-      width = self.width * 0.3,
-      height = self.height * 0.5,
+    CarouselButton({
+      direction = "right",
       onClick = function()
         self:moveToNextPassenger(1)
       end,
@@ -99,26 +86,19 @@ function Carousel.setPassenger(self, passengerId)
   end
 end
 
-local aspectRatio = {x = 80, y = 45}
 function Carousel:draw()
   assert(#self.passengers > 0, "This carousel has no passengers!")
-  local passenger = self:getSelectedPassenger()
-  local imgWidth, imgHeight = passenger.image:getDimensions()
-  local x, y = self:getScreenPos()
-  -- draw the image centered
-  menu_drawf(passenger.image, (x + self.width / 2), (y + self.height * 0.4), "center", "center", 0, aspectRatio.x / imgWidth, aspectRatio.y / imgHeight)
-
-  -- text below
-  -- Sankyr might tell me this should be a label but it's kinda bleh
-  if not passenger.fontText then
-    passenger.fontText = love.graphics.newText(self.font, passenger.text)
-  end
-  GraphicsUtil.printText(passenger.fontText, (x + self.width / 2), (y + self.height * 0.75), "center")
+  local x, width = self:drawPassenger()
 
   if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
-    self.leftButton:draw()
-    self.rightButton:draw()
+    self.leftButton:draw(x, width)
+    self.rightButton:draw(x, width)
   end
+end
+
+-- drawPassenger should return the x,y,width,height the passenger takes up centered in the carousel
+function Carousel:drawPassenger()
+  error("each specific carousel needs to draw its own specific passenger")
 end
 
 -- this should/may be overwritten by the parent
@@ -151,7 +131,7 @@ function Carousel:receiveInputs()
     self:onBack()
   end
 
-  -- TODO: Interpret touch inputs like swipes
+  -- TODO: Interpret touch inputs such as swipes
   -- probably needs some groundwork in inputManager though
 end
 
