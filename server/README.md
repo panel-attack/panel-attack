@@ -138,11 +138,11 @@ If you are running locally you can go into the client settings -> debug -> show 
 
 If you want to access your server from an IP you need to add your ip to the client's menus.
 
-Change mainloop.lua, around where it says something like
+Change MainMenu.lua, around where it says something like
 
-{loc("mm_2_vs_online", ""), main_net_vs_setup, {"panelattack.com"}},
+{createMainMenuButton("Beta Server", switchToScene("Lobby", {"betaserver.panelattack.com", 59569}),  {""}, false)},
 
-to something that makes sense for your server.  (replace "loc("mm_2_vs_online", "")", and the IP. Using a URL here instead is ok)
+to something that makes sense for your server. Replace "Beta Server" and the URL. Using an IP here is possible too, specify as `serverIp = "18.188.43.50"`` instead. The port number is not necessary but an option.
 
 
 ## Outdated info on how to build a client
