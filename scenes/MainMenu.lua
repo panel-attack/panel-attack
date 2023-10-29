@@ -59,8 +59,15 @@ local debugMenuItems = {
 }
 
 function MainMenu:addDebugMenuItems()
-  for i, menuItem in ipairs(debugMenuItems) do
-    self.menu:addMenuItem(i + 7, menuItem)
+  if config.debugShowServers then
+    for i, menuItem in ipairs(debugMenuItems) do
+      self.menu:addMenuItem(i + 7, menuItem)
+    end
+  end
+  if config.debugShowDesignHelper then
+    require("scenes.DesignHelper")
+    self.menu:addMenuItem(#self.menu.menuItems,
+      {createMainMenuButton("Design Helper", switchToScene("DesignHelper"))})
   end
 end
 
@@ -79,10 +86,8 @@ function MainMenu:load(sceneParams)
     maxHeight = themes[config.theme].main_menu_max_height
   })
   self.menu:setVisibility(true)
-  
-  if config.debugShowServers then
-    self:addDebugMenuItems()
-  end
+
+  self:addDebugMenuItems()
 
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")

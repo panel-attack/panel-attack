@@ -39,6 +39,7 @@ config = {
     -- Debug mode flag
     debug_mode                    = false,
     debugShowServers              = false,
+    debugShowDesignHelper         = false,
     -- Show FPS in the top-left corner of the screen
     show_fps                      = false,
     -- Show ingame infos while playing the game
