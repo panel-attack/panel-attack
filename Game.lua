@@ -15,6 +15,7 @@ local input = require("inputManager")
 local save = require("save")
 local fileUtils = require("FileUtils")
 local scenes = nil
+require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
 -- Useful for creating new canvas with a solid DPI
@@ -73,6 +74,9 @@ local Game = class(
 
     -- coroutines
     self.setupCoroutineObject = coroutine.create(function() self:setupCoroutine() end)
+
+    -- misc
+    self.rich_presence = RichPresence()
   end
 )
 

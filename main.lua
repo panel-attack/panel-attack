@@ -50,7 +50,6 @@ require("Theme")
 local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
-require("rich_presence.RichPresence")
 
 require("dump")
 
@@ -63,22 +62,18 @@ if GAME_UPDATER == nil then
   love.run = CustomRun.run
 end
 
-if PROFILING_ENABLED then
-  GAME.profiler = require("profiler")
-end
-
-GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
 function love.load(args) 
   love.keyboard.setTextInput(false)
-  
+
   if PROFILING_ENABLED then
+    GAME.profiler = require("profiler")
     GAME.profiler:start()
   end
-  
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
