@@ -7,7 +7,7 @@ local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 
 local function calculateFontSize(height)
-  return math.floor(height / 10) + 1
+  return math.floor(height / 2) + 1
 end
 
 local Carousel = class(function(carousel, options)
@@ -115,7 +115,7 @@ function Carousel:draw()
   end
   GraphicsUtil.printText(passenger.fontText, (x + self.width / 2) * GFX_SCALE, (y + self.height * 0.85) * GFX_SCALE, "center")
 
-  if self.hasFocus then
+  if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
     self.leftButton:draw()
     self.rightButton:draw()
   end
