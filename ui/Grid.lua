@@ -24,12 +24,16 @@ end, UiElement)
 -- width and height are sizes relative to the unitSize of the grid
 -- id is a string identificator to indiate what kind of uiElement resides here
 -- uiElement is the actual element on display that will perform user interaction when selected
-function Grid:createElementAt(x, y, width, height, description, uiElement)
+function Grid:createElementAt(x, y, width, height, description, uiElement, noPadding)
+  local unitPadding = self.unitPadding
+  if noPadding then
+    unitPadding = 0
+  end
   local gridElement = GridElement({
-    x = (x - 1) * self.unitSize + self.unitPadding,
-    y = (y - 1) * self.unitSize + self.unitPadding,
-    width = width * self.unitSize - self.unitPadding * 2,
-    height = height * self.unitSize - self.unitPadding * 2,
+    x = (x - 1) * self.unitSize + unitPadding,
+    y = (y - 1) * self.unitSize + unitPadding,
+    width = width * self.unitSize - unitPadding * 2,
+    height = height * self.unitSize - unitPadding * 2,
     description = description,
     content = uiElement
   })
@@ -72,14 +76,14 @@ end
 
 function Grid:draw()
   if DEBUG_ENABLED then
+    local left, top = self:getScreenPos()
+
     love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    love.graphics.rectangle("line", left, top, self.width, self.height)
     love.graphics.setColor(1, 1, 1, 1)
     -- draw all units
-    local left = self.x
-    local right = self.x + self.width
-    local top = self.y
-    local bottom = self.y + self.height
+    local right = left + self.width
+    local bottom = top + self.height
     for i = 1, self.gridHeight - 1 do
       local y = top + self.unitSize * i
       drawStraightLine(left, y, right, y, 1, 1, 1, 0.5)
