@@ -6,9 +6,6 @@ local sceneManager = require("scenes.sceneManager")
 local GraphicsUtil = require("graphics_util")
 local class = require("class")
 
--- need to load the existing global scene functions until they get ported to scenes
-require("mainloop")
-
 --@module MainMenu
 -- Scene for the main menu
 local MainMenu = class(
