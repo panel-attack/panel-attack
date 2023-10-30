@@ -9,6 +9,7 @@ local input = require("inputManager")
 local PanelCarousel = require("ui.PanelCarousel")
 local PagedUniGrid = require("ui.PagedUniGrid")
 local Button = require("ui.Button")
+local GridCursor = require("ui.GridCursor")
 
 local DesignHelper = class(function(self, sceneParams)
   self:load(sceneParams)
@@ -38,6 +39,13 @@ function DesignHelper:load()
   self.characterGrid.y = 0
   self.leaveButton = Button({width = 96, height = 96, label = "leave"})
   self.grid:createElementAt(9, 6, 1, 1, "leaveSelection", self.leaveButton)
+  self.cursor = GridCursor({
+    grid = self.grid,
+    activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
+    translateSubGrids = true,
+    startPosition = {x = 1, y = 2},
+    playerNumber = 1
+  })
 end
 
 function DesignHelper:loadPanels()
@@ -75,11 +83,22 @@ end
 function DesignHelper:drawBackground()
   self.backgroundImg:draw()
   GAME.gfx_q:push({self.grid.draw, {self.grid}})
+  GAME.gfx_q:push({self.cursor.draw, {self.cursor}})
 end
 
 function DesignHelper:update()
   if input.isDown["MenuEsc"] then
     sceneManager:switchToScene("MainMenu")
+  elseif input.isDown["Left"] then
+    self.cursor:move(GridCursor.directions.left)
+  elseif input.isDown["Right"] then
+    self.cursor:move(GridCursor.directions.right)
+  elseif input.isDown["Up"] then
+    self.cursor:move(GridCursor.directions.up)
+  elseif input.isDown["Down"] then
+    self.cursor:move(GridCursor.directions.down)
+  elseif input.isDown["MenuEnter"] then
+    self.cursor.selectedGridElement:onSelect()
   end
 end
 

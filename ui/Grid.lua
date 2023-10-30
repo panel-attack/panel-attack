@@ -19,6 +19,7 @@ local Grid = class(function(self, options)
       self.grid[row][col] = {}
     end
   end
+  self.TYPE = "Grid"
 end, UiElement)
 
 -- width and height are sizes relative to the unitSize of the grid
