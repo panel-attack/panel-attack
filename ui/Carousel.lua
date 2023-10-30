@@ -91,8 +91,8 @@ function Carousel:draw()
   local width = self:drawPassenger()
 
   if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
-    self.leftButton:draw(x, width)
-    self.rightButton:draw(x, width)
+    self.leftButton:draw(width)
+    self.rightButton:draw(width)
   end
 end
 
