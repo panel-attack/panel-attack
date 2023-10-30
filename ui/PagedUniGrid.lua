@@ -15,6 +15,7 @@ local function addNewPage(pagedUniGrid)
   pagedUniGrid.currentPage = #pagedUniGrid.pages
   pagedUniGrid.lastFilledUnit = {x = 0, y = 0}
   pagedUniGrid:addChild(grid)
+  pagedUniGrid.TYPE = "PagedUniGrid"
 end
 
 -- A paged uniform grid is a grid that only has grid elements of constant size

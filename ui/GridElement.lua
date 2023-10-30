@@ -13,6 +13,10 @@ local GridElement = class(function(gridElement, options)
     gridElement:addChild(gridElement.content)
   end
   gridElement.description = options.description
+  gridElement.gridOriginX = options.gridOriginX
+  gridElement.gridOriginY = options.gridOriginY
+  gridElement.gridWidth = options.gridWidth
+  gridElement.gridHeight = options.gridHeight
 end, UiElement)
 
 function GridElement:getScreenPos()

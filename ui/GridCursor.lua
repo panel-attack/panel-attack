@@ -25,12 +25,28 @@ local GridCursor = class(function(self, options)
   self.frameClock = 0
 end, UiElement)
 
-GridCursor.directions = {up = {x = 0, y = 1}, down = {x = 0, y = -1}, left = {x = -1, y = 0}, right = {x = 1, y = 0}}
+GridCursor.directions = {up = {x = 0, y = -1}, down = {x = 0, y = 1}, left = {x = -1, y = 0}, right = {x = 1, y = 0}}
 
 function GridCursor:updatePosition(x, y)
   self.selectedGridPos.x = x
   self.selectedGridPos.y = y
-  self.selectedGridElement = self.target.grid[self.selectedGridPos.y][self.selectedGridPos.x]
+  self.selectedGridElement = self:getElementAt(y, x)
+end
+
+function GridCursor:getElementAt(y, x)
+  local element = self.target.grid[y][x]
+  if self.translateSubGrids and element.content.TYPE == "Grid" or element.content.TYPE == "PagedUniGrid" then
+    if element.content.TYPE == "Grid" and element.content.unitSize == self.target.unitSize then
+      local relativeOffsetX = (x - element.gridOriginX) + 1
+      local relativeOffsetY = (y - element.gridOriginY) + 1
+      return element.content.grid[relativeOffsetY][relativeOffsetX]
+    elseif element.content.TYPE == "PagedUniGrid" and element.content.pages[element.content.currentPage].unitSize == self.target.unitSize then
+      local relativeOffsetX = (x - element.gridOriginX) + 1
+      local relativeOffsetY = (y - element.gridOriginY) + 1
+      return element.content.pages[element.content.currentPage].grid[relativeOffsetY][relativeOffsetX]
+    end
+  end
+  return element
 end
 
 -- TODO: implement navigation into subgrids when translateSubGrids is on
@@ -38,11 +54,11 @@ function GridCursor:move(direction)
   local nextGridElement
   if direction.x ~= 0 then
     local newX = wrap(self.activeArea.x1, self.selectedGridPos.x + direction.x, self.activeArea.x2)
-    nextGridElement = self.target.grid[self.selectedGridPos.y][newX]
+    nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
     -- look for a different UiElement until we wrapped back to our position before the move
-    while self.selectedGridElement == nextGridElement and newX ~= self.selectedGridPos.x do
+    while not nextGridElement or (self.selectedGridElement == nextGridElement and newX ~= self.selectedGridPos.x) do
       newX = wrap(self.activeArea.x1, newX + direction.x, self.activeArea.x2)
-      nextGridElement = self.target.grid[self.selectedGridPos.y][newX]
+      nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
     end
     if nextGridElement == self.selectedGridElement then
       -- this must be the only UiElement in this row, abort here
@@ -52,11 +68,11 @@ function GridCursor:move(direction)
     end
   else
     local newY = wrap(self.activeArea.y1, self.selectedGridPos.y + direction.y, self.activeArea.y2)
-    nextGridElement = self.target.grid[newY][self.selectedGridPos.x]
+    nextGridElement = self:getElementAt(newY,self.selectedGridPos.x)
     -- look for a different UiElement until we wrapped back to our position before the move
-    while self.selectedGridElement == nextGridElement and newY ~= self.selectedGridPos.y do
+    while not nextGridElement or (self.selectedGridElement == nextGridElement and newY ~= self.selectedGridPos.y) do
       newY = wrap(self.activeArea.y1, newY + direction.y, self.activeArea.y2)
-      nextGridElement = self.target.grid[newY][self.selectedGridPos.x]
+      nextGridElement = self:getElementAt(newY,self.selectedGridPos.x)
     end
     if nextGridElement == self.selectedGridElement then
       -- this must be the only UiElement in this row, abort here

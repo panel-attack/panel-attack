@@ -15,9 +15,9 @@ local Grid = class(function(self, options)
   self.grid = {}
   for row = 1, options.gridHeight do
     self.grid[row] = {}
-    for col = 1, options.gridWidth do
-      self.grid[row][col] = {}
-    end
+    -- for col = 1, options.gridWidth do
+    --   self.grid[row][col] = {}
+    -- end
   end
   self.TYPE = "Grid"
 end, UiElement)
@@ -35,6 +35,10 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
     y = (y - 1) * self.unitSize + unitPadding,
     width = width * self.unitSize - unitPadding * 2,
     height = height * self.unitSize - unitPadding * 2,
+    gridOriginX = x,
+    gridOriginY = y,
+    gridWidth = width,
+    gridHeight = height,
     description = description,
     content = uiElement
   })
@@ -43,7 +47,7 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
   for row = y, y + (height - 1) do
     for col = x, x + (width - 1) do
       -- ensure the area is still free
-      if tableUtils.length(self.grid[row][col]) > 0 then
+      if self.grid[row][col] then
         error("Error trying to create a grid element:\n" .. "There is already element " .. self.grid[row][col].id .. " at coordinate " ..
                   row .. "|" .. col)
       else
