@@ -73,9 +73,12 @@ function Button:draw()
     if self.image then
       love.graphics.draw(self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight())
     else
-      love.graphics.setColor(self.backgroundColor)
-      love.graphics.rectangle("fill", screenX, screenY, self.width, self.height)
-      love.graphics.setColor(1, 1, 1, 1)
+      -- index 4 is alpha, alpha 0 is invisible
+      if self.backgroundColor[4] > 0 then
+        love.graphics.setColor(self.backgroundColor)
+        love.graphics.rectangle("fill", screenX, screenY, self.width, self.height)
+        love.graphics.setColor(1, 1, 1, 1)
+      end
     end
   else
     GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
@@ -83,8 +86,12 @@ function Button:draw()
     if self.image then
       GAME.gfx_q:push({love.graphics.draw, {self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
     else
-      GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
-      GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
+      -- index 4 is alpha, alpha 0 is invisible
+      if self.backgroundColor[4] > 0 then
+        GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
+        GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
+        GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+      end
     end
   end
 

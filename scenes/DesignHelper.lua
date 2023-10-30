@@ -24,7 +24,13 @@ function DesignHelper:load()
   self.backgroundImg = themes[config.theme].images.bg_main
   self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
   -- this is just for demo purposes, current character should always bind to the underlying matchsetup
-  self.selectedCharacter = Button({width = 96, height = 96, image = characters[config.character].images.icon})
+  self.selectedCharacter = Button({
+    width = 96,
+    height = 96,
+    image = characters[config.character].images.icon,
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1}
+  })
   self.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.selectedCharacter)
   self:loadPanels()
   self.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.panelCarousel)
@@ -32,14 +38,26 @@ function DesignHelper:load()
   self.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.stageCarousel)
   self:loadLevels()
   self.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.levelSlider)
-  self.readyButton = Button({width = 96, height = 96, label = "ready"})
+  self.readyButton = Button({
+    width = 96,
+    height = 96,
+    label = "ready",
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1}
+  })
   self.grid:createElementAt(9, 2, 1, 1, "readySelection", self.readyButton)
   self:loadCharacters()
   self.grid:createElementAt(1, 3, 9, 3, "characterSelection", self.characterGrid, true)
   -- the character grid has its own padding so override the padding of the enveloping grid
   self.characterGrid.x = 0
   self.characterGrid.y = 0
-  self.leaveButton = Button({width = 96, height = 96, label = "leave"})
+  self.leaveButton = Button({
+    width = 96,
+    height = 96,
+    label = "leave",
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1}
+  })
   self.grid:createElementAt(9, 6, 1, 1, "leaveSelection", self.leaveButton)
   self.cursor = GridCursor({
     grid = self.grid,
@@ -48,7 +66,9 @@ function DesignHelper:load()
     startPosition = {x = 1, y = 2},
     playerNumber = 1
   })
-  self.cursor.escapeCallback = function() sceneManager:switchToScene("MainMenu") end
+  self.cursor.escapeCallback = function()
+    sceneManager:switchToScene("MainMenu")
+  end
 end
 
 function DesignHelper:loadPanels()
@@ -93,7 +113,7 @@ function DesignHelper:loadLevels()
     local x, y = self.parent:getScreenPos()
     grectangle("line", x, y, self.width, self.height)
     self:drawInternal()
-   end
+  end
 end
 
 local function goToReady(gridCursor)
@@ -104,7 +124,7 @@ function DesignHelper:loadCharacters()
   self.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 102, gridWidth = 9, gridHeight = 3, unitPadding = 6})
   for i = 1, #characters_ids_for_current_theme do
     local characterButton = Button({image = characters[characters_ids_for_current_theme[i]].images.icon, width = 96, height = 96})
-    characterButton.onClick = function (button)
+    characterButton.onClick = function(button)
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       -- don't do it like this
       self.selectedCharacter.image = characterButton.image
