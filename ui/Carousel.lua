@@ -88,6 +88,9 @@ end
 
 function Carousel:draw()
   assert(#self.passengers > 0, "This carousel has no passengers!")
+  local x, y = self:getScreenPos()
+  grectangle("line", x, y, self.width, self.height)
+
   local width = self:drawPassenger()
 
   if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then

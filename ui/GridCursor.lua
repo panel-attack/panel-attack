@@ -2,6 +2,7 @@ local UiElement = require("ui.UIElement")
 local class = require("class")
 local directsFocus = require("ui.FocusDirector")
 local input = require("inputManager")
+local consts = require("consts")
 
 -- create a new cursor that can navigate on the specified grid
 -- grid: the target grid that is navigated on
@@ -108,16 +109,16 @@ function GridCursor:receiveInputs()
     self.focused:receiveInputs()
   elseif input.isDown["MenuEsc"] or input.isDown["Swap2"] then
     self:escapeCallback()
-  elseif input.isDown["Left"] then
+  elseif input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.left)
-  elseif input.isDown["Right"] then
+  elseif input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.right)
-  elseif input.isDown["Up"] then
+  elseif input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.up)
-  elseif input.isDown["Down"] then
+  elseif input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.down)
   elseif input.isDown["Swap1"] then

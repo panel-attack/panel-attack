@@ -88,6 +88,12 @@ function DesignHelper:loadLevels()
       self.levelSlider:yieldFocus()
     end
   end
+  self.levelSlider.drawInternal = self.levelSlider.draw
+  self.levelSlider.draw = function(self)
+    local x, y = self.parent:getScreenPos()
+    grectangle("line", x, y, self.width, self.height)
+    self:drawInternal()
+   end
 end
 
 local function goToReady(gridCursor)

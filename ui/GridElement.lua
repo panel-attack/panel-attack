@@ -31,7 +31,9 @@ function GridElement:drawBorders()
 end
 
 function GridElement:draw()
-  self:drawBorders()
+  if DEBUG_ENABLED then
+    self:drawBorders()
+  end
   -- TODO match size of contents to the available space
   if self.content then
     if self.content.draw then
