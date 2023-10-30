@@ -10,6 +10,8 @@ local PanelCarousel = require("ui.PanelCarousel")
 local PagedUniGrid = require("ui.PagedUniGrid")
 local Button = require("ui.Button")
 local GridCursor = require("ui.GridCursor")
+local Focusable = require("ui.Focusable")
+local consts = require("consts")
 
 local DesignHelper = class(function(self, sceneParams)
   self:load(sceneParams)
@@ -46,6 +48,7 @@ function DesignHelper:load()
     startPosition = {x = 1, y = 2},
     playerNumber = 1
   })
+  self.cursor.escapeCallback = function() sceneManager:switchToScene("MainMenu") end
 end
 
 function DesignHelper:loadPanels()
@@ -70,12 +73,38 @@ function DesignHelper:loadLevels()
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end
   })
+  Focusable(self.levelSlider)
+  self.levelSlider.receiveInputs = function()
+    if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+      self.levelSlider:setValue(self.levelSlider.value - 1)
+    end
+
+    if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+      self.levelSlider:setValue(self.levelSlider.value + 1)
+    end
+
+    if input.isDown["MenuEsc"] then
+      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      self.levelSlider:yieldFocus()
+    end
+  end
+end
+
+local function goToReady(gridCursor)
+  gridCursor:updatePosition(9, 2)
 end
 
 function DesignHelper:loadCharacters()
   self.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 102, gridWidth = 9, gridHeight = 3, unitPadding = 6})
   for i = 1, #characters_ids_for_current_theme do
     local characterButton = Button({image = characters[characters_ids_for_current_theme[i]].images.icon, width = 96, height = 96})
+    characterButton.onClick = function (button)
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      -- don't do it like this
+      self.selectedCharacter.image = characterButton.image
+      goToReady(self.cursor)
+    end
+    characterButton.onSelect = characterButton.onClick
     self.characterGrid:addElement(characterButton)
   end
 end
@@ -87,19 +116,7 @@ function DesignHelper:drawBackground()
 end
 
 function DesignHelper:update()
-  if input.isDown["MenuEsc"] then
-    sceneManager:switchToScene("MainMenu")
-  elseif input.isDown["Left"] then
-    self.cursor:move(GridCursor.directions.left)
-  elseif input.isDown["Right"] then
-    self.cursor:move(GridCursor.directions.right)
-  elseif input.isDown["Up"] then
-    self.cursor:move(GridCursor.directions.up)
-  elseif input.isDown["Down"] then
-    self.cursor:move(GridCursor.directions.down)
-  elseif input.isDown["MenuEnter"] then
-    self.cursor.selectedGridElement:onSelect()
-  end
+  self.cursor:receiveInputs()
 end
 
 return DesignHelper

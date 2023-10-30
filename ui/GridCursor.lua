@@ -1,5 +1,7 @@
 local UiElement = require("ui.UIElement")
 local class = require("class")
+local directsFocus = require("ui.FocusDirector")
+local input = require("inputManager")
 
 -- create a new cursor that can navigate on the specified grid
 -- grid: the target grid that is navigated on
@@ -7,6 +9,8 @@ local class = require("class")
 -- activeArea: specify an area on the grid for movement, the cursor cannot move outside
 -- selectedGridPos: the starting position for the cursor on the grid
 local GridCursor = class(function(self, options)
+  directsFocus(self)
+
   self.target = options.grid
   self.translateSubGrids = options.translateSubGrids or false
   self.activeArea = options.activeArea or {x1 = 1, y1 = 1, x2 = self.target.gridWidth, y2 = self.target.gridHeight}
@@ -23,6 +27,8 @@ local GridCursor = class(function(self, options)
   self.blinkFrequency = options.blinkFrequency or 8
   self.rapidBlinking = options.rapidBlinking or false
   self.frameClock = 0
+
+  self.TYPE = "GridCursor"
 end, UiElement)
 
 GridCursor.directions = {up = {x = 0, y = -1}, down = {x = 0, y = 1}, left = {x = -1, y = 0}, right = {x = 1, y = 0}}
@@ -95,6 +101,33 @@ function GridCursor:draw()
   local x, y = self.selectedGridElement:getScreenPos()
   menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
   menu_drawq(image, self.rightQuad[cursorFrame], x + self.selectedGridElement.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+end
+
+function GridCursor:receiveInputs()
+  if self.focused then
+    self.focused:receiveInputs()
+  elseif input.isDown["MenuEsc"] or input.isDown["Swap2"] then
+    self:escapeCallback()
+  elseif input.isDown["Left"] then
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+    self:move(GridCursor.directions.left)
+  elseif input.isDown["Right"] then
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+    self:move(GridCursor.directions.right)
+  elseif input.isDown["Up"] then
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+    self:move(GridCursor.directions.up)
+  elseif input.isDown["Down"] then
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+    self:move(GridCursor.directions.down)
+  elseif input.isDown["Swap1"] then
+    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+    self.selectedGridElement:onSelect(self)
+  end
+end
+
+function GridCursor:escapeCallback()
+  error("Need to implement a callback for escape")
 end
 
 return GridCursor

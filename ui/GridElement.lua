@@ -17,6 +17,7 @@ local GridElement = class(function(gridElement, options)
   gridElement.gridOriginY = options.gridOriginY
   gridElement.gridWidth = options.gridWidth
   gridElement.gridHeight = options.gridHeight
+  gridElement.TYPE = "GridElement"
 end, UiElement)
 
 function GridElement:getScreenPos()

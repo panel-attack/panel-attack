@@ -2,10 +2,8 @@ local class = require("class")
 local UiElement = require("ui.UIElement")
 local tableUtils = require("tableUtils")
 local GridElement = require("ui.GridElement")
-local directsFocus = require("ui.FocusDirector")
 
 local Grid = class(function(self, options)
-  directsFocus(self)
   self.unitSize = options.unitSize
   self.unitPadding = options.unitPadding or 0
   self.gridHeight = options.gridHeight
@@ -57,11 +55,11 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
     end
   end
 
-  gridElement.onSelect = function()
-    if gridElement.content.isFocusable then
-      self:setFocus(gridElement.content)
+  gridElement.onSelect = function(self, focusDirector)
+    if self.content.isFocusable then
+      focusDirector:setFocus(self.content)
     else
-      gridElement.content:onSelect()
+      self.content:onSelect()
     end
   end
 
