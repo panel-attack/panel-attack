@@ -65,18 +65,6 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
 
 end
 
-function Grid.onSelect()
-
-end
-
-function Grid.onMove(x, y)
-
-end
-
-function Grid.onBack()
-
-end
-
 function Grid:draw()
   if DEBUG_ENABLED then
     local left, top = self:getScreenPos()

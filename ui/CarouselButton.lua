@@ -12,7 +12,7 @@ local CarouselButton = class(
 )
 
 -- x, width: x-offset and width of the passenger element
-function CarouselButton:draw(x, width)
+function CarouselButton:draw(width)
   if not self.isVisible then
     return
   end

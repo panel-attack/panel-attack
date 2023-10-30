@@ -1,6 +1,5 @@
 local Carousel = require("ui.Carousel")
 local class = require("class")
-local GraphicsUtil = require("graphics_util")
 
 local PanelCarousel = class(function(carousel, options)
   carousel.colorCount = 5
@@ -34,7 +33,7 @@ function PanelCarousel:drawPassenger()
   -- always draw shock
   love.graphics.draw(panels[id].images.classic[8][1], xOffset + self.colorCount * width, yOffset, 0, scale, scale)
 
-  return xOffset, totalWidth
+  return totalWidth
 end
 
 function PanelCarousel:setColorCount(count)

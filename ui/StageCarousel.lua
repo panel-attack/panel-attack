@@ -35,7 +35,7 @@ function StageCarousel:drawPassenger()
   end
   GraphicsUtil.printText(passenger.fontText, (x + self.width / 2), (y + self.height * 0.75), "center")
 
-  return x, aspectRatio.x
+  return aspectRatio.x
 end
 
 function StageCarousel:loadCurrentStages()

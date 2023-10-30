@@ -88,7 +88,7 @@ end
 
 function Carousel:draw()
   assert(#self.passengers > 0, "This carousel has no passengers!")
-  local x, width = self:drawPassenger()
+  local width = self:drawPassenger()
 
   if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
     self.leftButton:draw(x, width)
