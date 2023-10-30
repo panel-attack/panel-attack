@@ -9,7 +9,6 @@ local class = require("class")
 local logger = require("logger")
 local sound = require("sound")
 local analytics = require("analytics")
-local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local save = require("save")
@@ -360,8 +359,6 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
-
-  manualGC(0.0001, nil, nil)
 end
 
 function Game:switchToStartScene()

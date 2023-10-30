@@ -41,9 +41,9 @@ function CustomRun.sleep()
   -- actively collecting garbage is very CPU intensive
   -- only do it while a match is on-going
   if GAME and GAME.match and GAME.focused and not GAME.gameIsPaused then
-    -- Spend as much time as necessary collecting garbage, but at least 0.1ms
+    -- Spend as much time as necessary collecting garbage, but at least 1ms
     -- manualGc itself has a ceiling at which it will stop
-    manualGc(math.max(0.0001, idleTime * 0.99))
+    manualGc(math.max(0.001, idleTime * 0.99))
     currentTime = love.timer.getTime()
     CustomRun.runMetrics.gcDuration = currentTime - originalTime
     originalTime = currentTime
@@ -55,8 +55,27 @@ function CustomRun.sleep()
   -- Sleep any remaining amount of time to fill up the frametime to 1/60 of a second
   -- On most machines GC will have reduced the remaining idle time to near nothing
   -- But strong machines may exit garbage collection early and need to sleep the remaining time
-  if idleTime > 0 then
-    love.timer.sleep(idleTime * 0.99)
+  -- On modern windows OS, default sleep is at least 2ms
+  if idleTime > 0.002 then
+    while currentTime < targetTime do
+      -- we can use idle time to load assets
+      if not StageLoader.update() then
+        break
+      end
+      currentTime = love.timer.getTime()
+    end
+    while currentTime < targetTime do
+      -- we can use idle time to load assets
+      if not CharacterLoader.update() then
+        break
+      end
+      currentTime = love.timer.getTime()
+    end
+    currentTime = love.timer.getTime()
+    idleTime = targetTime - currentTime
+    if idleTime > 0.002 then
+      love.timer.sleep(idleTime * 0.99)
+    end
   end
   currentTime = love.timer.getTime()
 
