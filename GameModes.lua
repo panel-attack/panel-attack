@@ -14,7 +14,8 @@ local OnePlayerVsSelf = {
   style = Styles.Modern,
   selectFile = FileSelection.None,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.Self
+  stackInteraction = StackInteraction.Self,
+  scene = "EndlessGame"
 }
 local OnePlayerTimeAttack = {
   playerCount = 1,
@@ -56,7 +57,8 @@ local OnePlayerTraining = {
   style = Styles.Modern,
   selectFile = FileSelection.Training,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.AttackEngine
+  stackInteraction = StackInteraction.AttackEngine,
+  scene = "GameBase"
 }
 
 local OnePlayerPuzzle = {
@@ -84,7 +86,8 @@ local OnePlayerChallenge = {
   style = Styles.Modern,
   selectFile = FileSelection.None,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.HealthEngine
+  stackInteraction = StackInteraction.HealthEngine,
+  scene = "GameBase"
 }
 
 local TwoPlayerVersus = {

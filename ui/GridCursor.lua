@@ -99,9 +99,10 @@ function GridCursor:draw()
   local cursorFrame = math.floor((((self.frameClock + self.playerNumber * self.blinkFrequency) / self.blinkFrequency) % 2)) + 1
 
   local image = self.image[cursorFrame]
-  local x, y = self.selectedGridElement:getScreenPos()
+  local element = self.selectedGridElement or self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
+  local x, y = element:getScreenPos()
   menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
-  menu_drawq(image, self.rightQuad[cursorFrame], x + self.selectedGridElement.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+  menu_drawq(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
 end
 
 function GridCursor:receiveInputs()

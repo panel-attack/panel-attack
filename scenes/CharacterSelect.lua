@@ -3,33 +3,25 @@ local sceneManager = require("scenes.sceneManager")
 local consts = require("consts")
 local input = require("inputManager")
 local tableUtils = require("tableUtils")
-local Menu = require("ui.Menu")
 local class = require("class")
 local logger = require("logger")
+local Grid = require("ui.Grid")
+local GridElement = require("ui.GridElement")
+local StageCarousel = require("ui.StageCarousel")
+local LevelSlider = require("ui.LevelSlider")
+local input = require("inputManager")
+local PanelCarousel = require("ui.PanelCarousel")
+local PagedUniGrid = require("ui.PagedUniGrid")
+local Button = require("ui.Button")
+local GridCursor = require("ui.GridCursor")
+local Focusable = require("ui.Focusable")
+local consts = require("consts")
 
 --@module CharacterSelect
 -- The character select screen scene
 local CharacterSelect = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_select_screen
-    self.current_page = 1
-    self.myPreviousConfig = nil
-    self.menu_clock = 0
-    
-    -- set in child classes
-    self.independentControls = false
-    self.players = {{
-        stage = config.stage,
-        selectedStage = config.stage,
-        character = config.character,
-        selectedCharacter = config.character,
-        level = config.level,
-        inputMethod = config.inputMethod or "controller",
-        panels_dir = config.panels,
-        ready = false,
-        ranked = config.ranked,
-      }}
-    self.my_player_number = 1
   end,
   Scene
 )
@@ -37,40 +29,20 @@ local CharacterSelect = class(
 -- begin abstract functions
 
 -- Initalization specific to the child scene
-function CharacterSelect:customLoad(sceneParams) end
+function CharacterSelect:customLoad(sceneParams)
+  error("The function customLoad needs to be implemented on the scene")
+end
 
 -- updates specific to the child scene
-function CharacterSelect:customUpdate(sceneParams) end
+function CharacterSelect:customUpdate(sceneParams)
+  --error("The function customUpdate needs to be implemented on the scene")
+end
+
+function CharacterSelect:customDraw()
+
+end
 
 -- end abstract functions
-
-function CharacterSelect:initializeFromMenuState(playerNumber, menuState)
-  self.players[playerNumber].ranked = menuState.ranked
-  self.players[playerNumber].stage = menuState.stage
-  self.players[playerNumber].selectedStage = menuState.stage_is_random
-  self.players[playerNumber].character = characters[menuState.character] and menuState.character or nil
-  self.players[playerNumber].selectedCharacter = menuState.character_is_random and menuState.character_is_random or menuState.character
-  self.players[playerNumber].level = menuState.level
-  self.players[playerNumber].inputMethod = menuState.inputMethod
-  self.players[playerNumber].panels_dir = menuState.panels_dir
-  self.players[playerNumber].ready = false
-  self.players[playerNumber].wants_ready = menuState.wants_ready or false
-  self.players[playerNumber].ranked = menuState.ranked
-  --self.players[playerNumber].cursor.positionId = menuState.cursor
-  --self.players[playerNumber].cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page][menuState.cursor])
-end
-
-function CharacterSelect:updateExpectedWinRatios()
-  self.currentRoomRatings = self.currentRoomRatings or {{new = 0, old = 0, difference = 0}, {new = 0, old = 0, difference = 0}}
-  self.my_expected_win_ratio = nil
-  self.op_expected_win_ratio = nil
-  logger.trace("my_player_number = " .. self.my_player_number)
-  logger.trace("op_player_number = " .. self.op_player_number)
-  if self.currentRoomRatings[self.my_player_number].new and self.currentRoomRatings[self.my_player_number].new ~= 0 and self.currentRoomRatings[self.op_player_number] and self.currentRoomRatings[self.op_player_number].new ~= 0 then
-    self.my_expected_win_ratio = (100 * math.round(1 / (1 + 10 ^ ((self.currentRoomRatings[self.op_player_number].new - self.currentRoomRatings[self.my_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
-    self.op_expected_win_ratio = (100 * math.round(1 / (1 + 10 ^ ((self.currentRoomRatings[self.my_player_number].new - self.currentRoomRatings[self.op_player_number].new) / RATING_SPREAD_MODIFIER)), 2))
-  end
-end
 
 function CharacterSelect:playThemeMusic()
   if themes[config.theme].musics.select_screen then
@@ -81,300 +53,171 @@ function CharacterSelect:playThemeMusic()
   end
 end
 
--- Resolve the current character if it is random
-local function resolveRandomCharacter(character, selectedCharacter)
-    if characters[character] == nil and selectedCharacter == random_character_special_value then
-      character = tableUtils.getRandomElement(characters_ids_for_current_theme)
-    end
-
-    if characters[character]:is_bundle() then
-      character = tableUtils.getRandomElement(characters[character].sub_characters)
-    end
-    return character
-end
-
--- Resolve the current stage if it is random
-local function resolveRandomStage(stage, selectedStage)
-  if stages[stage] == nil and selectedStage == random_stage_special_value  then
-    stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
-  end
-
-  if stages[stage]:is_bundle() then
-    stage = tableUtils.getRandomElement(stages[stage].sub_stages)
-  end
-  return stage
-end
-
--- sets player.panels_dir / player.character / player.stage based on the respective selection values player.panels_dir, player.selectedCharacter and player.selectedStage
--- Automatically goes to a fallback or random mod if the selected one is not found
-function CharacterSelect:refreshBasedOnOwnMods(player)
-  if player ~= nil then
-    -- panels
-    if player.panels_dir == nil or panels[player.panels_dir] == nil then
-      player.panels_dir = config.panels
-    end
-
-    -- stage
-    if player.selectedStage or player.stage then
-      if player.selectedStage == nil and player.stage ~= nil then
-        -- converting to the expected format:
-        -- selectedStage is tentative and unconfirmed, needs to be rechecked against available stages
-        -- stage is confirmed and is definitely available
-        player.selectedStage = player.stage
-        player.stage = nil
-      end
-      if stages[player.selectedStage] then
-        -- selected stage exists and shall be used
-        if player.stage ~= player.selectedStage then
-          player.stage = player.selectedStage
-        end
-      else
-        if player.selectedStage ~= random_stage_special_value then
-          -- don't have the selected stage and it's not random, use a random stage
-            player.selectedStage = random_stage_special_value
-            player.stage = nil
-        end
-      end
-
-      player.stage = resolveRandomStage(player.stage, player.selectedStage)
-      player.stage_display_name = stages[player.stage].stage_display_name
-      StageLoader.load(player.stage)
-      StageLoader.wait()
-    end
-
-    -- character
-    if player.selectedCharacter or player.character then
-      if player.selectedCharacter == nil and player.character ~= nil then
-        -- converting to the expected format:
-        -- selectedCharacter is tentative and unconfirmed, needs to be rechecked against available characters
-        -- character is confirmed and is definitely available
-        player.selectedCharacter = player.character
-        player.character = nil
-      end
-      if characters[player.selectedCharacter] then
-        if player.character ~= player.selectedCharacter then
-          player.character = player.selectedCharacter
-        end
-      else
-        -- when there is no stage or the stage the other player selected, check if there's a character with the same name
-        if player.character_display_name and characters_ids_by_display_names[player.character_display_name] and not characters[characters_ids_by_display_names[player.character_display_name][1]]:is_bundle() then
-          player.character = characters_ids_by_display_names[player.character_display_name][1]
-        elseif player.selectedCharacter ~= random_character_special_value then
-          -- don't have the selected character and it's not random, use a random character
-          player.selectedCharacter = random_character_special_value
-          player.character = nil
-        end
-      end
-
-      player.character = resolveRandomCharacter(player.character, player.selectedCharacter)
-      player.character_display_name = characters[player.character].character_display_name
-      CharacterLoader.load(player.character)
-      CharacterLoader.wait()
-      
-    end
-  end
-end
-
--- Makes sure all the client data is up to date and ready
-function CharacterSelect:refreshLoadingState(playerNumber)
-  self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
-end
-
--- Updates the ready state for all players
-function CharacterSelect:refreshReadyStates()
-  for playerNumber = 1, #self.players do
-    self.players[playerNumber].ready = self.players[playerNumber].wants_ready and self.players[playerNumber].loaded
-  end
-end
-
-function CharacterSelect:setUpOpponentPlayer()
-  self.op_player_number = 2
-
-  self:initializeFromPlayerConfig(self.op_player_number)
-
-  if global_op_state then
-    self.players[self.op_player_number].selectedCharacter = global_op_state.character
-    self.players[self.op_player_number].character = global_op_state.character
-    self.players[self.op_player_number].stage = global_op_state.stage
-    self.players[self.op_player_number].panels_dir = global_op_state.panels_dir
-  end
-
-  self:refreshBasedOnOwnMods(self.players[self.op_player_number])
-  self:refreshLoadingState(self.op_player_number)
-end
-
 function CharacterSelect:load(sceneParams)
-   --"2p_net_vs", msg
-   --"2p_local_vs"
-   --"2p_local_computer_vs"
-   --"1p_vs_yourself"
+  self:loadUserInterface()
+  --"2p_net_vs", msg
+  --"2p_local_vs"
+  --"2p_local_computer_vs"
+  --"1p_vs_yourself"
   self:customLoad(sceneParams)
-
-  
-  if themes[config.theme].musics.select_screen then
-    stop_the_music()
-    find_and_add_music(themes[config.theme].musics, "select_screen")
-  elseif themes[config.theme].musics.main then
-    find_and_add_music(themes[config.theme].musics, "main")
-  end
+  -- we need to refresh the position once so it fetches the current element after all grid elements were loaded in customLoad
+  self.ui.cursor:updatePosition(self.ui.cursor.selectedGridPos.x, self.ui.cursor.selectedGridPos.y)
+  self:playThemeMusic()
   reset_filters()
-  --self:prepareDrawMap()
-  --self:drawMapToPageIdMapTransform()
-  --self:setInitialCursors()
-
-  --if not GAME.battleRoom.spectating then
-  --  self:initializeFromPlayerConfig(self.my_player_number)
-  --end
-  self:refreshBasedOnOwnMods(self.players[self.my_player_number])
-  self:refreshLoadingState(self.my_player_number)
-
-  self:refreshReadyStates()
-
-  self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
-  self.menu_clock = 0
 end
 
-function CharacterSelect:updateMyConfig()
-  -- update config, does not redefine it
-  local myPlayer = self.players[self.my_player_number]
-  config.character = myPlayer.selectedCharacter
-  config.stage = myPlayer.selectedStage
-  config.level = myPlayer.level
-  config.inputMethod = myPlayer.inputMethod
-  config.ranked = myPlayer.ranked
-  config.panels = myPlayer.panels_dir
+function CharacterSelect:loadUserInterface()
+  self.ui = {}
+  self:loadGrid()
+  self:loadPanels()
+  self:loadStandardButtons()
+  self:loadStages()
+  self:loadCharacters()
+
+  self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.selectedCharacter)
+  self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)
+  self.ui.grid:createElementAt(1, 3, 9, 3, "characterSelection", self.ui.characterGrid, true)
+  self.ui.grid:createElementAt(9, 6, 1, 1, "readyButton", self.ui.leaveButton)
 end
 
-function CharacterSelect:updateConfig()
-  if not deep_content_equal(self.players[self.my_player_number], self.myPreviousConfig) then
-    self:updateMyConfig()
-    self.myPreviousConfig = deepcpy(self.players[self.my_player_number])
+function CharacterSelect:loadStandardButtons()
+  -- this shouldn't be a button but rather some sort of image container
+  self.ui.selectedCharacter = Button({
+    width = 96,
+    height = 96,
+    image = characters[config.character].images.icon,
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1}
+  })
+
+  self.ui.readyButton = Button({
+    width = 96,
+    height = 96,
+    label = "ready",
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1},
+  })
+  self.ui.readyButton.onSelect = function()
+    self.ui.readyButton.onClick()
+  end
+
+  self.ui.leaveButton = Button({
+    width = 96,
+    height = 96,
+    label = "leave",
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1},
+    onClick = function()
+      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      sceneManager:switchToScene("MainMenu")
+    end
+  })
+  self.ui.leaveButton.onSelect = self.ui.leaveButton.onClick
+end
+
+function CharacterSelect:loadStages()
+  self.ui.stageCarousel = StageCarousel({})
+  self.ui.stageCarousel:loadCurrentStages()
+end
+
+function CharacterSelect:loadCharacters()
+  self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 102, gridWidth = 9, gridHeight = 3, unitPadding = 6})
+
+  local randomCharacterButton = Button({image = themes[config.theme].images.IMG_random_character, width = 96, height = 96})
+  randomCharacterButton.characterId = random_character_special_value
+  self.ui.characterGrid:addElement(randomCharacterButton)
+
+  for i = 1, #characters_ids_for_current_theme do
+    local characterButton = Button({image = characters[characters_ids_for_current_theme[i]].images.icon, width = 96, height = 96})
+    characterButton.characterId = characters_ids_for_current_theme[i]
+    self.ui.characterGrid:addElement(characterButton)
   end
 end
 
-function CharacterSelect:handleInput()
-  local up, down, left, right = {-1, 0}, {1, 0}, {0, -1}, {0, 1}
-  if not GAME.battleRoom.spectating then
-    local local_players
-    --[[if select_screen.character_select_mode == "2p_local_vs" then
-      local_players = { self.my_player_number, self.op_player_number}
-    else
-      local_players = { self.my_player_number }
-    end--]]
-    local_players = { self.my_player_number }
-    
-    for i = 1, #local_players do
-      local player = self.players[local_players[i]]
-      --[[local cursor = player.cursor
-      if menu_prev_page(i) then
-        if not cursor.selected then
-          self.current_page = util.bound(1, self.current_page - 1, self.pages_amount)
-        end
-      elseif menu_next_page(i) then
-        if not cursor.selected then
-          self.current_page = util.bound(1, self.current_page + 1, self.pages_amount)
-        end
-      elseif menu_up(i) then
-        if not cursor.selected then
-          self:move_cursor(cursor, up)
-        end
-      elseif menu_down(i) then
-        if not cursor.selected then
-          self:move_cursor(cursor, down)
-        end
-      elseif menu_left(i) then
-        if cursor.selected then
-          if cursor.positionId == "__Level" then
-            player.level = util.bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
-          elseif cursor.positionId == "__Panels" then
-            player.panels_dir = self.change_panels_dir(player.panels_dir, -1)
-          elseif cursor.positionId == "__Stage" then
-            self.change_stage(player, -1)
-          end
-        end
-        if not cursor.selected then
-          self:move_cursor(cursor, left)
-        end
-      elseif menu_right(i) then
-        if cursor.selected then
-          if cursor.positionId == "__Level" then
-            player.level = util.bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
-          elseif cursor.positionId == "__Panels" then
-            player.panels_dir = self.change_panels_dir(player.panels_dir, 1)
-          elseif cursor.positionId == "__Stage" then
-            self.change_stage(player, 1)
-          end
-        end
-        if not cursor.selected then
-          self:move_cursor(cursor, right)
-        end
-      -- mute sound to not play the menu sound in parallel to a character selection sfx
-      -- this is the enter that was held for long enough to super select
-      elseif menu_long_enter(i, true) then
-        if self:on_select(player, true) then
-          return self:on_quit()
-        end
-        -- mute sound to not play the menu sound in parallel to a character selection sfx
-      elseif menu_enter(i, true) then
-        -- don't process the enter yet if enter is still being held and super select is possible
-        if (not cursor.can_super_select or select_being_pressed_ratio(i) < super_selection_enable_ratio) then
-          if self:on_select(player, false) then
-            return self:on_quit()
-          end
-        end
-      elseif menu_escape(i) then
-        if cursor.positionId == "__Leave" then
-          return self:on_quit()
-        end
-        cursor.selected = false
-        cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Leave"])
-        cursor.positionId = "__Leave"
-        cursor.can_super_select = false
+function CharacterSelect:loadGrid()
+  self.ui.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
+  self.ui.cursor = GridCursor({
+    grid = self.ui.grid,
+    activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
+    translateSubGrids = true,
+    startPosition = {x = 1, y = 2},
+    playerNumber = 1
+  })
+  self.ui.cursor.escapeCallback = function()
+    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    sceneManager:switchToScene("MainMenu")
+  end
+end
+
+function CharacterSelect:loadPanels()
+  self.ui.panelCarousel = PanelCarousel({})
+  self.ui.panelCarousel:loadPanels()
+end
+
+function CharacterSelect:loadLevels(unitWidth)
+  local gridElementWidth = self.ui.grid.unitSize * unitWidth - self.ui.grid.unitPadding * 2
+  local tickLength = 20
+  self.ui.levelSlider = LevelSlider({
+    tickLength = tickLength,
+    x = (gridElementWidth - tickLength * #level_to_pop) / 2,
+    -- 10 is tickLength / 2, level images are forced into squares
+    y = (self.ui.grid.unitSize) / 2 - tickLength / 2 - self.ui.grid.unitPadding,
+    value = config.level or 5,
+    onValueChange = function(s)
+      play_optional_sfx(themes[config.theme].sounds.menu_move)
+    end
+  })
+  Focusable(self.ui.levelSlider)
+  self.ui.levelSlider.receiveInputs = function()
+    if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+      self.ui.levelSlider:setValue(self.ui.levelSlider.value - 1)
+    end
+
+    if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+      self.ui.levelSlider:setValue(self.ui.levelSlider.value + 1)
+    end
+
+    if input.isDown["MenuEsc"] then
+      if self.ui.levelSlider.onBackCallback then
+        self.ui.levelSlider.onBackCallback()
       end
-      --]]
-
-      --player.cursor.positionId = self.drawMap[self.current_page][cursor.position[1]][cursor.position[2]]
-      --player.wants_ready = player.cursor.selected and player.cursor.positionId == "__Ready"
-      player.wants_ready = true
-      player.ranked = false
-      player.level = 10
+      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      self.ui.levelSlider:yieldFocus()
     end
 
-    --[[if select_screen.character_select_mode == "2p_local_vs" then
-      self:savePlayer2Config()
-    end
-    --]]
-
-    self:updateConfig()
-  else -- (we are spectating)
-    if menu_escape() then
-      self:on_quit()
-      -- we left the select screen as a spectator, there is no need to wait on the server to confirm our leave
-      return {main_net_vs_lobby}
+    if input.isDown["Swap1"] or input.isDown["MenuEnter"] then
+      if self.ui.levelSlider.onSelectCallback then
+        self.ui.levelSlider.onSelectCallback()
+      end
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      self.ui.levelSlider:yieldFocus()
     end
   end
-
-  return nil
+  self.ui.levelSlider.drawInternal = self.ui.levelSlider.draw
+  self.ui.levelSlider.draw = function(self)
+    local x, y = self.parent:getScreenPos()
+    grectangle("line", x, y, self.width, self.height)
+    self:drawInternal()
+  end
 end
 
 function CharacterSelect:update()
+  self.matchSetup:update()
+  self.ui.cursor:receiveInputs()
+  GAME.gfx_q:push({self.ui.grid.draw,{self.ui.grid}})
+  GAME.gfx_q:push({self.ui.cursor.draw,{self.ui.cursor}})
+  self:customDraw()
   if self:customUpdate() then
     return
   end
-  
-  --gfx_q:push({graphics.draw, {graphics, self}})
-  
-  self:refreshLoadingState(self.my_player_number)
-  self:handleInput()
-  
-  self:refreshReadyStates()
-
-  --if select_screen.character_select_mode == "2p_local_computer_vs" and self.players[self.my_player_number].ready then
-  --  return self:start1pCpuMatch()
 end
 
 function CharacterSelect:drawBackground()
   self.backgroundImg:draw()
+end
+
+function CharacterSelect:drawForeground()
+
 end
 
 function CharacterSelect:unload()
