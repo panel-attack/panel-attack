@@ -12,6 +12,8 @@ local Button = require("ui.Button")
 local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local consts = require("consts")
+local GameModes = require("GameModes")
+local MatchSetup = require("MatchSetup")
 
 local DesignHelper = class(function(self, sceneParams)
   self:load(sceneParams)
@@ -21,6 +23,7 @@ DesignHelper.name = "DesignHelper"
 sceneManager:addScene(DesignHelper)
 
 function DesignHelper:load()
+  self.matchSetup = MatchSetup(GameModes.OnePlayerTimeAttack, false)
   self.backgroundImg = themes[config.theme].images.bg_main
   self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
   -- this is just for demo purposes, current character should always bind to the underlying matchsetup
@@ -43,8 +46,12 @@ function DesignHelper:load()
     height = 96,
     label = "ready",
     backgroundColor = {1, 1, 1, 0},
-    outlineColor = {1, 1, 1, 1}
+    outlineColor = {1, 1, 1, 1},
+    onClick = function()
+      self.matchSetup:startMatch()
+    end
   })
+  self.readyButton.onSelect = self.readyButton.onClick
   self.grid:createElementAt(9, 2, 1, 1, "readySelection", self.readyButton)
   self:loadCharacters()
   self.grid:createElementAt(1, 3, 9, 3, "characterSelection", self.characterGrid, true)
@@ -67,6 +74,7 @@ function DesignHelper:load()
     playerNumber = 1
   })
   self.cursor.escapeCallback = function()
+    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     sceneManager:switchToScene("MainMenu")
   end
 end
