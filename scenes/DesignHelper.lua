@@ -23,7 +23,6 @@ DesignHelper.name = "DesignHelper"
 sceneManager:addScene(DesignHelper)
 
 function DesignHelper:load()
-  self.matchSetup = MatchSetup(GameModes.OnePlayerTimeAttack, false)
   self.backgroundImg = themes[config.theme].images.bg_main
   self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
   -- this is just for demo purposes, current character should always bind to the underlying matchsetup
@@ -46,10 +45,7 @@ function DesignHelper:load()
     height = 96,
     label = "ready",
     backgroundColor = {1, 1, 1, 0},
-    outlineColor = {1, 1, 1, 1},
-    onClick = function()
-      self.matchSetup:startMatch()
-    end
+    outlineColor = {1, 1, 1, 1}
   })
   self.readyButton.onSelect = self.readyButton.onClick
   self.grid:createElementAt(9, 2, 1, 1, "readySelection", self.readyButton)
