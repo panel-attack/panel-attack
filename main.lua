@@ -68,8 +68,8 @@ function love.load(args)
   love.keyboard.setTextInput(false)
 
   if PROFILING_ENABLED then
-    GAME.profiler = require("jit.p")--require("profiler")
-    GAME.profiler.start("flm1", "profiler.log")
+    GAME.profiler = require("profiler")
+    GAME.profiler:start()
   end
 
   love.graphics.setDefaultFilter("linear", "linear")
@@ -163,8 +163,7 @@ end
 -- quit handling
 function love.quit()
   if PROFILING_ENABLED then
-    GAME.profiler.stop()
-    --GAME.profiler.report("profiler.log")
+    GAME.profiler.report("profiler.log")
   end
   if network_connected() then
     json_send({logout = true})
