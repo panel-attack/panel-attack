@@ -56,7 +56,7 @@ function CustomRun.sleep()
   -- On most machines GC will have reduced the remaining idle time to near nothing
   -- But strong machines may exit garbage collection early and need to sleep the remaining time
   -- On modern windows OS, default sleep is minimum 2ms, so only sleep if there's enough time left
-  if idleTime > 0.002 then
+  if (love.system.getOS() ~= "Windows" and idleTime > 0) or idleTime > 0.002 then
     love.timer.sleep(idleTime * 0.99)
   end
   currentTime = love.timer.getTime()
