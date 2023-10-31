@@ -57,7 +57,7 @@ local menuItems = {
     end)
   }, {
     createMainMenuButton("mm_2_vs_online", function()
-      switchToScene("Lobby", {"panelattack.com"})
+      switchToScene("Lobby", {serverIp = "panelattack.com"})
     end, {""})
   }, {
     createMainMenuButton("mm_2_vs_local", function()
@@ -89,8 +89,8 @@ local menuItems = {
 }
 
 local debugMenuItems = {
-  {createMainMenuButton("Beta Server", switchToScene("Lobby", {"betaserver.panelattack.com", 59569}), {""}, false)},
-  {createMainMenuButton("Localhost Server", switchToScene("Lobby", {"Localhost"}), {""}, false)}
+  {createMainMenuButton("Beta Server", switchToScene("Lobby", {serverIp = "betaserver.panelattack.com", serverPort = 59569}), {""}, false)},
+  {createMainMenuButton("Localhost Server", switchToScene("Lobby", {serverIp = "Localhost"}), {""}, false)}
 }
 
 function MainMenu:addDebugMenuItems()
