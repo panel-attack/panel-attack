@@ -1,6 +1,7 @@
 local logger = require("logger")
 local Replay = require("replay")
 local graphics = require("select_screen.select_screen_graphics")
+local levelPresets = require("LevelPresets")
 require("SimulatedOpponent")
 
 local select_screen = {}
@@ -816,10 +817,10 @@ function select_screen.startNetPlayMatch(self, msg)
   if GAME.battleRoom.spectating then
     is_local = false
   end
-  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
+  P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, levelData = levelPresets.modern[msg.player_settings.level], inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
   GAME.match:addPlayer(P1)
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
+  P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, levelData = levelPresets.modern[msg.opponent_settings.level], inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
   GAME.match:addPlayer(P2)
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
@@ -859,9 +860,9 @@ end
 -- returns transition to local vs screen
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, levelData = levelPresets.modern[self.players[self.my_player_number].level], inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match:addPlayer(P1)
-  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, levelData = levelPresets.modern[self.players[self.op_player_number].level],inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
   --note: local P2 not currently allowed to use "touch" input method
   GAME.match:addPlayer(P2)
   P1:setOpponent(P2)
@@ -889,7 +890,7 @@ function select_screen.start1pLocalMatch(self)
     challengeStage = challengeMode.stages[challengeMode.currentStageIndex]
     stackLevel = challengeStage.riseDifficulty
   end
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = stackLevel, inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = stackLevel, levelData = levelPresets.modern[stackLevel], inputMethod = self.players[self.my_player_number].inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
 
   if GAME.battleRoom.trainingModeSettings then
     local character = P1.character
@@ -935,9 +936,9 @@ end
 
 function select_screen.start1pCpuMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
-  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
+  P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, levelData = levelPresets.modern[self.players[self.my_player_number].level], character = self.players[self.my_player_number].character, player_number = 1}
   GAME.match:addPlayer(P1)
-  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
+  P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, levelData = levelPresets.modern[self.players[self.op_player_number].level], character = self.players[self.op_player_number].character, player_number = 2}
   P2.max_runs_per_frame = 1
   GAME.match:addPlayer(P2)
   GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)

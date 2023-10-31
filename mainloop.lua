@@ -8,6 +8,7 @@ local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local Replay = require("replay")
+local levelPresets = require("LevelPresets")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -425,7 +426,14 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   end
   commonGameSetup()
 
-  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod=config.inputMethod}
+  local levelData
+  if level then
+    levelData = levelPresets.modern[level]
+  else
+    levelData = levelPresets.classic[difficulty]
+    levelData.startingSpeed = speed
+  end
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, levelData = levelData, character=config.character, inputMethod=config.inputMethod}
 
   GAME.match:addPlayer(P1)
   P1:wait_for_random_character()
@@ -1733,7 +1741,9 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
     end
 
     GAME.match = Match("puzzle")
-    P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
+
+    local levelData = levelPresets.modern[config.puzzle_level]
+    P1 = Stack{which=1, match=GAME.match, is_local=true, levelData = levelData, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
     GAME.match:addPlayer(P1)
     P1:wait_for_random_character()
     if not character then

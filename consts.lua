@@ -112,10 +112,8 @@ card_animation = {false,
   popfx_fade_animation = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
 
 FC_HOVER = {12,  9,  6, 3}
--- TODO: delete FC_MATCH?
---FC_MATCH = {61, 49, 37}
 FC_FLASH = {44, 36, 22, 16}
-FC_FACE  = {17, 13, 15, 10} -- idk this is just MATCH-FLASH
+FC_FACE  = {17, 13, 15, 10}
 FC_POP   = { 9,  8,  7, 6}
 stop_time_combo =  {120, 120, 120, 90}
 stop_time_chain =  {300, 180, 120, 90}
@@ -164,8 +162,6 @@ level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32, 45}
 level_to_hang_time             = {121,101, 81, 66, 51, 41, 31, 21, 11,  1, 1}
 -- How many colors of panels can spawn in VS mode, not including metal panels.
 level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6, 6}
--- How many colors of panels can spawn in time trial mode.
-level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6, 6}
 -- How long panels will hover if not supported by anything, in frames.
 level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6, 3}
 -- How long newly-transformed panels from garbage will hover before falling, in frames.
