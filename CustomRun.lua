@@ -41,7 +41,7 @@ function CustomRun.sleep()
   -- actively collecting garbage is very CPU intensive
   -- only do it while a match is on-going
   if GAME and GAME.match and GAME.focused and not GAME.gameIsPaused then
-    -- Spend as much time as necessary collecting garbage, but at least 1ms
+    -- Spend as much time as necessary collecting garbage, but at least 0.1ms
     -- manualGc itself has a ceiling at which it will stop
     manualGc(math.max(0.0001, idleTime * 0.99))
     currentTime = love.timer.getTime()
