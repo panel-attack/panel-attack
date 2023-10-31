@@ -1,4 +1,5 @@
 local graphicsUtil = require("graphics_util")
+local levelPresets = require("LevelPresets")
 
 local select_screen_graphics = {
   v_align_center = {__Ready = true, __Random = true, __Leave = true},
@@ -466,7 +467,7 @@ function select_screen_graphics.draw_levels(self, player, player_number, y_paddi
   local paddingWidth = 4 -- padding between "<" levels, and ">"
   local reservedSpace = (outsidePadding * 2) + (leftRightIndicatorWidth * 2) + (paddingWidth) + (playerNumberWidth) -- fixed amount of space needed for the cursors etc
   local spaceAvailable = (self.button_width - reservedSpace)
-  local level_width = math.floor(spaceAvailable / #level_to_starting_speed)
+  local level_width = math.floor(spaceAvailable / #levelPresets.modern)
   local is_selected = player.cursor.selected and player.cursor.positionId == "__Level"
   local drawX = outsidePadding
 
@@ -479,7 +480,7 @@ function select_screen_graphics.draw_levels(self, player, player_number, y_paddi
   end
   drawX = drawX + leftRightIndicatorWidth + paddingWidth
 
-  for i = 1, #level_to_starting_speed do --which should equal the number of levels in the game
+  for i = 1, #levelPresets.modern do --which should equal the number of levels in the game
     local level_scale = level_width / themes[config.theme].images.IMG_levels[i]:getWidth()
     local use_unfocus = player.level < i
     if use_unfocus then

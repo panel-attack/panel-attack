@@ -624,7 +624,7 @@ function select_screen.handleInput(self)
       elseif menu_left(i) then
         if cursor.selected then
           if cursor.positionId == "__Level" then
-            player.level = bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
+            player.level = bound(1, player.level - 1, #levelPresets.modern) --which should equal the number of levels in the game
           elseif cursor.positionId == "__Panels" then
             player.panels_dir = self.change_panels_dir(player.panels_dir, -1)
           elseif cursor.positionId == "__Stage" then
@@ -637,7 +637,7 @@ function select_screen.handleInput(self)
       elseif menu_right(i) then
         if cursor.selected then
           if cursor.positionId == "__Level" then
-            player.level = bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
+            player.level = bound(1, player.level + 1, #levelPresets.modern) --which should equal the number of levels in the game
           elseif cursor.positionId == "__Panels" then
             player.panels_dir = self.change_panels_dir(player.panels_dir, 1)
           elseif cursor.positionId == "__Stage" then

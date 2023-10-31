@@ -432,6 +432,9 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
   else
     levelData = levelPresets.classic[difficulty]
     levelData.startingSpeed = speed
+    if mode == "endless" and difficulty == 1 then
+      levelData.colors = 5
+    end
   end
   P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, levelData = levelData, character=config.character, inputMethod=config.inputMethod}
 
