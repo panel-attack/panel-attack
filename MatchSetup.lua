@@ -474,6 +474,11 @@ end
 
 function MatchSetup:update()
   -- here we fetch network updates and update the match setup if applicable
+
+  -- if there are still unloaded assets, we can load them 1 asset a frame in the background
+  StageLoader.update()
+  CharacterLoader.update()
+
   self:updateLoadingState()
   self:refreshReadyStates()
   if self:allReady() then
