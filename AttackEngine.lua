@@ -29,7 +29,9 @@ AttackEngine =
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
     self.clock = 0
-    self.character = wait_for_random_character(character)
+    self.character = CharacterLoader.resolveCharacterSelection(character)
+    CharacterLoader.load(self.character)
+    CharacterLoader.wait()
     self.telegraph = Telegraph(sender)
     self:setGarbageTarget(garbageTarget)
     self.shouldPlayAttackSfx = shouldPlayAttackSfx
