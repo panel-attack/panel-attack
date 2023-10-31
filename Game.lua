@@ -200,7 +200,8 @@ function Game:createScenes()
     require("scenes.SetNameMenu"),
     require("scenes.OptionsMenu"),
     require("scenes.SoundTest"),
-    require("scenes.DesignHelper")
+    require("scenes.DesignHelper"),
+    require("scenes.VsSelfGame")
   }
 end
 

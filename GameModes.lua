@@ -15,7 +15,7 @@ local OnePlayerVsSelf = {
   selectFile = FileSelection.None,
   selectColorRandomization = false,
   stackInteraction = StackInteraction.Self,
-  scene = "EndlessGame"
+  scene = "VsSelfGame"
 }
 local OnePlayerTimeAttack = {
   playerCount = 1,
