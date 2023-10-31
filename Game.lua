@@ -15,6 +15,7 @@ local input = require("inputManager")
 local save = require("save")
 local fileUtils = require("FileUtils")
 local scenes = nil
+require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
 -- Useful for creating new canvas with a solid DPI
@@ -69,10 +70,12 @@ local Game = class(
     self.last_x = 0
     self.last_y = 0
     self.input_delta = 0.0
-    self.mainloop = nil
 
     -- coroutines
     self.setupCoroutineObject = coroutine.create(function() self:setupCoroutine() end)
+
+    -- misc
+    self.rich_presence = RichPresence()
   end
 )
 
@@ -318,14 +321,14 @@ function Game:update(dt)
     runSystemCommands()
   end
 
-  local status, err = nil, nil
   if coroutine.status(self.setupCoroutineObject) ~= "dead" then
-    status, err = coroutine.resume(self.setupCoroutineObject)
+    local status, err = coroutine.resume(self.setupCoroutineObject)
     -- loading bar setup finished
     if status and coroutine.status(self.setupCoroutineObject) == "dead" then
       self:switchToStartScene()
     elseif not status then
       self.crashTrace = debug.traceback(self.setupCoroutineObject)
+      error(err)
     end
   elseif input.isDown["return"] and input.isDown["Alt"] then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
@@ -335,20 +338,12 @@ function Game:update(dt)
     if sceneManager.isTransitioning then
       sceneManager:transition()
     end
-    status = true
   elseif sceneManager.isTransitioning then
     sceneManager:transition()
-    status = true
   else
-    status, err = coroutine.resume(mainloop)
-    if not status then
-      self.crashTrace = debug.traceback(mainloop)
-      error(errorString)
-    end
+    error("No active scene and no active transition")
   end
-  if not status then
-    error(err)
-  end
+
   if self.server_queue and self.server_queue:size() > 0 then
     logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
   end
@@ -356,7 +351,7 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
-  
+
   manualGC(0.0001, nil, nil)
 end
 

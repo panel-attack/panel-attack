@@ -42,7 +42,6 @@ require("network")
 require("Puzzle")
 require("PuzzleSet")
 require("puzzles")
-require("mainloop")
 require("sound")
 require("timezones")
 require("gen_panels")
@@ -51,9 +50,6 @@ require("Theme")
 local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
-require("rich_presence.RichPresence")
-
-require("dump")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
@@ -64,22 +60,18 @@ if GAME_UPDATER == nil then
   love.run = CustomRun.run
 end
 
-if PROFILING_ENABLED then
-  GAME.profiler = require("profiler")
-end
-
-GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
 function love.load(args) 
   love.keyboard.setTextInput(false)
-  
+
   if PROFILING_ENABLED then
+    GAME.profiler = require("profiler")
     GAME.profiler:start()
   end
-  
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
@@ -94,7 +86,6 @@ function love.load(args)
   GAME.rich_presence:initialize("902897593049301004")
   -- TODO: pull game updater from from args
   GAME:load(GAME_UPDATER)
-  mainloop = coroutine.create(fmainloop)
 
   GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
 end
@@ -274,6 +265,29 @@ end
 -- local _x, _y = GAME:transform_coordinates(x, y)
 -- click_or_tap(_x, _y, {id = id, x = _x, y = _y, dx = dx, dy = dy, pressure = pressure})
 -- end
+
+-- quit handling
+function love.quit()
+  if PROFILING_ENABLED then
+    GAME.profiler.report("profiler.log")
+  end
+  if network_connected() then
+    json_send({logout = true})
+  end
+  love.audio.stop()
+  if love.window.getFullscreen() then
+    _, _, config.display = love.window.getPosition()
+  else
+    config.windowX, config.windowY, config.display = love.window.getPosition()
+    config.windowX = math.max(config.windowX, 0)
+    config.windowY = math.max(config.windowY, 30) --don't let 'y' be zero, or the title bar will not be visible on next launch.
+  end
+
+  config.windowWidth, config.windowHeight, _ = love.window.getMode( )
+  config.maximizeOnStartup = love.window.isMaximized()
+  config.fullscreen = love.window.getFullscreen()
+  write_conf_file()
+end
 
 function love.errorhandler(msg)
 
