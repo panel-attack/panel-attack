@@ -77,10 +77,10 @@ function fmainloop()
     require("utilTests")
     --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
     -- Medium level tests (integration tests)
-    -- require("tests.ReplayTests")
-    -- require("tests.StackReplayTests")
-    -- require("tests.StackRollbackReplayTests")
-    -- require("tests.StackTouchReplayTests")
+    require("tests.ReplayTests")
+    require("tests.StackReplayTests")
+    require("tests.StackRollbackReplayTests")
+    require("tests.StackTouchReplayTests")
   end
   if PERFORMANCE_TESTS_ENABLED then
     GAME:drawLoadingString("Running Performance Tests")
