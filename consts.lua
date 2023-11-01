@@ -150,7 +150,7 @@ panels_to_next_speed =
 -- on stage 1, the increases occur at increments of:
 -- 20, 15, 15, 15, 10, 10, 10
 
--- The following are level settings for vs cpu in Tetris Attack:
+-- The following are level settings for vs cpu in:
 -- vs easy cpu -> vs level 2 for all levels
 -- vs normal cpu -> vs level 4 for all levels
 -- vs hard cpu -> vs level 6 for all levels
