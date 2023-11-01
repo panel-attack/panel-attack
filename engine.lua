@@ -317,7 +317,7 @@ function Stack:calculateMultibarFrameCount()
   -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
   --local preStopFrameCount = 30 + (10 - self.level) * 5
 
-  local minFrameCount = maxStop + level_to_hang_time[self.level] --+ preStopFrameCount
+  local minFrameCount = maxStop + (level_to_hang_time[self.level] or 1) --+ preStopFrameCount
 
   --return minFrameCount + preStopFrameCount
   return math.max(240, minFrameCount)

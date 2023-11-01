@@ -104,7 +104,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
     P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
-
+    GAME.match:addPlayer(P1)
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
@@ -143,7 +143,6 @@ function Replay.loadFromFile(replay, wantsCanvas)
   end
 
   P1:receiveConfirmedInput(uncompress_input_string(replayDetails.in_buf))
-  GAME.match:addPlayer(P1)
   P1.do_countdown = replayDetails.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.cur_wait_time = replayDetails.cur_wait_time or default_input_repeat_delay
