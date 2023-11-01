@@ -32,8 +32,10 @@ Stack =
     -- level or difficulty should be set
     assert(arguments.levelData ~= nil)
     local levelData = arguments.levelData
-    -- only for icon display, all actual data is in levelData
+    -- level and difficulty only for icon display and score saving, all actual data is in levelData
     local level = arguments.level
+    local difficulty = arguments.difficulty
+
     local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local player_number = arguments.player_number or which
     local wantsCanvas = arguments.wantsCanvas
@@ -67,6 +69,7 @@ Stack =
       s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
     end
 
+    s.difficulty = difficulty
     s.level = level
     s.levelData = levelData
     s.speed = s.levelData.startingSpeed
@@ -1565,7 +1568,7 @@ function Stack.simulate(self)
       else
         local winningPlayer = self
         if GAME.battleRoom then
-          winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
+          winningPlayer = GAME.battleRoom:winningPlayer(self.match.P1, self.match.P2)
         end
 
         local musics_to_use = nil

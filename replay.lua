@@ -1,5 +1,6 @@
 local utf8 = require("utf8Additions")
 local logger = require("logger")
+local levelPresets = require("LevelPresets")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -19,34 +20,36 @@ function Replay.createNewReplay(match)
   modeReplay.seed = match.seed
 
   if mode == "endless" or mode == "time" then
-    modeReplay.do_countdown = match.P1.do_countdown or false
-    modeReplay.speed = match.P1.speed
-    modeReplay.difficulty = match.P1.difficulty
-    modeReplay.cur_wait_time = match.P1.cur_wait_time or default_input_repeat_delay
+    modeReplay.do_countdown = match.players[1].do_countdown or false
+    modeReplay.speed = match.players[1].speed
+    modeReplay.difficulty = match.players[1].difficulty
+    modeReplay.cur_wait_time = match.players[1].cur_wait_time or default_input_repeat_delay
     modeReplay.in_buf = ""
-    modeReplay.inputMethod = match.P1.inputMethod
+    modeReplay.inputMethod = match.players[1].inputMethod
+    modeReplay.levelData = match.players[1].levelData
   elseif mode == "vs" then
     modeReplay.P = ""
     modeReplay.O = ""
     modeReplay.I = ""
     modeReplay.Q = ""
     modeReplay.in_buf = ""
-    modeReplay.P1_level = match.P1.level
-    modeReplay.P1_inputMethod = match.P1.inputMethod
+    modeReplay.P1_level = match.players[1].level
+    modeReplay.P1_levelData = match.players[1].levelData
+    modeReplay.P1_inputMethod = match.players[1].inputMethod
     modeReplay.P1_name = GAME.battleRoom.playerNames[1]
-    modeReplay.P1_char = match.P1.character
-    modeReplay.P1_char = match.P1.character
-    modeReplay.P1_cur_wait_time = match.P1.cur_wait_time
+    modeReplay.P1_char = match.players[1].character
+    modeReplay.P1_cur_wait_time = match.players[1].cur_wait_time
     modeReplay.do_countdown = true
-    if match.P2 then
-      modeReplay.P2_level = match.P2.level
-      modeReplay.P2_inputMethod = match.P2.inputMethod
+    if match.players[2] then
+      modeReplay.P2_level = match.players[2].level
+      modeReplay.P2_levelData = match.players[2].levelData
+      modeReplay.P2_inputMethod = match.players[2].inputMethod
       modeReplay.P2_name = GAME.battleRoom.playerNames[2]
-      modeReplay.P2_char = match.P2.character
-      modeReplay.P2_cur_wait_time = match.P2.cur_wait_time
+      modeReplay.P2_char = match.players[2].character
+      modeReplay.P2_cur_wait_time = match.players[2].cur_wait_time
 
       modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[match.P1.player_number]
-      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[match.P2.player_number]
+      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[match.players[2].player_number]
     end
   end
   return result
@@ -100,15 +103,16 @@ function Replay.loadFromFile(replay, wantsCanvas)
   GAME.match.seed = replayDetails.seed
   GAME.match.isFromReplay = true
 
+  local P1
   if replay.vs then
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
-    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1}
+    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, levelData = replayDetails.P1_levelData, character=replayDetails.P1_char, inputMethod=inputType1}
 
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
-      P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2}
+      P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, levelData = replayDetails.P2_levelData, character=replayDetails.P2_char, inputMethod=inputType2}
       
       P1:setGarbageTarget(P2)
       P1:setOpponent(P2)
@@ -137,8 +141,17 @@ function Replay.loadFromFile(replay, wantsCanvas)
 
   elseif replay.endless or replay.time then
     local inputMethod = (replayDetails.inputMethod) or "controller"
-    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod}
-    GAME.match:addPlayer(P1)
+    if not replayDetails.levelData then
+      if replayDetails.level then
+        replayDetails.levelData = levelPresets.modern[replayDetails.level]
+      else
+        replayDetails.levelData = levelPresets.classic[replayDetails.difficulty]
+      end
+    end
+    if replayDetails.speed then
+      replayDetails.levelData.startingSpeed = replayDetails.speed
+    end
+    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, levelData=replayDetails.levelData, inputMethod=inputMethod}
     P1:wait_for_random_character()
   end
 
@@ -233,10 +246,10 @@ end
 
 function Replay.finalizeReplay(match, replay)
   replay = addReplayStatisticsToReplay(match, replay)
-  replay[match.mode].in_buf = table.concat(match.P1.confirmedInput)
+  replay[match.mode].in_buf = table.concat(match.players[1].confirmedInput)
   replay[match.mode].stage = current_stage
-  if P2 then
-    replay[match.mode].I = table.concat(P2.confirmedInput)
+  if match.players[2] then
+    replay[match.mode].I = table.concat(match.players[2].confirmedInput)
   end
   Replay.compressReplay(replay)
 end

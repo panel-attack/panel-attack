@@ -35,10 +35,12 @@ end
 -- Returns the player with more win count.
 -- TODO handle ties?
 function BattleRoom.winningPlayer(self)
-  if not P2 then
-    return P1
+  if not GAME.match.players[2] then
+    return GAME.match.players[1]
   end
 
+  local P1 = GAME.match.players[1]
+  local P2 = GAME.match.players[2]
   if self.playerWinCounts[P1.player_number] >= self.playerWinCounts[P2.player_number] then
     logger.trace("Player " .. P1.which .. " (" .. P1.player_number .. ") has more wins")
     return P1

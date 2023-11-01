@@ -403,7 +403,7 @@ local function runMainGameLoop(updateFunction, variableStepFunction, abortGameFu
     end
 
     if not returnFunction then
-      local gameResult = P1:gameResult()
+      local gameResult = GAME.match.P1:gameResult()
       if gameResult then
         returnFunction = processGameResultsFunction(gameResult)
       end
@@ -436,7 +436,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
       levelData.colors = 5
     end
   end
-  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, levelData = levelData, character=config.character, inputMethod=config.inputMethod}
+  P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level = level, difficulty = difficulty, levelData = levelData, character=config.character, inputMethod=config.inputMethod}
 
   GAME.match:addPlayer(P1)
   P1:wait_for_random_character()
@@ -1686,7 +1686,7 @@ function main_replay()
 
   local function processGameResults(gameResult) 
 
-    if P2 then
+    if GAME.match.P2 then
       local matchOutcome = GAME.match.battleRoom:matchOutcome()
       if matchOutcome then
         local end_text = matchOutcome["end_text"]
@@ -1695,7 +1695,7 @@ function main_replay()
         return {game_over_transition, {replay_browser.main, end_text, winSFX}}
       end
     else
-      return {game_over_transition, {replay_browser.main, nil, P1:pick_win_sfx()}}
+      return {game_over_transition, {replay_browser.main, nil, GAME.match.P1:pick_win_sfx()}}
     end
   end
   
@@ -2126,7 +2126,7 @@ function game_over_transition(next_func, gameResultText, winnerSFX, timemax, kee
             stop_the_music()
           end
           SFX_GameOver_Play = 0
-          analytics.game_ends(P1.analytic)
+          analytics.game_ends(GAME.match.P1.analytic)
           ret = {next_func, args}
         end
         t = t + 1
