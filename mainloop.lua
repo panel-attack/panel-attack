@@ -1628,6 +1628,8 @@ function main_replay()
   end
 
   local frameAdvance = false
+  local P1 = GAME.match.players[1]
+  local P2 = GAME.match.players[2]
   local function variableStep()
     -- If we just finished a frame advance, pause again and restore the value of max_runs
     if frameAdvance then

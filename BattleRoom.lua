@@ -55,7 +55,8 @@ function BattleRoom.getPlayerWinCount(self, playerNumber)
 end
 
 function BattleRoom.matchOutcome(self)
-  
+  local P1 = GAME.match.players[1]
+  local P2 = GAME.match.players[2]
   local gameResult = P1:gameResult()
 
   if gameResult == nil then
