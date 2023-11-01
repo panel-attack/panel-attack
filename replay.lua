@@ -1,6 +1,7 @@
 local utf8 = require("utf8Additions")
 local logger = require("logger")
 local levelPresets = require("LevelPresets")
+local consts = require("consts")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -59,6 +60,14 @@ function Replay.replayCanBeViewed(replay)
   if replay.engineVersion >= VERSION_MIN_VIEW and replay.engineVersion <= VERSION then
     if not replay.puzzle then
       return true
+    end
+
+    if replay.engineVersion < consts.ENGINE_VERSIONS.LEVELDATA then
+      -- if one of the players is playing on level 11, we can't view the replay
+      if replay.vs then
+        -- before v048 there were no non-vs replays with level recorded
+        return replay.vs.P1_level ~= 11 and (replay.vs.P2_level == nil or replay.vs.P2_level ~= 11)
+      end
     end
   end
 
