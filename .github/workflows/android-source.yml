@@ -65,7 +65,11 @@ jobs:
         path: game-checkout
         submodules: recursive
     - name: Prepare Game files
-      run: mkdir game && cd game-checkout && cp -r *.lua *.ttf readme*.txt *.md *.ogg characters computerPlayers default_data engine libraries localization.csv panels rich_presence select_screen stages themes game
+      run: |
+      mkdir game && mkdir game/game
+      cd game-checkout
+      cp -r *.lua *.ttf readme*.txt *.md *.ogg characters computerPlayers default_data engine libraries localization.csv panels rich_presence select_screen stages themes game/game
+      cp panels/__default/panel11.png game/game_icon.png
     - name: Prepare Metadata
       id: md
       run: cd ../game && python scripts/prepare_android.py --get-icon-path --commit
