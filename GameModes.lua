@@ -1,8 +1,8 @@
 local GameModes = {}
 
-local Styles = { Choose = 0, Classic = 1, Modern = 2}
-local FileSelection = { None = 0, Training = 1, Puzzle = 2}
-local StackInteraction = { None = 0, Versus = 1, Self = 2, AttackEngine = 3, HealthEngine = 4}
+local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
+local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
+local StackInteraction = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
 
 local OnePlayerVsSelf = {
   playerCount = 1,
@@ -11,12 +11,13 @@ local OnePlayerVsSelf = {
   selectStage = true,
   selectPanels = true,
   selectRanked = false,
-  style = Styles.Modern,
-  selectFile = FileSelection.None,
+  style = Styles.MODERN,
+  selectFile = FileSelection.NONE,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.Self,
+  stackInteraction = StackInteraction.SELF,
   scene = "VsSelfGame"
 }
+
 local OnePlayerTimeAttack = {
   playerCount = 1,
   selectCharacter = true,
@@ -24,10 +25,10 @@ local OnePlayerTimeAttack = {
   selectStage = true,
   selectPanels = true,
   selectRanked = false,
-  style = Styles.Choose,
-  selectFile = FileSelection.None,
+  style = Styles.CHOOSE,
+  selectFile = FileSelection.NONE,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.None,
+  stackInteraction = StackInteraction.NONE,
   scene = "TimeAttackGame",
   matchMode = "time"
 }
@@ -39,10 +40,10 @@ local OnePlayerEndless = {
   selectStage = true,
   selectPanels = true,
   selectRanked = false,
-  style = Styles.Choose,
-  selectFile = FileSelection.None,
+  style = Styles.CHOOSE,
+  selectFile = FileSelection.NONE,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.None,
+  stackInteraction = StackInteraction.NONE,
   scene = "EndlessGame",
   matchMode = "endless"
 }
@@ -54,10 +55,10 @@ local OnePlayerTraining = {
   selectStage = true,
   selectPanels = true,
   selectRanked = false,
-  style = Styles.Modern,
-  selectFile = FileSelection.Training,
+  style = Styles.MODERN,
+  selectFile = FileSelection.TRAINING,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.AttackEngine,
+  stackInteraction = StackInteraction.ATTACK_ENGINE,
   scene = "GameBase"
 }
 
@@ -68,10 +69,10 @@ local OnePlayerPuzzle = {
   selectStage = true,
   selectPanels = true,
   selectRanked = false,
-  style = Styles.Modern,
-  selectFile = FileSelection.Puzzle,
+  style = Styles.MODERN,
+  selectFile = FileSelection.PUZZLE,
   selectColorRandomization = true,
-  stackInteraction = StackInteraction.None,
+  stackInteraction = StackInteraction.NONE,
   scene = "PuzzleGame",
   matchMode = "puzzle"
 }
@@ -83,10 +84,10 @@ local OnePlayerChallenge = {
   selectStage = true,
   selectPanels = true,
   selectRanked = false,
-  style = Styles.Modern,
-  selectFile = FileSelection.None,
+  style = Styles.MODERN,
+  selectFile = FileSelection.NONE,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.HealthEngine,
+  stackInteraction = StackInteraction.HEALTH_ENGINE,
   scene = "GameBase"
 }
 
@@ -98,23 +99,23 @@ local TwoPlayerVersus = {
   selectPanels = true,
   -- this has to be rechecked with the online flag
   selectRanked = true,
-  style = Styles.Modern,
-  selectFile = FileSelection.None,
+  style = Styles.MODERN,
+  selectFile = FileSelection.NONE,
   selectColorRandomization = false,
-  stackInteraction = StackInteraction.Versus,
+  stackInteraction = StackInteraction.VERSUS,
   scene = "OnlineVsGame"
 }
 
-GameModes.OnePlayerVsSelf = OnePlayerVsSelf
-GameModes.OnePlayerTimeAttack = OnePlayerTimeAttack
-GameModes.OnePlayerEndless = OnePlayerEndless
-GameModes.OnePlayerTraining = OnePlayerTraining
-GameModes.OnePlayerPuzzle = OnePlayerPuzzle
-GameModes.OnePlayerChallenge = OnePlayerChallenge
-GameModes.TwoPlayerVersus = TwoPlayerVersus
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
 GameModes.StackInteraction = StackInteraction
 
+GameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
+GameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack
+GameModes.ONE_PLAYER_ENDLESS = OnePlayerEndless
+GameModes.ONE_PLAYER_TRAINING = OnePlayerTraining
+GameModes.ONE_PLAYER_PUZZLE = OnePlayerPuzzle
+GameModes.ONE_PLAYER_CHALLENGE = OnePlayerChallenge
+GameModes.TWO_PLAYER_VS = TwoPlayerVersus
 
 return GameModes
