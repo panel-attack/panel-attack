@@ -2,7 +2,6 @@ local class = require("class")
 local UiElement = require("ui.UIElement")
 local CarouselButton = require("ui.CarouselButton")
 local GraphicsUtil = require("graphics_util")
-local Util = require("util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 

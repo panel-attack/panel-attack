@@ -1,4 +1,3 @@
-local UIElement = require("ui.UIElement")
 local GraphicsUtil = require("graphics_util")
 local Button = require("ui.Button")
 local class = require("class")

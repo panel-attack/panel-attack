@@ -1,8 +1,6 @@
 local UiElement = require("ui.UIElement")
 local Grid = require("ui.Grid")
 local class = require("class")
-local Util = require("util")
-local GraphicsUtil = require("graphics_util")
 
 local function addNewPage(pagedUniGrid)
   local grid = Grid({

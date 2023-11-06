@@ -1,6 +1,5 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
-local tableUtils = require("tableUtils")
 local GridElement = require("ui.GridElement")
 
 local Grid = class(function(self, options)

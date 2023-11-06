@@ -1,7 +1,5 @@
 local class = require("class")
-local util = require("util")
 local tableUtils = require("tableUtils")
-local logger = require("logger")
 local GameModes = require("GameModes")
 local sceneManager = require("scenes.sceneManager")
 local Replay = require("replay")
