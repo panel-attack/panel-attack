@@ -2,7 +2,7 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local class = require("class")
-local Replay = require("Replay")
+local Replay = require("replay")
 local logger = require("logger")
 
 --@module puzzleGame

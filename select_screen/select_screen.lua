@@ -1,5 +1,5 @@
 local logger = require("logger")
-local Replay = require("Replay")
+local Replay = require("replay")
 local graphics = require("select_screen.select_screen_graphics")
 local tableUtils = require("tableUtils")
 local util = require("util")

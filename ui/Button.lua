@@ -31,18 +31,15 @@ local Button = class(
       GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
     end
     self.onMouseUp = options.onMouseUp or function() end
-    
+
     if self.text then
       -- text field is set in base class (UIElement)
       local textWidth, textHeight = self.text:getDimensions()
       -- stretch to fit text
       self.width = math.max(textWidth + TEXT_WIDTH_PADDING, self.width)
       self.height = math.max(textHeight + TEXT_HEIGHT_PADDING, self.height)
-    elseif self.image then
-      -- an image button doesn't need a text, image is getting autoscaled in draw
-    else
-      error("either a text or image on the button probably makes sense")
     end
+
     buttonManager.buttons[self.id] = self.isVisible and self or nil
     self.TYPE = "Button"
   end,
@@ -70,15 +67,11 @@ function Button:draw()
     love.graphics.setColor(self.outlineColor)
     love.graphics.rectangle("line", screenX, screenY, self.width, self.height)
     love.graphics.setColor(1, 1, 1, 1)
-    if self.image then
-      love.graphics.draw(self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight())
-    else
-      -- index 4 is alpha, alpha 0 is invisible
-      if self.backgroundColor[4] > 0 then
-        love.graphics.setColor(self.backgroundColor)
-        love.graphics.rectangle("fill", screenX, screenY, self.width, self.height)
-        love.graphics.setColor(1, 1, 1, 1)
-      end
+    -- index 4 is alpha, alpha 0 is invisible
+    if self.backgroundColor[4] > 0 then
+      love.graphics.setColor(self.backgroundColor)
+      love.graphics.rectangle("fill", screenX, screenY, self.width, self.height)
+      love.graphics.setColor(1, 1, 1, 1)
     end
   else
     GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
@@ -95,7 +88,7 @@ function Button:draw()
     end
   end
 
-  if not self.image then
+  if self.text then
     local textWidth, textHeight = self.text:getDimensions()
     local xAlignments = {
       center = {self.width / 2, textWidth / 2},
@@ -111,6 +104,12 @@ function Button:draw()
     local yPosAlign, yOffset = unpack(yAlignments[self.valign])
 
     GraphicsUtil.drawClearText(self.text, screenX + xPosAlign, screenY + yPosAlign, xOffset, yOffset)
+  elseif self.image then
+    if GAME.isDrawing then
+      love.graphics.draw(self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight())
+    else
+      GAME.gfx_q:push({love.graphics.draw, {self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
+    end
   end
 
   -- draw children

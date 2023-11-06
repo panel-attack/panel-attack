@@ -9,7 +9,7 @@ local save = require("save")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
-local Replay = require("Replay")
+local Replay = require("replay")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
