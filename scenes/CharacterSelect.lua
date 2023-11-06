@@ -9,13 +9,12 @@ local Grid = require("ui.Grid")
 local GridElement = require("ui.GridElement")
 local StageCarousel = require("ui.StageCarousel")
 local LevelSlider = require("ui.LevelSlider")
-local input = require("inputManager")
 local PanelCarousel = require("ui.PanelCarousel")
 local PagedUniGrid = require("ui.PagedUniGrid")
 local Button = require("ui.Button")
 local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
-local consts = require("consts")
+local ImageContainer = require("ui.ImageContainer")
 
 --@module CharacterSelect
 -- The character select screen scene
@@ -77,16 +76,16 @@ function CharacterSelect:loadUserInterface()
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.selectedCharacter)
   self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)
   self.ui.grid:createElementAt(1, 3, 9, 3, "characterSelection", self.ui.characterGrid, true)
-  self.ui.grid:createElementAt(9, 6, 1, 1, "readyButton", self.ui.leaveButton)
+  self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
 end
 
 function CharacterSelect:loadStandardButtons()
   -- this shouldn't be a button but rather some sort of image container
-  self.ui.selectedCharacter = Button({
+  self.ui.selectedCharacter = ImageContainer({
     width = 96,
     height = 96,
     image = characters[config.character].images.icon,
-    backgroundColor = {1, 1, 1, 0},
+    drawBorders = true,
     outlineColor = {1, 1, 1, 1}
   })
 
