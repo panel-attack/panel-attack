@@ -13,14 +13,11 @@ local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local ImageContainer = require("ui.ImageContainer")
 
---@module CharacterSelect
+-- @module CharacterSelect
 -- The character select screen scene
-local CharacterSelect = class(
-  function (self, sceneParams)
-    self.backgroundImg = themes[config.theme].images.bg_select_screen
-  end,
-  Scene
-)
+local CharacterSelect = class(function(self, sceneParams)
+  self.backgroundImg = themes[config.theme].images.bg_select_screen
+end, Scene)
 
 -- begin abstract functions
 
@@ -31,7 +28,7 @@ end
 
 -- updates specific to the child scene
 function CharacterSelect:customUpdate(sceneParams)
-  --error("The function customUpdate needs to be implemented on the scene")
+  -- error("The function customUpdate needs to be implemented on the scene")
 end
 
 function CharacterSelect:customDraw()
@@ -51,10 +48,10 @@ end
 
 function CharacterSelect:load(sceneParams)
   self:loadUserInterface()
-  --"2p_net_vs", msg
-  --"2p_local_vs"
-  --"2p_local_computer_vs"
-  --"1p_vs_yourself"
+  -- "2p_net_vs", msg
+  -- "2p_local_vs"
+  -- "2p_local_computer_vs"
+  -- "1p_vs_yourself"
   self:customLoad(sceneParams)
   -- we need to refresh the position once so it fetches the current element after all grid elements were loaded in customLoad
   self.ui.cursor:updatePosition(self.ui.cursor.selectedGridPos.x, self.ui.cursor.selectedGridPos.y)
@@ -86,13 +83,7 @@ function CharacterSelect:loadStandardButtons()
     outlineColor = {1, 1, 1, 1}
   })
 
-  self.ui.readyButton = Button({
-    width = 96,
-    height = 96,
-    label = "ready",
-    backgroundColor = {1, 1, 1, 0},
-    outlineColor = {1, 1, 1, 1},
-  })
+  self.ui.readyButton = Button({width = 96, height = 96, label = "ready", backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
   self.ui.readyButton.onSelect = function()
     self.ui.readyButton.onClick()
   end
@@ -124,7 +115,14 @@ function CharacterSelect:loadCharacters()
   self.ui.characterGrid:addElement(randomCharacterButton)
 
   for i = 1, #characters_ids_for_current_theme do
-    local characterButton = Button({image = characters[characters_ids_for_current_theme[i]].images.icon, width = 96, height = 96})
+    local characterButton = Button({
+      image = characters[characters_ids_for_current_theme[i]].images.icon,
+      width = 96,
+      height = 96,
+      valign = "bottom",
+      label = characters[characters_ids_for_current_theme[i]].display_name,
+      translate = false
+    })
     characterButton.characterId = characters_ids_for_current_theme[i]
     self.ui.characterGrid:addElement(characterButton)
   end
@@ -200,8 +198,8 @@ end
 function CharacterSelect:update()
   self.matchSetup:update()
   self.ui.cursor:receiveInputs()
-  GAME.gfx_q:push({self.ui.grid.draw,{self.ui.grid}})
-  GAME.gfx_q:push({self.ui.cursor.draw,{self.ui.cursor}})
+  GAME.gfx_q:push({self.ui.grid.draw, {self.ui.grid}})
+  GAME.gfx_q:push({self.ui.cursor.draw, {self.ui.cursor}})
   self:customDraw()
   if self:customUpdate() then
     return

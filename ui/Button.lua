@@ -88,6 +88,14 @@ function Button:draw()
     end
   end
 
+  if self.image then
+    if GAME.isDrawing then
+      love.graphics.draw(self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight())
+    else
+      GAME.gfx_q:push({love.graphics.draw, {self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
+    end
+  end
+
   if self.text then
     local textWidth, textHeight = self.text:getDimensions()
     local xAlignments = {
@@ -104,12 +112,6 @@ function Button:draw()
     local yPosAlign, yOffset = unpack(yAlignments[self.valign])
 
     GraphicsUtil.drawClearText(self.text, screenX + xPosAlign, screenY + yPosAlign, xOffset, yOffset)
-  elseif self.image then
-    if GAME.isDrawing then
-      love.graphics.draw(self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight())
-    else
-      GAME.gfx_q:push({love.graphics.draw, {self.image, screenX + 1, screenY + 1, 0, (self.width - 2) / self.image:getWidth(), (self.height - 2) / self.image:getHeight()}})
-    end
   end
 
   -- draw children
