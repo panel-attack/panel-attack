@@ -23,8 +23,8 @@ function ModImport.importCharacter(path)
         local backUpPath = existingPath .. "/__backup_" ..
                                string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
         lfs.createDirectory(backUpPath)
-        local importFiles = ModImport.recursiveRead(path, {})
-        local currentFiles = ModImport.recursiveRead(existingPath, {})
+        local importFiles = ModImport.recursiveRead(path)
+        local currentFiles = ModImport.recursiveRead(existingPath)
         ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
       else
         recursive_copy(path, "characters/" .. config["name"])
@@ -33,8 +33,6 @@ function ModImport.importCharacter(path)
       return true
     end
   end
-
-  -- return true if the character got imported
 end
 
 -- This function will recursively populate the passed in empty table fileTree with the directory and fileData
@@ -54,6 +52,10 @@ function ModImport.recursiveRead(folder, fileTree)
       return folderString
     end
   end
+
+	if not fileTree then
+		fileTree = {}
+	end
 
   local filesTable = lfs.getDirectoryItems(folder)
   local folderName = getName(folder)
