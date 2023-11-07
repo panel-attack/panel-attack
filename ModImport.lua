@@ -5,9 +5,7 @@ local logger = require("logger")
 
 local lfs = love.filesystem
 
-local ModImport = class(function(self)
-
-end)
+local ModImport = {}
 
 function ModImport.importCharacter(path)
   local configPath = path .. "/config.json"
@@ -25,8 +23,8 @@ function ModImport.importCharacter(path)
         local backUpPath = existingPath .. "/__backup_" ..
                                string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
         lfs.createDirectory(backUpPath)
-        local importFiles = recursiveRead(path, {})
-        local currentFiles = recursiveRead(existingPath, {})
+        local importFiles = ModImport.recursiveRead(path, {})
+        local currentFiles = ModImport.recursiveRead(existingPath, {})
         ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
       else
         recursive_copy(path, "characters/" .. config["name"])
