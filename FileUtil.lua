@@ -48,6 +48,8 @@ function copy_file(source, destination)
   new_file:open("w")
   local success, message = new_file:write(temp, source_size)
   new_file:close()
+
+  return success, message
 end
 
 -- copies a file from the given source to the given destination
@@ -67,16 +69,7 @@ function recursive_copy(source, destination)
       end
       logger.trace("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
 
-      local source_file = lfs.newFile(source .. "/" .. name)
-      source_file:open("r")
-      local source_size = source_file:getSize()
-      temp = source_file:read(source_size)
-      source_file:close()
-
-      local new_file = lfs.newFile(destination .. "/" .. name)
-      new_file:open("w")
-      local success, message = new_file:write(temp, source_size)
-      new_file:close()
+      local success, message = copy_file(source .. "/" .. name, destination .. "/" .. name)
 
       if not success then
         logger.warn(message)
