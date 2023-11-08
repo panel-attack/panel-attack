@@ -1,5 +1,7 @@
 require("class")
+require("table_util")
 local logger = require("logger")
+local lfs = love.filesystem
 
 -- Utility methods for drawing
 FileUtil =
@@ -17,7 +19,7 @@ end
 function FileUtil.getFilteredDirectoryItems(path)
   local results = {}
 
-  local directoryList = love.filesystem.getDirectoryItems(path)
+  local directoryList = lfs.getDirectoryItems(path)
   for i = 1, #directoryList do
     local file = directoryList[i]
     
@@ -37,7 +39,6 @@ end
 
 -- copies a file from the given source to the given destination
 function copy_file(source, destination)
-  local lfs = love.filesystem
   local source_file = lfs.newFile(source)
   source_file:open("r")
   local source_size = source_file:getSize()
@@ -54,7 +55,6 @@ end
 
 -- copies a file from the given source to the given destination
 function recursive_copy(source, destination)
-  local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
@@ -65,7 +65,7 @@ function recursive_copy(source, destination)
     elseif info and info.type == "file" then
       local destination_info = lfs.getInfo(destination)
       if not destination_info or destination_info.type ~= "directory" then
-        love.filesystem.createDirectory(destination)
+        lfs.createDirectory(destination)
       end
       logger.trace("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
 
@@ -82,7 +82,6 @@ end
 
 -- Deletes any file matching the target name from the file tree recursively
 function recursiveRemoveFiles(folder, targetName)
-  local lfs = love.filesystem
   local filesTable = lfs.getDirectoryItems(folder)
   for _, fileName in ipairs(filesTable) do
     local file = folder .. "/" .. fileName
@@ -91,8 +90,16 @@ function recursiveRemoveFiles(folder, targetName)
       if info.type == "directory" then
         recursiveRemoveFiles(file, targetName)
       elseif info.type == "file" and fileName == targetName then
-        love.filesystem.remove(file)
+        lfs.remove(file)
       end
     end
   end
+end
+
+function FileUtil.getSubDirectories(path)
+  local files = lfs.getDirectoryItems(path)
+  files = table.filter(files, function(file)
+    return lfs.getInfo(path .. "/" .. file, "directory")
+  end)
+  return files
 end

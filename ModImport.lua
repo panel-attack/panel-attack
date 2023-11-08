@@ -81,30 +81,28 @@ function ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, curren
   -- assert(droppedFiles.type == "directory")
 
   for key, value in pairs(importFiles) do
-    if value.type == currentFiles[key].type and value.path == currentFiles[key].path then
-      if value.type == "file" then
-        if not currentFiles[key] then
-          -- the file doesn't exist, we can just copy over
-          copy_file(importFiles[key].path, currentFiles.path .. "/" .. key)
-        elseif value.content.size == currentFiles[key].content.size and value.content.content == currentFiles[key].content.content then
-          -- files are identical, no need to do anything
-        else
-          -- files are not identical, copy the old one to backup before copying the new one over
-          copy_file(currentFiles[key].path, backUpPath .. "/" .. key)
-          copy_file(importFiles[key].path, currentFiles[key].path)
-        end
-      else
-        if currentFiles[key] then
-          local nextBackUpPath = backUpPath .. "/" .. key
-          -- create the path in the backup folder so writes to backup don't fail in the recursive call
-          lfs.createDirectory(nextBackUpPath)
-          return ModImport.recursiveCompareBackupAndCopy(value.files, nextBackUpPath, currentFiles[key].files)
-        else
-          -- the subfolder doesn't exist, we can just copy over
-          recursive_copy(importFiles[key].path, currentFiles.path .. "/" .. key)
-        end
-      end
-    end
+		if value.type == "file" then
+			if not currentFiles[key] then
+				-- the file doesn't exist, we can just copy over
+				copy_file(importFiles[key].path, currentFiles.path .. "/" .. key)
+			elseif value.content.size == currentFiles[key].content.size and value.content.content == currentFiles[key].content.content then
+				-- files are identical, no need to do anything
+			else
+				-- files are not identical, copy the old one to backup before copying the new one over
+				copy_file(currentFiles[key].path, backUpPath .. "/" .. key)
+				copy_file(importFiles[key].path, currentFiles[key].path)
+			end
+		else
+			if currentFiles[key] then
+				local nextBackUpPath = backUpPath .. "/" .. key
+				-- create the path in the backup folder so writes to backup don't fail in the recursive call
+				lfs.createDirectory(nextBackUpPath)
+				return ModImport.recursiveCompareBackupAndCopy(value.files, nextBackUpPath, currentFiles[key].files)
+			else
+				-- the subfolder doesn't exist, we can just copy over
+				recursive_copy(importFiles[key].path, currentFiles.path .. "/" .. key)
+			end
+		end
   end
 end
 

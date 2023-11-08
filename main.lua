@@ -37,6 +37,7 @@ local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+local ModImport = require("ModImport")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
@@ -379,4 +380,26 @@ function love.errorhandler(msg)
     end
   end
 
+end
+
+function love.filedropped(file)
+  love.filesystem.mount(file:getFilename(), "dropped")
+  if love.filesystem.getInfo("dropped", "directory") then
+    -- if a file is a directory, that means it's a zip archive
+    local subDirectories = FileUtil.getSubDirectories("dropped")
+    if table.contains(subDirectories, "characters") then
+      local characterDirs = FileUtil.getSubDirectories("dropped/characters")
+      for i = 1, #characterDirs do
+        if ModImport.importCharacter("dropped/characters/" .. characterDirs[i]) then
+          logger.warn("imported character " .. characterDirs[i])
+        else
+          logger.warn("failed to import character " .. characterDirs[i])
+        end
+      end
+
+      characters_init()
+    end
+  end
+
+  love.filesystem.unmount(file:getFilename())
 end
