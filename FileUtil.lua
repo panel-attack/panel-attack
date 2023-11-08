@@ -103,3 +103,14 @@ function FileUtil.getSubDirectories(path)
   end)
   return files
 end
+
+function FileUtil.getDirectoryName(directoryPath)
+  local len = string.len(directoryPath)
+  local reversed = string.reverse(directoryPath)
+  local index, stop, _ = string.find(reversed, "/")
+  if index then
+    return string.sub(directoryPath, len - index + 1, len)
+  else
+    return directoryPath
+  end
+end

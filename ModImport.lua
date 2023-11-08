@@ -18,21 +18,88 @@ function ModImport.importCharacter(path)
     else
       local config = json.decode(configData)
       if table.contains(characters_ids, config["id"]) then
-        local now = os.date("*t", to_UTC(os.time()))
         local existingPath = characters[config["id"]].path
-        local backUpPath = existingPath .. "/__backup_" ..
-                               string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
-        lfs.createDirectory(backUpPath)
+        local backUpPath = ModImport.createBackupDirectory(existingPath)
         local importFiles = ModImport.recursiveRead(path)
         local currentFiles = ModImport.recursiveRead(existingPath)
         ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
       else
-        recursive_copy(path, "characters/" .. config["name"])
+        if not lfs.getInfo("characters/" .. config["name"]) then
+					recursive_copy(path, "characters/" .. config["name"])
+				else
+					recursive_copy(path, "characters/" .. config["id"])
+				end
       end
 
       return true
     end
   end
+end
+
+function ModImport.importStage(path)
+	local configPath = path .. "/config.json"
+  if not lfs.getInfo(configPath, "file") then
+    return false
+  else
+    local configData, err = lfs.read(configPath)
+    if not configData then
+      error("Error trying to import stage " .. path .. "\nCouldn't read config.json\n" .. err)
+    else
+      local config = json.decode(configData)
+      if table.contains(stages_ids, config["id"]) then
+        local existingPath = stages[config["id"]].path
+        local backUpPath = ModImport.createBackupDirectory(existingPath)
+        local importFiles = ModImport.recursiveRead(path)
+        local currentFiles = ModImport.recursiveRead(existingPath)
+        ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
+      else
+				if not lfs.getInfo("stages/" .. config["name"]) then
+					recursive_copy(path, "stages/" .. config["name"])
+				else
+					recursive_copy(path, "stages/" .. config["id"])
+				end
+      end
+
+      return true
+    end
+  end
+end
+
+function ModImport.importPanelSet(path)
+	local configPath = path .. "/config.json"
+  if not lfs.getInfo(configPath, "file") then
+    return false
+  else
+    local configData, err = lfs.read(configPath)
+    if not configData then
+      error("Error trying to import panels " .. path .. "\nCouldn't read config.json\n" .. err)
+    else
+      local config = json.decode(configData)
+      if table.contains(panels_ids, config["id"]) then
+        local existingPath = panels[config["id"]].path
+        local backUpPath = ModImport.createBackupDirectory(existingPath)
+        local importFiles = ModImport.recursiveRead(path)
+        local currentFiles = ModImport.recursiveRead(existingPath)
+        ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
+      else
+				if not lfs.getInfo("panels/" .. FileUtil.getDirectoryName(path)) then
+					recursive_copy(path, "panels/" .. FileUtil.getDirectoryName(path))
+				else
+					recursive_copy(path, "panels/" .. config["id"])
+				end
+      end
+
+      return true
+    end
+  end
+end
+
+function ModImport.createBackupDirectory(path)
+	local now = os.date("*t", to_UTC(os.time()))
+	local backUpPath = path .. "/__backup_" ..
+	string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+	lfs.createDirectory(backUpPath)
+	return backUpPath
 end
 
 -- This function will recursively populate the passed in empty table fileTree with the directory and fileData
@@ -42,23 +109,12 @@ function ModImport.recursiveRead(folder, fileTree)
     return {size = size, content = fileContent}
   end
 
-  local function getName(folderString)
-    local len = string.len(folderString)
-    local reversed = string.reverse(folderString)
-    local index, stop, _ = string.find(reversed, "/")
-    if index then
-      return string.sub(folderString, len - index + 1, len)
-    else
-      return folderString
-    end
-  end
-
 	if not fileTree then
 		fileTree = {}
 	end
 
   local filesTable = lfs.getDirectoryItems(folder)
-  local folderName = getName(folder)
+  local folderName = FileUtil.getDirectoryName(folder)
   fileTree[folderName] = {type = "directory", files = {}, path = folder}
   logger.debug("Reading folder " .. folder .. " into memory")
   for _, v in ipairs(filesTable) do

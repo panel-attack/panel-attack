@@ -384,8 +384,8 @@ end
 
 function love.filedropped(file)
   love.filesystem.mount(file:getFilename(), "dropped")
+  -- if a file is a directory, that means it's a zip archive
   if love.filesystem.getInfo("dropped", "directory") then
-    -- if a file is a directory, that means it's a zip archive
     local subDirectories = FileUtil.getSubDirectories("dropped")
     if table.contains(subDirectories, "characters") then
       local characterDirs = FileUtil.getSubDirectories("dropped/characters")
@@ -398,6 +398,32 @@ function love.filedropped(file)
       end
 
       characters_init()
+    end
+
+    if table.contains(subDirectories, "stages") then
+      local stageDirs = FileUtil.getSubDirectories("dropped/stages")
+      for i = 1, #stageDirs do
+        if ModImport.importStage("dropped/stages/" .. stageDirs[i]) then
+          logger.warn("imported stage " .. stageDirs[i])
+        else
+          logger.warn("failed to import stage " .. stageDirs[i])
+        end
+      end
+
+      stages_init()
+    end
+
+    if table.contains(subDirectories, "panels") then
+      local panelDirs = FileUtil.getSubDirectories("dropped/panels")
+      for i = 1, #panelDirs do
+        if ModImport.importStage("dropped/panels/" .. panelDirs[i]) then
+          logger.warn("imported panels " .. panelDirs[i])
+        else
+          logger.warn("failed to import panels " .. panelDirs[i])
+        end
+      end
+
+      panels_init()
     end
   end
 
