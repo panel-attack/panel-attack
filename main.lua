@@ -383,49 +383,70 @@ function love.errorhandler(msg)
 end
 
 function love.filedropped(file)
-  love.filesystem.mount(file:getFilename(), "dropped")
-  -- if a file is a directory, that means it's a zip archive
-  if love.filesystem.getInfo("dropped", "directory") then
-    local subDirectories = FileUtil.getSubDirectories("dropped")
-    if table.contains(subDirectories, "characters") then
-      local characterDirs = FileUtil.getSubDirectories("dropped/characters")
-      for i = 1, #characterDirs do
-        if ModImport.importCharacter("dropped/characters/" .. characterDirs[i]) then
-          logger.warn("imported character " .. characterDirs[i])
-        else
-          logger.warn("failed to import character " .. characterDirs[i])
+  if GAME.match == nil then
+    love.filesystem.mount(file:getFilename(), "dropped")
+    -- if a file is a directory, that means it's a zip archive
+    if love.filesystem.getInfo("dropped", "directory") then
+      local subDirectories = FileUtil.getSubDirectories("dropped")
+      if table.contains(subDirectories, "characters") then
+        local characterDirs = FileUtil.getSubDirectories("dropped/characters")
+        for i = 1, #characterDirs do
+          if ModImport.importCharacter("dropped/characters/" .. characterDirs[i]) then
+            logger.warn("imported character " .. characterDirs[i])
+          else
+            logger.warn("failed to import character " .. characterDirs[i])
+          end
         end
+
+        characters_init()
       end
 
-      characters_init()
-    end
-
-    if table.contains(subDirectories, "stages") then
-      local stageDirs = FileUtil.getSubDirectories("dropped/stages")
-      for i = 1, #stageDirs do
-        if ModImport.importStage("dropped/stages/" .. stageDirs[i]) then
-          logger.warn("imported stage " .. stageDirs[i])
-        else
-          logger.warn("failed to import stage " .. stageDirs[i])
+      if table.contains(subDirectories, "stages") then
+        local stageDirs = FileUtil.getSubDirectories("dropped/stages")
+        for i = 1, #stageDirs do
+          if ModImport.importStage("dropped/stages/" .. stageDirs[i]) then
+            logger.warn("imported stage " .. stageDirs[i])
+          else
+            logger.warn("failed to import stage " .. stageDirs[i])
+          end
         end
+
+        stages_init()
       end
 
-      stages_init()
-    end
-
-    if table.contains(subDirectories, "panels") then
-      local panelDirs = FileUtil.getSubDirectories("dropped/panels")
-      for i = 1, #panelDirs do
-        if ModImport.importStage("dropped/panels/" .. panelDirs[i]) then
-          logger.warn("imported panels " .. panelDirs[i])
-        else
-          logger.warn("failed to import panels " .. panelDirs[i])
+      if table.contains(subDirectories, "panels") then
+        local panelDirs = FileUtil.getSubDirectories("dropped/panels")
+        for i = 1, #panelDirs do
+          if ModImport.importPanelSet("dropped/panels/" .. panelDirs[i]) then
+            logger.warn("imported panels " .. panelDirs[i])
+          else
+            logger.warn("failed to import panels " .. panelDirs[i])
+          end
         end
+
+        panels_init()
       end
 
-      panels_init()
+      if table.contains(subDirectories, "themes") then
+        local themeDirs = FileUtil.getSubDirectories("dropped/themes")
+        for i = 1, #themeDirs do
+          if ModImport.importTheme("dropped/themes/" .. themeDirs[i]) then
+            logger.warn("imported themes " .. themeDirs[i])
+          else
+            logger.warn("failed to import themes " .. themeDirs[i])
+          end
+        end
+
+        -- themes never get initialized until selected
+      end
+
+      -- TODO
+      -- puzzles
+      -- training files
+      -- challengemode files
+      -- replays
     end
+
+    love.filesystem.unmount(file:getFilename())
   end
-
-  love.filesystem.unmount(file:getFilename())
 end

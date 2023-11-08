@@ -6,11 +6,13 @@ This structure does not need to be complete but may only contain the folders you
 
 ## Requirements
 
-All non-puzzle mods need to at least contain a config.json file. Non-theme mods need this config.json to specify their id, otherwise they cannot be imported by drag and drop.
+All mods need to at least contain a config.json file. Non-theme mods need this config.json to specify their id and in the case of characters and stages, their name, otherwise they cannot be imported.
 
 ## Limitations
 
-Attack pattern file import is currently not supported.
+Attack pattern file import is currently not supported.  
+Challenge mode file import is currently not supported.
+Puzzle file import is currently not supported
 
 ## Examples
 
@@ -25,9 +27,6 @@ Attack pattern file import is currently not supported.
 │   │   ├── Charizard
 │   │   |   ├── config.json
 │   │   |   ├── more files
-│   ├── puzzles
-│   │   ├── transition practice #1.json
-│   │   ├── transition practice #2.json
 │   ├── stages
 │   ├── themes
 │   │   ├── PPL

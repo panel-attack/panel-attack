@@ -94,6 +94,36 @@ function ModImport.importPanelSet(path)
   end
 end
 
+function ModImport.importTheme(path)
+	local configPath = path .. "/config.json"
+  if not lfs.getInfo(configPath, "file") then
+    return false
+  else
+    local configData, err = lfs.read(configPath)
+    if not configData then
+      error("Error trying to import theme " .. path .. "\nCouldn't read config.json\n" .. err)
+    else
+			local themeName = FileUtil.getDirectoryName(path)
+      if lfs.getInfo("themes/" .. themeName, "directory") then
+        local existingPath = "themes/" .. themeName
+        local backUpPath = ModImport.createBackupDirectory(existingPath)
+        local importFiles = ModImport.recursiveRead(path)
+        local currentFiles = ModImport.recursiveRead(existingPath)
+        ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
+      else
+				recursive_copy(path, "themes/" .. themeName)
+      end
+
+      return true
+    end
+  end
+end
+
+function ModImport.importPuzzleFile(path)
+	-- we really need a proper puzzle format that guarantees identification to some degree
+	-- way too easy to overwrite otherwise compared to themes
+end
+
 function ModImport.createBackupDirectory(path)
 	local now = os.date("*t", to_UTC(os.time()))
 	local backUpPath = path .. "/__backup_" ..
