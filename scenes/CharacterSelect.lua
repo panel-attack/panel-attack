@@ -74,11 +74,17 @@ function CharacterSelect:loadUserInterface()
 end
 
 function CharacterSelect:loadStandardButtons()
-  -- this shouldn't be a button but rather some sort of image container
+  local icon
+  if config.character == random_character_special_value then
+    icon = themes[config.theme].images.IMG_random_character
+  else
+    icon = characters[config.character].images.icon
+  end
+
   self.ui.selectedCharacter = ImageContainer({
     width = 96,
     height = 96,
-    image = characters[config.character].images.icon,
+    image = icon,
     drawBorders = true,
     outlineColor = {1, 1, 1, 1}
   })
