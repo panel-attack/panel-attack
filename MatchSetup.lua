@@ -7,12 +7,14 @@ local Replay = require("replay")
 local MatchSetup = class(function(match, mode, online, localPlayerNumber)
   match.mode = mode
   match:initializeSubscriptionList()
-  if mode.style == GameModes.Styles.Choose then
+  if mode.style == GameModes.Styles.CHOOSE then
     if config.endless_level then
-      match.style = GameModes.Styles.Modern
+      match.style = GameModes.Styles.MODERN
     else
-      match.style = GameModes.Styles.Classic
+      match.style = GameModes.Styles.CLASSIC
     end
+  else
+    match.style = match.mode.style
   end
 
   match.online = online
@@ -64,7 +66,7 @@ function MatchSetup:updateLocalConfig(playerNumber)
 end
 
 function MatchSetup:initializeLocalPlayer(playerNumber)
-  if self.style == GameModes.Styles.Classic then
+  if self.mode.style == GameModes.Styles.CLASSIC then
     self:setDifficulty(config.endless_difficulty, playerNumber)
     self:setSpeed(config.endless_speed, playerNumber)
   else
@@ -191,7 +193,7 @@ end
 
 function MatchSetup:setStyle(styleChoice)
   -- not sure if style should be configurable per player, doesn't seem to make sense
-  if self.mode.style == GameModes.Styles.Choose then
+  if self.mode.style == GameModes.Styles.CHOOSE then
     self.style = styleChoice
     self.onStyleChanged(styleChoice)
   else
@@ -208,7 +210,7 @@ function MatchSetup:setDifficulty(difficulty, player)
     player = 1
   end
 
-  if self.style == GameModes.Styles.Classic then
+  if self.style == GameModes.Styles.CLASSIC then
     self.players[player].difficulty = difficulty
     self:onPropertyChanged("difficulty", player)
   else
@@ -221,7 +223,7 @@ function MatchSetup:setSpeed(speed, player)
     player = 1
   end
 
-  if self.style == GameModes.Styles.Classic then
+  if self.style == GameModes.Styles.CLASSIC then
     self.players[player].speed = speed
     self:onPropertyChanged("speed", player)
   else
@@ -243,7 +245,7 @@ function MatchSetup:setLevel(level, player)
     player = 1
   end
 
-  if self.style == GameModes.Styles.Classic then
+  if self.style == GameModes.Styles.CLASSIC then
     error("Trying to set level while classic style was selected")
   else
     self.players[player].level = level
@@ -376,7 +378,7 @@ function MatchSetup:createStacks()
   local stacks = {}
 
   for playerId = 1, #self.players do
-    stacks[playerId] = Stack {
+    stacks[playerId] = Stack ({
       which = playerId,
       match = GAME.match,
       is_local = self.players[playerId].isLocal,
@@ -384,7 +386,7 @@ function MatchSetup:createStacks()
       level = self.players[playerId].level,
       character = self.players[playerId].character,
       player_number = playerId
-    }
+    })
   end
 
   GAME.match:addPlayer(stacks[1])
