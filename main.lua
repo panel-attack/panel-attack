@@ -58,7 +58,6 @@ local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
-
 local last_x = 0
 local last_y = 0
 local input_delta = 0.0
@@ -71,7 +70,7 @@ function love.load()
   if PROFILING_ENABLED then
     GAME.profiler:start()
   end
-  
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
@@ -86,7 +85,7 @@ function love.load()
   GAME.rich_presence:initialize("902897593049301004")
   mainloop = coroutine.create(fmainloop)
 
-  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=GAME:newCanvasSnappedScale()})
+  GAME.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale = GAME:newCanvasSnappedScale()})
 end
 
 function love.focus(f)
@@ -127,7 +126,7 @@ function love.update(dt)
   leftover_time = leftover_time + dt
 
   GAME:update(dt)
-  
+
   if GAME.backgroundImage then
     GAME.backgroundImage:update(dt)
   end
@@ -186,7 +185,7 @@ function love.draw()
     local scale = canvas_width / math.max(GAME.foreground_overlay:getWidth(), GAME.foreground_overlay:getHeight()) -- keep image ratio
     menu_drawf(GAME.foreground_overlay, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
   end
-  
+
   -- Draw the FPS if enabled
   if config ~= nil and config.show_fps then
     if not CustomRun.runTimeGraph then
@@ -194,19 +193,20 @@ function love.draw()
     end
   end
 
-  if STONER_MODE then 
+  if STONER_MODE then
     gprintf("Lag Mode On, S:" .. GAME.sendNetworkQueue:length() .. " R:" .. GAME.receiveNetworkQueue:length(), 1, 1 + (11 * 4))
   end
 
   love.graphics.setCanvas() -- render everything thats been added
   love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
-    
+
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(GAME.globalCanvas, GAME.canvasX, GAME.canvasY, 0, GAME.canvasXScale, GAME.canvasYScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
 
   if GAME.showGameScale or config.debug_mode then
-    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
+    local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height *
+                            GAME.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
 
     if canvas_width * GAME.canvasXScale > newPixelWidth then
@@ -267,7 +267,7 @@ function love.errorhandler(msg)
     end
   end
   local sanitizedTrace = table.concat(traceLines, "\n")
-  
+
   local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
   local detailedErrorLogString = Game.detailedErrorLogString(errorData)
   errorData.detailedErrorLogString = detailedErrorLogString
@@ -384,14 +384,25 @@ end
 
 function love.filedropped(file)
   if GAME.match == nil then
-    love.filesystem.mount(file:getFilename(), "dropped")
+    local mountPath = "dropped"
+    love.filesystem.mount(file:getFilename(), mountPath)
     -- if a file is a directory, that means it's a zip archive
-    if love.filesystem.getInfo("dropped", "directory") then
-      local subDirectories = FileUtil.getSubDirectories("dropped")
+    if love.filesystem.getInfo(mountPath, "directory") then
+      local path = mountPath
+      local subDirectories = FileUtil.getSubDirectories(path)
+      -- the mod folders need to be either directly at the top level or one below
+      if #subDirectories == 1 then
+        -- verify it's not a single asset type drop
+        if subDirectories[1] ~= "characters" and subDirectories[1] ~= "panels" and subDirectories[1] ~= "stages"
+            and subDirectories[1] ~= "themes" then
+          path = "dropped/" .. subDirectories[1]
+          subDirectories = FileUtil.getSubDirectories(path)
+        end
+      end
       if table.contains(subDirectories, "characters") then
-        local characterDirs = FileUtil.getSubDirectories("dropped/characters")
+        local characterDirs = FileUtil.getSubDirectories(path .. "/characters")
         for i = 1, #characterDirs do
-          if ModImport.importCharacter("dropped/characters/" .. characterDirs[i]) then
+          if ModImport.importCharacter(path .. "/characters/" .. characterDirs[i]) then
             logger.warn("imported character " .. characterDirs[i])
           else
             logger.warn("failed to import character " .. characterDirs[i])
@@ -402,9 +413,9 @@ function love.filedropped(file)
       end
 
       if table.contains(subDirectories, "stages") then
-        local stageDirs = FileUtil.getSubDirectories("dropped/stages")
+        local stageDirs = FileUtil.getSubDirectories(path .."/stages")
         for i = 1, #stageDirs do
-          if ModImport.importStage("dropped/stages/" .. stageDirs[i]) then
+          if ModImport.importStage(path .. "/stages/" .. stageDirs[i]) then
             logger.warn("imported stage " .. stageDirs[i])
           else
             logger.warn("failed to import stage " .. stageDirs[i])
@@ -415,9 +426,9 @@ function love.filedropped(file)
       end
 
       if table.contains(subDirectories, "panels") then
-        local panelDirs = FileUtil.getSubDirectories("dropped/panels")
+        local panelDirs = FileUtil.getSubDirectories(path .. "/panels")
         for i = 1, #panelDirs do
-          if ModImport.importPanelSet("dropped/panels/" .. panelDirs[i]) then
+          if ModImport.importPanelSet(path .. "/panels/" .. panelDirs[i]) then
             logger.warn("imported panels " .. panelDirs[i])
           else
             logger.warn("failed to import panels " .. panelDirs[i])
@@ -428,9 +439,9 @@ function love.filedropped(file)
       end
 
       if table.contains(subDirectories, "themes") then
-        local themeDirs = FileUtil.getSubDirectories("dropped/themes")
+        local themeDirs = FileUtil.getSubDirectories(path .. "/themes")
         for i = 1, #themeDirs do
-          if ModImport.importTheme("dropped/themes/" .. themeDirs[i]) then
+          if ModImport.importTheme(path .. "/themes/" .. themeDirs[i]) then
             logger.warn("imported themes " .. themeDirs[i])
           else
             logger.warn("failed to import themes " .. themeDirs[i])
