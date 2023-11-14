@@ -189,9 +189,6 @@ function ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, curren
         lfs.createDirectory(nextBackUpPath)
         return ModImport.recursiveCompareBackupAndCopy(value.files, nextBackUpPath, currentFiles[key].files)
       else
-        -- if currentFiles.path == nil then
-        --   local phi = 5
-        -- end
         -- the subfolder doesn't exist, we can just copy over
         recursive_copy(importFiles[key].path, currentFiles.path .. "/" .. key)
       end
