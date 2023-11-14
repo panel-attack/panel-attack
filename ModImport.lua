@@ -146,7 +146,7 @@ function ModImport.recursiveRead(folder, fileTree)
     fileTree = {}
   end
 
-  local filesTable = lfs.getDirectoryItems(folder)
+  local filesTable = FileUtil.getFilteredDirectoryItems(folder)
   local folderName = FileUtil.getDirectoryName(folder)
   fileTree[folderName] = {type = "directory", files = {}, path = folder}
   logger.debug("Reading folder " .. folder .. " into memory")
