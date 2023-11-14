@@ -51,3 +51,12 @@ Puzzle file import is currently not supported
 │   │   |   ├── config.json
 │   │   |   ├── more files
 ```
+
+also correct
+
+```
+├── characters
+│   ├── Pikachu
+│   |   ├── config.json
+│   |   ├── more files
+```
