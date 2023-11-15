@@ -403,7 +403,7 @@ function love.filedropped(file)
         local characterDirs = FileUtil.getSubDirectories(path .. "/characters")
         for i = 1, #characterDirs do
           if ModImport.importCharacter(path .. "/characters/" .. characterDirs[i]) then
-            logger.warn("imported character " .. characterDirs[i])
+            logger.info("imported character " .. characterDirs[i])
           else
             logger.warn("failed to import character " .. characterDirs[i])
           end
@@ -416,7 +416,7 @@ function love.filedropped(file)
         local stageDirs = FileUtil.getSubDirectories(path .."/stages")
         for i = 1, #stageDirs do
           if ModImport.importStage(path .. "/stages/" .. stageDirs[i]) then
-            logger.warn("imported stage " .. stageDirs[i])
+            logger.info("imported stage " .. stageDirs[i])
           else
             logger.warn("failed to import stage " .. stageDirs[i])
           end
@@ -429,7 +429,7 @@ function love.filedropped(file)
         local panelDirs = FileUtil.getSubDirectories(path .. "/panels")
         for i = 1, #panelDirs do
           if ModImport.importPanelSet(path .. "/panels/" .. panelDirs[i]) then
-            logger.warn("imported panels " .. panelDirs[i])
+            logger.info("imported panels " .. panelDirs[i])
           else
             logger.warn("failed to import panels " .. panelDirs[i])
           end
@@ -442,7 +442,7 @@ function love.filedropped(file)
         local themeDirs = FileUtil.getSubDirectories(path .. "/themes")
         for i = 1, #themeDirs do
           if ModImport.importTheme(path .. "/themes/" .. themeDirs[i]) then
-            logger.warn("imported themes " .. themeDirs[i])
+            logger.info("imported themes " .. themeDirs[i])
           else
             logger.warn("failed to import themes " .. themeDirs[i])
           end
