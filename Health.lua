@@ -1,4 +1,5 @@
 local logger = require("logger")
+local GraphicsUtil = require("graphics_util")
 
 local HEALTH_BAR_WIDTH = 50
 
@@ -14,8 +15,15 @@ Health =
     self.clock = 0 -- Current clock time, this should match the opponent
     self.riseLevel = riseLevel -- The current level used to simulate "rise speed"
     self.currentRiseSpeed = level_to_starting_speed[self.riseLevel] -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
+    self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, 1, 1, themes[config.theme].images.IMG_healthbar:getDimensions())
+    self.topOutQuad = GraphicsUtil:newRecycledQuad(0, 0, 1, 1, themes[config.theme].images.IMG_multibar_shake_bar:getDimensions())
   end
 )
+
+function Health:deinit()
+  GraphicsUtil:releaseQuad(self.healthQuad)
+  GraphicsUtil:releaseQuad(self.topOutQuad)
+end
 
 function Health:run()
 
@@ -68,12 +76,12 @@ function Health:isFullyDepleted()
   return self.secondsToppedOutToLose <= 0
 end
 
-function Health:renderPartialScaledImage(image, x, y, maxWidth, maxHeight, percentageX, percentageY)
+function Health:renderPartialScaledImage(image, quad, x, y, maxWidth, maxHeight, percentageX, percentageY)
   local width = image:getWidth()
   local height = image:getHeight()
   local partialWidth = width * percentageX
   local partialHeight = height * percentageY
-  local quad = love.graphics.newQuad(width - partialWidth, height - partialHeight, partialWidth, partialHeight, width, height)
+  quad:setViewport(width - partialWidth, height - partialHeight, partialWidth, partialHeight)
   
   local scaleX = maxWidth / width
   local scaleY = maxHeight / height
@@ -85,14 +93,14 @@ end
 
 function Health:renderHealth(xPosition)
   local percentage = math.max(0, self.secondsToppedOutToLose) / self.maxSecondsToppedOutToLose
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, xPosition, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, self.healthQuad, xPosition, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
 end
 
 function Health:renderTopOut(xPosition)
   local percentage = math.max(0, self.currentLines) / self.height
   local x = xPosition + HEALTH_BAR_WIDTH
   local y = 110
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
+  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, self.topOutQuad, x, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
 
   local height = 4
   local grey = 0.8
