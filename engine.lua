@@ -17,7 +17,6 @@ local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
-local COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 
 -- Represents the full panel stack for one player
 Stack =
@@ -41,9 +40,11 @@ Stack =
       wantsCanvas = true
     end
     local character = arguments.character or config.character
+    local theme = arguments.theme or themes[config.theme]
 
     s.match = match
     s.character = character
+    s.theme = theme
     s.max_health = 1
     s.panels_dir = panels_dir
     s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
@@ -237,6 +238,7 @@ Stack =
     s.player_number = player_number --player number according to the multiplayer server, for game outcome reporting
 
     s.shake_time = 0
+    s.shake_time_on_frame = 0
 
     s.prev_states = {}
 
@@ -274,21 +276,55 @@ Stack =
     s.totalFramesBehind = 0
     s.warningsTriggered = {}
 
-    s.time_quads = {}
     s.move_quads = {}
     s.score_quads = {}
     s.speed_quads = {}
-    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getHeight(), themes[config.theme].images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
-    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-    s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight(), themes[config.theme].images.IMG_multibar_prestop_bar:getWidth(), themes[config.theme].images.IMG_multibar_prestop_bar:getHeight())
-    s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight(), themes[config.theme].images.IMG_multibar_stop_bar:getWidth(), themes[config.theme].images.IMG_multibar_stop_bar:getHeight())
-    s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+    s.wins_quads = {}
+    s.rating_quads = {}
+    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getHeight(), s.theme.images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
+    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight(), s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight())
+    s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
+    s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
+    s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
+    s.multiBarFrameCount = s:calculateMultibarFrameCount()
 
     s:createCursors()
   end)
 
+-- calculates at how many frames the stack's multibar tops out
+function Stack:calculateMultibarFrameCount()
+  -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
+  local maxStop = 0
+
+  -- for a realistic max stop, let's only compare obtainable stop while topped out - while not topped out, stop doesn't matter after all
+  -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
+  maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
+
+  -- while topped out, stop from combos is capped at 10 combo
+  maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
+
+  -- if we wanted to include stop in non-topped out states:
+  -- combo stop is linear with combosize but +27 is a reasonable cutoff (garbage cap for combos)
+  -- maxStop = math.max(maxStop, self:calculateStopTime(27, false, false))
+  -- ...but this would produce insanely high values on low levels
+
+  -- bonus stop from extra chain links caps out at x13
+  -- maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
+  -- this too produces insanely high values on low levels
+
+  -- prestop does not need to be represented fully as there is visual representation via popping panels
+  -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
+  -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
+  --local preStopFrameCount = 30 + (10 - self.level) * 5
+
+  local minFrameCount = maxStop + level_to_hang_time[self.level] --+ preStopFrameCount
+
+  --return minFrameCount + preStopFrameCount
+  return math.max(240, minFrameCount)
+end
+
 function Stack:createCursors()
-  local cursorImage = themes[config.theme].images.IMG_cursor[1]
+  local cursorImage = self.theme.images.IMG_cursor[1]
   local imageWidth = cursorImage:getWidth()
   local imageHeight = cursorImage:getHeight()
   self.cursorQuads = {}
@@ -339,9 +375,6 @@ end
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
 function Stack:deinit()
-  for _, quad in ipairs(self.time_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
   for _, quad in ipairs(self.move_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
@@ -349,6 +382,12 @@ function Stack:deinit()
     GraphicsUtil:releaseQuad(quad)
   end
   for _, quad in ipairs(self.speed_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.wins_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.rating_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
   GraphicsUtil:releaseQuad(self.level_quad)
@@ -362,30 +401,36 @@ function Stack:deinit()
 end
 
 -- Positions the stack draw position for the given player
-function Stack.moveForPlayerNumber(stack, player_num)
+function Stack:moveForPlayerNumber(player_num)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  -- on 150% scale
   if player_num == 1 then
-    stack.pos_x = 80
-    stack.score_x = 546
-    stack.mirror_x = 1
-    stack.origin_x = stack.pos_x
-    stack.multiplication = 0
-    stack.id = "_1P"
-    stack.VAR_numbers = ""
+    self.mirror_x = 1
+    self.multiplication = 0
+    self.id = "_1P"
   elseif player_num == 2 then
-    stack.pos_x = 248
-    stack.score_x = 642
-    stack.mirror_x = -1
-    stack.origin_x = stack.pos_x
-    if stack.canvas then
-      stack.origin_x = stack.origin_x + (stack.canvas:getWidth() / GFX_SCALE) - 8
-    end
-    stack.multiplication = 1
-    stack.id = "_2P"
+    self.mirror_x = -1
+    self.multiplication = 1
+    self.id = "_2P"
   end
-  stack.pos_y = 4 + (108) / GFX_SCALE
-  stack.score_y = 208
+  local centerX = (canvas_width / 2)
+  local stackWidth = self:stackCanvasWidth()
+  local innerStackXMovement = 100
+  local outerStackXMovement = stackWidth + innerStackXMovement
+  self.panelOriginXOffset = 4
+  self.panelOriginYOffset = 4
+
+  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
+  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+
+  local frameOriginNonScaled = outerNonScaled
+  if self.mirror_x == -1 then
+    frameOriginNonScaled = outerNonScaled - stackWidth
+  end
+  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
+  self.frameOriginY = 108 / GFX_SCALE
+
+  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
+  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
 end
 
 function Stack.divergenceString(stackToTest)
@@ -427,6 +472,8 @@ end
 -- param source the stack to copy from
 -- param other the variable to copy to (this may be a full stack object in the case of restore, or just a table in case of backup)
 function Stack.rollbackCopy(source, other)
+  local restoringStack = getmetatable(other) ~= nil
+
   if other == nil then
     if #source.clonePool == 0 then
       other = {}
@@ -464,8 +511,13 @@ function Stack.rollbackCopy(source, other)
     if other.panels[i] == nil then
       other.panels[i] = {}
       for j = 1, width do
-        -- We don't need to "create" a panel, since we don't want the ID to change and want to do the minimum effort below
-        other.panels[i][j] = {}
+        if restoringStack then
+          other:createPanelAt(i, j) -- the panel ID will be overwritten below
+        else
+          -- We don't need to "create" a panel, since we are just backing up the key values
+          -- and when we restore we will usually have a panel to restore into.
+          other.panels[i][j] = {}
+        end
       end
     end
     for j = 1, width do
@@ -681,14 +733,14 @@ end
 -- Target must be able to take calls of
 -- receiveGarbage(frameToReceive, garbageList)
 -- and provide
--- pos_x
--- pos_y
+-- frameOriginX
+-- frameOriginY
 -- mirror_x
 -- stackCanvasWidth
 function Stack.setGarbageTarget(self, newGarbageTarget)
   if newGarbageTarget ~= nil then
-    assert(newGarbageTarget.pos_x ~= nil)
-    assert(newGarbageTarget.pos_y ~= nil)
+    assert(newGarbageTarget.frameOriginX ~= nil)
+    assert(newGarbageTarget.frameOriginY ~= nil)
     assert(newGarbageTarget.mirror_x ~= nil)
     assert(newGarbageTarget.stackCanvasWidth ~= nil)
     assert(newGarbageTarget.receiveGarbage ~= nil)
@@ -702,7 +754,7 @@ end
 function Stack:stackCanvasWidth()
   local stackCanvasWidth = 0
   if self.canvas then 
-    stackCanvasWidth = math.floor(self.canvas:getWidth() / GFX_SCALE)
+    stackCanvasWidth = math.floor(self.canvas:getWidth())
   end
   return stackCanvasWidth
 end
@@ -721,16 +773,10 @@ function Stack.taunt(self, taunt_type)
 end
 
 function Stack.set_puzzle_state(self, puzzle)
-  -- Copy the puzzle into our state
-  local boardSizeInPanels = self.width * self.height
-  while string.len(puzzle.stack) < boardSizeInPanels do
-    puzzle.stack = "0" .. puzzle.stack
-  end
-
-  local puzzleString = puzzle.stack
+  puzzle.stack = Puzzle.fillMissingPanelsInPuzzleString(puzzle.stack, self.width, self.height)
 
   self.puzzle = puzzle
-  self:setPanelsForPuzzleString(puzzleString)
+  self:setPanelsForPuzzleString(puzzle.stack)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
 
@@ -810,6 +856,13 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
     local panel = self:createPanelAt(0, column)
     panel.color = 9
     panel.state = "dimmed"
+  end
+
+  -- We need to mark all panels as state changed in case they need to match for clear puzzles / active puzzles.
+  for row = 1, self.height do
+    for col = 1, self.width do
+      panels[row][col].stateChanged = true
+    end
   end
 end
 
@@ -1210,37 +1263,43 @@ end
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
 function Stack.shouldPlayDangerMusic(self)
-  if not self.danger_music then
-    -- currently playing normal music
-    for row = self.height - 2, self.height do
-      local panelRow = self.panels[row]
-      for column = 1, self.width do
-        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
-          if self.shake_time > 0 then
-            return false
-          else
-            return true
+  if self.match.mode == "time" then
+    if self.game_stopwatch > TIME_ATTACK_TIME * 60 - 900 --[[15 seconds assuming 60 FPS]] then
+      return true
+    end
+  else
+    if not self.danger_music then
+      -- currently playing normal music
+      for row = self.height - 2, self.height do
+        local panelRow = self.panels[row]
+        for column = 1, self.width do
+          if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
+            if self.shake_time > 0 then
+              return false
+            else
+              return true
+            end
           end
         end
       end
-    end
-  else
-    --currently playing danger
-    local minRowForDangerMusic = self.height - 2
-    if config.danger_music_changeback_delay then
-      minRowForDangerMusic = self.height - 3
-    end
-    for row = minRowForDangerMusic, self.height do
-      local panelRow = self.panels[row]
-      if panelRow ~= nil and type(panelRow) == "table" then
-        for column = 1, self.width do
-          if panelRow[column].color ~= 0 then
-            return true
+    else
+      --currently playing danger
+      local minRowForDangerMusic = self.height - 2
+      if config.danger_music_changeback_delay then
+        minRowForDangerMusic = self.height - 3
+      end
+      for row = minRowForDangerMusic, self.height do
+        local panelRow = self.panels[row]
+        if panelRow ~= nil and type(panelRow) == "table" then
+          for column = 1, self.width do
+            if panelRow[column].color ~= 0 then
+              return true
+            end
           end
+        elseif self.warningsTriggered["Panels Invalid"] == nil then
+          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+          self.warningsTriggered["Panels Invalid"] = true
         end
-      elseif self.warningsTriggered["Panels Invalid"] == nil then
-        logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
-        self.warningsTriggered["Panels Invalid"] = true
       end
     end
   end
@@ -1249,6 +1308,10 @@ function Stack.shouldPlayDangerMusic(self)
 end
 
 function Stack.updatePanels(self)
+  if self.do_countdown then
+    return
+  end
+  
   self.shake_time_on_frame = 0
   self.popSizeThisFrame = "small"
   for row = 1, #self.panels do
@@ -1288,7 +1351,6 @@ function Stack.simulate(self)
   if self:game_ended() == false then
     self:prep_first_row()
     local panels = self.panels
-    local panel = nil
     local swapped_this_frame = nil
     self.garbageLandedThisFrame = {}
     self:runCountDownIfNeeded()
@@ -1545,12 +1607,12 @@ function Stack.simulate(self)
     if self:shouldChangeMusic() then
       if self.do_countdown then
         if SFX_Go_Play == 1 then
-          themes[config.theme].sounds.go:stop()
-          themes[config.theme].sounds.go:play()
+          self.theme.sounds.go:stop()
+          self.theme.sounds.go:play()
           SFX_Go_Play = 0
         elseif SFX_Countdown_Play == 1 then
-          themes[config.theme].sounds.countdown:stop()
-          themes[config.theme].sounds.countdown:play()
+          self.theme.sounds.countdown:stop()
+          self.theme.sounds.countdown:play()
           SFX_Go_Play = 0
         end
       else
@@ -1586,7 +1648,7 @@ function Stack.simulate(self)
           local fadeLength = 60
           if not self.fade_music_clock then
             self.fade_music_clock = fadeLength -- start fully faded in
-            self.match.current_music_is_casual = true
+            self.match.currentMusicIsDanger = false
           end
 
           local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
@@ -1598,8 +1660,8 @@ function Stack.simulate(self)
           end
 
           -- Do we need to switch music?
-          if self.match.current_music_is_casual ~= wantsDangerMusic then
-            self.match.current_music_is_casual = not self.match.current_music_is_casual
+          if self.match.currentMusicIsDanger ~= wantsDangerMusic then
+            self.match.currentMusicIsDanger = not self.match.currentMusicIsDanger
 
             if self.fade_music_clock >= fadeLength then
               self.fade_music_clock = 0 -- Do a full fade
@@ -1623,65 +1685,75 @@ function Stack.simulate(self)
           end
         else -- classic music
           if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-            if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+            if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
               stop_the_music()
               find_and_add_music(musics_to_use, "danger_music")
-              self.match.current_music_is_casual = false
+              self.match.currentMusicIsDanger = true
             elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
               stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              self.match.current_music_is_casual = true
+              self.match.currentMusicIsDanger = false
             end
           else --we should be playing normal_music or normal_music_start
-            if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+            if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
               stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              self.match.current_music_is_casual = true
+              self.match.currentMusicIsDanger = false
             end
           end
         end
       end
     end
 
+    -- In time attack, play countdown sound every second when there's 15 seconds left
+    if  self.match.mode == "time" and 
+        self.game_stopwatch and 
+        self.game_stopwatch >= TIME_ATTACK_TIME * 60 - 900 and 
+        self.game_stopwatch % 60 == 0 and 
+        self.game_stopwatch ~= TIME_ATTACK_TIME * 60 and           -- don't play on the last frame
+        self:shouldChangeSoundEffects() then
+      SFX_Countdown_Play = 1
+    end
+
     -- Update Sound FX
     if self:shouldChangeSoundEffects() then
       if SFX_Swap_Play == 1 then
-        themes[config.theme].sounds.swap:stop()
-        themes[config.theme].sounds.swap:play()
+        self.theme.sounds.swap:stop()
+        self.theme.sounds.swap:play()
         SFX_Swap_Play = 0
       end
       if SFX_Cur_Move_Play == 1 then
-        if not (self.match.mode == "vs" and themes[config.theme].sounds.swap:isPlaying()) and not self.do_countdown then
-          themes[config.theme].sounds.cur_move:stop()
-          themes[config.theme].sounds.cur_move:play()
+        if not (self.match.mode == "vs" and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
+          self.theme.sounds.cur_move:stop()
+          self.theme.sounds.cur_move:play()
         end
         SFX_Cur_Move_Play = 0
       end
       if self.sfx_land then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.land:play()
+        self.theme.sounds.land:stop()
+        self.theme.sounds.land:play()
         self.sfx_land = false
       end
       if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-          themes[config.theme].sounds.countdown:stop()
-          themes[config.theme].sounds.countdown:play()
+          self.theme.sounds.countdown:stop()
+          self.theme.sounds.countdown:play()
         end
         SFX_Countdown_Play = 0
       end
       if SFX_Go_Play == 1 then
         if self.which == 1 then
-          themes[config.theme].sounds.go:stop()
-          themes[config.theme].sounds.go:play()
+          self.theme.sounds.go:stop()
+          self.theme.sounds.go:play()
         end
         SFX_Go_Play = 0
       end
       if self.combo_chain_play then
         -- stop ongoing landing sound
-        themes[config.theme].sounds.land:stop()
+        self.theme.sounds.land:stop()
         -- and cancel it because an attack is performed on the exact same frame (takes priority)
         self.sfx_land = false
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
       end
@@ -1692,25 +1764,25 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.fanfare3:play()
+        self.theme.sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.fanfare2:play()
+        self.theme.sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.fanfare1:play()
+        self.theme.sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
       if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i = 1, 3 do
-          if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-            themes[config.theme].sounds.garbage_thud[i]:stop()
+          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+            self.theme.sounds.garbage_thud[i]:stop()
             interrupted_thud = i
           end
         end
         if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+          self.theme.sounds.garbage_thud[interrupted_thud]:play()
         else
-          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
+          self.theme.sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
         if interrupted_thud == nil then
           characters[self.character]:playGarbageLandSfx()
@@ -1726,9 +1798,9 @@ function Stack.simulate(self)
           popIndex = min(self.poppedPanelIndex, 10)
         end
         --stop the previous pop sound
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
+        self.theme.sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil
@@ -1773,27 +1845,28 @@ function Stack:runCountDownIfNeeded()
         self.cur_col = self.width
       end
     end
-    local COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
     if self.countdown_clock == 8 then
-      self.countdown_timer = COUNTDOWN_LENGTH
+      self.countdown_timer = consts.COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
-      local countDownFrame = COUNTDOWN_LENGTH - self.countdown_timer
-      if countDownFrame > 0 and countDownFrame % COUNTDOWN_CURSOR_SPEED == 0 then
-        local moveIndex = math.floor(countDownFrame / COUNTDOWN_CURSOR_SPEED)
+      local countDownFrame = consts.COUNTDOWN_LENGTH - self.countdown_timer
+      if countDownFrame > 0 and countDownFrame % consts.COUNTDOWN_CURSOR_SPEED == 0 then
+        local moveIndex = math.floor(countDownFrame / consts.COUNTDOWN_CURSOR_SPEED)
         if moveIndex <= 4 then
           self:moveCursorInDirection("down")
         elseif moveIndex <= 6 then
           self:moveCursorInDirection("left")
-          if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE and moveIndex == 6 then
-            self.cursorLock = nil
-          end
+
         elseif moveIndex == 10 then
-          self.animatingCursorDuringCountdown = false
+          self.animatingCursorDuringCountdown = nil
           if self.inputMethod == "touch" then
             self.cur_row = 0
             self.cur_col = 0
           end
+        end
+      elseif countDownFrame == 6 * consts.COUNTDOWN_CURSOR_SPEED + 1 then
+        if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
+          self.cursorLock = nil
         end
       end
       if self.countdown_timer == 0 then
@@ -1801,7 +1874,6 @@ function Stack:runCountDownIfNeeded()
         self.do_countdown = false
         self.countdown_timer = nil
         self.countdown_clock = nil
-        self.animatingCursorDuringCountdown = nil
         self.game_stopwatch_running = true
         if self.which == 1 and self:shouldChangeSoundEffects() then
           SFX_Go_Play = 1
@@ -1917,7 +1989,7 @@ function Stack.game_ended(self)
     if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return true
     elseif self.game_stopwatch then
-      if self.game_stopwatch > time_attack_time * 60 then
+      if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
         return true
       end
     end
@@ -1964,7 +2036,7 @@ function Stack.gameResult(self)
     if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return -1
     elseif self.game_stopwatch then
-      if self.game_stopwatch > time_attack_time * 60 then
+      if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
         return 1
       end
     end
@@ -2014,7 +2086,7 @@ function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.win ~= 0 then
     return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else
-    return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
+    return self.theme.sounds.fanfare1 -- TODO add a default win sound
   end
 end
 

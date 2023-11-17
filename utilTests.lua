@@ -66,4 +66,65 @@ local latinUncompressed2 = "ĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀĀ
 assert(latinCompressed2 == compress_input_string(latinUncompressed2))
 assert(latinUncompressed2 == uncompress_input_string(latinCompressed2))
 
+local function testFramesToTimeStringPartialSeconds()
+  assert(frames_to_time_string(0, false) == "0:00")
+  assert(frames_to_time_string(0, true) == "0:00'00")
+  assert(frames_to_time_string(1, false) == "0:00")
+  assert(frames_to_time_string(1, true) == "0:00'01")
+  assert(frames_to_time_string(2, false) == "0:00")
+  assert(frames_to_time_string(2, true) == "0:00'03")
+  assert(frames_to_time_string(3, false) == "0:00")
+  assert(frames_to_time_string(3, true) == "0:00'05")
+  assert(frames_to_time_string(4, false) == "0:00")
+  assert(frames_to_time_string(4, true) == "0:00'06")
+  assert(frames_to_time_string(5, false) == "0:00")
+  assert(frames_to_time_string(5, true) == "0:00'08")
+  assert(frames_to_time_string(6, false) == "0:00")
+  assert(frames_to_time_string(6, true) == "0:00'10")
+end
+
+testFramesToTimeStringPartialSeconds()
+
+local function testFramesToTimeStringSeconds()
+  assert(frames_to_time_string(60, false) == "0:01")
+  assert(frames_to_time_string(60, true) == "0:01'00")
+  assert(frames_to_time_string(61, false) == "0:01")
+  assert(frames_to_time_string(61, true) == "0:01'01")
+  assert(frames_to_time_string(62, false) == "0:01")
+  assert(frames_to_time_string(62, true) == "0:01'03")
+  assert(frames_to_time_string(63, false) == "0:01")
+  assert(frames_to_time_string(63, true) == "0:01'05")
+  assert(frames_to_time_string(64, false) == "0:01")
+  assert(frames_to_time_string(64, true) == "0:01'06")
+  assert(frames_to_time_string(65, false) == "0:01")
+  assert(frames_to_time_string(65, true) == "0:01'08")
+  assert(frames_to_time_string(66, false) == "0:01")
+  assert(frames_to_time_string(66, true) == "0:01'10")
+  assert(frames_to_time_string(606, false) == "0:10")
+  assert(frames_to_time_string(606, true) == "0:10'10")
+end
+
+testFramesToTimeStringSeconds()
+
+local function testFramesToTimeStringMinutes()
+  assert(frames_to_time_string(60 * 60, false) == "1:00")
+  assert(frames_to_time_string(60 * 60, true) == "1:00'00")
+  assert(frames_to_time_string(60 * 60 + 61, false) == "1:01")
+  assert(frames_to_time_string(60 * 60 + 61, true) == "1:01'01")
+  assert(frames_to_time_string(60 * 60 * 10, false) == "10:00")
+  assert(frames_to_time_string(60 * 60 * 10, true) == "10:00'00")
+end
+
+testFramesToTimeStringMinutes()
+
+local function testFramesToTimeStringHours()
+  -- Right now we don't treat hours special, just counts as 60 minutes
+  assert(frames_to_time_string(60 * 60 * 60, false) == "60:00")
+  assert(frames_to_time_string(60 * 60 * 60, true) == "60:00'00")
+  assert(frames_to_time_string(60 * 60 * 60 + 61, false) == "60:01")
+  assert(frames_to_time_string(60 * 60 * 60 + 61, true) == "60:01'01")
+end
+
+testFramesToTimeStringHours()
+
 

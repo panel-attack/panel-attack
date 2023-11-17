@@ -13,8 +13,7 @@ local function main_config_input()
   local idxs_to_set = {} -- indexs we are waiting for the user to key press
   local ret = nil
 
-  local function decrementConfiguration()
-    active_configuration = wrap(1, active_configuration - 1, GAME.input.maxConfigurations)
+  local function recreateInputMenu()
     inputConfiguration = GAME.input.inputConfigurations[active_configuration]
     if input_menu then
       input_menu:remove_self()
@@ -22,13 +21,19 @@ local function main_config_input()
     input_menu = createInputMenu(active_configuration)
   end
 
+  local function decrementConfiguration()
+    active_configuration = wrap(1, active_configuration - 1, GAME.input.maxConfigurations)
+    recreateInputMenu()
+  end
+
   local function incrementConfiguration()
     active_configuration = wrap(1, active_configuration + 1, GAME.input.maxConfigurations)
-    inputConfiguration = GAME.input.inputConfigurations[active_configuration]
-    if input_menu then
-      input_menu:remove_self()
-    end
-    input_menu = createInputMenu(active_configuration)
+    recreateInputMenu()
+  end
+
+  local function setConfiguration(configuration)
+    active_configuration = wrap(1, configuration, GAME.input.maxConfigurations)
+    recreateInputMenu()
   end
 
   local function selectKey()
@@ -38,10 +43,31 @@ local function main_config_input()
 
   local function selectAllKeys()
     input_menu:set_active_idx(2)
-    for i = 1, #key_names do
+    for i = 1, #KEY_NAMES do
       input_menu:set_button_setting(i + 1, "___")
       table.insert(idxs_to_set, i + 1)
     end
+  end
+
+
+  local function resetKeys()
+    setConfiguration(1)
+
+    for i, keys in ipairs(KEY_NAMES) do
+      input_menu:set_button_setting(i + 1, KEYS[i])
+      inputConfiguration[KEY_NAMES[i]] = KEYS[i]
+    end 
+
+    for iConfig = 2, GAME.input.maxConfigurations do
+      setConfiguration(iConfig)
+      for i = 1, #KEY_NAMES do
+        input_menu:set_button_setting(i + 1, loc("op_none"))
+        inputConfiguration[KEY_NAMES[i]] = nil
+      end
+    end
+
+    setConfiguration(1)
+    write_key_file()
   end
 
   local function goEscape()
@@ -57,12 +83,13 @@ local function main_config_input()
     local clickMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
     clickMenu:add_button(loc("configuration") .. " ", incrementConfiguration, goEscape, decrementConfiguration, incrementConfiguration)
     clickMenu:set_button_setting(#clickMenu.buttons, configurationNumber)
-    for i = 1, #key_names do
+    for i = 1, #KEY_NAMES do
       clickMenu:add_button(pretty_names[i], selectKey, goEscape)
-      local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[i]]) or loc("op_none")
+      local cleanString = GAME.input:cleanNameForButton(inputConfiguration[KEY_NAMES[i]]) or loc("op_none")
       clickMenu:set_button_setting(#clickMenu.buttons, cleanString)
     end
     clickMenu:add_button(loc("op_all_keys") .. " ", selectAllKeys, goEscape)
+    clickMenu:add_button("Reset to default controls" .. " ", resetKeys, goEscape)
     clickMenu:add_button(loc("back") .. " ", mainMenu, mainMenu)
 
     return clickMenu
@@ -80,14 +107,14 @@ local function main_config_input()
           local idx = idxs_to_set[1]
           for key, val in pairs(this_frame_keys) do
             if val then
-              inputConfiguration[key_names[idx - 1]] = key
+              inputConfiguration[KEY_NAMES[idx - 1]] = key
               table.remove(idxs_to_set, 1)
               if #idxs_to_set == 0 then
                 write_key_file()
                 ignoreMenuPressesTimer = 30
               end
               input_menu:set_active_idx(idx + 1)
-              local cleanString = GAME.input:cleanNameForButton(inputConfiguration[key_names[idx-1]]) or loc("op_none")
+              local cleanString = GAME.input:cleanNameForButton(inputConfiguration[KEY_NAMES[idx-1]]) or loc("op_none")
               input_menu:set_button_setting(idx, cleanString)
               break
             end

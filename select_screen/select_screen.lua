@@ -123,16 +123,16 @@ function refreshBasedOnOwnMods(player)
   end
 end
 
--- Updates the ready state for all players
+-- Each player sends "wants_ready" when they have selected the ready button.
+-- Each player is "loaded" when the character and stage are fully loaded
+-- The player isn't actually ready to start though until both players have selected "wants_ready" and are loaded.
+-- After that happens each player sends "ready"
+-- When the server gets the "ready" it tells both players to start the game.
+-- Its important to not send "ready" before both players want ready and are loaded so the server doesn't tell you 
+-- to start before everything is for sure not going to change and everything is loaded.
 function select_screen.refreshReadyStates(self)
   for playerNumber = 1, #self.players do
-    if self:isNetPlay() then
-      self.players[playerNumber].ready =
-          self.players[playerNumber].wants_ready and
-          table.trueForAll(self.players, function(pc) return pc.loaded end)
-    else
-      self.players[playerNumber].ready = self.players[playerNumber].wants_ready and self.players[playerNumber].loaded
-    end
+    self.players[playerNumber].ready = table.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
   end
 end
 
@@ -184,7 +184,10 @@ function select_screen.on_select(self, player, super)
       -- load stage even if hidden!
       stage_loader_load(player.stage)
     end
-    player.cursor.selected = not player.cursor.selected
+    -- Don't let the player stop ready if both players have already told the server to start the game
+    if player.cursor.positionId ~= "__Ready" or player.ready == false then 
+      player.cursor.selected = not player.cursor.selected
+    end
   elseif player.cursor.positionId == "__Leave" then
     return true
   elseif player.cursor.positionId == "__Random" then
@@ -233,7 +236,7 @@ function select_screen.isMultiplayer(self)
   -- vs cpu is not really multiplayer but it has 2 stacks so we need to set both "players" up
 end
 
--- Makes sure all the client data is up to date and ready
+-- Marks when the player's stage and character are loaded
 function select_screen.refreshLoadingState(self, playerNumber)
   self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
 end
@@ -581,7 +584,7 @@ function select_screen.sendMenuState(self)
   menuState.level = self.players[self.my_player_number].level
   menuState.inputMethod = self.players[self.my_player_number].inputMethod
   for k, v in pairs(menuState) do
-    if type(k) == "function" or type(v) == "function" then
+    if type(k) == "function" or type(v) == "function" or type(k) == "table" or type(v) == "table" then
       error("Trying to send an illegal object to the server\n" .. table_to_string(menuState))
     end
   end
@@ -805,21 +808,19 @@ function select_screen.startNetPlayMatch(self, msg)
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
-  if match_type == "Ranked" then
-    GAME.match.room_ratings = self.currentRoomRatings
-    GAME.match.my_player_number = self.my_player_number
-    GAME.match.op_player_number = self.op_player_number
-  end
+  GAME.match.room_ratings = self.currentRoomRatings
+  GAME.match.my_player_number = self.my_player_number
+  GAME.match.op_player_number = self.op_player_number
 
   local is_local = true
   if GAME.battleRoom.spectating then
     is_local = false
   end
   P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
   P1:setOpponent(P2)
@@ -859,10 +860,10 @@ end
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
   --note: local P2 not currently allowed to use "touch" input method
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   P1:setOpponent(P2)
   P1:setGarbageTarget(P2)
   P2:setOpponent(P1)
@@ -901,21 +902,21 @@ function select_screen.start1pLocalMatch(self)
       character_loader_wait()
     end
 
-    local xPosition = 760
+    local xPosition = 796
     local yPosition = 120
     local mirror = -1
     local simulatedOpponent = SimulatedOpponent(health, character, xPosition, yPosition, mirror)
     if challengeStage then
-      attackEngine = challengeStage:createAttackEngine(P1, simulatedOpponent, character)
+      attackEngine = challengeStage:createAttackEngine(P1, simulatedOpponent, character, true)
     else
-      attackEngine = AttackEngine.createEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings.attackSettings, P1, simulatedOpponent, character)
+      attackEngine = AttackEngine.createEngineForTrainingModeSettings(GAME.battleRoom.trainingModeSettings.attackSettings, P1, simulatedOpponent, character, false)
     end
     simulatedOpponent:setAttackEngine(attackEngine)
 
     GAME.match.simulatedOpponent = simulatedOpponent
   end
   
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   if not GAME.match.simulatedOpponent then
     P1:setGarbageTarget(P1)
   else
@@ -935,10 +936,10 @@ end
 function select_screen.start1pCpuMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
   P2.max_runs_per_frame = 1
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
 
   P1.garbageTarget = P2

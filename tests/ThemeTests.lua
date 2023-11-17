@@ -8,9 +8,14 @@ local defaultTheme = Theme(consts.DEFAULT_THEME_DIRECTORY)
 
 assert(defaultTheme ~= nil)
 assert(defaultTheme.name ~= nil)
-assert(defaultTheme.version == 2)
+assert(defaultTheme.version == defaultTheme.VERSIONS.current)
 assert(defaultTheme.images.bg_main ~= nil)
 assert(defaultTheme.multibar_is_absolute == true)
+assert(defaultTheme.images.IMG_cards[true][0] ~= nil)
+assert(defaultTheme.images.IMG_cards[true][2] ~= nil)
+assert(defaultTheme.images.IMG_cards[true][13] ~= nil)
+assert(defaultTheme.images.IMG_cards[true][99] ~= nil)
+assert(defaultTheme.chainCardLimit == 99)
 
 recursive_copy("tests/ThemeTestData/", Theme.themeDirectoryPath)
 
@@ -44,7 +49,7 @@ recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2Theme.name)
 local v1Theme = Theme("V1Test")
 assert(v1Theme ~= nil)
 assert(v1Theme.name == "V1Test")
-assert(v1Theme.version == 2) -- it was upgraded
+assert(v1Theme.version == v1Theme.VERSIONS.two) -- it was upgraded
 assert(v1Theme.images.bg_main ~= nil)
 assert(v1Theme.multibar_is_absolute == false) -- old v1 default
 assert(v1Theme.bg_main_is_tiled == true) -- override from v1 default
@@ -55,4 +60,16 @@ assert(v2AbsoluteTheme ~= nil)
 assert(v2AbsoluteTheme.name == "V2AbsoluteTheme")
 assert(v2AbsoluteTheme.version == 2)
 assert(v2AbsoluteTheme.multibar_is_absolute == false) -- override
+assert(v2AbsoluteTheme.images.IMG_cards[true][0] ~= nil)
+assert(v2AbsoluteTheme.images.IMG_cards[true][2] ~= nil)
+assert(v2AbsoluteTheme.chainCardLimit == 99)
 recursiveRemoveDirectory(Theme.themeDirectoryPath .. v2AbsoluteTheme.name)
+
+local legacyChainImages = Theme("LegacyChainImages")
+assert(v2AbsoluteTheme ~= nil)
+assert(legacyChainImages.images.IMG_cards[true][0] ~= nil)
+assert(legacyChainImages.images.IMG_cards[true][2] ~= nil)
+assert(legacyChainImages.images.IMG_cards[true][13] ~= nil)
+assert(legacyChainImages.images.IMG_cards[true][14] == nil)
+assert(legacyChainImages.chainCardLimit == 13)
+recursiveRemoveDirectory(Theme.themeDirectoryPath .. legacyChainImages.name)

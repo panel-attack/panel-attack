@@ -1,10 +1,11 @@
+require("developer")
 require("graphics_util")
 require("sound_util")
 local consts = require("consts")
 require("class")
 local logger = require("logger")
 
-local musics = {"main", "select_screen", "main_start", "select_screen_start"} -- the music used in a theme
+local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {
@@ -24,8 +25,9 @@ local flags = {
 Theme =
   class(
   function(self, name)
+    self.VERSIONS = { original = 1, two = 2, fixedOffsets = 3, current = 3}
     self.name = name
-    self.version = 1
+    self.version = self.VERSIONS.original
     self.images = {} -- theme images
     self.sounds = {} -- theme sfx
     self.musics = {} -- theme music
@@ -72,6 +74,7 @@ function Theme:configurableKeys()
   result["win_Pos"] = "table"
   result["win_Scale"] = "number"
   result["name_Pos"] = "table"
+  result["name_Font_Size"] = "number"
   result["ratingLabel_Pos"] = "table"
   result["ratingLabel_Scale"] = "number"
   result["rating_Pos"] = "table"
@@ -85,6 +88,7 @@ function Theme:configurableKeys()
   result["multibar_Pos"] = "table"
   result["multibar_Scale"] = "number"
   result["multibar_is_absolute"] = "boolean"
+  result["multibar_LeftoverTime_Pos"] = "table"
   result["font_size"] = "number"
   result["bg_title_speed_x"] = "number"
   result["bg_title_speed_y"] = "number"
@@ -98,6 +102,7 @@ function Theme:configurableKeys()
   result["bg_main_is_tiled"] = "boolean"
   result["bg_select_screen_is_tiled"] = "boolean"
   result["bg_readme_is_tiled"] = "boolean"
+  result["gameover_text_Pos"] = "table"
 
   return result
 end
@@ -113,6 +118,7 @@ function Theme:loadVersion1DefaultValues()
   self.time_Pos = {26, 26} -- the position of the timer
   self.time_Scale = 2 -- the scale size of the timer
   self.name_Pos = {20, -30} -- the position of the name
+  self.name_Font_Size = 12 -- the font size of the name
   self.moveLabel_Pos = {468, 170} -- the position of the move label
   self.moveLabel_Scale = 2 -- the scale size of the move label
   self.move_Pos = {40, 34} -- the position of the move
@@ -158,6 +164,33 @@ function Theme:loadVersion1DefaultValues()
   self.bg_readme_is_tiled = false -- if the image should tile (default is stretch)
   self.bg_readme_speed_x = 0
   self.bg_readme_speed_y = 0
+end
+
+function Theme:loadVersion2DefaultValues()
+  -- Version 2 values
+  -- All of the default values below are legacy "version 2" values, the modern values are are loaded from the default theme config file
+  self.timeLabel_Pos = {-4, 2} -- the position of the timer label
+  self.time_Pos = {26, 26} -- the position of the timer
+  self.name_Pos = {20, -30} -- the position of the name
+  self.name_Font_Size = 12 -- the font size of the name
+  self.scoreLabel_Pos = {104, 25} -- the position of the score label
+  self.score_Pos = {116, 34} -- the position of the score
+  self.speedLabel_Pos = {104, 42} -- the position of the speed label
+  self.speed_Pos = {116, 50} -- the position of the speed
+  self.levelLabel_Scale = 1 -- the scale size of the level label
+  self.levelLabel_Pos = {105, 58} -- the position of the level label
+  self.level_Pos = {112, 66} -- the position of the level
+  self.level_Scale = 1 -- the scale size of the level
+  self.ratingLabel_Pos = {0, 140} -- the position of the rating label
+  self.rating_Pos = {38, 162} -- the position of the rating value
+  self.spectators_Pos = {547, 460} -- the position of the spectator list
+  self.winLabel_Pos = {10, 190} -- the position of the win label
+  self.win_Pos = {40, 212} -- the position of the win counter
+  self.moveLabel_Scale = 1 -- the scale size of the move label
+  self.moveLabel_Pos = {468, 170} -- the position of the move label
+  self.move_Scale = 1 -- the scale size of the move
+  self.move_Pos = {40, 34} -- the position of the move
+  self.healthbar_frame_Pos = {-17, -4} -- the position of the healthbar frame
 end
 
 Theme.themeDirectoryPath = "themes/"
@@ -211,17 +244,11 @@ function Theme.graphics_init(self)
   self.images.fade = self:load_theme_img("fade")
 
   self.images.IMG_number_atlas_1P = self:load_theme_img("numbers_1P")
-  self.images.numberWidth_1P = self.images.IMG_number_atlas_1P:getWidth() / 10
-  self.images.numberHeight_1P = self.images.IMG_number_atlas_1P:getHeight()
   self.images.IMG_number_atlas_2P = self:load_theme_img("numbers_2P")
-  self.images.numberWidth_2P = self.images.IMG_number_atlas_2P:getWidth() / 10
-  self.images.numberHeight_2P = self.images.IMG_number_atlas_2P:getHeight()
 
   self.images.IMG_time = self:load_theme_img("time")
 
   self.images.IMG_timeNumber_atlas = self:load_theme_img("time_numbers")
-  self.images.timeNumberWidth = self.images.IMG_timeNumber_atlas:getWidth() / 12
-  self.images.timeNumberHeight = self.images.IMG_timeNumber_atlas:getHeight()
 
   self.images.IMG_pixelFont_blue_atlas = self:load_theme_img("pixel_font_blue")
   self.images.IMG_pixelFont_grey_atlas = self:load_theme_img("pixel_font_grey")
@@ -257,13 +284,11 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = self:load_theme_img("random_stage")
   self.images.IMG_random_character = self:load_theme_img("random_character")
 
-  if self.multibar_is_absolute then
-    self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P_absolute")
-    self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P_absolute")
-  else
-    self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
-    self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
-  end
+  self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
+  self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
+  self.images.IMG_healthbar_frame_1P_absolute = self:load_theme_img("healthbar_frame_1P_absolute")
+  self.images.IMG_healthbar_frame_2P_absolute = self:load_theme_img("healthbar_frame_2P_absolute")
+  
   self.images.IMG_healthbar = self:load_theme_img("healthbar")
 
   self.images.IMG_multibar_frame = self:load_theme_img("multibar_frame")
@@ -287,22 +312,29 @@ function Theme.graphics_init(self)
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
-  for i = 4, 66 do
+  for i = 4, 72 do
     self.images.IMG_cards[false][i] = self:load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
   -- mystery chain
   self.images.IMG_cards[true][0] = self:load_theme_img("chain/chain00")
+  -- mystery combo
+  self.images.IMG_cards[false][0] = self:load_theme_img("combo/combo00")
+
+  -- Chain card loading
+  -- load as many chain cards as there are available until 99
+  -- we assume if the theme provided any chains, they want to control all of them so don't load backups
+  local hasChainCards = love.filesystem.getInfo(Theme.themeDirectoryPath .. self.name .. "/chain")
+  local wantsBackupChainCards = hasChainCards == nil
   for i = 2, 13 do
     -- with backup from default theme
     self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
-  -- load as many more chain cards as there are available until 99, we will substitue in the mystery card if a card is missing
+  -- load as many more chain cards as there are available until 99, we will substitute in the mystery card if a card is missing
   self.chainCardLimit = 99
   for i = 14, 99 do
     -- without backup from default theme
-    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
+    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", wantsBackupChainCards)
     if self.images.IMG_cards[true][i] == nil then
-      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
       self.chainCardLimit = i - 1
       break
     end
@@ -427,8 +459,8 @@ function Theme.sound_init(self)
 end
 
 function Theme.upgradeAndSaveVerboseConfig(self)
-  if self.version == 1 then
-    self.version = 2
+  if self.version == self.VERSIONS.original then
+    self.version = self.VERSIONS.two
     self:saveVerboseConfig()
   end
 end
@@ -465,8 +497,10 @@ function Theme.json_init(self)
   if self.name ~= consts.DEFAULT_THEME_DIRECTORY then
     local customData = self:getJSONDataForFile(Theme.themeDirectoryPath .. self.name .. "/config.json")
     local version = self:versionForJSONVersion(customData.version)
-    if version == 1 then
+    if version == self.VERSIONS.original then
       self:loadVersion1DefaultValues()
+    elseif version == self.VERSIONS.two then
+      self:loadVersion2DefaultValues()
     end
     self:applyJSONData(customData)
 
@@ -478,7 +512,7 @@ function Theme:versionForJSONVersion(jsonVersion)
   if jsonVersion and type(jsonVersion) == "number" then
     return  jsonVersion
   else
-    return 1
+    return self.VERSIONS.original
   end
 end
 
@@ -523,7 +557,7 @@ function Theme:final_init()
   end
 
   self.images.bg_main = UpdatingImage(self:load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, canvas_width, canvas_height)
-  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_speed_x, self.bg_select_speed_y, canvas_width, canvas_height)
+  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_screen_speed_x, self.bg_select_screen_speed_y, canvas_width, canvas_height)
   self.images.bg_readme = UpdatingImage(self:load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
 
   local menuYPadding = 10
@@ -540,6 +574,26 @@ function Theme:final_init()
   self.main_menu_max_height = (self.main_menu_y_max - self.main_menu_screen_pos[2])
   self.main_menu_y_center = self.main_menu_screen_pos[2] + (self.main_menu_max_height / 2)
 
+end
+
+function Theme:offsetsAreFixed()
+  return self.version >= self.VERSIONS.fixedOffsets
+end
+
+function Theme:chainImage(chainAmount)
+  local cardImage = self.images.IMG_cards[true][chainAmount]
+  if cardImage == nil then
+   cardImage = self.images.IMG_cards[true][0]
+  end
+  return cardImage
+end
+
+function Theme:comboImage(comboAmount)
+  local cardImage = self.images.IMG_cards[false][comboAmount]
+  if cardImage == nil then
+   cardImage = self.images.IMG_cards[false][0]
+  end
+  return cardImage
 end
 
 -- loads a theme into the game

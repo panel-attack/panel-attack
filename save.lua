@@ -53,29 +53,32 @@ function read_txt_file(path_and_filename)
 end
 
 -- writes to the "user_id.txt" file of the directory of the connected ip
-function write_user_id_file()
+function write_user_id_file(userID, serverIP)
   pcall(
     function()
-      love.filesystem.createDirectory("servers/" .. GAME.connected_server_ip)
-      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
+      love.filesystem.createDirectory("servers/" .. serverIP)
+      local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
       file:open("w")
-      file:write(tostring(my_user_id))
+      file:write(tostring(userID))
       file:close()
     end
   )
 end
 
 -- reads the "user_id.txt" file of the directory of the connected ip
-function read_user_id_file()
+function read_user_id_file(serverIP)
+  local userID
   pcall(
     function()
-      local file = love.filesystem.newFile("servers/" .. GAME.connected_server_ip .. "/user_id.txt")
+      local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
       file:open("r")
-      my_user_id = file:read()
+      userID = file:read()
       file:close()
-      my_user_id = my_user_id:match("^%s*(.-)%s*$")
+      userID = userID:match("^%s*(.-)%s*$")
+      
     end
   )
+  return userID
 end
 
 -- writes the stock puzzles
@@ -158,8 +161,10 @@ function readAttackFile(path)
     local trainingConf, position, errorMsg = json.decode(jsonData)
     if trainingConf then
       if not trainingConf.name or type(trainingConf.name) ~= "string" then
-        trainingConf.name = path:match(package.config:sub(1, 1) .. '(.*)$')
-        trainingConf.name = FileUtil.getFileNameWithoutExtension(trainingConf.name)
+        local filenameOnly = path:match('%' .. sep .. '?(.*)$')
+        if filenameOnly ~= nil then
+          trainingConf.name = FileUtil.getFileNameWithoutExtension(filenameOnly)
+        end
       end
       return trainingConf
     else

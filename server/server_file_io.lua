@@ -1,6 +1,6 @@
 local lfs = require("lfs")
 local logger = require("logger")
-local csvfile = require("simplecsv")
+local csvfile = require("libraries.simplecsv")
 
 function makeDirectory(path) 
   local status, error = pcall(
@@ -21,7 +21,7 @@ function makeDirectoryRecursive(path)
   end
 end
 
-function write_players_file()
+function write_players_file(playerbase)
   local status, error = pcall(
     function()
       local f = assert(io.open("players.txt", "w"))
@@ -35,7 +35,7 @@ function write_players_file()
   end
 end
 
-function read_players_file()
+function read_players_file(playerbase)
   pcall(
     function()
       local f = assert(io.open("players.txt", "r"))
@@ -69,31 +69,6 @@ function readGameResults()
     end
   )
   return gameResults
-end
-
-function write_deleted_players_file()
-  local status, error = pcall(
-    function()
-      local f = assert(io.open("deleted_players.txt", "w"))
-      io.output(f)
-      io.write(json.encode(playerbase.players))
-      io.close(f)
-    end
-  )
-  if not status then
-    logger.error("Failed to write deleted players file with error: " .. error)
-  end
-end
-
-function read_deleted_players_file()
-  pcall(
-    function()
-      local f = assert(io.open("deleted_players.txt", "r"))
-      io.input(f)
-      playerbase.deleted_players = json.decode(io.read("*all"))
-      io.close(f)
-    end
-  )
 end
 
 function write_error_report(error_report_json)

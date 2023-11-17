@@ -1,4 +1,4 @@
-json = require("dkjson")
+json = require("libraries.dkjson")
 require("util")
 local consts = require("consts")
 require("Theme") -- needed for directory location
@@ -28,6 +28,7 @@ config = {
   
     puzzle_level                  = 5,
     puzzle_randomColors           = false,
+    puzzle_randomFlipped          = false,
   
     -- Player name
     name                          = "defaultname",
@@ -153,6 +154,9 @@ config = {
         end
         if type(read_data.puzzle_randomColors) == "boolean" then
           configTable.puzzle_randomColors = read_data.puzzle_randomColors
+        end
+        if type(read_data.puzzle_randomFlipped) == "boolean" then
+          configTable.puzzle_randomFlipped = read_data.puzzle_randomFlipped
         end
   
         if type(read_data.name) == "string" then

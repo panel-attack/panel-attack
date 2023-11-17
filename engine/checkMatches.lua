@@ -188,7 +188,7 @@ function Stack:getMatchingPanels()
   for i = 1, #matchingPanels do
     if matchingPanels[i].state == "hovering" then
       -- hovering panels that match can never chain (see Panel.matchAnyway for an explanation)
-      matchingPanels[i].chaining = false
+      matchingPanels[i].chaining = nil
     end
   end
 
@@ -227,9 +227,15 @@ function Stack:getConnectedGarbagePanels(matchingPanels)
         panelToCheck.matchesMetal = true
         panelToCheck.matchesGarbage = true
       else
-        panelToCheck.matchesMetal = matchingPanel.metal
-        panelToCheck.matchesGarbage = not matchingPanel.metal
+        -- We need to "OR" in these flags in case a different path caused a match too
+        if matchingPanel.metal then
+          panelToCheck.matchesMetal = true
+        else
+          panelToCheck.matchesGarbage = true
+        end
       end
+
+      -- We may add a panel multiple times but it will be "matching" after the first time and skip any work in the loop.
       panelsToCheck:push(panelToCheck)
     end
   end
@@ -305,6 +311,10 @@ end
 function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onScreenCount)
   garbagePanels = sortByPopOrder(garbagePanels, true)
 
+  if self:shouldChangeSoundEffects() then
+    SFX_garbage_match_play = true
+  end
+  
   for i = 1, #garbagePanels do
     local panel = garbagePanels[i]
     panel.y_offset = panel.y_offset - 1
@@ -364,6 +374,7 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
       self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.clock)
     end
     self:recordComboHistory(self.clock, 6, 1, true)
+    self.analytic:registerShock()
   end
 
   local combo_pieces = combo_garbage[comboSize]
@@ -403,17 +414,18 @@ function Stack:recordChainHistory()
   currentChainData.starts[#currentChainData.starts + 1] = self.clock
 end
 
-function Stack:awardStopTime(isChain, comboSize)
+-- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings
+function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
+  local stopTime = 0
   if comboSize > 3 or isChain then
-    local stopTime
-    if self.panels_in_top_row and isChain then
+    if toppedOut and isChain then
       if self.level then
-        local length = (self.chain_counter > 4) and 6 or self.chain_counter
+        local length = (chainCounter > 4) and 6 or chainCounter
         stopTime = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
       else
         stopTime = stop_time_danger[self.difficulty]
       end
-    elseif self.panels_in_top_row then
+    elseif toppedOut then
       if self.level then
         local length = (comboSize < 9) and 2 or 3
         stopTime = self.chain_coefficient * length + self.chain_constant
@@ -422,7 +434,7 @@ function Stack:awardStopTime(isChain, comboSize)
       end
     elseif isChain then
       if self.level then
-        local length = math.min(self.chain_counter, 13)
+        local length = math.min(chainCounter, 13)
         stopTime = self.chain_coefficient * length + self.chain_constant
       else
         stopTime = stop_time_chain[self.difficulty]
@@ -434,7 +446,15 @@ function Stack:awardStopTime(isChain, comboSize)
         stopTime = stop_time_combo[self.difficulty]
       end
     end
-    self.stop_time = math.max(self.stop_time, stopTime)
+  end
+
+  return stopTime
+end
+
+function Stack:awardStopTime(isChain, comboSize)
+  local stopTime = self:calculateStopTime(comboSize, self.panels_in_top_row, isChain, self.chain_counter)
+  if stopTime > self.stop_time then
+    self.stop_time = stopTime
   end
 end
 
