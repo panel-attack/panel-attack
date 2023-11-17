@@ -374,7 +374,7 @@ local function privateMakeFont(fontPath, size)
   else
     f = love.graphics.newFont(size, hinting, dpi)
   end
-  local dpi2 = f:getDPIScale()
+
   return f
 end
 
