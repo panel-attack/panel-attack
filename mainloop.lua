@@ -43,7 +43,7 @@ function fmainloop()
   panels_init()
   GAME:drawLoadingString(loc("ld_characters"))
   wait()
-  characters_init()
+  CharacterLoader.initCharacters()
   GAME:drawLoadingString(loc("ld_analytics"))
   wait()
   analytics.init()
@@ -61,26 +61,7 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     GAME:drawLoadingString("Running Unit Tests")
     wait()
-    -- Small tests (unit tests)
-    require("PuzzleTests")
-    require("ServerQueueTests")
-    require("StackTests")
-    require("tests.StackGraphicsTests")
-    require("tests.JsonEncodingTests")
-    require("tests.NetworkProtocolTests")
-    require("tests.ThemeTests")
-    require("tests.TouchDataEncodingTests")
-    require("tests.utf8AdditionsTests")
-    require("tests.QueueTests")
-    require("tests.TimeQueueTests")
-    require("table_util_tests")
-    require("utilTests")
-    --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
-    -- Medium level tests (integration tests)
-    require("tests.ReplayTests")
-    require("tests.StackReplayTests")
-    require("tests.StackRollbackReplayTests")
-    require("tests.StackTouchReplayTests")
+    require("tests.Tests")
   end
   if PERFORMANCE_TESTS_ENABLED then
     GAME:drawLoadingString("Running Performance Tests")
@@ -190,8 +171,8 @@ do
         find_and_add_music(themes[config.theme].musics, "main")
       end
     end
-    character_loader_clear()
-    stage_loader_clear()
+    CharacterLoader.clear()
+    StageLoader.clear()
     resetNetwork()
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
@@ -305,8 +286,8 @@ local function use_current_stage()
   if current_stage == nil then
     pick_random_stage()
   else
-    stage_loader_load(current_stage)
-    stage_loader_wait()
+    StageLoader.load(current_stage)
+    StageLoader.wait()
     GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
     GAME.background_overlay = themes[config.theme].images.bg_overlay
     GAME.foreground_overlay = themes[config.theme].images.fg_overlay
@@ -917,8 +898,8 @@ function main_net_vs_lobby()
   GAME.battleRoom = nil
   undo_stonermode()
   reset_filters()
-  character_loader_clear()
-  stage_loader_clear()
+  CharacterLoader.clear()
+  StageLoader.clear()
   local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
