@@ -8,24 +8,30 @@ config = {
     -- The last used engine version
     version                       = VERSION,
   
-      -- Lang used for localization
+    -- Lang used for localization
     language_code                 = "EN",
   
+    -- Last selected theme, panels, character and stage
     theme                         = consts.DEFAULT_THEME_DIRECTORY,
     panels                     	  = nil, -- setup later in panel init
     character                     = random_character_special_value,
     stage                         = random_stage_special_value,
   
+    -- Last choice for ranked and input method
     ranked                        = true,
     inputMethod                   = "controller",
   
     use_music_from                = "either",
+
     -- Level (2P modes / 1P vs yourself mode)
     level                         = 5,
+
+    -- Endless / Time Attack settings
     endless_speed                 = 1,
     endless_difficulty            = 1,
     endless_level                 = nil, -- nil indicates we want to use classic difficulty
   
+    -- Puzzle settings
     puzzle_level                  = 5,
     puzzle_randomColors           = false,
     puzzle_randomFlipped          = false,
@@ -52,11 +58,19 @@ config = {
     enable_analytics              = true,
     -- Save replays setting
     save_replays_publicly         = "with my name",
+    -- Darkness of the background portrait
     portrait_darkness             = 70,
+    -- Whether to show the popfx from panels
     popfx                         = true,
+    -- How much to divide the shake animation
+    shakeReduction = 1,
+    -- Not currently settable in game, spacing of popfx
     cardfx_scale                  = 100,
+    -- Whether to render the telegraph
     renderTelegraph               = true,
+    -- Whether to render the attacks that come from the panels
     renderAttacks                 = true,
+    -- Tracks if the default panels have been copied over yet
     defaultPanelsCopied           = false,
   
     -- True if we immediately want to maximize the screen on startup
@@ -204,6 +218,9 @@ config = {
         end
         if type(read_data.popfx) == "boolean" then
           configTable.popfx = read_data.popfx
+        end
+        if type(read_data.shakeReduction) == "number" then
+          configTable.shakeReduction = bound(1, read_data.shakeReduction, 4)
         end
         if type(read_data.cardfx_scale) == "number" then
           configTable.cardfx_scale = bound(1, read_data.cardfx_scale, 200)

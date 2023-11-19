@@ -6,28 +6,40 @@ local TouchDataEncoding = require("engine.TouchDataEncoding")
 local floor = math.floor
 local ceil = math.ceil
 
-local shake_arr = {}
 
--- Setup the shake_arr data used for rendering the stack shake animation
-local shake_idx = -6
-for i = 14, 6, -1 do
-  local x = -math.pi
-  local step = math.pi * 2 / i
-  for j = 1, i do
-    shake_arr[shake_idx] = (1 + math.cos(x)) / 2
-    x = x + step
-    shake_idx = shake_idx + 1
+function calculateShakeData()
+  local shake_arr = {}
+  -- Setup the shake_arr data used for rendering the stack shake animation
+  local shake_idx = -6
+  for i = 14, 6, -1 do
+    local x = -math.pi
+    local step = math.pi * 2 / i
+    for j = 1, i do
+      shake_arr[shake_idx] = (1 + math.cos(x)) / 2
+      x = x + step
+      shake_idx = shake_idx + 1
+    end
   end
+
+  -- 1 -> 1
+  -- #shake -> 0
+  local shake_step = 1 / (#shake_arr - 1)
+  local shake_mult = 1
+  for i = 1, #shake_arr do
+    shake_arr[i] = shake_arr[i] * shake_mult
+    -- print(shake_arr[i])
+    shake_mult = shake_mult - shake_step
+  end
+  return shake_arr
 end
 
--- 1 -> 1
--- #shake -> 0
-local shake_step = 1 / (#shake_arr - 1)
-local shake_mult = 1
-for i = 1, #shake_arr do
-  shake_arr[i] = shake_arr[i] * shake_mult
-  -- print(shake_arr[i])
-  shake_mult = shake_mult - shake_step
+local shakeOffsetData = calculateShakeData()
+
+function Stack:currentShakeOffset()
+  local shake_idx = #shakeOffsetData - self.shake_time
+  local shakeOffset = ceil((shakeOffsetData[shake_idx] or 0) * 13)
+  shakeOffset = ceil(shakeOffset / config.shakeReduction)
+  return shakeOffset
 end
 
 -- Provides the X origin to draw an element of the stack
@@ -509,8 +521,7 @@ function Stack.render(self)
   local metall_w, metall_h = metals.left:getDimensions()
   local metalr_w, metalr_h = metals.right:getDimensions()
 
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local shake = self:currentShakeOffset()
 
   -- Draw all the panels
   for row = 0, self.height do
@@ -976,8 +987,7 @@ function Stack.render_cursor(self)
   end
 
   local cursorImage = self.theme.images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local shake = self:currentShakeOffset()
   local desiredCursorWidth = 40
   local panelWidth = 16
   local scale_x = desiredCursorWidth / cursorImage:getWidth()
