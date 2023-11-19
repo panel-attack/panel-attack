@@ -29,7 +29,9 @@ AttackEngine =
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
     self.clock = 0
-    self.character = wait_for_random_character(character)
+    self.character = CharacterLoader.resolveCharacterSelection(character)
+    CharacterLoader.load(self.character)
+    CharacterLoader.wait()
     self.telegraph = Telegraph(sender)
     self:setGarbageTarget(garbageTarget)
     self.shouldPlayAttackSfx = shouldPlayAttackSfx
@@ -70,8 +72,8 @@ end
 function AttackEngine:setGarbageTarget(garbageTarget)
   assert(garbageTarget.stackCanvasWidth ~= nil)
   assert(garbageTarget.mirror_x ~= nil)
-  assert(garbageTarget.pos_x ~= nil)
-  assert(garbageTarget.pos_y ~= nil)
+  assert(garbageTarget.panelOriginX ~= nil)
+  assert(garbageTarget.panelOriginY ~= nil)
   assert(garbageTarget.garbage_q ~= nil)
   assert(garbageTarget.receiveGarbage ~= nil)
 
@@ -130,7 +132,7 @@ function AttackEngine.run(self)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
             end
             hasMetal = garbage.isMetal or hasMetal
-            self.telegraph:push(garbage, math.random(11, 17), math.random(1, 11), self.clock)
+            self.telegraph:push(garbage, math.random(1, 6), math.random(1, 11), self.clock)
           end
         end
       end

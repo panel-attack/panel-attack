@@ -12,18 +12,18 @@ The contents of each puzzle file should be formatted something like this:
 {
   "Version": 2,
   "Puzzle Sets": [
-    [
+    {
       "Set Name": "Name of Puzzle Set",
       "Puzzles": [
-        [
+        {
           "Puzzle Type": "chain",
           "Do Countdown": true,
           "Moves": 0,
           "Stack": 
             "040000
              111440",
-        ],
-        [
+        },
+        {
           "Puzzle Type": "clear",
           "Do Countdown": false,
           "Moves": 0,
@@ -43,9 +43,9 @@ The contents of each puzzle file should be formatted something like this:
 		   325363",
 		   "Stop": 60,
            "Shake": 0
-        ],
+        },
       ]
-    ],
+    },
   ]
 }
 
@@ -75,10 +75,11 @@ Note: carriage returns and spaces in your file are very helpful for readability,
  but are not necessary.
  
 Be sure to use the correct delimiters in the right places, i.e: 
-curly braces {} to start and end the file,
-square brackets [] around individual puzzles and around puzzle sets,
+curly braces {} to start and end the file and around individual puzzles and puzzle sets,
+square brackets [] around the list of puzzle sets and each list of puzzles,
 quotes "" around set names and panel maps
 commas between elements
+Try and use a JSON validator if Panel Attack cannot read your puzzle file!
 
 About the numbers mapping out each puzzle now:
 
@@ -88,7 +89,8 @@ Additionally there exists a special notation for representing connected garbage 
 
 This allows us to lay out our text representation of the puzzle how it would look in the game, like this:
 
-[====]
+[=====
+=====]
 001200
 002100
 002100

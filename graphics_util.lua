@@ -114,22 +114,6 @@ function draw(img, x, y, rot, x_scale, y_scale)
   end
 end
 
--- Draws a label image at the given spot.
--- TODO consolidate with above
-function draw_label(img, x, y, rot, scale, mirror)
-  rot = rot or 0
-  mirror = mirror or 0
-  if mirror ~= 0 then
-    x = x - math.floor((img:getWidth()/GFX_SCALE*scale)*mirror)
-  end
-  if GAME.isDrawing then
-    love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, rot, scale, scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, scale, scale}})
-  end
-end
-
 -- A pixel font map to use with numbers
 local number_pixel_font_map = {}
 --0-9 = 0-9
@@ -390,7 +374,7 @@ local function privateMakeFont(fontPath, size)
   else
     f = love.graphics.newFont(size, hinting, dpi)
   end
-  local dpi2 = f:getDPIScale()
+
   return f
 end
 

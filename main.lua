@@ -125,6 +125,8 @@ function love.update(dt)
 
   leftover_time = leftover_time + dt
 
+  GAME:update(dt)
+  
   if GAME.backgroundImage then
     GAME.backgroundImage:update(dt)
   end
@@ -192,7 +194,7 @@ function love.draw()
   end
 
   if STONER_MODE then 
-    gprintf("STONER", 1, 1 + (11 * 4))
+    gprintf("Lag Mode On, S:" .. GAME.sendNetworkQueue:length() .. " R:" .. GAME.receiveNetworkQueue:length(), 1, 1 + (11 * 4))
   end
 
   love.graphics.setCanvas() -- render everything thats been added
@@ -205,11 +207,24 @@ function love.draw()
   if GAME.showGameScale or config.debug_mode then
     local scaleString = "Scale: " .. GAME.canvasXScale .. " (" .. canvas_width * GAME.canvasXScale .. " x " .. canvas_height * GAME.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
+    local font = get_global_font()
+    local fontAscent = "Font Ascent: " .. font:getAscent()
+    local fontDescent = "Font Descent: " .. font:getDescent()
+    local fontBaseLine = "Font Baseline: " .. font:getBaseline()
+    local fontHeight = "Font Height: " .. font:getHeight()
+    local fontLineHeight = "Font Line Height: " .. font:getLineHeight()
 
     if canvas_width * GAME.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
-    love.graphics.printf(scaleString, get_global_font_with_size(30), 5, 5, 2000, "left")
+    local bigFont = get_global_font_with_size(30)
+    love.graphics.printf(scaleString, bigFont, 5, 5, 2000, "left")
+    love.graphics.printf(fontAscent, bigFont, 5, 35, 2000, "left")
+    love.graphics.printf(fontDescent, bigFont, 5, 65, 2000, "left")
+    love.graphics.printf(fontBaseLine, bigFont, 5, 95, 2000, "left")
+    love.graphics.printf(fontHeight, bigFont, 5, 125, 2000, "left")
+    love.graphics.printf(fontLineHeight, bigFont, 5, 155, 2000, "left")
+
   end
 
   if DEBUG_ENABLED and love.system.getOS() == "Android" then

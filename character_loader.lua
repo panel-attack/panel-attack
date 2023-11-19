@@ -3,17 +3,14 @@ require("globals")
 require("character")
 local logger = require("logger")
 
+CharacterLoader = {}
+
 local loading_queue = Queue()
 
 local loading_character = nil
 
-characters = {} -- holds all characters, most of them will not be fully loaded
-characters_ids = {} -- holds all characters ids
-characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
-characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
-
 -- queues a character to be loaded
-function character_loader_load(character_id)
+function CharacterLoader.load(character_id)
   if characters[character_id] and not characters[character_id].fully_loaded then
     loading_queue:push(character_id)
   end
@@ -22,7 +19,7 @@ end
 local instant_load_enabled = false
 
 -- return true if there is still data to load
-function character_loader_update()
+function CharacterLoader.update()
   if not loading_character and loading_queue:len() > 0 then
     local character_name = loading_queue:pop()
     loading_character = {
@@ -49,11 +46,11 @@ function character_loader_update()
   return false
 end
 
--- Waits for all characters to be loaded
-function character_loader_wait()
+-- Waits for all queued characters to be loaded
+function CharacterLoader.wait()
   instant_load_enabled = true
   while true do
-    if not character_loader_update() then
+    if not CharacterLoader.update() then
       break
     end
   end
@@ -61,7 +58,7 @@ function character_loader_wait()
 end
 
 -- Unloads all characters not in use by config or player 2
-function character_loader_clear()
+function CharacterLoader.clear()
   local p2_local_character = global_op_state and global_op_state.character or nil
   for character_id, character in pairs(characters) do
     if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
@@ -70,20 +67,8 @@ function character_loader_clear()
   end
 end
 
-function wait_for_random_character(character)
-  local resolvedCharacter = character
-  if character == random_character_special_value then
-    resolvedCharacter = table.getRandomElement(characters_ids_for_current_theme)
-  elseif characters[character]:is_bundle() then -- may have picked a bundle
-    resolvedCharacter = table.getRandomElement(characters[character].sub_characters)
-  end
-  character_loader_load(resolvedCharacter)
-  character_loader_wait()
-  return resolvedCharacter
-end
-
 -- Adds all the characters recursively in a folder to the global characters variable
-local function add_characters_from_dir_rec(path)
+function CharacterLoader.addCharactersFromDirectoryRecursively(path)
   local lfs = love.filesystem
   local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
@@ -92,7 +77,7 @@ local function add_characters_from_dir_rec(path)
       local current_path = path .. "/" .. v
       if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
         -- call recursively: facade folder
-        add_characters_from_dir_rec(current_path)
+        CharacterLoader.addCharactersFromDirectoryRecursively(current_path)
 
         -- init stage: 'real' folder
         local character = Character(current_path, v)
@@ -113,7 +98,7 @@ local function add_characters_from_dir_rec(path)
 end
 
 -- Loads all character IDs into the characters_ids global
-local function fill_characters_ids()
+function CharacterLoader.fillCharactersIds()
   -- check validity of bundle characters
   local invalid = {}
   local copy_of_characters_ids = shallowcpy(characters_ids)
@@ -149,19 +134,19 @@ local function fill_characters_ids()
   end
 end
 
--- Initializes the characters globals with data
-function characters_init()
+-- (re)Initializes the characters globals with data
+function CharacterLoader.initCharacters()
   characters = {} -- holds all characters, most of them will not be fully loaded
   characters_ids = {} -- holds all characters ids
   characters_ids_for_current_theme = {} -- holds characters ids for the current theme, those characters will appear in the lobby
   characters_ids_by_display_names = {} -- holds keys to array of character ids holding that name
-  add_characters_from_dir_rec("characters")
-  fill_characters_ids()
+  CharacterLoader.addCharactersFromDirectoryRecursively("characters")
+  CharacterLoader.fillCharactersIds()
 
   if #characters_ids == 0 then
     recursive_copy("default_data/characters", "characters")
-    add_characters_from_dir_rec("characters")
-    fill_characters_ids()
+    CharacterLoader.addCharactersFromDirectoryRecursively("characters")
+    CharacterLoader.fillCharactersIds()
   end
 
   if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") then
@@ -204,7 +189,26 @@ function characters_init()
   end
 
   if config.character ~= random_character_special_value and not characters[config.character]:is_bundle() then
-    character_loader_load(config.character)
-    character_loader_wait()
+    CharacterLoader.load(config.character)
+    CharacterLoader.wait()
   end
+end
+
+function CharacterLoader.resolveCharacterSelection(characterId)
+  if characterId and characters[characterId] then
+    characterId = CharacterLoader.resolveBundle(characterId)
+  else
+    -- resolve via random selection
+    characterId = table.getRandomElement(characters_ids_for_current_theme)
+  end
+
+  return characterId
+end
+
+function CharacterLoader.resolveBundle(characterId)
+  while characters[characterId]:is_bundle() do
+    characterId = table.getRandomElement(characters[characterId].sub_characters)
+  end
+
+  return characterId
 end

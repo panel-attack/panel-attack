@@ -1,6 +1,10 @@
+local consts = require("consts")
 local logger = require("logger")
 local NetworkProtocol = require("NetworkProtocol")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
+require("TimeQueue")
+
+-- TODO: Move this all into a proper class
 
 local TCP_sock = nil
 
@@ -41,13 +45,30 @@ function resetNetwork()
   TCP_sock = nil
 end
 
-local lag_q = Queue() -- only used for debugging
-local lastSendTime = nil
-local minLagSeconds = 0
-local maxLagSeconds = 1
-local lagIncrease = 1
-local lagSeconds = minLagSeconds
-local lagCount = 0
+function processDataToSend(stringData) 
+  if TCP_sock then
+    local fullMessageSent, error, partialBytesSent = TCP_sock:send(stringData)
+    if fullMessageSent then
+      --logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
+    else
+      logger.error("Error sending network message: " .. (error or "") .. " only sent " .. (partialBytesSent or "0") .. "bytes")
+    end
+  end
+end
+
+function processDataToReceive(data) 
+  queue_message(data[1], data[2])
+end
+
+function updateNetwork(dt)
+  GAME.sendNetworkQueue:update(dt, processDataToSend)
+  GAME.receiveNetworkQueue:update(dt, processDataToReceive)
+end
+
+local sendMinLag = 0
+local sendMaxLag = 0
+local receiveMinLag = 3
+local receiveMaxLag = receiveMinLag
 
 -- send the given message through
 function net_send(stringData)
@@ -55,48 +76,33 @@ function net_send(stringData)
     return false
   end
   if not STONER_MODE then
-    local fullMessageSent, error, partialBytesSent = TCP_sock:send(stringData)
-    if fullMessageSent then
-      --logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
-    else
-      logger.error("Error sending network message: " .. (error or "") .. " only sent " .. (partialBytesSent or "0") .. "bytes")
-    end
+    processDataToSend(stringData)
   else
-    if lastSendTime == nil then
-      lastSendTime = love.timer.getTime()
-    end
-    lag_q:push({stringData})
-    local currentTime = love.timer.getTime()
-    local timeDifference = currentTime - lastSendTime
-    if timeDifference > lagSeconds then
-      while lag_q:len() > 0 do
-        TCP_sock:send(unpack(lag_q:pop()))
-      end
-      lagSeconds = (math.random() * (maxLagSeconds - minLagSeconds)) + minLagSeconds
-      lagCount = lagCount + 1
-      lagSeconds = lagSeconds + (lagIncrease * lagCount)
-      lastSendTime = love.timer.getTime()
-    end
+    local lagSeconds = (math.random() * (sendMaxLag - sendMinLag)) + sendMinLag
+    GAME.sendNetworkQueue:push(stringData, lagSeconds)
   end
   return true
 end
 
 -- Send a json message with the "J" type
 function json_send(obj)
-  local json = json.encode(obj)
-  logger.debug("Sending JSON: " .. json)
-  local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, json)
+  local jsonResult = nil
+  local status, errorString = pcall(
+    function()
+      jsonResult = json.encode(obj)
+    end
+  )
+  if status == false and error and type(errorString) == "string" then
+      error("Crash sending JSON: " .. table_to_string(obj) .. " with error: " .. errorString)
+  end
+  local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, jsonResult)
   return net_send(message)
 end
 
 -- Cleans up "stonermode" used for testing laggy sends
 function undo_stonermode()
-  while lag_q:len() ~= 0 do
-    TCP_sock:send(unpack(lag_q:pop()))
-  end
-  lastSendTime = nil
-  lagCount = 0
-  lagSeconds = minLagSeconds
+  GAME.sendNetworkQueue:clearAndProcess(processDataToSend)
+  GAME.receiveNetworkQueue:clearAndProcess(processDataToReceive)
   STONER_MODE = false
 end
 
@@ -138,7 +144,6 @@ function queue_message(type, data)
       error(loc("nt_msg_err", (data or "nil")))
     end
     if current_message.spectators then
-      spectator_list = current_message.spectators
       spectators_string = spectator_list_string(current_message.spectators)
       return
     end
@@ -215,7 +220,7 @@ end
 function send_error_report(errorData)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
-  if not TCP_sock:connect("18.188.43.50", 49569) then --for official server
+  if not TCP_sock:connect(consts.SERVER_LOCATION, 49569) then
     return false
   end
   TCP_sock:settimeout(0)
@@ -240,7 +245,12 @@ function do_messages()
   while true do
     local type, message, remaining = NetworkProtocol.getMessageFromString(leftovers, true)
     if type then
-      queue_message(type, message)
+      if not STONER_MODE then
+        queue_message(type, message)
+      else
+        local lagSeconds = (math.random() * (receiveMaxLag - receiveMinLag)) + receiveMinLag
+        GAME.receiveNetworkQueue:push({type, message}, lagSeconds)
+      end
       leftovers = remaining
     else
       break
@@ -250,8 +260,8 @@ function do_messages()
   return true
 end
 
-function request_game(name)
-  json_send({game_request = {sender = config.name, receiver = name}})
+function request_game(opponentName)
+  json_send({game_request = {sender = config.name, receiver = opponentName}})
 end
 
 function request_spectate(roomNr)

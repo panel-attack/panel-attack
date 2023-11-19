@@ -1,5 +1,6 @@
 -- TODO rename
 local FILENAME = "localization.csv"
+local consts = require("consts")
 
 -- Holds all the data for localizing the game
 Localization =
@@ -24,7 +25,7 @@ function Localization.get_language(self)
 end
 
 function Localization.refresh_global_strings(self)
-  join_community_msg = loc("join_community") .. "\ndiscord.panelattack.com"
+  join_community_msg = loc("join_community") .. "\ndiscord." .. consts.SERVER_LOCATION
 end
 
 function Localization.set_language(self, lang_code)
@@ -40,6 +41,8 @@ function Localization.set_language(self, lang_code)
     set_global_font(themes[config.theme].font.path, themes[config.theme].font.size)
   elseif config.language_code == "JP" then
     set_global_font("jp.ttf", 14)
+  elseif config.language_code == "TH" then
+    set_global_font("th.otf", 14)
   else
     set_global_font(nil, 12)
   end

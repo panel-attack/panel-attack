@@ -1099,13 +1099,13 @@ local function userIDMenu(button_idx)
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
   local userIDDirectories = FileUtil.getFilteredDirectoryItems("servers")
   local userIDClickMenu
-  local currentButton
+  local currentButtonIndex
 
   local function updateID()
     ret = {
       function()
         local updateIDRet = nil
-        local id = read_user_id_file(userIDDirectories[currentButton])
+        local id = read_user_id_file(userIDDirectories[currentButtonIndex])
         love.keyboard.setTextInput(true) -- enables user to type
         while true do
           local to_print = "Enter User ID (or paste from clipboard)"
@@ -1119,11 +1119,11 @@ local function userIDMenu(button_idx)
           variable_step(
             function()
               if this_frame_keys["escape"] then
-                updateIDRet = {userIDMenu, {currentButton}}
+                updateIDRet = {userIDMenu, {currentButtonIndex}}
               end
               if menu_return_once() then
-                write_user_id_file(id, userIDDirectories[currentButton])
-                updateIDRet = {userIDMenu, {currentButton}}
+                write_user_id_file(id, userIDDirectories[currentButtonIndex])
+                updateIDRet = {userIDMenu, {currentButtonIndex}}
               end
               if menu_backspace() then
                 -- Remove the last character.
@@ -1165,7 +1165,11 @@ local function userIDMenu(button_idx)
 
   userIDClickMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   for i = 1, #userIDDirectories do
-    userIDClickMenu:add_button(userIDDirectories[i], updateID, goEscape)
+    if userIDDirectories[i] == consts.SERVER_LOCATION then
+      userIDClickMenu:add_button("Main Server ID", updateID, goEscape)
+    else
+      userIDClickMenu:add_button(userIDDirectories[i], updateID, goEscape)
+    end
   end
   userIDClickMenu:add_button(loc("back"), exitSettings, exitSettings)
 
@@ -1179,7 +1183,7 @@ local function userIDMenu(button_idx)
     wait()
     variable_step(
       function()
-        currentButton = userIDClickMenu.active_idx
+        currentButtonIndex = userIDClickMenu.active_idx
         userIDClickMenu:update()
       end
     )

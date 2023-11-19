@@ -19,6 +19,17 @@ https://github.com/panel-attack/panel-attack/blob/beta/themes/Panel%20Attack%20M
 
 You can use the Ctrl+Shift+Alt+T shortcut to reload your theme configuration and graphics in the game.
 
+## Version
+Themes have a "version" variable that specifies that last version they were upgraded to use. Whenever you improve a theme, you should change this value to the latest version and fix any problems to get the maximum value and bug fixes out of your theme.
+
+Version: unspecified or 1  
+Lots of legacy values were used, scaling was broken etc. Exists only for backward compatibility.  
+Version: 2  
+Mostly worked, but had some positioning bugs and various offsets were in different coordinates and scales. Exists only for backward compatibility.  
+Version: 3  
+The current version. All on screen graphics that are associated with a player are positioned relative to the players stack in absolute screen coordinates.  
+All non player screen elements are positioned in absolute screen coordinates relative to the top left.  
+All example values in this document assume theme version 3. Please do not create themes using older versions as they may no longer be supported in the future!
 
 -----------------------------------------------------------
 
@@ -234,19 +245,26 @@ Image for the bottom border of the stack.
 Unlike stack, this needs to be opaque in order to obstruct panel vision when raising it to the top to "lock" the stack.  
 Width of this image always gets scaled to fit the stack width
 
-#### Health bar
+#### Multibar 
 
-The healthbar is being drawn to the side of the stack to indicate remaining invincibility frames
-The healthbar supports two different display modes, configured in the theme's config.json:
+The multibar is being drawn to the side of the stack to indicate remaining invincibility frames
+The multibar supports two different display modes, configured in the theme's config.json:
 ```
 "multibar_is_absolute": true,
 ```
-When set to false, the game will always fully fill up the multibar upon gaining invincibility frames.  
-The depletion speed depends on how many invincibility frames were gained.
-When set to true, the multibar will be filled up depending on how many invincibility frames were gained.
-The depletion speed is constant.
 
-##### Frame
+##### Absolute multibar
+
+When set to true, the multibar will be filled up depending on how many invincibility frames were gained.
+The depletion speed is constant.  
+
+##### Relative Multibar
+
+When set to false, each type of invincibility frame has its own maximum height.  
+When gained, the bar for the type always caps out and then depletes at a rate relative to how much invincibility frames were actually obtained.  
+There are plans to discontinue the relative multibar in the future, so please create new themes only with the absolute multibar.
+
+##### Multibar Frame
 
 Depending on which mode is chosen, different images will be used.  
 For an absolute multibar, use `healthbar_frame_1P_absolute`.  
@@ -260,13 +278,16 @@ Position and scale have to be configured separately in the config.json:
 "multibar_Scale": 1,
 ```
 
+For absolute multibars, the y-offset refers to the bottom of the multibar, not the top.
+
 For a relative multibar, the compartment for health bar needs to be specified separately:
 ```
 "healthbar_frame_Pos": [-17, -4],
 "healthbar_frame_Scale": 1,
 ```
 
-For absolute multibars, the healthbar setting is obsolete as health will be part of the multibar.
+For absolute multibars, the healthbar setting is obsolete as health will be part of the multibar.  
+Absolute multibar is only supported for version 3 themes.  
 
 ##### Multibars
 
@@ -291,7 +312,7 @@ Match type refers to the `ranked` or `casual` image label.
 Configuration:
 ```
 "matchtypeLabel_Scale": 1,
-"matchtypeLabel_Pos": [-18, -34],
+"matchtypeLabel_Pos": [640, 60],
 ```
 
 ##### Time
@@ -301,9 +322,9 @@ Time itself is drawn from the `time_numbers` tile map.
 Configuration:
 ```
 "timeLabel_Scale": 1,
-"timeLabel_Pos": [-4, 2],
+"timeLabel_Pos": [640, -126],
 "time_Scale": 0.70,
-"time_Pos": [26, 26],
+"time_Pos": [640, 8],
 ```
 
 ##### Spectator position
@@ -312,14 +333,22 @@ Only the position is configurable here.
 Specifying an offscreen position effectively disables spectator display.
 Configuration:
 ```
-"spectators_Pos": [547, 460],
+"spectators_Pos": [546, 460],
 ```
 
 ##### Player names
 
-Only the position is configurable here:
+The position and font size of the player names are configurable:
 ```
-"name_Pos": [20, -30],
+"name_Pos": [184, -108],
+"name_Font_Size": 20,
+```
+
+##### Game Over text
+
+The position of the "game over" text.
+```
+"gameover_text_Pos": [640, 620],
 ```
 
 ##### Score
@@ -329,9 +358,9 @@ Score itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.
 Configuration:
 ```
 "scoreLabel_Scale": 1,
-"scoreLabel_Pos": [104, 25],
+"scoreLabel_Pos": [316, 64],
 "score_Scale": 0.5,
-"score_Pos": [116, 34],
+"score_Pos": [352, 88],
 ```
 
 ##### Speed
@@ -341,9 +370,9 @@ Speed itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.
 Configuration:
 ```
 "speedLabel_Scale": 1,
-"speedLabel_Pos": [104, 42],
+"speedLabel_Pos": [316, 122],
 "speed_Scale": 0.5,
-"speed_Pos": [116, 50],
+"speed_Pos": [352, 146],
 ```
 
 ##### Level
@@ -353,9 +382,9 @@ Level itself is drawn from the `level_numbers_1P` and `level_numbers_2P` tile ma
 Configuration:
 ```
 "levelLabel_Scale": 1,
-"levelLabel_Pos": [105, 58],
-"level_Pos": [112, 66],
+"levelLabel_Pos": [318, 0],
 "level_Scale": 1,
+"level_Pos": [340, 24],
 ```
 
 ##### Rating
@@ -365,9 +394,9 @@ Rating itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.
 Configuration:
 ```
 "ratingLabel_Scale": 1,
-"ratingLabel_Pos": [0, 140],
+"ratingLabel_Pos": [310, 180],
 "rating_Scale": 0.5,
-"rating_Pos": [38, 162],
+"rating_Pos": [354, 206],
 ```
 
 ##### Wins
@@ -377,10 +406,12 @@ Rating itself is drawn from the `numbers_1P` and `numbers_2P` tile maps.
 Configuration:
 ```
 "winLabel_Scale": 1,
-"winLabel_Pos": [10, 190],
+"winLabel_Pos": [318, -246],
 "win_Scale": 0.75,
-"win_Pos": [40, 212],
+"win_Pos": [260, -112],
 ```
+
+In the current default config the win label is offscreen to align the wincounts with the background overlay instead.
 
 ##### Moves
 
@@ -389,9 +420,9 @@ Move count itself is drawn from the `numbers_1P` tile map.
 Configuration:
 ```
 "moveLabel_Scale": 1,
-"moveLabel_Pos": [468, 170],
+"moveLabel_Pos": [312, 60],
 "move_Scale": 1,
-"move_Pos": [40, 34],
+"move_Pos": [354, 86],
 ```
 
 #### Fallback PopFX
@@ -464,6 +495,7 @@ While an incorrectly cased file may load on Windows, it will not on other operat
 
 All music has to be placed inside the `music` subdirectory.  
 
+`title_screen` and optionally `title_screen_start` for the title screen.  
 `main` and optionally `main_start` for all button menus.  
 `select_screen` and optionally `select_screen_start` for character selection.  
 If `main` exists but `select_screen` does not, `main` will play in character selection as well.
@@ -489,13 +521,13 @@ The value given should be a whole number.
 
 You may override the visible state configured in each character's/stage's configuration by providing respective files that explicitly state the visible mods.
 
-### characters.txt
+#### characters.txt
 
 If present, only characters listed in this file will show up in character selection.  
 Only characters listed in this file will be eligible for random selection.  
 Separate the IDs by new lines.
 
-##### stages.txt
+#### stages.txt
 
 If present, only stages listed in this file will show up in stage selection.  
 Only stages listed in this file will be eligible for random selection.  
