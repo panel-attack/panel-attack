@@ -43,8 +43,7 @@ function Carousel.createNavigationButtons(self)
       onClick = function()
         self:moveToNextPassenger(-1)
       end,
-      text = love.graphics.newText(self.font, "<"),
-      parent = self
+      text = love.graphics.newText(self.font, "<")
     })
   self.rightButton =
     CarouselButton({
@@ -52,9 +51,10 @@ function Carousel.createNavigationButtons(self)
       onClick = function()
         self:moveToNextPassenger(1)
       end,
-      text = love.graphics.newText(self.font, ">"),
-      parent = self
+      text = love.graphics.newText(self.font, ">")
     })
+  self:addChild(self.leftButton)
+  self:addChild(self.rightButton)
 end
 
 function Carousel.addPassenger(self, passenger)
