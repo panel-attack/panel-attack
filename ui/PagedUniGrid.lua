@@ -10,7 +10,6 @@ local function addNewPage(pagedUniGrid)
     gridHeight = pagedUniGrid.gridHeight
   })
   pagedUniGrid.pages[#pagedUniGrid.pages + 1] = grid
-  pagedUniGrid.currentPage = #pagedUniGrid.pages
   pagedUniGrid.lastFilledUnit = {x = 0, y = 0}
   pagedUniGrid:addChild(grid)
   pagedUniGrid.TYPE = "PagedUniGrid"
@@ -28,12 +27,12 @@ local PagedUniGrid = class(function(self, options)
   self.elements = {}
   self.pages = {}
   addNewPage(self)
+  self.currentPage = 1
 end, UiElement)
 
 function PagedUniGrid:addElement(element)
   if self.lastFilledUnit.x == self.gridWidth and self.lastFilledUnit.y == self.gridHeight then
     addNewPage(self)
-    self.currentPage = #self.pages
     self.lastFilledUnit.x = 0
     self.lastFilledUnit.y = 0
   end
@@ -48,7 +47,7 @@ function PagedUniGrid:addElement(element)
     self.lastFilledUnit.x = self.lastFilledUnit.x + 1
   end
 
-  self.pages[self.currentPage]:createElementAt(self.lastFilledUnit.x, self.lastFilledUnit.y, 1, 1, #self.elements, element)
+  self.pages[#self.pages]:createElementAt(self.lastFilledUnit.x, self.lastFilledUnit.y, 1, 1, #self.elements, element)
 end
 
 function PagedUniGrid:turnPage(sign)
