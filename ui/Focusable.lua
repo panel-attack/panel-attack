@@ -14,10 +14,11 @@ local function canBeFocused(table)
       error("Focusable UIElement of type " .. table.TYPE .. " doesn't implement input interpretation")
     end
   end
-  -- this function is implemented parent side cause the parent is expected to know about the children
-  -- but not necessarily vice versa
-  -- table.yieldFocus = function(parent, table)
-  --   parent.focused = nil
+
+  -- this function is implemented on the FocusDirector's side cause it is expected to know about what it is focusing
+  -- but the focused element probably does not know what is focusing it
+  -- table.yieldFocus = function(focusDirector, table)
+  --   focusDirector.focused = nil
   --   table.hasFocus = false
   -- end
 end

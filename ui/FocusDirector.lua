@@ -2,15 +2,15 @@
 
 local function directsFocus(table)
     table.focused = nil
-    table.setFocus = function(table, child)
+    table.setFocus = function(table, focusable)
       if table.focused then
         table.focused.hasFocus = false
       end
-      table.focused = child
-      if child then
-        child.hasFocus = true
-        child.yieldFocus = function()
-          child.hasFocus = false
+      table.focused = focusable
+      if focusable then
+        focusable.hasFocus = true
+        focusable.yieldFocus = function()
+          focusable.hasFocus = false
           table.focused = nil
         end
       end
