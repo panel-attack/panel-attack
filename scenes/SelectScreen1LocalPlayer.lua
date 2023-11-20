@@ -60,6 +60,14 @@ function SelectScreen1LocalPlayer:assignCallbacks()
       end
     end
 
+    self.ui.cursor.raise1Callback = function()
+      self.ui.characterGrid:turnPage(-1)
+    end
+
+    self.ui.cursor.raise2Callback = function()
+      self.ui.characterGrid:turnPage(1)
+    end
+
     -- ready button
     self.ui.readyButton.onClick = function ()
       self.matchSetup:setWantsReady(not self.matchSetup.players[1].wantsReady)
