@@ -122,6 +122,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
       replayDetails.P1_levelData = levelPresets.modern[replayDetails.P1_level]
     end
     P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, levelData = replayDetails.P1_levelData, character=replayDetails.P1_char, inputMethod=inputType1}
+    GAME.match:addPlayer(P1)
 
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
@@ -130,7 +131,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
         replayDetails.P2_levelData = levelPresets.modern[replayDetails.P2_level]
       end
       P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, levelData = replayDetails.P2_levelData, character=replayDetails.P2_char, inputMethod=inputType2}
-      
+
       P1:setGarbageTarget(P2)
       P1:setOpponent(P2)
       P2:setGarbageTarget(P1)
@@ -173,7 +174,6 @@ function Replay.loadFromFile(replay, wantsCanvas)
   end
 
   P1:receiveConfirmedInput(uncompress_input_string(replayDetails.in_buf))
-  GAME.match:addPlayer(P1)
   P1.do_countdown = replayDetails.do_countdown or false
   P1.max_runs_per_frame = 1
   P1.cur_wait_time = replayDetails.cur_wait_time or default_input_repeat_delay
