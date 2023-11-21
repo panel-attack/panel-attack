@@ -18,7 +18,11 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     self.ui.stageCarousel.onBackCallback = function()
-      self.ui.stageCarousel:setPassenger(self.matchSetup.players[1].stage)
+      self.ui.stageCarousel:setPassenger(config.stage)
+    end
+
+    self.ui.stageCarousel.onPassengerUpdateCallback = function ()
+      self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
     end
 
     -- panel carousel
@@ -27,7 +31,11 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     self.ui.panelCarousel.onBackCallback = function()
-      self.ui.panelCarousel:setPassenger(self.matchSetup.players[1].panelId)
+      self.ui.panelCarousel:setPassenger(config.panels)
+    end
+
+    self.ui.panelCarousel.onPassengerUpdateCallback = function ()
+      self.matchSetup:setPanels(self.ui.panelCarousel:getSelectedPassenger().id)
     end
 
     -- character grid

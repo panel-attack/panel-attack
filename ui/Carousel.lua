@@ -71,6 +71,7 @@ end
 function Carousel.moveToNextPassenger(self, directionSign)
   play_optional_sfx(themes[config.theme].sounds.menu_move)
   self.selectedId = wrap(1, self.selectedId + directionSign, #self.passengers)
+  self:onPassengerUpdate()
 end
 
 function Carousel.getSelectedPassenger(self)
@@ -81,6 +82,7 @@ function Carousel.setPassenger(self, passengerId)
   for i = 1, #self.passengers do
     if self.passengers[i].id == passengerId then
       self.selectedId = i
+      self:onPassengerUpdate()
     end
   end
 end
@@ -103,6 +105,12 @@ end
 -- drawPassenger should return the x,y,width,height the passenger takes up centered in the carousel
 function Carousel:drawPassenger()
   error("each specific carousel needs to draw its own specific passenger")
+end
+
+function Carousel:onPassengerUpdate()
+  if self.onPassengerUpdateCallback then
+    self:onPassengerUpdateCallback()
+  end
 end
 
 -- this should/may be overwritten by the parent
