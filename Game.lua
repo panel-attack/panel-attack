@@ -269,9 +269,7 @@ local function takeScreenshot()
   return true
 end
 
--- Called every few fractions of a second to update the game
--- dt is the amount of time in seconds that has passed.
-function Game:update(dt)
+function Game:updateMouseVisibility(dt)
   if love.mouse.getX() == self.last_x and love.mouse.getY() == self.last_y then
     if not self.pointer_hidden then
       if self.input_delta > consts.MOUSE_POINTER_TIMEOUT then
@@ -290,19 +288,9 @@ function Game:update(dt)
       love.mouse.setVisible(true)
     end
   end
+end
 
-  updateNetwork(dt)
-
-  if sceneManager.activeScene == nil then
-    leftover_time = leftover_time + dt
-  else
-    leftover_time = 0
-  end
-  
-  if self.backgroundImage then
-    self.backgroundImage:update(dt)
-  end
-  
+function Game:handleResize()
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
   if self.previousWindowWidth ~= newPixelWidth or self.previousWindowHeight ~= newPixelHeight then
     self:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
@@ -313,7 +301,27 @@ function Game:update(dt)
     end
     self.showGameScale = true
   end
-  
+end
+
+-- Called every few fractions of a second to update the game
+-- dt is the amount of time in seconds that has passed.
+function Game:update(dt)
+  self:updateMouseVisibility(dt)
+
+  updateNetwork(dt)
+
+  if sceneManager.activeScene == nil then
+    leftover_time = leftover_time + dt
+  else
+    leftover_time = 0
+  end
+
+  if self.backgroundImage then
+    self.backgroundImage:update(dt)
+  end
+
+  self:handleResize()
+
   if input.allKeys.isDown["f2"] or input.allKeys.isDown["printscreen"] then
     takeScreenshot()
   end
