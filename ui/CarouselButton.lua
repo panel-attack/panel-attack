@@ -4,18 +4,12 @@ local class = require("class")
 
 local CarouselButton = class(
   function(self, options)
-    self.containerHeight = options.containerHeight
     self.direction = options.direction
   end,
   Button
 )
 
--- x, width: x-offset and width of the passenger element
-function CarouselButton:draw(width)
-  if not self.isVisible then
-    return
-  end
-
+function CarouselButton:updatePosition(width)
   self.width = (self.parent.width - width) / 2
   self.height = self.parent.height
   if self.direction == "left" then
@@ -25,6 +19,14 @@ function CarouselButton:draw(width)
   else
     error("carousels only know left and right for their buttons")
   end
+end
+
+-- width: width of the passenger element
+function CarouselButton:draw()
+  if not self.isVisible then
+    return
+  end
+
   local boxOffsetX, boxOffsetY = self:getScreenPos()
   local textWidth, textHeight = self.text:getDimensions()
 

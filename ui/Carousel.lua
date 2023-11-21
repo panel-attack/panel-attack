@@ -91,10 +91,12 @@ function Carousel:draw()
   grectangle("line", x, y, self.width, self.height)
 
   local width = self:drawPassenger()
+  self.leftButton:updatePosition(width)
+  self.rightButton:updatePosition(width)
 
   if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
-    self.leftButton:draw(width)
-    self.rightButton:draw(width)
+    self.leftButton:draw()
+    self.rightButton:draw()
   end
 end
 
