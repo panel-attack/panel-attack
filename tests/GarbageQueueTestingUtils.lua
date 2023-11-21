@@ -40,7 +40,7 @@ end
 function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
   local battleRoom = BattleRoom()
   local match = Match("vs", battleRoom)
-  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, level=1, character=config.character, inputMethod="controller"}
+  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, level=1, levelData = LevelPresets.modern[1], character=config.character, inputMethod="controller"}
   P1.health = stackHealth or 100000
   P1.run = stackRunOverride
   P1.shouldRun = stackShouldRunOverride
