@@ -17,18 +17,18 @@ function calculateShakeData()
   local shakeCycles = {12, 12, 12, 10, 10, 10, 10} -- 0 spots, peaks are in between
   for currentCycle = 1, #shakeCycles do
     local cycleLength = shakeCycles[currentCycle]
-    local x = -math.pi
+    local x = math.pi / 2
     local step = math.pi * 2 / cycleLength
     for j = 1, cycleLength do
       local cosX = math.cos(x)
-      shake_arr[shake_idx] = (1 + cosX) / 2
+      shake_arr[shake_idx] = cosX
       x = x + step
       shake_idx = shake_idx + 1
     end
   end
   shake_arr[shake_idx] = 0
 
-  local maxAmplitude = 34
+  local maxAmplitude = 17
   local shake_step = maxAmplitude / (#shake_arr - 1)
   local shake_mult = maxAmplitude
   for i = 1, #shake_arr do
