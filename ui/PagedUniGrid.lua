@@ -15,6 +15,20 @@ local function addNewPage(pagedUniGrid)
   pagedUniGrid.TYPE = "PagedUniGrid"
 end
 
+local function goToPage(pagedUniGrid, pageNumber)
+  pagedUniGrid.currentPage = pageNumber
+  local elementsPerPage = pagedUniGrid.gridHeight * pagedUniGrid.gridWidth
+  for i = 1, #pagedUniGrid.elements do
+    if i <= pageNumber * elementsPerPage and i > (pageNumber - 1) * elementsPerPage then
+      -- is on current page
+      pagedUniGrid.elements[i]:setVisibility(true)
+    else
+      -- is not on current page
+      pagedUniGrid.elements[i]:setVisibility(false)
+    end
+  end
+end
+
 -- A paged uniform grid is a grid that only has grid elements of constant size
 -- elements are added left to right, top to bottom
 -- Once full, it creates however many pages are necessary to store all elements added to it
@@ -27,7 +41,7 @@ local PagedUniGrid = class(function(self, options)
   self.elements = {}
   self.pages = {}
   addNewPage(self)
-  self.currentPage = 1
+  goToPage(self, 1)
 end, UiElement)
 
 function PagedUniGrid:addElement(element)
@@ -51,7 +65,8 @@ function PagedUniGrid:addElement(element)
 end
 
 function PagedUniGrid:turnPage(sign)
-  self.currentPage = wrap(1, self.currentPage + math.sign(sign), #self.pages)
+  local newPageNumber = wrap(1, self.currentPage + math.sign(sign), #self.pages)
+  goToPage(self, newPageNumber)
 end
 
 function PagedUniGrid:draw()
