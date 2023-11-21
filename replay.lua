@@ -61,7 +61,7 @@ function Replay.replayCanBeViewed(replay)
     if replay.engineVersion < consts.ENGINE_VERSIONS.LEVELDATA then
       if replay.vs then
         -- before v048 there were no non-vs replays with level recorded
-        if replay.vs.P1_level == 11 or (replay.vs.P2_level and replay.vs.P2_level ~= 11) then
+        if replay.vs.P1_level == 11 or (replay.vs.P2_level and replay.vs.P2_level == 11) then
           -- if one of the players is playing on level 11, we can't view the replay
           return false
         end
