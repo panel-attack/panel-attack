@@ -1,5 +1,6 @@
 require("save")
 local GarbageQueueTestingUtils = {}
+local LevelPresets = require("LevelPresets")
 
 -- a reduced version of stackRun that skips on stuff like raise, health sfx, etc. as it's only meant to be on the receiving end of garbage
 local function stackRunOverride(self)

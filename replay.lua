@@ -159,17 +159,23 @@ function Replay.loadFromFile(replay, wantsCanvas)
 
   elseif replay.endless or replay.time then
     local inputMethod = (replayDetails.inputMethod) or "controller"
+    local args = {which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, inputMethod=inputMethod}
     if not replayDetails.levelData then
       if replayDetails.level then
         replayDetails.levelData = levelPresets.modern[replayDetails.level]
+        args.level = replayDetails.level
+        args.levelData = replayDetails.levelData
       else
         replayDetails.levelData = levelPresets.classic[replayDetails.difficulty]
+        args.difficulty = replayDetails.difficulty
+        args.levelData = replayDetails.levelData
       end
     end
     if replayDetails.speed then
       replayDetails.levelData.startingSpeed = replayDetails.speed
     end
-    P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, levelData=replayDetails.levelData, inputMethod=inputMethod}
+    P1 = Stack(args)
+    GAME.match:addPlayer(P1)
     P1:wait_for_random_character()
   end
 
