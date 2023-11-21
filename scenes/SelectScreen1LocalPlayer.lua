@@ -50,6 +50,10 @@ function SelectScreen1LocalPlayer:assignCallbacks()
       self.matchSetup:setLevel(self.ui.levelSlider.value)
     end
 
+    self.ui.levelSlider.onValueChange = function()
+      self.matchSetup:setLevel(self.ui.levelSlider.value)
+    end
+
     -- cursor
     self.ui.cursor.escapeCallback = function()
       if self.ui.cursor.selectedGridPos.x == 9 and self.ui.cursor.selectedGridPos.y == 6 then
