@@ -832,7 +832,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
-              local shake_time = garbage_to_shake_time[width * height]
+              local shake_time = self:shakeFramesForGarbageSize(width * height)
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
@@ -2243,7 +2243,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
   end
 
   self.garbageCreatedCount = self.garbageCreatedCount + 1
-  local shakeTime = garbage_to_shake_time[width * height]
+  local shakeTime = self:shakeFramesForGarbageSize(width * height)
 
   for row = originRow, originRow + height - 1 do
     if not self.panels[row] then
@@ -2584,4 +2584,28 @@ function Stack:getInfo()
   end
 
   return info
+end
+
+
+local garbageSizeToShakeFrames = {
+  [0] = 0,
+  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
+  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
+  66, 66, 66, 76
+}
+
+function Stack:shakeFramesForGarbageSize(size)
+  assert(size >= 0)
+  if size == 0 then
+    return 0
+  end
+  if size >= 24 then
+    return self:maxShakeTimePossible()
+  end
+  local result = garbageSizeToShakeFrames[size]
+  return result
+end
+
+function Stack:maxShakeTimePossible()
+  return 76
 end

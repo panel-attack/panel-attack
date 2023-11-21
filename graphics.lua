@@ -9,25 +9,31 @@ local ceil = math.ceil
 
 function calculateShakeData()
   local shake_arr = {}
-  -- Setup the shake_arr data used for rendering the stack shake animation
-  local shake_idx = -6
-  for i = 14, 6, -1 do
+  local shake_idx = 0
+  --local shakeCycles = {10, 24, 18, 6, 6, 6, 6} -- 0 spots, peaks are in between
+  -- The above is the actual peaks based on the shake data, but because its weird spacing it doesn't work.
+  -- If we want different curves for each type of shake we would need to track which shake type we are animating
+  -- and figure out transitioning from one to another
+  local shakeCycles = {12, 12, 12, 10, 10, 10, 10} -- 0 spots, peaks are in between
+  for currentCycle = 1, #shakeCycles do
+    local cycleLength = shakeCycles[currentCycle]
     local x = -math.pi
-    local step = math.pi * 2 / i
-    for j = 1, i do
-      shake_arr[shake_idx] = (1 + math.cos(x)) / 2
+    local step = math.pi * 2 / cycleLength
+    for j = 1, cycleLength do
+      local cosX = math.cos(x)
+      shake_arr[shake_idx] = (1 + cosX) / 2
       x = x + step
       shake_idx = shake_idx + 1
     end
   end
+  shake_arr[shake_idx] = 0
 
-  -- 1 -> 1
-  -- #shake -> 0
-  local shake_step = 1 / (#shake_arr - 1)
-  local shake_mult = 1
+  local maxAmplitude = 34
+  local shake_step = maxAmplitude / (#shake_arr - 1)
+  local shake_mult = maxAmplitude
   for i = 1, #shake_arr do
-    shake_arr[i] = shake_arr[i] * shake_mult
-    -- print(shake_arr[i])
+    shake_arr[i] = ceil(shake_arr[i] * shake_mult)
+    print(shake_arr[i])
     shake_mult = shake_mult - shake_step
   end
   return shake_arr
@@ -36,9 +42,13 @@ end
 local shakeOffsetData = calculateShakeData()
 
 function Stack:currentShakeOffset()
-  local shake_idx = #shakeOffsetData - self.shake_time
-  local shakeOffset = ceil((shakeOffsetData[shake_idx] or 0) * 13)
-  shakeOffset = ceil(shakeOffset / config.shakeReduction)
+  return self:shakeOffsetForShakeFrames(self.shake_time)
+end
+
+function Stack:shakeOffsetForShakeFrames(frames)
+  local shake_idx = #shakeOffsetData - frames
+  local shakeOffset = shakeOffsetData[shake_idx] or 0
+  --shakeOffset = ceil(shakeOffset / config.shakeReduction)
   return shakeOffset
 end
 
@@ -472,6 +482,12 @@ function Stack:drawDebug()
   end
 end
 
+function shouldFlashForFrame(frame)
+  local flashFrames = 1
+  flashFrames = 2 -- add config
+  return frame % (flashFrames * 2) < flashFrames
+end
+
 -- Renders the player's stack on screen
 function Stack.render(self)
   if self.canvas == nil then
@@ -521,14 +537,14 @@ function Stack.render(self)
   local metall_w, metall_h = metals.left:getDimensions()
   local metalr_w, metalr_h = metals.right:getDimensions()
 
-  local shake = self:currentShakeOffset()
+  local shakeOffset = self:currentShakeOffset() / GFX_SCALE
 
   -- Draw all the panels
   for row = 0, self.height do
     for col = 1, self.width do
       local panel = self.panels[row][col]
       local draw_x = 4 + (col - 1) * 16
-      local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
+      local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shakeOffset
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.isGarbage then
@@ -600,7 +616,7 @@ function Stack.render(self)
                 local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
                 draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
               end
-            elseif flash_time % 2 == 1 then
+            elseif shouldFlashForFrame(flash_time) == false then
               if panel.metal then
                 draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
                 draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
@@ -618,10 +634,10 @@ function Stack.render(self)
             local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
-            elseif flash_time % 2 == 1 then
+            elseif shouldFlashForFrame(flash_time) == false then
               draw_frame = 1
             else
-              draw_frame = 5
+              draw_frame = 5 -- flash
             end
           elseif panel.state == "popping" then
             draw_frame = 6
@@ -665,7 +681,7 @@ function Stack.render(self)
     graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
   end
   if wallImage then
-    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
+    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shakeOffset + self.height * 16)*GFX_SCALE, 288)
   end
 
   -- Draw the cursor
@@ -696,7 +712,7 @@ function Stack.render(self)
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.panelOriginX + (col - 1) * 16) * GFX_SCALE
-        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
+        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shakeOffset) * GFX_SCALE
 
         -- Require hovering over a stack to show details
         if mouseX >= self.panelOriginX * GFX_SCALE and mouseX <= (self.panelOriginX + self.width * 16) * GFX_SCALE then
@@ -987,7 +1003,7 @@ function Stack.render_cursor(self)
   end
 
   local cursorImage = self.theme.images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
-  local shake = self:currentShakeOffset()
+  local shakeOffset = self:currentShakeOffset() / GFX_SCALE
   local desiredCursorWidth = 40
   local panelWidth = 16
   local scale_x = desiredCursorWidth / cursorImage:getWidth()
@@ -1001,9 +1017,9 @@ function Stack.render_cursor(self)
   end
   if renderCursor then
     local xPosition = (self.cur_col - 1) * panelWidth
-    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shakeOffset, 0, scale_x, scale_y)
     if self.inputMethod == "touch" then
-      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shakeOffset, 0, scale_x, scale_y)
     end
   end
 end
