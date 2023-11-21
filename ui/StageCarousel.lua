@@ -48,7 +48,7 @@ function StageCarousel:loadCurrentStages()
   local randomStage = StageCarousel.createPassenger(random_stage_special_value, themes[config.theme].images.IMG_random_stage, loc("random"))
   self:addPassenger(randomStage)
 
-  self:setPassenger(config.character)
+  self:setPassenger(config.stage)
 end
 
 return StageCarousel

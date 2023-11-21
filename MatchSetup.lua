@@ -57,12 +57,12 @@ end
 function MatchSetup:updateLocalConfig(playerNumber)
   -- update config, does not redefine it
   local player = self.players[playerNumber]
-  config.character = player.selectedCharacter
-  config.stage = player.selectedStage
+  config.character = player.characterId
+  config.stage = player.stageId
   config.level = player.level
   config.inputMethod = player.inputMethod
   config.ranked = player.ranked
-  config.panels = player.panels_dir
+  config.panels = player.panelId
 end
 
 function MatchSetup:initializeLocalPlayer(playerNumber)
@@ -330,7 +330,11 @@ function MatchSetup:setMatchStage(stageId)
     -- we got one from the server
     self.stageId = StageLoader.resolveStageSelection(stageId)
   elseif self.mode.playerCount == 1 then
-    self.stageId = self.players[1].stage
+    if self.players[1].stageId == random_stage_special_value then
+      self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
+    else
+      self.stageId = self.players[1].stageId
+    end
   else
     self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
   end
@@ -384,7 +388,7 @@ function MatchSetup:createStacks()
       is_local = self.players[playerId].isLocal,
       panels_dir = self.players[playerId].panelId,
       level = self.players[playerId].level,
-      character = self.players[playerId].character,
+      character = self.players[playerId].characterId,
       player_number = playerId
     })
   end
