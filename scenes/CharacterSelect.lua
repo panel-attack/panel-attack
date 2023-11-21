@@ -140,7 +140,7 @@ function CharacterSelect:loadGrid()
     grid = self.ui.grid,
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
     translateSubGrids = true,
-    startPosition = {x = 1, y = 2},
+    startPosition = {x = 9, y = 2},
     playerNumber = 1
   })
   self.ui.cursor.escapeCallback = function()
