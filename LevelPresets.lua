@@ -336,6 +336,8 @@ classic.normal = {
   shockFrequency = 18,
   -- no metal panels in classic mode
   shockCap = 0,
+  -- game prep code and replay loading code needs to check for game mode and override
+  -- endless has only 5 colors on the lowest classic difficulty
   colors = 6,
   maxHealth = 1,
   stop = {

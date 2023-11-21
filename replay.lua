@@ -169,6 +169,9 @@ function Replay.loadFromFile(replay, wantsCanvas)
         replayDetails.levelData = levelPresets.classic[replayDetails.difficulty]
         args.difficulty = replayDetails.difficulty
         args.levelData = replayDetails.levelData
+        if args.difficulty == 1 and replay.endless then
+          args.levelData.colors = 5
+        end
       end
     end
     if replayDetails.speed then
