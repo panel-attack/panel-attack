@@ -14,7 +14,7 @@ Health =
     self.lastWasFourCombo = false -- Tracks if the last combo was a +4. If two +4s hit in a row, it only counts as 1 "line"
     self.clock = 0 -- Current clock time, this should match the opponent
     self.riseLevel = riseLevel -- The current level used to simulate "rise speed"
-    self.currentRiseSpeed = levelPresets.modern[self.riseLevel].startingSpeed -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
+    self.currentRiseSpeed = levelPresets.getModern(riseLevel).startingSpeed -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
   end
 )
 

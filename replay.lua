@@ -119,7 +119,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
     if not replayDetails.P1_levelData then
-      replayDetails.P1_levelData = levelPresets.modern[replayDetails.P1_level]
+      replayDetails.P1_levelData = levelPresets.getModern(replayDetails.P1_level)
     end
     P1 = Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, levelData = replayDetails.P1_levelData, character=replayDetails.P1_char, inputMethod=inputType1}
     GAME.match:addPlayer(P1)
@@ -128,7 +128,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
       if not replayDetails.P2_levelData then
-        replayDetails.P2_levelData = levelPresets.modern[replayDetails.P2_level]
+        replayDetails.P2_levelData = levelPresets.getModern(replayDetails.P2_level)
       end
       P2 = Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, levelData = replayDetails.P2_levelData, character=replayDetails.P2_char, inputMethod=inputType2}
 
@@ -162,11 +162,11 @@ function Replay.loadFromFile(replay, wantsCanvas)
     local args = {which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, inputMethod=inputMethod}
     if not replayDetails.levelData then
       if replayDetails.level then
-        replayDetails.levelData = levelPresets.modern[replayDetails.level]
+        replayDetails.levelData = levelPresets.getModern(replayDetails.level)
         args.level = replayDetails.level
         args.levelData = replayDetails.levelData
       else
-        replayDetails.levelData = levelPresets.classic[replayDetails.difficulty]
+        replayDetails.levelData = levelPresets.getClassic(replayDetails.difficulty)
         args.difficulty = replayDetails.difficulty
         args.levelData = replayDetails.levelData
         if args.difficulty == 1 and replay.endless then

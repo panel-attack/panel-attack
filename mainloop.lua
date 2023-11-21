@@ -409,9 +409,9 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
   local levelData
   if level then
-    levelData = levelPresets.modern[level]
+    levelData = levelPresets.getModern(level)
   else
-    levelData = levelPresets.classic[difficulty]
+    levelData = levelPresets.getClassic(difficulty)
     levelData.startingSpeed = speed
     if mode == "endless" and difficulty == 1 then
       levelData.colors = 5
@@ -1728,7 +1728,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
 
     GAME.match = Match("puzzle")
 
-    local levelData = levelPresets.modern[config.puzzle_level]
+    local levelData = levelPresets.getModern(config.puzzle_level)
     P1 = Stack{which=1, match=GAME.match, is_local=true, levelData = levelData, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
     GAME.match:addPlayer(P1)
     P1:wait_for_random_character()

@@ -12,21 +12,21 @@ Scores =
     self.version = currentVersion
 
     self.vsSelf = {}
-    for i = 1, #levelPresets.modern do
+    for i = 1, levelPresets.modernPresetCount do
       self.vsSelf[i] = {}
       self.vsSelf[i]["record"] = 0
       self.vsSelf[i]["last"] = 0
     end
 
     self.timeAttack1P = {}
-    for i = 1, #levelPresets.classic do
+    for i = 1, levelPresets.classicPresetCount do
       self.timeAttack1P[i] = {}
       self.timeAttack1P[i]["record"] = 0
       self.timeAttack1P[i]["last"] = 0
     end
 
     self.endless = {}
-    for i = 1, #levelPresets.classic do
+    for i = 1, levelPresets.classicPresetCount do
       self.endless[i] = {}
       self.endless[i]["record"] = 0
       self.endless[i]["last"] = 0

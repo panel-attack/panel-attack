@@ -410,4 +410,21 @@ classic.ex = {
 }
 classic[4] = classic.ex
 
-return {modern = modern, classic = classic}
+local LevelPresets = {}
+
+-- returns a deepcopy of the modern preset
+function LevelPresets.getModern(level)
+  assert(modern[level], "trying to load inexistent level preset" .. level)
+  return deepcpy(modern[level])
+end
+
+LevelPresets.modernPresetCount = #modern
+
+function LevelPresets.getClassic(difficulty)
+  assert(classic[difficulty], "trying to load inexistent difficulty preset" .. difficulty)
+  return deepcpy(classic[difficulty])
+end
+
+LevelPresets.classicPresetCount = #classic
+
+return LevelPresets
