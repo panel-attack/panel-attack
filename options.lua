@@ -9,6 +9,47 @@ local fixedScaleIndex
 local found_themes = {}
 local utf8 = require("utf8")
 
+local function show_readme(menu, filename, returnIndex, startbottom)
+  GAME.backgroundImage = themes[config.theme].images.bg_readme
+  reset_filters()
+
+  local readme = read_txt_file(filename)
+  local text = love.graphics.newText(get_global_font(), readme)
+  local heightDiff = text:getHeight() - (canvas_height - 15)
+  local xOffset = 0
+  local yOffset = 0
+  local scrollStep = 14
+  if startbottom and heightDiff > 0 then
+    yOffset = heightDiff + (scrollStep - (heightDiff % scrollStep))
+  end
+  while true do
+    gfx_q:push({love.graphics.draw, {text, 15, 15, nil, nil, nil, xOffset, yOffset}})
+    wait()
+    local readmeRet = nil
+    variable_step(
+      function()
+        if menu_escape() or menu_enter() then
+          readmeRet = {menu, {returnIndex}}
+        elseif heightDiff > 0 then
+          if menu_up() then
+            yOffset = math.max(0, yOffset - scrollStep)
+          elseif menu_down() then
+            yOffset = math.min(heightDiff + (scrollStep - (heightDiff % scrollStep)), yOffset + scrollStep)
+          end
+        end
+        if menu_right() then
+          xOffset = math.max(0, xOffset + scrollStep)
+        elseif menu_left() then
+          xOffset = math.max(0, xOffset - scrollStep)
+        end
+      end
+    )
+    if readmeRet then
+      return unpack(readmeRet)
+    end
+  end
+end
+
 local function general_menu()
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -897,6 +938,10 @@ local function debug_menu(button_idx)
     end
     debugMenu:set_button_setting(3, config.debugShowServers and loc("op_on") or loc("op_off"))
   end
+  
+  local function readWarningsFile()
+    ret = {show_readme, {debug_menu, "warnings.txt", 4, true}}
+  end
 
   local function nextMenu()
     debugMenu:selectNextIndex()
@@ -914,6 +959,7 @@ local function debug_menu(button_idx)
   debugMenu:add_button(loc("op_debug"), update_debug, goEscape, update_debug, update_debug)
   debugMenu:add_button("VS Frames Behind", nextMenu, goEscape, decreaseVsFramesBehind, increaseVsFramesBehind)
   debugMenu:add_button("Show Debug Servers", update_debugServers, goEscape, update_debugServers, update_debugServers)
+  debugMenu:add_button("Read warnings.txt", readWarningsFile, goEscape, readWarningsFile, readWarningsFile)
   debugMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_debug(true)
   updateVsFramesBehind()
@@ -945,37 +991,7 @@ local function about_menu(button_idx)
   GAME.backgroundImage = themes[config.theme].images.bg_main
   local aboutMenu
 
-  local function show_readme(filename, returnIndex)
-    GAME.backgroundImage = themes[config.theme].images.bg_readme
-    reset_filters()
-
-    local readme = read_txt_file(filename)
-    local text = love.graphics.newText(get_global_font(), readme)
-    local heightDiff = text:getHeight() - (canvas_height - 15)
-    local offset = 0
-    local scrollStep = 14
-    while true do
-      gfx_q:push({love.graphics.draw, {text, 15, 15, nil, nil, nil, nil, offset}})
-      wait()
-      local readmeRet = nil
-      variable_step(
-        function()
-          if menu_escape() or menu_enter() then
-            readmeRet = {about_menu, {returnIndex}}
-          elseif heightDiff > 0 then
-            if menu_up() then
-              offset = math.max(0, offset - scrollStep)
-            elseif menu_down() then
-              offset = math.min(heightDiff + (scrollStep - (heightDiff % scrollStep)), offset + scrollStep)
-            end
-          end
-        end
-      )
-      if readmeRet then
-        return unpack(readmeRet)
-      end
-    end
-  end
+  
 
   local function show_themes_readme()
     if not love.filesystem.getInfo(Theme.themeDirectoryPath .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
@@ -988,27 +1004,27 @@ local function about_menu(button_idx)
       recursive_copy("default_data/themes", "themes")
     end
 
-    ret = {show_readme, {"readme_themes.md", 1}}
+    ret = {show_readme, {about_menu, "readme_themes.md", 1}}
   end
 
   local function show_characters_readme()
-    ret = {show_readme, {"readme_characters.md", 2}}
+    ret = {show_readme, {about_menu, "readme_characters.md", 2}}
   end
 
   local function show_stages_readme()
-    ret = {show_readme, {"readme_stages.md", 3}}
+    ret = {show_readme, {about_menu, "readme_stages.md", 3}}
   end
 
   local function show_panels_readme()
-    ret = {show_readme, {"readme_panels.txt", 4}}
+    ret = {show_readme, {about_menu, "readme_panels.txt", 4}}
   end
 
   local function show_attack_readme()
-    ret = {show_readme, {"readme_training.txt", 5}}
+    ret = {show_readme, {about_menu, "readme_training.txt", 5}}
   end
 
   local function show_installMods_readme()
-    ret = {show_readme, {"readme_installmods.md"}}
+    ret = {show_readme, {about_menu, "readme_installmods.md", 6}}
   end
 
   local function show_system_info()
