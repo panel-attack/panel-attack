@@ -862,6 +862,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
   for row = 1, self.height do
     for col = 1, self.width do
       panels[row][col].stateChanged = true
+      panels[row][col].shake_time = nil
     end
   end
 end
