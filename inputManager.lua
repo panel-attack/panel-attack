@@ -209,7 +209,7 @@ function inputManager:updateSystemKeys()
   -- systemKey
   self.isDown["SystemKey"] = self.isDown["Alt"] and self.isDown["Ctrl"] and self.isDown["Shift"]
   self.isUp["SystemKey"] = self.isUp["Alt"] and self.isUp["Ctrl"] and self.isUp["Shift"]
-  self.isPressed["SystemKey"] = math.min(self.isPressed["Alt"] or 0xFFFFFFFF, self.isPressed["Ctrl"] or 0xFFFFFFFF, self.isPressed["Shift"] or 0xFFFFFFFF)
+  self.isPressed["SystemKey"] = self.isPressed["Alt"] and self.isPressed["Ctrl"] and self.isPressed["Shift"]
   if self.isPressed["SystemKey"] == 0xFFFFFFFF then
     self.isPressed["SystemKey"] = nil
   end
