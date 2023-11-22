@@ -160,3 +160,20 @@ local function testNewThemeOffsetPlayer2()
 end
 
 test(testNewThemeOffsetPlayer2)
+
+local function testShakeOffset()
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
+  match.seed = 1
+  local stack = match.P2
+
+  assert(stack:shakeOffsetForShakeFrames(76, 76) == 0)
+  assert(stack:shakeOffsetForShakeFrames(73, 76) == -16)
+  assert(stack:shakeOffsetForShakeFrames(1, 76) == 1)
+  assert(stack:shakeOffsetForShakeFrames(0, 76) == 0)
+
+  assert(stack:shakeOffsetForShakeFrames(18, 18) == 0)
+  assert(stack:shakeOffsetForShakeFrames(15, 18) == -3)
+  assert(stack:shakeOffsetForShakeFrames(0, 18) == 0)
+end
+
+test(testShakeOffset)

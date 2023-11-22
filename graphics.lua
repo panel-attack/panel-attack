@@ -7,49 +7,83 @@ local floor = math.floor
 local ceil = math.ceil
 
 
-function calculateShakeData()
-  local shake_arr = {}
-  local shake_idx = 0
-  --local shakeCycles = {10, 24, 18, 6, 6, 6, 6} -- 0 spots, peaks are in between
-  -- The above is the actual peaks based on the shake data, but because its weird spacing it doesn't work.
-  -- If we want different curves for each type of shake we would need to track which shake type we are animating
-  -- and figure out transitioning from one to another
-  local shakeCycles = {12, 12, 12, 10, 10, 10, 10} -- 0 spots, peaks are in between
-  for currentCycle = 1, #shakeCycles do
-    local cycleLength = shakeCycles[currentCycle]
+function calculateShakeData(maxShakeFrames, maxAmplitude)
+  local shakeData = {}
+  shakeData.maxFrames = maxShakeFrames
+  shakeData.offsets = {}
+
+  local shakeCycleFrames = shakeCycleArrayForFrames(maxShakeFrames)
+
+  local insertIndex = 0
+  for currentCycle = 1, #shakeCycleFrames do
+    local cycleLength = shakeCycleFrames[currentCycle]
     local x = math.pi / 2
     local step = math.pi * 2 / cycleLength
     for j = 1, cycleLength do
       local cosX = math.cos(x)
-      shake_arr[shake_idx] = cosX
+      shakeData.offsets[insertIndex] = cosX
       x = x + step
-      shake_idx = shake_idx + 1
+      insertIndex = insertIndex + 1
     end
   end
-  shake_arr[shake_idx] = 0
+  shakeData.offsets[insertIndex] = 0
 
-  local maxAmplitude = 17
-  local shake_step = maxAmplitude / (#shake_arr - 1)
+  if config.shakeReduction > 1 then
+    maxAmplitude = maxAmplitude / config.shakeReduction
+  end
+  
+  local shake_step = maxAmplitude / (#shakeData.offsets - 1)
   local shake_mult = maxAmplitude
-  for i = 1, #shake_arr do
-    shake_arr[i] = ceil(shake_arr[i] * shake_mult)
-    print(shake_arr[i])
+  for i = 0, #shakeData.offsets do
+    shakeData.offsets[i] = ceil(math.round(shakeData.offsets[i], 4) * shake_mult)
+    -- print(shakeData.offsets[i])
     shake_mult = shake_mult - shake_step
   end
-  return shake_arr
+  return shakeData
 end
 
-local shakeOffsetData = calculateShakeData()
+function shakeCycleArrayForFrames(frames)
+  local shakeCycleFrames = {}
+  local remainingFrames = frames
+  while remainingFrames > 0 do
+    if remainingFrames >= 12 then
+      shakeCycleFrames[#shakeCycleFrames+1] = 12
+      remainingFrames = remainingFrames - 12
+    else 
+      shakeCycleFrames[#shakeCycleFrames+1] = remainingFrames
+      remainingFrames = 0
+    end
+  end
+  return shakeCycleFrames
+end
+
+local shakeOffsetData = {}
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(76, 17)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(66, 15)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(42, 9)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(24, 5)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(18, 4)
 
 function Stack:currentShakeOffset()
-  return self:shakeOffsetForShakeFrames(self.shake_time)
+  return self:shakeOffsetForShakeFrames(self.shake_time, self.peak_shake_time)
 end
 
-function Stack:shakeOffsetForShakeFrames(frames)
-  local shake_idx = #shakeOffsetData - frames
-  local shakeOffset = shakeOffsetData[shake_idx] or 0
-  --shakeOffset = ceil(shakeOffset / config.shakeReduction)
-  return shakeOffset
+function Stack:shakeOffsetForShakeFrames(frames, maxShakeFrames)
+  assert(frames <= maxShakeFrames)
+  if frames <= 0 then
+    return 0
+  end
+
+  for _, shakeData in ipairs(shakeOffsetData) do
+    local maxFrames = shakeData.maxFrames
+    if maxFrames <= maxShakeFrames then
+      local offsetData = shakeData.offsets
+      local lookupIndex = #offsetData - frames
+      return offsetData[lookupIndex] or 0
+    end
+  end
+  assert(false, "couldn't find shake data for total shake of " .. maxShakeFrames)
+  return 0
 end
 
 -- Provides the X origin to draw an element of the stack
@@ -1093,16 +1127,10 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   end
 
   -- Shake bar
-  if shake_time == 0 or self.maxShake == nil then
-    self.maxShake = 0
-  end
-  if shake_time > self.maxShake then
-    self.maxShake = shake_time
-  end
 
   local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
-  if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-    multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
+  if self.peak_shake_time > 0 and shake_time >= self.pre_stop_time + stop_time then
+    multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.peak_shake_time) * 3
   end
   if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
     multi_stop_bar = stop_time * (self.theme.images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5

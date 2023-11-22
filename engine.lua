@@ -239,6 +239,7 @@ Stack =
 
     s.shake_time = 0
     s.shake_time_on_frame = 0
+    s.peak_shake_time = 0
 
     s.prev_states = {}
 
