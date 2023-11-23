@@ -1,4 +1,5 @@
 local utf8 = require("utf8Additions")
+local tableUtils = require("tableUtils")
 local pairs = pairs
 local type, setmetatable, getmetatable = type, setmetatable, getmetatable
 
@@ -37,7 +38,7 @@ end
 -- this is a dedicated method to use for dictionaries for technical reasons
 function pairsSortedByKeys(tab)
   -- these are already sorted
-  local keys = table.getKeys(tab)
+  local keys = tableUtils.getKeys(tab)
   local vals = {}
   -- and then assign the values with the corresponding indexes
   for i = 1, #keys do
@@ -351,7 +352,7 @@ function json.isValid(str)
   local firstChar = utf8.sub(content, 1, 1)
   local lastChar = utf8.sub(content, length, length)
   -- early quit condition for clearly non-matching files
-  if not table.contains({"{", "["}, firstChar) or not table.contains({"}", "]"}, lastChar) then
+  if not tableUtils.contains({"{", "["}, firstChar) or not tableUtils.contains({"}", "]"}, lastChar) then
     return false
   end
 

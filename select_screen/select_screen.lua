@@ -1,5 +1,6 @@
 local logger = require("logger")
 local Replay = require("replay")
+local tableUtils = require("tableUtils")
 local graphics = require("select_screen.select_screen_graphics")
 require("SimulatedOpponent")
 
@@ -40,22 +41,22 @@ function refreshBasedOnOwnMods(player)
   -- Resolve the current character if it is random
   local function resolveRandomCharacter()
       if characters[player.character] == nil and player.selectedCharacter == random_character_special_value then
-        player.character = table.getRandomElement(characters_ids_for_current_theme)
+        player.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
       end
 
       if characters[player.character]:is_bundle() then
-        player.character = table.getRandomElement(characters[player.character].sub_characters)
+        player.character = tableUtils.getRandomElement(characters[player.character].sub_characters)
       end
   end
 
   -- Resolve the current stage if it is random
   local function resolveRandomStage()
     if player.selectedStage == random_stage_special_value and stages[player.stage] == nil then
-      player.stage = table.getRandomElement(stages_ids_for_current_theme)
+      player.stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
     end
 
     if stages[player.stage]:is_bundle() then
-      player.stage = table.getRandomElement(stages[player.stage].sub_stages)
+      player.stage = tableUtils.getRandomElement(stages[player.stage].sub_stages)
     end
   end
 
@@ -132,7 +133,7 @@ end
 -- to start before everything is for sure not going to change and everything is loaded.
 function select_screen.refreshReadyStates(self)
   for playerNumber = 1, #self.players do
-    self.players[playerNumber].ready = table.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
+    self.players[playerNumber].ready = tableUtils.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
   end
 end
 
@@ -270,7 +271,7 @@ function select_screen.change_stage(player, increment)
   -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and selectedStage=true
   local stages = shallowcpy(stages_ids_for_current_theme)
   stages[#stages + 1] = random_stage_special_value
-  local currentId = table.indexOf(stages, player.selectedStage)
+  local currentId = tableUtils.indexOf(stages, player.selectedStage)
   currentId = wrap(1, currentId + increment, #stages)
   player.selectedStage = stages[currentId]
   player.stage = StageLoader.resolveStageSelection(player.selectedStage)

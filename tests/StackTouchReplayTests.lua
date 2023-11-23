@@ -1,5 +1,5 @@
 local consts = require("consts")
-require("table_util")
+local tableUtils = require("tableUtils")
 
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
@@ -56,8 +56,8 @@ local function simpleTouchTest()
   assert(match.seed == 2521746)
   assert(match.P1.game_over_clock == 4347)
   assert(match.P1.difficulty == 1)
-  assert(table.length(match.P1.chains) == 1)
-  assert(table.length(match.P1.combos) == 3)
+  assert(tableUtils.length(match.P1.chains) == 1)
+  assert(tableUtils.length(match.P1.combos) == 3)
   assert(match.P1.analytic.data.destroyed_panels == 31)
   teardown()
 end

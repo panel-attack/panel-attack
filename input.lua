@@ -1,5 +1,6 @@
 require("util")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- The class that holds all input mappings and state
 -- TODO: move all state variables in here
@@ -260,7 +261,7 @@ function love.keypressed(key, scancode, rep)
       if P2 then
         stacks["P2"] = P2:toPuzzleInfo()
       end
-      if table.length(stacks) > 0 then
+      if tableUtils.length(stacks) > 0 then
         love.system.setClipboardText(json.encode(stacks))
         return true
       end

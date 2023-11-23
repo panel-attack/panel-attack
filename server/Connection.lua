@@ -1,8 +1,8 @@
 require("class")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 local NetworkProtocol = require("NetworkProtocol")
 
-require("table_util")
 local time = os.time
 local utf8 = require("utf8Additions")
 require("tests.utf8AdditionsTests")
@@ -94,7 +94,7 @@ function Connection:login(user_id)
     logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     local serverUnseenBans = self.server.database:getPlayerUnseenBans(self.player.publicPlayerID)
-    if table.length(serverNotices) > 0 or table.length(serverUnseenBans) > 0 then
+    if tableUtils.length(serverNotices) > 0 or tableUtils.length(serverUnseenBans) > 0 then
       local noticeString = ""
       for messageID, message in pairs(serverNotices) do
         noticeString = noticeString .. message .. "\n\n"

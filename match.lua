@@ -1,4 +1,5 @@
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -133,7 +134,7 @@ function Match:warningOccurred()
   local P1 = self.P1
   local P2 = self.P2
   
-  if (P1 and table.length(P1.warningsTriggered) > 0) or (P2 and table.length(P2.warningsTriggered) > 0) then
+  if (P1 and tableUtils.length(P1.warningsTriggered) > 0) or (P2 and tableUtils.length(P2.warningsTriggered) > 0) then
     return true
   end
   return false

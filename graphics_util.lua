@@ -1,6 +1,6 @@
 require("consts")
 local logger = require("logger")
-
+local tableUtils = require("tableUtils")
 
 -- Utility methods for drawing
 GraphicsUtil = { 
@@ -156,7 +156,7 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
   font_map = font_map or standard_pixel_font_map
   assert(quads ~= nil)
 
-  local atlasFrameCount = table.length(font_map)
+  local atlasFrameCount = tableUtils.length(font_map)
   local atlasWidth = atlas:getWidth()
   local atlasHeight = atlas:getHeight()
   local characterWidth = atlasWidth/atlasFrameCount
