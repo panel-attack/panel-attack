@@ -229,20 +229,10 @@ function GameBase:runGameOver()
     do_messages() -- recieve messages so we know if the next game is in the queue
   end
 
-  local leftSelectMenu = false -- Whether a message has been sent that indicates a match has started or the room has closed
-  if this_frame_messages then
-    for _, msg in ipairs(this_frame_messages) do
-      -- if a new match has started or the room is being closed, flag the left select menu variavle
-      if msg.match_start or replay_of_match_so_far or msg.leave_room then
-        leftSelectMenu = true
-      end
-    end
-  end
-
   -- if conditions are met, leave the game over screen
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   
-  if not self.transitioning and ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed) or leftSelectMenu) then
+  if not self.transitioning and ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed)) then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     setMusicFadePercentage(1) -- reset the music back to normal config volume
     if not self.keepMusic then

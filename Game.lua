@@ -13,6 +13,7 @@ local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local save = require("save")
 local fileUtils = require("FileUtils")
+local handleShortcuts = require("Shortcuts")
 local scenes = nil
 require("rich_presence.RichPresence")
 
@@ -235,43 +236,7 @@ function Game:runUnitTests()
   end
 end
 
-local function runSystemCommands()
-  -- toggle debug mode
-  if input.allKeys.isDown["d"] then
-    config.debug_mode = not config.debug_mode
-    return true
-  -- reload characters
-  elseif input.allKeys.isDown["c"] then
-    characters_reload_graphics()
-    return true
-  -- reload panels
-  elseif input.allKeys.isDown["p"] then
-    panels_init()
-    return true
-  -- reload stages
-  elseif input.allKeys.isDown["s"] then
-    stages_reload_graphics()
-    return true
-  -- reload themes
-  elseif input.allKeys.isDown["t"] then
-    themes[config.theme]:json_init()
-    themes[config.theme]:graphics_init()
-    themes[config.theme]:final_init()
-    return true
-  end
-end
-
-local function takeScreenshot()
-  local now = os.date("*t", to_UTC(os.time()))
-  local filename = "screenshot_" .. "v" .. config.version .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. ".png"
-  love.filesystem.createDirectory("screenshots")
-  love.graphics.captureScreenshot("screenshots/" .. filename)
-  return true
-end
-
--- Called every few fractions of a second to update the game
--- dt is the amount of time in seconds that has passed.
-function Game:update(dt)
+function Game:updateMouseVisibility(dt)
   if love.mouse.getX() == self.last_x and love.mouse.getY() == self.last_y then
     if not self.pointer_hidden then
       if self.input_delta > consts.MOUSE_POINTER_TIMEOUT then
@@ -290,22 +255,11 @@ function Game:update(dt)
       love.mouse.setVisible(true)
     end
   end
+end
 
-  updateNetwork(dt)
-
-  if sceneManager.activeScene == nil then
-    leftover_time = leftover_time + dt
-  else
-    leftover_time = 0
-  end
-  
-  if self.backgroundImage then
-    self.backgroundImage:update(dt)
-  end
-  
-  local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
-  if self.previousWindowWidth ~= newPixelWidth or self.previousWindowHeight ~= newPixelHeight then
-    self:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+function Game:handleResize(newWidth, newHeight)
+  if self.previousWindowWidth ~= newWidth or self.previousWindowHeight ~= newHeight then
+    self:updateCanvasPositionAndScale(newWidth, newHeight)
     if self.match then
       self.needsAssetReload = true
     else
@@ -313,21 +267,15 @@ function Game:update(dt)
     end
     self.showGameScale = true
   end
-  
-  if input.allKeys.isDown["f2"] or input.allKeys.isDown["printscreen"] then
-    takeScreenshot()
-  end
+end
 
-  if DEBUG_ENABLED and input.allKeys.isDown["f5"] then
-    if sceneManager.activeScene.name == "DesignHelper" then
-      package.loaded["scenes.DesignHelper"] = nil
-      sceneManager.activeScene = require("scenes.DesignHelper")
-      sceneManager.activeScene:load()
-    end
-  end
-
-  if input.isPressed["SystemKey"] then
-    runSystemCommands()
+-- Called every few fractions of a second to update the game
+-- dt is the amount of time in seconds that has passed.
+function Game:update(dt)
+    if sceneManager.activeScene == nil then
+    leftover_time = leftover_time + dt
+  else
+    leftover_time = 0
   end
 
   if coroutine.status(self.setupCoroutineObject) ~= "dead" then
@@ -338,10 +286,14 @@ function Game:update(dt)
     elseif not status then
       self.crashTrace = debug.traceback(self.setupCoroutineObject)
       error(err)
+    else
+      return
     end
-  elseif input.isDown["return"] and input.isDown["Alt"] then
-      love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
-  elseif sceneManager.activeScene then
+  end
+
+  updateNetwork(dt)
+
+  if sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
     -- update transition to use draw priority queue
     if sceneManager.isTransitioning then
@@ -353,13 +305,14 @@ function Game:update(dt)
     error("No active scene and no active transition")
   end
 
-  if self.server_queue and self.server_queue:size() > 0 then
-    logger.trace("Queue Size: " .. self.server_queue:size() .. " Data:" .. self.server_queue:to_short_string())
+  if self.backgroundImage then
+    self.backgroundImage:update(dt)
   end
-  this_frame_messages = {}
 
+  self:updateMouseVisibility(dt)
   update_music()
   self.rich_presence:runCallbacks()
+  handleShortcuts()
 end
 
 function Game:switchToStartScene()

@@ -108,7 +108,6 @@ function love.update(dt)
   buttonManager.update()
   inputFieldManager.update()
 
-
   GAME:update(dt)
 end
 
@@ -183,7 +182,6 @@ function love.quit()
 end
 
 function love.errorhandler(msg)
-
   if not love.window or not love.graphics or not love.event then
     return
   end
@@ -322,5 +320,10 @@ function love.errorhandler(msg)
       love.timer.sleep(0.1)
     end
   end
+end
 
+function love.resize(newWidth, newHeight)
+  if GAME then
+    GAME:handleResize()
+  end
 end

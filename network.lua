@@ -140,13 +140,8 @@ function queue_message(type, data)
     connection_up_time = connection_up_time + 1 --connection_up_time counts "E" messages, not seconds
   elseif type == NetworkProtocol.serverMessageTypes.jsonMessage.prefix then
     local current_message = json.decode(data)
-    this_frame_messages[#this_frame_messages + 1] = current_message
     if not current_message then
       error(loc("nt_msg_err", (data or "nil")))
-    end
-    if current_message.spectators then
-      spectators_string = spectator_list_string(current_message.spectators)
-      return
     end
     logger.debug("Queuing JSON: " .. dump(current_message))
     server_queue:push(current_message)

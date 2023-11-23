@@ -410,7 +410,7 @@ function MatchSetup:createStacks()
     stacks[2]:moveForPlayerNumber(2)
   end
 
-  if self.mode.stackInteraction == GameModes.StackInteraction.Versus then
+  if self.mode.stackInteraction == GameModes.StackInteraction.VERSUS then
     for i = 1, #stacks do
       for j = 1, #stacks do
         if i ~= j then
@@ -420,11 +420,11 @@ function MatchSetup:createStacks()
         end
       end
     end
-  elseif self.mode.stackInteraction == GameModes.StackInteraction.Self then
+  elseif self.mode.stackInteraction == GameModes.StackInteraction.SELF then
     for i = 1, #stacks do
       stacks[i]:setGarbageTarget(stacks[i])
     end
-  elseif self.mode.stackInteraction == GameModes.StackInteraction.AttackEngine then
+  elseif self.mode.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
     local attackEngine
     self:getAttackEngine()
     for i = 1, #stacks do
