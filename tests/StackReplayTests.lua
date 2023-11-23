@@ -1,5 +1,5 @@
-local tableUtils = require("tableUtils")
 local consts = require("consts")
+local tableUtils = require("tableUtils")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 
