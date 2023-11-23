@@ -1,4 +1,5 @@
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 local function sortByPopOrder(panelList, isGarbage)
   table.sort(panelList, function(a, b)
@@ -35,7 +36,7 @@ local function getMetalCount(panels)
 end
 
 local function isNewChainLink(matchingPanels)
-  return table.trueForAny(matchingPanels, function(panel)
+  return tableUtils.trueForAny(matchingPanels, function(panel)
     return panel.chaining
   end)
 end

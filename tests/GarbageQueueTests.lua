@@ -1,4 +1,5 @@
 local GarbageQueueTestingUtils = require("tests.GarbageQueueTestingUtils")
+local tableUtils = require("tableUtils")
 
 -- 150 frames
 local minTransferTime = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + GARBAGE_DELAY_LAND_TIME
@@ -17,7 +18,7 @@ local function testComboQueueing1()
   GarbageQueueTestingUtils.runToFrame(match, 470)
   GarbageQueueTestingUtils.sendGarbage(P1, 5, 1)
   GarbageQueueTestingUtils.runToFrame(match, 511)
-  assert(table.length(P1.later_garbage) == 1, "3 and 4 wide should've left telegraph together")
+  assert(tableUtils.length(P1.later_garbage) == 1, "3 and 4 wide should've left telegraph together")
   assert(P1.later_garbage[420 + minTransferTime], "3 wide should've managed to pass through telegraph in the shortest time possible")
   assert(P1.telegraph.garbage_queue:len() == 1, "5 wide should still be inside")
 end
