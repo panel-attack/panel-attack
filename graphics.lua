@@ -1064,21 +1064,12 @@ function Stack:drawRating()
   local roomRatings = match.room_ratings
   if config.debug_mode and roomRatings == nil then
     roomRatings = {{new = 1337}, {new = 2042}}
-    match.my_player_number = 1
-    match.op_player_number = 2
   end
-  if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) then
-    local playerNumber = match.my_player_number
-    if self.which == 2 then
-      playerNumber = match.op_player_number
-    end
-    if roomRatings[playerNumber] and roomRatings[playerNumber].new then
-      local rating_to_print = roomRatings[playerNumber].new
-      if type(rating_to_print) == "number" and rating_to_print > 0 then
-        self:drawLabel(self.theme.images["IMG_rating" .. self.id], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
-        self:drawNumber(rating_to_print, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
-      end
-    end
+  if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) and roomRatings[self.player_number] and
+      roomRatings[self.player_number].new and type(roomRatings[self.player_number].new) == "number"
+      and roomRatings[self.player_number].new > 0 then
+      self:drawLabel(self.theme.images["IMG_rating" .. self.id], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
+      self:drawNumber(roomRatings[self.player_number].new, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
   end
 end
 

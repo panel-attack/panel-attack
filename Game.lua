@@ -9,7 +9,6 @@ local class = require("class")
 local logger = require("logger")
 local sound = require("sound")
 local analytics = require("analytics")
-local manualGC = require("libraries.batteries.manual_gc")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
 local save = require("save")
@@ -200,7 +199,9 @@ function Game:createScenes()
     require("scenes.InputConfigMenu"),
     require("scenes.SetNameMenu"),
     require("scenes.OptionsMenu"),
-    require("scenes.SoundTest")
+    require("scenes.SoundTest"),
+    require("scenes.DesignHelper"),
+    require("scenes.VsSelfGame")
   }
 end
 
@@ -313,8 +314,16 @@ function Game:update(dt)
     self.showGameScale = true
   end
   
-  if input.isDown["f2"] or input.isDown["printscreen"] then
+  if input.allKeys.isDown["f2"] or input.allKeys.isDown["printscreen"] then
     takeScreenshot()
+  end
+
+  if DEBUG_ENABLED and input.allKeys.isDown["f5"] then
+    if sceneManager.activeScene.name == "DesignHelper" then
+      package.loaded["scenes.DesignHelper"] = nil
+      sceneManager.activeScene = require("scenes.DesignHelper")
+      sceneManager.activeScene:load()
+    end
   end
 
   if input.isPressed["SystemKey"] then
@@ -351,8 +360,6 @@ function Game:update(dt)
 
   update_music()
   self.rich_presence:runCallbacks()
-
-  manualGC(0.0001, nil, nil)
 end
 
 function Game:switchToStartScene()

@@ -10,7 +10,7 @@ local LevelSlider = class(
     self.max = #themes[config.theme].images.IMG_levels
     self.value = options.value and util.bound(self.min, options.value, self.max) or 5
     -- pixels per value change
-    self.tickLength = 11
+    self.tickLength = options.tickLength or 11
   end,
   Slider)
 
@@ -27,12 +27,20 @@ function LevelSlider:draw()
   local screenX, screenY = self:getScreenPos()
   for i, level_img in ipairs(themes[config.theme].images.IMG_levels) do
     local img = i <= self.value and 
-      themes[config.theme].images.IMG_levels[i] or 
+      themes[config.theme].images.IMG_levels[i] or
       themes[config.theme].images.IMG_levels_unfocus[i]
-    GAME.gfx_q:push({love.graphics.draw, {img, screenX + (i - 1) * self.tickLength, screenY, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0}})
+      if GAME.isDrawing then
+        love.graphics.draw(img, screenX + (i - 1) * self.tickLength, screenY, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0)
+      else
+        GAME.gfx_q:push({love.graphics.draw, {img, screenX + (i - 1) * self.tickLength, screenY, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0}})
+      end
   end
   local cursor_image = themes[config.theme].images.IMG_level_cursor
-  GAME.gfx_q:push({love.graphics.draw, {cursor_image, screenX + (self.value - 1 + .5) * self.tickLength, screenY + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0}})
+  if GAME.isDrawing then
+    love.graphics.draw(cursor_image, screenX + (self.value - 1 + .5) * self.tickLength, screenY + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0)
+  else
+    GAME.gfx_q:push({love.graphics.draw, {cursor_image, screenX + (self.value - 1 + .5) * self.tickLength, screenY + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0}})
+  end
   
   -- draw children
   UIElement.draw(self)

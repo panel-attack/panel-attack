@@ -39,6 +39,7 @@ config = {
     -- Debug mode flag
     debug_mode                    = false,
     debugShowServers              = false,
+    debugShowDesignHelper         = false,
     -- Show FPS in the top-left corner of the screen
     show_fps                      = false,
     -- Show ingame infos while playing the game
@@ -181,6 +182,9 @@ config = {
         end
         if type(read_data.debugShowServers) == "boolean" then
           configTable.debugShowServers = read_data.debugShowServers
+        end
+        if type(read_data.debugShowDesignHelper) == "boolean" then
+          configTable.debugShowDesignHelper = read_data.debugShowDesignHelper
         end
         if type(read_data.show_fps) == "boolean" then
           configTable.show_fps = read_data.show_fps
