@@ -2,6 +2,7 @@
 -- simulated for one minute without restorefromrollbackcopy and debugmode off
 
 local utf8 = require("utf8")
+local tableUtils = require("tableUtils")
 
 local function testPerformanceString(seconds)
   local confirmedInputsP1 = ""

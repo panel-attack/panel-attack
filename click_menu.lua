@@ -1,5 +1,6 @@
 local GraphicsUtil = require("graphics_util")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 CLICK_MENUS = {} -- All click menus currently showing in the game
 

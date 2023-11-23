@@ -2,7 +2,6 @@ local consts = require("consts")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 
-
 -- Utility methods for drawing
 GraphicsUtil = { 
   fontFile = nil,
@@ -411,7 +410,7 @@ local function privateMakeFont(fontPath, size)
   else
     f = love.graphics.newFont(size, hinting, dpi)
   end
-  local dpi2 = f:getDPIScale()
+
   return f
 end
 

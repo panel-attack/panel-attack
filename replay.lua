@@ -1,5 +1,6 @@
 local utf8 = require("utf8Additions")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -104,7 +105,6 @@ function Replay.loadFromFile(replay, wantsCanvas)
     assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
     local inputType1 = (replayDetails.P1_inputMethod) or "controller"
     GAME.match:addPlayer(Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1})
-
     if replayDetails.I and utf8.len(replayDetails.I)> 0 then
       assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
       local inputType2 = (replayDetails.P2_inputMethod) or "controller"
@@ -138,6 +138,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
   elseif replay.endless or replay.time then
     local inputMethod = (replayDetails.inputMethod) or "controller"
     GAME.match:addPlayer(Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod})
+    GAME.match.P1:wait_for_random_character()
     GAME.match.P1:wait_for_random_character()
   end
 

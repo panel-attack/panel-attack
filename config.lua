@@ -1,4 +1,4 @@
-json = require("dkjson")
+json = require("libraries.dkjson")
 local util = require("util")
 local consts = require("consts")
 require("Theme") -- needed for directory location

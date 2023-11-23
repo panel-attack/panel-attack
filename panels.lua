@@ -66,14 +66,25 @@ function panels_init()
   add_panels_from_dir_rec("panels")
   
   if #panels_ids == 0 or (config and not config.defaultPanelsCopied) then
-    config.defaultPanelsCopied = true
+    fileUtils.recursiveCopy("panels/__default", "panels/pacci")
     fileUtils.recursiveCopy("default_data/panels", "panels")
+    config.defaultPanelsCopied = true
     add_panels_from_dir_rec("panels")
+  end
+
+  -- temporary measure to deliver pacci to existing users
+  if not panels["pacci"] and os.time() < os.time({year = 2024, month = 1, day = 31}) then
+    recursive_copy("panels/__default", "panels/pacci")
+    add_panels_from_dir_rec("panels/pacci")
   end
 
   -- fix config panel set if it's missing
   if not config.panels or not panels[config.panels] then
-    config.panels = tableUtils.getRandomElement(panels_ids)
+    if panels["pacci"] then
+      config.panels = "pacci"
+    else
+      config.panels = tableUtils.getRandomElement(panels_ids)
+    end
   end
 
   for _, panel in pairs(panels) do

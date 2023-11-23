@@ -5,16 +5,15 @@ local inputManager = require("inputManager")
 local logger = require("logger")
 local consts = require("consts")
 
-
 require("developer")
 require("class")
 socket = require("socket")
-
 require("match")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
 require("util")
-
+local tableUtils = require("tableUtils")
+local fileUtils = require("FileUtils")
 require("globals")
 require("character_loader") -- after globals!
 require("stage_loader") -- after globals!
