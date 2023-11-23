@@ -1,6 +1,6 @@
 require("class")
 socket = require("socket")
-GAME = require("game")
+GAME = require("Game")
 require("match")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
