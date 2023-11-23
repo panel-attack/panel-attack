@@ -84,7 +84,7 @@ function OnlineVsGame:customLoad(sceneParams)
   end
   --]]
 
-  GAME.input:requestSingleInputConfigurationForPlayerCount(1)
+  -- GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
   -- Proceed to the game screen and start the game
   P1:starting_state()
