@@ -133,8 +133,8 @@ function MainMenu:load(sceneParams)
   StageLoader.clear()
   resetNetwork()
   GAME.battleRoom = nil
-  GAME.input:clearInputConfigurationsForPlayers()
-  GAME.input:requestPlayerInputConfigurationAssignments(1)
+  --GAME.input:clearInputConfigurationsForPlayers()
+  --GAME.input:requestPlayerInputConfigurationAssignments(1)
   reset_filters()
   match_type_message = ""
 end

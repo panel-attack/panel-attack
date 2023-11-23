@@ -1,4 +1,3 @@
-require("input")
 require("util")
 local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")

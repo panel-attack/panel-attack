@@ -2,17 +2,10 @@ require("consts")
 require("queue")
 require("server_queue")
 
--- keyboard assignment vars
-keys = {}
-this_frame_keys = {}
-this_frame_released_keys = {}
-this_frame_unicodes = {}
-this_frame_messages = {}
-
 server_queue = ServerQueue()
 
 score_mode = SCOREMODE_TA
- 
+
 GARBAGE_TELEGRAPH_TIME = 45 -- the amount of time the garbage stays in the telegraph after getting there from the attack animation
 GARBAGE_DELAY_LAND_TIME = 60 -- this is the amount of time after garbage leaves the telegraph before it can land on the opponent
 						  -- a higher value allows less rollback to happen and makes lag have less of an impact on the game

@@ -327,3 +327,18 @@ function love.resize(newWidth, newHeight)
     GAME:handleResize()
   end
 end
+
+function love.keypressed(key, scancode, rep)
+  logger.trace("key pressed: " .. key)
+  if scancode then
+    inputManager:keyPressed(key, scancode, rep)
+  end
+end
+
+function love.textinput(text)
+  inputFieldManager.textInput(text)
+end
+
+function love.keyreleased(key, unicode)
+  inputManager:keyReleased(key, unicode)
+end
