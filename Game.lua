@@ -291,6 +291,8 @@ function Game:update(dt)
     end
   end
 
+  updateNetwork(dt)
+
   if sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
     -- update transition to use draw priority queue
@@ -308,7 +310,6 @@ function Game:update(dt)
   end
 
   self:updateMouseVisibility(dt)
-  updateNetwork(dt)
   update_music()
   self.rich_presence:runCallbacks()
   handleShortcuts()
