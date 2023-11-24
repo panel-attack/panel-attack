@@ -4,6 +4,7 @@ local input = require("inputManager")
 local class = require("class")
 local Replay = require("replay")
 local logger = require("logger")
+local GameModes = require("GameModes")
 
 --@module puzzleGame
 -- Scene for a puzzle mode instance of the game
@@ -35,67 +36,6 @@ end
 
 function OnlineVsGame:customLoad(sceneParams)
   logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
-  --refreshBasedOnOwnMods(msg.opponent_settings)
-  --refreshBasedOnOwnMods(msg.player_settings)
-  --refreshBasedOnOwnMods(msg) -- for stage only, other data are meaningless to us
-  -- mainly for spectator mode, those characters have already been loaded otherwise
-  --current_stage = msg.stage
-  --CharacterLoader.wait()
-  --StageLoader.wait()
-  GAME.match = Match("vs", GAME.battleRoom)
-  GAME.match.supportsPause = false
-  local msg = sceneParams.msg
-  GAME.match.seed = self:getSeed(msg)
-  if match_type == "Ranked" then
-    GAME.match.room_ratings = self.currentRoomRatings
-    GAME.match.my_player_number = self.my_player_number
-    GAME.match.op_player_number = self.op_player_number
-  end
-
-  local is_local = true
-  --if GAME.battleRoom.spectating then
-  --  is_local = false
-  --end
-  GAME.match.P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
-  local P1 = GAME.match.P1
-  P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  GAME.match.P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
-  local P2 = GAME.match.P2
-  P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
-  P1:setOpponent(P2)
-  P1:setGarbageTarget(P2)
-  P2:setOpponent(P1)
-  P2:setGarbageTarget(P1)
-  P2:moveForPlayerNumber(2)
-  -- replay = Replay.createNewReplay(GAME.match)
-
-  --[[
-  if GAME.battleRoom.spectating and replay_of_match_so_far then --we joined a match in progress
-    for k, v in pairs(replay_of_match_so_far.vs) do
-      replay.vs[k] = v
-    end
-    P1:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.in_buf))
-    P2:receiveConfirmedInput(uncompress_input_string(replay_of_match_so_far.vs.I))
-    
-    replay_of_match_so_far = nil
-    --this makes non local stacks run until caught up
-    P1.play_to_end = true
-    P2.play_to_end = true
-  end
-  --]]
-
-  -- GAME.input:requestSingleInputConfigurationForPlayerCount(1)
-
-  -- Proceed to the game screen and start the game
-  P1:starting_state()
-  P2:starting_state()
-
-  --[[
-  local to_print = loc("pl_game_start") .. "\n" .. loc("level") .. ": " .. P1.level .. "\n" .. loc("opponent_level") .. ": " .. P2.level
-  if P1.play_to_end or P2.play_to_end then
-    to_print = loc("pl_spectate_join")
-  end
-  --]]
 end
 
 local function handleTaunt()
@@ -124,7 +64,7 @@ local function handleLeaveMessage()
   local messages = server_queue:pop_all_with("leave_room")
   for _, msg in ipairs(messages) do
     if msg.leave_room then -- lost room during game, go back to lobby
-      Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true, GAME.match, replay)
+      Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.match, replay)
 
       -- Show a message that the match connection was lost along with the average frames behind.
       local message = loc("ss_room_closed_in_game")
@@ -184,7 +124,7 @@ function OnlineVsGame:customRun()
 
   -- if not GAME.battleRoom.spectating then
   if GAME.match.P1.tooFarBehindError or GAME.match.P2.tooFarBehindError then
-    Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, 0, true, GAME.match, replay)
+    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.match, replay)
     GAME:clearMatch()
     json_send({leave_room = true})
     local ip = GAME.connected_server_ip
@@ -204,13 +144,13 @@ function OnlineVsGame:customRun()
 end
 
 function OnlineVsGame:customGameOverSetup()
-  json_send({game_over = true, outcome = GAME.match.battleRoom:matchOutcome()["outcome_claim"]})
+  json_send({game_over = true, outcome = GAME.match:getOutcome()["outcome_claim"]})
   self.maxDisplayTime = 8
   self.nextScene = "CharacterSelectOnline"
 end
 
 function OnlineVsGame:processGameResults()
-  local matchOutcome = GAME.match.battleRoom:matchOutcome()
+  local matchOutcome = GAME.match:getOutcome()
   if matchOutcome then
     local end_text = matchOutcome["end_text"]
     local winSFX = matchOutcome["winSFX"]
@@ -219,7 +159,7 @@ function OnlineVsGame:processGameResults()
       GAME.battleRoom.playerWinCounts[outcome_claim] = GAME.battleRoom.playerWinCounts[outcome_claim] + 1
     end
     
-    Replay.finalizeAndWriteVsReplay(GAME.match.battleRoom, outcome_claim, false, GAME.match, replay)
+    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, outcome_claim, false, GAME.match, replay)
   
     --[[if GAME.battleRoom.spectating then
       -- next_func, text, winnerSFX, timemax, keepMusic, args

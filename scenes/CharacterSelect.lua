@@ -102,6 +102,7 @@ function CharacterSelect:loadStandardButtons()
     outlineColor = {1, 1, 1, 1},
     onClick = function()
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      GAME.battleRoom = nil
       sceneManager:switchToScene("MainMenu")
     end
   })
@@ -202,7 +203,7 @@ function CharacterSelect:loadLevels(unitWidth)
 end
 
 function CharacterSelect:update()
-  self.matchSetup:update()
+  GAME.battleRoom:update()
   self.ui.cursor:receiveInputs()
   GAME.gfx_q:push({self.ui.grid.draw, {self.ui.grid}})
   GAME.gfx_q:push({self.ui.cursor.draw, {self.ui.cursor}})

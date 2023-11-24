@@ -8,6 +8,7 @@ local consts = require("consts")
 require("developer")
 require("class")
 socket = require("socket")
+require("localization")
 require("match")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
@@ -19,7 +20,6 @@ require("character_loader") -- after globals!
 require("stage_loader") -- after globals!
 local CustomRun = require("CustomRun")
 
-require("localization")
 require("queue")
 local save = require("save")
 local Game = require("Game")

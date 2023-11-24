@@ -1,5 +1,11 @@
 local utf8 = require("utf8Additions")
 local logger = require("logger")
+local GameModes = require("GameModes")
+local ReplayV1 = require("replayV1")
+local ReplayV2 = require("replayV2")
+local Player = require("Player")
+
+local REPLAY_VERSION = 2
 local tableUtils = require("tableUtils")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
@@ -10,46 +16,43 @@ class(
   )
 
 function Replay.createNewReplay(match)
-  local mode = match.mode
+  local battleRoom = match.battleRoom
   local result = {}
   result.engineVersion = VERSION
+  result.replayVersion = REPLAY_VERSION
+  result.seed = match.seed
+  result.ranked = match_type == "Ranked"
+  result.doCountdown = match.doCountdown or true
+  result.stage = match.stageId
+  result.gameMode = {
+    stackInteraction = battleRoom.mode.stackInteraction,
+    winCondition = battleRoom.mode.winCondition,
+    disallowAdjacentColors = battleRoom.mode.disallowAdjacentColors,
+    timeLimit = battleRoom.mode.timeLimit
+  }
 
-  result[mode] = {}
-  local modeReplay = result[mode]
-
-  modeReplay.seed = match.seed
-
-  if mode == "endless" or mode == "time" then
-    modeReplay.do_countdown = match.P1.do_countdown or false
-    modeReplay.speed = match.P1.speed
-    modeReplay.difficulty = match.P1.difficulty
-    modeReplay.cur_wait_time = match.P1.cur_wait_time or default_input_repeat_delay
-    modeReplay.in_buf = ""
-    modeReplay.inputMethod = match.P1.inputMethod
-  elseif mode == "vs" then
-    modeReplay.P = ""
-    modeReplay.O = ""
-    modeReplay.I = ""
-    modeReplay.Q = ""
-    modeReplay.in_buf = ""
-    modeReplay.P1_level = match.P1.level
-    modeReplay.P1_inputMethod = match.P1.inputMethod
-    modeReplay.P1_name = GAME.battleRoom.playerNames[1]
-    modeReplay.P1_char = match.P1.character
-    modeReplay.P1_char = match.P1.character
-    modeReplay.P1_cur_wait_time = match.P1.cur_wait_time
-    modeReplay.do_countdown = true
-    if match.P2 then
-      modeReplay.P2_level = match.P2.level
-      modeReplay.P2_inputMethod = match.P2.inputMethod
-      modeReplay.P2_name = GAME.battleRoom.playerNames[2]
-      modeReplay.P2_char = match.P2.character
-      modeReplay.P2_cur_wait_time = match.P2.cur_wait_time
-
-      modeReplay.P1_win_count = GAME.match.battleRoom.playerWinCounts[match.P1.player_number]
-      modeReplay.P2_win_count = GAME.match.battleRoom.playerWinCounts[match.P2.player_number]
+  result.players = {}
+  for i = 1, #battleRoom.players do
+    local player = battleRoom.players[i]
+    result.players[i] = {
+      name = player.name,
+      wins = player.wins,
+      publicId = player.publicId,
+      settings = {
+        characterId = player.settings.characterId,
+        panelId = player.settings.panelId,
+        levelData = player.settings.levelData,
+        inputMethod = player.settings.inputMethod
+      }
+    }
+    if player.settings.style == GameModes.Styles.MODERN then
+      result.players[i].settings.level = player.settings.level
+    else
+      result.players[i].settings.difficulty = player.settings.difficulty
+      result.players[i].settings.speed = player.settings.speed
     end
   end
+
   return result
 end
 
@@ -80,124 +83,80 @@ function Replay.loadFromPath(path)
     return true
 end
 
-function Replay.loadFromFile(replay, wantsCanvas)
-  assert(replay ~= nil)
-  local replayDetails
-  if replay.vs then
-    GAME.battleRoom = BattleRoom()
-    GAME.match = Match("vs", GAME.battleRoom)
-    replayDetails = replay.vs
-  elseif replay.endless or replay.time then
-    if replay.time then
-      GAME.match = Match("time")
+local function createMatchFromReplay(replay, wantsCanvas)
+  local battleRoom
+
+  if replay.gameMode.stackInteraction == GameModes.StackInteraction.VERSUS then
+    if #replay.players == 2 then
+      battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS, replay)
     else
-      GAME.match = Match("endless")
+      error("There is no versus game mode for more or less than 2 players")
     end
-    replayDetails = replay.endless or replay.time
-  end
-
-  assert(replayDetails.seed, "invalid replay: seed must be set")
-  GAME.match.engineVersion = replay.engineVersion
-  GAME.match.seed = replayDetails.seed
-  GAME.match.isFromReplay = true
-
-  if replay.vs then
-    assert(replayDetails.P1_level, "invalid replay: player 1 level missing from vs replay")
-    local inputType1 = (replayDetails.P1_inputMethod) or "controller"
-    GAME.match:addPlayer(Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P1_level, character=replayDetails.P1_char, inputMethod=inputType1})
-    if replayDetails.I and utf8.len(replayDetails.I)> 0 then
-      assert(replayDetails.P2_level, "invalid replay: player 1 level missing from vs replay")
-      local inputType2 = (replayDetails.P2_inputMethod) or "controller"
-      GAME.match:addPlayer(Stack{which=2, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, level=replayDetails.P2_level, character=replayDetails.P2_char, inputMethod=inputType2})
-      
-      GAME.match.P1:setGarbageTarget(GAME.match.P2)
-      GAME.match.P1:setOpponent(GAME.match.P2)
-      GAME.match.P2:setGarbageTarget(GAME.match.P1)
-      GAME.match.P2:setOpponent(GAME.match.P1)
-      GAME.match.P2:moveForPlayerNumber(2)
-
-      if replayDetails.P1_win_count then
-        GAME.match.battleRoom.playerWinCounts[1] = replayDetails.P1_win_count
-        GAME.match.battleRoom.playerWinCounts[2] = replayDetails.P2_win_count
+  elseif replay.gameMode.stackInteraction == GameModes.StackInteraction.SELF then
+    if #replay.players == 1 then
+      battleRoom = BattleRoom(GameModes.ONE_PLAYER_VS_SELF, replay)
+    else
+      error("There is no versus self game mode for more than 1 player")
+    end
+  elseif replay.gameMode.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
+    if #replay.players == 1 then
+      battleRoom = BattleRoom(GameModes.ONE_PLAYER_TRAINING, replay)
+    else
+      error("There is no training game mode for more than 1 player")
+    end
+  elseif replay.gameMode.stackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
+    if #replay.players == 1 then
+      battleRoom = BattleRoom(GameModes.ONE_PLAYER_CHALLENGE, replay)
+    else
+      error("There is no challenge game mode for more than 1 player")
+    end
+  else -- if replay.gameMode.stackInteraction == GameModes.StackInteraction.NONE
+    if #replay.players == 1 then
+      if replay.gameMode.timeLimit then
+        battleRoom = BattleRoom(GameModes.ONE_PLAYER_TIME_ATTACK, replay)
+      else
+        battleRoom = BattleRoom(GameModes.ONE_PLAYER_ENDLESS, replay)
       end
     else
-      GAME.match.P1:setGarbageTarget(GAME.match.P1)
+      error("There is no time attack/endless game mode for more than 1 player")
     end
-
-    GAME.battleRoom.playerNames[1] = replayDetails.P1_name or loc("player_n", "1")
-    if GAME.match.P2 then
-      GAME.battleRoom.playerNames[2] = replayDetails.P2_name or loc("player_n", "2")
-    end
-
-    if replayDetails.ranked then
-      match_type = "Ranked"
-    else
-      match_type = "Casual"
-    end
-
-  elseif replay.endless or replay.time then
-    local inputMethod = (replayDetails.inputMethod) or "controller"
-    GAME.match:addPlayer(Stack{which=1, match=GAME.match, wantsCanvas=wantsCanvas, is_local=false, speed=replayDetails.speed, difficulty=replayDetails.difficulty, inputMethod=inputMethod})
-    GAME.match.P1:wait_for_random_character()
-    GAME.match.P1:wait_for_random_character()
   end
 
-  GAME.match.P1:receiveConfirmedInput(uncompress_input_string(replayDetails.in_buf))
-  GAME.match.P1.do_countdown = replayDetails.do_countdown or false
-  GAME.match.P1.max_runs_per_frame = 1
-  GAME.match.P1.cur_wait_time = replayDetails.cur_wait_time or default_input_repeat_delay
+  GAME.battleRoom = battleRoom
+  local match = battleRoom:createMatch()
 
-  refreshBasedOnOwnMods(GAME.match.P1)
+  match.isFromReplay = true
+  match.doCountdown = replay.doCountdown
+  match:setSeed(replay.seed)
+  match:setStage(replay.stageId)
 
-  if GAME.match.P2 then
-    GAME.match.P2:receiveConfirmedInput(uncompress_input_string(replayDetails.I))
-    GAME.match.P2.do_countdown = replayDetails.do_countdown or false
-    GAME.match.P2.max_runs_per_frame = 1
-    GAME.match.P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
-    refreshBasedOnOwnMods(GAME.match.P2)
+  return match
+end
+
+function Replay.loadFromFile(replay)
+  assert(replay ~= nil)
+  if not replay.replayVersion then
+    replay = ReplayV1.loadFromFile(replay)
+  else
+    replay = ReplayV2.loadFromFile(replay)
   end
-  CharacterLoader.wait()
-
-  GAME.match.P1:starting_state()
-
-  if GAME.match.P2 then
-    GAME.match.P2:starting_state()
-  end
+  return createMatchFromReplay(replay)
 end
 
 local function addReplayStatisticsToReplay(match, replay)
-  local r = replay[match.mode]
-  r.duration = match:gameEndedClockTime()
-  if match.mode == "vs" and match.P2 then
-    r.match_type = match_type
-    local p1GameResult = match.P1:gameResult()
-    if p1GameResult == 1 then
-      r.winner = match.P1.which
-    elseif p1GameResult == -1 then
-      r.winner = match.P2.which
-    elseif p1GameResult == 0 then
-      r.winner = 0
-    end
-  end
-  r.playerStats = {}
-  
-  if match.P1 then
-    r.playerStats[match.P1.which] = {}
-    r.playerStats[match.P1.which].number = match.P1.which
-    r.playerStats[match.P1.which] = match.P1.analytic.data
-    r.playerStats[match.P1.which].score = match.P1.score
-    if match.mode == "vs" and match.room_ratings then
-      r.playerStats[match.P1.which].rating = match.room_ratings[match.P1.which]
-    end
+  replay.duration = match:gameEndedClockTime()
+  local winner = match:getWinner()
+  if winner then
+    replay.winner = winner.publicId or winner.playerNumber
   end
 
-  if match.P2 then
-    r.playerStats[match.P2.which] = {}
-    r.playerStats[match.P2.which].number = match.P2.which
-    r.playerStats[match.P2.which] = match.P2.analytic.data
-    r.playerStats[match.P2.which].score = match.P2.score
-    if match.mode == "vs" and match.room_ratings then
-      r.playerStats[match.P2.which].rating = match.room_ratings[match.P2.which]
+  for i = 1, #match.players do
+    local stack = match.players[i].stack
+    local playerTable = replay.players[i]
+    playerTable.analytics = stack.analytic.data
+    playerTable.analytics.score = stack.score
+    if match.room_ratings and match.room_ratings[i] then
+      playerTable.analytics.rating = match.room_ratings[i]
     end
   end
 
@@ -229,12 +188,10 @@ end
 
 function Replay.finalizeReplay(match, replay)
   replay = addReplayStatisticsToReplay(match, replay)
-  replay[match.mode].in_buf = table.concat(match.P1.confirmedInput)
-  replay[match.mode].stage = current_stage
-  if match.P2 then
-    replay[match.mode].I = table.concat(match.P2.confirmedInput)
+  replay.stage = current_stage
+  for i = 1, #match.players do
+    replay.players[i].settings.inputs = compress_input_string(table.concat(match.players[i].stack.confirmedInput))
   end
-  Replay.compressReplay(replay)
 end
 
 function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame, match, replay)
@@ -274,24 +231,6 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
   end
 
   Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)
-end
-
-function Replay.compressReplay(replay)
-  if replay.puzzle then
-    replay.puzzle.in_buf = compress_input_string(replay.puzzle.in_buf)
-    logger.debug("Compressed puzzle in_buf")
-    logger.debug(replay.puzzle.in_buf)
-  end
-  if replay.endless then
-    replay.endless.in_buf = compress_input_string(replay.endless.in_buf)
-    logger.debug("Compressed endless in_buf")
-    logger.debug(replay.endless.in_buf)
-  end
-  if replay.vs then
-    replay.vs.I = compress_input_string(replay.vs.I)
-    replay.vs.in_buf = compress_input_string(replay.vs.in_buf)
-    logger.debug("Compressed vs I/in_buf")
-  end
 end
 
 -- writes a replay file of the given path and filename

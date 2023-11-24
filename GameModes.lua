@@ -3,6 +3,7 @@ local GameModes = {}
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
 local StackInteraction = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
+local WinCondition = { NONE = 0, GAME_OVER = 1, SCORE = 2, TIME = 3}
 
 local OnePlayerVsSelf = {
   playerCount = 1,
@@ -15,7 +16,13 @@ local OnePlayerVsSelf = {
   selectFile = FileSelection.NONE,
   selectColorRandomization = false,
   stackInteraction = StackInteraction.SELF,
-  scene = "VsSelfGame"
+  scene = "VsSelfGame",
+  richPresenceLabel = loc("mm_1_vs"),
+  -- temporary crutch until all checks for this are eliminated
+  matchMode = "vs",
+  winCondition = WinCondition.NONE,
+  doCountdown = true,
+  disallowAdjacentColors = true
 }
 
 local OnePlayerTimeAttack = {
@@ -30,7 +37,12 @@ local OnePlayerTimeAttack = {
   selectColorRandomization = false,
   stackInteraction = StackInteraction.NONE,
   scene = "TimeAttackGame",
-  matchMode = "time"
+  richPresenceLabel = loc("mm_1_time"),
+  matchMode = "time",
+  winCondition = WinCondition.NONE,
+  doCountdown = true,
+  timeLimit = 120,
+  disallowAdjacentColors = false
 }
 
 local OnePlayerEndless = {
@@ -45,7 +57,11 @@ local OnePlayerEndless = {
   selectColorRandomization = false,
   stackInteraction = StackInteraction.NONE,
   scene = "EndlessGame",
-  matchMode = "endless"
+  richPresenceLabel = loc("mm_1_endless"),
+  matchMode = "endless",
+  winCondition = WinCondition.NONE,
+  doCountdown = true,
+  disallowAdjacentColors = false
 }
 
 local OnePlayerTraining = {
@@ -59,7 +75,11 @@ local OnePlayerTraining = {
   selectFile = FileSelection.TRAINING,
   selectColorRandomization = false,
   stackInteraction = StackInteraction.ATTACK_ENGINE,
-  scene = "GameBase"
+  scene = "GameBase",
+  richPresenceLabel = loc("mm_1_training"),
+  winCondition = WinCondition.NONE,
+  doCountdown = true,
+  disallowAdjacentColors = true
 }
 
 local OnePlayerPuzzle = {
@@ -74,7 +94,11 @@ local OnePlayerPuzzle = {
   selectColorRandomization = true,
   stackInteraction = StackInteraction.NONE,
   scene = "PuzzleGame",
-  matchMode = "puzzle"
+  matchMode = "puzzle",
+  richPresenceLabel = loc("mm_1_puzzle"),
+  winCondition = WinCondition.NONE,
+  doCountdown = false,
+  disallowAdjacentColors = false
 }
 
 local OnePlayerChallenge = {
@@ -88,7 +112,11 @@ local OnePlayerChallenge = {
   selectFile = FileSelection.NONE,
   selectColorRandomization = false,
   stackInteraction = StackInteraction.HEALTH_ENGINE,
-  scene = "GameBase"
+  scene = "GameBase",
+  richPresenceLabel = loc("mm_1_challenge_mode"),
+  winCondition = WinCondition.GAME_OVER,
+  doCountdown = true,
+  disallowAdjacentColors = true
 }
 
 local TwoPlayerVersus = {
@@ -103,12 +131,17 @@ local TwoPlayerVersus = {
   selectFile = FileSelection.NONE,
   selectColorRandomization = false,
   stackInteraction = StackInteraction.VERSUS,
-  scene = "OnlineVsGame"
+  scene = "OnlineVsGame",
+  richPresenceLabel = loc("mm_2_vs"),
+  winCondition = WinCondition.GAME_OVER,
+  doCountdown = true,
+  disallowAdjacentColors = true
 }
 
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
 GameModes.StackInteraction = StackInteraction
+GameModes.WinCondition = WinCondition
 
 GameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
 GameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack

@@ -1,8 +1,15 @@
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
+local GameModes = require("GameModes")
+local Player = require("Player")
 
 local function puzzleTest()
-  local match = Match("puzzle") -- to stop rising
+  -- to stop rising
+  local battleRoom = BattleRoom(GameModes.ONE_PLAYER_PUZZLE)
+  local player = Player("P1", 1)
+  player.settings.level = 5
+  player.settings.inputMethod = "controller"
+  local match = battleRoom:createMatch()
   local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
   match:addPlayer(stack)
   stack.do_countdown = false

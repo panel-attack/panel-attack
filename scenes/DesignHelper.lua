@@ -13,7 +13,6 @@ local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local consts = require("consts")
 local GameModes = require("GameModes")
-local MatchSetup = require("MatchSetup")
 
 local DesignHelper = class(function(self, sceneParams)
   self:load(sceneParams)
@@ -25,7 +24,7 @@ sceneManager:addScene(DesignHelper)
 function DesignHelper:load()
   self.backgroundImg = themes[config.theme].images.bg_main
   self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
-  -- this is just for demo purposes, current character should always bind to the underlying matchsetup
+  -- this is just for demo purposes, current character should always bind to the underlying battleRoom
   self.selectedCharacter = Button({
     width = 96,
     height = 96,

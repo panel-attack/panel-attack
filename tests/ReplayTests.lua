@@ -2,6 +2,7 @@ local tableUtils = require("tableUtils")
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local Replay = require("replay")
+local GameModes = require("GameModes")
 
 
 local function endlessSaveTest()
@@ -11,7 +12,7 @@ local function endlessSaveTest()
   StackReplayTestingUtils:fullySimulateMatch(match)
 
   assert(match ~= nil)
-  assert(match.mode == "endless")
+  assert(match.mode == GameModes.ONE_PLAYER_ENDLESS)
   assert(match.seed == 1)
   assert(match.P1.game_over_clock == 908)
 

@@ -216,7 +216,7 @@ function stages_reload_graphics()
   -- reload the current stage graphics immediately
   if stages[current_stage] then
     stages[current_stage]:graphics_init(true, false)
-    if GAME and GAME.match then
+    if GAME and GAME.battleRoom and GAME.battleRoom.match then
       -- for reasons, this is not drawn directly from the stage but from background image
       -- so override this while in a match
       GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)

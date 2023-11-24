@@ -1,7 +1,6 @@
 local SelectScreen1LocalPlayer = require("scenes.SelectScreen1LocalPlayer")
 local sceneManager = require("scenes.sceneManager")
 local class = require("class")
-local MatchSetup = require("MatchSetup")
 local GameModes = require("GameModes")
 
 --@module CharacterSelectVsSelf
@@ -17,7 +16,7 @@ CharacterSelectVsSelf.name = "VsSelfMenu"
 sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)
-  self.matchSetup = MatchSetup(GameModes.ONE_PLAYER_VS_SELF)
+  GAME.battleRoom = BattleRoom(GameModes.ONE_PLAYER_VS_SELF)
   self:designScreen()
   self:assignCallbacks()
 end

@@ -43,9 +43,19 @@ local function handleCopy()
   local stacks = {}
   if GAME.match.P1 then
     stacks["P1"] = GAME.match.P1:toPuzzleInfo()
+    if GAME.battleRoom then
+      stacks["P1"]["Player"] = GAME.battleRoom.playerNames[GAME.match.P1.which]
+    else
+      stacks["P1"]["Player"] = config.name
+    end
   end
   if GAME.match.P2 then
     stacks["P2"] = GAME.match.P2:toPuzzleInfo()
+    if GAME.battleRoom then
+      stacks["P2"]["Player"] = GAME.battleRoom.playerNames[GAME.match.P2.which]
+    else
+      stacks["P2"]["Player"] = config.name
+    end
   end
   if tableUtils.length(stacks) > 0 then
     love.system.setClipboardText(json.encode(stacks))
@@ -58,6 +68,9 @@ local function handleDumpAttackPattern(playerNumber)
 
   if stack then
     local data, state = stack:getAttackPatternData()
+    if GAME.battleRoom then
+      data.extraInfo.playerName = GAME.battleRoom.playerNames[stack.which]
+    end
     saveJSONToPath(data, state, "dumpAttackPattern.json")
     return true
   end

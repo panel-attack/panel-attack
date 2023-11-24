@@ -10,6 +10,7 @@ local select_screen = require("select_screen.select_screen")
 local input = require("inputManager")
 local uiUtils = require("ui.uiUtils")
 local logger = require("logger")
+local GameModes = require("GameModes")
 
 --@module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
@@ -295,7 +296,7 @@ function Lobby:processServerMessages()
       return
     end
     if msg.create_room or msg.spectate_request_granted then
-      GAME.battleRoom = BattleRoom()
+      GAME.battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
       if msg.spectate_request_granted then
         if not self.requestedSpectateRoom then
           error("expected requested room")

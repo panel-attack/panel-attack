@@ -21,12 +21,12 @@ local function finishedMatchForPath(path)
 
   if GAME.match.P1 and GAME.match.P2 then
     local match = GAME.match
-    local matchOutcome = match.battleRoom:matchOutcome()
+    local matchOutcome = match:getOutcome()
     local lastClock = -1
     while matchOutcome == nil and lastClock ~= match.P1.clock do
       lastClock = match.P1.clock
       match:run()
-      matchOutcome = match.battleRoom:matchOutcome()
+      matchOutcome = match:getOutcome()
     end
 
     reset_filters()
