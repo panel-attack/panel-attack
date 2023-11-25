@@ -14,6 +14,7 @@ local GraphicsUtil = require("graphics_util")
 local fileUtils = require("FileUtils")
 local analytics = require("analytics")
 local class = require("class")
+local tableUtils = require("tableUtils")
 
 --@module optionsMenu
 -- Scene for the options menu
@@ -324,8 +325,97 @@ function OptionsMenu:load()
     }
   )
 
-  local graphicsMenuOptions = {
+  local function scaleSettingsChanged()
+    GAME.showGameScale = true
+    local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
+    local previousXScale = GAME.canvasXScale
+    GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
+    if previousXScale ~= GAME.canvasXScale then
+      GAME:refreshCanvasAndImagesForNewScale()
+    end
+  end
+
+  local fixedScaleData = {}
+  for _, value in ipairs(GAME.availableScales) do
+    fixedScaleData[#fixedScaleData+1] = {}
+    fixedScaleData[#fixedScaleData].value = value
+    fixedScaleData[#fixedScaleData].label = value
+  end
+  for index, value in ipairs(fixedScaleData) do
+    value.index = index
+  end
+  local function updateFixedScale(fixedScale)
+    assert(config.gameScaleType == "fixed")
+    config.gameScaleFixedValue = fixedScale
+    scaleSettingsChanged()
+  end
+
+  local fixedScaleButtonGroup = ButtonGroup(
+    {
+      buttons = tableUtils.map(fixedScaleData,
+        function(scaleType)
+          return Button({label = scaleType.label, translate = false})
+        end
+      ),
+      values = tableUtils.map(fixedScaleData,
+        function(scaleType)
+          return scaleType.value
+        end
+      ),
+      selectedIndex = tableUtils.first(fixedScaleData, function(scaleType) return scaleType.value == config.gameScaleFixedValue end).index or 1,
+      onChange = function(value) 
+        Menu.playMoveSfx() 
+        updateFixedScale(value)
+      end
+    }
+  )
+
+  local fixedScaleGroup = nil
+  function updateFixedButtonGroupVisibility()
+    local graphicsMenu = menus["graphicsMenu"]
+    if config.gameScaleType ~= "fixed" then
+      graphicsMenu:removeMenuItem(fixedScaleGroup[1].id)
+    else
+      if graphicsMenu:containsMenuItemID(fixedScaleGroup[1].id) == false then 
+        graphicsMenu:addMenuItem(3,fixedScaleGroup)
+      end
+    end
+  end
+
+  local scaleTypeData = {{value = "auto", label = "op_scale_auto"},
+                             {value = "fit", label = "op_scale_fit"},
+                             {value = "fixed", label = "op_scale_fixed"}}
+  for index, value in ipairs(scaleTypeData) do
+    value.index = index
+  end
+
+  local scaleButtonGroup = ButtonGroup(
+    {
+      buttons = tableUtils.map(scaleTypeData,
+        function(scaleType)
+          return Button({label = scaleType.label})
+        end
+      ),
+      values = tableUtils.map(scaleTypeData,
+        function(scaleType)
+          return scaleType.value
+        end
+      ),
+      selectedIndex = tableUtils.first(scaleTypeData, function(scaleType) return scaleType.value == config.gameScaleType end).index,
+      onChange = function(value) 
+        Menu.playMoveSfx() 
+        config.gameScaleType = value
+        updateFixedButtonGroupVisibility()
+        scaleSettingsChanged()
+      end
+    }
+  )
+
+  fixedScaleGroup = {Label({width = LABEL_WIDTH, label = "op_scale_fixed_value"}), fixedScaleButtonGroup}
+  graphicsMenuOptions = {
     {Label({width = LABEL_WIDTH, label = "op_theme"}), themeStepper},
+    {Label({width = LABEL_WIDTH, label = "op_scale"}), scaleButtonGroup},
+    fixedScaleGroup,
     {Label({width = LABEL_WIDTH, label = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
     {Label({width = LABEL_WIDTH, label = "op_popfx"}), createToggleButtonGroup("popfx")},
     {Label({width = LABEL_WIDTH, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
@@ -400,6 +490,7 @@ function OptionsMenu:load()
   for _, menu in pairs(menus) do
     menu:setVisibility(false)
   end
+  updateFixedButtonGroupVisibility()
   
   self:repositionMenus()
   
