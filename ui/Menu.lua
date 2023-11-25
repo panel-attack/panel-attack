@@ -108,7 +108,7 @@ function Menu:removeMenuItemAtIndex(index)
   return self:removeMenuItem(self.menuItems[index].id)
 end
 
-function Menu:removeMenuItem(menuItemId)
+function Menu:indexOfMenuItemID(menuItemId)
   local menuItemIndex = nil
   for i, menuItem in ipairs(self.menuItems) do
     if menuItemId == menuItem.id then
@@ -116,6 +116,15 @@ function Menu:removeMenuItem(menuItemId)
       break
     end
   end
+  return menuItemIndex
+end
+
+function Menu:containsMenuItemID(menuItemId)
+  return self:indexOfMenuItemID(menuItemId) ~= nil
+end
+
+function Menu:removeMenuItem(menuItemId)
+  local menuItemIndex = self:indexOfMenuItemID(menuItemId)
 
   if menuItemIndex == nil then
     return

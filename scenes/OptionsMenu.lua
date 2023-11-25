@@ -354,7 +354,7 @@ function OptionsMenu:load()
     {
       buttons = tableUtils.map(fixedScaleData,
         function(scaleType)
-          return Button({label = scaleType.label})
+          return Button({label = scaleType.label, translate = false})
         end
       ),
       values = tableUtils.map(fixedScaleData,
@@ -372,10 +372,13 @@ function OptionsMenu:load()
 
   local fixedScaleGroup = nil
   function updateFixedButtonGroupVisibility()
+    local graphicsMenu = menus["graphicsMenu"]
     if config.gameScaleType ~= "fixed" then
-      menus["graphicsMenu"]:removeMenuItem(fixedScaleGroup[1].id)
+      graphicsMenu:removeMenuItem(fixedScaleGroup[1].id)
     else
-      menus["graphicsMenu"]:addMenuItem(3,fixedScaleGroup)
+      if graphicsMenu:containsMenuItemID(fixedScaleGroup[1].id) == false then 
+        graphicsMenu:addMenuItem(3,fixedScaleGroup)
+      end
     end
   end
 
