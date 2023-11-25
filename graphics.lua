@@ -74,16 +74,18 @@ function Stack:shakeOffsetForShakeFrames(frames, maxShakeFrames)
     return 0
   end
 
-  for _, shakeData in ipairs(shakeOffsetData) do
+  local indexToUse = 1
+  for index, shakeData in ipairs(shakeOffsetData) do
     local maxFrames = shakeData.maxFrames
     if maxFrames <= maxShakeFrames then
-      local offsetData = shakeData.offsets
-      local lookupIndex = #offsetData - frames
-      return offsetData[lookupIndex] or 0
+      indexToUse = index
+      break
     end
   end
-  assert(false, "couldn't find shake data for total shake of " .. maxShakeFrames)
-  return 0
+
+  local offsetData = shakeOffsetData[indexToUse].offsets
+  local lookupIndex = #offsetData - frames
+  return offsetData[lookupIndex] or 0
 end
 
 -- Provides the X origin to draw an element of the stack

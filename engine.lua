@@ -2174,6 +2174,7 @@ function Stack.processPuzzleSwap(self)
       -- start depleting stop / shake time
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
+      self.peak_shake_time = self.shake_time
     end
     self.puzzle.remaining_moves = self.puzzle.remaining_moves - 1
   end
