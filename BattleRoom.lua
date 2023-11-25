@@ -130,6 +130,10 @@ function BattleRoom:updateLoadingState()
   end
 
   self.allAssetsLoaded = fullyLoaded
+
+  if not self.allAssetsLoaded then
+    self:startLoadingNewAssets()
+  end
 end
 
 function BattleRoom:refreshReadyStates()
@@ -214,6 +218,25 @@ end
 -- not player specific, so this gets a separate callback that can only be overwritten once
 -- so the UI can update and load up the different controls for it
 function BattleRoom.onStyleChanged(style, player)
+end
+
+function BattleRoom:startLoadingNewAssets()
+  if CharacterLoader.loading_queue:len() == 0 then
+    for i = 1, #self.players do
+      local playerSettings = self.players[i].settings
+      if not characters[playerSettings.characterId].fully_loaded then
+        CharacterLoader.load(playerSettings.characterId)
+      end
+    end
+  end
+  if StageLoader.loading_queue:len() == 0 then
+    for i = 1, #self.players do
+      local playerSettings = self.players[i].settings
+      if not stages[playerSettings.stageId].fully_loaded then
+        StageLoader.load(playerSettings.stageId)
+      end
+    end
+  end
 end
 
 function BattleRoom:update()
