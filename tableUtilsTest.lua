@@ -108,6 +108,56 @@ local function testTableFilterDict()
   logger.trace("passed test testTableFilterDict")
 end
 
+local function testTableFirstList()
+  local testData = getTestDataList()
+  local expected = {row = 2, column = 1, color = 3}
+
+  local firstItem =
+    tableUtils.first(
+    testData,
+    function(data)
+      return data.color == 3
+    end
+  )
+
+  assert(deep_content_equal(firstItem, expected))
+
+  logger.trace("passed test testTableFirstList")
+end
+
+local function testTableFirstDict()
+  local testData = getTestDataDict()
+  local expected = "330000"
+
+  local firstItem =
+    tableUtils.first(
+    testData,
+    function(value)
+      return value == "330000"
+    end
+  )
+  assert(deep_content_equal(firstItem, expected))
+
+  logger.trace("passed test testTableFirstDict")
+end
+
+
+local function testTableFirstEmptyDict()
+  local testData = getTestDataDict()
+  local expected = nil
+
+  local firstItem =
+    tableUtils.first(
+    testData,
+    function(value)
+      return value == "3412300"
+    end
+  )
+  assert(deep_content_equal(firstItem, expected))
+
+  logger.trace("passed test testTableFirstEmptyDict")
+end
+
 local function testTableTrueForAnyList()
   local testData = getTestDataList()
   assert(
@@ -378,6 +428,9 @@ testTableContainsDict()
 testTableContainsDictKeys()
 testTableFilterList()
 testTableFilterDict()
+testTableFirstList()
+testTableFirstDict()
+testTableFirstEmptyDict()
 testTableAppendToListEmpty()
 testTableAppendToList()
 testTableInsertListAt()

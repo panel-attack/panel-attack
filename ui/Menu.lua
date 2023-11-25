@@ -92,6 +92,7 @@ function Menu:updateMenuItemPositions(index)
 end
 
 function Menu:addMenuItem(index, menuItem)
+  assert(type(menuItem) == "table")
   if menuItem[2] then
     menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
     menuItem[1]:addChild(menuItem[2])
@@ -114,6 +115,10 @@ function Menu:removeMenuItem(menuItemId)
       menuItemIndex = i
       break
     end
+  end
+
+  if menuItemIndex == nil then
+    return
   end
 
   local menuItem = {table.remove(self.menuItems, menuItemIndex)}

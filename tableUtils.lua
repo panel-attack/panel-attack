@@ -36,6 +36,17 @@ function tableUtils.filter(tab, filter)
   end
 
   return filteredTable 
+end  
+
+-- returns the first element that fulfills the filter condition, or nil if none do
+function tableUtils.first(tab, filter) 
+  for key, value in pairs(tab) do
+    if filter(value) then
+      return value
+    end
+  end
+
+  return nil 
 end 
  
 -- returns true if the table contains at least one value that fulfills the condition, otherwise false 
