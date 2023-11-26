@@ -234,7 +234,10 @@ function Game:runUnitTests()
   coroutine.yield()
 
   logger.info("Running Unit Tests...")
-  require("tests.Tests")
+  local status, err = xpcall(function() require("tests.Tests") end, debug.traceback)
+  if not status then
+    error(err)
+  end
   -- Performance Tests
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
