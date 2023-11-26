@@ -8,7 +8,7 @@ local function puzzleTest()
   local battleRoom = BattleRoom(GameModes.ONE_PLAYER_PUZZLE)
   LocalPlayer.settings.level = 5
   local match = battleRoom:createMatch()
-  battleRoom:startMatch()
+  match:start()
   local stack = LocalPlayer.stack
 
   stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
@@ -31,11 +31,11 @@ local function clearPuzzleTest()
   local battleRoom = BattleRoom(GameModes.ONE_PLAYER_PUZZLE)
   LocalPlayer.settings.level = 5
   local match = battleRoom:createMatch()
+  match:start()
   local stack = LocalPlayer.stack
 
   stack:set_puzzle_state(Puzzle("clear", false, 0, "[============================][====]246260[====]600016514213466313451511124242", 60, 0))
 
-  battleRoom:startMatch()
   assert(stack.panels[1][1].color == 1, "wrong color")
   assert(stack.panels[1][2].color == 2, "wrong color")
 
@@ -52,7 +52,6 @@ clearPuzzleTest()
 
 local function basicSwapTest()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
-  match.seed = 1 -- so we consistently have a panel to swap
   local stack = match.P1
 
   stack.do_countdown = false
@@ -74,7 +73,6 @@ basicSwapTest()
 
 local function moveAfterCountdownV46Test()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
-  match.seed = 1 -- so we consistently have a panel to swap
   match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
   local stack = match.P1
   stack.do_countdown = true

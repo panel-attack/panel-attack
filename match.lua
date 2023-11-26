@@ -24,7 +24,7 @@ Match =
     self.isFromReplay = false
     self.doCountdown = true
     self.startTimestamp = os.time(os.date("*t"))
-    if (P2 or battleRoom.mode.stackInteraction == GameModes.StackInteraction.VERSUS) then
+    if (P2 or self.mode.stackInteraction == GameModes.StackInteraction.VERSUS) then
       GAME.rich_presence:setPresence(
       (battleRoom.spectating and "Spectating" or "Playing") .. " a " .. battleRoom.mode.richPresenceLabel .. " match",
       battleRoom.players[1].name .. " vs " .. (battleRoom.players[2].name),

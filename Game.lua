@@ -233,6 +233,10 @@ function Game:runUnitTests()
   self:drawLoadingString("Running Unit Tests")
   coroutine.yield()
 
+  -- we need to overwrite the local player as all replay related tests need a non-local player
+  LocalPlayer = Player.getLocalPlayer()
+  LocalPlayer.isLocal = false
+
   logger.info("Running Unit Tests...")
   local status, err = xpcall(function() require("tests.Tests") end, debug.traceback)
   if not status then
@@ -242,6 +246,9 @@ function Game:runUnitTests()
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
   end
+
+  -- reinitialize the local player after tests
+  self:initializeLocalPlayer()
 end
 
 function Game:updateMouseVisibility(dt)

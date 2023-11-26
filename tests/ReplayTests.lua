@@ -20,7 +20,7 @@ local function endlessSaveTest()
   local replayJSON = json.encode(replay)
   
   assert(replay ~= nil)
-  assert(replay.endless.in_buf == "A909")
+  assert(replay.players[1].settings.inputs == "A909")
   assert(replayJSON ~= nil)
   assert(type(replayJSON) == "string")
 end

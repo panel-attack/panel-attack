@@ -129,6 +129,7 @@ local function createMatchFromReplay(replay, wantsCanvas)
   match.doCountdown = replay.doCountdown
   match:setSeed(replay.seed)
   match:setStage(replay.stageId)
+  match.engineVersion = replay.engineVersion
 
   return match
 end
