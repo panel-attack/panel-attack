@@ -179,7 +179,12 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   --   GAME.input:requestSingleInputConfigurationForPlayerCount(#self.players)
   -- end
 
-  local match = self:createMatch()
+  local match
+  if not self.match then
+    match = self:createMatch()
+  else
+    match = self.match
+  end
 
   match:setStage(stageId)
   match:setSeed(seed)

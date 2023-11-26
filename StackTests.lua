@@ -6,16 +6,11 @@ local Player = require("Player")
 local function puzzleTest()
   -- to stop rising
   local battleRoom = BattleRoom(GameModes.ONE_PLAYER_PUZZLE)
-  local player = Player("P1", 1)
-  player.settings.level = 5
-  player.settings.inputMethod = "controller"
+  LocalPlayer.settings.level = 5
   local match = battleRoom:createMatch()
-  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match:addPlayer(stack)
-  stack.do_countdown = false
-  stack:wait_for_random_character()
+  battleRoom:startMatch()
+  local stack = LocalPlayer.stack
 
-  assert(characters ~= nil, "no characters")
   stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
 
   assert(stack.panels[1][1].color == 0, "wrong color")
@@ -33,15 +28,14 @@ end
 puzzleTest()
 
 local function clearPuzzleTest()
-  local match = Match("puzzle") -- to stop rising
-  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match:addPlayer(stack)
-  stack.do_countdown = false
-  stack:wait_for_random_character()
+  local battleRoom = BattleRoom(GameModes.ONE_PLAYER_PUZZLE)
+  LocalPlayer.settings.level = 5
+  local match = battleRoom:createMatch()
+  local stack = LocalPlayer.stack
 
-  assert(characters ~= nil, "no characters")
   stack:set_puzzle_state(Puzzle("clear", false, 0, "[============================][====]246260[====]600016514213466313451511124242", 60, 0))
 
+  battleRoom:startMatch()
   assert(stack.panels[1][1].color == 1, "wrong color")
   assert(stack.panels[1][2].color == 2, "wrong color")
 
