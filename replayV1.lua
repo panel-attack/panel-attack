@@ -52,10 +52,16 @@ function ReplayV1.loadFromFile(legacyReplay)
       -- not saved in v1
       panelId = config.panels,
       -- not saved for engine version v046
-      inputMethod = v1r.P1_inputMethod or "controller",
       inputs = uncompress_input_string(v1r.in_buf)
     }
   }
+
+  -- for some reason these are saved in different fields depending on game mode
+  if gameMode.playerCount == 2 then
+    r.players[1].settings.inputMethod = v1r.P1_inputMethod or "controller"
+  else
+    r.players[1].settings.inputMethod = v1r.inputMethod or "controller"
+  end
 
   if v1r.P1_level then
     r.players[1].settings.level = v1r.P1_level

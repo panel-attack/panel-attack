@@ -1,6 +1,7 @@
 local tableUtils = require("tableUtils")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
+local GameModes = require("GameModes")
 
 
 -- Vs rollback one player way behind
@@ -31,7 +32,7 @@ local function rollbackPastAttackTest()
   StackReplayTestingUtils:fullySimulateMatch(match)
 
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.mode == GameModes.TWO_PLAYER_VS)
   assert(match.seed == 2992240)
   assert(match.P1.game_over_clock == 2039)
   assert(match.P1.level == 10)
@@ -72,7 +73,7 @@ local function rollbackNotPastAttackTest()
   StackReplayTestingUtils:fullySimulateMatch(match)
 
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.mode == GameModes.TWO_PLAYER_VS)
   assert(match.seed == 2992240)
   assert(match.P1.game_over_clock == 2039)
   assert(match.P1.level == 10)
@@ -136,7 +137,7 @@ local function rollbackFullyPastAttack()
   assert(match.P1.chains[428].finish == 636)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.mode == GameModes.ONE_PLAYER_VS_SELF)
   assert(match.seed == 3917661)
   assert(match.P1.game_over_clock == 797)
   assert(match.P1.level == 8)
