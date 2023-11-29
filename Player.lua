@@ -174,6 +174,13 @@ function Player:setStyle(style)
   end
 end
 
+function Player:setPuzzleSet(puzzleSet)
+  if puzzleSet ~= self.settings.puzzleSet then
+    self.settings.puzzleSet = puzzleSet
+    self:onPropertyChanged("puzzleSet")
+  end
+end
+
 function Player.getLocalPlayer()
   local player = Player(config.name)
 

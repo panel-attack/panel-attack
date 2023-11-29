@@ -187,6 +187,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
     match = self.match
   end
 
+  match.replay = replayOfMatch
   match:setStage(stageId)
   match:setSeed(seed)
 
@@ -194,7 +195,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
     match.room_ratings = {}
   end
 
-  match:start(replayOfMatch, true)
+  match:start()
 
   replay = Replay.createNewReplay(match)
   -- game dies when using the fade transition for unclear reasons

@@ -40,8 +40,8 @@ end
 
 local function handleTaunt()
   local function getCharacter(playerNumber)
-    local P1 = GAME.match.P1
-    local P2 = GAME.match.P2
+    local P1 = GAME.battleRoom.match.P1
+    local P2 = GAME.battleRoom.match.P2
     if P1.player_number == playerNumber then
       return characters[P1.character]
     elseif P2.player_number == playerNumber then
@@ -64,13 +64,13 @@ local function handleLeaveMessage()
   local messages = server_queue:pop_all_with("leave_room")
   for _, msg in ipairs(messages) do
     if msg.leave_room then -- lost room during game, go back to lobby
-      Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.match, replay)
+      Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.battleRoom.match, replay)
 
       -- Show a message that the match connection was lost along with the average frames behind.
       local message = loc("ss_room_closed_in_game")
 
-      local P1Behind = GAME.match.P1:averageFramesBehind()
-      local P2Behind = GAME.match.P2:averageFramesBehind()
+      local P1Behind = GAME.battleRoom.match.P1:averageFramesBehind()
+      local P2Behind = GAME.battleRoom.match.P2:averageFramesBehind()
       local maxBehind = math.max(P1Behind, P2Behind)
 
       if GAME.battleRoom.spectating then
@@ -109,8 +109,8 @@ function OnlineVsGame:customRun()
   process_all_data_messages() -- Receive game play inputs from the network
 
   -- if not GAME.battleRoom.spectating then
-  if GAME.match.P1.tooFarBehindError or GAME.match.P2.tooFarBehindError then
-    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.match, replay)
+  if self.match.P1.tooFarBehindError or self.match.P2.tooFarBehindError then
+    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, self.match, replay)
     GAME:clearMatch()
     json_send({leave_room = true})
     local ip = GAME.connected_server_ip
@@ -130,13 +130,13 @@ function OnlineVsGame:customRun()
 end
 
 function OnlineVsGame:customGameOverSetup()
-  json_send({game_over = true, outcome = GAME.match:getOutcome()["outcome_claim"]})
+  json_send({game_over = true, outcome = self.match:getOutcome()["outcome_claim"]})
   self.maxDisplayTime = 8
   self.nextScene = "CharacterSelectOnline"
 end
 
 function OnlineVsGame:processGameResults()
-  local matchOutcome = GAME.match:getOutcome()
+  local matchOutcome = self.match:getOutcome()
   if matchOutcome then
     local end_text = matchOutcome["end_text"]
     local winSFX = matchOutcome["winSFX"]
@@ -145,7 +145,7 @@ function OnlineVsGame:processGameResults()
       GAME.battleRoom.playerWinCounts[outcome_claim] = GAME.battleRoom.playerWinCounts[outcome_claim] + 1
     end
 
-    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, outcome_claim, false, GAME.match, replay)
+    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, outcome_claim, false, self.match, replay)
   end
 end
 

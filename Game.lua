@@ -123,17 +123,17 @@ function Game:setupCoroutine()
   apply_config_volume()
 
   self:createDirectoriesIfNeeded()
-  
+
   self:checkForUpdates()
 
   self:createScenes()
-
-  self:initializeLocalPlayer()
 
   -- Run all unit tests now that we have everything loaded
   if TESTS_ENABLED then
     self:runUnitTests()
   end
+
+  self:initializeLocalPlayer()
 end
 
 function Game:initializeLocalPlayer()
@@ -233,8 +233,9 @@ function Game:runUnitTests()
   self:drawLoadingString("Running Unit Tests")
   coroutine.yield()
 
-  -- we need to overwrite the local player as all replay related tests need a non-local player
+  -- LocalPlayer is the standard player for battleRooms that don't get started from replays/spectate
   LocalPlayer = Player.getLocalPlayer()
+  -- we need to overwrite the local player as all replay related tests need a non-local player
   LocalPlayer.isLocal = false
 
   logger.info("Running Unit Tests...")
@@ -246,9 +247,6 @@ function Game:runUnitTests()
   if PERFORMANCE_TESTS_ENABLED then
     require("tests/performanceTests")
   end
-
-  -- reinitialize the local player after tests
-  self:initializeLocalPlayer()
 end
 
 function Game:updateMouseVisibility(dt)

@@ -654,7 +654,9 @@ function Match:start()
   for i = 1, #self.players do
     local pString = "P" .. tostring(i)
     self[pString] = self.players[i].stack
-    self.players[i].stack:starting_state()
+    if self.mode.selectFile ~= GameModes.FileSelection.PUZZLE then
+      self.players[i].stack:starting_state()
+    end
   end
 
   self.ready = true
