@@ -60,7 +60,7 @@ end
 
 -- Ui Elements can subscribe to properties by passing a callback
 function Player:subscribe(property, callback)
-  if self[property] then
+  if self.settings[property] then
     if not self.subscriptionList[property] then
       self.subscriptionList[property] = {}
     end

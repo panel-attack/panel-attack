@@ -95,7 +95,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
         self.ui.selectedCharacter:setImage(characters[characterId].images.icon)
       end
     end
-    localPlayer:subscribe("characterId", 1, updateSelectedCharacterImage)
+    localPlayer:subscribe("characterId", updateSelectedCharacterImage)
   end
 
   return SelectScreen1LocalPlayer
