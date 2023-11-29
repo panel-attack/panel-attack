@@ -213,9 +213,7 @@ function ReplayBrowser:update()
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(replay) then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      local match = Replay.loadFromFile(replay)
-      match:start(replay, true)
-      sceneManager:switchToScene("ReplayGame", {match = match})
+      sceneManager:switchToScene("ReplayGame", {match = Replay.loadFromFile(replay)})
     end
   end
 end

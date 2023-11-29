@@ -31,6 +31,7 @@ BattleRoom =
           player.settings.inputMethod = rpp.settings.inputMethod
           player.settings.level = rpp.settings.level
           player.settings.difficulty = rpp.settings.difficulty
+          player.settings.allowAdjacentColors = rpp.settings.allowAdjacentColors
           --player.settings.levelData = rpp.settings.levelData
           self:addPlayer(player)
         end

@@ -2,6 +2,7 @@ require("util")
 require("csprng")
 local logger = require("logger")
 local GameModes = require("GameModes")
+local tableUtils = require("tableUtils")
 
 -- class used for generating panels
 PanelGenerator = class(function(self)
@@ -80,34 +81,31 @@ function PanelGenerator.privateCheckPanels(ret)
   end
 end
 
-function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, opponentLevel)
+function PanelGenerator.makePanels(stack)
+  --logger.debug("generating panels with seed: " .. stack.match.seed + stack.panelGenCount .. " buffer: " .. stack.panel_buffer)
+  PanelGenerator.setSeed(stack.match.seed + stack.panelGenCount)
 
-  PanelGenerator.setSeed(seed)
-
-  -- logger.debug("make_panels(" .. ncolors .. ", " .. prev_panels .. ", ") .. ")")
-  local ret = prev_panels
+  -- logger.debug("make_panels(" .. stack.NCOLORS .. ", " .. stack.panel_buffer .. ", ") .. ")")
+  local ret = stack.panel_buffer
   local rows_to_make = 100 -- setting the seed is slow, so try to build a lot of panels at once.
-  if ncolors < 2 then
+  if stack.NCOLORS < 2 then
     return
   end
   local cut_panels = false
-  local disallowAdjacentColors = mode.disallowAdjacentColors or (level and level > 7)
+  local allowAdjacentColors = stack.allowAdjacentColors
 
-  if prev_panels == "" then
+  if stack.panel_buffer == "" then
     ret = "000000"
     rows_to_make = 7
     -- During the initial board we can't allow adjacent colors if the other player can't
-    disallowAdjacentColors = mode.disallowAdjacentColors or (level or 1) > 7 or (opponentLevel or 1) > 7
-    -- isn't this always true???
-    -- if mode == "vs" or mode == "endless" or mode == "time" then
+    allowAdjacentColors = tableUtils.trueForAll(stack.match.players, function(player) return player.stack.allowAdjacentColors end)
     cut_panels = true
-    -- end
   end
 
-  ret = PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, ret, disallowAdjacentColors)
+  ret = PanelGenerator.privateGeneratePanels(rows_to_make, stack.NCOLORS, ret, not allowAdjacentColors)
 
   -- If this is the first time panels, remove the placeholder "000000"
-  if prev_panels == "" then
+  if stack.panel_buffer == "" then
     ret = string.sub(ret, 7, -1)
   end
 
@@ -181,9 +179,8 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
   return ret
 end
 
-function PanelGenerator.makeGarbagePanels(seed, ncolors, prev_panels, mode, level)
-
-  PanelGenerator.setSeed(seed)
+function PanelGenerator.makeGarbagePanels(stack)
+  PanelGenerator.setSeed(stack.match.seed + stack.garbageGenCount)
 
   local firstPanelSet = false
   if prev_panels == "" then
@@ -191,8 +188,7 @@ function PanelGenerator.makeGarbagePanels(seed, ncolors, prev_panels, mode, leve
     prev_panels = "000000"
   end
 
-  local disallowAdjacentColors = (mode.stackInteraction ~= GameModes.StackInteraction.NONE and level > 7)
-  local ret = PanelGenerator.privateGeneratePanels(20, ncolors, prev_panels, disallowAdjacentColors)
+  local ret = PanelGenerator.privateGeneratePanels(20, stack.NCOLORS, stack.gpanel_buffer, not stack.allowAdjacentColors)
 
   if firstPanelSet then
     ret = string.sub(ret, 7, -1)

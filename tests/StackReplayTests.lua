@@ -345,7 +345,7 @@ local function matchMetalAndGarbageClearsAllMetalTest()
   assert(match.P1.panels[8][6].state == "matched")
 end
 
---test(matchMetalAndGarbageClearsAllMetalTest)
+test(matchMetalAndGarbageClearsAllMetalTest)
 
 -- Test that a panel that is still falling when it starts hovering doesn't get the chain flag.
 -- I believe the reasoning behind this is it wasn't "established" enough to count as a chain.

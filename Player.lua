@@ -28,7 +28,7 @@ function Player:incrementWinCount()
   self.wins = self.wins + 1
 end
 
-function Player:createStackFromSettings(match, wantsCanvas)
+function Player:createStackFromSettings(match)
   local args = {}
   args.which = self.playerNumber
   args.player_number = self.playerNumber
@@ -38,12 +38,16 @@ function Player:createStackFromSettings(match, wantsCanvas)
   args.character = self.settings.characterId
   if self.settings.style == GameModes.Styles.MODERN then
     args.level = self.settings.level
+    args.allowAdjacentColors = args.level < 8
   else
     args.difficulty = self.settings.difficulty
     args.speed = self.settings.speed
+    args.allowAdjacentColors = true
+  end
+  if match.isFromReplay and self.settings.allowAdjacentColors ~= nil then
+    args.allowAdjacentColors = self.settings.allowAdjacentColors
   end
   args.inputMethod = self.settings.inputMethod
-  args.wantsCanvas = wantsCanvas or false
 
   self.stack = Stack(args)
 

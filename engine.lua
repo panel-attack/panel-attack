@@ -38,12 +38,10 @@ Stack =
     local difficulty = arguments.difficulty
     local speed = arguments.speed
     local player_number = arguments.player_number or which
-    local wantsCanvas = arguments.wantsCanvas
-    if wantsCanvas == nil then
-      wantsCanvas = true
-    end
+  
     local character = arguments.character or config.character
     local theme = arguments.theme or themes[config.theme]
+    s.allowAdjacentColors = arguments.allowAdjacentColors
 
     s.match = match
     s.character = character
@@ -74,9 +72,7 @@ Stack =
     end
 
     -- frame.png dimensions
-    if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
-    end
+    s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
 
     -- The player's speed level decides the amount of time
     -- the stack takes to rise automatically
@@ -2323,12 +2319,7 @@ function Stack.new_row(self)
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
-    local opponentLevel = nil
-    if self.opponentStack then
-      opponentLevel = self.opponentStack.level
-    end
-    self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
-    logger.debug("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
+    self.panel_buffer = PanelGenerator.makePanels(self)
     self.panelGenCount = self.panelGenCount + 1
   end
 
@@ -2341,6 +2332,7 @@ function Stack.new_row(self)
     self.metal_panels_queued = self.metal_panels_queued - 1
     metal_panels_this_row = 1
   end
+
   for col = 1, self.width do
     local panel = panels[0][col]
     local this_panel_color = string.sub(self.panel_buffer, col, col)

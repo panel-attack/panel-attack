@@ -27,7 +27,6 @@ function Replay.createNewReplay(match)
   result.gameMode = {
     stackInteraction = battleRoom.mode.stackInteraction,
     winCondition = battleRoom.mode.winCondition,
-    disallowAdjacentColors = battleRoom.mode.disallowAdjacentColors,
     timeLimit = battleRoom.mode.timeLimit
   }
 
@@ -39,10 +38,11 @@ function Replay.createNewReplay(match)
       wins = player.wins,
       publicId = player.publicId,
       settings = {
-        characterId = player.settings.characterId,
-        panelId = player.settings.panelId,
-        levelData = player.settings.levelData,
-        inputMethod = player.settings.inputMethod
+        characterId = player.stack.character,
+        panelId = player.stack.panels_dir,
+        -- levelData = player.stack.levelData,
+        inputMethod = player.stack.inputMethod,
+        allowAdjacentColors = player.stack.allowAdjacentColors
       }
     }
     if player.settings.style == GameModes.Styles.MODERN then
@@ -83,7 +83,7 @@ function Replay.loadFromPath(path)
     return true
 end
 
-local function createMatchFromReplay(replay, wantsCanvas)
+local function createMatchFromReplay(replay)
   local battleRoom
 
   if replay.gameMode.stackInteraction == GameModes.StackInteraction.VERSUS then
@@ -130,6 +130,9 @@ local function createMatchFromReplay(replay, wantsCanvas)
   match:setSeed(replay.seed)
   match:setStage(replay.stageId)
   match.engineVersion = replay.engineVersion
+  match.replay = replay
+
+  match:start()
 
   return match
 end

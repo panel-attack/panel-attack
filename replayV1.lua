@@ -33,7 +33,6 @@ function ReplayV1.loadFromFile(legacyReplay)
   r.gameMode = {
     stackInteraction = gameMode.stackInteraction,
     winCondition = gameMode.winCondition,
-    disallowAdjacentColors = gameMode.disallowAdjacentColors
   }
 
   if mode == "time" then
@@ -52,7 +51,7 @@ function ReplayV1.loadFromFile(legacyReplay)
       -- not saved in v1
       panelId = config.panels,
       -- not saved for engine version v046
-      inputs = uncompress_input_string(v1r.in_buf)
+      inputs = uncompress_input_string(v1r.in_buf),
     }
   }
 
@@ -66,11 +65,13 @@ function ReplayV1.loadFromFile(legacyReplay)
   if v1r.P1_level then
     r.players[1].settings.level = v1r.P1_level
     r.players[1].settings.style = GameModes.Styles.MODERN
+    r.players[1].allowAdjacentColors = v1r.P1_level < 8
     --r.players[1].settings.levelData = levelPresets.getModern(v1r.P1_level)
   else
     r.players[1].settings.difficulty = v1r.difficulty
     r.players[1].settings.speed = v1r.speed
     r.players[1].settings.style = GameModes.Styles.CLASSIC
+    r.players[1].allowAdjacentColors = true
     --r.players[1].settings.levelData = levelPresets.getClassic(v1r.difficulty)
     --r.players[1].settings.levelData.startingSpeed = v1r.speed
   end
@@ -93,6 +94,8 @@ function ReplayV1.loadFromFile(legacyReplay)
         -- levelData = levelPresets.getModern(v1r.P2_level)
       }
     }
+
+    --r.players[1]
   end
 
   if v1r.duration then

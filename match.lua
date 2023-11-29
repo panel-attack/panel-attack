@@ -22,7 +22,7 @@ Match =
     self.currentMusicIsDanger = false
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
-    self.doCountdown = true
+    self.doCountdown = self.mode.doCountdown
     self.startTimestamp = os.time(os.date("*t"))
     if (P2 or self.mode.stackInteraction == GameModes.StackInteraction.VERSUS) then
       GAME.rich_presence:setPresence(
@@ -602,25 +602,28 @@ function Match:waitForAssets()
   end
 
   self.stageId = StageLoader.resolveStageSelection(self.stageId)
+  current_stage = self.stageId
   StageLoader.load(self.stageId)
   StageLoader.wait()
 end
 
-function Match:start(replay, wantsCanvas)
+function Match:start()
   self:waitForAssets()
 
   for i = 1, #self.players do
-    local stack = self.players[i]:createStackFromSettings(self, wantsCanvas)
+    local stack = self.players[i]:createStackFromSettings(self)
     stack.do_countdown = self.doCountdown
 
-    if self.isFromReplay then
-      -- watching a finished replay
-      stack:receiveConfirmedInput(replay.players[i].settings.inputs)
-      stack.max_runs_per_frame = 1
-    elseif replay then
-      -- catching up to a match in progress
-      stack:receiveConfirmedInput(replay.players[i].settings.inputs)
-      stack.play_to_end = true
+    if self.replay then
+      if self.isFromReplay then
+        -- watching a finished replay
+        stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
+        stack.max_runs_per_frame = 1
+      else
+        -- catching up to a match in progress
+        stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
+        stack.play_to_end = true
+      end
     end
   end
 

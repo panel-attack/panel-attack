@@ -1,3 +1,5 @@
+require("localization")
+
 local GameModes = {}
 
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
@@ -19,7 +21,6 @@ local OnePlayerVsSelf = {
   scene = "VsSelfGame",
   richPresenceLabel = loc("mm_1_vs"),
   -- temporary crutch until all checks for this are eliminated
-  matchMode = "vs",
   winCondition = WinCondition.NONE,
   doCountdown = true,
   disallowAdjacentColors = true
@@ -38,7 +39,6 @@ local OnePlayerTimeAttack = {
   stackInteraction = StackInteraction.NONE,
   scene = "TimeAttackGame",
   richPresenceLabel = loc("mm_1_time"),
-  matchMode = "time",
   winCondition = WinCondition.NONE,
   doCountdown = true,
   timeLimit = 120,
@@ -58,7 +58,6 @@ local OnePlayerEndless = {
   stackInteraction = StackInteraction.NONE,
   scene = "EndlessGame",
   richPresenceLabel = loc("mm_1_endless"),
-  matchMode = "endless",
   winCondition = WinCondition.NONE,
   doCountdown = true,
   disallowAdjacentColors = false
@@ -94,7 +93,6 @@ local OnePlayerPuzzle = {
   selectColorRandomization = true,
   stackInteraction = StackInteraction.NONE,
   scene = "PuzzleGame",
-  matchMode = "puzzle",
   richPresenceLabel = loc("mm_1_puzzle"),
   winCondition = WinCondition.NONE,
   doCountdown = false,
