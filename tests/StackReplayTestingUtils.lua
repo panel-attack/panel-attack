@@ -29,10 +29,10 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
   local match = battleRoom:createMatch()
   match:setSeed(1)
   match:start()
+  if not wantsCanvas then
+    match:removeCanvases()
+  end
   for i = 1, #match.players do
-    if not wantsCanvas then
-      match.players[i].stack.canvas = nil
-    end
     match.players[i].stack.max_runs_per_frame = 1
   end
 
@@ -84,10 +84,7 @@ function StackReplayTestingUtils:setupReplayWithPath(path)
 
   Replay.loadFromPath(path)
   local match = Replay.loadFromFile(replay)
-  for i = 1, #match.players do
-    -- don't draw for tests
-    match.players[i].stack.canvas = nil
-  end
+  match:removeCanvases()
   match:start(replay)
 
   assert(GAME ~= nil)

@@ -12,6 +12,12 @@ local legacyScoreX = 546
 local legacyScoreXP2 = 642
 local legacyScoreY = 208
 
+local currentTheme = themes[config.theme]
+
+local function setTheme(theme)
+  themes[config.theme] = theme
+end
+
 local v1Theme = Theme("V1Test")
 assert(v1Theme ~= nil)
 local defaultTheme = Theme(consts.DEFAULT_THEME_DIRECTORY)
@@ -20,7 +26,8 @@ assert(defaultTheme ~= nil)
 -- ORIGIN TESTING
 
 local function testOriginalThemeStackGraphics()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1, v1Theme)
+  setTheme(v1Theme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
   local stack = match.P1
 
   assert(match ~= nil)
@@ -34,7 +41,8 @@ end
 --test(testOriginalThemeStackGraphics)
 
 local function testOriginalThemeStackGraphicsPlayer2()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, v1Theme)
+  setTheme(v1Theme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
   local stack = match.P2
 
   assert(match ~= nil)
@@ -48,7 +56,8 @@ end
 --test(testOriginalThemeStackGraphicsPlayer2)
 
 local function testNewThemeStackGraphics()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1, defaultTheme)
+  setTheme(defaultTheme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
   local stack = match.P1
 
   assert(match ~= nil)
@@ -62,7 +71,8 @@ end
 test(testNewThemeStackGraphics)
 
 local function testNewThemeStackGraphicsPlayer2()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
+  setTheme(defaultTheme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
   local stack = match.P2
 
   assert(match ~= nil)
@@ -78,7 +88,8 @@ test(testNewThemeStackGraphicsPlayer2)
 -- ORIGIN SHIFT TESTING 
 
 local function testOriginalThemeOffset()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1, v1Theme)
+  setTheme(v1Theme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
   local stack = match.P1
 
   assert(match ~= nil)
@@ -97,7 +108,8 @@ end
 --test(testOriginalThemeOffset)
 
 local function testOriginalThemeOffsetPlayer2()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, v1Theme)
+  setTheme(v1Theme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
   local stack = match.P2
 
   assert(match ~= nil)
@@ -116,7 +128,8 @@ end
 --test(testOriginalThemeOffsetPlayer2)
 
 local function testNewThemeOffset()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1, defaultTheme)
+  setTheme(defaultTheme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
   local stack = match.P1
 
   assert(match ~= nil)
@@ -135,7 +148,8 @@ end
 test(testNewThemeOffset)
 
 local function testNewThemeOffsetPlayer2()
-  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
+  setTheme(defaultTheme)
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
   local stack = match.P2
 
   assert(match ~= nil)
@@ -152,3 +166,5 @@ local function testNewThemeOffsetPlayer2()
 end
 
 test(testNewThemeOffsetPlayer2)
+
+setTheme(currentTheme)

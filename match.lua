@@ -713,3 +713,11 @@ function Match:getWinner()
     end
   end
 end
+
+-- a helper function for tests
+-- prevents running graphics related processes, e.g. cards, popFX
+function Match:removeCanvases()
+  for i = 1, #self.players do
+    self.players[i].stack.canvas = nil
+  end
+end
