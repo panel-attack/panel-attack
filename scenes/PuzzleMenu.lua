@@ -144,7 +144,9 @@ function PuzzleMenu:update()
   self.menu:update()
   self.menu:draw()
 
-  GAME.battleRoom:update()
+  if GAME.battleRoom then
+    GAME.battleRoom:update()
+  end
 end
 
 function PuzzleMenu:unload()
