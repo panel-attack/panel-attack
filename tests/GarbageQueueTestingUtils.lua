@@ -58,7 +58,6 @@ function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
 
   -- cause telegraph is very global needy
   GAME.battleRoom = battleRoom
-  GAME.match = match
   return match
 end
 

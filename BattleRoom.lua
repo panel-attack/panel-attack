@@ -197,7 +197,6 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:start(replayOfMatch, true)
 
   replay = Replay.createNewReplay(match)
-  GAME.match = match
   -- game dies when using the fade transition for unclear reasons
   sceneManager:switchToScene(self.mode.scene, {match = self.match}, "none")
 

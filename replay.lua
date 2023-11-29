@@ -210,7 +210,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     extraFilename = extraFilename .. "-WARNING-OCCURRED"
   end
 
-  if GAME.match.P2 then
+  if battleRoom.match.P2 then
     local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
     if rep_b_name < rep_a_name then
@@ -218,7 +218,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. GAME.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. GAME.match.P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. battleRoom.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. battleRoom.match.P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
@@ -233,7 +233,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     end
   else -- vs Self
     extraPath = "Vs Self"
-    extraFilename = extraFilename .. "vsSelf-" .. "L" .. GAME.match.P1.level
+    extraFilename = extraFilename .. "vsSelf-" .. "L" .. battleRoom.match.P1.level
   end
 
   Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)

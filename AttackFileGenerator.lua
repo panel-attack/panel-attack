@@ -17,10 +17,12 @@ local function finishedMatchForPath(path)
   Replay.loadFromFile(replay)
 
   assert(GAME ~= nil)
-  assert(GAME.match ~= nil)
+  assert(GAME.battleRoom ~= nil)
+  assert(GAME.battleRoom.match ~= nil)
+  assert(GAME.battleRoom.match.players ~= nil)
 
-  if GAME.match.P1 and GAME.match.P2 then
-    local match = GAME.match
+  if #GAME.battleRoom.match.players > 1 then
+    local match = GAME.battleRoom.match
     local matchOutcome = match:getOutcome()
     local lastClock = -1
     while matchOutcome == nil and lastClock ~= match.P1.clock do

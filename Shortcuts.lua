@@ -41,39 +41,34 @@ end
 
 local function handleCopy()
   local stacks = {}
-  if GAME.match.P1 then
-    stacks["P1"] = GAME.match.P1:toPuzzleInfo()
-    if GAME.battleRoom then
-      stacks["P1"]["Player"] = GAME.battleRoom.playerNames[GAME.match.P1.which]
-    else
-      stacks["P1"]["Player"] = config.name
+  if GAME.battleRoom and GAME.battleRoom.match and GAME.battleRoom.match.P1 then
+    local match = GAME.battleRoom.match
+
+    for i = 1, #match.players do
+      local player = match.players[i]
+      stacks["P" .. i] = player.stack:toPuzzleInfo()
+      stacks["P" .. i]["Player"] = player.name
     end
-  end
-  if GAME.match.P2 then
-    stacks["P2"] = GAME.match.P2:toPuzzleInfo()
-    if GAME.battleRoom then
-      stacks["P2"]["Player"] = GAME.battleRoom.playerNames[GAME.match.P2.which]
-    else
-      stacks["P2"]["Player"] = config.name
+
+    if tableUtils.length(stacks) > 0 then
+      love.system.setClipboardText(json.encode(stacks))
+      return true
     end
-  end
-  if tableUtils.length(stacks) > 0 then
-    love.system.setClipboardText(json.encode(stacks))
-    return true
   end
 end
 
 local function handleDumpAttackPattern(playerNumber)
-  local stack = GAME.match.players[playerNumber]
+  if GAME.battleRoom and GAME.battleRoom.match and GAME.battleRoom.match.players[playerNumber] then
+    local player = GAME.battleRoom.match.players[playerNumber]
 
-  if stack then
-    local data, state = stack:getAttackPatternData()
-    if GAME.battleRoom then
-      data.extraInfo.playerName = GAME.battleRoom.playerNames[stack.which]
+    if player.stack then
+      local data, state = player.stack:getAttackPatternData()
+      data.extraInfo.playerName = player.name
+      saveJSONToPath(data, state, "dumpAttackPattern.json")
+      return true
     end
-    saveJSONToPath(data, state, "dumpAttackPattern.json")
-    return true
   end
+
 end
 
 local function modifyWinCounts(functionIndex)

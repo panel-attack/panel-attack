@@ -8,9 +8,9 @@ local class = require("class")
 local EndlessGame = class(
   function (self, sceneParams)
     self.nextScene = "EndlessMenu"
-    self.winnerSFX = GAME.match.P1:pick_win_sfx()
-    
+
     self:load(sceneParams)
+    self.winnerSFX = self.S1:pick_win_sfx()
   end,
   GameBase
 )
@@ -20,11 +20,11 @@ sceneManager:addScene(EndlessGame)
 
 function EndlessGame:processGameResults(gameResult) 
   local extraPath, extraFilename
-  if GAME.match.P1.level == nil then
-    GAME.scores:saveEndlessScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
+  if self.S1.level == nil then
+    GAME.scores:saveEndlessScoreForLevel(self.S1.score, self.S1.difficulty)
     extraPath = "Endless"
-    extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-endless"
-    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
+    extraFilename = "Spd" .. self.S1.speed .. "-Dif" .. self.S1.difficulty .. "-endless"
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match, replay)
   end
 end
 

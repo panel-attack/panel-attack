@@ -86,20 +86,6 @@ local function handleLeaveMessage()
   end
 end
 
---[[
-local function handleGameEndAsSpectator()
-  -- if the game already ended before we caught up, abort trying to catch up to it early in order to get into the next game instead
-  if GAME.battleRoom.spectating and (GAME.match.P1.play_to_end or GAME.match.P2.play_to_end) then
-    local message = server_queue:pop_next_with("create_room", "character_select")
-    if message then
-      -- shove the message back in for select_screen to handle
-      server_queue:push(message)
-      return {main_dumb_transition, {select_screen.main, nil, 0, 0, false, false, {select_screen, "2p_net_vs"}}}
-    end
-  end
-end
---]]
-
 function OnlineVsGame:customRun()
   local transition = nil
   handleTaunt()
@@ -158,19 +144,8 @@ function OnlineVsGame:processGameResults()
     if outcome_claim ~= 0 then
       GAME.battleRoom.playerWinCounts[outcome_claim] = GAME.battleRoom.playerWinCounts[outcome_claim] + 1
     end
-    
+
     Replay.finalizeAndWriteVsReplay(GAME.battleRoom, outcome_claim, false, GAME.match, replay)
-  
-    --[[if GAME.battleRoom.spectating then
-      -- next_func, text, winnerSFX, timemax, keepMusic, args
-      return {game_over_transition,
-        {select_screen.main, end_text, winSFX, nil, false, {select_screen, "2p_net_vs"}}
-      }
-    else
-      return {game_over_transition, 
-        {select_screen.main, end_text, winSFX, 60 * 8, false, {select_screen, "2p_net_vs"}}
-      }
-    end--]]
   end
 end
 
