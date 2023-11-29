@@ -53,6 +53,8 @@ function Replay.createNewReplay(match)
     end
   end
 
+  match.replay = replay
+
   return result
 end
 

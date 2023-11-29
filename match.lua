@@ -619,7 +619,7 @@ function Match:start()
         -- watching a finished replay
         stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
         stack.max_runs_per_frame = 1
-      else
+      elseif self.battleRoom.spectating and self.replay.players[i].setting.inputs then
         -- catching up to a match in progress
         stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
         stack.play_to_end = true
