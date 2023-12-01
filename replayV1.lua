@@ -32,11 +32,11 @@ function ReplayV1.loadFromFile(legacyReplay)
   r.stage = v1r.stage
   r.gameMode = {
     stackInteraction = gameMode.stackInteraction,
-    winCondition = gameMode.winCondition,
+    winConditions = gameMode.winConditions,
   }
 
   if mode == "time" then
-    r.gameMode.timeLimit = 120
+    r.gameMode.timeLimit = TIME_ATTACK_TIME
   end
 
   r.players = {}
@@ -91,6 +91,7 @@ function ReplayV1.loadFromFile(legacyReplay)
         inputMethod = v1r.P2_inputMethod or "controller",
         inputs = uncompress_input_string(v1r.I),
         level = v1r.P2_level,
+        style = GameModes.Styles.MODERN
         -- levelData = levelPresets.getModern(v1r.P2_level)
       }
     }

@@ -16,7 +16,7 @@ CharacterSelectVsSelf.name = "VsSelfMenu"
 sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)
-  GAME.battleRoom = BattleRoom(GameModes.ONE_PLAYER_VS_SELF)
+  GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_VS_SELF)
   self:designScreen()
   self:assignCallbacks()
 end

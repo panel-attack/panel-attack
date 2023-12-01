@@ -64,10 +64,10 @@ Stack =
     end
 
     if difficulty then
-      if s.match.mode == GameModes.ONE_PLAYER_ENDLESS then
-        s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
-      elseif s.match.mode == GameModes.ONE_PLAYER_TIME_ATTACK then
+      if s.match.mode.timeLimit then
         s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
+      else
+        s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
       end
     end
 
@@ -1260,7 +1260,7 @@ end
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
 function Stack.shouldPlayDangerMusic(self)
-  if self.match.mode == GameModes.ONE_PLAYER_TIME_ATTACK then
+  if self.match.mode.timeLimit then
     if self.game_stopwatch > TIME_ATTACK_TIME * 60 - 900 --[[15 seconds assuming 60 FPS]] then
       return true
     end
@@ -1703,8 +1703,8 @@ function Stack.simulate(self)
     end
 
     -- In time attack, play countdown sound every second when there's 15 seconds left
-    if  self.match.mode == GameModes.ONE_PLAYER_TIME_ATTACK and
-        self.game_stopwatch and 
+    if  self.match.mode.timeLimit and
+        self.game_stopwatch and
         self.game_stopwatch >= TIME_ATTACK_TIME * 60 - 900 and
         self.game_stopwatch % 60 == 0 and 
         self.game_stopwatch ~= TIME_ATTACK_TIME * 60 and           -- don't play on the last frame
@@ -1985,7 +1985,7 @@ function Stack.game_ended(self)
     if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
       return true
     end
-  elseif self.match.mode == GameModes.ONE_PLAYER_TIME_ATTACK then
+  elseif self.match.mode.timeLimit then
     if self.game_stopwatch then
       if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
         return true
@@ -2034,20 +2034,10 @@ function Stack.gameResult(self)
     end
   end
 
-  if self.match.mode == GameModes.ONE_PLAYER_TIME_ATTACK then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return -1
-    elseif self.game_stopwatch then
-      if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
-        -- we didn't die within the time limit so that's a win I guess?
-        return 1
-      end
-    end
-  end
-
-  if self.match.mode == GameModes.ONE_PLAYER_ENDLESS then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return -1
+  if self.match.mode.timeLimit and self.game_stopwatch then
+    if self.game_stopwatch > self.match.mode.timeLimit * 60 then
+      -- we didn't die within the time limit so that's a win I guess?
+      return 1
     end
   end
 
@@ -2055,6 +2045,12 @@ function Stack.gameResult(self)
     if self:puzzle_done() then
       return 1
     elseif self:puzzle_failed() then
+      return -1
+    end
+  end
+
+  if #self.match.players == 1 then
+    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
       return -1
     end
   end

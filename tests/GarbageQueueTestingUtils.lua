@@ -41,10 +41,10 @@ end
 function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
   local battleRoom
   if attackFile then
-    battleRoom = BattleRoom(GameModes.ONE_PLAYER_TRAINING)
+    battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_TRAINING)
     battleRoom.trainingModeSettings = readAttackFile(attackFile)
   else
-    battleRoom = BattleRoom(GameModes.ONE_PLAYER_VS_SELF)
+    battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_VS_SELF)
   end
   LocalPlayer.settings.level = 1
   local match = battleRoom:createMatch()

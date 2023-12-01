@@ -22,12 +22,12 @@ function Replay.createNewReplay(match)
   result.replayVersion = REPLAY_VERSION
   result.seed = match.seed
   result.ranked = match_type == "Ranked"
-  result.doCountdown = match.doCountdown or true
   result.stage = match.stageId
   result.gameMode = {
     stackInteraction = battleRoom.mode.stackInteraction,
-    winCondition = battleRoom.mode.winCondition,
-    timeLimit = battleRoom.mode.timeLimit
+    winConditions = battleRoom.mode.winConditions or {},
+    timeLimit = battleRoom.mode.timeLimit,
+    doCountdown = battleRoom.mode.doCountdown or true
   }
 
   result.players = {}
@@ -86,46 +86,8 @@ function Replay.loadFromPath(path)
 end
 
 local function createMatchFromReplay(replay)
-  local battleRoom
-
-  if replay.gameMode.stackInteraction == GameModes.StackInteraction.VERSUS then
-    if #replay.players == 2 then
-      battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS, replay)
-    else
-      error("There is no versus game mode for more or less than 2 players")
-    end
-  elseif replay.gameMode.stackInteraction == GameModes.StackInteraction.SELF then
-    if #replay.players == 1 then
-      battleRoom = BattleRoom(GameModes.ONE_PLAYER_VS_SELF, replay)
-    else
-      error("There is no versus self game mode for more than 1 player")
-    end
-  elseif replay.gameMode.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
-    if #replay.players == 1 then
-      battleRoom = BattleRoom(GameModes.ONE_PLAYER_TRAINING, replay)
-    else
-      error("There is no training game mode for more than 1 player")
-    end
-  elseif replay.gameMode.stackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
-    if #replay.players == 1 then
-      battleRoom = BattleRoom(GameModes.ONE_PLAYER_CHALLENGE, replay)
-    else
-      error("There is no challenge game mode for more than 1 player")
-    end
-  else -- if replay.gameMode.stackInteraction == GameModes.StackInteraction.NONE
-    if #replay.players == 1 then
-      if replay.gameMode.timeLimit then
-        battleRoom = BattleRoom(GameModes.ONE_PLAYER_TIME_ATTACK, replay)
-      else
-        battleRoom = BattleRoom(GameModes.ONE_PLAYER_ENDLESS, replay)
-      end
-    else
-      error("There is no time attack/endless game mode for more than 1 player")
-    end
-  end
-
-  GAME.battleRoom = battleRoom
-  local match = battleRoom:createMatch()
+  GAME.battleRoom = BattleRoom.createFromReplay(replay)
+  local match = GAME.battleRoom:createMatch()
 
   match.isFromReplay = true
   match.doCountdown = replay.doCountdown

@@ -64,7 +64,7 @@ local function exitMenu()
 end
 
 function SimpleGameSetupMenu:load()
-  GAME.battleRoom = BattleRoom(self.gameMode)
+  GAME.battleRoom = BattleRoom.createLocalFromGameMode(self.gameMode)
   self.speedSlider = Slider({
     min = 1, 
     max = 99, 

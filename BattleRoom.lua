@@ -8,7 +8,7 @@ local GameModes = require("GameModes")
 -- A Battle Room is a session of vs battles, keeping track of the room number, wins / losses etc
 BattleRoom =
   class(
-  function(self, mode, roomData)
+  function(self, mode)
     assert(mode)
     self.mode = mode
     self.players = {}
@@ -17,53 +17,56 @@ BattleRoom =
     self.trainingModeSettings = nil
     self.allAssetsLoaded = false
     self.ranked = false
-    if roomData then
-      -- this could come from online or replay
-      if roomData.replayVersion then
-        -- coming from a replay
-        for i = 1, #roomData.players do
-          local rpp = roomData.players[i]
-          local player = Player(rpp.name, rpp.publicId)
-          player.playerNumber = i
-          player.wins = rpp.wins
-          player.settings.panelId = rpp.settings.panelId
-          player.settings.characterId = CharacterLoader.resolveCharacterSelection(rpp.settings.characterId)
-          player.settings.inputMethod = rpp.settings.inputMethod
-          player.settings.level = rpp.settings.level
-          player.settings.difficulty = rpp.settings.difficulty
-          player.settings.allowAdjacentColors = rpp.settings.allowAdjacentColors
-          --player.settings.levelData = rpp.settings.levelData
-          self:addPlayer(player)
-        end
-      elseif roomData.create_room then
-        -- coming from online
-        if self.spectating then
-          -- just initialize from message
-
-        else
-          self:addPlayer(LocalPlayer)
-          -- find out which player in the message is not the local player
-          -- create a Player for them
-          -- apply their settings
-          -- add to players table
-        end
-      end
-    else
-      -- no room creation data means we're exclusively local
-      -- always use the global local player
-      self:addPlayer(LocalPlayer)
-      for i = 2, self.mode.playerCount do
-        self.addPlayer(Player.getLocalPlayer())
-      end
-    end
-
-    if self.mode.style ~= GameModes.Styles.CHOOSE then
-      for i = 1, #self.players do
-        self.players[i]:setStyle(self.mode.style)
-      end
-    end
   end
 )
+
+function BattleRoom.createFromReplay(replay)
+  replay.gameMode.playerCount = #replay.players
+  replay.gameMode.richPresenceLabel = "Replay"
+  replay.gameMode.scene = "ReplayGame"
+  local battleRoom = BattleRoom(replay.gameMode)
+
+  for i = 1, #replay.players do
+    local rpp = replay.players[i]
+    local player = Player(rpp.name, rpp.publicId)
+    player.playerNumber = i
+    player.wins = rpp.wins
+    player.settings.panelId = rpp.settings.panelId
+    player.settings.characterId = CharacterLoader.resolveCharacterSelection(rpp.settings.characterId)
+    player.settings.inputMethod = rpp.settings.inputMethod
+    -- style will be obsolete for replays with style-independent levelData
+    player.settings.style = rpp.settings.style
+    player.settings.level = rpp.settings.level
+    player.settings.difficulty = rpp.settings.difficulty
+    player.settings.allowAdjacentColors = rpp.settings.allowAdjacentColors
+    --player.settings.levelData = rpp.settings.levelData
+    battleRoom:addPlayer(player)
+  end
+
+  return battleRoom
+end
+
+function BattleRoom.createFromServerMessage(message)
+  -- TODO for networking
+end
+
+function BattleRoom.createLocalFromGameMode(gameMode)
+  local battleRoom = BattleRoom(gameMode)
+
+  -- always use the global local player
+  battleRoom:addPlayer(LocalPlayer)
+  for i = 2, gameMode.playerCount do
+    battleRoom.addPlayer(Player.getLocalPlayer())
+  end
+
+  if gameMode.style ~= GameModes.Styles.CHOOSE then
+    for i = 1, #battleRoom.players do
+      battleRoom.players[i]:setStyle(gameMode.style)
+    end
+  end
+
+  return battleRoom
+end
 
 function BattleRoom.setWinCounts(self, winCounts)
   for i = 1, winCounts do
