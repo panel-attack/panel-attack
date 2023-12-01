@@ -173,12 +173,7 @@ function BattleRoom:updateRankedStatus(rankedStatus, comments)
 end
 
 function BattleRoom:startMatch(stageId, seed, replayOfMatch)
-  -- lock down configuration to one per player to avoid macro like abuses via multiple configs
-  -- if self.online and self.localPlayerNumber then
-  --   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
-  -- elseif not self.online then
-  --   GAME.input:requestSingleInputConfigurationForPlayerCount(#self.players)
-  -- end
+  -- TODO: lock down configuration to one per player to avoid macro like abuses via multiple configs
 
   local match
   if not self.match then
