@@ -658,8 +658,6 @@ function Match:start()
       self.players[i].stack:starting_state()
     end
   end
-
-  self.ready = true
 end
 
 function Match:setStage(stageId)

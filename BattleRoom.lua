@@ -202,10 +202,6 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   end
 end
 
-function BattleRoom:abortMatch()
-  --tbd
-end
-
 function BattleRoom:setStyle(styleChoice)
   -- style could be configurable per play instead but let's not for now
   if self.mode.style == GameModes.Styles.CHOOSE then
@@ -247,7 +243,7 @@ function BattleRoom:update()
   StageLoader.update()
   CharacterLoader.update()
 
-  if not self.match or not self.match.ready then
+  if not self.match then
     -- the setup phase of the room
     self:updateLoadingState()
     self:refreshReadyStates()
