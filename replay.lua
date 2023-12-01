@@ -90,7 +90,6 @@ local function createMatchFromReplay(replay)
   local match = GAME.battleRoom:createMatch()
 
   match.isFromReplay = true
-  match.doCountdown = replay.doCountdown
   match:setSeed(replay.seed)
   match:setStage(replay.stageId)
   match.engineVersion = replay.engineVersion
