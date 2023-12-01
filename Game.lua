@@ -132,6 +132,9 @@ function Game:setupCoroutine()
   if TESTS_ENABLED then
     self:runUnitTests()
   end
+  if PERFORMANCE_TESTS_ENABLED then
+    self:runPerformanceTests()
+  end
 
   self:initializeLocalPlayer()
 end
@@ -243,10 +246,14 @@ function Game:runUnitTests()
   if not status then
     error(err)
   end
-  -- Performance Tests
-  if PERFORMANCE_TESTS_ENABLED then
-    require("tests/performanceTests")
-  end
+end
+
+function Game:runPerformanceTests()
+  GAME:drawLoadingString("Running Performance Tests")
+  coroutine.yield()
+  require("tests.StackReplayPerformanceTests")
+  -- Disabled since they just prove lua tables are faster for rapid concatenation of strings
+  --require("tests.StringPerformanceTests")
 end
 
 function Game:updateMouseVisibility(dt)
