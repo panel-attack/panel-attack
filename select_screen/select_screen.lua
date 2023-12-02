@@ -709,7 +709,6 @@ function select_screen.savePlayer2Config(self)
   global_op_state = shallowcpy(self.players[self.op_player_number])
   global_op_state.character = global_op_state.selectedCharacter
   global_op_state.stage = global_op_state.selectedStage
-  global_op_state.level = self.players[self.op_player_number].level
   global_op_state.wants_ready = false
 end
 
