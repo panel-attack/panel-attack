@@ -556,6 +556,7 @@ function select_screen.setUpOpponentPlayer(self)
       self.players[self.op_player_number].selectedCharacter = global_op_state.character
       self.players[self.op_player_number].character = global_op_state.character
       self.players[self.op_player_number].stage = global_op_state.stage
+      self.players[self.op_player_number].level = global_op_state.level
       self.players[self.op_player_number].panels_dir = global_op_state.panels_dir
     end
   end
