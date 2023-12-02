@@ -67,12 +67,11 @@ function StageLoader.clear()
 end
 
 function StageLoader.resolveStageSelection(stageId)
-  if stageId and stages[stageId] then
-    stageId = StageLoader.resolveBundle(stageId)
-  else
+  if not stageId or not stages[stageId] then
     -- resolve via random selection
     stageId = tableUtils.getRandomElement(stages_ids_for_current_theme)
   end
+  stageId = StageLoader.resolveBundle(stageId)
 
   return stageId
 end

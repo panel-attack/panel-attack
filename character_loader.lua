@@ -196,12 +196,11 @@ function CharacterLoader.initCharacters()
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if characterId and characters[characterId] then
-    characterId = CharacterLoader.resolveBundle(characterId)
-  else
+  if not characterId or not characters[characterId] then
     -- resolve via random selection
     characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
+  characterId = CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end
