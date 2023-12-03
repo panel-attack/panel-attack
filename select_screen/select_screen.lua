@@ -204,7 +204,7 @@ function select_screen.on_select(self, player, super)
     player.selectedCharacter = player.cursor.positionId
     local character = characters[player.selectedCharacter]
     if character then
-      player.character = character.id
+      player.character = CharacterLoader.resolveCharacterSelection(character.id)
       CharacterLoader.load(player.character)
       characterSelectionSoundHasBeenPlayed = character:play_selection_sfx()
       if super then
@@ -505,8 +505,8 @@ end
 function select_screen.initializeFromPlayerConfig(self, playerNumber)
   self.players[playerNumber].stage = config.stage
   self.players[playerNumber].selectedStage = config.stage
-  self.players[playerNumber].character = config.character
   self.players[playerNumber].selectedCharacter = config.character
+  self.players[playerNumber].character = config.character
   self.players[playerNumber].level = config.level
   self.players[playerNumber].inputMethod = config.inputMethod or "controller"
   self.players[playerNumber].panels_dir = config.panels
