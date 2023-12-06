@@ -612,7 +612,7 @@ function Match:start()
 
   for i = 1, #self.players do
     local stack = self.players[i]:createStackFromSettings(self)
-    stack.do_countdown = self.doCountdown
+    stack.do_countdown = self.battleRoom.mode.doCountdown
 
     if self.replay then
       if self.isFromReplay then
