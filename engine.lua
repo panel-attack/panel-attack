@@ -8,6 +8,7 @@ local util = require("util")
 local utf8 = require("utf8")
 local GraphicsUtil = require("graphics_util")
 local GameModes = require("GameModes")
+local PanelGenerator = require("gen_panels")
 require("engine.panel")
 
 -- Stuff defined in this file:
@@ -971,6 +972,7 @@ end
 
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
+  self:makeStartingBoardPanels()
   if self.do_first_row then
     self.do_first_row = nil
     for i = 1, (n or 8) do
@@ -2315,7 +2317,7 @@ function Stack.new_row(self)
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
-    self.panel_buffer = PanelGenerator.makePanels(self)
+    self.panel_buffer = self:makePanels()
     self.panelGenCount = self.panelGenCount + 1
   end
 
@@ -2579,4 +2581,43 @@ function Stack:getInfo()
   end
 
   return info
+end
+
+function Stack:makePanels()
+  PanelGenerator.setSeed(self.match.seed + self.panelGenCount)
+
+  local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.NCOLORS, self.panel_buffer, not self.allowAdjacentColors)
+  ret = PanelGenerator.assignMetalLocations(ret, self.width)
+
+  return ret
+end
+
+function Stack:makeStartingBoardPanels()
+  PanelGenerator.setSeed(self.match.seed + self.panelGenCount)
+
+  local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
+
+  local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.NCOLORS, self.panel_buffer, not allowAdjacentColors)
+  -- technically there can never be metal on the starting board but who knows
+  ret = PanelGenerator.assignMetalLocations(ret, self.width)
+
+  -- legacy crutch, the arcane magic for the non-uniform starting board assumes this is there
+  ret = string.rep("0", self.width) .. ret
+  -- arcane magic to get a non-uniform starting board
+  ret = procat(ret)
+  local height = tableUtils.map(procat(string.rep("7", self.width)), function(s) return tonumber(s) end)
+  local to_remove = self.height
+  while to_remove > 0 do
+    local idx = PanelGenerator.rng:random(1, self.width) -- pick a random column
+    if height[idx] > 0 then
+      ret[idx + self.width * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
+      height[idx] = height[idx] - 1
+      to_remove = to_remove - 1
+    end
+  end
+  ret = table.concat(ret)
+  ret = string.sub(ret, self.width + 1)
+  PanelGenerator.privateCheckPanels(ret, self.width)
+
+return ret
 end

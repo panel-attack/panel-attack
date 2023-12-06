@@ -1,62 +1,47 @@
 require("util")
 require("csprng")
 local logger = require("logger")
-local GameModes = require("GameModes")
 local tableUtils = require("tableUtils")
 
--- class used for generating panels
-PanelGenerator = class(function(self)
-
-end)
+-- table of static functions used for generating panels
+local PanelGenerator = { rng = love.math.newRandomGenerator()}
 
 local PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", [0] = "0"}
 local PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", [0] = "0"}
 PanelGenerator.PANEL_COLOR_TO_NUMBER = {
-  ["A"] = 1,
-  ["B"] = 2,
-  ["C"] = 3,
-  ["D"] = 4,
-  ["E"] = 5,
-  ["F"] = 6,
-  ["G"] = 7,
-  ["H"] = 8,
-  ["a"] = 1,
-  ["b"] = 2,
-  ["c"] = 3,
-  ["d"] = 4,
-  ["e"] = 5,
-  ["f"] = 6,
-  ["g"] = 7,
-  ["h"] = 8,
-  ["1"] = 1,
-  ["2"] = 2,
-  ["3"] = 3,
-  ["4"] = 4,
-  ["5"] = 5,
-  ["6"] = 6,
-  ["7"] = 7,
-  ["8"] = 8,
-  ["0"] = 0
+  ["A"] = 1, ["B"] = 2, ["C"] = 3, ["D"] = 4, ["E"] = 5, ["F"] = 6, ["G"] = 7, ["H"] = 8,
+  ["a"] = 1, ["b"] = 2, ["c"] = 3, ["d"] = 4, ["e"] = 5, ["f"] = 6, ["g"] = 7, ["h"] = 8,
+  ["1"] = 1, ["2"] = 2, ["3"] = 3, ["4"] = 4, ["5"] = 5, ["6"] = 6, ["7"] = 7, ["8"] = 8, ["0"] = 0
 }
 
+-- sets the seed for the PanelGenerators own random number generator
+-- seed has to be a number
 function PanelGenerator.setSeed(seed)
   if seed then
-    love.math.setRandomSeed(seed)
+    PanelGenerator.rng:setSeed(seed)
   end
 end
 
-function PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, previousPanels, disallowAdjacentColors)
+function PanelGenerator.privateGeneratePanels(rowsToMake, rowWidth, ncolors, previousPanels, disallowAdjacentColors)
+  logger.debug("generating panels with seed: " .. PanelGenerator.rng:getSeed() ..
+               "\nbuffer: " .. previousPanels ..
+               "\ncolors: " .. ncolors)
+
   local result = previousPanels
 
-  for x = 0, rows_to_make - 1 do
-    for y = 0, 5 do
+  if ncolors < 2 then
+    error("Trying to generate panels with only " .. ncolors .. " colors")
+  end
+
+  for x = 0, rowsToMake - 1 do
+    for y = 0, rowWidth - 1 do
       local previousTwoMatchOnThisRow = y > 1 and PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] ==
                                             PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -2, -2)]
       local nogood = true
       local color = 0
-      local belowColor = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -6, -6)]
+      local belowColor = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -rowWidth, -rowWidth)]
       while nogood do
-        color = love.math.random(1, ncolors)
+        color = PanelGenerator.rng:random(1, ncolors)
         nogood =
             (previousTwoMatchOnThisRow and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
             color == belowColor or -- can't have the same color as below
@@ -65,75 +50,46 @@ function PanelGenerator.privateGeneratePanels(rows_to_make, ncolors, previousPan
       result = result .. tostring(color)
     end
   end
-
+  PanelGenerator.privateCheckPanels(result, rowWidth)
+  logger.debug(result)
   return result
 end
 
-function PanelGenerator.privateCheckPanels(ret)
+function PanelGenerator.privateCheckPanels(ret, rowWidth)
   if TESTS_ENABLED then
-    assert(string.len(ret) % 6 == 0)
-    for i = 7, string.len(ret) do
+    assert(string.len(ret) % rowWidth == 0)
+    for i = rowWidth + 1, string.len(ret) do
       local color = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(ret, i, i)]
-      if color ~= 0 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(ret, i - 6, i - 6)] then
-        error("invalid panels")
+      if color ~= 0 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(ret, i - rowWidth, i - rowWidth)] then
+        error("invalid panels: " .. ret)
       end
     end
   end
 end
 
-function PanelGenerator.makePanels(stack)
-  --logger.debug("generating panels with seed: " .. stack.match.seed + stack.panelGenCount .. " buffer: " .. stack.panel_buffer)
-  PanelGenerator.setSeed(stack.match.seed + stack.panelGenCount)
-
-  -- logger.debug("make_panels(" .. stack.NCOLORS .. ", " .. stack.panel_buffer .. ", ") .. ")")
-  local ret = stack.panel_buffer
-  local rows_to_make = 100 -- setting the seed is slow, so try to build a lot of panels at once.
-  if stack.NCOLORS < 2 then
-    return
-  end
-  local cut_panels = false
-  local allowAdjacentColors = stack.allowAdjacentColors
-
-  if stack.panel_buffer == "" then
-    ret = "000000"
-    rows_to_make = 7
-    -- During the initial board we can't allow adjacent colors if the other player can't
-    allowAdjacentColors = tableUtils.trueForAll(stack.match.players, function(player) return player.stack.allowAdjacentColors end)
-    cut_panels = true
-  end
-
-  ret = PanelGenerator.privateGeneratePanels(rows_to_make, stack.NCOLORS, ret, not allowAdjacentColors)
-
-  -- If this is the first time panels, remove the placeholder "000000"
-  if stack.panel_buffer == "" then
-    ret = string.sub(ret, 7, -1)
-  end
-
-  PanelGenerator.privateCheckPanels(ret)
-
+function PanelGenerator.assignMetalLocations(ret, rowWidth)
   -- logger.debug("panels before potential metal panel position assignments:")
   -- logger.debug(ret)
   -- assign potential metal panel placements
-  local row_width = 6 -- this may belong in globals if we were to ever make a game mode with a different width
-  local new_ret = "000000"
+  local new_ret = string.rep("0", rowWidth)
   local new_row
   local prev_row
-  for i = 1, string.len(ret) / 6 do
-    local current_row_from_ret = string.sub(ret, (i - 1) * row_width + 1, (i - 1) * row_width + row_width)
+  for i = 1, string.len(ret) / rowWidth do
+    local current_row_from_ret = string.sub(ret, (i - 1) * rowWidth + 1, (i - 1) * rowWidth + rowWidth)
     -- logger.debug("current_row_from_ret: " .. current_row_from_ret)
     if tonumber(current_row_from_ret) then -- doesn't already have letters in it for metal panel locations
-      prev_row = string.sub(new_ret, 0 - row_width, -1)
+      prev_row = string.sub(new_ret, 0 - rowWidth, -1)
       local first, second -- locations of potential metal panels
       -- while panel vertically adjacent is not numeric, so can be a metal panel
       while not first or not tonumber(string.sub(prev_row, first, first)) do
-        first = love.math.random(1, row_width)
+        first = PanelGenerator.rng:random(1, rowWidth)
       end
       while not second or second == first or not tonumber(string.sub(prev_row, second, second)) do
-        second = love.math.random(1, row_width)
+        second = PanelGenerator.rng:random(1, rowWidth)
       end
       new_row = ""
-      for j = 1, row_width do
-        local chr_from_ret = string.sub(ret, (i - 1) * row_width + j, (i - 1) * row_width + j)
+      for j = 1, rowWidth do
+        local chr_from_ret = string.sub(ret, (i - 1) * rowWidth + j, (i - 1) * rowWidth + j)
         local num_from_ret = tonumber(chr_from_ret)
         if j == first then
           new_row = new_row .. (PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
@@ -148,50 +104,15 @@ function PanelGenerator.makePanels(stack)
     end
     new_ret = new_ret .. new_row
   end
-  ret = new_ret
 
-  PanelGenerator.privateCheckPanels(ret)
+  -- new_ret was started with a row of 0 because the algorithm relies on a row without shock panels being there at the start
+  -- so cut that extra row out again
+  new_ret = string.sub(ret, rowWidth + 1, -1)
+  PanelGenerator.privateCheckPanels(new_ret, rowWidth)
 
   -- logger.debug("panels after potential metal panel position assignments:")
   -- logger.debug(ret)
-  if cut_panels then
-    ret = procat(ret)
-    local height = {7, 7, 7, 7, 7, 7}
-    local to_remove = 12
-    while to_remove > 0 do
-      local idx = love.math.random(1, 6) -- pick a random column
-      if height[idx] > 0 then
-        ret[idx + 6 * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
-        height[idx] = height[idx] - 1
-        to_remove = to_remove - 1
-      end
-    end
-    ret = table.concat(ret)
-  end
-  -- if cut_panels then
-  -- logger.debug("panels after cut_panels")
-  -- end
-
-  ret = string.sub(ret, 7, -1)
-
-  PanelGenerator.privateCheckPanels(ret)
-
-  return ret
+  return new_ret
 end
 
-function PanelGenerator.makeGarbagePanels(stack)
-  PanelGenerator.setSeed(stack.match.seed + stack.garbageGenCount)
-
-  local firstPanelSet = false
-  if prev_panels == "" then
-    firstPanelSet = true
-    prev_panels = "000000"
-  end
-
-  local ret = PanelGenerator.privateGeneratePanels(20, stack.NCOLORS, stack.gpanel_buffer, not stack.allowAdjacentColors)
-
-  if firstPanelSet then
-    ret = string.sub(ret, 7, -1)
-  end
-  return ret
-end
+return PanelGenerator

@@ -1,5 +1,6 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local PanelGenerator = require("gen_panels")
 
 local function sortByPopOrder(panelList, isGarbage)
   table.sort(panelList, function(a, b)
@@ -350,6 +351,11 @@ function Stack:convertGarbagePanels(isChain)
       end
     end
   end
+end
+
+function Stack:makeGarbagePanels()
+  PanelGenerator.setSeed(self.match.seed + self.garbageGenCount)
+  return PanelGenerator.privateGeneratePanels(20, self.width, self.NCOLORS, self.gpanel_buffer, not self.allowAdjacentColors)
 end
 
 function Stack:refillGarbagePanelBuffer()
