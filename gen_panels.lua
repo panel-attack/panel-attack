@@ -107,7 +107,7 @@ function PanelGenerator.assignMetalLocations(ret, rowWidth)
 
   -- new_ret was started with a row of 0 because the algorithm relies on a row without shock panels being there at the start
   -- so cut that extra row out again
-  new_ret = string.sub(ret, rowWidth + 1, -1)
+  new_ret = string.sub(new_ret, rowWidth + 1)
   PanelGenerator.privateCheckPanels(new_ret, rowWidth)
 
   -- logger.debug("panels after potential metal panel position assignments:")

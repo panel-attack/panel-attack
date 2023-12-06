@@ -972,7 +972,7 @@ end
 
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
-  self:makeStartingBoardPanels()
+  self.panel_buffer = self:makeStartingBoardPanels()
   if self.do_first_row then
     self.do_first_row = nil
     for i = 1, (n or 8) do
@@ -2318,7 +2318,6 @@ function Stack.new_row(self)
 
   if string.len(self.panel_buffer) <= 10 * self.width then
     self.panel_buffer = self:makePanels()
-    self.panelGenCount = self.panelGenCount + 1
   end
 
   -- assign colors to the new row 0
@@ -2588,6 +2587,7 @@ function Stack:makePanels()
 
   local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.NCOLORS, self.panel_buffer, not self.allowAdjacentColors)
   ret = PanelGenerator.assignMetalLocations(ret, self.width)
+  self.panelGenCount = self.panelGenCount + 100 * self.width
 
   return ret
 end
@@ -2601,12 +2601,13 @@ function Stack:makeStartingBoardPanels()
   -- technically there can never be metal on the starting board but who knows
   ret = PanelGenerator.assignMetalLocations(ret, self.width)
 
-  -- legacy crutch, the arcane magic for the non-uniform starting board assumes this is there
+  -- legacy crutch, the arcane magic for the non-uniform starting board assumes this is there and it really doesn't work without it
   ret = string.rep("0", self.width) .. ret
   -- arcane magic to get a non-uniform starting board
   ret = procat(ret)
-  local height = tableUtils.map(procat(string.rep("7", self.width)), function(s) return tonumber(s) end)
-  local to_remove = self.height
+  local maxStartingHeight = 7
+  local height = tableUtils.map(procat(string.rep(maxStartingHeight, self.width)), function(s) return tonumber(s) end)
+  local to_remove = 2 * self.width
   while to_remove > 0 do
     local idx = PanelGenerator.rng:random(1, self.width) -- pick a random column
     if height[idx] > 0 then
@@ -2618,6 +2619,8 @@ function Stack:makeStartingBoardPanels()
   ret = table.concat(ret)
   ret = string.sub(ret, self.width + 1)
   PanelGenerator.privateCheckPanels(ret, self.width)
+  -- starting boards always flatten out to 5 high
+  self.panelGenCount = self.panelGenCount + (maxStartingHeight - 2) * self.width
 
 return ret
 end
