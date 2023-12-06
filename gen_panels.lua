@@ -1,17 +1,16 @@
 require("util")
 require("csprng")
 local logger = require("logger")
-local tableUtils = require("tableUtils")
 
 -- table of static functions used for generating panels
 local PanelGenerator = { rng = love.math.newRandomGenerator()}
 
-local PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", [0] = "0"}
-local PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", [0] = "0"}
+PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", "I", [0] = "J"}
+PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", "i", [0] = "j" }
 PanelGenerator.PANEL_COLOR_TO_NUMBER = {
-  ["A"] = 1, ["B"] = 2, ["C"] = 3, ["D"] = 4, ["E"] = 5, ["F"] = 6, ["G"] = 7, ["H"] = 8,
-  ["a"] = 1, ["b"] = 2, ["c"] = 3, ["d"] = 4, ["e"] = 5, ["f"] = 6, ["g"] = 7, ["h"] = 8,
-  ["1"] = 1, ["2"] = 2, ["3"] = 3, ["4"] = 4, ["5"] = 5, ["6"] = 6, ["7"] = 7, ["8"] = 8, ["0"] = 0
+  ["A"] = 1, ["B"] = 2, ["C"] = 3, ["D"] = 4, ["E"] = 5, ["F"] = 6, ["G"] = 7, ["H"] = 8, ["I"] = 9, ["J"] = 0,
+  ["a"] = 1, ["b"] = 2, ["c"] = 3, ["d"] = 4, ["e"] = 5, ["f"] = 6, ["g"] = 7, ["h"] = 8, ["i"] = 9, ["j"] = 0,
+  ["1"] = 1, ["2"] = 2, ["3"] = 3, ["4"] = 4, ["5"] = 5, ["6"] = 6, ["7"] = 7, ["8"] = 8, ["9"] = 9, ["0"] = 0
 }
 
 -- sets the seed for the PanelGenerators own random number generator
@@ -96,9 +95,9 @@ function PanelGenerator.assignMetalLocations(ret, rowWidth)
         local chr_from_ret = string.sub(ret, (i - 1) * rowWidth + j, (i - 1) * rowWidth + j)
         local num_from_ret = tonumber(chr_from_ret)
         if j == first then
-          new_row = new_row .. (PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
+          new_row = new_row .. (PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
         elseif j == second then
-          new_row = new_row .. (PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
+          new_row = new_row .. (PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
         else
           new_row = new_row .. chr_from_ret
         end

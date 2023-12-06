@@ -2598,7 +2598,7 @@ function Stack:makeStartingBoardPanels()
   local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
 
   local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.NCOLORS, self.panel_buffer, not allowAdjacentColors)
-  -- technically there can never be metal on the starting board but who knows
+  -- technically there can never be metal on the starting board but we need to call it to advance the RNG (compatibility)
   ret = PanelGenerator.assignMetalLocations(ret, self.width)
 
   -- legacy crutch, the arcane magic for the non-uniform starting board assumes this is there and it really doesn't work without it
@@ -2616,8 +2616,22 @@ function Stack:makeStartingBoardPanels()
       to_remove = to_remove - 1
     end
   end
+
   ret = table.concat(ret)
   ret = string.sub(ret, self.width + 1)
+
+  -- now comes slightly silly thanks to refactoring:
+  -- this starting board goes in full into the next panel generation and will get processed by PanelGenerator.assignMetalLocations again
+  -- in the past, the top row had already been consumed at this point in time
+  -- that function tries to have metal positions assigned for every single row 
+  -- in the starting board, due to the board having 0s, in the top row it may not be possible for assignMetalLocations to find a placement
+  -- in that case it would try that line the next time (and fail) and while doing that, advance the RNG
+  -- to prevent that, convert the first number to its letter equivalent
+  if not string.match(ret:sub(1, self.width), "%s") then
+    local char = ret:sub(1, 1)
+    ret = ret:gsub(ret:sub(1, 1), PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[tonumber(char)], 1)
+  end
+
   PanelGenerator.privateCheckPanels(ret, self.width)
 
   self.panelGenCount = self.panelGenCount + 1
