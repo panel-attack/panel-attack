@@ -18,23 +18,18 @@ PanelGenerator.PANEL_COLOR_TO_NUMBER = {
 -- seed has to be a number
 function PanelGenerator:setSeed(seed)
   if seed then
-    logger.info("setting seed to " .. seed)
-    --self.rng:setSeed(seed)
-    love.math.setRandomSeed(seed)
-    logger.info("confirming seed is " .. love.math.getRandomSeed())
-
+    self.rng:setSeed(seed)
   end
 end
 
 function PanelGenerator:random(min, max)
-  -- return self.rng:random(min, max)
-  return love.math.random(min, max)
+  return self.rng:random(min, max)
 end
 
 function PanelGenerator.privateGeneratePanels(rowsToMake, rowWidth, ncolors, previousPanels, disallowAdjacentColors)
-  logger.info("generating panels with seed: " .. PanelGenerator.rng:getSeed() ..
-               "\nbuffer: " .. previousPanels ..
-               "\ncolors: " .. ncolors)
+  -- logger.info("generating panels with seed: " .. PanelGenerator.rng:getSeed() ..
+  --              "\nbuffer: " .. previousPanels ..
+  --              "\ncolors: " .. ncolors)
 
   local result = previousPanels
 
@@ -44,34 +39,23 @@ function PanelGenerator.privateGeneratePanels(rowsToMake, rowWidth, ncolors, pre
 
   for x = 0, rowsToMake - 1 do
     for y = 0, rowWidth - 1 do
-
-      local color
-      local belowColor = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -rowWidth, -rowWidth)]
+      local previousTwoMatchOnThisRow = y > 1 and PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] ==
+                                            PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -2, -2)]
       local nogood = true
+      local color = 0
+      local belowColor = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -rowWidth, -rowWidth)]
       while nogood do
         color = PanelGenerator:random(1, ncolors)
-        nogood = false
-
-        if color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] then
-          if disallowAdjacentColors then
-            -- natural horizontal pairs cannot occur (parameter)
-            nogood = true
-          elseif y > 1 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -2, -2)] then
-            -- natural horizontal matches cannot occur
-            nogood = true
-          end
-        end
-
-        if belowColor and belowColor == color then
-          -- natural vertical pairs cannot occur
-          nogood = true
-        end
+        nogood =
+            (previousTwoMatchOnThisRow and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
+            color == belowColor or -- can't have the same color as below
+                (y > 0 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] and disallowAdjacentColors) -- on level 8+ vs, don't allow any adjacent colors
       end
       result = result .. tostring(color)
     end
   end
   PanelGenerator.privateCheckPanels(result, rowWidth)
-  logger.debug(result)
+  -- logger.debug(result)
   return result
 end
 
