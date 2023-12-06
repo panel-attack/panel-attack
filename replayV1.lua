@@ -28,11 +28,11 @@ function ReplayV1.loadFromFile(legacyReplay)
   r.replayVersion = 1
   r.seed = v1r.seed
   r.ranked = v1r.match_type == "Ranked"
-  r.doCountdown = v1r.do_countdown
   r.stage = v1r.stage
   r.gameMode = {
     stackInteraction = gameMode.stackInteraction,
     winConditions = gameMode.winConditions,
+    doCountdown = v1r.do_countdown
   }
 
   if mode == "time" then

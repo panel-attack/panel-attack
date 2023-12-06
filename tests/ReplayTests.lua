@@ -7,6 +7,8 @@ local GameModes = require("GameModes")
 
 local function endlessSaveTest()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
+  local puzzleString = Puzzle.toPuzzleString(match.P1.panels):sub(-36)
+  assert(puzzleString == "002040054133025661353423461141644526")
   match.P1:receiveConfirmedInput(string.rep(match.P1:idleInput(), 909))
   local replay = Replay.createNewReplay(match)
   StackReplayTestingUtils:fullySimulateMatch(match)

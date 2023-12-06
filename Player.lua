@@ -38,7 +38,11 @@ function Player:createStackFromSettings(match)
   args.character = self.settings.characterId
   if self.settings.style == GameModes.Styles.MODERN then
     args.level = self.settings.level
-    args.allowAdjacentColors = args.level < 8
+    if match.battleRoom.mode.stackInteraction == GameModes.StackInteraction.NONE then
+      args.allowAdjacentColors = true
+    else
+      args.allowAdjacentColors = args.level < 8
+    end
   else
     args.difficulty = self.settings.difficulty
     args.speed = self.settings.speed
