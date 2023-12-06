@@ -16,14 +16,23 @@ PanelGenerator.PANEL_COLOR_TO_NUMBER = {
 
 -- sets the seed for the PanelGenerators own random number generator
 -- seed has to be a number
-function PanelGenerator.setSeed(seed)
+function PanelGenerator:setSeed(seed)
   if seed then
-    PanelGenerator.rng:setSeed(seed)
+    logger.info("setting seed to " .. seed)
+    --self.rng:setSeed(seed)
+    love.math.setRandomSeed(seed)
+    logger.info("confirming seed is " .. love.math.getRandomSeed())
+
   end
 end
 
+function PanelGenerator:random(min, max)
+  -- return self.rng:random(min, max)
+  return love.math.random(min, max)
+end
+
 function PanelGenerator.privateGeneratePanels(rowsToMake, rowWidth, ncolors, previousPanels, disallowAdjacentColors)
-  logger.debug("generating panels with seed: " .. PanelGenerator.rng:getSeed() ..
+  logger.info("generating panels with seed: " .. PanelGenerator.rng:getSeed() ..
                "\nbuffer: " .. previousPanels ..
                "\ncolors: " .. ncolors)
 
@@ -35,17 +44,28 @@ function PanelGenerator.privateGeneratePanels(rowsToMake, rowWidth, ncolors, pre
 
   for x = 0, rowsToMake - 1 do
     for y = 0, rowWidth - 1 do
-      local previousTwoMatchOnThisRow = y > 1 and PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] ==
-                                            PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -2, -2)]
-      local nogood = true
-      local color = 0
+
+      local color
       local belowColor = PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -rowWidth, -rowWidth)]
+      local nogood = true
       while nogood do
-        color = PanelGenerator.rng:random(1, ncolors)
-        nogood =
-            (previousTwoMatchOnThisRow and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)]) or -- Can't have three in a row on this column
-            color == belowColor or -- can't have the same color as below
-                (y > 0 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] and disallowAdjacentColors) -- on level 8+ vs, don't allow any adjacent colors
+        color = PanelGenerator:random(1, ncolors)
+        nogood = false
+
+        if color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -1, -1)] then
+          if disallowAdjacentColors then
+            -- natural horizontal pairs cannot occur (parameter)
+            nogood = true
+          elseif y > 1 and color == PanelGenerator.PANEL_COLOR_TO_NUMBER[string.sub(result, -2, -2)] then
+            -- natural horizontal matches cannot occur
+            nogood = true
+          end
+        end
+
+        if belowColor and belowColor == color then
+          -- natural vertical pairs cannot occur
+          nogood = true
+        end
       end
       result = result .. tostring(color)
     end
@@ -82,10 +102,10 @@ function PanelGenerator.assignMetalLocations(ret, rowWidth)
       local first, second -- locations of potential metal panels
       -- while panel vertically adjacent is not numeric, so can be a metal panel
       while not first or not tonumber(string.sub(prev_row, first, first)) do
-        first = PanelGenerator.rng:random(1, rowWidth)
+        first = PanelGenerator:random(1, rowWidth)
       end
       while not second or second == first or not tonumber(string.sub(prev_row, second, second)) do
-        second = PanelGenerator.rng:random(1, rowWidth)
+        second = PanelGenerator:random(1, rowWidth)
       end
       new_row = ""
       for j = 1, rowWidth do

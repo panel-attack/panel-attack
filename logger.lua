@@ -9,7 +9,7 @@ local INFO = 2 -- Log something that is useful in most normal conditions
 local WARN = 3 -- Log something that could be a problem
 local ERROR = 4 -- Log something that definitely is a problem
 
-local LOG_LEVEL = DEBUG
+local LOG_LEVEL = INFO
 
 -- See comments above about when you should use each logging level
 function logger.trace(msg)

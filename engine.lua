@@ -2583,17 +2583,17 @@ function Stack:getInfo()
 end
 
 function Stack:makePanels()
-  PanelGenerator.setSeed(self.match.seed + self.panelGenCount)
+  PanelGenerator:setSeed(self.match.seed + self.panelGenCount)
 
   local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.NCOLORS, self.panel_buffer, not self.allowAdjacentColors)
   ret = PanelGenerator.assignMetalLocations(ret, self.width)
-  self.panelGenCount = self.panelGenCount + 100 * self.width
+  self.panelGenCount = self.panelGenCount + 1
 
   return ret
 end
 
 function Stack:makeStartingBoardPanels()
-  PanelGenerator.setSeed(self.match.seed + self.panelGenCount)
+  PanelGenerator:setSeed(self.match.seed)
 
   local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
 
@@ -2609,7 +2609,7 @@ function Stack:makeStartingBoardPanels()
   local height = tableUtils.map(procat(string.rep(maxStartingHeight, self.width)), function(s) return tonumber(s) end)
   local to_remove = 2 * self.width
   while to_remove > 0 do
-    local idx = PanelGenerator.rng:random(1, self.width) -- pick a random column
+    local idx = PanelGenerator:random(1, self.width) -- pick a random column
     if height[idx] > 0 then
       ret[idx + self.width * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
       height[idx] = height[idx] - 1
@@ -2619,8 +2619,8 @@ function Stack:makeStartingBoardPanels()
   ret = table.concat(ret)
   ret = string.sub(ret, self.width + 1)
   PanelGenerator.privateCheckPanels(ret, self.width)
-  -- starting boards always flatten out to 5 high
-  self.panelGenCount = self.panelGenCount + (maxStartingHeight - 2) * self.width
+
+  self.panelGenCount = self.panelGenCount + 1
 
 return ret
 end

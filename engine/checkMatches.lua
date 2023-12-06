@@ -353,15 +353,11 @@ function Stack:convertGarbagePanels(isChain)
   end
 end
 
-function Stack:makeGarbagePanels()
-  PanelGenerator.setSeed(self.match.seed + self.garbageGenCount)
-  return PanelGenerator.privateGeneratePanels(20, self.width, self.NCOLORS, self.gpanel_buffer, not self.allowAdjacentColors)
-end
-
 function Stack:refillGarbagePanelBuffer()
-  local garbagePanels = PanelGenerator.makeGarbagePanels(self)
-  self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-  logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+  PanelGenerator:setSeed(self.match.seed + self.garbageGenCount)
+  logger.info("gpanel buffer is " .. self.gpanel_buffer)
+  self.gpanel_buffer = PanelGenerator.privateGeneratePanels(20, self.width, self.NCOLORS, self.gpanel_buffer, not self.allowAdjacentColors)
+  logger.info("gpanel buffer is " .. self.gpanel_buffer)
   self.garbageGenCount = self.garbageGenCount + 1
 end
 
