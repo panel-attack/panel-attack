@@ -75,7 +75,7 @@ function Match:gameEndedClockTime()
   return result
 end
 
-function Match.getOutcome(self)
+function Match:getOutcome()
   
   local gameResult = self.P1:gameResult()
 
@@ -340,7 +340,7 @@ function Match:drawCommunityMessage()
   end
 end
 
-function Match.render(self)
+function Match:render()
   local P1 = self.P1
   local P2 = self.P2
   
@@ -452,7 +452,7 @@ function Match.render(self)
     gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("Seed " .. GAME.battleRoom.match.seed, drawX, drawY)
+    gprintf("Seed " .. self.seed, drawX, drawY)
 
     local gameEndedClockTime = self:gameEndedClockTime()
 
