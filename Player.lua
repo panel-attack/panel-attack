@@ -1,6 +1,11 @@
 local class = require("class")
 local GameModes = require("GameModes")
 
+-- A player is mostly a data representation of a Panel Attack player
+-- It holds data pertaining to their online status (like name, public id)
+-- It holds data pertaining to their client status (like character, stage, panels, level etc)
+-- Player implements a lot of setters that feed into an observer-like pattern, notifying possible subscribers about property changes
+-- Due to this, unless for a good reason, all properties on Player should be set using the setters
 local Player = class(function(self, name, publicId, isLocal)
   self.name = name
   self.wins = 0
@@ -65,7 +70,7 @@ function Player:getRatingDiff()
   return self.rating.new - self.rating.old
 end
 
--- Ui Elements can subscribe to properties by passing a callback
+-- Other elements (ui, network) can subscribe to properties in Player.settings by passing a callback
 function Player:subscribe(property, callback)
   if self.settings[property] then
     if not self.subscriptionList[property] then
@@ -78,7 +83,7 @@ function Player:subscribe(property, callback)
   return false
 end
 
--- the callback is executed with the new property value as the argument whenever the property is modified for the player
+-- the callback is executed with the new property value as the argument whenever a property is modified via its setter
 function Player:onPropertyChanged(property)
   if self.subscriptionList[property] then
     for i = 1, #self.subscriptionList[property] do
