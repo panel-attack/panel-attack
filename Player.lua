@@ -16,6 +16,7 @@ local Player = class(function(self, name, publicId, isLocal)
   self.subscriptionList = {}
 end)
 
+-- returns the count of wins modified by the `modifiedWins` property
 function Player:getWinCount()
   return self.wins + self.modifiedWins
 end
@@ -28,6 +29,8 @@ function Player:incrementWinCount()
   self.wins = self.wins + 1
 end
 
+-- creates a stack for the given match according to the player's settings and returns it
+-- the stack is also saved as a reference on player
 function Player:createStackFromSettings(match)
   local args = {}
   args.which = self.playerNumber
@@ -171,6 +174,9 @@ function Player:setInputMethod(inputMethod)
   end
 end
 
+-- sets the style of "level" presets the player selects from
+-- 1 = classic
+-- 2 = modern
 function Player:setStyle(style)
   if style ~= self.settings.style then
     self.settings.style = style

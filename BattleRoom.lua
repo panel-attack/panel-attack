@@ -5,7 +5,7 @@ local tableUtils = require("tableUtils")
 local sceneManager = require("scenes.sceneManager")
 local GameModes = require("GameModes")
 
--- A Battle Room is a session of vs battles, keeping track of the room number, wins / losses etc
+-- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom =
   class(
   function(self, mode)
@@ -80,6 +80,8 @@ function BattleRoom:setRatings(ratings)
   end
 end
 
+-- returns the total amount of games played, derived from the sum of wins across all players
+-- (this means draws don't count as games)
 function BattleRoom:totalGames()
   local totalGames = 0
   for i = 1, #self.players do
@@ -102,6 +104,7 @@ function BattleRoom:winningPlayer()
   end
 end
 
+-- creates a match with the players in the BattleRoom
 function BattleRoom:createMatch()
   self.match = Match(self)
 
@@ -112,6 +115,7 @@ function BattleRoom:createMatch()
   return self.match
 end
 
+-- creates a new Player based on their minimum information and adds them to the BattleRoom
 function BattleRoom:addNewPlayer(name, publicId, isLocal)
   local player = Player(name, publicId, isLocal)
   player.playerNumber = #self.players+1
@@ -119,6 +123,7 @@ function BattleRoom:addNewPlayer(name, publicId, isLocal)
   return player
 end
 
+-- adds an existing Player to the BattleRoom
 function BattleRoom:addPlayer(player)
   player.playerNumber = #self.players+1
   self.players[#self.players+1] = player
@@ -149,6 +154,7 @@ function BattleRoom:refreshReadyStates()
   end
 end
 
+-- returns true if all players are ready, false otherwise
 function BattleRoom:allReady()
   -- ready should probably be a battleRoom prop, not a player prop? at least for local player(s)?
   for playerNumber = 1, #self.players do
@@ -175,6 +181,7 @@ function BattleRoom:updateRankedStatus(rankedStatus, comments)
   end
 end
 
+-- creates a match based on the room and player settings, starts it up and switches to the Game scene
 function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   -- TODO: lock down configuration to one per player to avoid macro like abuses via multiple configs
 
@@ -205,6 +212,10 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   end
 end
 
+-- sets the style of "level" presets the players select from
+-- 1 = classic
+-- 2 = modern
+-- in the future this may become a player only prop but for now it's battleRoom wide and players have to match
 function BattleRoom:setStyle(styleChoice)
   -- style could be configurable per play instead but let's not for now
   if self.mode.style == GameModes.Styles.CHOOSE then
