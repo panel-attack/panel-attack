@@ -13,8 +13,8 @@ local UIElement = class(
     self.y = options.y or 0
     
     -- ui dimensions
-    self.width = options.width or 110
-    self.height = options.height or 25
+    self.width = options.width or 0
+    self.height = options.height or 0
     
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
