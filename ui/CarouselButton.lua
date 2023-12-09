@@ -12,6 +12,8 @@ local CarouselButton = class(
 function CarouselButton:updatePosition(width)
   self.width = (self.parent.width - width) / 2
   self.height = self.parent.height
+  self.label.width = self.width
+  self.label.height = self.height
   if self.direction == "left" then
     self.x = 0
   elseif self.direction == "right" then
@@ -27,11 +29,10 @@ function CarouselButton:draw()
     return
   end
 
-  local boxOffsetX, boxOffsetY = self:getScreenPos()
-  local textWidth, textHeight = self.label.width, self.label.height
+  local screenX, screenY = self:getScreenPos()
 
-  local xPosAlign, xOffset = self.width / 2, textWidth / 2
-  local yPosAlign, yOffset = self.height / 2, textHeight / 2
+  self:drawBackground(screenX, screenY)
+  self:drawOutline(screenX, screenY)
 
   --GraphicsUtil.drawClearText(self.label, boxOffsetX + xPosAlign, boxOffsetY + yPosAlign, xOffset, yOffset)
   self:drawChildren()
