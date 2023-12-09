@@ -2,7 +2,7 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local Label = require("ui.Label")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local class = require("class")
@@ -85,14 +85,14 @@ function TrainingMenu:load(sceneParams)
   local garbagePatternLabels = {}
   for _, garbagepatternName in ipairs(garbagePatternNames) do
     table.insert(garbagePatternLabels, Label({
-        label = garbagepatternName,
+        text = garbagepatternName,
         translate = tableUtils.contains(translatableGarbagePatternNames, garbagepatternName),
         width = 70,
         height = 25}))
   end
 
-  local widthLabel = Label({label = "width"})
-  local heightLabel = Label({label = "height"})
+  local widthLabel = Label({text = "width"})
+  local heightLabel = Label({text = "height"})
 
   local lightBlue = {.7, .7, 1, .7}
   local darkBlue = {.5, .5, 1, .7}
@@ -137,11 +137,11 @@ function TrainingMenu:load(sceneParams)
   })
 
   local menuItems = {
-    {Label({label = "Garbage Pattern", translate = false,}), garbagePatternStepper},
+    {Label({text = "Garbage Pattern", translate = false,}), garbagePatternStepper},
     {widthLabel, widthSlider},
     {heightLabel, heightSlider},
-    {Button({label = "go_", onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {TextButton({label = Label({text = "go_"}), onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})},
+    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -160,7 +160,7 @@ end
 function TrainingMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update(dt)
-  self.menu:draw()
+  GAME.gfx_q:push({self.menu.draw, {self.menu}})
 end
 
 function TrainingMenu:unload()

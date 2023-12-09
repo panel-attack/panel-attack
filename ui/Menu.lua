@@ -3,7 +3,7 @@ local love = love
 
 local class = require("class")
 local UIElement = require("ui.UIElement")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local input = require("inputManager")
@@ -32,8 +32,8 @@ local Menu = class(
     self:addChild(self.menuItemContainer)
     self:setMenuItems(options.menuItems)
     
-    self.upButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "/\\", translate = false, onClick = function() self:scrollUp() end})
-    self.downButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "\\/", translate = false, onClick = function() self:scrollDown() end})
+    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
+    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/"}), translate = false, onClick = function() self:scrollDown() end})
     self:setVisibility(self.isVisible)
     
     self:updateNavButtonPos()

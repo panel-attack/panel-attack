@@ -9,9 +9,11 @@ local LevelSlider = require("ui.LevelSlider")
 local PanelCarousel = require("ui.PanelCarousel")
 local PagedUniGrid = require("ui.PagedUniGrid")
 local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local ImageContainer = require("ui.ImageContainer")
+local Label = require("ui.Label")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -89,15 +91,15 @@ function CharacterSelect:loadStandardButtons()
     outlineColor = {1, 1, 1, 1}
   })
 
-  self.ui.readyButton = Button({width = 96, height = 96, label = "ready", backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
+  self.ui.readyButton = TextButton({width = 96, height = 96, label = Label({text = "ready"}), backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
   self.ui.readyButton.onSelect = function()
     self.ui.readyButton.onClick()
   end
 
-  self.ui.leaveButton = Button({
+  self.ui.leaveButton = TextButton({
     width = 96,
     height = 96,
-    label = "leave",
+    label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1},
     onClick = function()

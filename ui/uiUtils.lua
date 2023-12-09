@@ -5,7 +5,7 @@ local consts = require("consts")
 local uiUtils = {}
 
 function uiUtils.createCenteredLabel(labelText)
-  local label = Label({label = labelText, translate = false})
+  local label = Label({text = labelText, translate = false})
   local x = consts.CANVAS_WIDTH / 2
   local y = consts.CANVAS_HEIGHT / 2
   local backgroundPadding = 10

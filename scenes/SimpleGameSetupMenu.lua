@@ -1,6 +1,6 @@
 local class = require("class")
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
@@ -85,11 +85,11 @@ function SimpleGameSetupMenu:load()
   self.difficultyButtons = ButtonGroup(
       {
         buttons = {
-          Button({label = "easy", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-          Button({label = "normal", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-          Button({label = "hard", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          TextButton({label = Label({text = "easy"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          TextButton({label = Label({text = "normal"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          TextButton({label = Label({text = "hard"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
           -- TODO: localize "EX Mode"
-          Button({label = "EX Mode", translate = false}),
+          TextButton({label = Label({text = "EX Mode"}), translate = false}),
         },
         values = {1, 2, 3, 4},
         selectedIndex = GAME.config.endless_difficulty or 1,
@@ -109,11 +109,11 @@ function SimpleGameSetupMenu:load()
   self.typeButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "endless_classic", onClick = function()
+        TextButton({label = Label({text = "endless_classic"}), onClick = function()
               self.modernMenu:setVisibility(false)
               self.classicMenu:setVisibility(true)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        Button({label = "endless_modern", onClick = function()
+        TextButton({label = Label({text = "endless_modern"}), onClick = function()
               self.classicMenu:setVisibility(false) 
               self.modernMenu:setVisibility(true)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
@@ -125,18 +125,18 @@ function SimpleGameSetupMenu:load()
   )
   
   local modernMenuOptions = {
-    {Label({label = "endless_type"}), self.typeButtons},
-    {Label({label = "level"}), self.levelSlider},
-    {Button({label = "go_", onClick = function() self:startGame() end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {Label({text = "endless_type"}), self.typeButtons},
+    {Label({text = "level"}), self.levelSlider},
+    {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
+    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
   
   local classicMenuOptions = {
     modernMenuOptions[1],
-    {Label({label = "speed", isVisible = false}), self.speedSlider},
-    {Label({label = "difficulty", isVisible = false}), self.difficultyButtons},
-    {Button({label = "go_", onClick = function() self:startGame() end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {Label({text = "speed", isVisible = false}), self.speedSlider},
+    {Label({text = "difficulty", isVisible = false}), self.difficultyButtons},
+    {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
+    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)

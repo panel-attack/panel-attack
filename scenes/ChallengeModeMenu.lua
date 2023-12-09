@@ -4,7 +4,7 @@ local class = require("class")
 local ChallengeMode = require("ChallengeMode")
 local Menu = require("ui.Menu")
 local Label = require("ui.Label")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local tableUtils = require("tableUtils")
@@ -31,10 +31,7 @@ function ChallengeModeMenu:load(sceneParams)
   local difficultyLabels = {}
   local challengeModes = {}
   for i = 1, ChallengeMode.numDifficulties do
-    table.insert(difficultyLabels, Label({
-        label = "challenge_difficulty_" .. i,
-        width = 70,
-        height = 25}))
+    table.insert(difficultyLabels, Label({text = "challenge_difficulty_" .. i}))
     table.insert(challengeModes, ChallengeMode(i))
   end
 
@@ -42,13 +39,15 @@ function ChallengeModeMenu:load(sceneParams)
       labels = difficultyLabels,
       values = challengeModes,
       selectedIndex = 1,
+      width = 70,
+      height = 25
     }
   )
 
   local menuItems = {
-    {Label({label = "difficulty"}), difficultyStepper},
-    {Button({label = "go_", onClick = function() sceneManager:switchToScene("CharacterSelectChallenge", {challengeMode = difficultyStepper.value}) end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {Label({text = "difficulty"}), difficultyStepper},
+    {TextButton({label = Label({text = "go_"}), onClick = function() sceneManager:switchToScene("CharacterSelectChallenge", {challengeMode = difficultyStepper.value}) end})},
+    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)

@@ -9,11 +9,11 @@ local input = require("inputManager")
 local PanelCarousel = require("ui.PanelCarousel")
 local PagedUniGrid = require("ui.PagedUniGrid")
 local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local consts = require("consts")
-local GameModes = require("GameModes")
-local MatchSetup = require("MatchSetup")
+local Label = require("ui.Label")
 
 local DesignHelper = class(function(self, sceneParams)
   self:load(sceneParams)
@@ -40,10 +40,10 @@ function DesignHelper:load()
   self.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.stageCarousel)
   self:loadLevels()
   self.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.levelSlider)
-  self.readyButton = Button({
+  self.readyButton = TextButton({
     width = 96,
     height = 96,
-    label = "ready",
+    label = Label({text = "ready"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1}
   })
@@ -54,10 +54,10 @@ function DesignHelper:load()
   -- the character grid has its own padding so override the padding of the enveloping grid
   self.characterGrid.x = 0
   self.characterGrid.y = 0
-  self.leaveButton = Button({
+  self.leaveButton = TextButton({
     width = 96,
     height = 96,
-    label = "leave",
+    label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1}
   })

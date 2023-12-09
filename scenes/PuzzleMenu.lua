@@ -1,6 +1,6 @@
 local Scene = require("scenes.Scene")
 local logger = require("logger")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
@@ -83,8 +83,8 @@ function PuzzleMenu:load()
   self.randomColorsButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        Button({label = "op_on", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_off"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_on"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomColors and 2 or 1,
@@ -95,8 +95,8 @@ function PuzzleMenu:load()
   self.randomlyFlipPuzzleButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        Button({label = "op_on", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_off"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_on"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomFlipped and 2 or 1,
@@ -105,15 +105,15 @@ function PuzzleMenu:load()
   )
   
   local menuOptions = {
-    {Label({label = "level", isVisible = false}), self.levelSlider},
-    {Label({label = "randomColors", isVisible = false}), self.randomColorsButtons},
-    {Label({label = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons}
+    {Label({label = Label({text = "level"}), isVisible = false}), self.levelSlider},
+    {Label({label = Label({text = "randomColors"}), isVisible = false}), self.randomColorsButtons},
+    {Label({label = Label({text = "randomHorizontalFlipped"}), isVisible = false}), self.randomlyFlipPuzzleButtons}
   }
 
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
-    menuOptions[#menuOptions + 1] = {Button({label = puzzleSetName, translate = false, onClick = function() self:startGame(puzzleSet) end})}
+    menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = puzzleSetName, translate = false}), onClick = function() self:startGame(puzzleSet) end})}
   end
-  menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
+  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = exitMenu})}
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 20

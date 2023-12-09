@@ -1,5 +1,4 @@
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
 local InputField = require("ui.InputField")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")

@@ -1,7 +1,8 @@
 local class = require("class")
 local util = require("util")
 local UIElement = require("ui.UIElement")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
+local Label = require("ui.Label")
 
 local BUTTON_PADDING = 5
 
@@ -47,8 +48,8 @@ local Stepper = class(
     self.selectedIndex = options.selectedIndex or 1
     
     local navButtonWidth = 25
-    self.leftButton = Button({width = navButtonWidth, label = "<", translate = false, onClick = function() setState(self, self.selectedIndex - 1) end})
-    self.rightButton = Button({width = navButtonWidth, label = ">", translate = false, onClick = function() setState(self, self.selectedIndex + 1) end})
+    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function() setState(self, self.selectedIndex - 1) end})
+    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function() setState(self, self.selectedIndex + 1) end})
     self:addChild(self.leftButton)
     self:addChild(self.rightButton)
     
@@ -82,6 +83,14 @@ function Stepper:draw()
   if not self.isVisible then
     return
   end
+
+  local screenX, screenY = self:getScreenPos()
+
+  GAME.gfx_q:push({love.graphics.setColor, self.color})
+  GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
+  GAME.gfx_q:push({love.graphics.setColor, self.borderColor})
+  GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
+  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
 
   -- draw children
   UIElement.draw(self)

@@ -2,7 +2,7 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Stepper = require("ui.Stepper")
 local Label = require("ui.Label")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
 local tableUtils = require("tableUtils")
@@ -142,8 +142,8 @@ function SoundTest:load()
   musicTypeButtonGroup = ButtonGroup(
     {
       buttons = {
-        Button({label = "Normal", translate = false}),
-        Button({label = "Danger", translate = false}),
+        TextButton({label = Label({text = "Normal"}), translate = false}),
+        TextButton({label = Label({text = "Danger"}), translate = false}),
       },
       values = {"normal_music", "danger_music"},
       selectedIndex = 1,
@@ -161,9 +161,9 @@ function SoundTest:load()
   playButtonGroup = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off"}),
-        Button({label = "character"}),
-        Button({label = "stage"}),
+        TextButton({label = Label({text = "op_off"})}),
+        TextButton({label = Label({text = "character"})}),
+        TextButton({label = Label({text = "stage"})}),
       },
       values = {"", "character", "stage"},
       selectedIndex = 1,
@@ -201,12 +201,12 @@ function SoundTest:load()
 
   local menuLabelWidth = 120
   local soundTestMenuOptions = {
-    {Label({width = menuLabelWidth, label = "character"}), characterStepper},
-    {Label({width = menuLabelWidth, label = "stage"}), stageStepper},
-    {Label({width = menuLabelWidth, label = "op_music_type"}), musicTypeButtonGroup},
-    {Label({width = menuLabelWidth, label = "Background", translate = false}), playButtonGroup},
-    {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = playCharacterSFXFn}), sfxStepper},
-    {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("OptionsMenu") end})},
+    {Label({width = menuLabelWidth, text = "character"}), characterStepper},
+    {Label({width = menuLabelWidth, text = "stage"}), stageStepper},
+    {Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup},
+    {Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup},
+    {TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper},
+    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function() sceneManager:switchToScene("OptionsMenu") end})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)

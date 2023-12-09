@@ -16,16 +16,6 @@ local UIElement = class(
     self.width = options.width or 110
     self.height = options.height or 25
     
-    -- label to be displayed on ui element
-    -- Only used for Buttons & Labels
-    self.label = options.label
-    -- list of parameters for translating the label
-    if self.label then
-      self.extraLabels = options.extraLabels or {}
-    end
-    -- whether we should traslante the label or not
-    self.translate = options.translate or options.translate == nil and true
-    
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
     -- whether the ui element recieves events
@@ -35,14 +25,7 @@ local UIElement = class(
     self.parent = options.parent
     -- list of children elements
     self.children = options.children or {}
-    
-    -- private members
-    if self.label then
-      self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
-    else
-      self.text = options.text
-    end
-    
+
     self.id = uniqueId
     uniqueId = uniqueId + 1
     
@@ -97,6 +80,10 @@ function UIElement:updateLabel(label)
 end
 
 function UIElement:draw()
+  self:drawChildren()
+end
+
+function UIElement:drawChildren()
   for _, uiElement in ipairs(self.children) do
     if uiElement.isVisible then
       uiElement:draw()

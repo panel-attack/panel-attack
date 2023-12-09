@@ -1,5 +1,5 @@
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
@@ -163,7 +163,7 @@ end
 function InputConfigMenu:load(sceneParams)
   local menuOptions = {}
   menuOptions[1] = {
-      Label({label = "configuration"}), 
+      Label({text = "configuration"}),
       Slider({
           min = 1,
           max = input.maxConfigurations,
@@ -173,11 +173,13 @@ function InputConfigMenu:load(sceneParams)
     }
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyName = self:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
-    local label = Label({label = keyName, translate = false, width = KEY_NAME_LABEL_WIDTH})
+    local label = Label({text = keyName, translate = false, width = KEY_NAME_LABEL_WIDTH})
     menuOptions[#menuOptions + 1] = {
-      Button({
-          label = key,
-          translate = false,
+      TextButton({
+          label = Label({
+            text = key,
+            translate = false
+          }),
           onClick = function() 
             if not self.settingKey then
               self:setKeyStart(key)
@@ -186,15 +188,15 @@ function InputConfigMenu:load(sceneParams)
       label}
   end
   menuOptions[#menuOptions + 1] = {
-    Button({label = "op_all_keys",
+    TextButton({label = Label({text = "op_all_keys"}),
     onClick = function() self:setAllKeysStart() end})}
   menuOptions[#menuOptions + 1] = {
-    Button({label = "Clear All Inputs", translate = false,
+    TextButton({label = Label({text = "Clear All Inputs", translate = false}),
     onClick = function() clearAllInputs(menuOptions) end})}
-  menuOptions[#menuOptions + 1] = { 
-    Button({label = "Reset Keys To Default", translate = false, 
+  menuOptions[#menuOptions + 1] = {
+    TextButton({label = Label({text = "Reset Keys To Default", translate = false}),
     onClick = function() self:resetToDefault(menuOptions) end})} 
-  menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
+  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = exitMenu})}
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.menu = Menu({

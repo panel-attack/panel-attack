@@ -1,5 +1,6 @@
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
+local Label = require("ui.Label")
 local consts = require("consts")
 local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
@@ -27,7 +28,7 @@ local function createMainMenuButton(label, onClick, extraLabels, translate)
   if translate == nil then
     translate = true
   end
-  return Button({label = label, extraLabels = extraLabels, translate = translate, onClick = onClick, width = BUTTON_WIDTH})
+  return TextButton({label = Label({text = label, extraLabels = extraLabels, translate = translate}), onClick = onClick, width = BUTTON_WIDTH})
 end
 
 local menuItems = {

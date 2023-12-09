@@ -2,7 +2,7 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Label = require("ui.Label")
 local ButtonGroup = require("ui.ButtonGroup")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
 local class = require("class")
 local consts = require("consts")
@@ -99,8 +99,8 @@ function Lobby:initLobbyMenu()
   local showLeaderboardButtonGroup = ButtonGroup(
     {
       buttons = {
-        Button({width = 60, label = "op_off"}),
-        Button({width = 60, label = "op_on"}),
+        TextButton({width = 60, label = Label({text = "op_off"})}),
+        TextButton({width = 60, label = Label({text = "op_on"})}),
       },
       values = {false, true},
       selectedIndex = 1,
@@ -112,8 +112,8 @@ function Lobby:initLobbyMenu()
   )
   
   local menuItems = {
-    {Label({label = "Leaderboard", translate = false}), showLeaderboardButtonGroup},
-    {Button({label = "lb_back", onClick = exitMenu})},
+    {Label({text = "Leaderboard", translate = false}), showLeaderboardButtonGroup},
+    {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
   }
 
   self.lobbyMenu = Menu({x = self.lobby_menu_x[showLeaderboardButtonGroup.value], y = self.lobby_menu_y, menuItems = menuItems})
@@ -395,14 +395,14 @@ function Lobby:defaultUpdate(dt)
     for _, v in ipairs(self.unpaired_players) do
       if v ~= config.name then
         local unmatchedPlayer = v .. self:playerRatingString(v) .. (self.sent_requests[v] and " " .. loc("lb_request") or "") .. (self.willing_players[v] and " " .. loc("lb_received") or "")
-        self.lobbyMenu:addMenuItem(1, {Button({label = unmatchedPlayer, translate = false, onClick = self:requestGameFunction(v)})})
+        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})})
       end
     end
     for _, room in ipairs(self.spectatable_rooms) do
       if room.name then
         local roomName = loc("lb_spectate") .. " " .. room.a .. self:playerRatingString(room.a) .. " vs " .. room.b .. self:playerRatingString(room.b) .. " (" .. room.state .. ")"
         --local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
-        self.lobbyMenu:addMenuItem(1, {Button({label = roomName, translate = false, onClick = self:requestSpectateFunction(room)})})
+        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})})
       end
     end
   --[[  
