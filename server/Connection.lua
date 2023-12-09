@@ -218,10 +218,10 @@ function Connection:I(message)
     if self.player_number == 1 and self.room then
       local uMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix, message)
       self.room:send_to_spectators(uMessage)
-      self.room.replay.vs.in_buf = self.room.replay.vs.in_buf .. message
+      self.room.inputs[self.player_number][#self.room.inputs[self.player_number] + 1] = message
     elseif self.player_number == 2 and self.room then
       self.room:send_to_spectators(iMessage)
-      self.room.replay.vs.I = self.room.replay.vs.I .. message
+      self.room.inputs[self.player_number][#self.room.inputs[self.player_number] + 1] = message
     end
   end
 end
@@ -374,6 +374,7 @@ function Connection:handleMenuStateMessage(message)
   end
 
   if self.ready and self.opponent.ready then
+    self.room.inputs = {{},{}}
     self.room.replay = {}
     self.room.replay.vs = {
       P = "",
