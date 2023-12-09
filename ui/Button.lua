@@ -8,7 +8,7 @@ local Button = class(
   function(self, options)
     self.backgroundColor = options.backgroundColor or {.3, .3, .3, .7}
     self.outlineColor = options.outlineColor or {.5, .5, .5, .7}
-    
+
     -- callbacks
     self.onClick = options.onClick or function() 
       play_optional_sfx(themes[config.theme].sounds.menu_validate)

@@ -1,12 +1,12 @@
 local GraphicsUtil = require("graphics_util")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local class = require("class")
 
 local CarouselButton = class(
   function(self, options)
     self.direction = options.direction
   end,
-  Button
+  TextButton
 )
 
 function CarouselButton:updatePosition(width)
@@ -28,12 +28,13 @@ function CarouselButton:draw()
   end
 
   local boxOffsetX, boxOffsetY = self:getScreenPos()
-  local textWidth, textHeight = self.text:getDimensions()
+  local textWidth, textHeight = self.label.width, self.label.height
 
   local xPosAlign, xOffset = self.width / 2, textWidth / 2
   local yPosAlign, yOffset = self.height / 2, textHeight / 2
 
-  GraphicsUtil.drawClearText(self.text, boxOffsetX + xPosAlign, boxOffsetY + yPosAlign, xOffset, yOffset)
+  --GraphicsUtil.drawClearText(self.label, boxOffsetX + xPosAlign, boxOffsetY + yPosAlign, xOffset, yOffset)
+  self:drawChildren()
 end
 
 return CarouselButton

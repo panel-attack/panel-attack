@@ -4,6 +4,7 @@ local CarouselButton = require("ui.CarouselButton")
 local GraphicsUtil = require("graphics_util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
+local Label = require("ui.Label")
 
 local function calculateFontSize(height)
   return math.floor(height / 2) + 1
@@ -39,19 +40,19 @@ end
 function Carousel.createNavigationButtons(self)
   self.leftButton =
     CarouselButton({
+      label = Label({text = "<", translate = false}),
       direction = "left",
       onClick = function()
         self:moveToNextPassenger(-1)
-      end,
-      text = love.graphics.newText(self.font, "<")
+      end
     })
   self.rightButton =
     CarouselButton({
+      label = Label({text = ">", translate = false}),
       direction = "right",
       onClick = function()
         self:moveToNextPassenger(1)
       end,
-      text = love.graphics.newText(self.font, ">")
     })
   self:addChild(self.leftButton)
   self:addChild(self.rightButton)
