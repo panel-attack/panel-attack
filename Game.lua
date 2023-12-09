@@ -340,7 +340,12 @@ function Game:draw()
 
   self.isDrawing = true
   for i = self.gfx_q.first, self.gfx_q.last do
-    self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
+    local func = self.gfx_q[i][1]
+    local args = self.gfx_q[i][2]
+    if type(args) ~= "table" then
+      local phi = 5
+    end
+    func(unpack(args))
   end
   self.gfx_q:clear()
   self.isDrawing = false

@@ -52,6 +52,9 @@ local Stepper = class(
     self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function() setState(self, self.selectedIndex + 1) end})
     self:addChild(self.leftButton)
     self:addChild(self.rightButton)
+
+    self.color = {.5, .5, 1, .7}
+    self.borderColor = {.7, .7, 1, .7}
     
     setLabels(self, options.labels, options.values, self.selectedIndex)
     
@@ -86,11 +89,19 @@ function Stepper:draw()
 
   local screenX, screenY = self:getScreenPos()
 
-  GAME.gfx_q:push({love.graphics.setColor, self.color})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, self.borderColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  if GAME.isDrawing then
+    love.graphics.setColor(self.color)
+    love.graphics.rectangle("fill", screenX, screenY, self.width, self.height)
+    love.graphics.setColor(self.borderColor)
+    love.graphics.rectangle("line", screenX, screenY, self.width, self.height)
+    love.graphics.setColor(1, 1, 1, 1)
+  else
+    GAME.gfx_q:push({love.graphics.setColor, self.color})
+    GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
+    GAME.gfx_q:push({love.graphics.setColor, self.borderColor})
+    GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
+    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  end
 
   -- draw children
   UIElement.draw(self)

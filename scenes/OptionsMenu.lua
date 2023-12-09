@@ -85,8 +85,8 @@ local function createToggleButtonGroup(configField, onChangeFn)
   return ButtonGroup(
     {
       buttons = {
-        TextButton({width = 60, Label({text = "op_off"})}),
-        TextButton({width = 60, Label({text = "op_on"})}),
+        TextButton({width = 60, label = Label({text = "op_off"})}),
+        TextButton({width = 60, label = Label({text = "op_on"})}),
       },
       values = {false, true},
       selectedIndex = config[configField] and 2 or 1,
@@ -259,21 +259,21 @@ function OptionsMenu:load()
 
   local baseMenuOptions = {
     {Label({width = MENU_WIDTH, text = "op_language"}), languageStepper},
-    {TextButton({width = MENU_WIDTH, Label({text = "op_general"}), onClick = function() switchMenu("generalMenu") end})},
-    {TextButton({width = MENU_WIDTH, Label({text = "op_graphics"}), onClick = function() switchMenu("graphicsMenu") end})},
-    {TextButton({width = MENU_WIDTH, Label({text = "op_audio"}), onClick = function() switchMenu("audioMenu") end})},
-    {TextButton({width = MENU_WIDTH, Label({text = "op_debug"}), onClick = function() switchMenu("debugMenu") end})},
-    {TextButton({width = MENU_WIDTH, Label({text = "op_about"}), onClick = function() switchMenu("aboutMenu") end})},
-    {TextButton({width = MENU_WIDTH, Label({text = "back"}), onClick = exitMenu})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "op_general"}), onClick = function() switchMenu("generalMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "op_graphics"}), onClick = function() switchMenu("graphicsMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "op_audio"}), onClick = function() switchMenu("audioMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "op_debug"}), onClick = function() switchMenu("debugMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "op_about"}), onClick = function() switchMenu("aboutMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = exitMenu})},
   }
 
   local saveReplaysPubliclyIndexMap = {["with my name"] = 1, ["anonymously"] = 2, ["not at all"] = 3}
   local publicReplayButtonGroup = ButtonGroup(
     {
       buttons = {
-        TextButton({Label({text = "op_replay_public_with_name"})}),
-        TextButton({Label({text = "op_replay_public_anonymously"})}),
-        TextButton({Label({text = "op_replay_public_no"})}),
+        TextButton({label = Label({text = "op_replay_public_with_name"})}),
+        TextButton({label = Label({text = "op_replay_public_anonymously"})}),
+        TextButton({label = Label({text = "op_replay_public_no"})}),
       },
       values = {"with my name", "anonymously", "not at all"},
       selectedIndex = saveReplaysPubliclyIndexMap[config.save_replays_publicly],
@@ -299,7 +299,7 @@ function OptionsMenu:load()
   foundThemes = {}
   for i, v in ipairs(fileUtils.getFilteredDirectoryItems("themes")) do
     foundThemes[#foundThemes + 1] = v
-    themeLabels[#themeLabels + 1] = Label({label = v, translate = false})
+    themeLabels[#themeLabels + 1] = Label({text = v, translate = false})
     if config.theme == v then
       themeIndex = #foundThemes
     end
@@ -393,7 +393,7 @@ function OptionsMenu:load()
     {
       buttons = tableUtils.map(scaleTypeData,
         function(scaleType)
-          return TextButton({label = Label({text = scaleType.label})})
+          return TextButton({label = Label({text = scaleType.text})})
         end
       ),
       values = tableUtils.map(scaleTypeData,

@@ -71,7 +71,7 @@ local function createSfxMenuInfo(characterId)
   local sfxValues = {}
   for _, sfx in ipairs(soundFiles) do
     sfxLabels[#sfxLabels + 1] = Label({
-        label = string.match(sfx, "(.*)[.]"),
+        text = string.match(sfx, "(.*)[.]"),
         translate = false,
         width = BUTTON_WIDTH,
         height = BUTTON_HEIGHT,
@@ -86,7 +86,7 @@ function SoundTest:load()
   local characterIds = {}
   for _, character in pairs(characters) do
     characterLabels[#characterLabels + 1] = Label({
-        label = character.display_name,
+        text = character.display_name,
         translate = false,
         width = BUTTON_WIDTH,
         height = BUTTON_HEIGHT})
@@ -119,7 +119,7 @@ function SoundTest:load()
   local stageIds = {}
   for _, stage in pairs(stages) do
     stageLabels[#stageLabels + 1] = Label({
-        label = stage.display_name,
+        text = stage.display_name,
         translate = false,
         width = BUTTON_WIDTH,
         height = BUTTON_HEIGHT})
