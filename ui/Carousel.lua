@@ -40,16 +40,16 @@ end
 function Carousel.createNavigationButtons(self)
   self.leftButton =
     CarouselButton({
-      label = Label({text = "<", translate = false}),
-      direction = "left",
+      label = Label({text = "<", translate = false, hAlign = "center"}),
+      hAlign = "left",
       onClick = function()
         self:moveToNextPassenger(-1)
       end
     })
   self.rightButton =
     CarouselButton({
-      label = Label({text = ">", translate = false}),
-      direction = "right",
+      label = Label({text = ">", translate = false, hAlign = "center"}),
+      hAlign = "right",
       onClick = function()
         self:moveToNextPassenger(1)
       end,
@@ -92,9 +92,7 @@ function Carousel:drawSelf()
   assert(#self.passengers > 0, "This carousel has no passengers!")
   grectangle("line", self.x, self.y, self.width, self.height)
 
-  local width = self:drawPassenger()
-  self.leftButton:updatePosition(width)
-  self.rightButton:updatePosition(width)
+  self:drawPassenger()
 end
 
 -- drawPassenger should return the x,y,width,height the passenger takes up centered in the carousel

@@ -63,20 +63,10 @@ function UIElement:getScreenPos()
   return x + self.x, y + self.y
 end
 
--- updates the label with a new label
--- also translates the label if needed
--- if no label is passed in it will translate the existing label
-function UIElement:updateLabel(label)
-  if label then
-    self.label = label
-  end
-
-  if self.label and (self.translate or label) then
-    self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
-  end
-  
+-- passes a retranslation request through the tree to reach all Labels
+function UIElement:refreshLocalization()
   for _, uiElement in ipairs(self.children) do
-    uiElement:updateLabel()
+    uiElement:refreshLocalization()
   end
 end
 

@@ -71,7 +71,7 @@ end
 
 local function updateMenuLanguage()
   for _, menu in pairs(menus) do
-    menu:updateLabel()
+    menu:refreshLocalization()
   end
 end
 

@@ -75,11 +75,11 @@ local Stepper = class(
 Stepper.setLabels = setLabels
 Stepper.setState = setState
 
-function Stepper:updateLabel()
+function Stepper:refreshLocalization()
   for i, label in ipairs(self.labels) do
-    label:updateLabel()
+    label:refreshLocalization()
   end
-  UIElement.updateLabel(self)
+  UIElement.refreshLocalization(self)
 end
 
 function Stepper:drawSelf()

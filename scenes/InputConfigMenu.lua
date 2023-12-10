@@ -70,7 +70,7 @@ function InputConfigMenu:updateInputConfigMenuLabels(index)
   Menu.playMoveSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyDisplayName = self:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
-    self.menu.menuItems[i + 1].children[1]:updateLabel(keyDisplayName)
+    self.menu.menuItems[i + 1].children[1]:setText(keyDisplayName)
   end
 end
 
@@ -78,7 +78,7 @@ function InputConfigMenu:updateKey(key, pressedKey, index)
   Menu.playValidationSfx()
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
   local keyDisplayName = self:getKeyDisplayName(pressedKey)
-  self.menu.menuItems[index + 1].children[1]:updateLabel(keyDisplayName)
+  self.menu.menuItems[index + 1].children[1]:setText(keyDisplayName)
   write_key_file()
 end
 
@@ -96,7 +96,7 @@ function InputConfigMenu:setAllKeys()
     self:updateKey(consts.KEY_NAMES[self.index], pressedKey, self.index)
     if self.index < #consts.KEY_NAMES then
       self.index = self.index + 1
-      self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
+      self.menu.menuItems[self.index + 1].children[1]:setText(pendingInputText)
       self.menu.selectedIndex = self.index + 1
       self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
     else
@@ -115,7 +115,7 @@ function InputConfigMenu:setKeyStart(key)
       break
     end
   end
-  self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
+  self.menu.menuItems[self.index + 1].children[1]:setText(pendingInputText)
   self.menu.selectedIndex = self.index + 1
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY_TRANSITION)
 end
@@ -123,7 +123,7 @@ end
 function InputConfigMenu:setAllKeysStart()
   Menu.playValidationSfx()
   self.index = 1
-  self.menu.menuItems[self.index + 1].children[1]:updateLabel(pendingInputText)
+  self.menu.menuItems[self.index + 1].children[1]:setText(pendingInputText)
   self.menu:setSelectedIndex(self.index + 1)
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
 end
@@ -133,7 +133,7 @@ local function clearAllInputs(menuOptions)
   for i, key in ipairs(consts.KEY_NAMES) do
     GAME.input.inputConfigurations[configIndex][key] = nil
     local keyName = loc("op_none")
-    menuOptions[i + 1][2]:updateLabel(keyName)
+    menuOptions[i + 1][2]:setText(keyName)
   end
   write_key_file()
 end
@@ -143,7 +143,7 @@ function InputConfigMenu:resetToDefault(menuOptions)
   local i = 1 
   for keyName, key in pairs(input.defaultKeys) do 
     GAME.input.inputConfigurations[1][keyName] = key
-    menuOptions[i + 1][2]:updateLabel(GAME.input.inputConfigurations[1][keyName]) 
+    menuOptions[i + 1][2]:setText(GAME.input.inputConfigurations[1][keyName])
     i = i + 1 
   end
   for i = 2, input.maxConfigurations do
