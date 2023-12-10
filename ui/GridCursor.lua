@@ -94,7 +94,7 @@ function GridCursor:toggleRapidBlinking()
   self.rapidBlinking = not self.rapidBlinking
 end
 
-function GridCursor:draw()
+function GridCursor:drawSelf()
   self.frameClock = self.frameClock + 1
   local cursorFrame = math.floor((((self.frameClock + self.playerNumber * self.blinkFrequency) / self.blinkFrequency) % 2)) + 1
 

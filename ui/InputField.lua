@@ -127,11 +127,7 @@ function InputField:textInput(t)
   end
 end
 
-function InputField:draw()
-  if not self.isVisible then
-    return
-  end
-
+function InputField:drawSelf()
   GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
   GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
   GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
@@ -167,9 +163,6 @@ function InputField:draw()
     end
   end
   GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  
-  -- draw children
-  UIElement.draw(self)
 end
 
 return InputField

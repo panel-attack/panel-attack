@@ -19,31 +19,22 @@ function LevelSlider:isSelected(x, y)
   return x >= screenX and x <= screenX + (self.max - self.min + 1) * self.tickLength and y >= screenY and y <= screenY + self.tickLength * 2
 end
 
-function LevelSlider:draw()
-  if not self.isVisible then
-    return
-  end
-
-  local screenX, screenY = self:getScreenPos()
+function LevelSlider:drawSelf()
   for i, level_img in ipairs(themes[config.theme].images.IMG_levels) do
-    local img = i <= self.value and 
-      themes[config.theme].images.IMG_levels[i] or
+    local img = i <= self.value and level_img or
       themes[config.theme].images.IMG_levels_unfocus[i]
       if GAME.isDrawing then
-        love.graphics.draw(img, screenX + (i - 1) * self.tickLength, screenY, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0)
+        love.graphics.draw(img, self.x + (i - 1) * self.tickLength, self.y, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0)
       else
-        GAME.gfx_q:push({love.graphics.draw, {img, screenX + (i - 1) * self.tickLength, screenY, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0}})
+        GAME.gfx_q:push({love.graphics.draw, {img, self.x + (i - 1) * self.tickLength, self.y, 0, self.tickLength / img:getWidth(), self.tickLength / img:getHeight(), 0, 0}})
       end
   end
   local cursor_image = themes[config.theme].images.IMG_level_cursor
   if GAME.isDrawing then
-    love.graphics.draw(cursor_image, screenX + (self.value - 1 + .5) * self.tickLength, screenY + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0)
+    love.graphics.draw(cursor_image, self.x + (self.value - 1 + .5) * self.tickLength, self.y + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0)
   else
-    GAME.gfx_q:push({love.graphics.draw, {cursor_image, screenX + (self.value - 1 + .5) * self.tickLength, screenY + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0}})
+    GAME.gfx_q:push({love.graphics.draw, {cursor_image, self.x + (self.value - 1 + .5) * self.tickLength, self.y + self.tickLength, 0, 1, 1, cursor_image:getWidth() / 2, 0}})
   end
-  
-  -- draw children
-  UIElement.draw(self)
 end
 
 return LevelSlider

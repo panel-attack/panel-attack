@@ -23,19 +23,4 @@ function CarouselButton:updatePosition(width)
   end
 end
 
--- width: width of the passenger element
-function CarouselButton:draw()
-  if not self.isVisible then
-    return
-  end
-
-  local screenX, screenY = self:getScreenPos()
-
-  self:drawBackground(screenX, screenY)
-  self:drawOutline(screenX, screenY)
-
-  --GraphicsUtil.drawClearText(self.label, boxOffsetX + xPosAlign, boxOffsetY + yPosAlign, xOffset, yOffset)
-  self:drawChildren()
-end
-
 return CarouselButton

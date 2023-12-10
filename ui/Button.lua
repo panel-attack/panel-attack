@@ -38,44 +38,35 @@ function Button:isSelected(x, y)
   return x > screenX and x < screenX + self.width and y > screenY and y < screenY + self.height
 end
 
-function Button:drawBackground(screenX, screenY)
+function Button:drawBackground()
   if self.backgroundColor[4] > 0 then
     if GAME.isDrawing then
       love.graphics.setColor(self.backgroundColor)
-      love.graphics.rectangle("fill", screenX, screenY, self.width, self.height)
+      love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
       love.graphics.setColor(1, 1, 1, 1)
     else
       GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
-      GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
+      GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
       GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
     end
   end
 end
 
-function Button:drawOutline(screenX, screenY)
+function Button:drawOutline()
   if GAME.isDrawing then
     love.graphics.setColor(self.outlineColor)
-    love.graphics.rectangle("line", screenX, screenY, self.width, self.height)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
     love.graphics.setColor(1, 1, 1, 1)
   else
     GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
-    GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
+    GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
     GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
   end
 end
 
-function Button:draw()
-  if not self.isVisible then
-    return
-  end
-
-  local screenX, screenY = self:getScreenPos()
-
-  self:drawBackground(screenX, screenY)
-  self:drawOutline(screenX, screenY)
-
-  -- draw children
-  self:drawChildren()
+function Button:drawSelf()
+  self:drawBackground()
+  self:drawOutline()
 end
 
 return Button

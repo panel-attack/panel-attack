@@ -39,6 +39,8 @@ local Menu = class(
     self:updateNavButtonPos()
     self.menuItemContainer:addChild(self.upButton)
     self.menuItemContainer:addChild(self.downButton)
+
+    self.TYPE = "VerticalScrollingButtonMenu"
   end,
   UIElement
 )
@@ -279,19 +281,17 @@ function Menu:update()
   end
 end
 
-function Menu:draw()
-  if not self.isVisible then
-    return
-  end
-
+function Menu:drawSelf()
   local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
-  local screenX, screenY = self.menuItems[self.selectedIndex]:getScreenPos()
-  local arrowx = screenX - 10 + animationX
-  local arrowy = screenY + self.menuItems[self.selectedIndex].height / 4
-  GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
-  
-  -- draw children
-  UIElement.draw(self)
+  local selectedItem = self.menuItems[self.selectedIndex]
+  local arrowx = selectedItem.x - 10 + animationX
+  local arrowy = selectedItem.y + self.menuItems[self.selectedIndex].height / 4
+  love.graphics.draw(arrow, self.x + arrowx, self.y + arrowy, 0, 1, 1, 0, 0)
+
+  if DEBUG_ENABLED then
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  end
 end
 
 

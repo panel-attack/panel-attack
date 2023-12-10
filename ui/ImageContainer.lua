@@ -23,7 +23,7 @@ function ImageContainer:setImage(image, aspectRatio)
   end
 end
 
-function ImageContainer:draw()
+function ImageContainer:drawSelf()
   local x, y = self:getScreenPos()
   local imageWidth, imageHeight = self.image:getDimensions()
   local width, height = self.width, self.height

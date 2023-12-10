@@ -15,6 +15,9 @@ local UIElement = class(
     -- ui dimensions
     self.width = options.width or 0
     self.height = options.height or 0
+
+    self.hAlign = options.hAlign or "left"
+    self.vAlign = options.vAlign or "top"
     
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
@@ -32,8 +35,6 @@ local UIElement = class(
     self.TYPE = "UIElement"
   end
 )
-
-
 
 function UIElement:addChild(uiElement)
   self.children[#self.children + 1] = uiElement
@@ -80,13 +81,26 @@ function UIElement:updateLabel(label)
 end
 
 function UIElement:draw()
-  self:drawChildren()
+  if self.isVisible then
+    self:drawSelf()
+    love.graphics.push("transform")
+    love.graphics.translate(self.x, self.y)
+    self:drawChildren()
+    love.graphics.pop()
+  end
+end
+
+-- UiElements containing children draw the children-independent part in this function
+-- implementation is optional so layout elements don't have to
+function UIElement:drawSelf()
 end
 
 function UIElement:drawChildren()
   for _, uiElement in ipairs(self.children) do
     if uiElement.isVisible then
+      GraphicsUtil.applyAlignment(self, uiElement)
       uiElement:draw()
+      GraphicsUtil.resetAlignment()
     end
   end
 end

@@ -24,11 +24,11 @@ local function switchToScene(scene, sceneParams)
 end
 
 local BUTTON_WIDTH = 140
-local function createMainMenuButton(label, onClick, extraLabels, translate)
+local function createMainMenuButton(text, onClick, extraLabels, translate)
   if translate == nil then
     translate = true
   end
-  return TextButton({label = Label({text = label, extraLabels = extraLabels, translate = translate}), onClick = onClick, width = BUTTON_WIDTH})
+  return TextButton({label = Label({text = text, extraLabels = extraLabels, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick, width = BUTTON_WIDTH})
 end
 
 local menuItems = {
@@ -172,6 +172,10 @@ function MainMenu:update(dt)
   end
 
   self.menu:update()
+  GAME.gfx_q:push({self.draw, {self}})
+end
+
+function MainMenu:draw()
   self.menu:draw()
 end
 

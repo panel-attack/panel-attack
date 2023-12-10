@@ -5,6 +5,9 @@ local GraphicsUtil = require("graphics_util")
 --@module Label
 local Label = class(
   function(self, options)
+    self.halign = options.halign or "center"
+    self.valign = options.valign or "center"
+
     self.text = options.text
     -- list of parameters for translating the label (e.g. numbers/names to replace placeholders with)
     self.replacementTable = options.extraLabels or {}
@@ -30,16 +33,8 @@ local Label = class(
   UIElement
 )
 
-function Label:draw()
-  if not self.isVisible then
-    return
-  end
-
-  local screenX, screenY = self:getScreenPos()
-
-  GraphicsUtil.drawClearText(self.drawable, screenX, screenY, self.width / 2, self.height / 2)
-
-  self:drawChildren()
+function Label:drawSelf()
+  GraphicsUtil.drawClearText(self.drawable, self.x, self.y)
 end
 
 return Label

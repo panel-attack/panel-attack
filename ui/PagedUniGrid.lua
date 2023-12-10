@@ -69,7 +69,7 @@ function PagedUniGrid:turnPage(sign)
   goToPage(self, newPageNumber)
 end
 
-function PagedUniGrid:draw()
+function PagedUniGrid:drawSelf()
   self.pages[self.currentPage]:draw()
 end
 

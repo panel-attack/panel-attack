@@ -27,17 +27,9 @@ function GridElement:drawBorders()
   grectangle("line", x, y, self.width, self.height)
 end
 
-function GridElement:draw()
+function GridElement:drawSelf()
   if DEBUG_ENABLED then
     self:drawBorders()
-  end
-  -- TODO match size of contents to the available space
-  if self.content then
-    if self.content.draw then
-      self.content:draw()
-    elseif self.content:typeOf("Drawable") then
-      draw(self.content, self:getScreenPos())
-    end
   end
 end
 

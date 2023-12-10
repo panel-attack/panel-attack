@@ -545,4 +545,35 @@ function GraphicsUtil.drawClearText(text, x, y, ox, oy)
   end
 end
 
+-- sets the translation for a childElement inside of a parentElement so that
+-- x=0, y=0 aligns the childElement inside the parentElement according to the settings
+function GraphicsUtil.applyAlignment(parentElement, childElement)
+  local xOffset, yOffset
+  if childElement.hAlign == "center" then
+    xOffset = parentElement.width / 2 - childElement.width / 2
+  elseif childElement.hAlign == "right" then
+    xOffset = parentElement.width - childElement.width
+  else -- if hAlign == "left" then
+    -- default
+    xOffset = 0
+  end
+
+  if childElement.vAlign == "center" then
+    yOffset = parentElement.height / 2 - childElement.height / 2
+  elseif childElement.vAlign == "bottom" then
+    yOffset = parentElement.height - childElement.height
+  else --if uiElement.vAlign == "top" then
+    -- default
+    yOffset = 0
+  end
+
+  love.graphics.push("transform")
+  love.graphics.translate(xOffset, yOffset)
+end
+
+-- resets the translation of the last alignment adjustment
+function GraphicsUtil.resetAlignment()
+  love.graphics.pop()
+end
+
 return GraphicsUtil

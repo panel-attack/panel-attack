@@ -88,19 +88,13 @@ function Carousel.setPassenger(self, passengerId)
   end
 end
 
-function Carousel:draw()
+function Carousel:drawSelf()
   assert(#self.passengers > 0, "This carousel has no passengers!")
-  local x, y = self:getScreenPos()
-  grectangle("line", x, y, self.width, self.height)
+  grectangle("line", self.x, self.y, self.width, self.height)
 
   local width = self:drawPassenger()
   self.leftButton:updatePosition(width)
   self.rightButton:updatePosition(width)
-
-  if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
-    self.leftButton:draw()
-    self.rightButton:draw()
-  end
 end
 
 -- drawPassenger should return the x,y,width,height the passenger takes up centered in the carousel

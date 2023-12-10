@@ -64,7 +64,7 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
 
 end
 
-function Grid:draw()
+function Grid:drawSelf()
   if DEBUG_ENABLED then
     local left, top = self:getScreenPos()
 
@@ -81,12 +81,6 @@ function Grid:draw()
     for i = 1, self.gridWidth - 1 do
       local x = left + self.unitSize * i
       drawStraightLine(x, top, x, bottom, 1, 1, 1, 0.5)
-    end
-  end
-
-  for _, gridElement in ipairs(self.children) do
-    if gridElement.isVisible then
-      gridElement:draw()
     end
   end
 end
