@@ -180,6 +180,16 @@ function SimpleGameSetupMenu:update(dt)
   self.backgroundImg:update(dt)
 
   if self.typeButtons.value == "Classic" then
+    self.classicMenu:update()
+  else
+    self.modernMenu:update()
+  end
+
+  GAME.gfx_q:push({self.draw, {self}})
+end
+
+function SimpleGameSetupMenu:draw()
+  if self.typeButtons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
   
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -196,16 +206,13 @@ function SimpleGameSetupMenu:update(dt)
     draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
     draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
   
-    self.classicMenu:update()
     self.classicMenu:draw()
   else
-    self.modernMenu:update()
     self.modernMenu:draw()
   end
-  
 end
 
-function SimpleGameSetupMenu:unload() 
+function SimpleGameSetupMenu:unload()
   if self.typeButtons.value == "Classic" then
     self.classicMenu:setVisibility(false)
   else

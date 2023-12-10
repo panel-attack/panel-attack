@@ -128,15 +128,15 @@ function InputField:textInput(t)
 end
 
 function InputField:drawSelf()
-  GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
+  love.graphics.setColor(self.outlineColor)
+  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(self.backgroundColor)
+  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
   
   local text = self.value ~= "" and self.text or self.placeholderText
   local textColor = self.value ~= "" and {1, 1, 1, 1} or {.5, .5, .5, 1}
   
-  GAME.gfx_q:push({love.graphics.setColor, textColor})
+  love.graphics.setColor(textColor)
   
   local textWidth = self.text:getWidth()
   local textHeight = text:getHeight()
@@ -153,16 +153,16 @@ function InputField:drawSelf()
   local xPosAlign, xOffset = unpack(xAlignments[self.halign])
   local yPosAlign, yOffset = unpack(yAlignments[self.valign])
   
-  GAME.gfx_q:push({love.graphics.draw, {text, self.x + xPosAlign + textOffset, self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+  love.graphics.draw(text, self.x + xPosAlign + textOffset, self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset)
   
   if self.hasFocus then
     local cursorFlashPeriod = .5
     if (math.floor(love.timer.getTime() / cursorFlashPeriod)) % 2 == 0 then
-      GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-      GAME.gfx_q:push({love.graphics.draw, {textCursor, self:getCursorPos(), self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.draw(textCursor, self:getCursorPos(), self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset)
     end
   end
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return InputField

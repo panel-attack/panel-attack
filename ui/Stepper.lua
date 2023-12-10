@@ -83,19 +83,11 @@ function Stepper:updateLabel()
 end
 
 function Stepper:drawSelf()
-  if GAME.isDrawing then
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(self.borderColor)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
-  else
-    GAME.gfx_q:push({love.graphics.setColor, self.color})
-    GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
-    GAME.gfx_q:push({love.graphics.setColor, self.borderColor})
-    GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
-    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  end
+  love.graphics.setColor(self.color)
+  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(self.borderColor)
+  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return Stepper

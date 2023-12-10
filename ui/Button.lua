@@ -40,28 +40,16 @@ end
 
 function Button:drawBackground()
   if self.backgroundColor[4] > 0 then
-    if GAME.isDrawing then
-      love.graphics.setColor(self.backgroundColor)
-      love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
-      love.graphics.setColor(1, 1, 1, 1)
-    else
-      GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
-      GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
-      GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-    end
+    love.graphics.setColor(self.backgroundColor)
+    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(1, 1, 1, 1)
   end
 end
 
 function Button:drawOutline()
-  if GAME.isDrawing then
-    love.graphics.setColor(self.outlineColor)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
-  else
-    GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
-    GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
-    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  end
+  love.graphics.setColor(self.outlineColor)
+  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Button:drawSelf()

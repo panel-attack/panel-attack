@@ -183,7 +183,7 @@ local function drawSystemInfo()
 end
 
 local function drawInfo(text)
-  gfx_q:push({love.graphics.draw, {aboutText[text], 15, 15, nil, nil, nil, nil, infoOffset}})
+  love.graphics.draw(aboutText[text], 15, 15, nil, nil, nil, nil, infoOffset)
   if inputManager.isDown["MenuEsc"] then
     Menu.playCancelSfx()
     backgroundImage = themes[config.theme].images.bg_main
@@ -510,6 +510,12 @@ function OptionsMenu:update(dt)
   backgroundImage:update(dt)
   if optionsState == "menus" then
     menus[activeMenuName]:update()
+  end
+  GAME.gfx_q:push({self.draw, {self}})
+end
+
+function OptionsMenu:draw()
+  if optionsState == "menus" then
     menus[activeMenuName]:draw()
   elseif optionsState == "info" then
     drawInfo(infoName)
