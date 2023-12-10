@@ -227,8 +227,8 @@ function inputManager:updateKeyMaps()
   for _, keyAlias in ipairs(consts.KEY_NAMES) do 
     self.isDown[keyAlias] = KEY_CHANGE.NONE 
     self.isUp[keyAlias] = KEY_CHANGE.NONE 
-    self.isPressed[keyAlias] = KEY_CHANGE.NONE 
-    for i = 1, GAME.input.maxConfigurations do
+    self.isPressed[keyAlias] = KEY_CHANGE.NONE
+    for i = 1, #GAME.input.inputConfigurations do
       local key = GAME.input.inputConfigurations[i][keyAlias]
       self.player[i].isDown[keyAlias] = self.allKeys.isDown[key] 
       self.player[i].isUp[keyAlias] = self.allKeys.isUp[key] 
