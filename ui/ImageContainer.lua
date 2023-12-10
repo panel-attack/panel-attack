@@ -24,12 +24,11 @@ function ImageContainer:setImage(image, aspectRatio)
 end
 
 function ImageContainer:drawSelf()
-  local x, y = self:getScreenPos()
   local imageWidth, imageHeight = self.image:getDimensions()
   local width, height = self.width, self.height
   if self.drawBorders then
     love.graphics.setColor(self.outlineColor)
-    love.graphics.rectangle("line", x, y, self.width, self.height)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
     love.graphics.setColor(1, 1, 1, 1)
     width = width - 2
     height = height - 2
@@ -41,7 +40,7 @@ function ImageContainer:drawSelf()
   ratioX = imageWidth / self.aspectRatio.x
   ratioY = imageHeight / self.aspectRatio.y
 
-  love.graphics.draw(self.image, x, y, 0, containerRatio * ratioX,
+  love.graphics.draw(self.image, self.x, self.y, 0, containerRatio * ratioX,
                      containerRatio * ratioY)
 
 end

@@ -66,21 +66,19 @@ end
 
 function Grid:drawSelf()
   if DEBUG_ENABLED then
-    local left, top = self:getScreenPos()
-
     love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.rectangle("line", left, top, self.width, self.height)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
     love.graphics.setColor(1, 1, 1, 1)
     -- draw all units
-    local right = left + self.width
-    local bottom = top + self.height
+    local right = self.x + self.width
+    local bottom = self.y + self.height
     for i = 1, self.gridHeight - 1 do
-      local y = top + self.unitSize * i
-      drawStraightLine(left, y, right, y, 1, 1, 1, 0.5)
+      local y = self.y + self.unitSize * i
+      drawStraightLine(self.x, y, right, y, 1, 1, 1, 0.5)
     end
     for i = 1, self.gridWidth - 1 do
-      local x = left + self.unitSize * i
-      drawStraightLine(x, top, x, bottom, 1, 1, 1, 0.5)
+      local x = self.x + self.unitSize * i
+      drawStraightLine(x, self.y, x, bottom, 1, 1, 1, 0.5)
     end
   end
 end

@@ -23,8 +23,7 @@ function GridElement:getScreenPos()
 end
 
 function GridElement:drawBorders()
-  local x, y = self:getScreenPos()
-  grectangle("line", x, y, self.width, self.height)
+  grectangle("line", self.x, self.y, self.width, self.height)
 end
 
 function GridElement:drawSelf()
