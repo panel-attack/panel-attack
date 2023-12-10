@@ -42,6 +42,7 @@ for k, v in ipairs(localization:get_list_codes()) do
 end
 
 local MENU_WIDTH = 130
+local ITEM_HEIGHT = 30
 local SCROLL_STEP = 14
 local optionsState
 local activeMenuName = "baseMenu"
@@ -479,13 +480,13 @@ function OptionsMenu:load()
     {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function() switchMenu("baseMenu") end})},
   }
   
-  menus["baseMenu"] = Menu({menuItems = baseMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  menus["generalMenu"] = Menu({menuItems = generalMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  menus["audioMenu"] = Menu({menuItems = audioMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  menus["debugMenu"] = Menu({menuItems = debugMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
-  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["baseMenu"] = Menu({menuItems = baseMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["generalMenu"] = Menu({menuItems = generalMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["soundTestMenu"] = Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["audioMenu"] = Menu({menuItems = audioMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["debugMenu"] = Menu({menuItems = debugMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
 
   for _, menu in pairs(menus) do
     menu:setVisibility(false)

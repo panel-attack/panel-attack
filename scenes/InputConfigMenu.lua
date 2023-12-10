@@ -218,7 +218,7 @@ end
 function InputConfigMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update()
-  self.menu:draw()
+  GAME.gfx_q:push({self.draw, {self}})
 
   local noKeysHeld = next(input.allKeys.isDown) == nil and next(input.allKeys.isPressed) == nil
 
@@ -237,7 +237,11 @@ function InputConfigMenu:update(dt)
   end
 end
 
-function InputConfigMenu:unload()  
+function InputConfigMenu:draw()
+  self.menu:draw()
+end
+
+function InputConfigMenu:unload()
   self.menu:setVisibility(false)
 end
 

@@ -30,6 +30,8 @@ local Menu = class(
     self.firstActiveIndex = 1
     self.menuItemContainer = UIElement({})
     self:addChild(self.menuItemContainer)
+    self.itemWidth = options.itemWidth or 130
+    self.itemHeight = options.itemHeight or 30
     self:setMenuItems(options.menuItems)
     
     self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
@@ -70,8 +72,11 @@ function Menu:setMenuItems(menuItems)
     if i > 1 then 
        menuItem[1].y = menuItems[i - 1][1].y + menuItems[i - 1][1].height + Menu.BUTTON_VERTICAL_PADDING
     end
+    menuItem[1].width = math.max(self.itemWidth, menuItem[1].width)
+    menuItem[1].height = self.itemHeight
     if menuItem[2] then
       menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
+      menuItem[2].height = self.itemHeight
       menuItem[1]:addChild(menuItem[2])
     end
     self.menuItemContainer:addChild(menuItem[1])

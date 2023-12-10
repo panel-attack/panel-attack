@@ -9,6 +9,8 @@ local TEXT_HEIGHT_PADDING = 6
 -- This is different from the regular button that scales its content to fit inside itself
 local TextButton = class(function(self, options)
   self.label = options.label
+  self.label.hAlign = "center"
+  self.label.vAlign = "center"
   self:addChild(self.label)
 
   -- stretch to fit text

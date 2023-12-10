@@ -54,9 +54,6 @@ function SetNameMenu:update(dt)
   if not input.allKeys.isDown["return"] and tableUtils.trueForAny(input.allKeys.isDown, function(val) return val end) then
     warningText = ""
   end
-
-  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
-  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   
   if input.allKeys.isDown["return"] then
     if nameField.value == "" then
@@ -72,7 +69,13 @@ function SetNameMenu:update(dt)
     Menu.playCancelSfx()
     sceneManager:switchToScene("MainMenu")
   end
-  
+
+  GAME.gfx_q:push({self.draw, {self}})
+end
+
+function SetNameMenu:draw()
+  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
+  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   nameField:draw()
 end
 

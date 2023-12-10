@@ -19,8 +19,8 @@ local InputField = class(
     -- text alignments settings
     -- must be one of the following values:
     -- left, right, center
-    self.halign = options.halign or 'left'
-    self.valign = options.valign or 'center'
+    self.hAlign = options.hAlign or 'left'
+    self.vAlign = options.vAlign or 'center'
     
     self.text = love.graphics.newText(love.graphics.getFont(), self.value)
     -- stretch to fit text
@@ -137,29 +137,13 @@ function InputField:drawSelf()
   local textColor = self.value ~= "" and {1, 1, 1, 1} or {.5, .5, .5, 1}
   
   love.graphics.setColor(textColor)
-  
-  local textWidth = self.text:getWidth()
-  local textHeight = text:getHeight()
-  local xAlignments = {
-    center = {self.width / 2, textWidth / 2},
-    left = {0, 0},
-    right = {self.width, textWidth},
-  }
-  local yAlignments = {
-    center = {self.height / 2, textHeight / 2},
-    top = {0, 0},
-    bottom = {self.height, textHeight},
-  }
-  local xPosAlign, xOffset = unpack(xAlignments[self.halign])
-  local yPosAlign, yOffset = unpack(yAlignments[self.valign])
-  
-  love.graphics.draw(text, self.x + xPosAlign + textOffset, self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset)
+  love.graphics.draw(text, self.x + textOffset, self.y + 0, 0, 1, 1)
   
   if self.hasFocus then
     local cursorFlashPeriod = .5
     if (math.floor(love.timer.getTime() / cursorFlashPeriod)) % 2 == 0 then
       love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.draw(textCursor, self:getCursorPos(), self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset)
+      love.graphics.draw(textCursor, self:getCursorPos(), self.y, 0, 1, 1)
     end
   end
   love.graphics.setColor(1, 1, 1, 1)

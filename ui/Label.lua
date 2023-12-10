@@ -5,8 +5,8 @@ local GraphicsUtil = require("graphics_util")
 --@module Label
 local Label = class(
   function(self, options)
-    self.hAlign = options.hAlign or "center"
-    self.vAlign = options.hAlign or "center"
+    self.hAlign = options.hAlign or "left"
+    self.vAlign = options.vAlign or "center"
 
     self.text = options.text
     -- list of parameters for translating the label (e.g. numbers/names to replace placeholders with)
