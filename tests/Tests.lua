@@ -1,6 +1,5 @@
 -- In Development, so you don't have to wait for all other tests to debug (move to correct location later)
-require("tests.ReplayTests")
-
+require("tests.PanelGenTests")
 -- Small tests (unit tests)
 require("PuzzleTests")
 require("ServerQueueTests")
@@ -17,6 +16,7 @@ require("tableUtilsTest")
 require("utilTests")
 --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
 -- Medium level tests (integration tests)
+require("tests.ReplayTests")
 require("tests.StackReplayTests")
 require("tests.StackRollbackReplayTests")
 require("tests.StackTouchReplayTests")
