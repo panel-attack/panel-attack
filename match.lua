@@ -50,6 +50,9 @@ function Match:deinit()
   for _, quad in ipairs(self.time_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
+  if self.simulatedOpponent then
+    self.simulatedOpponent:deinit()
+  end
 end
 
 function Match:addPlayer(stack)
@@ -536,7 +539,7 @@ function Match.render(self)
       if P2 then
         P2:render()
       end
-      
+
       if self.simulatedOpponent then
         self.simulatedOpponent:render()
       end
