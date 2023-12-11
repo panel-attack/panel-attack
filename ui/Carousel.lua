@@ -75,7 +75,9 @@ end
 
 function Carousel.moveToNextPassenger(self, directionSign)
   play_optional_sfx(themes[config.theme].sounds.menu_move)
+  self.passengers[self.selectedId].uiElement:setVisibility(false)
   self.selectedId = wrap(1, self.selectedId + directionSign, #self.passengers)
+  self.passengers[self.selectedId].uiElement:setVisibility(true)
   self:onPassengerUpdate()
 end
 

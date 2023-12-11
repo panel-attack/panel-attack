@@ -26,11 +26,12 @@ sceneManager:addScene(DesignHelper)
 function DesignHelper:load()
   self:loadGrid()
   self:loadPanels()
-  self.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.panelCarousel)
+  self:loadStages()
+  self.grid:createElementAt(1, 2, 2, 1, "stage", self.stageCarousel)
 end
 
 function DesignHelper:loadGrid()
-  self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
+  self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitMargin = 6})
   self.cursor = GridCursor({
     grid = self.grid,
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
@@ -50,7 +51,7 @@ function DesignHelper:loadPanels()
 end
 
 function DesignHelper:loadStages()
-  self.stageCarousel = StageCarousel({})
+  self.stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", hFill = true, vFill = true})
   self.stageCarousel:loadCurrentStages()
 end
 

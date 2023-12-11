@@ -4,7 +4,7 @@ local GridElement = require("ui.GridElement")
 
 local Grid = class(function(self, options)
   self.unitSize = options.unitSize
-  self.unitPadding = options.unitPadding or 0
+  self.unitMargin = options.unitMargin or 0
   self.gridHeight = options.gridHeight
   self.gridWidth = options.gridWidth
   self.width = self.gridWidth * self.unitSize
@@ -23,15 +23,15 @@ end, UiElement)
 -- id is a string identificator to indiate what kind of uiElement resides here
 -- uiElement is the actual element on display that will perform user interaction when selected
 function Grid:createElementAt(x, y, width, height, description, uiElement, noPadding)
-  local unitPadding = self.unitPadding
+  local unitMargin = self.unitMargin
   if noPadding then
-    unitPadding = 0
+    unitMargin = 0
   end
   local gridElement = GridElement({
-    x = (x - 1) * self.unitSize + unitPadding,
-    y = (y - 1) * self.unitSize + unitPadding,
-    width = width * self.unitSize - unitPadding * 2,
-    height = height * self.unitSize - unitPadding * 2,
+    x = (x - 1) * self.unitSize + unitMargin,
+    y = (y - 1) * self.unitSize + unitMargin,
+    width = width * self.unitSize - unitMargin * 2,
+    height = height * self.unitSize - unitMargin * 2,
     gridOriginX = x,
     gridOriginY = y,
     gridWidth = width,
@@ -91,14 +91,14 @@ function Grid:getElementAt(row, column)
     -- return a placeholder element that represents where the element *would* be
     local placeholder =
     {
-      width = self.unitSize - self.unitPadding * 2,
-      height = self.unitSize - self.unitPadding * 2,
+      width = self.unitSize - self.unitMargin * 2,
+      height = self.unitSize - self.unitMargin * 2,
       gridOriginX = column,
       gridOriginY = row,
       gridWidth = 1,
       gridHeight = 1,
-      x = (column - 1) * self.unitSize + self.unitPadding,
-      y = (row - 1) * self.unitSize + self.unitPadding,
+      x = (column - 1) * self.unitSize + self.unitMargin,
+      y = (row - 1) * self.unitSize + self.unitMargin,
       content = { TYPE = "GridPlaceholder"}
     }
     placeholder.getScreenPos = function ()

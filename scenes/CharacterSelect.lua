@@ -66,7 +66,7 @@ function CharacterSelect:loadUserInterface()
   self:loadGrid()
   self:loadPanels()
   self:loadStandardButtons()
-  --self:loadStages()
+  self:loadStages()
   self:loadCharacters()
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.selectedCharacter)
@@ -116,9 +116,9 @@ function CharacterSelect:loadStages()
 end
 
 function CharacterSelect:loadCharacters()
-  self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 108, gridWidth = 9, gridHeight = 3, unitPadding = 6})
+  self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 108, gridWidth = 9, gridHeight = 3, unitMargin = 6})
 
-  local randomCharacterButton = Button({width = 96, height = 96})
+  local randomCharacterButton = Button({hFill = true, vFill = true})
   randomCharacterButton.characterId = random_character_special_value
   randomCharacterButton.image = ImageContainer({image = themes[config.theme].images.IMG_random_character, hFill = true, vFill = true})
   randomCharacterButton:addChild(randomCharacterButton.image)
@@ -141,7 +141,7 @@ function CharacterSelect:loadCharacters()
 end
 
 function CharacterSelect:loadGrid()
-  self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitPadding = 6})
+  self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6})
   self.ui.cursor = GridCursor({
     grid = self.ui.grid,
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},

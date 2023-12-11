@@ -5,7 +5,7 @@ local class = require("class")
 local function addNewPage(pagedUniGrid)
   local grid = Grid({
     unitSize = pagedUniGrid.unitSize,
-    unitPadding = pagedUniGrid.unitPadding,
+    unitMargin = pagedUniGrid.unitMargin,
     gridWidth = pagedUniGrid.gridWidth,
     gridHeight = pagedUniGrid.gridHeight
   })
@@ -35,7 +35,7 @@ end
 -- the main thing it shares with the regular grid is the cursor navigation
 local PagedUniGrid = class(function(self, options)
   self.unitSize = options.unitSize
-  self.unitPadding = options.unitPadding or 0
+  self.unitMargin = options.unitMargin or 0
   self.gridHeight = options.gridHeight
   self.gridWidth = options.gridWidth
   self.elements = {}

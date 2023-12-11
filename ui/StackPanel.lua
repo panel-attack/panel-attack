@@ -109,7 +109,7 @@ end
 
 function StackPanel:drawSelf()
   if DEBUG_ENABLED then
-    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.setColor(1, 0, 0, 0.7)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
     love.graphics.setColor(1, 1, 1, 1)
   end
