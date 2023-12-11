@@ -39,8 +39,6 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
     description = description,
     content = uiElement
   })
-  uiElement.width = gridElement.width
-  uiElement.height = gridElement.height
   self:addChild(gridElement)
 
   for row = y, y + (height - 1) do
@@ -64,6 +62,7 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
     end
   end
 
+  return gridElement
 end
 
 function Grid:drawSelf()

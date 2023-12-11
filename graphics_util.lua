@@ -545,9 +545,7 @@ function GraphicsUtil.drawClearText(text, x, y, ox, oy)
   end
 end
 
--- sets the translation for a childElement inside of a parentElement so that
--- x=0, y=0 aligns the childElement inside the parentElement according to the settings
-function GraphicsUtil.applyAlignment(parentElement, childElement)
+function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
   local xOffset, yOffset
   if childElement.hAlign == "center" then
     xOffset = parentElement.width / 2 - childElement.width / 2
@@ -567,8 +565,14 @@ function GraphicsUtil.applyAlignment(parentElement, childElement)
     yOffset = 0
   end
 
+  return xOffset, yOffset
+end
+
+-- sets the translation for a childElement inside of a parentElement so that
+-- x=0, y=0 aligns the childElement inside the parentElement according to the settings
+function GraphicsUtil.applyAlignment(parentElement, childElement)
   love.graphics.push("transform")
-  love.graphics.translate(xOffset, yOffset)
+  love.graphics.translate(GraphicsUtil.getAlignmentOffset(parentElement, childElement))
 end
 
 -- resets the translation of the last alignment adjustment

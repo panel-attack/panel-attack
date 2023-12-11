@@ -45,10 +45,9 @@ function Slider:setValueFromPos(x)
 end
 
 function Slider:setValue(value)
-  local prevValue = self.value
-  self.value = util.bound(self.min, value, self.max)
-  self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
-  if self.value ~= prevValue then
+  if value ~= self.value then
+    self.value = util.bound(self.min, value, self.max)
+    self.valueText:set(self.value)
     self:onValueChange()
   end
 end

@@ -111,7 +111,7 @@ function CharacterSelect:loadStandardButtons()
 end
 
 function CharacterSelect:loadStages()
-  self.ui.stageCarousel = StageCarousel({})
+  self.ui.stageCarousel = StageCarousel({hAlign = "center", vAlign = "center"})
   self.ui.stageCarousel:loadCurrentStages()
 end
 
@@ -152,22 +152,19 @@ function CharacterSelect:loadGrid()
 end
 
 function CharacterSelect:loadPanels()
-  self.ui.panelCarousel = PanelCarousel({})
+  self.ui.panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center"})
   self.ui.panelCarousel:loadPanels()
 end
 
-function CharacterSelect:loadLevels(unitWidth)
-  local gridElementWidth = self.ui.grid.unitSize * unitWidth - self.ui.grid.unitPadding * 2
-  local tickLength = 20
+function CharacterSelect:loadLevels(imageWidth)
   self.ui.levelSlider = LevelSlider({
-    tickLength = tickLength,
-    x = (gridElementWidth - tickLength * #level_to_pop) / 2,
-    -- 10 is tickLength / 2, level images are forced into squares
-    y = (self.ui.grid.unitSize) / 2 - tickLength / 2 - self.ui.grid.unitPadding,
+    tickLength = imageWidth,
     value = config.level or 5,
     onValueChange = function(s)
       play_optional_sfx(themes[config.theme].sounds.menu_move)
-    end
+    end,
+    hAlign = "center",
+    vAlign = "center"
   })
   Focusable(self.ui.levelSlider)
   self.ui.levelSlider.receiveInputs = function()
@@ -194,12 +191,6 @@ function CharacterSelect:loadLevels(unitWidth)
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       self.ui.levelSlider:yieldFocus()
     end
-  end
-  self.ui.levelSlider.drawInternal = self.ui.levelSlider.draw
-  self.ui.levelSlider.draw = function(self)
-    local x, y = self.parent:getScreenPos()
-    grectangle("line", x, y, self.width, self.height)
-    self:drawInternal()
   end
 end
 

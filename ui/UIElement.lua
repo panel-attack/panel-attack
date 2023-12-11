@@ -56,11 +56,13 @@ end
 
 function UIElement:getScreenPos()
   local x, y = 0, 0
+  local xOffset, yOffset = 0, 0
   if self.parent then
     x, y = self.parent:getScreenPos()
+    xOffset, yOffset = GraphicsUtil.getAlignmentOffset(self.parent, self)
   end
-  
-  return x + self.x, y + self.y
+
+  return x + self.x + xOffset, y + self.y + yOffset
 end
 
 -- passes a retranslation request through the tree to reach all Labels
