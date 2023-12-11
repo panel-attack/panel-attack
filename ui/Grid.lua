@@ -84,4 +84,29 @@ function Grid:drawSelf()
   end
 end
 
+function Grid:getElementAt(row, column)
+  if self.grid[row][column] then
+    return self.grid[row][column]
+  else
+    -- return a placeholder element that represents where the element *would* be
+    local placeholder =
+    {
+      width = self.unitSize - self.unitPadding * 2,
+      height = self.unitSize - self.unitPadding * 2,
+      gridOriginX = column,
+      gridOriginY = row,
+      gridWidth = 1,
+      gridHeight = 1,
+      x = (column - 1) * self.unitSize + self.unitPadding,
+      y = (row - 1) * self.unitSize + self.unitPadding,
+      content = { TYPE = "GridPlaceholder"}
+    }
+    placeholder.getScreenPos = function ()
+      local cX, cY = self:getScreenPos()
+      return cX + placeholder.x, cY + placeholder.y
+    end
+    return placeholder
+  end
+end
+
 return Grid

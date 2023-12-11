@@ -80,4 +80,8 @@ function PagedUniGrid:drawSelf()
   end
 end
 
+function PagedUniGrid:getElementAt(row, column)
+  return self.pages[self.currentPage]:getElementAt(row, column)
+end
+
 return PagedUniGrid
