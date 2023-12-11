@@ -12,19 +12,23 @@ function ImageContainer:setImage(image, width, height, scale)
   self.image = image
   self.imageWidth, self.imageHeight = self.image:getDimensions()
 
-  scale = scale or 1
-
-  local scaledImageWidth = self.imageWidth * scale
-  local scaledImageHeight = self.imageHeight * scale
-
-  if width and height then
-    -- scale is getting capped to what width and height actually give us
-    self.scale = math.min(self.width / scaledImageWidth, self.height / scaledImageHeight)
+  if self.hFill and self.vFill then
+    self.scale = math.min(self.width / self.imageWidth, self.height / self.imageHeight)
   else
-    -- there are no size limits, set the size based on scale
-    self.width = scaledImageWidth
-    self.height = scaledImageHeight
-    self.scale = scale
+    scale = scale or 1
+  
+    local scaledImageWidth = self.imageWidth * scale
+    local scaledImageHeight = self.imageHeight * scale
+  
+    if width and height then
+      -- scale is getting capped to what width and height actually give us
+      self.scale = math.min(self.width / scaledImageWidth, self.height / scaledImageHeight)
+    else
+      -- there are no size limits, set the size based on scale
+      self.width = scaledImageWidth
+      self.height = scaledImageHeight
+      self.scale = scale
+    end
   end
 end
 
