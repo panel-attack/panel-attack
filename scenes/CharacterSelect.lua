@@ -84,8 +84,8 @@ function CharacterSelect:loadStandardButtons()
   end
 
   self.ui.selectedCharacter = ImageContainer({
-    width = 96,
-    height = 96,
+    hFill = true,
+    vFill = true,
     image = icon,
     drawBorders = true,
     outlineColor = {1, 1, 1, 1}
