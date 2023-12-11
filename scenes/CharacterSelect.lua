@@ -124,13 +124,14 @@ function CharacterSelect:loadCharacters()
 
   for i = 1, #characters_ids_for_current_theme do
     local characterButton = Button({
-      image = characters[characters_ids_for_current_theme[i]].images.icon,
       width = 96,
       height = 96,
-      valign = "bottom",
-      label = characters[characters_ids_for_current_theme[i]].display_name,
       translate = false
     })
+    characterButton.image = ImageContainer({image = characters[characters_ids_for_current_theme[i]].images.icon, width = 96, height = 96})
+    characterButton:addChild(characterButton.image)
+    characterButton.label = Label({text = characters[characters_ids_for_current_theme[i]].display_name, translate = false, vAlign = "bottom", hAlign = "center"})
+    characterButton:addChild(characterButton.label)
     characterButton.characterId = characters_ids_for_current_theme[i]
     self.ui.characterGrid:addElement(characterButton)
   end
