@@ -58,11 +58,17 @@ function UIElement:resize()
     self.height = self.parent.height
   end
 
+  self:onResize()
+
   if self.hFill or self.vFill then
     for _, child in ipairs(self.children) do
       child:resize()
     end
   end
+end
+
+-- overridable function to define extra behaviour to the element itself on resize
+function UIElement:onResize()
 end
 
 function UIElement:detach()

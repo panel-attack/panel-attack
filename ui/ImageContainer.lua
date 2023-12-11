@@ -28,6 +28,10 @@ function ImageContainer:setImage(image, width, height, scale)
   end
 end
 
+function ImageContainer:onResize()
+  self.scale = math.min(self.width / self.imageWidth, self.height / self.imageHeight)
+end
+
 function ImageContainer:drawSelf()
   love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
 

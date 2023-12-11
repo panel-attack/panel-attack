@@ -116,7 +116,7 @@ function CharacterSelect:loadStages()
 end
 
 function CharacterSelect:loadCharacters()
-  self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 102, gridWidth = 9, gridHeight = 3, unitPadding = 6})
+  self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 108, gridWidth = 9, gridHeight = 3, unitPadding = 6})
 
   local randomCharacterButton = Button({image = themes[config.theme].images.IMG_random_character, width = 96, height = 96})
   randomCharacterButton.characterId = random_character_special_value
@@ -128,7 +128,7 @@ function CharacterSelect:loadCharacters()
       height = 96,
       translate = false
     })
-    characterButton.image = ImageContainer({image = characters[characters_ids_for_current_theme[i]].images.icon, width = 96, height = 96})
+    characterButton.image = ImageContainer({image = characters[characters_ids_for_current_theme[i]].images.icon, hFill = true, vFill = true})
     characterButton:addChild(characterButton.image)
     characterButton.label = Label({text = characters[characters_ids_for_current_theme[i]].display_name, translate = false, vAlign = "bottom", hAlign = "center"})
     characterButton:addChild(characterButton.label)
@@ -138,7 +138,7 @@ function CharacterSelect:loadCharacters()
 end
 
 function CharacterSelect:loadGrid()
-  self.ui.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
+  self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitPadding = 6})
   self.ui.cursor = GridCursor({
     grid = self.ui.grid,
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
