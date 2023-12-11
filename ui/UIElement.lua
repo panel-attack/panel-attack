@@ -44,16 +44,25 @@ local UIElement = class(
 )
 
 function UIElement:addChild(uiElement)
-  if uiElement.hFill then
-    uiElement.width = self.width
-  end
-
-  if uiElement.vFill then
-    uiElement.height = self.height
-  end
-
   self.children[#self.children + 1] = uiElement
   uiElement.parent = self
+  uiElement:resize()
+end
+
+function UIElement:resize()
+  if self.hFill then
+    self.width = self.parent.width
+  end
+
+  if self.vFill then
+    self.height = self.parent.height
+  end
+
+  if self.hFill or self.vFill then
+    for _, child in ipairs(self.children) do
+      child:resize()
+    end
+  end
 end
 
 function UIElement:detach()

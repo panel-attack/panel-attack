@@ -1,6 +1,6 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
-local CarouselButton = require("ui.CarouselButton")
+local TextButton = require("ui.TextButton")
 local GraphicsUtil = require("graphics_util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
@@ -39,17 +39,19 @@ end
 
 function Carousel.createNavigationButtons(self)
   self.leftButton =
-    CarouselButton({
+    TextButton({
       label = Label({text = "<", translate = false, hAlign = "center"}),
       hAlign = "left",
+      vFill = true,
       onClick = function()
         self:moveToNextPassenger(-1)
       end
     })
   self.rightButton =
-    CarouselButton({
+    TextButton({
       label = Label({text = ">", translate = false, hAlign = "center"}),
       hAlign = "right",
+      vFill = true,
       onClick = function()
         self:moveToNextPassenger(1)
       end,
