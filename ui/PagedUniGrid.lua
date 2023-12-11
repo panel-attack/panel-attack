@@ -62,11 +62,22 @@ function PagedUniGrid:addElement(element)
   end
 
   self.pages[#self.pages]:createElementAt(self.lastFilledUnit.x, self.lastFilledUnit.y, 1, 1, #self.elements, element)
+  if self.currentPage ~= #self.pages then
+    element:setVisibility(false)
+  end
 end
 
 function PagedUniGrid:turnPage(sign)
   local newPageNumber = wrap(1, self.currentPage + math.sign(sign), #self.pages)
   goToPage(self, newPageNumber)
+end
+
+function PagedUniGrid:drawSelf()
+  if DEBUG_ENABLED then
+    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(1, 1, 1, 1)
+  end
 end
 
 return PagedUniGrid
