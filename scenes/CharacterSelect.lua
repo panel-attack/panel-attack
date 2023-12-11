@@ -111,7 +111,7 @@ function CharacterSelect:loadStandardButtons()
 end
 
 function CharacterSelect:loadStages()
-  self.ui.stageCarousel = StageCarousel({hAlign = "center", vAlign = "center"})
+  self.ui.stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", hFill = true, vFill = true})
   self.ui.stageCarousel:loadCurrentStages()
 end
 
@@ -153,7 +153,7 @@ function CharacterSelect:loadGrid()
 end
 
 function CharacterSelect:loadPanels()
-  self.ui.panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center"})
+  self.ui.panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = true, vFill = true})
   self.ui.panelCarousel:loadPanels()
 end
 

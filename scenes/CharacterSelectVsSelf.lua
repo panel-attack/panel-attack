@@ -29,11 +29,7 @@ function CharacterSelectVsSelf:designScreen()
   -- self.ui.grid:createElementAt(1, 3, 9, 3, "characterSelection", self.ui.characterGrid, true)
   -- self.ui.grid:createElementAt(9, 6, 1, 1, "leaveSelection", self.ui.leaveButton)
   self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelCarousel)
-  self.ui.panelCarousel.width = self.ui.grid.grid[2][1].width
-  self.ui.panelCarousel.height = self.ui.grid.grid[2][1].height
   self.ui.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.ui.stageCarousel)
-  self.ui.stageCarousel.width = self.ui.grid.grid[2][3].width
-  self.ui.stageCarousel.height = self.ui.grid.grid[2][3].height
   self:loadLevels(20)
   self.ui.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.ui.levelSlider)
 end

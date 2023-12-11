@@ -10,7 +10,7 @@ local Button = class(
     self.outlineColor = options.outlineColor or {.5, .5, .5, .7}
 
     -- callbacks
-    self.onClick = options.onClick or function() 
+    self.onClick = options.onClick or function()
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
     end
     self.onMouseDown = options.onMouseDown or function() end

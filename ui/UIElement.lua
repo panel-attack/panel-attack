@@ -16,8 +16,15 @@ local UIElement = class(
     self.width = options.width or 0
     self.height = options.height or 0
 
+    -- how to align the element inside the parent element
     self.hAlign = options.hAlign or "left"
     self.vAlign = options.vAlign or "top"
+
+    -- how the size is determined relative to the parent element
+    -- hFill true sets the width to the size of the parent
+    self.hFill = options.hFill or false
+    -- vFill true sets the height to the size of the parent
+    self.vFill = options.vFill or false
     
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
@@ -37,6 +44,14 @@ local UIElement = class(
 )
 
 function UIElement:addChild(uiElement)
+  if uiElement.hFill then
+    uiElement.width = self.width
+  end
+
+  if uiElement.vFill then
+    uiElement.height = self.height
+  end
+
   self.children[#self.children + 1] = uiElement
   uiElement.parent = self
 end
