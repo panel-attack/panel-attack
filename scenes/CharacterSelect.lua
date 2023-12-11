@@ -66,7 +66,7 @@ function CharacterSelect:loadUserInterface()
   self:loadGrid()
   self:loadPanels()
   self:loadStandardButtons()
-  self:loadStages()
+  --self:loadStages()
   self:loadCharacters()
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.selectedCharacter)

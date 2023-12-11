@@ -13,17 +13,17 @@ local SelectScreen1LocalPlayer = class(
 
 function SelectScreen1LocalPlayer:assignCallbacks()
     -- stage carousel
-    self.ui.stageCarousel.onSelectCallback = function()
-      self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
-    end
+    -- self.ui.stageCarousel.onSelectCallback = function()
+    --   self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
+    -- end
 
-    self.ui.stageCarousel.onBackCallback = function()
-      self.ui.stageCarousel:setPassenger(config.stage)
-    end
+    -- self.ui.stageCarousel.onBackCallback = function()
+    --   self.ui.stageCarousel:setPassenger(config.stage)
+    -- end
 
-    self.ui.stageCarousel.onPassengerUpdateCallback = function ()
-      self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
-    end
+    -- self.ui.stageCarousel.onPassengerUpdateCallback = function ()
+    --   self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
+    -- end
 
     -- panel carousel
     self.ui.panelCarousel.onSelectCallback = function()

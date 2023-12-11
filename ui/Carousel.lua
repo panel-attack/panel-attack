@@ -33,7 +33,7 @@ local Carousel = class(function(carousel, options)
   carousel.TYPE = "Carousel"
 end, UiElement)
 
-function Carousel.createPassenger(id, image, text)
+function Carousel:createPassenger(id, image, text)
   error("Each specific carousel needs to implement its own passenger")
 end
 
@@ -62,6 +62,8 @@ end
 
 function Carousel.addPassenger(self, passenger)
   self.passengers[#self.passengers + 1] = passenger
+  self:addChild(passenger.uiElement)
+  passenger.uiElement:setVisibility(false)
 end
 
 function Carousel.removeSelectedPassenger(self)
@@ -84,22 +86,18 @@ end
 function Carousel.setPassenger(self, passengerId)
   for i = 1, #self.passengers do
     if self.passengers[i].id == passengerId then
+      self.passengers[self.selectedId].uiElement:setVisibility(false)
       self.selectedId = i
+      self.passengers[i].uiElement:setVisibility(true)
       self:onPassengerUpdate()
     end
   end
 end
 
 function Carousel:drawSelf()
-  assert(#self.passengers > 0, "This carousel has no passengers!")
-  grectangle("line", self.x, self.y, self.width, self.height)
-
-  self:drawPassenger()
-end
-
--- drawPassenger should return the x,y,width,height the passenger takes up centered in the carousel
-function Carousel:drawPassenger()
-  error("each specific carousel needs to draw its own specific passenger")
+  if DEBUG_ENABLED then
+    grectangle("line", self.x, self.y, self.width, self.height)
+  end
 end
 
 function Carousel:onPassengerUpdate()
