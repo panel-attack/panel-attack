@@ -118,15 +118,18 @@ end
 function CharacterSelect:loadCharacters()
   self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 108, gridWidth = 9, gridHeight = 3, unitPadding = 6})
 
-  local randomCharacterButton = Button({image = themes[config.theme].images.IMG_random_character, width = 96, height = 96})
+  local randomCharacterButton = Button({width = 96, height = 96})
   randomCharacterButton.characterId = random_character_special_value
+  randomCharacterButton.image = ImageContainer({image = themes[config.theme].images.IMG_random_character, hFill = true, vFill = true})
+  randomCharacterButton:addChild(randomCharacterButton.image)
+  randomCharacterButton.label = Label({text = "random", translate = true, vAlign = "bottom", hAlign = "center"})
+  randomCharacterButton:addChild(randomCharacterButton.label)
   self.ui.characterGrid:addElement(randomCharacterButton)
 
   for i = 1, #characters_ids_for_current_theme do
     local characterButton = Button({
       width = 96,
       height = 96,
-      translate = false
     })
     characterButton.image = ImageContainer({image = characters[characters_ids_for_current_theme[i]].images.icon, hFill = true, vFill = true})
     characterButton:addChild(characterButton.image)
