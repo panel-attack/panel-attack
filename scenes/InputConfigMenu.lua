@@ -29,7 +29,6 @@ InputConfigMenu.name = "InputConfigMenu"
 sceneManager:addScene(InputConfigMenu)
 
 local KEY_NAME_LABEL_WIDTH = 200
-local font = GraphicsUtil.getGlobalFont()
 local pendingInputText = "__"
 local configIndex = 1
 
@@ -70,7 +69,7 @@ function InputConfigMenu:updateInputConfigMenuLabels(index)
   Menu.playMoveSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyDisplayName = self:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
-    self.menu.menuItems[i + 1].children[1]:setText(keyDisplayName)
+    self.menu.menuItems[i + 1].children[2]:setText(keyDisplayName)
   end
 end
 
@@ -78,7 +77,7 @@ function InputConfigMenu:updateKey(key, pressedKey, index)
   Menu.playValidationSfx()
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
   local keyDisplayName = self:getKeyDisplayName(pressedKey)
-  self.menu.menuItems[index + 1].children[1]:setText(keyDisplayName)
+  self.menu.menuItems[index + 1].children[2]:setText(keyDisplayName)
   write_key_file()
 end
 
@@ -96,7 +95,7 @@ function InputConfigMenu:setAllKeys()
     self:updateKey(consts.KEY_NAMES[self.index], pressedKey, self.index)
     if self.index < #consts.KEY_NAMES then
       self.index = self.index + 1
-      self.menu.menuItems[self.index + 1].children[1]:setText(pendingInputText)
+      self.menu.menuItems[self.index + 1].children[2]:setText(pendingInputText)
       self.menu.selectedIndex = self.index + 1
       self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
     else
@@ -115,7 +114,7 @@ function InputConfigMenu:setKeyStart(key)
       break
     end
   end
-  self.menu.menuItems[self.index + 1].children[1]:setText(pendingInputText)
+  self.menu.menuItems[self.index + 1].children[2]:setText(pendingInputText)
   self.menu.selectedIndex = self.index + 1
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY_TRANSITION)
 end
@@ -123,7 +122,7 @@ end
 function InputConfigMenu:setAllKeysStart()
   Menu.playValidationSfx()
   self.index = 1
-  self.menu.menuItems[self.index + 1].children[1]:setText(pendingInputText)
+  self.menu.menuItems[self.index + 1].children[2]:setText(pendingInputText)
   self.menu:setSelectedIndex(self.index + 1)
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
 end
@@ -184,7 +183,7 @@ function InputConfigMenu:load(sceneParams)
             if not self.settingKey then
               self:setKeyStart(key)
             end
-          end}), 
+          end}),
       label}
   end
   menuOptions[#menuOptions + 1] = {
