@@ -6,6 +6,7 @@ local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 local Label = require("ui.Label")
 local touchable = require("ui.Touchable")
+local tableUtils = require("tableUtils")
 
 local function calculateFontSize(height)
   return math.floor(height / 2) + 1
@@ -39,8 +40,10 @@ local Carousel = class(function(carousel, options)
   carousel.TYPE = "Carousel"
 end, UiElement)
 
-function Carousel:createPassenger(id)
+function Carousel:createPassenger(id, uiElement)
   error("Each specific carousel needs to implement its own passenger")
+  -- passengers are expected to have an id property with a unique identifier
+  -- passengers are expected to have a uiElement property for being drawn
 end
 
 function Carousel.createNavigationButtons(self)
@@ -92,10 +95,9 @@ function Carousel.getSelectedPassenger(self)
 end
 
 function Carousel.setPassengerById(self, passengerId)
-  for i = 1, #self.passengers do
-    if self.passengers[i].id == passengerId then
-      self:setPassengerByIndex(i)
-    end
+  local passengerIndex = tableUtils.first(self.passengers, function(passenger) return passenger.id == passengerId end))
+  if passengerIndex then
+    self:setPassengerByIndex(passengerIndex)
   end
 end
 
