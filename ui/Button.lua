@@ -1,7 +1,7 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
-local buttonManager = require("ui.buttonManager")
 local GraphicsUtil = require("graphics_util")
+local touchable = require("ui.Touchable")
 
 --@module Button
 local Button = class(
@@ -22,20 +22,22 @@ local Button = class(
     end
     self.onMouseUp = options.onMouseUp or function() end
 
-    buttonManager.buttons[self.id] = self.isVisible and self or nil
+    touchable(self)
+
     self.TYPE = "Button"
   end,
   UIElement
 )
 
-function Button:setVisibility(isVisible)
-  buttonManager.buttons[self.id] = isVisible and self or nil
-  UIElement.setVisibility(self, isVisible)
+function Button:onTouch(x, y)
+  self.backgroundColor[4] = 1
 end
 
-function Button:isSelected(x, y)
-  local screenX, screenY = self:getScreenPos()
-  return x > screenX and x < screenX + self.width and y > screenY and y < screenY + self.height
+function Button:onRelease(x, y)
+  self.backgroundColor[4] = 0.7
+  if self:isSelected(x, y) then
+    self:onClick()
+  end
 end
 
 function Button:drawBackground()

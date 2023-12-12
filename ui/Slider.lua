@@ -1,7 +1,9 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
-local sliderManager = require("ui.sliderManager")
 local util = require("util")
+local touchable = require("ui.Touchable")
+
+local handleRadius = 7.5
 
 --@module Slider
 local Slider = class(
@@ -16,8 +18,12 @@ local Slider = class(
     self.minText = love.graphics.newText(love.graphics.getFont(), self.min)
     self.maxText = love.graphics.newText(love.graphics.getFont(), self.max)
     self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
-    
-    sliderManager.sliders[self.id] = self.isVisible and self or nil
+
+    self.width = self.tickLength * (self.max - self.min + 1)
+    self.height = handleRadius * 2
+
+    touchable(self)
+
     self.TYPE = "Slider"
   end,
   UIElement
@@ -27,16 +33,17 @@ local xOffset = 0
 local yOffset = 15
 local textOffset = -3
 local sliderBarThickness = 5
-local handleRadius = 7.5
 
-function Slider:setVisibility(isVisible)
-  sliderManager.sliders[self.id] = isVisible and self or nil
-  UIElement.setVisibility(self, isVisible)
+function Slider:onTouch(x, y)
+  self:setValueFromPos(x)
 end
 
-function Slider:isSelected(x, y)
-  local screenX, screenY = self:getScreenPos()
-  return x >= screenX and x <= screenX + (self.max - self.min + 1) * self.tickLength and y >= screenY + yOffset + sliderBarThickness / 2 - handleRadius and y <= screenY + yOffset + sliderBarThickness / 2 + handleRadius
+function Slider:onDrag(x, y)
+  self:setValueFromPos(x)
+end
+
+function Slider:onRelease(x, y)
+  self:setValueFromPos(x)
 end
 
 function Slider:setValueFromPos(x)

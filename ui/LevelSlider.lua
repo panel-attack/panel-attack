@@ -11,7 +11,8 @@ local LevelSlider = class(
     self.value = options.value and util.bound(self.min, options.value, self.max) or 5
     -- pixels per value change
     self.tickLength = options.tickLength or 11
-    self.width = self.tickLength * self.max
+
+    self.width = self.max * self.tickLength
     self.height = self.tickLength
   end,
   Slider)

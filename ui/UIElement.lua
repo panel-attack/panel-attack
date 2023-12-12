@@ -132,6 +132,11 @@ function UIElement:setVisibility(isVisible)
   for _, uiElement in ipairs(self.children) do
     uiElement:setVisibility(isVisible)
   end
+  self:onVisibilityChanged()
+end
+
+function UIElement:onVisibilityChanged()
+
 end
 
 function UIElement:setEnabled(isEnabled)

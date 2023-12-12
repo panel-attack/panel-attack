@@ -1,5 +1,4 @@
 local class = require("class")
-local buttonManager = require("ui.buttonManager")
 local Button = require("ui.Button")
 
 local TEXT_WIDTH_PADDING = 15
@@ -17,7 +16,6 @@ local TextButton = class(function(self, options)
   self.width = math.max(self.label.width + TEXT_WIDTH_PADDING, self.width)
   self.height = math.max(self.label.height + TEXT_HEIGHT_PADDING, self.height)
 
-  buttonManager.buttons[self.id] = self.isVisible and self or nil
   self.TYPE = "Button"
 end, Button)
 

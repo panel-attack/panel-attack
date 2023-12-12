@@ -1,5 +1,4 @@
-local buttonManager = require("ui.buttonManager")
-local sliderManager = require("ui.sliderManager")
+local touchHandler = require("ui.touchHandler")
 local inputFieldManager = require("ui.inputFieldManager")
 local inputManager = require("inputManager")
 local logger = require("logger")
@@ -105,7 +104,6 @@ function love.update(dt)
   end
 
   inputManager:update(dt)
-  buttonManager.update()
   inputFieldManager.update()
 
   GAME:update(dt)
@@ -118,8 +116,7 @@ end
 
 -- Handle a mouse or touch press
 function love.mousepressed(x, y, button)
-  buttonManager.mousePressed(x, y)
-  sliderManager.mousePressed(x, y)
+  touchHandler:touch(x, y)
   inputFieldManager.mousePressed(x, y)
   inputManager:mousePressed(x, y, button)
 
@@ -130,15 +127,14 @@ end
 
 function love.mousereleased(x, y, button)
   if button == 1 then
-    sliderManager.mouseReleased(x, y)
-    buttonManager.mouseReleased(x, y)
+    touchHandler:release(x, y)
     inputManager:mouseReleased(x, y, button)
   end
 end
 
 function love.mousemoved( x, y, dx, dy, istouch )
   if love.mouse.isDown(1) then
-    sliderManager.mouseDragged(x, y)
+    touchHandler:drag(x, y)
   end
   inputManager:mouseMoved(x, y)
 end
