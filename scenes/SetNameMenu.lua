@@ -55,10 +55,9 @@ function SetNameMenu:update(dt)
   if not input.allKeys.isDown["return"] and tableUtils.trueForAny(input.allKeys.isDown, function(val) return val end) then
     warningText = ""
   end
-
-  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
-  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   
+  GAME.gfx_q:push({self.draw, {self}})
+
   if input.allKeys.isDown["return"] then
     if nameField.value == "" then
       warningText = loc("op_username_blank_warning")
@@ -74,7 +73,13 @@ function SetNameMenu:update(dt)
     sceneManager:switchToScene("MainMenu")
   end
   
+end
+
+function SetNameMenu:draw()
+  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
+  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   nameField:draw()
+
 end
 
 function SetNameMenu:unload()  

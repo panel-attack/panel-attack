@@ -55,6 +55,7 @@ local menus = {
   audioMenu = nil,
   debugMenu = nil,
   aboutMenu = nil,
+  modifyUserIdMenu = nil
 }
 
 local foundThemes = {}
@@ -223,6 +224,8 @@ function OptionsMenu:repositionMenus()
   menus["debugMenu"].y = y
   menus["aboutMenu"].x = x
   menus["aboutMenu"].y = y
+  menus["modifyUserIdMenu"].x = x
+  menus["modifyUserIdMenu"].y = y
 end
 
 function OptionsMenu:load()
@@ -265,6 +268,7 @@ function OptionsMenu:load()
     {Button({width = LABEL_WIDTH, label = "op_audio", onClick = function() switchMenu("audioMenu") end})},
     {Button({width = LABEL_WIDTH, label = "op_debug", onClick = function() switchMenu("debugMenu") end})},
     {Button({width = LABEL_WIDTH, label = "op_about", onClick = function() switchMenu("aboutMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "Modify User ID", onClick = function() switchMenu("modifyUserIdMenu") end})},
     {Button({width = LABEL_WIDTH, label = "back", onClick = exitMenu})},
   }
 
@@ -479,7 +483,14 @@ function OptionsMenu:load()
     {Button({width = LABEL_WIDTH, label = "System Info", translate = false, onClick = setupSystemInfo})},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
   }
-  
+
+  local modifyUserIdOptions = {}
+  local userIDDirectories = fileUtils.getFilteredDirectoryItems("servers")
+  for i = 1, #userIDDirectories do
+    modifyUserIdOptions[#modifyUserIdOptions+1] = {Button({width = LABEL_WIDTH, label = userIDDirectories[i], onClick = function() sceneManager:switchToScene("SetUserIdMenu", {serverIp = userIDDirectories[i]}) end})}
+  end
+  modifyUserIdOptions[#modifyUserIdOptions + 1] = {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})}
+
   menus["baseMenu"] = Menu({menuItems = baseMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   menus["generalMenu"] = Menu({menuItems = generalMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
@@ -487,6 +498,7 @@ function OptionsMenu:load()
   menus["audioMenu"] = Menu({menuItems = audioMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   menus["debugMenu"] = Menu({menuItems = debugMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
   menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, maxHeight = themes[config.theme].main_menu_max_height})
+  menus["modifyUserIdMenu"] = Menu({menuItems = modifyUserIdOptions, maxHeight = themes[config.theme].main_menu_max_height})
 
   for _, menu in pairs(menus) do
     menu:setVisibility(false)

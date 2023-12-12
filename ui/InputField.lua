@@ -85,7 +85,7 @@ end
 
 function InputField:onBackspace()
   if self.offset == 0 then
-    return 
+    return
   end
 
   -- get the byte offset to the last UTF-8 character in the string.
@@ -100,7 +100,7 @@ function InputField:onBackspace()
   else
     self.value = string.sub(self.value, 1, byteoffset) .. string.sub(self.value, byteoffset2 + 1, strByteLength)
   end
-  self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+  self.text:set(self.value)
   self.offset = self.offset - 1
 end
 
@@ -112,7 +112,7 @@ function InputField:textInput(t)
   if self.filterAlphanumeric and string.find(t, "[^%w]+") then
     return
   end
-  if utf8.len(self.value) < self.charLimit then
+  if utf8.len(self.value) + utf8.len(t) <= self.charLimit then
     local strByteLength = utf8.offset(self.value, -1) or 0
     local byteoffset = utf8.offset(self.value, self.offset) or 0
     if self.offset == 0 then
@@ -122,25 +122,27 @@ function InputField:textInput(t)
     else
       self.value = string.sub(self.value, 1, byteoffset) .. t .. string.sub(self.value, byteoffset + 1, strByteLength)
     end
-    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
-    self.offset = self.offset + 1
+    self.text:set(self.value)
+    self.offset = self.offset + utf8.len(t)
   end
 end
 
+local valueColor = {1, 1, 1, 1}
+local placeholderColor = {.5, .5, .5, 1}
 function InputField:draw()
   if not self.isVisible then
     return
   end
 
-  GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
+  love.graphics.setColor(self.outlineColor)
+  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(self.backgroundColor)
+  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
   
   local text = self.value ~= "" and self.text or self.placeholderText
-  local textColor = self.value ~= "" and {1, 1, 1, 1} or {.5, .5, .5, 1}
+  local textColor = self.value ~= "" and valueColor or placeholderColor
   
-  GAME.gfx_q:push({love.graphics.setColor, textColor})
+  love.graphics.setColor(textColor)
   
   local textWidth = self.text:getWidth()
   local textHeight = text:getHeight()
@@ -157,16 +159,16 @@ function InputField:draw()
   local xPosAlign, xOffset = unpack(xAlignments[self.halign])
   local yPosAlign, yOffset = unpack(yAlignments[self.valign])
   
-  GAME.gfx_q:push({love.graphics.draw, {text, self.x + xPosAlign + textOffset, self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+  love.graphics.draw(text, self.x + xPosAlign + textOffset, self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset)
   
   if self.hasFocus then
     local cursorFlashPeriod = .5
     if (math.floor(love.timer.getTime() / cursorFlashPeriod)) % 2 == 0 then
-      GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-      GAME.gfx_q:push({love.graphics.draw, {textCursor, self:getCursorPos(), self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.draw(textCursor, self:getCursorPos(), self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset)
     end
   end
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  love.graphics.setColor(1, 1, 1, 1)
   
   -- draw children
   UIElement.draw(self)
