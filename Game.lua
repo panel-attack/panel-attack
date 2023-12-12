@@ -56,6 +56,7 @@ local Game = class(
     self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
     
     self.availableScales = {1, 1.5, 2, 2.5, 3}
+    -- specifies a time that is compared against self.timer to determine if GameScale should be shown
     self.showGameScaleUntil = 0
     self.needsAssetReload = false
     self.previousWindowWidth = 0
@@ -76,6 +77,7 @@ local Game = class(
 
     -- misc
     self.rich_presence = RichPresence()
+    -- time in seconds, can be used by other elements to track the passing of time beyond dt
     self.timer = love.timer.getTime()
   end
 )
