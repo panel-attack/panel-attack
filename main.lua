@@ -46,7 +46,6 @@ require("gen_panels")
 require("panels")
 require("Theme")
 local utf8 = require("utf8Additions")
-require("click_menu")
 require("computerPlayers.computerPlayer")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
@@ -118,10 +117,6 @@ end
 function love.mousepressed(x, y, button)
   touchHandler:touch(x, y)
   inputManager:mousePressed(x, y, button)
-
-  for menu_name, menu in pairs(CLICK_MENUS) do
-    menu:click_or_tap(GAME:transform_coordinates(x, y))
-  end
 end
 
 function love.mousereleased(x, y, button)

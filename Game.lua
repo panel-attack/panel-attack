@@ -549,9 +549,6 @@ function Game:refreshCanvasAndImagesForNewScale()
   
   -- Reload loc to get the new font
   localization:set_language(config.language_code)
-  for _, menu in pairs(CLICK_MENUS) do
-    menu:reloadGraphics()
-  end
 end
 
 -- Transform from window coordinates to game coordinates

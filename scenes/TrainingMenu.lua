@@ -22,25 +22,6 @@ local TrainingMenu = class(
 TrainingMenu.name = "TrainingMenu"
 sceneManager:addScene(TrainingMenu)
 
---[[trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
-  trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
-  trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
-  trainingSettingsMenu:add_button(loc("go_"), start_training, goEscape)
-  trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
-  trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
-  trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
-
-customTrainingModes[0] = {name = "None"}
-  customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
-  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
-  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
-  for _, value in ipairs(readAttackFiles("training")) do
-    customTrainingModes[#customTrainingModes+1] = {name = value.name, attackSettings = value}
-  end
-  --]]
-  
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   sceneManager:switchToScene("MainMenu")
