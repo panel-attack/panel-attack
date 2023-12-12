@@ -17,11 +17,6 @@ local LevelSlider = class(
   end,
   Slider)
 
-function LevelSlider:isSelected(x, y)
-  local screenX, screenY = self:getScreenPos()
-  return x >= screenX and x <= screenX + (self.max - self.min + 1) * self.tickLength and y >= screenY and y <= screenY + self.tickLength * 2
-end
-
 function LevelSlider:drawSelf()
   for i, level_img in ipairs(themes[config.theme].images.IMG_levels) do
     local img = i <= self.value and level_img or

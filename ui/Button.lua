@@ -35,7 +35,7 @@ end
 
 function Button:onRelease(x, y)
   self.backgroundColor[4] = 0.7
-  if self:isSelected(x, y) then
+  if self:inBounds(x, y) then
     self:onClick()
   end
 end

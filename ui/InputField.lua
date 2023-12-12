@@ -4,6 +4,7 @@ local util = require("util")
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local inputFieldManager = require("ui.inputFieldManager")
+local touchable = require("ui.Touchable")
 
 --@module InputField
 local InputField = class(
@@ -33,21 +34,37 @@ local InputField = class(
     self.textCursorPos = nil
 
     inputFieldManager.inputFields[self.id] = self.isVisible and self or nil
+    touchable(self)
     self.TYPE = "InputField"
   end,
   UIElement
 )
 
+function InputField:onTouch(x, y)
+  self:setFocus(x, y)
+end
+
+function InputField:onDrag(x, y)
+  if self:inBounds(x, y) then
+    self:setFocus(x, y)
+  end
+end
+
+function InputField:onRelease(x, y)
+  if self:inBounds(x, y) then
+    self:setFocus(x, y)
+  end
+end
+
 local textOffset = 4
 local textCursor = love.graphics.newText(love.graphics.getFont(), "|")
 
-function InputField:setVisibility(isVisible)
-  inputFieldManager.inputFields[self.id] = isVisible and self or nil
-  UIElement.setVisibility(self, isVisible)
-end
-
-function InputField:isSelected(x, y)
-  return x > self.x and x < self.x + self.width and y > self.y and y < self.y + self.height
+function InputField:onVisibilityChanged()
+  if self.isVisible then
+    inputFieldManager.inputFields[self.id] = self
+  else
+    inputFieldManager.inputFields[self.id] = nil
+  end
 end
 
 function InputField:getCursorPos()

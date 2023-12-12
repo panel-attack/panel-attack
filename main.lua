@@ -117,7 +117,6 @@ end
 -- Handle a mouse or touch press
 function love.mousepressed(x, y, button)
   touchHandler:touch(x, y)
-  inputFieldManager.mousePressed(x, y)
   inputManager:mousePressed(x, y, button)
 
   for menu_name, menu in pairs(CLICK_MENUS) do

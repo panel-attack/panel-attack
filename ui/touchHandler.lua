@@ -9,7 +9,7 @@ local touchHandler = {
 function touchHandler:touch(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
   for id, element in pairs(self.touchableElements) do
-    if element:isSelected(canvasX, canvasY) and element.isEnabled then
+    if element:inBounds(canvasX, canvasY) and element.isEnabled then
       self.touchedElement = element
       if self.touchedElement.onTouch then
         self.touchedElement:onTouch(canvasX, canvasY)
@@ -27,8 +27,8 @@ end
 
 function touchHandler:release(x, y)
   if self.touchedElement then
-    local canvasX, canvasY = GAME:transform_coordinates(x, y)
     if self.touchedElement.onRelease then
+      local canvasX, canvasY = GAME:transform_coordinates(x, y)
       self.touchedElement:onRelease(canvasX, canvasY)
     end
     self.touchedElement = nil
