@@ -18,7 +18,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     self.ui.stageCarousel.onBackCallback = function()
-      self.ui.stageCarousel:setPassenger(config.stage)
+      self.ui.stageCarousel:setPassengerById(config.stage)
     end
 
     self.ui.stageCarousel.onPassengerUpdateCallback = function ()
@@ -31,7 +31,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     self.ui.panelCarousel.onBackCallback = function()
-      self.ui.panelCarousel:setPassenger(config.panels)
+      self.ui.panelCarousel:setPassengerById(config.panels)
     end
 
     self.ui.panelCarousel.onPassengerUpdateCallback = function ()

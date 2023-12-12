@@ -5,6 +5,7 @@ local GraphicsUtil = require("graphics_util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
 local Label = require("ui.Label")
+local touchable = require("ui.Touchable")
 
 local function calculateFontSize(height)
   return math.floor(height / 2) + 1
@@ -30,10 +31,15 @@ local Carousel = class(function(carousel, options)
   carousel.font = GraphicsUtil.getGlobalFontWithSize(calculateFontSize(carousel.height))
   carousel:createNavigationButtons()
 
+  carousel.initialTouchX = 0
+  carousel.initialTouchY = 0
+  carousel.swiping = false
+  touchable(carousel)
+
   carousel.TYPE = "Carousel"
 end, UiElement)
 
-function Carousel:createPassenger(id, image, text)
+function Carousel:createPassenger(id)
   error("Each specific carousel needs to implement its own passenger")
 end
 
@@ -85,15 +91,19 @@ function Carousel.getSelectedPassenger(self)
   return self.passengers[self.selectedId]
 end
 
-function Carousel.setPassenger(self, passengerId)
+function Carousel.setPassengerById(self, passengerId)
   for i = 1, #self.passengers do
     if self.passengers[i].id == passengerId then
-      self.passengers[self.selectedId].uiElement:setVisibility(false)
-      self.selectedId = i
-      self.passengers[i].uiElement:setVisibility(true)
-      self:onPassengerUpdate()
+      self:setPassengerByIndex(i)
     end
   end
+end
+
+function Carousel.setPassengerByIndex(self, index)
+  self.passengers[self.selectedId].uiElement:setVisibility(false)
+  self.selectedId = index
+  self.passengers[index].uiElement:setVisibility(true)
+  self:onPassengerUpdate()
 end
 
 function Carousel:drawSelf()
@@ -137,9 +147,36 @@ function Carousel:receiveInputs()
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     self:onBack()
   end
+end
 
-  -- TODO: Interpret touch inputs such as swipes
-  -- probably needs some groundwork in inputManager though
+-- TODO: Interpret touch inputs such as swipes
+-- probably needs some groundwork in inputManager though
+function Carousel:onTouch(x, y)
+  self.swiping = true
+  self.initialTouchX = x
+  self.initialTouchY = y
+  self.initialTouchPassenger = self.selectedId
+end
+
+function Carousel:onDrag(x, y)
+  -- let's say 40 pixels are 1 stage
+  local indexOffset = math.floor((x - self.initialTouchX) / 40)
+  local direction = math.sign(indexOffset)
+  local passengerIndex = self.initialTouchPassenger
+  for i = self.initialTouchPassenger, self.initialTouchPassenger + (indexOffset - 1), direction do
+    passengerIndex = wrap(1, passengerIndex + direction, #self.passengers)
+  end
+  if passengerIndex ~= self.selectedId then
+    self:setPassengerByIndex(passengerIndex)
+  end
+end
+
+function Carousel:onRelease(x, y)
+  self:onDrag(x, y)
+  self.swiping = false
+  self.initialTouchX = 0
+  self.initialTouchY = 0
+  self.initialTouchPassenger = nil
 end
 
 return Carousel

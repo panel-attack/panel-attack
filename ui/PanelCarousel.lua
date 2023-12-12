@@ -47,7 +47,7 @@ function PanelCarousel:loadPanels()
     self:addPassenger(passenger)
   end
 
-  self:setPassenger(config.panels)
+  self:setPassengerById(config.panels)
 end
 
 return PanelCarousel
