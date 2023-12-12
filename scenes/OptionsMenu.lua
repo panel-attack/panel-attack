@@ -15,6 +15,7 @@ local fileUtils = require("FileUtils")
 local analytics = require("analytics")
 local class = require("class")
 local tableUtils = require("tableUtils")
+local utf8 = require("utf8")
 
 --@module optionsMenu
 -- Scene for the options menu

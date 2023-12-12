@@ -195,7 +195,7 @@ print("lobby2")
   match_type = ""
   match_type_message = ""
   --attempt login
-  read_user_id_file()
+  read_user_id_file(GAME.connected_server_ip)
   if not my_user_id then
     my_user_id = "need a new user id"
   end
@@ -226,7 +226,7 @@ function Lobby:processServerMessages()
         if msg.new_user_id then
           my_user_id = msg.new_user_id
           logger.trace("about to write user id file")
-          write_user_id_file()
+          write_user_id_file(my_user_id, GAME.connected_server_ip)
           self.login_status_message = loc("lb_user_new", config.name)
         elseif msg.name_changed then
           self.login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
