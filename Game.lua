@@ -1,4 +1,3 @@
-local consts = require("consts")
 require("TimeQueue")
 
 -- The main game object for tracking everything in Panel Attack.
