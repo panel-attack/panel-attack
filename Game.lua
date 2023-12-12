@@ -56,7 +56,7 @@ local Game = class(
     self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
     
     self.availableScales = {1, 1.5, 2, 2.5, 3}
-    self.showGameScale = false
+    self.showGameScaleUntil = 0
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
@@ -76,6 +76,7 @@ local Game = class(
 
     -- misc
     self.rich_presence = RichPresence()
+    self.timer = love.timer.getTime()
   end
 )
 
@@ -265,14 +266,15 @@ function Game:handleResize(newWidth, newHeight)
     else
       self:refreshCanvasAndImagesForNewScale()
     end
-    self.showGameScale = true
+    self.showGameScaleUntil = self.timer + 5
   end
 end
 
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function Game:update(dt)
-    if sceneManager.activeScene == nil then
+  self.timer = love.timer.getTime()
+  if sceneManager.activeScene == nil then
     leftover_time = leftover_time + dt
   else
     leftover_time = 0
@@ -350,7 +352,7 @@ function Game:draw()
     love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
   end
   
-  if self.showGameScale or config.debug_mode then
+  if self.showGameScaleUntil > self.timer or config.debug_mode then
     local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
 

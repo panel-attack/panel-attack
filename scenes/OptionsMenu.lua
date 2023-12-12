@@ -326,7 +326,7 @@ function OptionsMenu:load()
   )
 
   local function scaleSettingsChanged()
-    GAME.showGameScale = true
+    GAME.showGameScaleUntil = GAME.timer + 1000
     local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
     local previousXScale = GAME.canvasXScale
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
@@ -421,7 +421,7 @@ function OptionsMenu:load()
     {Label({width = LABEL_WIDTH, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
     {Label({width = LABEL_WIDTH, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
     {Button({width = LABEL_WIDTH, label = "back", onClick = function()
-      GAME.showGameScale = false
+      GAME.showGameScaleUntil = GAME.timer
       switchMenu("baseMenu")
     end})},
   }
