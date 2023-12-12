@@ -420,7 +420,10 @@ function OptionsMenu:load()
     {Label({width = LABEL_WIDTH, label = "op_popfx"}), createToggleButtonGroup("popfx")},
     {Label({width = LABEL_WIDTH, label = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
     {Label({width = LABEL_WIDTH, label = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
-    {Button({width = LABEL_WIDTH, label = "back", onClick = function() switchMenu("baseMenu") end})},
+    {Button({width = LABEL_WIDTH, label = "back", onClick = function()
+      GAME.showGameScale = false
+      switchMenu("baseMenu")
+    end})},
   }
 
   local soundTestMenuOptions = {
