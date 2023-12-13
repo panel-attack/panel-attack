@@ -178,9 +178,9 @@ end
 -- Handler for the various "game data" message types
 function process_data_message(type, data)
   if type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
-    GAME.match.P1:receiveConfirmedInput(data)
+    GAME.battleRoom.match.P1:receiveConfirmedInput(data)
   elseif type == NetworkProtocol.serverMessageTypes.opponentInput.prefix then
-    GAME.match.P2:receiveConfirmedInput(data)
+    GAME.battleRoom.match.P2:receiveConfirmedInput(data)
   end
 end
 

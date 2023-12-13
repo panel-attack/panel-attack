@@ -7,14 +7,13 @@ local tableUtils = require("tableUtils")
 
 CharacterLoader = {}
 
-local loading_queue = Queue()
-
-local loading_character = nil
+CharacterLoader.loading_queue = Queue()
+CharacterLoader.loading_character = nil
 
 -- queues a character to be loaded
 function CharacterLoader.load(character_id)
   if characters[character_id] and not characters[character_id].fully_loaded then
-    loading_queue:push(character_id)
+    CharacterLoader.loading_queue:push(character_id)
   end
 end
 
@@ -22,9 +21,9 @@ local instant_load_enabled = false
 
 -- return true if there is still data to load
 function CharacterLoader.update()
-  if not loading_character and loading_queue:len() > 0 then
-    local character_name = loading_queue:pop()
-    loading_character = {
+  if not CharacterLoader.loading_character and CharacterLoader.loading_queue:len() > 0 then
+    local character_name = CharacterLoader.loading_queue:pop()
+    CharacterLoader.loading_character = {
       character_name,
       coroutine.create(
         function()
@@ -34,13 +33,13 @@ function CharacterLoader.update()
     }
   end
 
-  if loading_character then
-    if coroutine.status(loading_character[2]) == "suspended" then
-      coroutine.resume(loading_character[2])
+  if CharacterLoader.loading_character then
+    if coroutine.status(CharacterLoader.loading_character[2]) == "suspended" then
+      coroutine.resume(CharacterLoader.loading_character[2])
       return true
-    elseif coroutine.status(loading_character[2]) == "dead" then
-      loading_character = nil
-      return loading_queue:len() > 0
+    elseif coroutine.status(CharacterLoader.loading_character[2]) == "dead" then
+      CharacterLoader.loading_character = nil
+      return CharacterLoader.loading_queue:len() > 0
     -- TODO: unload characters if too much data have been loaded (be careful not to release currently-used characters)
     end
   end
@@ -197,12 +196,11 @@ function CharacterLoader.initCharacters()
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if characterId and characters[characterId] then
-    characterId = CharacterLoader.resolveBundle(characterId)
-  else
+  if not characterId or not characters[characterId] then
     -- resolve via random selection
     characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
+  characterId = CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end

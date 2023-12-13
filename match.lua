@@ -1,17 +1,19 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local GameModes = require("GameModes")
+local sceneManager = require("scenes.sceneManager")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
-  function(self, mode, battleRoom)
+  function(self, battleRoom)
     self.players = {}
     self.P1 = nil
     self.P2 = nil
     self.engineVersion = VERSION
-    self.mode = mode
-    assert(mode ~= "vs" or battleRoom)
+    assert(battleRoom)
     self.battleRoom = battleRoom
+    self.mode = battleRoom.mode
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
     self.maxTimeSpentRunning = 0
@@ -20,15 +22,16 @@ Match =
     self.currentMusicIsDanger = false
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
+    self.doCountdown = self.mode.doCountdown
     self.startTimestamp = os.time(os.date("*t"))
-    if (P2 or mode == "vs") and GAME.battleRoom then
+    if (P2 or self.mode.stackInteraction == GameModes.StackInteraction.VERSUS) then
       GAME.rich_presence:setPresence(
-      (GAME.battleRoom.spectating and "Spectating" or "Playing") .. " a " .. match_type .. " match",
-      GAME.battleRoom.playerNames[1] .. " vs " .. (GAME.battleRoom.playerNames[2] or "themselves"),
+      (battleRoom.spectating and "Spectating" or "Playing") .. " a " .. battleRoom.mode.richPresenceLabel .. " match",
+      battleRoom.players[1].name .. " vs " .. (battleRoom.players[2].name),
       true)
     else
       GAME.rich_presence:setPresence(
-      "Playing " .. mode .. " mode",
+      "Playing " .. battleRoom.mode.richPresenceLabel .. " mode",
       nil,
       true)
     end
@@ -52,14 +55,8 @@ function Match:deinit()
   end
 end
 
-function Match:addPlayer(stack)
-  if stack.which == 1 then
-    self.P1 = stack
-  elseif stack.which == 2 then
-    self.P2 = stack
-  end
-  assert(#self.players == stack.which-1, "Player was added to match before previous player")
-  self.players[#self.players+1] = stack
+function Match:addPlayer(player)
+  self.players[#self.players+1] = player
 end
 
 function Match:gameEndedClockTime()
@@ -78,7 +75,7 @@ function Match:gameEndedClockTime()
   return result
 end
 
-function Match.matchOutcome(self)
+function Match:getOutcome()
   
   local gameResult = self.P1:gameResult()
 
@@ -90,17 +87,13 @@ function Match.matchOutcome(self)
   if gameResult == 0 then -- draw
     results["end_text"] = loc("ss_draw")
     results["outcome_claim"] = 0
-  elseif gameResult == -1 then -- opponent wins
+  elseif gameResult == -1 then -- P2 wins
     results["winSFX"] = self.P2:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[2])
-    -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[self.P2.player_number] = GAME.battleRoom.playerWinCounts[self.P2.player_number] + 1
+    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.players[2].name)
     results["outcome_claim"] = self.P2.player_number
-  elseif self.P2.game_over_clock == self:gameEndedClockTime() then -- client wins
+  elseif gameResult == 1 then -- P1 wins
     results["winSFX"] = self.P1:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.playerNames[1])
-    -- win_counts will get overwritten by the server in net games
-    GAME.battleRoom.playerWinCounts[self.P1.player_number] = GAME.battleRoom.playerWinCounts[self.P1.player_number] + 1
+    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.players[1].name)
     results["outcome_claim"] = self.P1.player_number
   else
     error("No win result")
@@ -307,18 +300,18 @@ function Match:drawTimer()
   end
 
   -- Draw the timer for time attack
-  if self.mode == "puzzle" then
+  if self.mode == GameModes.ONE_PLAYER_PUZZLE then
     -- puzzles don't have a timer...yet?
   else
     local frames = stack.game_stopwatch
-    if self.mode == "time" then
-      frames = (TIME_ATTACK_TIME * 60) - stack.game_stopwatch
+    if self.mode.timeLimit then
+      frames = (self.mode.timeLimit * 60) - stack.game_stopwatch
       if frames < 0 then
         frames = 0
       end
     end
     --frames = frames + 60 * 60 * 80 -- debug large timer rendering
-    local timeString = frames_to_time_string(frames, self.mode == "endless")
+    local timeString = frames_to_time_string(frames, not self.mode.timeLimit)
     
     self:drawMatchLabel(stack.theme.images.IMG_time, stack.theme.timeLabel_Pos, stack.theme.timeLabel_Scale)
     self:drawMatchTime(timeString, self.time_quads, stack.theme.time_Pos, stack.theme.time_Scale)
@@ -347,7 +340,7 @@ function Match:drawCommunityMessage()
   end
 end
 
-function Match.render(self)
+function Match:render()
   local P1 = self.P1
   local P2 = self.P2
   
@@ -459,7 +452,7 @@ function Match.render(self)
     gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("Seed " .. GAME.match.seed, drawX, drawY)
+    gprintf("Seed " .. self.seed, drawX, drawY)
 
     local gameEndedClockTime = self:gameEndedClockTime()
 
@@ -557,7 +550,8 @@ function Match.render(self)
       -- Draw VS HUD
       if self.battleRoom then
         if not config.debug_mode then --this is printed in the same space as the debug details
-          gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
+          -- TODO: get spectator string from battleRoom
+          --gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
         end
 
         self:drawMatchType()
@@ -589,12 +583,141 @@ function Match:getInfo()
   info.mode = self.mode
   info.stage = current_stage
   info.stacks = {}
-  if P1 then
-    info.stacks[1] = P1:getInfo()
+  if self.P1 then
+    info.stacks[1] = self.P1:getInfo()
   end
-  if P2 then
-    info.stacks[2] = P2:getInfo()
+  if self.P2 then
+    info.stacks[2] = self.P2:getInfo()
   end
 
   return info
+end
+
+function Match:waitForAssets()
+  for i = 1, #self.players do
+    local playerSettings = self.players[i].settings
+    playerSettings.characterId = CharacterLoader.resolveCharacterSelection(playerSettings.characterId)
+    CharacterLoader.load(playerSettings.characterId)
+    CharacterLoader.wait()
+  end
+
+  self.stageId = StageLoader.resolveStageSelection(self.stageId)
+  current_stage = self.stageId
+  StageLoader.load(self.stageId)
+  StageLoader.wait()
+end
+
+function Match:start()
+  self:waitForAssets()
+
+  for i = 1, #self.players do
+    local stack = self.players[i]:createStackFromSettings(self)
+    stack.do_countdown = self.battleRoom.mode.doCountdown
+
+    if self.replay then
+      if self.isFromReplay then
+        -- watching a finished replay
+        stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
+        stack.max_runs_per_frame = 1
+      elseif self.battleRoom.spectating and self.replay.players[i].setting.inputs then
+        -- catching up to a match in progress
+        stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
+        stack.play_to_end = true
+      end
+    end
+  end
+
+  if self.mode.stackInteraction == GameModes.StackInteraction.SELF then
+    for i = 1, #self.players do
+      self.players[i].stack:setGarbageTarget(self.players[i].stack)
+    end
+  elseif self.mode.stackInteraction == GameModes.StackInteraction.VERSUS then
+    for i = 1, #self.players do
+      for j = 1, #self.players do
+        if i ~= j then
+          -- once we have more than 2P in a single mode, setGarbageTarget/setOpponent needs to put these into an array
+          -- or we rework it anyway for team play
+          self.players[i].stack:setGarbageTarget(self.players[j].stack)
+          self.players[i].stack:setOpponent(self.players[j].stack)
+        end
+      end
+    end
+  elseif self.mode.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
+    local trainingModeSettings = GAME.battleRoom.trainingModeSettings
+    local attackEngine = AttackEngine:createEngineForTrainingModeSettings(trainingModeSettings)
+    for i = 1, #self.players do
+      local attackEngineClone = deepcpy(attackEngine)
+      attackEngineClone:setGarbageTarget(self.players[i].stack)
+    end
+  end
+
+  for i = 1, #self.players do
+    local pString = "P" .. tostring(i)
+    self[pString] = self.players[i].stack
+    if self.mode.selectFile ~= GameModes.FileSelection.PUZZLE then
+      self.players[i].stack:starting_state()
+    end
+  end
+end
+
+function Match:setStage(stageId)
+  if stageId then
+    -- we got one from the server
+    self.stageId = StageLoader.resolveStageSelection(stageId)
+  elseif self.mode.playerCount == 1 then
+    if self.players[1].settings.stageId == random_stage_special_value then
+      self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
+    else
+      self.stageId = self.players[1].settings.stageId
+    end
+  else
+    self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
+  end
+  StageLoader.load(self.stageId)
+  -- TODO check if we can unglobalize that
+  current_stage = self.stageId
+end
+
+function Match:generateSeed()
+  local seed = 17
+  seed = seed * 37 + self.players[1].rating.new
+  seed = seed * 37 + self.players[2].rating.new
+  seed = seed * 37 + GAME.battleRoom.playerWinCounts[1]
+  seed = seed * 37 + GAME.battleRoom.playerWinCounts[2]
+
+  return seed
+end
+
+function Match:setSeed(seed)
+  if seed then
+    self.seed = seed
+  elseif self.online and #self.players > 1 then
+    self.seed = self:generateSeed()
+  elseif self.battleRoom.online and self.battleRoom.ranked and #self.players == 1 then
+    -- not used yet but for future time attack leaderboard
+    error("Didn't get provided with a seed from the server")
+  else
+    -- Use the default random seed set up on match creation
+  end
+end
+
+function Match:getWinner()
+  if #self.players < 2 then
+    -- no winner in 1p matches except puzzles
+    return nil
+  else
+    for i = 1, #self.players do
+      if not self.players[i].stack.game_over then
+        return self.players[i]
+      end
+    end
+  end
+end
+
+-- a helper function for tests
+-- prevents running graphics related processes, e.g. cards, popFX
+function Match:removeCanvases()
+  for i = 1, #self.players do
+    self.players[i].stack.canvas = nil
+  end
 end

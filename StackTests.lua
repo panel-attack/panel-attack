@@ -1,14 +1,16 @@
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
+local GameModes = require("GameModes")
+local Player = require("Player")
 
 local function puzzleTest()
-  local match = Match("puzzle") -- to stop rising
-  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match:addPlayer(stack)
-  stack.do_countdown = false
-  stack:wait_for_random_character()
+  -- to stop rising
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_PUZZLE)
+  LocalPlayer.settings.level = 5
+  local match = battleRoom:createMatch()
+  match:start()
+  local stack = LocalPlayer.stack
 
-  assert(characters ~= nil, "no characters")
   stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
 
   assert(stack.panels[1][1].color == 0, "wrong color")
@@ -26,13 +28,12 @@ end
 puzzleTest()
 
 local function clearPuzzleTest()
-  local match = Match("puzzle") -- to stop rising
-  local stack = Stack{which=1, match=match, wantsCanvas=false, is_local=false, level=5, inputMethod="controller"}
-  match:addPlayer(stack)
-  stack.do_countdown = false
-  stack:wait_for_random_character()
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_PUZZLE)
+  LocalPlayer.settings.level = 5
+  local match = battleRoom:createMatch()
+  match:start()
+  local stack = LocalPlayer.stack
 
-  assert(characters ~= nil, "no characters")
   stack:set_puzzle_state(Puzzle("clear", false, 0, "[============================][====]246260[====]600016514213466313451511124242", 60, 0))
 
   assert(stack.panels[1][1].color == 1, "wrong color")
@@ -51,7 +52,6 @@ clearPuzzleTest()
 
 local function basicSwapTest()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
-  match.seed = 1 -- so we consistently have a panel to swap
   local stack = match.P1
 
   stack.do_countdown = false
@@ -73,7 +73,6 @@ basicSwapTest()
 
 local function moveAfterCountdownV46Test()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
-  match.seed = 1 -- so we consistently have a panel to swap
   match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
   local stack = match.P1
   stack.do_countdown = true

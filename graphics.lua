@@ -1,6 +1,7 @@
 require("util")
 local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
+local GameModes = require("GameModes")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -721,7 +722,7 @@ function Stack.render(self)
 
   local function drawMoveCount()
     -- draw outside of stack's frame canvas
-    if self.match.mode == "puzzle" then
+    if self.match.mode == GameModes.ONE_PLAYER_PUZZLE then
       self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale, false, true)
       local moveNumber = math.abs(self.puzzle.remaining_moves)
       if self.puzzle.puzzleType == "moves" then
@@ -909,7 +910,7 @@ function Stack.render(self)
   drawMoveCount()
   -- Draw the "extra" game info
   if config.show_ingame_infos then
-    if self.match.mode ~= "puzzle" then
+    if self.match.mode ~= GameModes.ONE_PLAYER_PUZZLE then
       drawScore()
       drawSpeed()
     end
@@ -929,7 +930,7 @@ function Stack.render(self)
 end
 
 function Stack:drawPlayerName()
-  local username = (self.match.battleRoom.playerNames[self.which] or "")
+  local username = (self.match.players[self.which].name or "")
   self:drawString(username, self.theme.name_Pos, true, self.theme.name_Font_Size)
 end
 
@@ -939,7 +940,7 @@ function Stack:drawWinCount()
   end
 
   self:drawLabel(self.theme.images.IMG_wins, self.theme.winLabel_Pos, self.theme.winLabel_Scale, true)
-  self:drawNumber(self.match.battleRoom:getPlayerWinCount(self.player_number), self.wins_quads, self.theme.win_Pos, self.theme.win_Scale, true)
+  self:drawNumber(self.match.battleRoom.players[self.player_number]:getWinCount(), self.wins_quads, self.theme.win_Pos, self.theme.win_Scale, true)
 end
 
 function Stack:drawRating()
@@ -947,21 +948,12 @@ function Stack:drawRating()
   local roomRatings = match.room_ratings
   if config.debug_mode and roomRatings == nil then
     roomRatings = {{new = 1337}, {new = 2042}}
-    match.my_player_number = 1
-    match.op_player_number = 2
   end
-  if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) then
-    local playerNumber = match.my_player_number
-    if self.which == 2 then
-      playerNumber = match.op_player_number
-    end
-    if roomRatings[playerNumber] and roomRatings[playerNumber].new then
-      local rating_to_print = roomRatings[playerNumber].new
-      if type(rating_to_print) == "number" and rating_to_print > 0 then
-        self:drawLabel(self.theme.images["IMG_rating" .. self.id], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
-        self:drawNumber(rating_to_print, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
-      end
-    end
+  if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) and roomRatings[self.player_number] and
+      roomRatings[self.player_number].new and type(roomRatings[self.player_number].new) == "number"
+      and roomRatings[self.player_number].new > 0 then
+      self:drawLabel(self.theme.images["IMG_rating" .. self.id], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
+      self:drawNumber(roomRatings[self.player_number].new, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
   end
 end
 
@@ -1026,7 +1018,7 @@ function Stack:drawMultibar()
   local shake_time = self.shake_time
 
   -- before the first move, display the stop time from the puzzle, not the stack
-  if self.match.mode == "puzzle" and self.puzzle.puzzleType == "clear" and self.puzzle.moves == self.puzzle.remaining_moves then
+  if self.match.mode == GameModes.ONE_PLAYER_PUZZLE and self.puzzle.puzzleType == "clear" and self.puzzle.moves == self.puzzle.remaining_moves then
     stop_time = self.puzzle.stop_time
     shake_time = self.puzzle.shake_time
   end

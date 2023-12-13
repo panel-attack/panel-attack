@@ -15,6 +15,7 @@ local Focusable = require("ui.Focusable")
 local consts = require("consts")
 local Label = require("ui.Label")
 local StackPanel = require("ui.StackPanel")
+local GameModes = require("GameModes")
 
 local DesignHelper = class(function(self, sceneParams)
   self:load(sceneParams)

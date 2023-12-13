@@ -8,9 +8,9 @@ local class = require("class")
 local VsSelfGame = class(
   function (self, sceneParams)
     self.nextScene = "VsSelfMenu"
-    self.winnerSFX = GAME.match.P1:pick_win_sfx()
     
     self:load(sceneParams)
+    self.winnerSFX = self.S1:pick_win_sfx()
   end,
   GameBase
 )
@@ -19,9 +19,9 @@ VsSelfGame.name = "VsSelfGame"
 sceneManager:addScene(VsSelfGame)
 
 function VsSelfGame:processGameResults(gameResult)
-  local P1 = GAME.match.players[1]
+  local P1 = GAME.battleRoom.match.players[1].stack
   GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
-  Replay.finalizeAndWriteVsReplay(nil, nil, false, GAME.match, replay)
+  Replay.finalizeAndWriteVsReplay(GAME.battleRoom, nil, false, self.match, replay)
 end
 
 function VsSelfGame:abortGame()

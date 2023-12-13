@@ -2,6 +2,7 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local CharacterSelect = require("scenes.CharacterSelect")
 local class = require("class")
+local GameModes = require("GameModes")
 
 --@module CharacterSelectTraining
 -- 
@@ -18,7 +19,7 @@ CharacterSelectTraining.name = "CharacterSelectTraining"
 sceneManager:addScene(CharacterSelectTraining)
 
 function CharacterSelectTraining:customLoad(sceneParams)
-  GAME.battleRoom = BattleRoom()
+  GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_TRAINING)
   if sceneParams.trainingModeSettings then
     GAME.battleRoom.trainingModeSettings = sceneParams.trainingModeSettings
   end

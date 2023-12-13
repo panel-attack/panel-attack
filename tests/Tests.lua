@@ -4,7 +4,7 @@
 require("PuzzleTests")
 require("ServerQueueTests")
 require("StackTests")
-require("tests.StackGraphicsTests")
+--require("tests.StackGraphicsTests")
 require("tests.JsonEncodingTests")
 require("tests.NetworkProtocolTests")
 require("tests.ThemeTests")

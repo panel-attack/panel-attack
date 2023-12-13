@@ -4,7 +4,7 @@ local class = require("class")
 
 --@module SelectScreen1LocalPlayer
 -- An abstract implementation of the select screen for game modes with only 1 local player
--- It implements the callbacks to update the matchSetup to always update player 1 on interactions
+-- It implements the callbacks to update the battleRoom to always update player 1 on interactions
 local SelectScreen1LocalPlayer = class(
   function (self, sceneParams)
   end,
@@ -12,9 +12,11 @@ local SelectScreen1LocalPlayer = class(
 )
 
 function SelectScreen1LocalPlayer:assignCallbacks()
+  local localPlayer = GAME.battleRoom.players[1]
+
     -- stage carousel
     self.ui.stageCarousel.onSelectCallback = function()
-      self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
+      localPlayer:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
     end
 
     self.ui.stageCarousel.onBackCallback = function()
@@ -22,12 +24,12 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     self.ui.stageCarousel.onPassengerUpdateCallback = function ()
-      self.matchSetup:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
+      localPlayer:setStage(self.ui.stageCarousel:getSelectedPassenger().id)
     end
 
     -- panel carousel
     self.ui.panelCarousel.onSelectCallback = function()
-      self.matchSetup:setPanels(self.ui.panelCarousel:getSelectedPassenger().id)
+      localPlayer:setPanels(self.ui.panelCarousel:getSelectedPassenger().id)
     end
 
     self.ui.panelCarousel.onBackCallback = function()
@@ -35,7 +37,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     self.ui.panelCarousel.onPassengerUpdateCallback = function ()
-      self.matchSetup:setPanels(self.ui.panelCarousel:getSelectedPassenger().id)
+      localPlayer:setPanels(self.ui.panelCarousel:getSelectedPassenger().id)
     end
 
     -- character grid
@@ -43,7 +45,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
       local characterButton = self.ui.characterGrid.elements[i]
       characterButton.onClick = function()
         play_optional_sfx(themes[config.theme].sounds.menu_validate)
-        self.matchSetup:setCharacter(characterButton.characterId)
+        localPlayer:setCharacter(characterButton.characterId)
         self.ui.cursor:updatePosition(9, 2)
       end
       characterButton.onSelect = characterButton.onClick
@@ -51,15 +53,15 @@ function SelectScreen1LocalPlayer:assignCallbacks()
 
     -- level slider
     self.ui.levelSlider.onBackCallback = function ()
-      self.ui.levelSlider:setValue(self.matchSetup.players[1].level)
+      self.ui.levelSlider:setValue(localPlayer.level)
     end
 
     self.ui.levelSlider.onSelectCallback = function ()
-      self.matchSetup:setLevel(self.ui.levelSlider.value)
+      localPlayer:setLevel(self.ui.levelSlider.value)
     end
 
     self.ui.levelSlider.onValueChange = function()
-      self.matchSetup:setLevel(self.ui.levelSlider.value)
+      localPlayer:setLevel(self.ui.levelSlider.value)
     end
 
     -- cursor
@@ -82,7 +84,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
 
     -- ready button
     self.ui.readyButton.onClick = function ()
-      self.matchSetup:setWantsReady(not self.matchSetup.players[1].wantsReady)
+      localPlayer:setWantsReady(not localPlayer.settings.wantsReady)
     end
 
     -- character image
@@ -93,7 +95,7 @@ function SelectScreen1LocalPlayer:assignCallbacks()
         self.ui.selectedCharacter:setImage(characters[characterId].images.icon)
       end
     end
-    self.matchSetup:subscribe("characterId", 1, updateSelectedCharacterImage)
+    localPlayer:subscribe("characterId", updateSelectedCharacterImage)
   end
 
   return SelectScreen1LocalPlayer

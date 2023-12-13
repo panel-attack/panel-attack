@@ -153,8 +153,8 @@ function ChallengeMode:drawTimeSplits()
     local time = self.stages[i].expendedTime
     local currentStageTime = time
     local isCurrentStage = i == self.currentStageIndex
-    if isCurrentStage and GAME.match.P1:game_ended() == false then
-      currentStageTime = currentStageTime + GAME.match.P1.game_stopwatch
+    if isCurrentStage and GAME.battleRoom.match.P1:game_ended() == false then
+      currentStageTime = currentStageTime + GAME.battleRoom.match.P1.game_stopwatch
     end
     totalTime = totalTime + currentStageTime
 

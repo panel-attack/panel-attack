@@ -353,8 +353,7 @@ function Stack:convertGarbagePanels(isChain)
 end
 
 function Stack:refillGarbagePanelBuffer()
-  local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer,
-                                                         self.match.mode, self.level)
+  local garbagePanels = PanelGenerator.makeGarbagePanels(self)
   self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
   logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
   self.garbageGenCount = self.garbageGenCount + 1

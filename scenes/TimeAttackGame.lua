@@ -7,10 +7,10 @@ local class = require("class")
 -- Scene for an time attack mode instance of the game
 local TimeAttackGame = class(
   function (self, sceneParams)
-    self.winnerSFX = GAME.match.P1:pick_win_sfx()
     self.nextScene = "TimeAttackMenu"
-  
+    
     self:load(sceneParams)
+    self.winnerSFX = self.S1:pick_win_sfx()
   end,
   GameBase
 )
@@ -20,11 +20,11 @@ sceneManager:addScene(TimeAttackGame)
 
 function TimeAttackGame:processGameResults(gameResult) 
   local extraPath, extraFilename
-  if GAME.match.P1.level == nil then
-    GAME.scores:saveTimeAttack1PScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
+  if self.S1.level == nil then
+    GAME.scores:saveTimeAttack1PScoreForLevel(self.S1.score, self.S1.difficulty)
     extraPath = "Time Attack"
-    extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-timeattack"
-    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
+    extraFilename = "Spd" .. self.S1.speed .. "-Dif" .. self.S1.difficulty .. "-timeattack"
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match, replay)
   end
 end
 

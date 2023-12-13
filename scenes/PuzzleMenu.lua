@@ -10,6 +10,7 @@ local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
 local class = require("class")
+local GameModes = require("GameModes")
 
 --@module puzzleMenu
 -- Scene for the puzzle selection menu
@@ -31,42 +32,41 @@ sceneManager:addScene(PuzzleMenu)
 local BUTTON_WIDTH = 60
 local BUTTON_HEIGHT = 25
 local font = GraphicsUtil.getGlobalFont()
-  
-function PuzzleMenu:startGame(puzzleSet)
-  current_stage = config.stage
-  if current_stage == random_stage_special_value then
-    current_stage = nil
-  end
-  
-  if config.puzzle_randomColors then
-    puzzleSet = deepcpy(puzzleSet)
 
-    for _, puzzle in pairs(puzzleSet.puzzles) do
-      puzzle.stack = Puzzle.randomizeColorsInPuzzleString(puzzle.stack)
-    end
-  end
-  
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("PuzzleGame", {puzzleSet = puzzleSet, puzzleIndex = 1})
-  
+function PuzzleMenu:startGame(puzzleSet)
   if config.puzzle_level ~= self.levelSlider.value or config.puzzle_randomColors ~= self.randomColorsButtons.value then
     config.puzzle_level = self.levelSlider.value
-    config.puzzle_randomColors = self.randomColorsButtons.value 
+    config.puzzle_randomColors = self.randomColorsButtons.value
     logger.debug("saving settings...")
     write_conf_file()
   end
-  
-  if config.puzzle_randomFlipped ~= self.randomlyFlipPuzzleButtons.value then
+
+  current_stage = StageLoader.resolveStageSelection(config.stage)
+
+  if config.puzzle_randomColors or config.puzzle_randomFlipped then
+    puzzleSet = deepcpy(puzzleSet)
+
     for _, puzzle in pairs(puzzleSet.puzzles) do
-      if math.random(2) == 1 then
-        puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+      if config.puzzle_randomColors then
+        puzzle.stack = Puzzle.randomizeColorsInPuzzleString(puzzle.stack)
+      end
+      if config.puzzle_randomFlipped then
+        if math.random(2) == 1 then
+          puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+        end
       end
     end
   end
+
+  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+
+  LocalPlayer:setPuzzleSet(puzzleSet)
+  LocalPlayer:setWantsReady(true)
 end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  GAME.battleRoom = nil
   sceneManager:switchToScene("MainMenu")
 end
 
@@ -128,6 +128,10 @@ function PuzzleMenu:load()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   reset_filters()
+
+  if not GAME.battleRoom then
+    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_PUZZLE)
+  end
 end
 
 function PuzzleMenu:drawBackground()
@@ -139,6 +143,10 @@ function PuzzleMenu:update()
       
   self.menu:update()
   self.menu:draw()
+
+  if GAME.battleRoom then
+    GAME.battleRoom:update()
+  end
 end
 
 function PuzzleMenu:unload()

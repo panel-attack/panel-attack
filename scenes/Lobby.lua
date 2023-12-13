@@ -6,10 +6,10 @@ local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
 local class = require("class")
 local consts = require("consts")
-local select_screen = require("select_screen.select_screen")
 local input = require("inputManager")
 local uiUtils = require("ui.uiUtils")
 local logger = require("logger")
+local GameModes = require("GameModes")
 
 --@module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
@@ -126,10 +126,9 @@ function Lobby:load(sceneParams)
     self.state = states.SET_NAME
     return
   end
-  if GAME.match then
+  if GAME.battleRoom then
     print("nil-ing P1 & P2")
-    GAME.match.P1 = nil
-    GAME.match.P2 = nil
+    GAME.battleRoom = nil
   end
   server_queue = ServerQueue()
   --gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
@@ -188,10 +187,7 @@ print("lobby2")
   CharacterLoader.clear()
   StageLoader.clear()
   
-  -- reset player ids and match type
-  -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
-  select_screen.my_player_number = nil
-  select_screen.op_player_number = nil
+  -- reset match type
   match_type = ""
   match_type_message = ""
   --attempt login
@@ -295,7 +291,7 @@ function Lobby:processServerMessages()
       return
     end
     if msg.create_room or msg.spectate_request_granted then
-      GAME.battleRoom = BattleRoom()
+      GAME.battleRoom = BattleRoom.createFromServerMessage(msg)
       if msg.spectate_request_granted then
         if not self.requestedSpectateRoom then
           error("expected requested room")
@@ -310,7 +306,6 @@ function Lobby:processServerMessages()
         play_optional_sfx(themes[config.theme].sounds.notification)
       end
       sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = msg})
-      --return select_screen.main, {select_screen, "2p_net_vs", msg}
     end
     if msg.players then
       self.playerData = msg.players

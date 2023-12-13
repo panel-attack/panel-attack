@@ -14,6 +14,8 @@ local save = require("save")
 local fileUtils = require("FileUtils")
 local handleShortcuts = require("Shortcuts")
 local scenes = nil
+local Player = require("Player")
+local GameModes = require("GameModes")
 require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -123,7 +125,7 @@ function Game:setupCoroutine()
   apply_config_volume()
 
   self:createDirectoriesIfNeeded()
-  
+
   self:checkForUpdates()
 
   self:createScenes()
@@ -132,6 +134,30 @@ function Game:setupCoroutine()
   if TESTS_ENABLED then
     self:runUnitTests()
   end
+  if PERFORMANCE_TESTS_ENABLED then
+    self:runPerformanceTests()
+  end
+
+  self:initializeLocalPlayer()
+end
+
+function Game:initializeLocalPlayer()
+  LocalPlayer = Player.getLocalPlayer()
+  LocalPlayer:subscribe("characterId", function(newId) config.character = newId end)
+  LocalPlayer:subscribe("stageId", function(newId) config.stage = newId end)
+  LocalPlayer:subscribe("panelId", function(newId) config.panels = newId end)
+  LocalPlayer:subscribe("inputMethod", function(inputMethod) config.inputMethod = inputMethod end)
+  LocalPlayer:subscribe("speed", function(speed) config.endless_speed = speed end)
+  LocalPlayer:subscribe("difficulty", function(difficulty) config.endless_difficulty = difficulty end)
+  LocalPlayer:subscribe("level", function(level) config.level = level end)
+  LocalPlayer:subscribe("wantsRanked", function(wantsRanked) config.ranked = wantsRanked end)
+  LocalPlayer:subscribe("style", function(style)
+    if style == GameModes.Styles.CLASSIC then
+      config.endless_level = nil
+    else
+      config.endless_level = config.level
+    end
+  end)
 end
 
 function Game:createDirectoriesIfNeeded()
@@ -213,30 +239,24 @@ function Game:runUnitTests()
   self:drawLoadingString("Running Unit Tests")
   coroutine.yield()
 
+  -- LocalPlayer is the standard player for battleRooms that don't get started from replays/spectate
+  LocalPlayer = Player.getLocalPlayer()
+  -- we need to overwrite the local player as all replay related tests need a non-local player
+  LocalPlayer.isLocal = false
+
   logger.info("Running Unit Tests...")
-  -- Small tests (unit tests)
-  require("PuzzleTests")
-  require("ServerQueueTests")
-  require("StackTests")
-  require("tests.StackGraphicsTests")
-  require("tests.JsonEncodingTests")
-  require("tests.NetworkProtocolTests")
-  require("tests.ThemeTests")
-  require("tests.TouchDataEncodingTests")
-  require("tests.utf8AdditionsTests")
-  require("tests.QueueTests")
-  require("tests.TimeQueueTests")
-  require("tableUtilsTest")
-  require("utilTests")
-  -- Medium level tests (integration tests)
-  require("tests.ReplayTests")
-  require("tests.StackReplayTests")
-  require("tests.StackRollbackReplayTests")
-  require("tests.StackTouchReplayTests")
-  -- Performance Tests
-  if PERFORMANCE_TESTS_ENABLED then
-    require("tests/performanceTests")
+  local status, err = xpcall(function() require("tests.Tests") end, debug.traceback)
+  if not status then
+    error(err)
   end
+end
+
+function Game:runPerformanceTests()
+  GAME:drawLoadingString("Running Performance Tests")
+  coroutine.yield()
+  require("tests.StackReplayPerformanceTests")
+  -- Disabled since they just prove lua tables are faster for rapid concatenation of strings
+  --require("tests.StringPerformanceTests")
 end
 
 function Game:updateMouseVisibility(dt)
@@ -427,8 +447,8 @@ function Game.errorData(errorString, traceBack)
       theme = config.theme
     }
 
-  if GAME.match then
-    errorData.matchInfo = GAME.match:getInfo()
+  if GAME.battleRoom and GAME.battleRoom.match then
+    errorData.matchInfo = GAME.battleRoom.match:getInfo()
   end
 
   return errorData
@@ -452,7 +472,7 @@ function Game.detailedErrorLogString(errorData)
 
     if errorData.matchInfo then
       detailedErrorLogString = detailedErrorLogString .. newLine ..
-      errorData.matchInfo.mode .. " Match Info: " .. newLine ..
+      errorData.matchInfo.mode.scene .. " Match Info: " .. newLine ..
       "  Stage: " .. errorData.matchInfo.stage .. newLine ..
       "  Stacks: "
       for i = 1, #errorData.matchInfo.stacks do
