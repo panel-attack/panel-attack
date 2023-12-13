@@ -66,11 +66,11 @@ function ReplayV1.loadFromFile(legacyReplay)
   if v1r.P1_level then
     r.players[1].settings.level = v1r.P1_level
     r.players[1].settings.style = GameModes.Styles.MODERN
+    -- suffices because modern endless/timeattack never had replays
     r.players[1].allowAdjacentColors = v1r.P1_level < 8
     r.players[1].settings.levelData = levelPresets.getModern(v1r.P1_level)
   else
     r.players[1].settings.difficulty = v1r.difficulty
-    r.players[1].settings.speed = v1r.speed
     r.players[1].settings.style = GameModes.Styles.CLASSIC
     r.players[1].allowAdjacentColors = true
     r.players[1].settings.levelData = levelPresets.getClassic(v1r.difficulty)

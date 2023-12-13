@@ -51,7 +51,6 @@ function Replay.createNewReplay(match)
       result.players[i].settings.level = player.settings.level
     else
       result.players[i].settings.difficulty = player.settings.difficulty
-      result.players[i].settings.speed = player.settings.speed
     end
   end
 
