@@ -54,11 +54,11 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
     end
   end
 
-  gridElement.onSelect = function(self, focusDirector)
-    if self.content.isFocusable then
-      focusDirector:setFocus(self.content)
+  gridElement.onSelect = function(self, selector)
+    if selector.setFocus and self.content.isFocusable then
+      selector:setFocus(self.content)
     else
-      self.content:onSelect()
+      self.content:onSelect(selector)
     end
   end
 

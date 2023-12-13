@@ -1,17 +1,11 @@
 -- use in tandem with FocusDirector.lua
 
-local function canBeFocused(table)
-  table.isFocusable = true
-  table.hasFocus = false
-  table.setFocus = function()
-    table.hasFocus = true
-  end
-  table.isFocussed = function()
-    return table.hasFocus
-  end
-  if table.receiveInputs == nil then
-    table.receiveInputs = function()
-      error("Focusable UIElement of type " .. table.TYPE .. " doesn't implement input interpretation")
+local function canBeFocused(uiElement)
+  uiElement.isFocusable = true
+  uiElement.hasFocus = false
+  if uiElement.receiveInputs == nil then
+    uiElement.receiveInputs = function(inputSource)
+      error("Focusable UIElement of type " .. uiElement.TYPE .. " doesn't implement input interpretation")
     end
   end
 

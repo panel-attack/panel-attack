@@ -18,10 +18,11 @@ local GridCursor = class(function(self, options)
   self.selectedGridPos = options.startPosition or {x = 1, y = 1}
   self.selectedGridElement = self.target.grid[self.selectedGridPos.y][self.selectedGridPos.x]
 
-  self.playerNumber = options.playerNumber or 1
-  self.image = themes[config.theme].images.IMG_char_sel_cursors[self.playerNumber]
-  self.leftQuad = themes[config.theme].images.IMG_char_sel_cursor_halves.left[self.playerNumber]
-  self.rightQuad = themes[config.theme].images.IMG_char_sel_cursor_halves.right[self.playerNumber]
+  self.player = options.player
+  self.player.cursor = self
+  self.image = themes[config.theme].images.IMG_char_sel_cursors[self.player.playerNumber]
+  self.leftQuad = themes[config.theme].images.IMG_char_sel_cursor_halves.left[self.player.playerNumber]
+  self.rightQuad = themes[config.theme].images.IMG_char_sel_cursor_halves.right[self.player.playerNumber]
   self.imageWidth, self.imageHeight = self.image[1]:getDimensions()
   self.imageScale = self.target.unitSize / self.imageHeight
 
@@ -111,7 +112,7 @@ end
 
 function GridCursor:drawSelf()
   self.frameClock = self.frameClock + 1
-  local cursorFrame = math.floor((((self.frameClock + self.playerNumber * self.blinkFrequency) / self.blinkFrequency) % 2)) + 1
+  local cursorFrame = math.floor((((self.frameClock + self.player.playerNumber * self.blinkFrequency) / self.blinkFrequency) % 2)) + 1
 
   local image = self.image[cursorFrame]
   local element = self.selectedGridElement or self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
@@ -122,7 +123,7 @@ end
 
 function GridCursor:receiveInputs()
   if self.focused then
-    self.focused:receiveInputs()
+    self.focused:receiveInputs(self)
   elseif input.isDown["MenuEsc"] or input.isDown["Swap2"] then
     self:escapeCallback()
   elseif input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then

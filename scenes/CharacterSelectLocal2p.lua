@@ -17,8 +17,8 @@ local CharacterSelectLocal2p = class(
 CharacterSelectLocal2p.name = "CharacterSelectLocal2p"
 sceneManager:addScene(CharacterSelectLocal2p)
 
-function CharacterSelectLocal2p:start2pLocalMatch()
-
+function CharacterSelectLocal2p:loadUserInterface()
+  
 end
 
 function CharacterSelectLocal2p:customLoad(sceneParams)
@@ -26,16 +26,7 @@ function CharacterSelectLocal2p:customLoad(sceneParams)
 end
 
 function CharacterSelectLocal2p:customUpdate()
-  --local playerNumberWaiting = GAME.input.playerNumberWaitingForInputConfiguration()
-  --if playerNumberWaiting then
-  --  gprintf(loc("player_press_key", playerNumberWaiting), 0, 30, canvas_width, "center")
-  --end
-  
-  self:refreshLoadingState(self.op_player_number)
-  
-  if self.players[self.my_player_number].ready and self.players[self.op_player_number].ready then
-    return self:start2pLocalMatch()
-  end
+
 end
 
 return CharacterSelectLocal2p
