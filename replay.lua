@@ -183,7 +183,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
   end
 
   if battleRoom.match.P2 then
-    local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
+    local rep_a_name, rep_b_name = battleRoom.players[1].name, battleRoom.players[2].name
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
     if rep_b_name < rep_a_name then
       extraPath = rep_b_name .. "-vs-" .. rep_a_name
