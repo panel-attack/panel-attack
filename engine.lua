@@ -8,6 +8,7 @@ local util = require("util")
 local utf8 = require("utf8")
 local GraphicsUtil = require("graphics_util")
 local GameModes = require("GameModes")
+local PanelGenerator = require("gen_panels")
 require("engine.panel")
 local levelPresets = require("LevelPresets")
 
@@ -919,6 +920,7 @@ end
 
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
+  self.panel_buffer = self:makeStartingBoardPanels()
   if self.do_first_row then
     self.do_first_row = nil
     for i = 1, (n or 8) do
@@ -2263,8 +2265,7 @@ function Stack.new_row(self)
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
-    self.panel_buffer = PanelGenerator.makePanels(self)
-    self.panelGenCount = self.panelGenCount + 1
+    self.panel_buffer = self:makePanels()
   end
 
   -- assign colors to the new row 0
@@ -2527,4 +2528,61 @@ function Stack:getInfo()
   end
 
   return info
+end
+
+function Stack:makePanels()
+  PanelGenerator:setSeed(self.match.seed + self.panelGenCount)
+
+  local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.NCOLORS, self.panel_buffer, not self.allowAdjacentColors)
+  ret = PanelGenerator.assignMetalLocations(ret, self.width)
+  self.panelGenCount = self.panelGenCount + 1
+
+  return ret
+end
+
+function Stack:makeStartingBoardPanels()
+  PanelGenerator:setSeed(self.match.seed)
+
+  local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
+
+  local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.NCOLORS, self.panel_buffer, not allowAdjacentColors)
+  -- technically there can never be metal on the starting board but we need to call it to advance the RNG (compatibility)
+  ret = PanelGenerator.assignMetalLocations(ret, self.width)
+
+  -- legacy crutch, the arcane magic for the non-uniform starting board assumes this is there and it really doesn't work without it
+  ret = string.rep("0", self.width) .. ret
+  -- arcane magic to get a non-uniform starting board
+  ret = procat(ret)
+  local maxStartingHeight = 7
+  local height = tableUtils.map(procat(string.rep(maxStartingHeight, self.width)), function(s) return tonumber(s) end)
+  local to_remove = 2 * self.width
+  while to_remove > 0 do
+    local idx = PanelGenerator:random(1, self.width) -- pick a random column
+    if height[idx] > 0 then
+      ret[idx + self.width * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
+      height[idx] = height[idx] - 1
+      to_remove = to_remove - 1
+    end
+  end
+
+  ret = table.concat(ret)
+  ret = string.sub(ret, self.width + 1)
+
+  -- now comes slightly silly thanks to refactoring:
+  -- this starting board goes in full into the next panel generation and will get processed by PanelGenerator.assignMetalLocations again
+  -- in the past, the top row had already been consumed at this point in time
+  -- that function tries to have metal positions assigned for every single row 
+  -- in the starting board, due to the board having 0s, in the top row it may not be possible for assignMetalLocations to find a placement
+  -- in that case it would try that line the next time (and fail) and while doing that, advance the RNG
+  -- to prevent that, convert the first number to its letter equivalent
+  if not string.match(ret:sub(1, self.width), "%s") then
+    local char = ret:sub(1, 1)
+    ret = ret:gsub(ret:sub(1, 1), PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[tonumber(char)], 1)
+  end
+
+  PanelGenerator.privateCheckPanels(ret, self.width)
+
+  self.panelGenCount = self.panelGenCount + 1
+
+return ret
 end

@@ -1,5 +1,6 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local PanelGenerator = require("gen_panels")
 
 local function sortByPopOrder(panelList, isGarbage)
   table.sort(panelList, function(a, b)
@@ -354,9 +355,24 @@ function Stack:convertGarbagePanels(isChain)
 end
 
 function Stack:refillGarbagePanelBuffer()
-  local garbagePanels = PanelGenerator.makeGarbagePanels(self)
+  PanelGenerator:setSeed(self.match.seed + self.garbageGenCount)
+  -- privateGeneratePanels already appends to the existing self.gpanel_buffer
+  local garbagePanels = PanelGenerator.privateGeneratePanels(20, self.width, self.NCOLORS, self.gpanel_buffer, not self.allowAdjacentColors)
+  -- and then we append that result to the remaining buffer
   self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-  logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+  -- that means the next 10 rows of garbage will use the same colors as the 10 rows after
+  -- that's a bug but it cannot be fixed without breaking replays
+  -- it is also hard to abuse as 
+  -- a) players would need to accurately track the 10 row cycles
+  -- b) "solve into the same thing" only applies to a limited degree:
+  --   a garbage panel row of 123456 solves into 1234 for ====00 but into 3456 for 00====
+  --   that means information may be incomplete and partial memorization may prove unreliable
+  -- c) garbage panels change every (10 + n * 20 rows) with n>0 in ℕ 
+  --    so the player needs to always survive 20 rows to start abusing
+  --    and can then only abuse for every 10 rows out of 20
+  -- overall it is to be expected that the strain of trying to memorize outweighs the gains
+  -- this bug should be fixed with the next breaking change to the engine
+
   self.garbageGenCount = self.garbageGenCount + 1
 end
 
