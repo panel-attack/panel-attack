@@ -48,12 +48,9 @@ function CharacterSelectLocal2p:loadUserInterface()
   self.ui.leaveButton = self:createLeaveButton()
   self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
 
-  local offset = 30
   self.ui.characterIcons = {}
   for i = 1, #GAME.battleRoom.players do
     local player = GAME.battleRoom.players[i]
-    local yOffsetSign = (#GAME.battleRoom.players / 2) - i > (#GAME.battleRoom.players / 2) and -1 or 1
-    local yOffset = yOffsetSign * offset
 
     local panelCarousel = self:createPanelCarousel(player, 48)
     self.ui.panelSelection:addElement(panelCarousel, player)
@@ -62,7 +59,6 @@ function CharacterSelectLocal2p:loadUserInterface()
     self.ui.stageSelection:addElement(stageCarousel, player)
 
     local levelSlider = self:createLevelSlider(player, 20)
-    levelSlider.y = yOffset
     self.ui.levelSelection:addElement(levelSlider, player)
 
     local cursor = self:createCursor(self.ui.grid, player)
