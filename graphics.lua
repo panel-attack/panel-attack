@@ -576,7 +576,7 @@ function Stack.render(self)
           end
           if panel.state == "matched" then
             local flash_time = panel.initial_time - panel.timer
-            if flash_time >= self.FRAMECOUNTS.FLASH then
+            if flash_time >= self.levelData.frameConstants.FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
                   draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
@@ -604,8 +604,8 @@ function Stack.render(self)
           end
         else
           if panel.state == "matched" then
-            local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
-            if flash_time >= self.FRAMECOUNTS.FLASH then
+            local flash_time = self.levelData.frameConstants.FACE - panel.timer
+            if flash_time >= 0 then
               draw_frame = 6
             elseif flash_time % 2 == 1 then
               draw_frame = 1
@@ -1035,7 +1035,7 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   self:drawLabel(self.theme.images["IMG_healthbar_frame" .. self.id], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
 
   -- Healthbar
-  local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.max_health)
+  local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.levelData.maxHealth)
   self.healthQuad:setViewport(0, self.theme.images.IMG_healthbar:getHeight() - healthbar, self.theme.images.IMG_healthbar:getWidth(), healthbar)
   local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / GFX_SCALE
   local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / GFX_SCALE

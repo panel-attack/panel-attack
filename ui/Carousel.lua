@@ -95,9 +95,9 @@ function Carousel.getSelectedPassenger(self)
 end
 
 function Carousel.setPassengerById(self, passengerId)
-  local passengerIndex = tableUtils.first(self.passengers, function(passenger) return passenger.id == passengerId end)
-  if passengerIndex then
-    self:setPassengerByIndex(passengerIndex)
+  local passenger = tableUtils.first(self.passengers, function(passenger) return passenger.id == passengerId end)
+  if passenger then
+    self:setPassengerByIndex(tableUtils.indexOf(self.passengers, passenger))
   end
 end
 

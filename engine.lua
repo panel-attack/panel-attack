@@ -9,6 +9,7 @@ local utf8 = require("utf8")
 local GraphicsUtil = require("graphics_util")
 local GameModes = require("GameModes")
 require("engine.panel")
+local levelPresets = require("LevelPresets")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -32,11 +33,13 @@ Stack =
     local is_local = arguments.is_local
     local panels_dir = arguments.panels_dir or config.panels
     -- level or difficulty should be set
-    assert(arguments.level ~= nil or arguments.difficulty ~= nil)
+    assert(arguments.levelData ~= nil)
+    local levelData = arguments.levelData
+    -- level and difficulty only for icon display and score saving, all actual data is in levelData
     local level = arguments.level
-    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local difficulty = arguments.difficulty
-    local speed = arguments.speed
+
+    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local player_number = arguments.player_number or which
   
     local character = arguments.character or config.character
@@ -46,7 +49,6 @@ Stack =
     s.match = match
     s.character = character
     s.theme = theme
-    s.max_health = 1
     s.panels_dir = panels_dir
     s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
     s.is_local = is_local
@@ -63,49 +65,21 @@ Stack =
       s.do_first_row = true
     end
 
-    if difficulty then
-      if s.match.mode.timeLimit then
-        s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
-      else
-        s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
-      end
-    end
-
     -- frame.png dimensions
     s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
 
-    -- The player's speed level decides the amount of time
-    -- the stack takes to rise automatically
-    if speed then
-      s.speed = speed
-    end
-
-    s.FRAMECOUNTS = {}
-
-    if level then
-      s:setLevel(level)
+    s.difficulty = difficulty
+    s.level = level
+    s.levelData = levelData
+    s.speed = s.levelData.startingSpeed
+    if s.levelData.speedIncreaseMode == 1 then
       -- mode 1: increase speed based on fixed intervals
-      s.speedIncreaseMode = 1
       s.nextSpeedIncreaseClock = DT_SPEED_INCREASE
     else
-      s.difficulty = difficulty or 2
-
-      -- These change depending on the difficulty and speed levels:
-      s.FRAMECOUNTS.HOVER = s.FRAMECOUNTS.HOVER or FC_HOVER[s.difficulty]
-      s.FRAMECOUNTS.FLASH = s.FRAMECOUNTS.FLASH or FC_FLASH[s.difficulty]
-      s.FRAMECOUNTS.FACE = s.FRAMECOUNTS.FACE or FC_FACE[s.difficulty]
-      s.FRAMECOUNTS.POP = s.FRAMECOUNTS.POP or FC_POP[s.difficulty]
-      s.FRAMECOUNTS.MATCH = s.FRAMECOUNTS.FACE + s.FRAMECOUNTS.FLASH
-
-      -- mode 2: increase speed based on how many panels were cleared
-      s.speedIncreaseMode = 2
-      if not speed then
-        s.speed = 1
-      end
       s.panels_to_speedup = panels_to_next_speed[s.speed]
     end
 
-    s.health = s.max_health
+    s.health = s.levelData.maxHealth
 
     -- Which columns each size garbage is allowed to fall in.
     -- This is typically constant but maybe some day we would allow different ones 
@@ -183,7 +157,6 @@ Stack =
     s.stop_time = 0
     s.pre_stop_time = 0
 
-    s.NCOLORS = s.NCOLORS or 5
     s.score = 0 -- der skore
     s.chain_counter = 0 -- how high is the current chain (starts at 2)
 
@@ -316,7 +289,7 @@ function Stack:calculateMultibarFrameCount()
   -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
   --local preStopFrameCount = 30 + (10 - self.level) * 5
 
-  local minFrameCount = maxStop + (level_to_hang_time[self.level] or 1) --+ preStopFrameCount
+  local minFrameCount = maxStop + self.levelData.maxHealth --+ preStopFrameCount
 
   --return minFrameCount + preStopFrameCount
   return math.max(240, minFrameCount)
@@ -342,31 +315,6 @@ function Stack:createCursors()
     self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
   else
     self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, imageWidth, imageHeight, imageWidth, imageHeight)
-  end
-end
-
-function Stack.setLevel(self, level)
-  self.level = level
-  if not self.speed then
-    -- there is no UI for it yet but we may want to support using levels with a different starting speed at some point
-    self.speed = level_to_starting_speed[level]
-  end
-  -- mode 1: increase speed per time interval?
-  self.max_health = level_to_hang_time[level]
-  self.FRAMECOUNTS.HOVER = level_to_hover[level]
-  self.FRAMECOUNTS.GPHOVER = level_to_garbage_panel_hover[level]
-  self.FRAMECOUNTS.FLASH = level_to_flash[level]
-  self.FRAMECOUNTS.FACE = level_to_face[level]
-  self.FRAMECOUNTS.POP = level_to_pop[level]
-  self.FRAMECOUNTS.MATCH = self.FRAMECOUNTS.FACE + self.FRAMECOUNTS.FLASH
-  self.combo_constant = level_to_combo_constant[level]
-  self.combo_coefficient = level_to_combo_coefficient[level]
-  self.chain_constant = level_to_chain_constant[level]
-  self.chain_coefficient = level_to_chain_coefficient[level]
-  if self.match.mode == "2ptime" then
-    self.NCOLORS = level_to_ncolors_time[level]
-  else
-    self.NCOLORS = level_to_ncolors_vs[level]
   end
 end
 
@@ -1370,7 +1318,7 @@ function Stack.simulate(self)
     self:updateRiseLock()
 
     -- Increase the speed if applicable
-    if self.speedIncreaseMode == 1 then
+    if self.levelData.speedIncreaseMode == 1 then
       -- increase per interval
       if self.clock == self.nextSpeedIncreaseClock then
         self.speed = min(self.speed + 1, 99)
@@ -1415,7 +1363,7 @@ function Stack.simulate(self)
     end
 
     if not self.panels_in_top_row and self.match.mode ~= GameModes.ONE_PLAYER_PUZZLE and not self:has_falling_garbage() then
-      self.health = self.max_health
+      self.health = self.levelData.maxHealth
     end
 
     if self.displacement % 16 ~= 0 then
@@ -2412,7 +2360,7 @@ end
 -- creates a new panel at the specified row+column and adds it to the Stack's panels table
 function Stack.createPanelAt(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
-  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
+  local panel = Panel(self.panelsCreatedCount, row, column, self.levelData.frameConstants)
   panel.onPop = function(panel)
     self:onPop(panel)
   end
@@ -2454,8 +2402,8 @@ function Stack.onPop(self, panel)
 
     self.panels_cleared = self.panels_cleared + 1
     if self.match.mode.stackInteraction ~= GameModes.StackInteraction.NONE
-        and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-      self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+        and self.panels_cleared % self.levelData.shockFrequency == 0 then
+          self.metal_panels_queued = min(self.metal_panels_queued + 1, self.levelData.shockCap)
     end
     if self:shouldChangeSoundEffects() then
       SFX_Pop_Play = 1

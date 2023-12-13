@@ -60,6 +60,7 @@ function Stack:checkMatches()
   local comboSize = #matchingPanels
 
   if comboSize > 0 then
+    local frameConstants = self.levelData.frameConstants
     local metalCount = getMetalCount(matchingPanels)
     local isChainLink = isNewChainLink(matchingPanels)
     if isChainLink then
@@ -73,11 +74,11 @@ function Stack:checkMatches()
     local garbagePanelCountOnScreen = 0
     if #garbagePanels > 0 then
       garbagePanelCountOnScreen = getOnScreenCount(self.height, garbagePanels)
-      local garbageMatchTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCountOnScreen)
+      local garbageMatchTime = frameConstants.FLASH + frameConstants.FACE + frameConstants.POP * (comboSize + garbagePanelCountOnScreen)
       self:matchGarbagePanels(garbagePanels, garbageMatchTime, isChainLink, garbagePanelCountOnScreen)
     end
 
-    local preStopTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCountOnScreen)
+    local preStopTime = frameConstants.FLASH + frameConstants.FACE + frameConstants.POP * (comboSize + garbagePanelCountOnScreen)
     self.pre_stop_time = math.max(self.pre_stop_time, preStopTime)
     self:awardStopTime(isChainLink, comboSize)
 
@@ -324,7 +325,7 @@ function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onSc
     panel:setTimer(garbageMatchTime + 1)
     panel.initial_time = garbageMatchTime
     -- these two may end up with nonsense values for off-screen garbage but it doesn't matter
-    panel.pop_time = self.FRAMECOUNTS.POP * (onScreenCount - i)
+    panel.pop_time = self.levelData.frameConstants.POP * (onScreenCount - i)
     panel.pop_index = math.min(i, 10)
   end
 
@@ -417,33 +418,34 @@ end
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings
 function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
   local stopTime = 0
+  local stop = self.levelData.stop
   if comboSize > 3 or isChain then
     if toppedOut and isChain then
-      if self.level then
+      if stop.formula == 1 then
         local length = (chainCounter > 4) and 6 or chainCounter
-        stopTime = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
-      else
-        stopTime = stop_time_danger[self.difficulty]
+        stopTime = stop.dangerConstant + (length - 1) * stop.coefficient
+      elseif stop.formula == 2 then
+        stopTime = stop.dangerConstant
       end
     elseif toppedOut then
-      if self.level then
+      if stop.formula == 1 then
         local length = (comboSize < 9) and 2 or 3
-        stopTime = self.chain_coefficient * length + self.chain_constant
-      else
-        stopTime = stop_time_danger[self.difficulty]
+        stopTime = stop.coefficient * length + stop.chainConstant
+      elseif stop.formula == 2 then
+        stopTime = stop.dangerConstant
       end
     elseif isChain then
-      if self.level then
+      if stop.formula == 1 then
         local length = math.min(chainCounter, 13)
-        stopTime = self.chain_coefficient * length + self.chain_constant
-      else
-        stopTime = stop_time_chain[self.difficulty]
+        stopTime = stop.coefficient * length + stop.chainConstant
+      elseif stop.formula == 2 then
+        stopTime = stop.chainConstant
       end
     else
-      if self.level then
-        stopTime = self.combo_coefficient * comboSize + self.combo_constant
-      else
-        stopTime = stop_time_combo[self.difficulty]
+      if stop.formula == 1 then
+        stopTime = stop.coefficient * comboSize + stop.comboConstant
+      elseif stop.formula == 2 then
+        stopTime = stop.comboConstant
       end
     end
   end

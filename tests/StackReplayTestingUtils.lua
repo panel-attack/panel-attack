@@ -1,6 +1,7 @@
 local logger = require("logger")
 local GameModes = require("GameModes")
 local Player = require("Player")
+local LevelPresets = require("LevelPresets")
 
 local StackReplayTestingUtils = {}
 

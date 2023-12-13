@@ -5,6 +5,7 @@ local consts = require("consts")
 require("class")
 local logger = require("logger")
 local fileUtils = require("FileUtils")
+local levelPresets = require("LevelPresets")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 
@@ -227,7 +228,7 @@ function Theme.graphics_init(self)
   self.images.IMG_levels_unfocus = {}
   self.images.IMG_levels[1] = self:load_theme_img("level/level1")
   self.images.IMG_levels_unfocus[1] = nil -- meaningless by design
-  for i = 2, #level_to_starting_speed do --which should equal the number of levels in the game
+  for i = 2, levelPresets.modernPresetCount do --which should equal the number of levels in the game
     self.images.IMG_levels[i] = self:load_theme_img("level/level" .. i .. "")
     self.images.IMG_levels_unfocus[i] = self:load_theme_img("level/level" .. i .. "unfocus")
   end

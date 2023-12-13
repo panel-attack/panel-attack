@@ -7,6 +7,8 @@ local Player = require("Player")
 
 local REPLAY_VERSION = 2
 local tableUtils = require("tableUtils")
+local levelPresets = require("LevelPresets")
+local consts = require("consts")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -40,7 +42,7 @@ function Replay.createNewReplay(match)
       settings = {
         characterId = player.stack.character,
         panelId = player.stack.panels_dir,
-        -- levelData = player.stack.levelData,
+        levelData = player.stack.levelData,
         inputMethod = player.stack.inputMethod,
         allowAdjacentColors = player.stack.allowAdjacentColors
       }
@@ -60,9 +62,19 @@ end
 
 function Replay.replayCanBeViewed(replay)
   if replay.engineVersion >= VERSION_MIN_VIEW and replay.engineVersion <= VERSION then
-    if not replay.puzzle then
-      return true
+    if replay.engineVersion < consts.ENGINE_VERSIONS.LEVELDATA then
+      if replay.vs then
+        -- before v048 there were no non-vs replays with level recorded
+        if replay.vs.P1_level == 11 or (replay.vs.P2_level and replay.vs.P2_level == 11) then
+          -- if one of the players is playing on level 11, we can't view the replay
+          return false
+        end
+      end
     end
+  end
+
+  if not replay.puzzle then
+    return true
   end
 
   return false
@@ -164,7 +176,7 @@ end
 function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame, match, replay)
 
   incompleteGame = incompleteGame or false
-  
+
   local extraPath, extraFilename = "", ""
 
   if match:warningOccurred() then

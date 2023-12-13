@@ -1,5 +1,6 @@
 local class = require("class")
 local GameModes = require("GameModes")
+local LevelPresets = require("LevelPresets")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -46,6 +47,7 @@ function Player:createStackFromSettings(match)
   args.character = self.settings.characterId
   if self.settings.style == GameModes.Styles.MODERN then
     args.level = self.settings.level
+    args.levelData = LevelPresets.getModern(args.level)
     if match.battleRoom.mode.stackInteraction == GameModes.StackInteraction.NONE then
       args.allowAdjacentColors = true
     else
@@ -53,7 +55,8 @@ function Player:createStackFromSettings(match)
     end
   else
     args.difficulty = self.settings.difficulty
-    args.speed = self.settings.speed
+    args.levelData = LevelPresets.getClassic(args.difficulty)
+    args.levelData.startingSpeed = self.settings.speed
     args.allowAdjacentColors = true
   end
   if match.isFromReplay and self.settings.allowAdjacentColors ~= nil then

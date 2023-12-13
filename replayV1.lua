@@ -1,5 +1,6 @@
 local GameModes = require("GameModes")
 --local Replay = require("replay")
+local levelPresets = require("LevelPresets")
 require("util")
 
 local ReplayV1 = {}
@@ -66,14 +67,14 @@ function ReplayV1.loadFromFile(legacyReplay)
     r.players[1].settings.level = v1r.P1_level
     r.players[1].settings.style = GameModes.Styles.MODERN
     r.players[1].allowAdjacentColors = v1r.P1_level < 8
-    --r.players[1].settings.levelData = levelPresets.getModern(v1r.P1_level)
+    r.players[1].settings.levelData = levelPresets.getModern(v1r.P1_level)
   else
     r.players[1].settings.difficulty = v1r.difficulty
     r.players[1].settings.speed = v1r.speed
     r.players[1].settings.style = GameModes.Styles.CLASSIC
     r.players[1].allowAdjacentColors = true
-    --r.players[1].settings.levelData = levelPresets.getClassic(v1r.difficulty)
-    --r.players[1].settings.levelData.startingSpeed = v1r.speed
+    r.players[1].settings.levelData = levelPresets.getClassic(v1r.difficulty)
+    r.players[1].settings.levelData.startingSpeed = v1r.speed
   end
 
   if v1r.P2_char then
@@ -91,12 +92,10 @@ function ReplayV1.loadFromFile(legacyReplay)
         inputMethod = v1r.P2_inputMethod or "controller",
         inputs = uncompress_input_string(v1r.I),
         level = v1r.P2_level,
-        style = GameModes.Styles.MODERN
-        -- levelData = levelPresets.getModern(v1r.P2_level)
+        style = GameModes.Styles.MODERN,
+        levelData = levelPresets.getModern(v1r.P2_level)
       }
     }
-
-    --r.players[1]
   end
 
   if v1r.duration then
