@@ -4,6 +4,7 @@ local Player = require("Player")
 local tableUtils = require("tableUtils")
 local sceneManager = require("scenes.sceneManager")
 local GameModes = require("GameModes")
+local class = require("class")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom =
@@ -38,6 +39,7 @@ function BattleRoom.createFromReplay(replay)
     player.settings.style = rpp.settings.style
     player.settings.level = rpp.settings.level
     player.settings.difficulty = rpp.settings.difficulty
+    player.settings.levelData = rpp.settings.levelData
     player.settings.allowAdjacentColors = rpp.settings.allowAdjacentColors
     --player.settings.levelData = rpp.settings.levelData
     battleRoom:addPlayer(player)

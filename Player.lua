@@ -47,7 +47,6 @@ function Player:createStackFromSettings(match)
   args.character = self.settings.characterId
   if self.settings.style == GameModes.Styles.MODERN then
     args.level = self.settings.level
-    args.levelData = LevelPresets.getModern(args.level)
     if match.battleRoom.mode.stackInteraction == GameModes.StackInteraction.NONE then
       args.allowAdjacentColors = true
     else
@@ -55,10 +54,11 @@ function Player:createStackFromSettings(match)
     end
   else
     args.difficulty = self.settings.difficulty
-    args.levelData = LevelPresets.getClassic(args.difficulty)
-    args.levelData.startingSpeed = self.settings.speed
     args.allowAdjacentColors = true
   end
+
+  args.levelData = self.settings.levelData
+
   if match.isFromReplay and self.settings.allowAdjacentColors ~= nil then
     args.allowAdjacentColors = self.settings.allowAdjacentColors
   end
@@ -157,20 +157,36 @@ end
 function Player:setDifficulty(difficulty)
   if difficulty ~= self.settings.difficulty then
     self.settings.difficulty = difficulty
+    self:setLevelData(LevelPresets.getClassic(difficulty))
     self:onPropertyChanged("difficulty")
   end
 end
 
+function Player:setLevelData(levelData)
+  self.settings.levelData = levelData
+  self:onPropertyChanged("levelData")
+end
+
 function Player:setSpeed(speed)
-  if speed ~= self.settings.speed then
+  if speed ~= self.settings.speed or speed ~= self.settings.levelData.startingSpeed then
+    self.settings.levelData.startingSpeed = speed
     self.settings.speed = speed
     self:onPropertyChanged("speed")
+  end
+end
+
+function Player:setColorCount(colorCount)
+  if colorCount ~= self.settings.colorCount or colorCount ~= self.settings.levelData.colors  then
+    self.settings.levelData.colors = colorCount
+    self.settings.colorCount = colorCount
+    self:onPropertyChanged("colorCount")
   end
 end
 
 function Player:setLevel(level)
   if level ~= self.settings.level then
     self.settings.level = level
+    self:setLevelData(LevelPresets.getModern(level))
     self:onPropertyChanged("level")
   end
 end
@@ -188,6 +204,14 @@ end
 function Player:setStyle(style)
   if style ~= self.settings.style then
     self.settings.style = style
+    if style == GameModes.Styles.MODERN then
+      self:setLevelData(LevelPresets.getModern(self.settings.level))
+    else
+      self:setLevelData(LevelPresets.getClassic(self.settings.difficulty))
+      self:setSpeed(self.settings.speed)
+    end
+    -- reset color count while we don't have an established caching mechanism for it
+    self:setColorCount(self.settings.levelData.colors)
     self:onPropertyChanged("style")
   end
 end

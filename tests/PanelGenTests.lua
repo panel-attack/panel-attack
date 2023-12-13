@@ -61,9 +61,11 @@ testPanelGenForRegularBoard2()
 local function testStackStartingBoard1()
   local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_ENDLESS)
   local player = battleRoom.players[1]
-  player.settings.speed = 1
-  player.settings.difficulty = 1
-  player.settings.style = GameModes.Styles.CLASSIC
+  player:setStyle(GameModes.Styles.CLASSIC)
+  player:setSpeed(1)
+  player:setDifficulty(1)
+  -- endless easy deviates by 1 color from time attack easy
+  player:setColorCount(5)
 
   local stack = player:createStackFromSettings(battleRoom:createMatch())
   stack.match:setSeed(7)
@@ -79,8 +81,8 @@ testStackStartingBoard1()
 local function testStackStartingBoard2()
   local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_VS_SELF)
   local player = battleRoom.players[1]
-  player.settings.level = 10
-  player.settings.style = GameModes.Styles.MODERN
+  player:setStyle(GameModes.Styles.MODERN)
+  player:setLevel(10)
 
   local stack = player:createStackFromSettings(battleRoom:createMatch())
   stack.match:setSeed(8)

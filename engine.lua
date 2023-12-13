@@ -2533,7 +2533,7 @@ end
 function Stack:makePanels()
   PanelGenerator:setSeed(self.match.seed + self.panelGenCount)
 
-  local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.NCOLORS, self.panel_buffer, not self.allowAdjacentColors)
+  local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.levelData.colors, self.panel_buffer, not self.allowAdjacentColors)
   ret = PanelGenerator.assignMetalLocations(ret, self.width)
   self.panelGenCount = self.panelGenCount + 1
 
@@ -2545,7 +2545,7 @@ function Stack:makeStartingBoardPanels()
 
   local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
 
-  local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.NCOLORS, self.panel_buffer, not allowAdjacentColors)
+  local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.levelData.colors, self.panel_buffer, not allowAdjacentColors)
   -- technically there can never be metal on the starting board but we need to call it to advance the RNG (compatibility)
   ret = PanelGenerator.assignMetalLocations(ret, self.width)
 

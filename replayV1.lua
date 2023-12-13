@@ -75,6 +75,9 @@ function ReplayV1.loadFromFile(legacyReplay)
     r.players[1].allowAdjacentColors = true
     r.players[1].settings.levelData = levelPresets.getClassic(v1r.difficulty)
     r.players[1].settings.levelData.startingSpeed = v1r.speed
+    if v1r.difficulty == 1 and gameMode == GameModes.ONE_PLAYER_ENDLESS then
+      r.players[1].settings.levelData.colors = 5
+    end
   end
 
   if v1r.P2_char then
