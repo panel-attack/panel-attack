@@ -128,8 +128,8 @@ function CharacterSelect:createLeaveButton()
   return leaveButton
 end
 
-function CharacterSelect:createStageCarousel(player, hFill)
-  local stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", hFill = hFill, vFill = true})
+function CharacterSelect:createStageCarousel(player, width)
+  local stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", width = width, vFill = true})
   stageCarousel:loadCurrentStages()
 
   -- stage carousel
@@ -225,8 +225,8 @@ function CharacterSelect:createCursor(grid, player)
   return cursor
 end
 
-function CharacterSelect:createPanelCarousel(player, hFill)
-  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = hFill, vFill = true})
+function CharacterSelect:createPanelCarousel(player, height)
+  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = true, height = height})
   panelCarousel:loadPanels()
 
   -- panel carousel

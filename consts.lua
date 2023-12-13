@@ -18,7 +18,7 @@ local consts = {
   MENU_PADDING = 10
 }
 
--- TODO: Move all values below to the above table
+-- TODO: Move all values below to the above table or to other files if they are only used in 1
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 
