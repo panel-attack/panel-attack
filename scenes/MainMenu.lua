@@ -62,7 +62,7 @@ local menuItems = {
     end, {""})
   }, {
     createMainMenuButton("mm_2_vs_local", function()
-      switchToScene("CharacterSelectLocal2p")
+      switchToScene("Local2pMenu")
     end)
   }, {
     createMainMenuButton("mm_replay_browser", function()

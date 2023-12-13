@@ -58,7 +58,7 @@ function BattleRoom.createLocalFromGameMode(gameMode)
   -- always use the global local player
   battleRoom:addPlayer(LocalPlayer)
   for i = 2, gameMode.playerCount do
-    battleRoom.addPlayer(Player.getLocalPlayer())
+    battleRoom:addPlayer(Player.getLocalPlayer())
   end
 
   if gameMode.style ~= GameModes.Styles.CHOOSE then
@@ -206,7 +206,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
 
   replay = Replay.createNewReplay(match)
   -- game dies when using the fade transition for unclear reasons
-  sceneManager:switchToScene(self.mode.scene, {match = self.match}, "none")
+  sceneManager:switchToScene(self.mode.scene, {match = self.match, nextScene = sceneManager.activeScene.name}, "none")
 
   -- to prevent the game from instantly restarting, unready all players
   for i = 1, #self.players do

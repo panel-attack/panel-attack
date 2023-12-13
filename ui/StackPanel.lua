@@ -16,37 +16,36 @@ local StackPanel = class(function(stackPanel, options)
 end,
 UiElement)
 
-local function applyStackPanelSettings(stackPanel, uiElement)
-  if stackPanel.alignment == "left" then
+function StackPanel:applyStackPanelSettings(uiElement)
+  if self.alignment == "left" then
     uiElement.hFill = false
     uiElement.hAlign = "left"
-    uiElement.x = stackPanel.width
-    stackPanel.pixelsTaken = stackPanel.pixelsTaken + uiElement.width
-    stackPanel.width = stackPanel.pixelsTaken
-  elseif stackPanel.alignment == "right" then
+    uiElement.x = self.width
+    self.pixelsTaken = self.pixelsTaken + uiElement.width
+    self.width = self.pixelsTaken
+  elseif self.alignment == "right" then
     uiElement.hFill = false
     uiElement.hAlign = "right"
-    uiElement.x = - stackPanel.pixelsTaken
-    stackPanel.pixelsTaken = stackPanel.pixelsTaken + uiElement.width
-    stackPanel.width = stackPanel.pixelsTaken
-  elseif stackPanel.alignment == "top" then
+    uiElement.x = - self.pixelsTaken
+    self.pixelsTaken = self.pixelsTaken + uiElement.width
+    self.width = self.pixelsTaken
+  elseif self.alignment == "top" then
     uiElement.vFill = false
     uiElement.vAlign = "top"
-    uiElement.y = stackPanel.pixelsTaken
-    stackPanel.pixelsTaken = stackPanel.pixelsTaken + uiElement.height
-    stackPanel.height = stackPanel.pixelsTaken
-  elseif stackPanel.alignment == "bottom" then
+    uiElement.y = self.pixelsTaken
+    self.pixelsTaken = self.pixelsTaken + uiElement.height
+    self.height = self.pixelsTaken
+  elseif self.alignment == "bottom" then
     uiElement.vFill = false
     uiElement.vAlign = "bottom"
-    uiElement.y = - stackPanel.pixelsTaken
-    stackPanel.pixelsTaken = stackPanel.pixelsTaken + uiElement.height
-    stackPanel.height = stackPanel.pixelsTaken
+    uiElement.y = - self.pixelsTaken
+    self.pixelsTaken = self.pixelsTaken + uiElement.height
+    self.height = self.pixelsTaken
   end
 end
 
 function StackPanel:addElement(uiElement)
-  applyStackPanelSettings(self, uiElement)
-
+  self:applyStackPanelSettings(uiElement)
   self:addChild(uiElement)
 end
 

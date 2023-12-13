@@ -4,7 +4,7 @@ local function canBeFocused(uiElement)
   uiElement.isFocusable = true
   uiElement.hasFocus = false
   if uiElement.receiveInputs == nil then
-    uiElement.receiveInputs = function(inputSource)
+    uiElement.receiveInputs = function(inputs)
       error("Focusable UIElement of type " .. uiElement.TYPE .. " doesn't implement input interpretation")
     end
   end

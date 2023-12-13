@@ -29,7 +29,7 @@ end
 local Game = class(
   function(self)
     self.scores = require("scores")
-    self.input = { maxConfigurations = 8, inputConfigurations = {{}, {}, {}, {}, {}, {}, {}, {}}}
+    self.input = input
     self.match = nil -- Match - the current match going on or nil if inbetween games
     self.battleRoom = nil -- BattleRoom - the current room being used for battles
     self.focused = true -- if the window is focused
@@ -90,7 +90,7 @@ function Game:load(game_updater)
   self.game_updater = game_updater
   local user_input_conf = save.read_key_file()
   if user_input_conf then
-    self.input.inputConfigurations = user_input_conf
+    self.input:importConfigurations(user_input_conf)
   end
 end
 
@@ -231,7 +231,8 @@ function Game:createScenes()
     require("scenes.SoundTest"),
     require("scenes.DesignHelper"),
     require("scenes.VsSelfGame"),
-    require("scenes.SetUserIdMenu")
+    require("scenes.SetUserIdMenu"),
+    require("scenes.Game2pVs")
   }
 end
 

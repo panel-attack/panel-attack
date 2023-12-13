@@ -28,7 +28,7 @@ local GridCursor = class(function(self, options)
 
   self.blinkFrequency = options.blinkFrequency or 8
   self.rapidBlinking = options.rapidBlinking or false
-  self.frameClock = 0
+  self.drawClock = 0
 
   self.TYPE = "GridCursor"
 end, UiElement)
@@ -106,46 +106,56 @@ function GridCursor:move(direction)
   end
 end
 
-function GridCursor:toggleRapidBlinking()
-  self.rapidBlinking = not self.rapidBlinking
+function GridCursor:setRapidBlinking(rapid)
+  self.rapidBlinking = rapid
 end
 
 function GridCursor:drawSelf()
-  self.frameClock = self.frameClock + 1
-  local cursorFrame = math.floor((((self.frameClock + self.player.playerNumber * self.blinkFrequency) / self.blinkFrequency) % 2)) + 1
+  self.drawClock = self.drawClock + 1
+  local cursorFrame
+  local drawThisFrame
+  if self.rapidBlinking then
+    cursorFrame = 1
+    drawThisFrame  = (math.floor(self.drawClock / self.blinkFrequency) + self.player.playerNumber) % 2 + 1 == self.player.playerNumber
+  else
+    cursorFrame = (math.floor(self.drawClock / 8) + self.player.playerNumber) % 2 + 1
+    drawThisFrame = true
+  end
 
   local image = self.image[cursorFrame]
   local element = self.selectedGridElement or self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
   local x, y = element:getScreenPos()
-  menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
-  menu_drawq(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+  if drawThisFrame then
+    menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
+    menu_drawq(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+  end
 end
 
-function GridCursor:receiveInputs()
+function GridCursor:receiveInputs(inputs)
   if self.focused then
-    self.focused:receiveInputs(self)
-  elseif input.isDown["MenuEsc"] or input.isDown["Swap2"] then
+    self.focused:receiveInputs(inputs)
+  elseif inputs.isDown["Swap2"] then
     self:escapeCallback()
-  elseif input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  elseif inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.left)
-  elseif input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  elseif inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.right)
-  elseif input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  elseif inputs:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.up)
-  elseif input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  elseif inputs:isPressedWithRepeat("Down", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.down)
-  elseif input.isDown["Swap1"] then
+  elseif inputs.isDown["Swap1"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     self.selectedGridElement:onSelect(self)
-  elseif input.isDown["Raise1"] then
+  elseif inputs.isDown["Raise1"] then
     if self.raise1Callback then
       self:raise1Callback()
     end
-  elseif input.isDown["Raise2"] then
+  elseif inputs.isDown["Raise2"] then
     if self.raise2Callback then
       self:raise2Callback()
     end

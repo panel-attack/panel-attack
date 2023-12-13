@@ -60,11 +60,8 @@ function DesignHelper:drawBackground()
 end
 
 function DesignHelper:update()
-  self.cursor:receiveInputs()
-  if input.allKeys.isDown["6"] then
-    self.panelCarousel:setColorCount(self.panelCarousel.colorCount - 1)
-  elseif input.allKeys.isDown["7"] then
-    self.panelCarousel:setColorCount(self.panelCarousel.colorCount + 1)
+  if input.allKeys.isDown["MenuEsc"] then
+    sceneManager:switchToScene("MainMenu")
   end
   GAME.gfx_q:push({self.grid.draw, {self.grid}})
 end

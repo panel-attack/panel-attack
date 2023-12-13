@@ -1,6 +1,7 @@
 local class = require("class")
 local GameModes = require("GameModes")
 local LevelPresets = require("LevelPresets")
+local input = require("inputManager")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -11,14 +12,30 @@ local Player = class(function(self, name, publicId, isLocal)
   self.name = name
   self.wins = 0
   self.modifiedWins = 0
-  self.settings = {}
-  self.publicId = publicId
+  self.settings = {
+    -- these need to all be initialized so subscription works
+    level = 1,
+    difficulty = 1,
+    speed = 1,
+    levelData = LevelPresets.getModern(1),
+    style = GameModes.Styles.MODERN,
+    characterId = "",
+    stageId = "",
+    panelId = "",
+    wantsReady = false,
+    wantsRanked = true,
+    inputMethod = "controller"
+  }
+  -- planned for the future, players don't have public ids yet
+  self.publicId = publicId or -1
   self.trainingModeSettings = nil
   self.rating = nil
   self.stack = nil
   self.playerNumber = nil
   self.isLocal = isLocal or false
-  self.inputConfiguration = nil
+  -- a player has only one configuration at a time
+  -- this is either keys or a single input configuration
+  self.inputConfiguration = input.allKeys
   self.subscriptionList = {}
 end)
 
@@ -75,7 +92,7 @@ end
 
 -- Other elements (ui, network) can subscribe to properties in Player.settings by passing a callback
 function Player:subscribe(subscriber, property, callback)
-  if self.settings[property] then
+  if self.settings[property] ~= nil then
     if not self.subscriptionList[property] then
       self.subscriptionList[property] = {}
     end
@@ -234,6 +251,20 @@ function Player:setPuzzleSet(puzzleSet)
   end
 end
 
+function Player:restrictInputs(inputConfiguration)
+  if inputConfiguration.usedByPlayer ~= nil and inputConfiguration.usedByPlayer ~= self then
+    error("Trying to assign input configuration to player " .. self.playerNumber ..
+      " that is already in use by player " .. inputConfiguration.usedByPlayer.playerNumber)
+  end
+  self.inputConfiguration = inputConfiguration
+  self.inputConfiguration.usedByPlayer = self
+end
+
+function Player:unrestrictInputs()
+  self.inputConfiguration.usedByPlayer = nil
+  self.inputConfiguration = input.allKeys
+end
+
 function Player.getLocalPlayer()
   local player = Player(config.name)
 
@@ -243,6 +274,7 @@ function Player.getLocalPlayer()
   player:setCharacter(config.character)
   player:setStage(config.stage)
   player:setPanels(config.panels)
+  player:setWantsReady(false)
   player:setWantsRanked(config.ranked)
   player:setInputMethod(config.inputMethod)
   if config.endless_level then

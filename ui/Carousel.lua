@@ -137,15 +137,15 @@ function Carousel:onBack()
 end
 
 -- the parent makes sure this is only called while focused
-function Carousel:receiveInputs()
-  if input:isPressedWithRepeat("Left", 0.25, 0.25) then
+function Carousel:receiveInputs(inputs)
+  if inputs:isPressedWithRepeat("Left", 0.25, 0.25) then
     self:moveToNextPassenger(-1)
-  elseif input:isPressedWithRepeat("Right", 0.25, 0.25) then
+  elseif inputs:isPressedWithRepeat("Right", 0.25, 0.25) then
     self:moveToNextPassenger(1)
-  elseif input.isDown["Swap1"] or input.isDown["Start"] then
+  elseif inputs.isDown["Swap1"] or inputs.isDown["Start"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     self:onSelect()
-  elseif input.isDown["Swap2"] or input.isDown["Escape"] then
+  elseif inputs.isDown["Swap2"] or inputs.isDown["Escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     self:onBack()
   end

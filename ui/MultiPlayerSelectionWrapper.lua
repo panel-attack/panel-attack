@@ -1,4 +1,5 @@
 local UiElement = require("ui.UIElement")
+local StackPanel = require("ui.StackPanel")
 local class = require("class")
 local focusable = require("ui.Focusable")
 
@@ -9,19 +10,20 @@ local MultiPlayerSelectionWrapper = class(function(wrapper, options)
   wrapper.activeElement = nil
   wrapper.wrappedElements = {}
 end,
-UiElement)
+StackPanel)
 
 function MultiPlayerSelectionWrapper:addElement(uiElement, player)
   self.wrappedElements[player] = uiElement
   uiElement.yieldFocus = function()
     self.yieldFocus()
   end
+  self:applyStackPanelSettings(uiElement)
   self:addChild(uiElement)
 end
 
 -- the parent makes sure this is only called while focused
-function MultiPlayerSelectionWrapper:receiveInputs(inputSource)
-  self.wrappedElements[inputSource.player]:receiveInputs()
+function MultiPlayerSelectionWrapper:receiveInputs(inputs)
+  self.wrappedElements[inputs.usedByPlayer]:receiveInputs(inputs)
 end
 
 function MultiPlayerSelectionWrapper:drawSelf()

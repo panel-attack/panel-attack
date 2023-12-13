@@ -5,6 +5,7 @@ local ImageContainer = require("ui.ImageContainer")
 
 local PanelCarousel = class(function(carousel, options)
   carousel.colorCount = 5
+  carousel.player = player
 end, Carousel)
 
 function PanelCarousel:createPassenger(id)

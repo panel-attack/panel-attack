@@ -49,7 +49,17 @@ function CharacterSelect:playThemeMusic()
 end
 
 function CharacterSelect:load(sceneParams)
+  self.ui = {}
+  self.ui.cursors = {}
   self:customLoad(sceneParams)
+  -- assign input configs
+  -- ideally the local player can use all configs in menus until game start
+  -- but should be ok for now
+  for i = 1, #GAME.battleRoom.players do
+    if GAME.battleRoom.players[i].inputConfiguration == input.allKeys then
+      GAME.battleRoom.players[i]:restrictInputs(GAME.input.inputConfigurations[i])
+    end
+  end
   self:playThemeMusic()
   reset_filters()
 end
@@ -87,7 +97,7 @@ function CharacterSelect:createReadyButton()
   local readyButton = TextButton({width = 96, height = 96, label = Label({text = "ready"}), backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
 
   -- assign player generic callback
-  readyButton.onClick = function(inputSource)
+  readyButton.onClick = function(self, inputSource)
     if inputSource.player then
       player = inputSource.player
     else
@@ -118,10 +128,10 @@ function CharacterSelect:createLeaveButton()
   return leaveButton
 end
 
-function CharacterSelect:createStageCarousel(player)
-  local stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", hFill = true, vFill = true})
+function CharacterSelect:createStageCarousel(player, hFill)
+  local stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", hFill = hFill, vFill = true})
   stageCarousel:loadCurrentStages()
-  
+
   -- stage carousel
   stageCarousel.onSelectCallback = function()
     player:setStage(stageCarousel:getSelectedPassenger().id)
@@ -165,15 +175,15 @@ function CharacterSelect:getCharacterButtons()
   -- assign player generic callbacks
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
-    characterButton.onClick = function(inputSource)
-      if inputSource.player then
+    characterButton.onClick = function(self, inputSource)
+      if inputSource and inputSource.player then
         player = inputSource.player
       else
         player = LocalPlayer
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      player:setCharacter(characterButton.characterId)
-      self.ui.cursor:updatePosition(9, 2)
+      player:setCharacter(self.characterId)
+      player.cursor:updatePosition(9, 2)
     end
     characterButton.onSelect = characterButton.onClick
   end
@@ -200,12 +210,14 @@ function CharacterSelect:createCursor(grid, player)
     player = player
   })
 
+  player:subscribe(cursor, "wantsReady", cursor.setRapidBlinking)
+
   cursor.escapeCallback = function()
     if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
-      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      sceneManager:switchToScene("MainMenu")
-    else
+      self:leave()
+    elseif player.settings.wantsReady then
       player:setWantsReady(false)
+    else
       cursor:updatePosition(9, 6)
     end
   end
@@ -213,8 +225,8 @@ function CharacterSelect:createCursor(grid, player)
   return cursor
 end
 
-function CharacterSelect:createPanelCarousel(player)
-  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = true, vFill = true})
+function CharacterSelect:createPanelCarousel(player, hFill)
+  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = hFill, vFill = true})
   panelCarousel:loadPanels()
 
   -- panel carousel
@@ -243,16 +255,16 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
     vAlign = "center"
   })
   Focusable(levelSlider)
-  levelSlider.receiveInputs = function()
-    if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  levelSlider.receiveInputs = function(self, inputs)
+    if inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
       levelSlider:setValue(levelSlider.value - 1)
     end
 
-    if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
       levelSlider:setValue(levelSlider.value + 1)
     end
 
-    if input.isDown["MenuEsc"] then
+    if inputs.isDown["Swap2"] then
       if levelSlider.onBackCallback then
         levelSlider.onBackCallback()
       end
@@ -260,7 +272,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
       levelSlider:yieldFocus()
     end
 
-    if input.isDown["Swap1"] or input.isDown["MenuEnter"] then
+    if inputs.isDown["Swap1"] or inputs.isDown["MenuEnter"] then
       if levelSlider.onSelectCallback then
         levelSlider.onSelectCallback()
       end
@@ -270,16 +282,17 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
   end
 
   -- level slider
-  levelSlider.onBackCallback = function ()
-    levelSlider:setValue(player.level)
-  end
-
   levelSlider.onSelectCallback = function ()
     player:setLevel(levelSlider.value)
   end
 
   levelSlider.onValueChange = function()
-    player:setLevel(levelSlider.value)
+    -- using this makes the onBackCallback pointless
+    --player:setLevel(levelSlider.value)
+  end
+
+  levelSlider.onBackCallback = function ()
+    levelSlider:setValue(player.settings.level)
   end
 
   return levelSlider
@@ -287,13 +300,23 @@ end
 
 function CharacterSelect:update()
   GAME.battleRoom:update()
-  self.ui.cursor:receiveInputs()
-  GAME.gfx_q:push({self.ui.grid.draw, {self.ui.grid}})
-  GAME.gfx_q:push({self.ui.cursor.draw, {self.ui.cursor}})
-  self:customDraw()
+  --if sceneManager.activeScene == self and not sceneManager.isTransitioning then
+    for i = 1, #self.ui.cursors do
+      self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
+    end
+  --end
+  GAME.gfx_q:push({self.draw, {self}})
   if self:customUpdate() then
     return
   end
+end
+
+function CharacterSelect:draw()
+  self.ui.grid:draw()
+  for i = 1, #self.ui.cursors do
+    self.ui.cursors[i]:draw()
+  end
+  self:customDraw()
 end
 
 function CharacterSelect:drawBackground()
@@ -307,6 +330,16 @@ end
 function CharacterSelect:unload()
   self.ui.grid:setVisibility(false)
   stop_the_music()
+end
+
+function CharacterSelect:leave()
+  for i = 1, #GAME.battleRoom.players do
+    local player = GAME.battleRoom.players[i]
+    player:unrestrictInputs()
+    player:unsubscribe(player.cursor)
+  end
+  play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+  sceneManager:switchToScene("MainMenu")
 end
 
 return CharacterSelect
