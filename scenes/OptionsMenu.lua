@@ -332,7 +332,7 @@ function OptionsMenu:load()
   )
 
   local function scaleSettingsChanged()
-    GAME.showGameScale = true
+    GAME.showGameScaleUntil = GAME.timer + 1000
     local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
     local previousXScale = GAME.canvasXScale
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
@@ -426,7 +426,10 @@ function OptionsMenu:load()
     {Label({width = MENU_WIDTH, text = "op_popfx"}), createToggleButtonGroup("popfx")},
     {Label({width = MENU_WIDTH, text = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
     {Label({width = MENU_WIDTH, text = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")},
-    {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function() switchMenu("baseMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function()
+      GAME.showGameScaleUntil = GAME.timer
+      switchMenu("baseMenu")
+    end})},
   }
 
   local soundTestMenuOptions = {
