@@ -27,8 +27,8 @@ function CharacterSelectVsSelf:loadUserInterface()
 
   self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6})
 
-  self.ui.selectedCharacter = self:createSelectedCharacterIcon(player)
-  self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.selectedCharacter)
+  self.ui.characterIcons[1] = self:createSelectedCharacterIcon(player)
+  self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.characterIcons[1])
 
   local panelCarousel = self:createPanelCarousel(player, 96)
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})

@@ -51,6 +51,7 @@ end
 function CharacterSelect:load(sceneParams)
   self.ui = {}
   self.ui.cursors = {}
+  self.ui.characterIcons = {}
   self:customLoad(sceneParams)
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
@@ -337,6 +338,7 @@ function CharacterSelect:leave()
     local player = GAME.battleRoom.players[i]
     player:unrestrictInputs()
     player:unsubscribe(player.cursor)
+    player:unsubscribe(self.ui.characterIcons[i])
   end
   play_optional_sfx(themes[config.theme].sounds.menu_cancel)
   sceneManager:switchToScene("MainMenu")
