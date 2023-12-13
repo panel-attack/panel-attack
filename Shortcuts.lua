@@ -1,6 +1,7 @@
 local input = require("inputManager")
 local sceneManager = require("scenes.sceneManager")
 local tableUtils = require("tableUtils")
+local inputFieldManager = require("ui.inputFieldManager")
 
 local function runSystemCommands()
   -- toggle debug mode
@@ -102,6 +103,11 @@ function handleShortcuts()
       handleDumpAttackPattern(1)
     elseif input.allKeys.isDown["2"] then
       handleDumpAttackPattern(2)
+    elseif input.allKeys.isDown["v"] then
+      local clipboard = love.system.getClipboardText()
+      if clipboard then
+        inputFieldManager.textInput(clipboard)
+      end
     end
   elseif input.isPressed["Alt"] then
     if input.isDown["return"] then

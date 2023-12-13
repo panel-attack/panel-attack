@@ -15,6 +15,7 @@ local fileUtils = require("FileUtils")
 local analytics = require("analytics")
 local class = require("class")
 local tableUtils = require("tableUtils")
+local utf8 = require("utf8")
 
 --@module optionsMenu
 -- Scene for the options menu
@@ -55,6 +56,7 @@ local menus = {
   audioMenu = nil,
   debugMenu = nil,
   aboutMenu = nil,
+  modifyUserIdMenu = nil
 }
 
 local foundThemes = {}
@@ -223,6 +225,8 @@ function OptionsMenu:repositionMenus()
   menus["debugMenu"].y = y
   menus["aboutMenu"].x = x
   menus["aboutMenu"].y = y
+  menus["modifyUserIdMenu"].x = x
+  menus["modifyUserIdMenu"].y = y
 end
 
 function OptionsMenu:load()
@@ -265,6 +269,7 @@ function OptionsMenu:load()
     {TextButton({width = MENU_WIDTH, label = Label({text = "op_audio"}), onClick = function() switchMenu("audioMenu") end})},
     {TextButton({width = MENU_WIDTH, label = Label({text = "op_debug"}), onClick = function() switchMenu("debugMenu") end})},
     {TextButton({width = MENU_WIDTH, label = Label({text = "op_about"}), onClick = function() switchMenu("aboutMenu") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "Modify User ID", translate = false}), onClick = function() switchMenu("modifyUserIdMenu") end})},
     {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = exitMenu})},
   }
 
@@ -479,7 +484,14 @@ function OptionsMenu:load()
     {TextButton({width = MENU_WIDTH, label = Label({text = "System Info"}), translate = false, onClick = setupSystemInfo})},
     {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function() switchMenu("baseMenu") end})},
   }
-  
+
+  local modifyUserIdOptions = {}
+  local userIDDirectories = fileUtils.getFilteredDirectoryItems("servers")
+  for i = 1, #userIDDirectories do
+    modifyUserIdOptions[#modifyUserIdOptions+1] = {TextButton({width = MENU_WIDTH, label = Label({text = userIDDirectories[i], translate = false}), onClick = function() sceneManager:switchToScene("SetUserIdMenu", {serverIp = userIDDirectories[i]}) end})}
+  end
+  modifyUserIdOptions[#modifyUserIdOptions + 1] = {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function() switchMenu("baseMenu") end})}
+
   menus["baseMenu"] = Menu({menuItems = baseMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   menus["generalMenu"] = Menu({menuItems = generalMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   menus["graphicsMenu"] = Menu({menuItems = graphicsMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
@@ -487,6 +499,7 @@ function OptionsMenu:load()
   menus["audioMenu"] = Menu({menuItems = audioMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   menus["debugMenu"] = Menu({menuItems = debugMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   menus["aboutMenu"] = Menu({menuItems = aboutMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  menus["modifyUserIdMenu"] = Menu({menuItems = modifyUserIdOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
 
   for _, menu in pairs(menus) do
     menu:setVisibility(false)

@@ -55,6 +55,8 @@ function SetNameMenu:update(dt)
     warningText = ""
   end
   
+  GAME.gfx_q:push({self.draw, {self}})
+
   if input.allKeys.isDown["return"] then
     if nameField.value == "" then
       warningText = loc("op_username_blank_warning")
@@ -79,7 +81,7 @@ function SetNameMenu:draw()
   nameField:draw()
 end
 
-function SetNameMenu:unload()  
+function SetNameMenu:unload()
   nameField:setVisibility(false)
   nameField:unfocus()
 end

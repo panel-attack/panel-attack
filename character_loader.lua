@@ -146,7 +146,7 @@ function CharacterLoader.initCharacters()
   CharacterLoader.fillCharactersIds()
 
   if #characters_ids == 0 then
-    recursive_copy("default_data/characters", "characters")
+    fileUtils.recursiveCopy("default_data/characters", "characters")
     CharacterLoader.addCharactersFromDirectoryRecursively("characters")
     CharacterLoader.fillCharactersIds()
   end
