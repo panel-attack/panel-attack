@@ -7,7 +7,6 @@ local Menu = require("ui.Menu")
 local class = require("class")
 local consts = require("consts")
 local input = require("inputManager")
-local uiUtils = require("ui.uiUtils")
 local logger = require("logger")
 local GameModes = require("GameModes")
 
