@@ -110,15 +110,21 @@ local LoginRoutine = class(function(self, ip, port)
   self.port = port
 end)
 
--- returns the current progress of the login process as a string message
+-- returns false and the current progress of the login process as a string message while in progress
+-- returns true and a result table when finishing and on further queries
 function LoginRoutine:progress()
-  if coroutine.status(self.routine) ~= "dead" then
-    return self.status
+  if coroutine.status(self.routine) == "dead" then
+    return true, self.result
   else
     local success, status = coroutine.resume(self.routine, self.ip, self.port)
     if success then
-      self.status = status
-      return status
+      if type(status) == "table" then
+        self.result = status
+        return true, status
+      else
+        self.status = status
+        return false, status
+      end
     else
       GAME.crashTrace = debug.traceback(self.routine)
       error(status)

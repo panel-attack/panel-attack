@@ -122,28 +122,6 @@ function Lobby:initLobbyMenu()
 end
 
 function Lobby:load(sceneParams)
-  local loginSuccessful, loginMessage = login(sceneParams.serverIp, sceneParams.serverPort)
-
-  if not loginSuccessful then
-    self.state = states.SWITCH_SCENE
-    self.switchSceneLabel = Label({text = loginMessage, translate = false})
-    self.stateParams = {
-      startTime = love.timer.getTime(),
-      maxDisplayTime = 10,
-      minDisplayTime = 1,
-      sceneName = "MainMenu",
-      sceneParams = nil
-    }
-  else
-    self.state = states.SHOW_SERVER_NOTICE
-    self.switchSceneLabel = Label({text = loginMessage, translate = false})
-    self.stateParams = {
-      startTime = love.timer.getTime(),
-      maxDisplayTime = 10,
-      minDisplayTime = 1,
-      sceneParams = nil
-    }
-  end
   
   --main_net_vs_lobby
   if next(currently_playing_tracks) == nil then
