@@ -1,7 +1,7 @@
 local consts = require("consts")
 local logger = require("logger")
 local input = require("inputManager")
-local NetworkProtocol = require("NetworkProtocol")
+local NetworkProtocol = require("network.NetworkProtocol")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 require("TimeQueue")
 

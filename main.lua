@@ -36,7 +36,7 @@ require("AttackEngine")
 
 require("graphics")
 require("replay")
-require("network")
+require("network.network")
 require("Puzzle")
 require("PuzzleSet")
 require("puzzles")
