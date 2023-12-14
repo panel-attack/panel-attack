@@ -28,7 +28,7 @@ function Request:send()
   if self.messageType.prefix == "J" then
     message = toJsonMessage(self.messageText)
   elseif self.messageType.prefix == "H" then
-    message = NetworkProtocol.clientMessageTypes.versionCheck.prefix .. VERSION
+    message = NetworkProtocol.clientMessageTypes.versionCheck.prefix .. consts.VERSION
   else
     error("Trying to send a message with message type " .. table_to_string(self.messageType) .. " that has no interaction defined")
   end

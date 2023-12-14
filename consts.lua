@@ -3,7 +3,7 @@ local tableUtils = require("tableUtils")
 
 --- @module consts
 local consts = {
-  VERSION = "046",
+  VERSION = "047",
   CANVAS_WIDTH = 1280,
   CANVAS_HEIGHT = 720,
   DEFAULT_THEME_DIR = "Panel Attack",

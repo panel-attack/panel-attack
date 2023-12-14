@@ -299,20 +299,19 @@ function Lobby:update(dt)
       end
     end
   else
-    if not do_messages() then
-      -- try to log back in
-      self.state = STATES.Login
-      self.loginRoutine = LoginRoutine(GAME.connected_server_ip, GAME.connected_server_port)
-      resetNetwork()
-    else
-      drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
+    drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
 
-      self:processServerMessages()
-      self.lobbyMenu:update()
-      self:defaultUpdate(dt)
-    end
+    self:processServerMessages()
+    self.lobbyMenu:update()
+    self:defaultUpdate(dt)
   end
 
+  if not do_messages() then
+    -- try to log back in
+    self.state = STATES.Login
+    self.loginRoutine = LoginRoutine(GAME.connected_server_ip, GAME.connected_server_port)
+    resetNetwork()
+  end
 
   GAME.gfx_q:push({self.draw, {self}})
 end
