@@ -1,19 +1,16 @@
-require("server_queue")
-require("network.network")
 
--- how many tries (read: frames) it takes for a request to give up waiting for a response
-local REQUEST_TIMEOUT = 10 * 60
+-- how many seconds it takes for a request to give up waiting for a response
+local REQUEST_TIMEOUT = 5
 
 local function createResponseCoroutine(responseTypes)
+  local startTime = love.timer.getTime()
   local cr = coroutine.create(
     function ()
       local response
-      local frameCount = 0
 
-      while not response and frameCount < REQUEST_TIMEOUT do
+      while not response and love.timer.getTime() < startTime + REQUEST_TIMEOUT do
         coroutine.yield()
         response = server_queue:pop_next_with(unpack(responseTypes))
-        frameCount = frameCount + 1
       end
 
       return response
@@ -46,7 +43,7 @@ function Response:tryGetValue()
       GAME.crashTrace = debug.traceback(self.coroutine)
       error(returnValues)
     else
-      if coroutine.status(self.coFunc) ~= "dead" then
+      if coroutine.status(self.coroutine) ~= "dead" then
         return "waiting", nil
       else
         self.awaitingResponse = false

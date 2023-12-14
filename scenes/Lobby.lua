@@ -9,7 +9,7 @@ local consts = require("consts")
 local input = require("inputManager")
 local logger = require("logger")
 local GameModes = require("GameModes")
-require("network.network")
+local LoginRoutine = require("network.LoginRoutine")
 
 local STATES = { Login = 1, Lobby = 2}
 
@@ -122,9 +122,28 @@ function Lobby:initLobbyMenu()
 end
 
 function Lobby:load(sceneParams)
-  local loginSuccessful, loginMessage = login(sceneParams.ip, sceneParams.port)
- 
-  logged_in = false
+  local loginSuccessful, loginMessage = login(sceneParams.serverIp, sceneParams.serverPort)
+
+  if not loginSuccessful then
+    self.state = states.SWITCH_SCENE
+    self.switchSceneLabel = Label({text = loginMessage, translate = false})
+    self.stateParams = {
+      startTime = love.timer.getTime(),
+      maxDisplayTime = 10,
+      minDisplayTime = 1,
+      sceneName = "MainMenu",
+      sceneParams = nil
+    }
+  else
+    self.state = states.SHOW_SERVER_NOTICE
+    self.switchSceneLabel = Label({text = loginMessage, translate = false})
+    self.stateParams = {
+      startTime = love.timer.getTime(),
+      maxDisplayTime = 10,
+      minDisplayTime = 1,
+      sceneParams = nil
+    }
+  end
   
   --main_net_vs_lobby
   if next(currently_playing_tracks) == nil then
@@ -150,33 +169,10 @@ function Lobby:drawBackground()
 end
 
 function Lobby:processServerMessages()
-  local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
+  local messages = server_queue:pop_all_with("create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
   for _, msg in ipairs(messages) do
     self.updated = true
     self.items = {}
-    if msg.choose_another_name and msg.choose_another_name.used_names then
-      self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = Label({text =  "lb_used_name"})
-      self.stateParams = {
-        startTime = love.timer.getTime(),
-        maxDisplayTime = 10, 
-        minDisplayTime = 1,
-        sceneName = "MainMenu",
-        sceneParams = nil
-      }
-      return
-    elseif msg.choose_another_name and msg.choose_another_name.reason then
-      self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = Label({text = "Error: " .. msg.choose_another_name.reason, translate = false})
-      self.stateParams = {
-        startTime = love.timer.getTime(),
-        maxDisplayTime = 5, 
-        minDisplayTime = 1,
-        sceneName = "MainMenu",
-        sceneParams = nil
-      }
-      return
-    end
     if msg.create_room or msg.spectate_request_granted then
       GAME.battleRoom = BattleRoom.createFromServerMessage(msg)
       if msg.spectate_request_granted then
