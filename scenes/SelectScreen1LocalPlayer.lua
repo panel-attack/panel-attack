@@ -95,7 +95,11 @@ function SelectScreen1LocalPlayer:assignCallbacks()
         self.ui.selectedCharacter:setImage(characters[characterId].images.icon)
       end
     end
-    localPlayer:subscribe("characterId", updateSelectedCharacterImage)
+    localPlayer:subscribe(self.ui.selectedCharacter, "characterId", updateSelectedCharacterImage)
+  end
+
+  function SelectScreen1LocalPlayer:customUnload()
+    GAME.battleRoom.players[1]:unsubscribe(self.ui.selectedCharacter)
   end
 
   return SelectScreen1LocalPlayer

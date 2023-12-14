@@ -71,23 +71,34 @@ function Player:getRatingDiff()
 end
 
 -- Other elements (ui, network) can subscribe to properties in Player.settings by passing a callback
-function Player:subscribe(property, callback)
-  if self.settings[property] then
+function Player:subscribe(subscriber, property, callback)
+  if self.settings[property] ~= nil then
     if not self.subscriptionList[property] then
       self.subscriptionList[property] = {}
     end
-    self.subscriptionList[property][#self.subscriptionList[property] + 1] = callback
+    self.subscriptionList[property][subscriber] = callback
     return true
   end
 
   return false
 end
 
+function Player:unsubscribe(subscriber, property)
+  if property then
+    self.subscriptionList[property][subscriber] = nil
+  else
+    -- if no property is given, unsubscribe everything for that subscriber
+    for property, _ in pairs(self.subscriptionList) do
+      self.subscriptionList[property][subscriber] = nil
+    end
+  end
+end
+
 -- the callback is executed with the new property value as the argument whenever a property is modified via its setter
 function Player:onPropertyChanged(property)
   if self.subscriptionList[property] then
-    for i = 1, #self.subscriptionList[property] do
-      self.subscriptionList[property][i](self.settings[property])
+    for subscriber, callback in pairs(self.subscriptionList[property]) do
+      callback(subscriber, self.settings[property])
     end
   end
 end

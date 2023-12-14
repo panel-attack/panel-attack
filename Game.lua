@@ -141,15 +141,15 @@ end
 
 function Game:initializeLocalPlayer()
   LocalPlayer = Player.getLocalPlayer()
-  LocalPlayer:subscribe("characterId", function(newId) config.character = newId end)
-  LocalPlayer:subscribe("stageId", function(newId) config.stage = newId end)
-  LocalPlayer:subscribe("panelId", function(newId) config.panels = newId end)
-  LocalPlayer:subscribe("inputMethod", function(inputMethod) config.inputMethod = inputMethod end)
-  LocalPlayer:subscribe("speed", function(speed) config.endless_speed = speed end)
-  LocalPlayer:subscribe("difficulty", function(difficulty) config.endless_difficulty = difficulty end)
-  LocalPlayer:subscribe("level", function(level) config.level = level end)
-  LocalPlayer:subscribe("wantsRanked", function(wantsRanked) config.ranked = wantsRanked end)
-  LocalPlayer:subscribe("style", function(style)
+  LocalPlayer:subscribe(config, "characterId", function(config, newId) config.character = newId end)
+  LocalPlayer:subscribe(config, "stageId", function(config, newId) config.stage = newId end)
+  LocalPlayer:subscribe(config, "panelId", function(config, newId) config.panels = newId end)
+  LocalPlayer:subscribe(config, "inputMethod", function(config, inputMethod) config.inputMethod = inputMethod end)
+  LocalPlayer:subscribe(config, "speed", function(config, speed) config.endless_speed = speed end)
+  LocalPlayer:subscribe(config, "difficulty", function(config, difficulty) config.endless_difficulty = difficulty end)
+  LocalPlayer:subscribe(config, "level", function(config, level) config.level = level end)
+  LocalPlayer:subscribe(config, "wantsRanked", function(config, wantsRanked) config.ranked = wantsRanked end)
+  LocalPlayer:subscribe(config, "style", function(config, style)
     if style == GameModes.Styles.CLASSIC then
       config.endless_level = nil
     else
