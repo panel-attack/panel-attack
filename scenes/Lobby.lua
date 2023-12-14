@@ -5,10 +5,8 @@ local ButtonGroup = require("ui.ButtonGroup")
 local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
 local class = require("class")
-local consts = require("consts")
 local input = require("inputManager")
 local logger = require("logger")
-local GameModes = require("GameModes")
 local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
 
@@ -55,14 +53,7 @@ local Lobby = class(
     self.loginDeniedMsg = nil
     
     --set in load
-    self.state = nil
-    self.stateParams = {
-      startTime = nil,
-      maxDisplayTime = nil, 
-      minDisplayTime = nil,
-      sceneName = nil,
-      sceneParams = nil
-    }
+    self.state = STATES.Login
     self.lobbyMenu = nil
     
     self:load(sceneParams)
@@ -226,8 +217,6 @@ function Lobby:load(sceneParams)
   match_type_message = ""
 
   self:initLobbyMenu()
-
-  self.state = states.DEFAULT
 end
 
 function Lobby:drawBackground()
@@ -264,14 +253,6 @@ function Lobby:requestSpectateFunction(room)
 end
 
 function Lobby:defaultUpdate(dt)
-  if not do_messages() then
-    self.state = states.DISCONNECTED
-    return
-  end
-  drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
-    
-  self:processServerMessages()
-
   -- If we got an update to the lobby, refresh the menu
   if self.updated then
     while #self.lobbyMenu.menuItems > 2 do
@@ -295,36 +276,52 @@ function Lobby:defaultUpdate(dt)
   self.updated = false
 end
 
+local loginStateLabel = Label({text = "", translate = false, x = 500, y = 350})
 function Lobby:update(dt)
   self.backgroundImg:update(dt)
 
-  if self.state == states.SWITCH_SCENE then
-    local stateDuration = love.timer.getTime() - self.stateParams.startTime
-    if stateDuration >= self.stateParams.maxDisplayTime or 
-       (stateDuration <= self.stateParams.minDisplayTime and (input.isDown["MenuEsc"] or input.isDown["MenuPause"])) then
-      sceneManager:switchToScene(self.stateParams.sceneName, self.stateParams.sceneParams)
+  if self.state == STATES.Login then
+    local done, result = self.loginRoutine:progress()
+    if not done then
+      loginStateLabel:setText(result)
+    else
+      if result.loggedIn then
+        self.state = STATES.Lobby
+      else
+        loginStateLabel:setText(result.message)
+        if not self.loginScreenTimer then
+          self.loginScreenTimer = GAME.timer + 5
+        end
+        if GAME.timer > self.loginScreenTimer then
+          self.loginScreenTimer = nil
+          sceneManager:switchToScene("MainMenu")
+        end
+      end
     end
-  elseif self.state == states.SET_NAME then
-      sceneManager:switchToScene("SetNameMenu", {prevScene = "Lobby"})
-  elseif self.state == states.DEFAULT then
-    self:defaultUpdate(dt)
-    self.lobbyMenu:update()
-  elseif self.state == states.SHOW_SERVER_NOTICE then
-    if love.timer.getTime() - self.stateParams.startTime >= SERVER_NOTICE_DISPLAY_TIME or input.isDown["MenuEsc"] or input.isDown["MenuPause"] then
-      self.state = states.DEFAULT
+  else
+    if not do_messages() then
+      -- try to log back in
+      self.state = STATES.Login
+      self.loginRoutine = LoginRoutine(GAME.connected_server_ip, GAME.connected_server_port)
+      resetNetwork()
+    else
+      drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
+
+      self:processServerMessages()
+      self.lobbyMenu:update()
+      self:defaultUpdate(dt)
     end
   end
+
 
   GAME.gfx_q:push({self.draw, {self}})
 end
 
 function Lobby:draw()
-  if self.state ==states.SHOW_SERVER_NOTICE then
-    self.serverNoticeLabel:draw()
-  elseif self.state == states.DEFAULT then
+  if self.state == STATES.Lobby then
     self.lobbyMenu:draw()
-  elseif self.state == states.SWITCH_SCENE then
-    self.switchSceneLabel:draw()
+  elseif self.state == STATES.Login then
+    loginStateLabel:draw()
   end
 end
 

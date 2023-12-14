@@ -28,3 +28,5 @@ end
 function MessageListener:unsubscribe(subscriber)
   self.subscriptionList[subscriber] = nil
 end
+
+return MessageListener

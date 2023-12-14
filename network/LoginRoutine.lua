@@ -24,7 +24,7 @@ local function login(ip, port)
 
     if status == "timeout" then
       result.loggedIn = false
-      result.message = loc("lb_login_timeout")
+      result.message = loc("nt_conn_timeout")
       return result
     elseif status == "received" then
       if not value.versionCompatible then
@@ -65,7 +65,7 @@ local function login(ip, port)
 
           if status == "timeout" then
             result.loggedIn = false
-            result.message = loc("lb_login_timeout")
+            result.message = loc("nt_conn_timeout")
             return result
           elseif status == "received" then
             if value.login_successful then
@@ -111,7 +111,7 @@ local LoginRoutine = class(function(self, ip, port)
 end)
 
 -- returns false and the current progress of the login process as a string message while in progress
--- returns true and a result table when finishing and on further queries
+-- returns true and a result table {loggedIn = val, message = "msg"} when finishing and on further queries
 function LoginRoutine:progress()
   if coroutine.status(self.routine) == "dead" then
     return true, self.result
@@ -120,6 +120,9 @@ function LoginRoutine:progress()
     if success then
       if type(status) == "table" then
         self.result = status
+        if self.result.loggedIn == false then
+          resetNetwork()
+        end
         return true, status
       else
         self.status = status
