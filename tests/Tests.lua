@@ -1,5 +1,5 @@
 -- In Development, so you don't have to wait for all other tests to debug (move to correct location later)
-
+require("tests.InputTests")
 -- Small tests (unit tests)
 require("PuzzleTests")
 require("ServerQueueTests")
