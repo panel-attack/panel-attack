@@ -143,7 +143,7 @@ function Lobby:load(sceneParams)
   if not network_init(GAME.connected_server_ip, GAME.connected_network_port) then
     print("lobby1b")
     self.state = states.SWITCH_SCENE
-    self.switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"))
+    self.switchSceneLabel = Label({text = loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"), translate = false})
     self.stateParams = {
       startTime = love.timer.getTime(),
       maxDisplayTime = 5, 
@@ -160,7 +160,7 @@ print("lobby2")
     --gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     if not do_messages() then
       self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_disconnect") .. "\n\n" .. loc("ss_return"))
+      self.switchSceneLabel = Label({text = loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), translate = false})
       self.stateParams = {
         startTime = love.timer.getTime(),
         maxDisplayTime = 5, 
@@ -232,7 +232,7 @@ function Lobby:processServerMessages()
         end
         if msg.server_notice then
           local serverNotice = msg.server_notice:gsub("\\n", "\n")
-          self.serverNoticeLabel = uiUtils.createCenteredLabel(serverNotice)
+          self.serverNoticeLabel = Label({text = serverNotice})
           
           self.stateParams.startTime = love.timer.getTime()
 
@@ -245,7 +245,7 @@ function Lobby:processServerMessages()
         --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
         login_status_message_duration = 10
         self.state = states.SWITCH_SCENE
-        self.switchSceneLabel = uiUtils.createCenteredLabel(loc("lb_error_msg") .. "\n\n" .. json.encode(msg))
+        self.switchSceneLabel = Label({text = loc("lb_error_msg") .. "\n\n" .. json.encode(msg), translate = false})
         self.stateParams = {
           startTime = love.timer.getTime(),
           maxDisplayTime = 10, 
@@ -269,7 +269,7 @@ function Lobby:processServerMessages()
     self.items = {}
     if msg.choose_another_name and msg.choose_another_name.used_names then
       self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = uiUtils.createCenteredLabel(loc("lb_used_name"))
+      self.switchSceneLabel = Label({text =  "lb_used_name"})
       self.stateParams = {
         startTime = love.timer.getTime(),
         maxDisplayTime = 10, 
@@ -280,7 +280,7 @@ function Lobby:processServerMessages()
       return
     elseif msg.choose_another_name and msg.choose_another_name.reason then
       self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = uiUtils.createCenteredLabel("Error: " .. msg.choose_another_name.reason)
+      self.switchSceneLabel = Label({text = "Error: " .. msg.choose_another_name.reason, translate = false})
       self.stateParams = {
         startTime = love.timer.getTime(),
         maxDisplayTime = 5, 

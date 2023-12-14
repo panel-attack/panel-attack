@@ -6,6 +6,7 @@ local uiUtils = require("ui.uiUtils")
 local tableUtils = require("tableUtils")
 local logger = require("logger")
 local input = require("inputManager")
+local Label = require("Label")
 
 --@module CharacterSelectOnline
 -- 
@@ -56,7 +57,7 @@ function CharacterSelectOnline:pollInitializationMessage()
       maxDisplayTime = 5,  
       minDisplayTime = 1,
       sceneName = "MainMenu",
-      switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_disconnect") .. "\n\n" .. loc("ss_return"))
+      switchSceneLabel = Label({text = loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), translate = false})
     }
   end
 end
@@ -267,7 +268,7 @@ function CharacterSelectOnline:customUpdate()
         maxDisplayTime = 5,  
         minDisplayTime = 1,
         sceneName = "MainMenu",
-        switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_init_fail") .. "\n\n" .. loc("ss_return"))
+        switchSceneLabel = Label({text = loc("ss_init_fail") .. "\n\n" .. loc("ss_return"), translate = false})
       }
     end
   elseif self.state == states.SWITCH_SCENE then
@@ -293,7 +294,7 @@ function CharacterSelectOnline:customUpdate()
         maxDisplayTime = 5,  
         minDisplayTime = 1,
         sceneName = "MainMenu",
-        switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_disconnect") .. "\n\n" .. loc("ss_return"))
+        switchSceneLabel = Label({text = loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), translate = false})
       }
     end
   end
