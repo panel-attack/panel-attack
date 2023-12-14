@@ -35,7 +35,7 @@ end)
 -- returns expired if the response returned its result before
 -- returns timeout if no server response arrived within the timeout limit
 -- returns waiting if no response has arrived yet but time is still below timeout limit
--- returns value and the response value if a response arrived
+-- returns received and the response value if a response arrived
 function Response:tryGetValue()
   if coroutine.status(self.coroutine) == "dead" then
     return "expired", nil
@@ -55,7 +55,7 @@ function Response:tryGetValue()
           return "timeout", nil
         else
           self.given = true
-          return "value", returnValues
+          return "received", returnValues
         end
       end
     end

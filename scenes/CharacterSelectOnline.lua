@@ -5,7 +5,7 @@ local class = require("class")
 local tableUtils = require("tableUtils")
 local logger = require("logger")
 local input = require("inputManager")
-local Label = require("Label")
+local Label = require("ui.Label")
 
 --@module CharacterSelectOnline
 -- 

@@ -9,6 +9,9 @@ local consts = require("consts")
 local input = require("inputManager")
 local logger = require("logger")
 local GameModes = require("GameModes")
+require("network.network")
+
+local STATES = { Login = 1, Lobby = 2}
 
 --@module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
@@ -119,58 +122,8 @@ function Lobby:initLobbyMenu()
 end
 
 function Lobby:load(sceneParams)
-  print("lobby")
-  --main_net_vs_setup
-  if not config.name or config.name == "defaultname" then
-    self.state = states.SET_NAME
-    return
-  end
-  if GAME.battleRoom then
-    print("nil-ing P1 & P2")
-    GAME.battleRoom = nil
-  end
-  server_queue = ServerQueue()
-  --gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
-
-  print("lobby1")
-  if sceneParams.serverIp then
-    GAME.connected_server_ip = sceneParams.serverIp
-  end
-  if sceneParams.serverPort then
-    GAME.connected_server_ip = sceneParams.serverPort
-  end
-  if not network_init(GAME.connected_server_ip, GAME.connected_network_port) then
-    print("lobby1b")
-    self.state = states.SWITCH_SCENE
-    self.switchSceneLabel = Label({text = loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"), translate = false})
-    self.stateParams = {
-      startTime = love.timer.getTime(),
-      maxDisplayTime = 5, 
-      minDisplayTime = 1,
-      sceneName = "MainMenu",
-      sceneParams = nil
-    }
-    print("lobby2b")
-    return
-  end
-print("lobby2")
-  local timeout_counter = 0
-  while not connection_is_ready() do
-    --gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
-    if not do_messages() then
-      self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = Label({text = loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), translate = false})
-      self.stateParams = {
-        startTime = love.timer.getTime(),
-        maxDisplayTime = 5, 
-        minDisplayTime = 1,
-        sceneName = "MainMenu",
-        sceneParams = nil
-      }
-      return
-    end
-  end
-  print("lobby3")
+  local loginSuccessful, loginMessage = login(sceneParams.ip, sceneParams.port)
+ 
   logged_in = false
   
   --main_net_vs_lobby
@@ -180,25 +133,11 @@ print("lobby2")
       find_and_add_music(themes[config.theme].musics, "main")
     end
   end
-  print("lobby4")
-  GAME.battleRoom = nil
   reset_filters()
-  CharacterLoader.clear()
-  StageLoader.clear()
   
   -- reset match type
   match_type = ""
   match_type_message = ""
-  --attempt login
-  read_user_id_file(GAME.connected_server_ip)
-  if not my_user_id then
-    my_user_id = "need a new user id"
-  end
-
-print("lobby5")
-  if connection_up_time <= self.login_status_message_duration then
-    json_send({login_request = true, user_id = my_user_id})
-  end
   
   self:initLobbyMenu()
   
@@ -211,57 +150,6 @@ function Lobby:drawBackground()
 end
 
 function Lobby:processServerMessages()
-  if connection_up_time <= self.login_status_message_duration then
-    local messages = server_queue:pop_all_with("login_successful", "login_denied")
-    for _, msg in ipairs(messages) do
-      print(msg)
-      if msg.login_successful then
-        current_server_supports_ranking = true
-        logged_in = true
-        if msg.new_user_id then
-          my_user_id = msg.new_user_id
-          logger.trace("about to write user id file")
-          write_user_id_file(my_user_id, GAME.connected_server_ip)
-          self.login_status_message = loc("lb_user_new", config.name)
-        elseif msg.name_changed then
-          self.login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
-          self.login_status_message_duration = 5
-        else
-          self.login_status_message = loc("lb_welcome_back", config.name)
-        end
-        if msg.server_notice then
-          local serverNotice = msg.server_notice:gsub("\\n", "\n")
-          self.serverNoticeLabel = Label({text = serverNotice})
-          
-          self.stateParams.startTime = love.timer.getTime()
-
-          self.state = states.SHOW_SERVER_NOTICE
-        end
-      elseif msg.login_denied then
-        current_server_supports_ranking = true
-        self.login_denied = true
-        --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-        --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
-        login_status_message_duration = 10
-        self.state = states.SWITCH_SCENE
-        self.switchSceneLabel = Label({text = loc("lb_error_msg") .. "\n\n" .. json.encode(msg), translate = false})
-        self.stateParams = {
-          startTime = love.timer.getTime(),
-          maxDisplayTime = 10, 
-          minDisplayTime = 1,
-          sceneName = "MainMenu",
-          sceneParams = nil
-        }
-        return
-      end
-      
-    end
-    if connection_up_time == 2 and not current_server_supports_ranking then
-      self.login_status_message = loc("lb_login_timeout")
-      self.login_status_message_duration = 7
-    end
-  end
-
   local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
   for _, msg in ipairs(messages) do
     self.updated = true
@@ -409,27 +297,31 @@ function Lobby:update(dt)
 
   if self.state == states.SWITCH_SCENE then
     local stateDuration = love.timer.getTime() - self.stateParams.startTime
-    if not self.transitioning and
-       stateDuration >= self.stateParams.maxDisplayTime or 
+    if stateDuration >= self.stateParams.maxDisplayTime or 
        (stateDuration <= self.stateParams.minDisplayTime and (input.isDown["MenuEsc"] or input.isDown["MenuPause"])) then
       sceneManager:switchToScene(self.stateParams.sceneName, self.stateParams.sceneParams)
-      self.transitioning = true
     end
-    self.switchSceneLabel:draw()
   elseif self.state == states.SET_NAME then
-    if not self.transitioning then
       sceneManager:switchToScene("SetNameMenu", {prevScene = "Lobby"})
-      self.transitioning = true
-    end
   elseif self.state == states.DEFAULT then
     self:defaultUpdate(dt)
     self.lobbyMenu:update()
-    self.lobbyMenu:draw()
   elseif self.state == states.SHOW_SERVER_NOTICE then
     if love.timer.getTime() - self.stateParams.startTime >= SERVER_NOTICE_DISPLAY_TIME or input.isDown["MenuEsc"] or input.isDown["MenuPause"] then
       self.state = states.DEFAULT
     end
+  end
+
+  GAME.gfx_q:push({self.draw, {self}})
+end
+
+function Lobby:draw()
+  if self.state ==states.SHOW_SERVER_NOTICE then
     self.serverNoticeLabel:draw()
+  elseif self.state == states.DEFAULT then
+    self.lobbyMenu:draw()
+  elseif self.state == states.SWITCH_SCENE then
+    self.switchSceneLabel:draw()
   end
 end
 

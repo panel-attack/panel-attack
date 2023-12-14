@@ -3,6 +3,7 @@ local logger = require("logger")
 local input = require("inputManager")
 local NetworkProtocol = require("network.NetworkProtocol")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
+local ClientRequests = require("network.ClientProtocol")
 require("TimeQueue")
 
 -- TODO: Move this all into a proper class
@@ -37,7 +38,7 @@ function resetNetwork()
   logged_in = 0
   connection_up_time = 0
   GAME.connected_server_ip = ""
-  GAME.connected_network_port = nil
+  GAME.connected_server_port = nil
   current_server_supports_ranking = false
   match_type = ""
   if TCP_sock then
@@ -107,7 +108,6 @@ function undo_stonermode()
   STONER_MODE = false
 end
 
-local got_H = false
 
 -- list of spectators
 function spectator_list_string(list)
@@ -132,9 +132,9 @@ function queue_message(type, data)
     logger.debug("Queuing: " .. type .. " with data:" .. data)
     server_queue:push(dataMessage)
   elseif type == NetworkProtocol.serverMessageTypes.versionCorrect.prefix then
-    got_H = true
+    server_queue:push({versionCompatible = true})
   elseif type == NetworkProtocol.serverMessageTypes.versionWrong.prefix then
-    error(loc("nt_ver_err"))
+    server_queue:push({versionCompatible = false})
   elseif type == NetworkProtocol.serverMessageTypes.ping.prefix then
     net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
     connection_up_time = connection_up_time + 1 --connection_up_time counts "E" messages, not seconds
@@ -185,7 +185,7 @@ function process_data_message(type, data)
 end
 
 -- setup the network connection on the given IP and port
-function network_init(ip, network_port)
+function connectToServer(ip, network_port)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
   local result, err = TCP_sock:connect(ip, network_port or 49569)
@@ -194,23 +194,6 @@ function network_init(ip, network_port)
   end
   TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)
-  got_H = false
-  net_send(NetworkProtocol.clientMessageTypes.versionCheck.prefix .. VERSION)
-  assert(config.name and config.save_replays_publicly)
-  local sent_json = {
-    name = config.name,
-    level = config.level,
-    inputMethod = config.inputMethod or "controller",
-    panels_dir = config.panels,
-    character = config.character,
-    character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil),
-    stage = config.stage,
-    ranked = config.ranked,
-    stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil),
-    save_replays_publicly = config.save_replays_publicly
-  }
-  sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name
-  json_send(sent_json)
   return true
 end
 
@@ -225,10 +208,6 @@ function send_error_report(errorData)
   json_send(errorFull)
   resetNetwork()
   return true
-end
-
-function connection_is_ready()
-  return got_H
 end
 
 -- Processes messages that came in from the server
@@ -317,4 +296,86 @@ function Stack.send_controls(self)
   self:handle_input_taunt()
 
   self:receiveConfirmedInput(to_send)
+end
+
+-- returns true/false as the first return value to indicate success or failure of the login
+-- returns a string with a message to display for the user
+function login(ip, port)
+  if not connectToServer(ip, port) then
+    return false, loc("ss_could_not_connect")
+  else
+    GAME.connected_server_ip = ip
+    GAME.connected_server_port = port
+
+    local response = ClientRequests.requestVersionCompatibilityCheck()
+    local status, result = response:tryGetValue()
+    while status == "waiting" do
+      status, result = response:tryGetValue()
+    end
+
+    if status == "timeout" then
+      return false, loc("lb_login_timeout")
+    elseif status == "received" then
+      if not result.versionCompatible then
+        return false, loc("nt_ver_err")
+      else
+        response = ClientRequests.tryReserveUsername()
+        status, result = response:tryGetValue()
+        while status == "waiting" do
+          status, result = response:tryGetValue()
+        end
+
+        if status == "received" then
+          if result.choose_another_name.used_names then
+            return false, loc("lb_used_name")
+          elseif result.choose_another_name.reason then
+            return false, "Error: " .. result.choose_another_name.reason
+          else
+            return false, "Unknown reason"
+          end
+        elseif status == "timeout" then
+          -- not getting a response means the name went through
+          local userId = read_user_id_file(ip)
+        if not userId then
+          userId = "need a new user id"
+        end
+
+        response = ClientRequests.requestLogin(userId)
+        status, result = response:tryGetValue()
+        while status == "waiting" do
+          status, result = response:tryGetValue()
+        end
+
+        if status == "timeout" then
+          return false, loc("lb_login_timeout")
+        elseif status == "received" then
+          if result.login_successful then
+            local message
+            if result.new_user_id then
+              write_user_id_file(result.new_user_id, GAME.connected_server_ip)
+              message = loc("lb_user_new", config.name)
+            elseif result.name_changed then
+              message = loc("lb_user_update", result.old_name, result.new_name)
+            else
+              message = loc("lb_welcome_back", config.name)
+            end
+            if result.server_notice then
+              message = message .. "\n" result.server_notice:gsub("\\n", "\n")
+            end
+
+            return true, message
+          else --if result.login_denied then
+            return false, loc("lb_error_msg") .. "\n" .. result.reason
+          end
+        else
+          error("Unexpected status " .. status .. " trying to login with user id on the server " .. ip)
+        end
+        else
+          error("Unexpected status " .. status .. " trying to reserve username " .. config.name .. " on the server " .. ip)
+        end
+      end
+    else
+      error("Unexpected status " .. status .. " trying to verify version compatibility with the server " .. ip)
+    end
+  end
 end
