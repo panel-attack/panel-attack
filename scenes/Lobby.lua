@@ -10,6 +10,7 @@ local input = require("inputManager")
 local logger = require("logger")
 local GameModes = require("GameModes")
 local LoginRoutine = require("network.LoginRoutine")
+local MessageListener = require("network.MessageListener")
 
 local STATES = { Login = 1, Lobby = 2}
 
@@ -40,7 +41,6 @@ local Lobby = class(
     self.sent_requests = {}
 
     self.lobby_menu = nil
-    self.items = {}
     self.lastPlayerIndex = 0
     self.updated = true -- need update when first entering
     self.ret = nil
@@ -97,6 +97,87 @@ local function exitMenu()
   sceneManager:switchToScene("MainMenu")
 end
 
+function Lobby:start2pVsOnlineMatch(createRoomMessage)
+  GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
+  love.window.requestAttention()
+  play_optional_sfx(themes[config.theme].sounds.notification)
+  sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = createRoomMessage})
+end
+
+function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
+  GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
+  sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
+end
+
+function Lobby:updateLobbyState(lobbyStateMessage)
+  if lobbyStateMessage.players then
+    self.playerData = lobbyStateMessage.players
+  end
+  if lobbyStateMessage.unpaired then
+    self.unpaired_players = lobbyStateMessage.unpaired
+    -- players who leave the unpaired list no longer have standing invitations to us.\
+    -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
+    local new_willing = {}
+    local new_sent_requests = {}
+    for _, player in ipairs(self.unpaired_players) do
+      new_willing[player] = self.willing_players[player]
+      new_sent_requests[player] = self.sent_requests[player]
+    end
+    self.willing_players = new_willing
+    self.sent_requests = new_sent_requests
+    if lobbyStateMessage.spectatable then
+      self.spectatable_rooms = lobbyStateMessage.spectatable
+    end
+  end
+  self.updated = true
+end
+
+function Lobby:processGameRequest(gameRequestMessage)
+  if gameRequestMessage.game_request then
+    self.updated = true
+    self.willing_players[gameRequestMessage.game_request.sender] = true
+    love.window.requestAttention()
+    play_optional_sfx(themes[config.theme].sounds.notification)
+  end
+end
+
+local function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
+  str = loc("lb_header_board") .. "\n"
+  first_viewable_idx = math.max(first_viewable_idx, 1)
+  last_viewable_idx = math.min(last_viewable_idx, #report)
+
+  for i = first_viewable_idx, last_viewable_idx do
+    rating_spacing = "     " .. string.rep("  ", (3 - string.len(i)))
+    name_spacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
+    if report[i].is_you then
+      str = str .. loc("lb_you") .. "-> "
+    else
+      str = str .. "      "
+    end
+    str = str .. i .. rating_spacing .. report[i].rating .. name_spacing .. report[i].user_name
+    if i < #report then
+      str = str .. "\n"
+    end
+  end
+  return str
+end
+
+function Lobby:updateLeaderboard(leaderboardReport)
+  if leaderboardReport.leaderboard_report then
+    self.updated = true
+    leaderboard_report = leaderboardReport.leaderboard_report
+    for rank = #leaderboard_report, 1, -1 do
+      local user = leaderboard_report[rank]
+      if user.user_name == config.name then
+        self.my_rank = rank
+      end
+    end
+    leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
+    leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
+    leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+  end
+end
+
 function Lobby:initLobbyMenu()
   local showLeaderboardButtonGroup = ButtonGroup(
     {
@@ -122,7 +203,15 @@ function Lobby:initLobbyMenu()
 end
 
 function Lobby:load(sceneParams)
-  
+  self.loginRoutine = LoginRoutine(sceneParams.serverIp, sceneParams.serverPort)
+  self.messageListeners = {}
+  self.messageListeners["create_room"] = MessageListener("create_room")
+  self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)
+  self.messageListeners["unpaired"] = MessageListener("unpaired")
+  self.messageListeners["unpaired"]:subscribe(self, self.updateLobbyState)
+  self.messageListeners["game_request"] = MessageListener("game_request")
+  self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
+
   --main_net_vs_lobby
   if next(currently_playing_tracks) == nil then
     stop_the_music()
@@ -131,15 +220,14 @@ function Lobby:load(sceneParams)
     end
   end
   reset_filters()
-  
+
   -- reset match type
   match_type = ""
   match_type_message = ""
-  
+
   self:initLobbyMenu()
-  
+
   self.state = states.DEFAULT
-  print("lobbyEnd")
 end
 
 function Lobby:drawBackground()
@@ -147,67 +235,8 @@ function Lobby:drawBackground()
 end
 
 function Lobby:processServerMessages()
-  local messages = server_queue:pop_all_with("create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
-  for _, msg in ipairs(messages) do
-    self.updated = true
-    self.items = {}
-    if msg.create_room or msg.spectate_request_granted then
-      GAME.battleRoom = BattleRoom.createFromServerMessage(msg)
-      if msg.spectate_request_granted then
-        if not self.requestedSpectateRoom then
-          error("expected requested room")
-        end
-        GAME.battleRoom.spectating = true
-        GAME.battleRoom.playerNames[1] = self.requestedSpectateRoom.a
-        GAME.battleRoom.playerNames[2] = self.requestedSpectateRoom.b
-      else
-        GAME.battleRoom.playerNames[1] = config.name
-        GAME.battleRoom.playerNames[2] = msg.opponent
-        love.window.requestAttention()
-        play_optional_sfx(themes[config.theme].sounds.notification)
-      end
-      sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = msg})
-    end
-    if msg.players then
-      self.playerData = msg.players
-    end
-    if msg.unpaired then
-      self.unpaired_players = msg.unpaired
-      -- players who leave the unpaired list no longer have standing invitations to us.\
-      -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
-      local new_willing = {}
-      local new_sent_requests = {}
-      for _, player in ipairs(self.unpaired_players) do
-        new_willing[player] = self.willing_players[player]
-        new_sent_requests[player] = self.sent_requests[player]
-      end
-      self.willing_players = new_willing
-      self.sent_requests = new_sent_requests
-      if msg.spectatable then
-        self.spectatable_rooms = msg.spectatable
-      end
-    end
-
-    if msg.game_request then
-      self.willing_players[msg.game_request.sender] = true
-      love.window.requestAttention()
-      play_optional_sfx(themes[config.theme].sounds.notification)
-    end
-    if msg.leaderboard_report then
-      --if self.lobby_menu then
-      --  self.lobby_menu:show_controls(true)
-      --end
-      leaderboard_report = msg.leaderboard_report
-      for rank = #leaderboard_report, 1, -1 do
-        local user = leaderboard_report[rank]
-        if user.user_name == config.name then
-          self.my_rank = rank
-        end
-      end
-      leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
-      leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
-      leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-    end
+  for _, listener in pairs(self.messageListeners) do
+    listener:listen()
   end
 end
 
