@@ -6,6 +6,7 @@ local tableUtils = require("tableUtils")
 local logger = require("logger")
 local input = require("inputManager")
 local Label = require("ui.Label")
+local ClientRequests = require("network.ClientProtocol")
 
 --@module CharacterSelectOnline
 -- 
@@ -126,7 +127,7 @@ function CharacterSelectOnline:sendMenuState()
     end
   end
 
-  json_send({menu_state = menuState})
+  ClientRequests.sendMenuState(menuState)
 end
 
 function CharacterSelectOnline:updateConfig()

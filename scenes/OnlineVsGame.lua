@@ -5,6 +5,7 @@ local class = require("class")
 local Replay = require("replay")
 local logger = require("logger")
 local GameModes = require("GameModes")
+local ClientRequests = require("network.ClientProtocol")
 
 --@module puzzleGame
 -- Scene for a puzzle mode instance of the game
@@ -112,7 +113,7 @@ function OnlineVsGame:customRun()
   if self.match.P1.tooFarBehindError or self.match.P2.tooFarBehindError then
     Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, self.match, replay)
     GAME:clearMatch()
-    json_send({leave_room = true})
+    ClientRequests.leaveRoom()
     local ip = GAME.connected_server_ip
     local port = GAME.connected_network_port
     resetNetwork()
@@ -130,7 +131,7 @@ function OnlineVsGame:customRun()
 end
 
 function OnlineVsGame:customGameOverSetup()
-  json_send({game_over = true, outcome = self.match:getOutcome()["outcome_claim"]})
+  ClientRequests.reportLocalGameResult(self.match:getOutcome()["outcome_claim"])
   self.maxDisplayTime = 8
   self.nextScene = "CharacterSelectOnline"
 end

@@ -4,41 +4,9 @@ local msgTypes = NetworkProtocol.clientMessageTypes
 
 local ClientRequests = {}
 
--- players are challenged by their current name on the server
-function ClientRequests.challengePlayer(name)
-  local playerChallengeRequest =
-  {
-    game_request =
-    {
-      sender = config.name,
-      receiver = name
-    }
-  }
-
-  local request = Request(msgTypes.jsonMessage, playerChallengeRequest)
-  return request:send()
-end
-
-function ClientRequests.requestSpectate(roomNumber)
-  local spectateRequest =
-  {
-    spectate_request =
-    {
-      sender = config.name,
-      roomNumber = roomNumber
-    }
-  }
-
-  local request = Request(msgTypes.jsonMessage, spectateRequest, {"spectate_request_granted"})
-  return request:send()
-end
-
-function ClientRequests.requestLeaderboard()
-  local leaderboardRequest = {leaderboard_request = true}
-
-  local request = Request(msgTypes.jsonMessage, leaderboardRequest, {"leaderboard_report"})
-  return request:send()
-end
+-------------------------
+-- login related requests
+-------------------------
 
 function ClientRequests.requestLogin(userId)
   local loginMessage = {login_request = true, user_id = userId}
@@ -79,6 +47,84 @@ end
 function ClientRequests.requestVersionCompatibilityCheck()
 
   local request = Request(msgTypes.versionCheck, nil, {"versionCompatible"})
+  return request:send()
+end
+
+-------------------------
+-- Lobby related requests
+-------------------------
+
+-- players are challenged by their current name on the server
+function ClientRequests.challengePlayer(name)
+  local playerChallengeMessage =
+  {
+    game_request =
+    {
+      sender = config.name,
+      receiver = name
+    }
+  }
+
+  local request = Request(msgTypes.jsonMessage, playerChallengeMessage)
+  return request:send()
+end
+
+function ClientRequests.requestSpectate(roomNumber)
+  local spectateRequestMessage =
+  {
+    spectate_request =
+    {
+      sender = config.name,
+      roomNumber = roomNumber
+    }
+  }
+
+  local request = Request(msgTypes.jsonMessage, spectateRequestMessage, {"spectate_request_granted"})
+  return request:send()
+end
+
+function ClientRequests.requestLeaderboard()
+  local leaderboardRequestMessage = {leaderboard_request = true}
+
+  local request = Request(msgTypes.jsonMessage, leaderboardRequestMessage, {"leaderboard_report"})
+  return request:send()
+end
+
+------------------------------
+-- BattleRoom related requests
+------------------------------
+function ClientRequests.leaveRoom()
+  local leaveRoomMessage = {leave_room = true}
+  local request = Request(msgTypes.jsonMessage, leaveRoomMessage)
+  return request:send()
+end
+
+function ClientRequests.reportLocalGameResult(outcome)
+  local gameResultMessage = {game_over = true, outcome = outcome}
+  local request = Request(msgTypes.jsonMessage, gameResultMessage)
+  return request:send()
+end
+
+function ClientRequests.sendMenuState(menuState)
+  local menuStateMessage = {menu_state = menuState}
+  local request = Request(msgTypes.jsonMessage, menuStateMessage)
+  return request:send()
+end
+
+function ClientRequests.sendTaunt(direction, index)
+  local type = "taunt_" .. string.lower(direction) .. "s"
+  local tauntMessage = {taunt = true, type = type, index = index}
+  local request = Request(msgTypes.jsonMessage, tauntMessage)
+  return request:send()
+end
+
+-------------------------
+-- miscellaneous requests
+-------------------------
+
+function ClientRequests.sendErrorReport(errorData)
+  local errorReportMessage = {error_report = errorData}
+  local request = Request(msgTypes.jsonMessage, errorReportMessage)
   return request:send()
 end
 

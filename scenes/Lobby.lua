@@ -9,6 +9,7 @@ local input = require("inputManager")
 local logger = require("logger")
 local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
+local ClientRequests = require("network.ClientProtocol")
 
 local STATES = { Login = 1, Lobby = 2}
 
@@ -16,46 +17,36 @@ local STATES = { Login = 1, Lobby = 2}
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
 local Lobby = class(
   function (self, sceneParams)
-    self.backgroundImg = themes[config.theme].images.bg_main
-    
+    -- lobby data from the server
+    self.playerData = nil
     self.unpaired_players = {} -- list
     self.willing_players = {} -- set
     self.spectatable_rooms = {}
-
-    -- reset player ids and match type
-    -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
-    self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
-    self.leaderboard_string = ""
-    self.my_rank = nil
-
-    self.login_status_message = "   " .. loc("lb_login")
-    self.noticeTextObject = nil
-    self.noticeLastText = nil
-    self.login_status_message_duration = 2
-    self.login_denied = false
-    self.showing_leaderboard = false
-    self.lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-    self.lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
+    -- requests to play a match, not web requests
     self.sent_requests = {}
 
+    -- leaderboard data
+    self.showing_leaderboard = false
+    self.my_rank = nil
+    self.leaderboard_string = ""
+    self.leaderboardResponse = nil
+
+    -- ui
+    self.backgroundImg = themes[config.theme].images.bg_main
     self.lobby_menu = nil
-    self.lastPlayerIndex = 0
-    self.updated = true -- need update when first entering
-    self.ret = nil
-    self.requestedSpectateRoom = nil
-    self.playerData = nil
-    
-    self.transitioning = false
-    self.switchSceneLabel = nil
-    
-    -- set if needed in DefautUpdate
-    self.serverNoticeLabel = nil
-    self.loginDeniedMsg = nil
-    
-    --set in load
+    self.lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
+    self.lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
+    -- currently unused, need to find a new place to draw this later
+    self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
+
+    -- state fields to manage Lobby's update cycle    
     self.state = STATES.Login
-    self.lobbyMenu = nil
-    
+    self.updated = true -- need update when first entering
+
+    -- network features not yet implemented
+    self.spectateRequestResponse = nil
+    self.requestedSpectateRoom = nil
+
     self:load(sceneParams)
   end,
   Scene
@@ -64,18 +55,12 @@ local Lobby = class(
 Lobby.name = "Lobby"
 sceneManager:addScene(Lobby)
 
-local states = {SWITCH_SCENE = 1, SET_NAME = 2, DEFAULT = 3, SHOW_SERVER_NOTICE = 4}
-local SERVER_NOTICE_DISPLAY_TIME = 3
-
-local serverIp = nil
-local serverPort = nil
-
 function Lobby:toggleLeaderboard()
   self.updated = true
   if not self.showing_leaderboard then
     --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
     self.showing_leaderboard = true
-    json_send({leaderboard_request = true})
+    self.leaderboardResponse = ClientRequests.requestLeaderboard()
   else
     --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
     self.showing_leaderboard = false
@@ -85,10 +70,12 @@ end
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  resetNetwork()
   sceneManager:switchToScene("MainMenu")
 end
 
 function Lobby:start2pVsOnlineMatch(createRoomMessage)
+  -- Not yet implemented
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   love.window.requestAttention()
   play_optional_sfx(themes[config.theme].sounds.notification)
@@ -96,6 +83,7 @@ function Lobby:start2pVsOnlineMatch(createRoomMessage)
 end
 
 function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
+  -- Not yet implemented
   GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
   sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
 end
@@ -178,9 +166,9 @@ function Lobby:initLobbyMenu()
       },
       values = {false, true},
       selectedIndex = 1,
-      onChange = function(value) 
+      onChange = function(value)
         Menu.playMoveSfx()
-        -- enable leaderboard
+        self:toggleLeaderboard()
       end
     }
   )
@@ -212,10 +200,6 @@ function Lobby:load(sceneParams)
   end
   reset_filters()
 
-  -- reset match type
-  match_type = ""
-  match_type_message = ""
-
   self:initLobbyMenu()
 end
 
@@ -226,6 +210,15 @@ end
 function Lobby:processServerMessages()
   for _, listener in pairs(self.messageListeners) do
     listener:listen()
+  end
+
+  if self.leaderboardResponse then
+    local status, value = self.leaderboardResponse:tryGetValue()
+    if status == "timeout" then
+      self.leaderboardResponse = ClientRequests.requestLeaderboard()
+    elseif status == "received" then
+      self:updateLeaderboard(value)
+    end
   end
 end
 
@@ -240,7 +233,7 @@ end
 function Lobby:requestGameFunction(opponentName)
   return function()
     self.sent_requests[opponentName] = true
-    request_game(opponentName)
+    ClientRequests.challengePlayer(opponentName)
     self.updated = true
   end
 end
@@ -248,7 +241,7 @@ end
 function Lobby:requestSpectateFunction(room)
   return function()
     self.requestedSpectateRoom = room
-    request_spectate(room.roomNumber)
+    ClientRequests.requestSpectate(room.roomNumber)
   end
 end
 
@@ -276,7 +269,7 @@ function Lobby:defaultUpdate(dt)
   self.updated = false
 end
 
-local loginStateLabel = Label({text = "", translate = false, x = 500, y = 350})
+local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
 function Lobby:update(dt)
   self.backgroundImg:update(dt)
 

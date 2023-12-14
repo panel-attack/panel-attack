@@ -86,21 +86,6 @@ function net_send(stringData)
   return true
 end
 
--- Send a json message with the "J" type
-function json_send(obj)
-  local jsonResult = nil
-  local status, errorString = pcall(
-    function()
-      jsonResult = json.encode(obj)
-    end
-  )
-  if status == false and error and type(errorString) == "string" then
-      error("Crash sending JSON: " .. table_to_string(obj) .. " with error: " .. errorString)
-  end
-  local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.jsonMessage.prefix, jsonResult)
-  return net_send(message)
-end
-
 -- Cleans up "stonermode" used for testing laggy sends
 function undo_stonermode()
   GAME.sendNetworkQueue:clearAndProcess(processDataToSend)
@@ -132,8 +117,10 @@ function queue_message(type, data)
     logger.debug("Queuing: " .. type .. " with data:" .. data)
     server_queue:push(dataMessage)
   elseif type == NetworkProtocol.serverMessageTypes.versionCorrect.prefix then
+    -- make responses to client H messages processable via server_queue
     server_queue:push({versionCompatible = true})
   elseif type == NetworkProtocol.serverMessageTypes.versionWrong.prefix then
+    -- make responses to client H messages processable via server_queue
     server_queue:push({versionCompatible = false})
   elseif type == NetworkProtocol.serverMessageTypes.ping.prefix then
     net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
@@ -204,8 +191,7 @@ function send_error_report(errorData)
     return false
   end
   TCP_sock:settimeout(0)
-  local errorFull = { error_report = errorData }
-  json_send(errorFull)
+  ClientRequests.sendErrorReport(errorData)
   resetNetwork()
   return true
 end
@@ -236,25 +222,17 @@ function do_messages()
   return true
 end
 
-function request_game(opponentName)
-  json_send({game_request = {sender = config.name, receiver = opponentName}})
-end
-
-function request_spectate(roomNr)
-  json_send({spectate_request = {sender = config.name, roomNumber = roomNr}})
-end
-
 function Stack.handle_input_taunt(self)
 
   if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
     if TCP_sock then
-      json_send({taunt = true, type = "taunt_ups", index = self.taunt_up})
+      ClientRequests.sendTaunt("up", self.taunt_up)
     end
   elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
     self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
     if TCP_sock then
-      json_send({taunt = true, type = "taunt_downs", index = self.taunt_down})
+      ClientRequests.sendTaunt("down", self.taunt_down)
     end
   end
 end

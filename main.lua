@@ -22,6 +22,7 @@ local CustomRun = require("CustomRun")
 require("queue")
 local save = require("save")
 local Game = require("Game")
+local ClientRequests = require("network.ClientProtocol")
 -- move to load once global dependencies have been resolved
 GAME = Game()
 -- temp hack to keep modules dependent on the global gfx_q working, please use GAME:gfx_q instead
@@ -153,7 +154,7 @@ function love.quit()
     GAME.profiler.report("profiler.log")
   end
   if network_connected() then
-    json_send({logout = true})
+    ClientRequests.logout()
   end
   love.audio.stop()
   if love.window.getFullscreen() then
