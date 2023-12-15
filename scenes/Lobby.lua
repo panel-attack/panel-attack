@@ -26,7 +26,7 @@ local Lobby = class(
     self.sent_requests = {}
 
     -- leaderboard data
-    self.showing_leaderboard = false
+    self.showingLeaderboard = false
     self.my_rank = nil
     self.leaderboard_string = ""
     self.leaderboardResponse = nil
@@ -56,16 +56,17 @@ Lobby.name = "Lobby"
 sceneManager:addScene(Lobby)
 
 function Lobby:toggleLeaderboard()
+  Menu.playMoveSfx()
   self.updated = true
-  if not self.showing_leaderboard then
+  if not self.showingLeaderboard then
     --lobbyMenu:set_button_text(#lobbyMenu.buttons - 1, loc("lb_hide_board"))
-    self.showing_leaderboard = true
+    self.showingLeaderboard = true
     self.leaderboardResponse = ClientRequests.requestLeaderboard()
   else
     --lobbyMenu:set_button_text(#lobbyMenu.buttons - 1, loc("lb_show_board"))
-    self.showing_leaderboard = false
-    self.lobbyMenu.x = self.lobby_menu_x[self.showing_leaderboard]
+    self.showingLeaderboard = false
   end
+  self.lobbyMenu.x = self.lobby_menu_x[self.showingLeaderboard]
 end
 
 local function exitMenu()
@@ -158,27 +159,14 @@ function Lobby:updateLeaderboard(leaderboardReport)
 end
 
 function Lobby:initLobbyMenu()
-  local showLeaderboardButtonGroup = ButtonGroup(
-    {
-      buttons = {
-        TextButton({width = 60, label = Label({text = "op_off"})}),
-        TextButton({width = 60, label = Label({text = "op_on"})}),
-      },
-      values = {false, true},
-      selectedIndex = 1,
-      onChange = function(value)
-        Menu.playMoveSfx()
-        self:toggleLeaderboard()
-      end
-    }
-  )
+  
 
   local menuItems = {
-    {Label({text = "Leaderboard", translate = false}), showLeaderboardButtonGroup},
+    {TextButton({label = Label({text = "lb_show_board"}), onClick = function() self:toggleLeaderboard() end})},
     {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
   }
 
-  self.lobbyMenu = Menu({x = self.lobby_menu_x[showLeaderboardButtonGroup.value], y = self.lobby_menu_y, menuItems = menuItems})
+  self.lobbyMenu = Menu({x = self.lobby_menu_x[self.showingLeaderboard], y = self.lobby_menu_y, menuItems = menuItems})
 end
 
 function Lobby:load(sceneParams)
@@ -318,8 +306,8 @@ end
 function Lobby:draw()
   if self.state == STATES.Lobby then
     self.lobbyMenu:draw()
-    if self.showing_leaderboard and self.leaderboard_string and self.leaderboard_string ~= "" then
-      gprint(self.leaderboard_string, self.lobby_menu_x[self.showing_leaderboard] + 400, self.lobby_menu_y)
+    if self.showingLeaderboard and self.leaderboard_string and self.leaderboard_string ~= "" then
+      gprint(self.leaderboard_string, self.lobby_menu_x[self.showingLeaderboard] + 400, self.lobby_menu_y)
     end
   elseif self.state == STATES.Login then
     loginStateLabel:draw()
