@@ -46,15 +46,15 @@ local BUTTON_HEIGHT = 25
 
 function SimpleGameSetupMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  LocalPlayer:setSpeed(self.speedSlider.value)
-  LocalPlayer:setDifficulty(self.difficultyButtons.value)
+  GAME.localPlayer:setSpeed(self.speedSlider.value)
+  GAME.localPlayer:setDifficulty(self.difficultyButtons.value)
   if self.typeButtons.value == "Classic" then
-    LocalPlayer:setStyle(GameModes.Styles.CLASSIC)
+    GAME.localPlayer:setStyle(GameModes.Styles.CLASSIC)
   else
-    LocalPlayer:setStyle(GameModes.Styles.MODERN)
+    GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
   end
   write_conf_file()
-  LocalPlayer:setWantsReady(true)
+  GAME.localPlayer:setWantsReady(true)
 end
 
 local function exitMenu()

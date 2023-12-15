@@ -18,7 +18,6 @@ class(
   )
 
 function Replay.createNewReplay(match)
-  local battleRoom = match.battleRoom
   local result = {}
   result.engineVersion = VERSION
   result.replayVersion = REPLAY_VERSION
@@ -26,15 +25,15 @@ function Replay.createNewReplay(match)
   result.ranked = match_type == "Ranked"
   result.stage = match.stageId
   result.gameMode = {
-    stackInteraction = battleRoom.mode.stackInteraction,
-    winConditions = battleRoom.mode.winConditions or {},
-    timeLimit = battleRoom.mode.timeLimit,
-    doCountdown = battleRoom.mode.doCountdown or true
+    stackInteraction = match.stackInteraction,
+    winConditions = match.winConditions or {},
+    timeLimit = match.timeLimit,
+    doCountdown = match.doCountdown or true
   }
 
   result.players = {}
-  for i = 1, #battleRoom.players do
-    local player = battleRoom.players[i]
+  for i = 1, #match.players do
+    local player = match.players[i]
     result.players[i] = {
       name = player.name,
       wins = player.wins,
@@ -172,7 +171,7 @@ function Replay.finalizeReplay(match, replay)
   end
 end
 
-function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGame, match, replay)
+function Replay.finalizeAndWriteVsReplay(outcome_claim, incompleteGame, match, replay)
 
   incompleteGame = incompleteGame or false
 
@@ -182,15 +181,15 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     extraFilename = extraFilename .. "-WARNING-OCCURRED"
   end
 
-  if battleRoom.match.P2 then
-    local rep_a_name, rep_b_name = battleRoom.playerNames[1], battleRoom.playerNames[2]
+  if match.P2 then
+    local rep_a_name, rep_b_name = match.players[1].name, match.players[2].name
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
     if rep_b_name < rep_a_name then
       extraPath = rep_b_name .. "-vs-" .. rep_a_name
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. battleRoom.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. battleRoom.match.P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. match.P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
@@ -205,7 +204,7 @@ function Replay.finalizeAndWriteVsReplay(battleRoom, outcome_claim, incompleteGa
     end
   else -- vs Self
     extraPath = "Vs Self"
-    extraFilename = extraFilename .. "vsSelf-" .. "L" .. battleRoom.match.P1.level
+    extraFilename = extraFilename .. "vsSelf-" .. "L" .. match.P1.level
   end
 
   Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)

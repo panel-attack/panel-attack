@@ -221,6 +221,9 @@ end
 function CharacterSelect:unload()
   self.ui.grid:setVisibility(false)
   stop_the_music()
+  if self.customUnload then
+    self:customUnload()
+  end
 end
 
 return CharacterSelect

@@ -60,7 +60,7 @@ Stack =
       s.panels_dir = config.panels
     end
 
-    if s.match.mode == GameModes.ONE_PLAYER_PUZZLE then
+    if s.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
       s.drawsAnalytics = false
     else
       s.do_first_row = true
@@ -190,7 +190,7 @@ Stack =
     s.cur_col = 3 -- the column the left half of the cursor's on
     s.queuedSwapColumn = 0 -- the left column of the two columns to swap or 0 if no swap queued
     s.queuedSwapRow = 0 -- the row of the queued swap or 0 if no swap queued
-    s.top_cur_row = s.height + (s.match.mode == GameModes.ONE_PLAYER_PUZZLE and 0 or -1)
+    s.top_cur_row = s.height + (s.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE and 0 or -1)
 
     s.poppedPanelIndex = s.poppedPanelIndex or 1
     s.panels_cleared = s.panels_cleared or 0
@@ -220,7 +220,7 @@ Stack =
     s.opponentStack = nil -- the other stack you are playing against
     s.garbageTarget = nil -- the target you are sending attacks to
 
-    if s.match.mode.stackInteraction ~= GameModes.StackInteraction.NONE then
+    if s.match.stackInteraction ~= GameModes.StackInteraction.NONE then
       s.telegraph = Telegraph(s)
       -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
       -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
@@ -1195,7 +1195,7 @@ function Stack.updateDangerBounce(self)
     end
   end
   if self.danger then
-    if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= GameModes.ONE_PLAYER_PUZZLE then
+    if self.panels_in_top_row and self.speed ~= 0 and self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE then
       -- Player has topped out, panels hold the "flattened" frame
       self.danger_timer = 15
     elseif self.stop_time == 0 then
@@ -1210,7 +1210,7 @@ end
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
 function Stack.shouldPlayDangerMusic(self)
-  if self.match.mode.timeLimit then
+  if self.match.timeLimit then
     if self.game_stopwatch > TIME_ATTACK_TIME * 60 - 900 --[[15 seconds assuming 60 FPS]] then
       return true
     end
@@ -1335,7 +1335,7 @@ function Stack.simulate(self)
     -- Phase 0 //////////////////////////////////////////////////////////////
     -- Stack automatic rising
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
-      if self.match.mode == GameModes.ONE_PLAYER_PUZZLE then
+      if self.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
         -- only reduce health after the first swap to give the player a chance to strategize
         if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
           self.health = self.health - 1
@@ -1348,7 +1348,7 @@ function Stack.simulate(self)
             self:set_game_over()
           end
         else
-          if self.match.mode ~= GameModes.ONE_PLAYER_PUZZLE then
+          if self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE then
             self.rise_timer = self.rise_timer - 1
             if self.rise_timer <= 0 then -- try to rise
               self.displacement = self.displacement - 1
@@ -1364,7 +1364,7 @@ function Stack.simulate(self)
       end
     end
 
-    if not self.panels_in_top_row and self.match.mode ~= GameModes.ONE_PLAYER_PUZZLE and not self:has_falling_garbage() then
+    if not self.panels_in_top_row and self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE and not self:has_falling_garbage() then
       self.health = self.levelData.maxHealth
     end
 
@@ -1447,7 +1447,7 @@ function Stack.simulate(self)
     end
 
     -- MANUAL STACK RAISING
-    if self.manual_raise and self.match.mode ~= GameModes.ONE_PLAYER_PUZZLE then
+    if self.manual_raise and self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE then
       if not self.rise_lock then
         if self.panels_in_top_row then
           self:set_game_over()
@@ -1653,7 +1653,7 @@ function Stack.simulate(self)
     end
 
     -- In time attack, play countdown sound every second when there's 15 seconds left
-    if  self.match.mode.timeLimit and
+    if  self.match.timeLimit and
         self.game_stopwatch and
         self.game_stopwatch >= TIME_ATTACK_TIME * 60 - 900 and
         self.game_stopwatch % 60 == 0 and 
@@ -1671,7 +1671,7 @@ function Stack.simulate(self)
       end
       if SFX_Cur_Move_Play == 1 then
         -- I have no idea why this makes a distinction for vs, like what?
-        if not (self.match.mode.stackInteraction ~= GameModes.StackInteraction.NONE and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
+        if not (self.match.stackInteraction ~= GameModes.StackInteraction.NONE and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
           self.theme.sounds.cur_move:stop()
           self.theme.sounds.cur_move:play()
         end
@@ -1921,7 +1921,7 @@ end
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
 
-  if self.match.mode == GameModes.ONE_PLAYER_PUZZLE then
+  if self.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
     if self:puzzle_done() or self:puzzle_failed() then
       return true
     else
@@ -1931,11 +1931,11 @@ function Stack.game_ended(self)
 
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
-  if self.match.mode.StackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
+  if self.match.StackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
     if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
       return true
     end
-  elseif self.match.mode.timeLimit then
+  elseif self.match.timeLimit then
     if self.game_stopwatch then
       if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
         return true
@@ -1961,18 +1961,18 @@ function Stack.gameResult(self)
 
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
-  if self.match.mode.stackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
+  if self.match.stackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
     if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
       return 1
     end
   end
 
-  if self.match.mode.stackInteraction == GameModes.StackInteraction.SELF then
+  if self.match.stackInteraction == GameModes.StackInteraction.SELF then
     -- can't win against yourself :-(
     return -1
   end
 
-  if self.match.mode.stackInteraction == GameModes.StackInteraction.VERSUS then
+  if self.match.stackInteraction == GameModes.StackInteraction.VERSUS then
     if self.opponentStack:game_ended() then
       if self.game_over_clock == gameEndedClockTime and self.opponentStack.game_over_clock == gameEndedClockTime then
         return 0
@@ -1984,14 +1984,14 @@ function Stack.gameResult(self)
     end
   end
 
-  if self.match.mode.timeLimit and self.game_stopwatch then
-    if self.game_stopwatch > self.match.mode.timeLimit * 60 then
+  if self.match.timeLimit and self.game_stopwatch then
+    if self.game_stopwatch > self.match.timeLimit * 60 then
       -- we didn't die within the time limit so that's a win I guess?
       return 1
     end
   end
 
-  if self.match.mode == GameModes.ONE_PLAYER_PUZZLE then
+  if self.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
     if self:puzzle_done() then
       return 1
     elseif self:puzzle_failed() then
@@ -2402,7 +2402,7 @@ function Stack.onPop(self, panel)
     self.score = self.score + 10
 
     self.panels_cleared = self.panels_cleared + 1
-    if self.match.mode.stackInteraction ~= GameModes.StackInteraction.NONE
+    if self.match.stackInteraction ~= GameModes.StackInteraction.NONE
         and self.panels_cleared % self.levelData.shockFrequency == 0 then
           self.metal_panels_queued = min(self.metal_panels_queued + 1, self.levelData.shockCap)
     end
