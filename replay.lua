@@ -57,23 +57,18 @@ function Replay.createNewReplay(match)
 end
 
 function Replay.replayCanBeViewed(replay)
-  if replay.engineVersion >= VERSION_MIN_VIEW and replay.engineVersion <= VERSION then
-    if replay.engineVersion < consts.ENGINE_VERSIONS.LEVELDATA then
-      if replay.vs then
-        -- before v048 there were no non-vs replays with level recorded
-        if replay.vs.P1_level == 11 or (replay.vs.P2_level and replay.vs.P2_level == 11) then
-          -- if one of the players is playing on level 11, we can't view the replay
-          return false
-        end
-      end
-    end
-  end
-
-  if not replay.puzzle then
+  if replay.engineVersion > VERSION then
+    -- replay is from a newer game version, we can't watch
+    -- or maybe we can but there is no way to verify we can
+    return false
+  elseif replay.engineVersion < VERSION_MIN_VIEW then
+    -- there were breaking changes since the version the replay was recorded on
+    -- definitely can not watch
+    return false
+  else
+    -- can view this one
     return true
   end
-
-  return false
 end
 
 function Replay.loadFromPath(path)
