@@ -324,7 +324,7 @@ end
 
 function love.resize(newWidth, newHeight)
   if GAME then
-    GAME:handleResize()
+    GAME:handleResize(newWidth, newHeight)
   end
 end
 
