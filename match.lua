@@ -17,6 +17,12 @@ Match =
     self.timeLimit = battleRoom.mode.timeLimit
     self.doCountdown = battleRoom.mode.doCountdown
     self.winConditions = battleRoom.mode.winConditions
+
+    assert(battleRoom.players and #battleRoom.players > 0)
+    for i = 1, #battleRoom.players do
+      self:addPlayer(battleRoom.players[i])
+    end
+
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
     self.maxTimeSpentRunning = 0
@@ -541,7 +547,7 @@ function Match:render()
         challengeMode:render()
       end
 
-      if self.stackInteraction ~= GameModes.StackInteractions.NONE then
+      if self.stackInteraction ~= GameModes.StackInteraction.NONE then
         if P1 and P1.telegraph then
           P1.telegraph:render()
         end
@@ -551,7 +557,7 @@ function Match:render()
       end
 
       -- Draw VS HUD
-      if self.stackInteraction == GameModes.StackInteractions.VERSUS then
+      if self.stackInteraction == GameModes.StackInteraction.VERSUS then
         if not config.debug_mode then --this is printed in the same space as the debug details
           -- TODO: get spectator string from battleRoom
           --gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])

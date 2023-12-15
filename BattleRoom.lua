@@ -107,11 +107,6 @@ end
 -- creates a match with the players in the BattleRoom
 function BattleRoom:createMatch()
   self.match = Match(self)
-
-  for i = 1, #self.players do
-    self.match:addPlayer(self.players[i])
-  end
-
   return self.match
 end
 
