@@ -1,6 +1,7 @@
 local class = require("class")
 local ClientRequests = require("network.ClientProtocol")
 
+-- TODO: recheck label assignments, the return when the name is taken is crap somehow
 -- returns true/false as the first return value to indicate success or failure of the login
 -- returns a string with a message to display for the user
 -- not meant to be called directly as it may block update for a good while, hence local, use the LoginRoutine instead!

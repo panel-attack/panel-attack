@@ -41,7 +41,6 @@ local Lobby = class(
 
     -- state fields to manage Lobby's update cycle    
     self.state = STATES.Login
-    self.updated = true -- need update when first entering
 
     -- network features not yet implemented
     self.spectateRequestResponse = nil
@@ -55,19 +54,9 @@ local Lobby = class(
 Lobby.name = "Lobby"
 sceneManager:addScene(Lobby)
 
-function Lobby:toggleLeaderboard()
-  Menu.playMoveSfx()
-  self.updated = true
-  if not self.showingLeaderboard then
-    --lobbyMenu:set_button_text(#lobbyMenu.buttons - 1, loc("lb_hide_board"))
-    self.showingLeaderboard = true
-    self.leaderboardResponse = ClientRequests.requestLeaderboard()
-  else
-    --lobbyMenu:set_button_text(#lobbyMenu.buttons - 1, loc("lb_show_board"))
-    self.showingLeaderboard = false
-  end
-  self.lobbyMenu.x = self.lobby_menu_x[self.showingLeaderboard]
-end
+----------
+-- exit --
+----------
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -75,50 +64,61 @@ local function exitMenu()
   sceneManager:switchToScene("MainMenu")
 end
 
-function Lobby:start2pVsOnlineMatch(createRoomMessage)
-  -- Not yet implemented
-  GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
-  love.window.requestAttention()
-  play_optional_sfx(themes[config.theme].sounds.notification)
-  sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = createRoomMessage})
+function Lobby:unload()
+  self.lobbyMenu:setVisibility(false)
 end
 
-function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
-  -- Not yet implemented
-  GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
-  sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
-end
+-------------
+-- startup --
+-------------
 
-function Lobby:updateLobbyState(lobbyStateMessage)
-  if lobbyStateMessage.players then
-    self.playerData = lobbyStateMessage.players
-  end
-  if lobbyStateMessage.unpaired then
-    self.unpaired_players = lobbyStateMessage.unpaired
-    -- players who leave the unpaired list no longer have standing invitations to us.\
-    -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
-    local new_willing = {}
-    local new_sent_requests = {}
-    for _, player in ipairs(self.unpaired_players) do
-      new_willing[player] = self.willing_players[player]
-      new_sent_requests[player] = self.sent_requests[player]
-    end
-    self.willing_players = new_willing
-    self.sent_requests = new_sent_requests
-    if lobbyStateMessage.spectatable then
-      self.spectatable_rooms = lobbyStateMessage.spectatable
+function Lobby:load(sceneParams)
+  self.loginRoutine = LoginRoutine(sceneParams.serverIp, sceneParams.serverPort)
+  self.messageListeners = {}
+  self.messageListeners["create_room"] = MessageListener("create_room")
+  self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)
+  self.messageListeners["players"] = MessageListener("players")
+  self.messageListeners["players"]:subscribe(self, self.updateLobbyState)
+  self.messageListeners["game_request"] = MessageListener("game_request")
+  self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
+
+  if next(currently_playing_tracks) == nil then
+    stop_the_music()
+    if themes[config.theme].musics["main"] then
+      find_and_add_music(themes[config.theme].musics, "main")
     end
   end
-  self.updated = true
+  reset_filters()
+
+  self:initLobbyMenu()
 end
 
-function Lobby:processGameRequest(gameRequestMessage)
-  if gameRequestMessage.game_request then
-    self.updated = true
-    self.willing_players[gameRequestMessage.game_request.sender] = true
-    love.window.requestAttention()
-    play_optional_sfx(themes[config.theme].sounds.notification)
+function Lobby:initLobbyMenu()
+  self.leaderboardToggleLabel = Label({text = "lb_show_board"})
+  self.leaderboardToggleButton = TextButton({label = self.leaderboardToggleLabel, onClick = function() self:toggleLeaderboard() end})
+  local menuItems = {
+    {self.leaderboardToggleButton},
+    {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
+  }
+
+  self.lobbyMenu = Menu({x = self.lobby_menu_x[self.showingLeaderboard], y = self.lobby_menu_y, menuItems = menuItems})
+end
+
+-----------------
+-- leaderboard --
+-----------------
+
+function Lobby:toggleLeaderboard()
+  Menu.playMoveSfx()
+  if not self.showingLeaderboard then
+    self.leaderboardToggleLabel:setText("lb_hide_board")
+    self.showingLeaderboard = true
+    self.leaderboardResponse = ClientRequests.requestLeaderboard()
+  else
+    self.leaderboardToggleLabel:setText("lb_show_board")
+    self.showingLeaderboard = false
   end
+  self.lobbyMenu.x = self.lobby_menu_x[self.showingLeaderboard]
 end
 
 local function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
@@ -144,7 +144,6 @@ end
 
 function Lobby:updateLeaderboard(leaderboardReport)
   if leaderboardReport.leaderboard_report then
-    self.updated = true
     local leaderboard_report = leaderboardReport.leaderboard_report
     for rank = #leaderboard_report, 1, -1 do
       local user = leaderboard_report[rank]
@@ -158,48 +157,143 @@ function Lobby:updateLeaderboard(leaderboardReport)
   end
 end
 
-function Lobby:initLobbyMenu()
-  
+--------------------------------
+-- Processing server messages --
+--------------------------------
 
-  local menuItems = {
-    {TextButton({label = Label({text = "lb_show_board"}), onClick = function() self:toggleLeaderboard() end})},
-    {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
-  }
-
-  self.lobbyMenu = Menu({x = self.lobby_menu_x[self.showingLeaderboard], y = self.lobby_menu_y, menuItems = menuItems})
+function Lobby:processGameRequest(gameRequestMessage)
+  if gameRequestMessage.game_request then
+    self.willing_players[gameRequestMessage.game_request.sender] = true
+    love.window.requestAttention()
+    play_optional_sfx(themes[config.theme].sounds.notification)
+    -- this might be moot if the server sends a lobby update to everyone after receiving the challenge
+    self:onLobbyStateUpdate()
+  end
 end
 
-function Lobby:load(sceneParams)
-  self.loginRoutine = LoginRoutine(sceneParams.serverIp, sceneParams.serverPort)
-  self.messageListeners = {}
-  self.messageListeners["create_room"] = MessageListener("create_room")
-  self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)
-  self.messageListeners["players"] = MessageListener("players")
-  self.messageListeners["players"]:subscribe(self, self.updateLobbyState)
-  self.messageListeners["game_request"] = MessageListener("game_request")
-  self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
-
-  --main_net_vs_lobby
-  if next(currently_playing_tracks) == nil then
-    stop_the_music()
-    if themes[config.theme].musics["main"] then
-      find_and_add_music(themes[config.theme].musics, "main")
+-- populates playerData, willing_players, sent_requests and unpaired_players from the server messages
+function Lobby:updateLobbyState(lobbyStateMessage)
+  if lobbyStateMessage.players then
+    self.playerData = lobbyStateMessage.players
+  end
+  if lobbyStateMessage.unpaired then
+    self.unpaired_players = lobbyStateMessage.unpaired
+    -- players who leave the unpaired list no longer have standing invitations to us.\
+    -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
+    local new_willing = {}
+    local new_sent_requests = {}
+    for _, player in ipairs(self.unpaired_players) do
+      new_willing[player] = self.willing_players[player]
+      new_sent_requests[player] = self.sent_requests[player]
+    end
+    self.willing_players = new_willing
+    self.sent_requests = new_sent_requests
+    if lobbyStateMessage.spectatable then
+      self.spectatable_rooms = lobbyStateMessage.spectatable
     end
   end
-  reset_filters()
-
-  self:initLobbyMenu()
+  self:onLobbyStateUpdate()
 end
 
-function Lobby:drawBackground()
-  self.backgroundImg:draw()
+-- starts a 2p vs online match
+function Lobby:start2pVsOnlineMatch(createRoomMessage)
+  -- Not yet implemented
+  GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
+  love.window.requestAttention()
+  play_optional_sfx(themes[config.theme].sounds.notification)
+  sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = createRoomMessage})
+end
+
+-- starts to spectate a 2p vs online match
+function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
+  -- Not yet implemented
+  GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
+  sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
+end
+
+function Lobby:playerRatingString(playerName)
+  local rating = ""
+  if self.playerData and self.playerData[playerName] and self.playerData[playerName].rating then
+    rating = " (" .. self.playerData[playerName].rating .. ")"
+  end
+  return rating
+end
+
+-- challenges the opponent with that name
+function Lobby:requestGameFunction(opponentName)
+  return function()
+    self.sent_requests[opponentName] = true
+    ClientRequests.challengePlayer(opponentName)
+    self:onLobbyStateUpdate()
+  end
+end
+
+-- requests to spectate the specified room
+function Lobby:requestSpectateFunction(room)
+  return function()
+    self.requestedSpectateRoom = room
+    self.spectateRequestResponse = ClientRequests.requestSpectate(room.roomNumber)
+  end
+end
+
+-- rebuilds the UI based on the new lobby information
+function Lobby:onLobbyStateUpdate()
+  if self.updated then
+    while #self.lobbyMenu.menuItems > 2 do
+      self.lobbyMenu:removeMenuItemAtIndex(1)
+    end
+    for _, v in ipairs(self.unpaired_players) do
+      if v ~= config.name then
+        local unmatchedPlayer = v .. self:playerRatingString(v)
+        if self.sent_requests[v] then
+          unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_request")
+        end
+        if self.willing_players[v] then
+          unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
+        end
+        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})})
+      end
+    end
+    for _, room in ipairs(self.spectatable_rooms) do
+      if room.name then
+        local playerA = room.a .. self:playerRatingString(room.a)
+        local playerB = room.b .. self:playerRatingString(room.b)
+        local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
+        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})})
+      end
+    end
+  end
+
+  self.updated = false
+end
+
+----------------------
+-- network handling --
+----------------------
+
+local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
+function Lobby:handleLogin()
+  local done, result = self.loginRoutine:progress()
+  if not done then
+    loginStateLabel:setText(result)
+  else
+    if result.loggedIn then
+      self.state = STATES.Lobby
+    else
+      loginStateLabel:setText(result.message)
+      if not self.loginScreenTimer then
+        self.loginScreenTimer = GAME.timer + 5
+      end
+      if GAME.timer > self.loginScreenTimer then
+        self.loginScreenTimer = nil
+        sceneManager:switchToScene("MainMenu")
+      end
+    end
+  end
 end
 
 function Lobby:processServerMessages()
-  for message, listener in pairs(self.messageListeners) do
-    if message == "players" then
-      local phi = 5
-    end
+  for _, listener in pairs(self.messageListeners) do
     listener:listen()
   end
 
@@ -211,96 +305,47 @@ function Lobby:processServerMessages()
       self:updateLeaderboard(value)
     end
   end
-end
 
-function Lobby:playerRatingString(playerName)
-  local rating = ""
-  if self.playerData and self.playerData[playerName] and self.playerData[playerName].rating then
-    rating = " (" .. self.playerData[playerName].rating .. ")"
-  end
-  return rating
-end
-
-function Lobby:requestGameFunction(opponentName)
-  return function()
-    self.sent_requests[opponentName] = true
-    ClientRequests.challengePlayer(opponentName)
-    self.updated = true
-  end
-end
-
-function Lobby:requestSpectateFunction(room)
-  return function()
-    self.requestedSpectateRoom = room
-    ClientRequests.requestSpectate(room.roomNumber)
-  end
-end
-
-function Lobby:defaultUpdate(dt)
-  -- If we got an update to the lobby, refresh the menu
-  if self.updated then
-    while #self.lobbyMenu.menuItems > 2 do
-      self.lobbyMenu:removeMenuItemAtIndex(1)
-    end
-    for _, v in ipairs(self.unpaired_players) do
-      if v ~= config.name then
-        local unmatchedPlayer = v .. self:playerRatingString(v) .. (self.sent_requests[v] and " " .. loc("lb_request") or "") .. (self.willing_players[v] and " " .. loc("lb_received") or "")
-        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})})
-      end
-    end
-    for _, room in ipairs(self.spectatable_rooms) do
-      if room.name then
-        local roomName = loc("lb_spectate") .. " " .. room.a .. self:playerRatingString(room.a) .. " vs " .. room.b .. self:playerRatingString(room.b) .. " (" .. room.state .. ")"
-        --local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
-        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})})
-      end
+  if self.spectateRequestResponse then
+    local status, value = self.spectateRequestResponse:tryGetValue()
+    if status == "timeout" then
+      self.spectateRequestResponse = ClientRequests.requestSpectate(self.requestedSpectateRoom.roomNumber)
+    elseif status == "received" then
+      -- Not Yet Implemented
+      self:spectate2pVsOnlineMatch(value)
     end
   end
-
-  self.updated = false
 end
 
-local i = 0
-local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
+------------------------------
+-- scene core functionality --
+------------------------------
+
 function Lobby:update(dt)
   self.backgroundImg:update(dt)
 
   if self.state == STATES.Login then
-    local done, result = self.loginRoutine:progress()
-    if not done then
-      loginStateLabel:setText(result)
-    else
-      if result.loggedIn then
-        self.state = STATES.Lobby
-      else
-        loginStateLabel:setText(result.message)
-        if not self.loginScreenTimer then
-          self.loginScreenTimer = GAME.timer + 5
-        end
-        if GAME.timer > self.loginScreenTimer then
-          self.loginScreenTimer = nil
-          sceneManager:switchToScene("MainMenu")
-        end
-      end
-    end
+    self:handleLogin()
   else
     -- We are in the lobby, we shouldn't have any game data messages
     drop_old_data_messages()
 
     self:processServerMessages()
     self.lobbyMenu:update()
-    self:defaultUpdate(dt)
-    i = i + 1
   end
 
   if not do_messages() then
-    -- try to log back in
+    -- automatic reconnect
     self.state = STATES.Login
     self.loginRoutine = LoginRoutine(GAME.connected_server_ip, GAME.connected_server_port)
     resetNetwork()
   end
 
   GAME.gfx_q:push({self.draw, {self}})
+end
+
+function Lobby:drawBackground()
+  self.backgroundImg:draw()
 end
 
 function Lobby:draw()
@@ -312,10 +357,6 @@ function Lobby:draw()
   elseif self.state == STATES.Login then
     loginStateLabel:draw()
   end
-end
-
-function Lobby:unload()
-  self.lobbyMenu:setVisibility(false)
 end
 
 return Lobby
