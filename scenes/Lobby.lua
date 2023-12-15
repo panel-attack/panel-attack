@@ -217,13 +217,13 @@ function Lobby:start2pVsOnlineMatch(createRoomMessage)
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   love.window.requestAttention()
   play_optional_sfx(themes[config.theme].sounds.notification)
-  sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = createRoomMessage})
+  sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
 end
 
 -- starts to spectate a 2p vs online match
 function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
   -- Not yet implemented
-  GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
+  local battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
   sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
 end
 

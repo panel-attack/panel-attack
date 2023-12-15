@@ -288,4 +288,39 @@ function Player.getLocalPlayer()
   return player
 end
 
+function Player:updateWithMenuState(menuState)
+  if characters[menuState.characterId] then
+    -- if we have their character, use it
+    self:setCharacter(menuState.characterId)
+  elseif menuState.selectedCharacterId and characters[menuState.selectedCharacterId] then
+    -- if we don't have their character rolled from their bundle, but the bundle itself, use that
+    -- very unlikely tbh
+    self:setCharacter(menuState.selectedCharacterId)
+  elseif self.settings.characterId == "" then
+    -- we don't have their character and we didn't roll them a random character yet
+    self:setCharacter(random_character_special_value)
+  end
+
+  if stages[menuState.stageId] then
+    -- if we have their stage, use it
+    self:setStage(menuState.stageId)
+  elseif menuState.selectedStageId and stages[menuState.selectedStageId] then
+    -- if we don't have their stage rolled from their bundle, but the bundle itself, use that
+    -- very unlikely tbh
+    self:setStage(menuState.selectedStageId)
+  elseif self.settings.stageId == "" then
+    -- we don't have their stage and we didn't roll them a random stage yet
+    self:setStage(random_stage_special_value)
+  end
+
+  self:setWantsRanked(menuState.wantsRanked)
+  if menuState.panelId then
+    -- panelId may be absent in some messages due to a server bug
+    self:setPanels(menuState.panelId)
+  end
+
+  self:setLevel(menuState.level)
+  self:setInputMethod(menuState.inputMethod)
+end
+
 return Player

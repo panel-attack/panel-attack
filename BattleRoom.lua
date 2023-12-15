@@ -5,6 +5,8 @@ local tableUtils = require("tableUtils")
 local sceneManager = require("scenes.sceneManager")
 local GameModes = require("GameModes")
 local class = require("class")
+local ServerMessages = require("network.ServerMessages")
+local ClientMessages = require("network.ClientProtocol")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom =
@@ -18,6 +20,10 @@ BattleRoom =
     self.trainingModeSettings = nil
     self.allAssetsLoaded = false
     self.ranked = false
+    if GAME.tcpClient:isConnected() then
+      -- this is a bit naive but effective
+      self.online = true
+    end
   end
 )
 
@@ -49,7 +55,28 @@ function BattleRoom.createFromReplay(replay)
 end
 
 function BattleRoom.createFromServerMessage(message)
+  -- two player versus being the only option so far
+  -- in the future this information might be in the message!
+  local battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
   -- TODO for networking
+  if message.spectate_request_granted then
+    battleRoom.spectating = true
+  else
+    message = ServerMessages.sanitizeCreateRoom(message)
+    -- player 1 is always the local player so that data can be ignored in favor of local data
+    battleRoom:addPlayer(GAME.localPlayer)
+    GAME.localPlayer.playerNumber = message.players[1].playerNumber
+    GAME.localPlayer.rating = message.players[1].ratingInfo
+
+    local player2 = Player(message.players[2].name, message.players[2].playerNumber, false)
+    player2:updateWithMenuState(message.players[2])
+    battleRoom:addPlayer(player2)
+  end
+
+  battleRoom:setupSettingsListeners()
+  battleRoom:registerCallbacks()
+
+  return battleRoom
 end
 
 function BattleRoom.createLocalFromGameMode(gameMode)
@@ -248,7 +275,17 @@ function BattleRoom:startLoadingNewAssets()
 end
 
 function BattleRoom:update()
-  -- here we fetch network updates and update the match setup if applicable
+  -- here we fetch network updates and update the battleroom / match
+  if self.online then
+    if not GAME.tcpClient:processIncomingMessages() then
+      -- oh no, we probably disconnected
+      self:shutdownOnline()
+      -- let's try to log in back via lobby
+      sceneManager:switchToScene("Lobby")
+    else
+      self:runNetworkTasks()
+    end
+  end
 
   -- if there are still unloaded assets, we can load them 1 asset a frame in the background
   StageLoader.update()
