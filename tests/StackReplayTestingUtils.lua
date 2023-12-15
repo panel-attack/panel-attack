@@ -14,9 +14,9 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
     playerCount = 1
   end
   local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_ENDLESS)
-  LocalPlayer.settings.speed = speed
-  LocalPlayer.settings.difficulty = difficulty
-  LocalPlayer.settings.level = level
+  battleRoom.players[1].settings.speed = speed
+  battleRoom.players[1].settings.difficulty = difficulty
+  battleRoom.players[1].settings.level = level
 
   if playerCount == 2 then
     local player = Player.getLocalPlayer()

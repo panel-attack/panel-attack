@@ -139,17 +139,19 @@ function Game:setupCoroutine()
   self:initializeLocalPlayer()
 end
 
+-- GAME.localPlayer is the standard player for battleRooms that don't get started from replays/spectate
+-- it basically represents the player that is operating the client (and thus binds to its configuration)
 function Game:initializeLocalPlayer()
-  LocalPlayer = Player.getLocalPlayer()
-  LocalPlayer:subscribe(config, "characterId", function(config, newId) config.character = newId end)
-  LocalPlayer:subscribe(config, "stageId", function(config, newId) config.stage = newId end)
-  LocalPlayer:subscribe(config, "panelId", function(config, newId) config.panels = newId end)
-  LocalPlayer:subscribe(config, "inputMethod", function(config, inputMethod) config.inputMethod = inputMethod end)
-  LocalPlayer:subscribe(config, "speed", function(config, speed) config.endless_speed = speed end)
-  LocalPlayer:subscribe(config, "difficulty", function(config, difficulty) config.endless_difficulty = difficulty end)
-  LocalPlayer:subscribe(config, "level", function(config, level) config.level = level end)
-  LocalPlayer:subscribe(config, "wantsRanked", function(config, wantsRanked) config.ranked = wantsRanked end)
-  LocalPlayer:subscribe(config, "style", function(config, style)
+  self.localPlayer = Player.getLocalPlayer()
+  self.localPlayer:subscribe(config, "characterId", function(config, newId) config.character = newId end)
+  self.localPlayer:subscribe(config, "stageId", function(config, newId) config.stage = newId end)
+  self.localPlayer:subscribe(config, "panelId", function(config, newId) config.panels = newId end)
+  self.localPlayer:subscribe(config, "inputMethod", function(config, inputMethod) config.inputMethod = inputMethod end)
+  self.localPlayer:subscribe(config, "speed", function(config, speed) config.endless_speed = speed end)
+  self.localPlayer:subscribe(config, "difficulty", function(config, difficulty) config.endless_difficulty = difficulty end)
+  self.localPlayer:subscribe(config, "level", function(config, level) config.level = level end)
+  self.localPlayer:subscribe(config, "wantsRanked", function(config, wantsRanked) config.ranked = wantsRanked end)
+  self.localPlayer:subscribe(config, "style", function(config, style)
     if style == GameModes.Styles.CLASSIC then
       config.endless_level = nil
     else
@@ -236,10 +238,11 @@ function Game:runUnitTests()
   self:drawLoadingString("Running Unit Tests")
   coroutine.yield()
 
-  -- LocalPlayer is the standard player for battleRooms that don't get started from replays/spectate
-  LocalPlayer = Player.getLocalPlayer()
+  -- GAME.localPlayer is the standard player for battleRooms that don't get started from replays/spectate
+  -- basically the player that is operating the client
+  GAME.localPlayer = Player.getLocalPlayer()
   -- we need to overwrite the local player as all replay related tests need a non-local player
-  LocalPlayer.isLocal = false
+  GAME.localPlayer.isLocal = false
 
   logger.info("Running Unit Tests...")
   local status, err = xpcall(function() require("tests.Tests") end, debug.traceback)

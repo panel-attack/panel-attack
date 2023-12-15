@@ -60,8 +60,8 @@ function PuzzleMenu:startGame(puzzleSet)
 
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
 
-  LocalPlayer:setPuzzleSet(puzzleSet)
-  LocalPlayer:setWantsReady(true)
+  GAME.localPlayer:setPuzzleSet(puzzleSet)
+  GAME.localPlayer:setWantsReady(true)
 end
 
 local function exitMenu()

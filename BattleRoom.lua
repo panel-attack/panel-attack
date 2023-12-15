@@ -53,8 +53,8 @@ end
 function BattleRoom.createLocalFromGameMode(gameMode)
   local battleRoom = BattleRoom(gameMode)
 
-  -- always use the global local player
-  battleRoom:addPlayer(LocalPlayer)
+  -- always use the game client's local player
+  battleRoom:addPlayer(GAME.localPlayer)
   for i = 2, gameMode.playerCount do
     battleRoom.addPlayer(Player.getLocalPlayer())
   end
