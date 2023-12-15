@@ -26,13 +26,13 @@ local Lobby = class(function(self, sceneParams)
   self.sentRequests = {}
 
   -- leaderboard data
-  self.showingLeaderboard = false
   self.myRank = nil
   self.leaderboardString = ""
   self.leaderboardResponse = nil
 
   -- ui
   self.backgroundImg = themes[config.theme].images.bg_main
+  self.leaderboardLabel = nil
   self.lobbyMenu = nil
   self.lobbyMenuXoffsetMap = {
     [true] = -200,
@@ -125,16 +125,14 @@ end
 
 function Lobby:toggleLeaderboard()
   Menu.playMoveSfx()
-  if not self.showingLeaderboard then
+  if not self.leaderboardLabel.isVisible then
     self.leaderboardToggleLabel:setText("lb_hide_board")
-    self.showingLeaderboard = true
     self.leaderboardResponse = ClientRequests.requestLeaderboard()
     self.leaderboardLabel:setVisibility(true)
   else
     self.leaderboardToggleLabel:setText("lb_show_board")
-    self.leaderboardLabel:setVisibility(false)
-    self.showingLeaderboard = false
   end
+  self.leaderboardLabel:setVisibility(not self.leaderboardLabel.isVisible)
   self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.leaderboardLabel.isVisible]
 end
 
