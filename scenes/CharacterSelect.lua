@@ -102,7 +102,7 @@ function CharacterSelect:createReadyButton()
     if inputSource.player then
       player = inputSource.player
     else
-      player = LocalPlayer
+      player = GAME.localPlayer
     end
     player:setWantsReady(not player.settings.wantsReady)
   end
@@ -145,6 +145,10 @@ function CharacterSelect:createStageCarousel(player, width)
   stageCarousel.onPassengerUpdateCallback = function ()
     player:setStage(stageCarousel:getSelectedPassenger().id)
   end
+
+  -- to update the UI if code gets changed from the backend (e.g. network messages)
+  player:subscribe(stageCarousel, "stageId", stageCarousel.setPassengerById)
+
   return stageCarousel
 end
 
@@ -180,7 +184,7 @@ function CharacterSelect:getCharacterButtons()
       if inputSource and inputSource.player then
         player = inputSource.player
       else
-        player = LocalPlayer
+        player = GAME.localPlayer
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       player:setCharacter(self.characterId)
@@ -242,6 +246,10 @@ function CharacterSelect:createPanelCarousel(player, height)
   panelCarousel.onPassengerUpdateCallback = function ()
     player:setPanels(panelCarousel:getSelectedPassenger().id)
   end
+
+  -- to update the UI if code gets changed from the backend (e.g. network messages)
+  player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
+
   return panelCarousel
 end
 
@@ -295,6 +303,9 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
   levelSlider.onBackCallback = function ()
     levelSlider:setValue(player.settings.level)
   end
+
+  -- to update the UI if code gets changed from the backend (e.g. network messages)
+  player:subscribe(levelSlider, "level", levelSlider.setValue)
 
   return levelSlider
 end

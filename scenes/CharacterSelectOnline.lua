@@ -52,10 +52,10 @@ function CharacterSelectOnline:loadUserInterface()
   self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
 
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
-  self.ui.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.ui.stageSelection)
+  self.ui.grid:createElementAt(5, 2, 2, 1, "stageSelection", self.ui.stageSelection)
 
   self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
-  self.ui.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.ui.levelSelection)
+  self.ui.grid:createElementAt(7, 2, 2, 1, "levelSelection", self.ui.levelSelection)
 
   self.ui.readyButton = self:createReadyButton()
   self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)
@@ -75,10 +75,10 @@ function CharacterSelectOnline:loadUserInterface()
     local panelCarousel = self:createPanelCarousel(player, 48)
     self.ui.panelSelection:addElement(panelCarousel, player)
 
-    local stageCarousel = self:createStageCarousel(player, self.ui.grid.unitSize * 1.5 - self.ui.grid.unitMargin * 2)
+    local stageCarousel = self:createStageCarousel(player, self.ui.grid.unitSize - self.ui.grid.unitMargin * 2)
     self.ui.stageSelection:addElement(stageCarousel, player)
 
-    local levelSlider = self:createLevelSlider(player, 20)
+    local levelSlider = self:createLevelSlider(player, 14)
     self.ui.levelSelection:addElement(levelSlider, player)
 
     local cursor = self:createCursor(self.ui.grid, player)
