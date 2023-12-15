@@ -14,7 +14,6 @@ local NAVIGATION_BUTTON_WIDTH = 30
 --@module MainMenu
 local Menu = class(
   function(self, options)
-    self.selecteIndex = nil
     -- list of menu items
     -- set from options.menuItems, which consists of a list of UIElement tuples of the form:
     -- {{Label/Button, ButtonGroup/Stepper/Slider}, ...}

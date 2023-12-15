@@ -10,46 +10,47 @@ local logger = require("logger")
 local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
 local ClientRequests = require("network.ClientProtocol")
+local UiElement = require("ui.UIElement")
 
-local STATES = { Login = 1, Lobby = 2}
+local STATES = {Login = 1, Lobby = 2}
 
---@module Lobby
+-- @module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
-local Lobby = class(
-  function (self, sceneParams)
-    -- lobby data from the server
-    self.playerData = nil
-    self.unpairedPlayers = {} -- list
-    self.willingPlayers = {} -- set
-    self.spectatableRooms = {}
-    -- requests to play a match, not web requests
-    self.sentRequests = {}
+local Lobby = class(function(self, sceneParams)
+  -- lobby data from the server
+  self.playerData = nil
+  self.unpairedPlayers = {} -- list
+  self.willingPlayers = {} -- set
+  self.spectatableRooms = {}
+  -- requests to play a match, not web requests
+  self.sentRequests = {}
 
-    -- leaderboard data
-    self.showingLeaderboard = false
-    self.myRank = nil
-    self.leaderboardString = ""
-    self.leaderboardResponse = nil
+  -- leaderboard data
+  self.showingLeaderboard = false
+  self.myRank = nil
+  self.leaderboardString = ""
+  self.leaderboardResponse = nil
 
-    -- ui
-    self.backgroundImg = themes[config.theme].images.bg_main
-    self.yOffset = themes[config.theme].main_menu_screen_pos[2] + 10
-    self.lobbyMenu = nil
-    self.lobbyMenuXoffsetMap = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-    -- currently unused, need to find a new place to draw this later
-    self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
+  -- ui
+  self.backgroundImg = themes[config.theme].images.bg_main
+  self.lobbyMenu = nil
+  self.lobbyMenuXoffsetMap = {
+    [true] = -200,
+    [false] = 0
+  }
+  -- will be used to make room in case the leaderboard should be shown.
+  -- currently unused, need to find a new place to draw this later
+  self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
 
-    -- state fields to manage Lobby's update cycle    
-    self.state = STATES.Login
+  -- state fields to manage Lobby's update cycle    
+  self.state = STATES.Login
 
-    -- network features not yet implemented
-    self.spectateRequestResponse = nil
-    self.requestedSpectateRoom = nil
+  -- network features not yet implemented
+  self.spectateRequestResponse = nil
+  self.requestedSpectateRoom = nil
 
-    self:load(sceneParams)
-  end,
-  Scene
-)
+  self:load(sceneParams)
+end, Scene)
 
 Lobby.name = "Lobby"
 sceneManager:addScene(Lobby)
@@ -94,14 +95,28 @@ function Lobby:load(sceneParams)
 end
 
 function Lobby:initLobbyMenu()
-  self.leaderboardToggleLabel = Label({text = "lb_show_board"})
-  self.leaderboardToggleButton = TextButton({label = self.leaderboardToggleLabel, onClick = function() self:toggleLeaderboard() end})
-  local menuItems = {
-    {self.leaderboardToggleButton},
-    {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
-  }
+  self.lobbyScreen = UiElement({x = 0, y = 0, width = canvas_width, height = canvas_height})
 
-  self.lobbyMenu = Menu({x = self.lobbyMenuXoffsetMap[self.showingLeaderboard], y = self.yOffset, menuItems = menuItems})
+  self.leaderboardLabel = Label({text = "", translate = false, hAlign = "center", vAlign = "center", x = 200, isVisible = false})
+  self.leaderboardToggleLabel = Label({text = "lb_show_board"})
+  self.leaderboardToggleButton = TextButton({
+    label = self.leaderboardToggleLabel,
+    onClick = function()
+      self:toggleLeaderboard()
+    end
+  })
+  local menuItems = {{self.leaderboardToggleButton}, {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})}}
+
+  self.lobbyMenu = Menu({
+    x = self.lobbyMenuXoffsetMap[false],
+    y = 0,
+    menuItems = menuItems,
+    -- this alignment setup does not quite work yet because Menu isn't acting like a proper container
+    hAlign = "center",
+    vAlign = "center",
+  })
+  self.lobbyScreen:addChild(self.lobbyMenu)
+  self.lobbyScreen:addChild(self.leaderboardLabel)
 end
 
 -----------------
@@ -114,27 +129,29 @@ function Lobby:toggleLeaderboard()
     self.leaderboardToggleLabel:setText("lb_hide_board")
     self.showingLeaderboard = true
     self.leaderboardResponse = ClientRequests.requestLeaderboard()
+    self.leaderboardLabel:setVisibility(true)
   else
     self.leaderboardToggleLabel:setText("lb_show_board")
+    self.leaderboardLabel:setVisibility(false)
     self.showingLeaderboard = false
   end
-  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.showingLeaderboard]
+  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.leaderboardLabel.isVisible]
 end
 
-local function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
+local function build_viewable_leaderboard_string(report, firstVisibleIndex, lastVisibleIndex)
   str = loc("lb_header_board") .. "\n"
-  first_viewable_idx = math.max(first_viewable_idx, 1)
-  last_viewable_idx = math.min(last_viewable_idx, #report)
+  firstVisibleIndex = math.max(firstVisibleIndex, 1)
+  lastVisibleIndex = math.min(lastVisibleIndex, #report)
 
-  for i = first_viewable_idx, last_viewable_idx do
-    rating_spacing = "     " .. string.rep("  ", (3 - string.len(i)))
-    name_spacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
+  for i = firstVisibleIndex, lastVisibleIndex do
+    ratingSpacing = "     " .. string.rep("  ", (3 - string.len(i)))
+    nameSpacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
     if report[i].is_you then
       str = str .. loc("lb_you") .. "-> "
     else
       str = str .. "      "
     end
-    str = str .. i .. rating_spacing .. report[i].rating .. name_spacing .. report[i].user_name
+    str = str .. i .. ratingSpacing .. report[i].rating .. nameSpacing .. report[i].user_name
     if i < #report then
       str = str .. "\n"
     end
@@ -142,18 +159,19 @@ local function build_viewable_leaderboard_string(report, first_viewable_idx, las
   return str
 end
 
-function Lobby:updateLeaderboard(leaderboardReport)
-  if leaderboardReport.leaderboard_report then
-    local leaderboard_report = leaderboardReport.leaderboard_report
-    for rank = #leaderboard_report, 1, -1 do
-      local user = leaderboard_report[rank]
+function Lobby:updateLeaderboard(leaderboardReportMessage)
+  if leaderboardReportMessage.leaderboard_report then
+    local leaderboardReport = leaderboardReportMessage.leaderboard_report
+    for rank = #leaderboardReport, 1, -1 do
+      local user = leaderboardReport[rank]
       if user.user_name == config.name then
         self.myRank = rank
       end
     end
-    local leaderboard_first_idx_to_show = math.max((self.myRank or 1) - 8, 1)
-    local leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
-    self.leaderboardString = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+    local firstVisibleIndex = math.max((self.myRank or 1) - 8, 1)
+    local lastVisibleIndex = math.min(firstVisibleIndex + 20, #leaderboardReport)
+    self.leaderboardString = build_viewable_leaderboard_string(leaderboardReport, firstVisibleIndex, lastVisibleIndex)
+    self.leaderboardLabel:setText(self.leaderboardString)
   end
 end
 
@@ -180,14 +198,14 @@ function Lobby:updateLobbyState(lobbyStateMessage)
     self.unpairedPlayers = lobbyStateMessage.unpaired
     -- players who leave the unpaired list no longer have standing invitations to us.\
     -- we also no longer have a standing invitation to them, so we'll remove them from sentRequests
-    local new_willing = {}
-    local new_sent_requests = {}
+    local newWillingPlayers = {}
+    local newSentRequests = {}
     for _, player in ipairs(self.unpairedPlayers) do
-      new_willing[player] = self.willingPlayers[player]
-      new_sent_requests[player] = self.sentRequests[player]
+      newWillingPlayers[player] = self.willingPlayers[player]
+      newSentRequests[player] = self.sentRequests[player]
     end
-    self.willingPlayers = new_willing
-    self.sentRequests = new_sent_requests
+    self.willingPlayers = newWillingPlayers
+    self.sentRequests = newSentRequests
     if lobbyStateMessage.spectatable then
       self.spectatableRooms = lobbyStateMessage.spectatable
     end
@@ -238,33 +256,33 @@ end
 
 -- rebuilds the UI based on the new lobby information
 function Lobby:onLobbyStateUpdate()
-  if self.updated then
-    while #self.lobbyMenu.menuItems > 2 do
-      self.lobbyMenu:removeMenuItemAtIndex(1)
-    end
-    for _, v in ipairs(self.unpairedPlayers) do
-      if v ~= config.name then
-        local unmatchedPlayer = v .. self:playerRatingString(v)
-        if self.sentRequests[v] then
-          unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_request")
-        end
-        if self.willingPlayers[v] then
-          unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
-        end
-        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})})
+  while #self.lobbyMenu.menuItems > 2 do
+    self.lobbyMenu:removeMenuItemAtIndex(1)
+  end
+  for _, v in ipairs(self.unpairedPlayers) do
+    if v ~= config.name then
+      local unmatchedPlayer = v .. self:playerRatingString(v)
+      if self.sentRequests[v] then
+        unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_request")
       end
-    end
-    for _, room in ipairs(self.spectatableRooms) do
-      if room.name then
-        local playerA = room.a .. self:playerRatingString(room.a)
-        local playerB = room.b .. self:playerRatingString(room.b)
-        local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
-        self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})})
+      if self.willingPlayers[v] then
+        unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
       end
+      self.lobbyMenu:addMenuItem(1, {
+        TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})
+      })
     end
   end
-
-  self.updated = false
+  for _, room in ipairs(self.spectatableRooms) do
+    if room.name then
+      local playerA = room.a .. self:playerRatingString(room.a)
+      local playerB = room.b .. self:playerRatingString(room.b)
+      local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
+      self.lobbyMenu:addMenuItem(1, {
+        TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})
+      })
+    end
+  end
 end
 
 ----------------------
@@ -350,10 +368,7 @@ end
 
 function Lobby:draw()
   if self.state == STATES.Lobby then
-    self.lobbyMenu:draw()
-    if self.showingLeaderboard and self.leaderboardString and self.leaderboardString ~= "" then
-      gprint(self.leaderboardString, self.lobbyMenuXoffsetMap[true] + 400, self.yOffset)
-    end
+    self.lobbyScreen:draw()
   elseif self.state == STATES.Login then
     loginStateLabel:draw()
   end
