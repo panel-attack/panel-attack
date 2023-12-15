@@ -33,7 +33,7 @@ local Lobby = class(
 
     -- ui
     self.backgroundImg = themes[config.theme].images.bg_main
-    self.lobby_menu = nil
+    self.lobbyMenu = nil
     self.lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
     self.lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
     -- currently unused, need to find a new place to draw this later
@@ -58,13 +58,13 @@ sceneManager:addScene(Lobby)
 function Lobby:toggleLeaderboard()
   self.updated = true
   if not self.showing_leaderboard then
-    --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
+    --lobbyMenu:set_button_text(#lobbyMenu.buttons - 1, loc("lb_hide_board"))
     self.showing_leaderboard = true
     self.leaderboardResponse = ClientRequests.requestLeaderboard()
   else
-    --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
+    --lobbyMenu:set_button_text(#lobbyMenu.buttons - 1, loc("lb_show_board"))
     self.showing_leaderboard = false
-    self.lobby_menu.x = self.lobby_menu_x[self.showing_leaderboard]
+    self.lobbyMenu.x = self.lobby_menu_x[self.showing_leaderboard]
   end
 end
 
@@ -153,7 +153,7 @@ function Lobby:updateLeaderboard(leaderboardReport)
     end
     leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
     leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
-    leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+    self.leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
   end
 end
 
@@ -172,7 +172,7 @@ function Lobby:initLobbyMenu()
       end
     }
   )
-  
+
   local menuItems = {
     {Label({text = "Leaderboard", translate = false}), showLeaderboardButtonGroup},
     {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
@@ -312,6 +312,9 @@ end
 function Lobby:draw()
   if self.state == STATES.Lobby then
     self.lobbyMenu:draw()
+    if self.showing_leaderboard and self.leaderboard_string and self.leaderboard_string ~= "" then
+      gprint(self.leaderboard_string, self.lobby_menu_x[self.showing_leaderboard] + 400, self.lobby_menu_y)
+    end
   elseif self.state == STATES.Login then
     loginStateLabel:draw()
   end
