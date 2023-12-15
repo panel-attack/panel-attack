@@ -1031,7 +1031,7 @@ function Stack.shouldRun(self, runsSoFar)
       -- Don't fall behind if the game is over for the other player
       if self.opponentStack and self.opponentStack:game_ended() == false then
         -- If we are at the end of the replay we want to catch up
-        if network_connected() or #self.opponentStack.input_buffer > 0 then
+        if GAME.tcpClient:isConnected() or #self.opponentStack.input_buffer > 0 then
           local framesBehind = math.abs(config.debug_vsFramesBehind)
           if self.clock >= self.opponentStack.clock - framesBehind then
             return false

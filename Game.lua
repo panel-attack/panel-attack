@@ -18,6 +18,8 @@ local handleShortcuts = require("Shortcuts")
 local scenes = nil
 local Player = require("Player")
 local GameModes = require("GameModes")
+local TcpClient = require("network.network")
+
 require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -42,6 +44,7 @@ local Game = class(
     self.gameIsPaused = false -- game can be paused while playing on local
     self.renderDuringPause = false -- if the game can render when you are paused
     self.gfx_q = Queue()
+    self.tcpClient = TcpClient()
     self.server_queue = ServerQueue()
     self.main_menu_screen_pos = {consts.CANVAS_WIDTH / 2 - 108 + 50, consts.CANVAS_HEIGHT / 2 - 111}
     self.config = config
@@ -64,8 +67,6 @@ local Game = class(
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
-    self.sendNetworkQueue = TimeQueue()
-    self.receiveNetworkQueue = TimeQueue()
 
     self.crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
     

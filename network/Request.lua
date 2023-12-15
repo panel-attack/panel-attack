@@ -32,7 +32,7 @@ function Request:send()
   else
     error("Trying to send a message with message type " .. table_to_string(self.messageType) .. " that has no interaction defined")
   end
-  net_send(message)
+  GAME.tcpClient:send(message)
 
 
   -- in network, all responses from the server get mapped into "json" responses

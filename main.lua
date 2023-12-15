@@ -36,7 +36,6 @@ require("AttackEngine")
 
 require("graphics")
 require("replay")
-require("network.network")
 require("Puzzle")
 require("PuzzleSet")
 require("puzzles")
@@ -152,7 +151,7 @@ function love.quit()
   if PROFILING_ENABLED then
     GAME.profiler.report("profiler.log")
   end
-  if network_connected() then
+  if GAME.tcpClient:isConnected() then
     ClientRequests.logout()
   end
   love.audio.stop()
@@ -202,7 +201,11 @@ function love.errorhandler(msg)
   local detailedErrorLogString = Game.detailedErrorLogString(errorData)
   errorData.detailedErrorLogString = detailedErrorLogString
   if GAME_UPDATER_GAME_VERSION then
-    send_error_report(errorData)
+    if GAME.tcpClient:isConnected() then
+      GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
+    end
+    GAME.tcpClient:sendErrorReport(errorData)
+    GAME.tcpClient:resetNetwork()
   end
 
   local errorLines = {}

@@ -7,14 +7,23 @@ local ClientRequests = require("network.ClientProtocol")
 require("TimeQueue")
 local class = require("class")
 
-local TcpClient = class(function(tcpClient, server, ip)
-  tcpClient.socket = socket.tcp()
+local TcpClient = class(function(tcpClient)
+  -- holds data fragments
+  tcpClient.data = ""
+  --connectionUptime counts "E" messages, not seconds
+  tcpClient.connectionUptime = 0
+  tcpClient.receivedMessageQueue = ServerQueue()
+  tcpClient.sendNetworkQueue = TimeQueue()
+  tcpClient.receiveNetworkQueue = TimeQueue()
 end)
 
 -- setup the network connection on the given IP and port
-function TcpClient:connectToServer(ip, network_port)
+function TcpClient:connectToServer(ip, port)
+  self.ip = ip
+  self.port = port
+  self.socket = socket.tcp()
   self.socket:settimeout(7)
-  local result, err = self.socket:connect(ip, network_port or 49569)
+  local result, err = self.socket:connect(ip, port or 49569)
   if not result then
     return err == "already connected"
   end
@@ -23,46 +32,55 @@ function TcpClient:connectToServer(ip, network_port)
   return true
 end
 
--- Expected length for each message type
-local leftovers = "" -- Everything currently in the data queue
-
-function TcpClient:network_connected()
-  return self.socket:getpeername() ~= nil
+function TcpClient:isConnected()
+  return self.socket and self.socket:getpeername() ~= nil
 end
 
--- Grabs data from the socket
+-- Appends all data from the socket to TcpClient.data
 -- returns false if something went wrong
-function TcpClient:flush_socket()
+function TcpClient:flushSocket()
   if not self.socket then
     return
   end
-  local junk, err, data = self.socket:receive("*a")
-  -- lol, if it returned successfully then that's bad!
-  if not err then
-    -- Return false, so we know things went badly
+  -- receive(*a) means to receive data until the connection closes!
+  -- combined with a timeout of 0 means we're streaming data because the receival always gets interrupted before the connection closes
+  local data, error, partialData = self.socket:receive("*a")
+  -- complete data is returned to data (but it should always be empty)
+  -- error lists the reason why the data receival was interrupted (should normally be "timeout")
+  -- all partial data lands as data fragments in the partialdata variable
+  if error == "timeout" then
+    -- "timeout" is the expected scenario
+    -- in case of an error, data is always nil so there is no danger of overwriting
+    data = partialData
+  end
+  if data and data:len() > 0 then
+    -- append data to our unprocessed data so far
+    self.data = self.data .. data
+  end
+  if error == "closed" then
+    logger.warn("the connection was closed while trying to stream data")
+    -- technically we might want to discard our current data but it should already recover on its own
     return false
   end
-  leftovers = leftovers .. data
   -- When done, return true, so we know things went okay
   return true
 end
 
 function TcpClient:resetNetwork()
-  logged_in = 0
-  connection_up_time = 0
-  GAME.connected_server_ip = ""
-  GAME.connected_server_port = nil
-  current_server_supports_ranking = false
-  match_type = ""
+  self.connectionUptime = 0
+  self.ip = ""
+  self.port = 0
   if self.socket then
     self.socket:close()
   end
   self.socket = nil
 end
 
-function TcpClient:processDataToSend(stringData)
-  if self.socket then
-    local fullMessageSent, error, partialBytesSent = self.socket:send(stringData)
+local function processDataToSend(stringData)
+  -- accessing the client in this way is a dirty workaround
+  -- owed to the fact that TimeQueue were written under the assumption that the socket was global
+  if GAME.tcpClient:isConnected() then
+    local fullMessageSent, error, partialBytesSent = GAME.tcpClient.socket:send(stringData)
     if fullMessageSent then
       --logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
     else
@@ -71,13 +89,15 @@ function TcpClient:processDataToSend(stringData)
   end
 end
 
-function TcpClient:processDataToReceive(data)
-  self:queue_message(data[1], data[2])
+local function processDataToReceive(data)
+  -- accessing the client in this way is a dirty workaround
+  -- owed to the fact that TimeQueue were written under the assumption that the socket was global
+  GAME.tcpClient:queueMessage(data[1], data[2])
 end
 
-function updateNetwork(dt)
-  GAME.sendNetworkQueue:update(dt, processDataToSend)
-  GAME.receiveNetworkQueue:update(dt, processDataToReceive)
+function TcpClient:updateNetwork(dt)
+  self:update(dt, processDataToSend)
+  self:update(dt, processDataToReceive)
 end
 
 local sendMinLag = 0
@@ -86,7 +106,7 @@ local receiveMinLag = 3
 local receiveMaxLag = receiveMinLag
 
 -- send the given message through
-function TcpClient:net_send(stringData)
+function TcpClient:send(stringData)
   if not self.socket then
     return false
   end
@@ -94,64 +114,48 @@ function TcpClient:net_send(stringData)
     self:processDataToSend(stringData)
   else
     local lagSeconds = (math.random() * (sendMaxLag - sendMinLag)) + sendMinLag
-    GAME.sendNetworkQueue:push(stringData, lagSeconds)
+    self.sendNetworkQueue:push(stringData, lagSeconds)
   end
   return true
 end
 
 -- Cleans up "stonermode" used for testing laggy sends
-function undo_stonermode()
-  GAME.sendNetworkQueue:clearAndProcess(processDataToSend)
-  GAME.receiveNetworkQueue:clearAndProcess(processDataToReceive)
+function TcpClient:undo_stonermode()
+  self.sendNetworkQueue:clearAndProcess(self.processDataToSend)
+  self.receiveNetworkQueue:clearAndProcess(self.processDataToReceive)
   STONER_MODE = false
 end
 
-
--- list of spectators
-function spectator_list_string(list)
-  local str = ""
-  for k, v in ipairs(list) do
-    str = str .. v
-    if k < #list then
-      str = str .. "\n"
-    end
-  end
-  if str ~= "" then
-    str = loc("pl_spectators") .. "\n" .. str
-  end
-  return str
-end
-
 -- Adds the message to the network queue or processes it immediately in a couple cases
-function TcpClient:queue_message(type, data)
+function TcpClient:queueMessage(type, data)
   if type == NetworkProtocol.serverMessageTypes.opponentInput.prefix or type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
     local dataMessage = {}
     dataMessage[type] = data
     logger.debug("Queuing: " .. type .. " with data:" .. data)
-    GAME.server_queue:push(dataMessage)
+    self.receivedMessageQueue:push(dataMessage)
   elseif type == NetworkProtocol.serverMessageTypes.versionCorrect.prefix then
-    -- make responses to client H messages processable via GAME.server_queue
-    GAME.server_queue:push({versionCompatible = true})
+    -- make responses to client H messages processable by treating them like a json response
+    self.receivedMessageQueue:push({versionCompatible = true})
   elseif type == NetworkProtocol.serverMessageTypes.versionWrong.prefix then
-    -- make responses to client H messages processable via GAME.server_queue
-    GAME.server_queue:push({versionCompatible = false})
+    -- make responses to client H messages processable by treating them like a json response
+    self.receivedMessageQueue:push({versionCompatible = false})
   elseif type == NetworkProtocol.serverMessageTypes.ping.prefix then
-    self:net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
-    connection_up_time = connection_up_time + 1 --connection_up_time counts "E" messages, not seconds
+    self:send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
+    self.connectionUptime = self.connectionUptime + 1
   elseif type == NetworkProtocol.serverMessageTypes.jsonMessage.prefix then
     local current_message = json.decode(data)
     if not current_message then
       error(loc("nt_msg_err", (data or "nil")))
     end
     logger.debug("Queuing JSON: " .. dump(current_message))
-    GAME.server_queue:push(current_message)
+    self.receivedMessageQueue:push(current_message)
   end
 end
 
 -- Drops all "game data" messages prior to the next server "J" message.
-function drop_old_data_messages()
+function TcpClient:drop_old_data_messages()
   while true do
-    local message = GAME.server_queue:top()
+    local message = self.receivedMessageQueue:top()
     if not message then
       break
     end
@@ -159,14 +163,14 @@ function drop_old_data_messages()
     if not message[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not message[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
       break -- Found a non user input message. Stop. Future data is for next game
     else
-      GAME.server_queue:pop() -- old data, drop it
+      self.receivedMessageQueue:pop() -- old data, drop it
     end
   end
 end
 
 -- Process all game data messages in the queue
 function process_all_data_messages()
-  local messages = GAME.server_queue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
+  local messages = GAME.tcpClient.receivedMessageQueue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
       logger.debug("Processing: " .. type .. " with data:" .. data)
@@ -184,36 +188,28 @@ function process_data_message(type, data)
   end
 end
 
-function send_error_report(errorData)
-  TCP_sock = socket.tcp()
-  TCP_sock:settimeout(7)
-  if not TCP_sock:connect(consts.SERVER_LOCATION, 59569) then
-    return false
-  end
-  TCP_sock:settimeout(0)
+function TcpClient:sendErrorReport(errorData)
   ClientRequests.sendErrorReport(errorData)
-  TcpClient.resetNetwork(TCP_sock)
-  return true
 end
 
 -- Processes messages that came in from the server
 -- Returns false if the connection is broken.
-function TcpClient:do_messages()
-  if not self:flush_socket() then
+function TcpClient:processIncomingMessages()
+  if not self:flushSocket() then
     -- Something went wrong while receiving data.
     -- Bail out and return.
     return false
   end
   while true do
-    local type, message, remaining = NetworkProtocol.getMessageFromString(leftovers, true)
+    local type, message, remaining = NetworkProtocol.getMessageFromString(self.data, true)
     if type then
       if not STONER_MODE then
-        self:queue_message(type, message)
+        self:queueMessage(type, message)
       else
         local lagSeconds = (math.random() * (receiveMaxLag - receiveMinLag)) + receiveMinLag
-        GAME.receiveNetworkQueue:push({type, message}, lagSeconds)
+        self.receiveNetworkQueue:push({type, message}, lagSeconds)
       end
-      leftovers = remaining
+      self.data = remaining
     else
       break
     end
@@ -226,12 +222,12 @@ function Stack.handle_input_taunt(self)
 
   if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
-    if TCP_sock then
+    if GAME.tcpClient:isConnected() then
       ClientRequests.sendTaunt("up", self.taunt_up)
     end
   elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
     self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
-    if TCP_sock then
+    if GAME.tcpClient:isConnected() then
       ClientRequests.sendTaunt("down", self.taunt_down)
     end
   end
@@ -243,7 +239,7 @@ function Stack.idleInput(self)
 end
 
 function Stack.send_controls(self)
-  if self.is_local and TCP_sock and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
+  if self.is_local and GAME.tcpClient:isConnected() and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
     -- Send 1 frame at clock time 0 then wait till we get our first input from the other player.
     -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
     -- print("self.confirmedInput="..(self.confirmedInput or "nil"))
@@ -266,9 +262,9 @@ function Stack.send_controls(self)
   elseif self.inputMethod == "touch" then
     to_send = self.touchInputController:encodedCharacterForCurrentTouchInput()
   end
-  if TCP_sock then
+  if GAME.tcpClient:isConnected() then
     local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.playerInput.prefix, to_send)
-    net_send(message)
+    GAME.tcpClient:send(message)
   end
 
   self:handle_input_taunt()

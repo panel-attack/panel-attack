@@ -721,3 +721,19 @@ function Match:removeCanvases()
     self.players[i].stack.canvas = nil
   end
 end
+
+-- list of spectators
+-- parked here to get it out of network.network.lua
+function spectator_list_string(list)
+  local str = ""
+  for k, v in ipairs(list) do
+    str = str .. v
+    if k < #list then
+      str = str .. "\n"
+    end
+  end
+  if str ~= "" then
+    str = loc("pl_spectators") .. "\n" .. str
+  end
+  return str
+end
