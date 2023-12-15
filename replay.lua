@@ -16,7 +16,6 @@ class(
   )
 
 function Replay.createNewReplay(match)
-  local battleRoom = match.battleRoom
   local result = {}
   result.engineVersion = VERSION
   result.replayVersion = REPLAY_VERSION
@@ -24,15 +23,15 @@ function Replay.createNewReplay(match)
   result.ranked = match_type == "Ranked"
   result.stage = match.stageId
   result.gameMode = {
-    stackInteraction = battleRoom.mode.stackInteraction,
-    winConditions = battleRoom.mode.winConditions or {},
-    timeLimit = battleRoom.mode.timeLimit,
-    doCountdown = battleRoom.mode.doCountdown or true
+    stackInteraction = match.stackInteraction,
+    winConditions = match.winConditions or {},
+    timeLimit = match.timeLimit,
+    doCountdown = match.doCountdown or true
   }
 
   result.players = {}
-  for i = 1, #battleRoom.players do
-    local player = battleRoom.players[i]
+  for i = 1, #match.players do
+    local player = match.players[i]
     result.players[i] = {
       name = player.name,
       wins = player.wins,
