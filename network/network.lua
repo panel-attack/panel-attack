@@ -5,25 +5,38 @@ local NetworkProtocol = require("network.NetworkProtocol")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local ClientRequests = require("network.ClientProtocol")
 require("TimeQueue")
+local class = require("class")
 
--- TODO: Move this all into a proper class
+local TcpClient = class(function(tcpClient, server, ip)
+  tcpClient.socket = socket.tcp()
+end)
 
-local TCP_sock = nil
+-- setup the network connection on the given IP and port
+function TcpClient:connectToServer(ip, network_port)
+  self.socket:settimeout(7)
+  local result, err = self.socket:connect(ip, network_port or 49569)
+  if not result then
+    return err == "already connected"
+  end
+  self.socket:setoption("tcp-nodelay", true)
+  self.socket:settimeout(0)
+  return true
+end
 
 -- Expected length for each message type
 local leftovers = "" -- Everything currently in the data queue
 
-function network_connected()
-  return TCP_sock ~= nil
+function TcpClient:network_connected()
+  return self.socket:getpeername() ~= nil
 end
 
 -- Grabs data from the socket
 -- returns false if something went wrong
-function flush_socket()
-  if not TCP_sock then
+function TcpClient:flush_socket()
+  if not self.socket then
     return
   end
-  local junk, err, data = TCP_sock:receive("*a")
+  local junk, err, data = self.socket:receive("*a")
   -- lol, if it returned successfully then that's bad!
   if not err then
     -- Return false, so we know things went badly
@@ -34,22 +47,22 @@ function flush_socket()
   return true
 end
 
-function resetNetwork()
+function TcpClient:resetNetwork()
   logged_in = 0
   connection_up_time = 0
   GAME.connected_server_ip = ""
   GAME.connected_server_port = nil
   current_server_supports_ranking = false
   match_type = ""
-  if TCP_sock then
-    TCP_sock:close()
+  if self.socket then
+    self.socket:close()
   end
-  TCP_sock = nil
+  self.socket = nil
 end
 
-function processDataToSend(stringData) 
-  if TCP_sock then
-    local fullMessageSent, error, partialBytesSent = TCP_sock:send(stringData)
+function TcpClient:processDataToSend(stringData)
+  if self.socket then
+    local fullMessageSent, error, partialBytesSent = self.socket:send(stringData)
     if fullMessageSent then
       --logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
     else
@@ -58,8 +71,8 @@ function processDataToSend(stringData)
   end
 end
 
-function processDataToReceive(data) 
-  queue_message(data[1], data[2])
+function TcpClient:processDataToReceive(data)
+  self:queue_message(data[1], data[2])
 end
 
 function updateNetwork(dt)
@@ -73,12 +86,12 @@ local receiveMinLag = 3
 local receiveMaxLag = receiveMinLag
 
 -- send the given message through
-function net_send(stringData)
-  if not TCP_sock then
+function TcpClient:net_send(stringData)
+  if not self.socket then
     return false
   end
   if not STONER_MODE then
-    processDataToSend(stringData)
+    self:processDataToSend(stringData)
   else
     local lagSeconds = (math.random() * (sendMaxLag - sendMinLag)) + sendMinLag
     GAME.sendNetworkQueue:push(stringData, lagSeconds)
@@ -110,7 +123,7 @@ function spectator_list_string(list)
 end
 
 -- Adds the message to the network queue or processes it immediately in a couple cases
-function queue_message(type, data)
+function TcpClient:queue_message(type, data)
   if type == NetworkProtocol.serverMessageTypes.opponentInput.prefix or type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
     local dataMessage = {}
     dataMessage[type] = data
@@ -123,7 +136,7 @@ function queue_message(type, data)
     -- make responses to client H messages processable via GAME.server_queue
     GAME.server_queue:push({versionCompatible = false})
   elseif type == NetworkProtocol.serverMessageTypes.ping.prefix then
-    net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
+    self:net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
     connection_up_time = connection_up_time + 1 --connection_up_time counts "E" messages, not seconds
   elseif type == NetworkProtocol.serverMessageTypes.jsonMessage.prefix then
     local current_message = json.decode(data)
@@ -171,19 +184,6 @@ function process_data_message(type, data)
   end
 end
 
--- setup the network connection on the given IP and port
-function connectToServer(ip, network_port)
-  TCP_sock = socket.tcp()
-  TCP_sock:settimeout(7)
-  local result, err = TCP_sock:connect(ip, network_port or 49569)
-  if not result then
-    return err == "already connected"
-  end
-  TCP_sock:setoption("tcp-nodelay", true)
-  TCP_sock:settimeout(0)
-  return true
-end
-
 function send_error_report(errorData)
   TCP_sock = socket.tcp()
   TCP_sock:settimeout(7)
@@ -192,14 +192,14 @@ function send_error_report(errorData)
   end
   TCP_sock:settimeout(0)
   ClientRequests.sendErrorReport(errorData)
-  resetNetwork()
+  TcpClient.resetNetwork(TCP_sock)
   return true
 end
 
 -- Processes messages that came in from the server
 -- Returns false if the connection is broken.
-function do_messages()
-  if not flush_socket() then
+function TcpClient:do_messages()
+  if not self:flush_socket() then
     -- Something went wrong while receiving data.
     -- Bail out and return.
     return false
@@ -208,7 +208,7 @@ function do_messages()
     local type, message, remaining = NetworkProtocol.getMessageFromString(leftovers, true)
     if type then
       if not STONER_MODE then
-        queue_message(type, message)
+        self:queue_message(type, message)
       else
         local lagSeconds = (math.random() * (receiveMaxLag - receiveMinLag)) + receiveMinLag
         GAME.receiveNetworkQueue:push({type, message}, lagSeconds)
@@ -275,3 +275,5 @@ function Stack.send_controls(self)
 
   self:receiveConfirmedInput(to_send)
 end
+
+return TcpClient

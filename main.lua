@@ -3,7 +3,6 @@ local inputFieldManager = require("ui.inputFieldManager")
 local inputManager = require("inputManager")
 local logger = require("logger")
 local consts = require("consts")
-
 require("developer")
 require("class")
 socket = require("socket")

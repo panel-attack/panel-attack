@@ -1,5 +1,6 @@
 local class = require("class")
 local ClientRequests = require("network.ClientProtocol")
+local TcpClient = require("network.network")
 
 -- TODO: recheck label assignments, the return when the name is taken is crap somehow
 -- returns true/false as the first return value to indicate success or failure of the login
@@ -8,7 +9,7 @@ local ClientRequests = require("network.ClientProtocol")
 local function login(ip, port)
   local result = {loggedIn = false, message = ""}
 
-  if not connectToServer(ip, port) then
+  if not TcpClient.connectToServer(ip, port) then
     result.loggedIn = false
     result.message = loc("ss_could_not_connect")
     return result
