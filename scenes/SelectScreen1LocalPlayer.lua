@@ -88,11 +88,11 @@ function SelectScreen1LocalPlayer:assignCallbacks()
     end
 
     -- character image
-    local updateSelectedCharacterImage = function(characterId)
+    local updateSelectedCharacterImage = function(self, characterId)
       if characterId == random_character_special_value then
-        self.ui.selectedCharacter:setImage(themes[config.theme].images.IMG_random_character)
+        self:setImage(themes[config.theme].images.IMG_random_character)
       else
-        self.ui.selectedCharacter:setImage(characters[characterId].images.icon)
+        self:setImage(characters[characterId].images.icon)
       end
     end
     localPlayer:subscribe(self.ui.selectedCharacter, "characterId", updateSelectedCharacterImage)
