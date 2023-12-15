@@ -1,21 +1,22 @@
 local class = require("class")
 local ClientRequests = require("network.ClientProtocol")
-local TcpClient = require("network.network")
 
 -- TODO: recheck label assignments, the return when the name is taken is crap somehow
 -- returns true/false as the first return value to indicate success or failure of the login
 -- returns a string with a message to display for the user
 -- not meant to be called directly as it may block update for a good while, hence local, use the LoginRoutine instead!
-local function login(ip, port)
+local function login(tcpClient, ip, port)
   local result = {loggedIn = false, message = ""}
 
-  if not TcpClient.connectToServer(ip, port) then
+  if not tcpClient:connectToServer(ip, port) then
     result.loggedIn = false
     result.message = loc("ss_could_not_connect")
     return result
   else
     GAME.connected_server_ip = ip
     GAME.connected_server_port = port
+    -- genuinely, this is sneaky as fuck, not sure if a good idea
+    GAME.server_queue = tcpClient.receivedMessageQueue
 
     local response = ClientRequests.requestVersionCompatibilityCheck()
     local status, value = response:tryGetValue()
@@ -106,7 +107,8 @@ end
 
 -- A wrapper class around the login process
 -- Allows to advance the login process bit by bit via calling progress
-local LoginRoutine = class(function(self, ip, port)
+local LoginRoutine = class(function(self, tcpClient, ip, port)
+  self.tcpClient = tcpClient
   self.routine = coroutine.create(login)
   self.ip = ip
   self.port = port

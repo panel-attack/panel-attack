@@ -76,9 +76,7 @@ function TcpClient:resetNetwork()
   self.socket = nil
 end
 
-local function processDataToSend(stringData)
-  -- accessing the client in this way is a dirty workaround
-  -- owed to the fact that TimeQueue were written under the assumption that the socket was global
+function TcpClient:sendMessage(stringData)
   if GAME.tcpClient:isConnected() then
     local fullMessageSent, error, partialBytesSent = GAME.tcpClient.socket:send(stringData)
     if fullMessageSent then
@@ -89,15 +87,20 @@ local function processDataToSend(stringData)
   end
 end
 
-local function processDataToReceive(data)
-  -- accessing the client in this way is a dirty workaround
-  -- owed to the fact that TimeQueue were written under the assumption that the socket was global
-  GAME.tcpClient:queueMessage(data[1], data[2])
-end
-
 function TcpClient:updateNetwork(dt)
-  self:update(dt, processDataToSend)
-  self:update(dt, processDataToReceive)
+  self.sendNetworkQueue:update(dt)
+  local data = self.sendNetworkQueue:popIfReady()
+  while data do
+    self:sendMessage(data)
+    data = self.sendNetworkQueue:popIfReady()
+  end
+
+  self.receiveNetworkQueue:update(dt)
+  data = self.receiveNetworkQueue:popIfReady()
+  while data do
+    self:queueMessage(data[1], data[2])
+    data = self.receiveNetworkQueue:popIfReady()
+  end
 end
 
 local sendMinLag = 0
@@ -111,7 +114,7 @@ function TcpClient:send(stringData)
     return false
   end
   if not STONER_MODE then
-    self:processDataToSend(stringData)
+    self:sendMessage(stringData)
   else
     local lagSeconds = (math.random() * (sendMaxLag - sendMinLag)) + sendMinLag
     self.sendNetworkQueue:push(stringData, lagSeconds)
@@ -120,9 +123,9 @@ function TcpClient:send(stringData)
 end
 
 -- Cleans up "stonermode" used for testing laggy sends
-function TcpClient:undo_stonermode()
-  self.sendNetworkQueue:clearAndProcess(self.processDataToSend)
-  self.receiveNetworkQueue:clearAndProcess(self.processDataToReceive)
+function TcpClient:undoStonermode()
+  self.sendNetworkQueue:clear()
+  self.receiveNetworkQueue:clear()
   STONER_MODE = false
 end
 
@@ -153,9 +156,9 @@ function TcpClient:queueMessage(type, data)
 end
 
 -- Drops all "game data" messages prior to the next server "J" message.
-function TcpClient:drop_old_data_messages()
+function drop_old_data_messages()
   while true do
-    local message = self.receivedMessageQueue:top()
+    local message = GAME.tcpClient.receivedMessageQueue:top()
     if not message then
       break
     end
@@ -163,7 +166,7 @@ function TcpClient:drop_old_data_messages()
     if not message[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not message[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
       break -- Found a non user input message. Stop. Future data is for next game
     else
-      self.receivedMessageQueue:pop() -- old data, drop it
+      GAME.tcpClient.receivedMessageQueue:pop() -- old data, drop it
     end
   end
 end
