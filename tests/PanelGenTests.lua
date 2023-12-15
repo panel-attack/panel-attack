@@ -61,9 +61,9 @@ testPanelGenForRegularBoard2()
 local function testStackStartingBoard1()
   local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_ENDLESS)
   local player = battleRoom.players[1]
-  player:setStyle(GameModes.Styles.CLASSIC)
   player:setSpeed(1)
   player:setDifficulty(1)
+  player:setStyle(GameModes.Styles.CLASSIC)
   -- endless easy deviates by 1 color from time attack easy
   player:setColorCount(5)
 

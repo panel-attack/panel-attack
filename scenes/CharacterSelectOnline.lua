@@ -6,7 +6,7 @@ local tableUtils = require("tableUtils")
 local logger = require("logger")
 local input = require("inputManager")
 local Label = require("ui.Label")
-local ClientRequests = require("network.ClientProtocol")
+local ClientMessages = require("network.ClientProtocol")
 
 --@module CharacterSelectOnline
 -- 
@@ -50,7 +50,7 @@ function CharacterSelectOnline:pollInitializationMessage()
     self.roomInitializationMessage = msg
   end
   -- gprint(loc("ss_init"), unpack(themes[config.theme].main_menu_screen_pos))
-  if not do_messages() then
+  if not GAME.tcpClient:processIncomingMessages()  then
     self.state = states.SWITCH_SCENE
     self.stateParams = {
       startTime = love.timer.getTime(),
@@ -127,7 +127,7 @@ function CharacterSelectOnline:sendMenuState()
     end
   end
 
-  ClientRequests.sendMenuState(menuState)
+  GAME.tcpClient:sendRequest(ClientMessages.sendMenuState(menuState))
 end
 
 function CharacterSelectOnline:updateConfig()
@@ -287,7 +287,7 @@ function CharacterSelectOnline:customUpdate()
     self:refreshLoadingState(self.op_player_number)
     
     -- Fetch the next network messages for 2p vs. When we get a start message we will transition there.
-    if not do_messages() then
+    if not GAME.tcpClient:processIncomingMessages()  then
       self.state = states.SWITCH_SCENE
       self.stateParams = {
         startTime = love.timer.getTime(),

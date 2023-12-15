@@ -1,5 +1,5 @@
 local class = require("class")
-local ClientRequests = require("network.ClientProtocol")
+local ClientMessages = require("network.ClientProtocol")
 
 -- TODO: recheck label assignments, the return when the name is taken is crap somehow
 -- returns true/false as the first return value to indicate success or failure of the login
@@ -13,12 +13,13 @@ local function login(tcpClient, ip, port)
     result.message = loc("ss_could_not_connect")
     return result
   else
+    -- this should also probably be elsewhere
     GAME.connected_server_ip = ip
     GAME.connected_server_port = port
     -- genuinely, this is sneaky as fuck, not sure if a good idea
     GAME.server_queue = tcpClient.receivedMessageQueue
 
-    local response = ClientRequests.requestVersionCompatibilityCheck()
+    local response = tcpClient:sendRequest(ClientMessages.requestVersionCompatibilityCheck())
     local status, value = response:tryGetValue()
     while status == "waiting" do
       coroutine.yield("Checking version compatibility with the server")
@@ -35,7 +36,7 @@ local function login(tcpClient, ip, port)
         result.message = loc("nt_ver_err")
         return result
       else
-        response = ClientRequests.tryReserveUsername(config)
+        response = tcpClient:sendRequest(ClientMessages.tryReserveUsernameRequest(config))
         status, value = response:tryGetValue()
         while status == "waiting" do
           coroutine.yield("Trying to reserve the chosen name on the server")
@@ -59,7 +60,7 @@ local function login(tcpClient, ip, port)
             userId = "need a new user id"
           end
 
-          response = ClientRequests.requestLogin(userId)
+          response = tcpClient:sendRequest(ClientMessages.requestLogin(userId))
           status, value = response:tryGetValue()
           while status == "waiting" do
             coroutine.yield("Logging in")
@@ -120,12 +121,12 @@ function LoginRoutine:progress()
   if coroutine.status(self.routine) == "dead" then
     return true, self.result
   else
-    local success, status = coroutine.resume(self.routine, self.ip, self.port)
+    local success, status = coroutine.resume(self.routine, self.tcpClient, self.ip, self.port)
     if success then
       if type(status) == "table" then
         self.result = status
         if self.result.loggedIn == false then
-          resetNetwork()
+          self.tcpClient:resetNetwork()
         end
         return true, status
       else

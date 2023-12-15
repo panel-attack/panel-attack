@@ -228,7 +228,7 @@ function GameBase:runGameOver()
 
 
   if GAME.tcpClient:isConnected() then
-    GAME.tcpClient:do_messages() -- recieve messages so we know if the next game is in the queue
+    GAME.tcpClient:processIncomingMessages()  -- recieve messages so we know if the next game is in the queue
   end
 
   -- if conditions are met, leave the game over screen

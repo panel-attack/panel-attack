@@ -2,26 +2,32 @@ local Request = require("network.Request")
 local NetworkProtocol = require("network.NetworkProtocol")
 local msgTypes = NetworkProtocol.clientMessageTypes
 
-local ClientRequests = {}
+local ClientMessages = {}
 
 -------------------------
 -- login related requests
 -------------------------
 
-function ClientRequests.requestLogin(userId)
+function ClientMessages.requestLogin(userId)
   local loginMessage = {login_request = true, user_id = userId}
 
-  local request = Request(msgTypes.jsonMessage, loginMessage, {"login_successful", "login_denied"})
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = loginMessage,
+    responseTypes = {"login_successful", "login_denied"}
+  }
 end
 
-function ClientRequests.logout()
+function ClientMessages.logout()
   local logoutMessage = {logout = true}
 
-  return Request(msgTypes.jsonMessage, logoutMessage):send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = logoutMessage,
+  }
 end
 
-function ClientRequests.tryReserveUsername(config)
+function ClientMessages.tryReserveUsernameRequest(config)
   local userNameMessage =
   {
     name = config.name,
@@ -29,25 +35,43 @@ function ClientRequests.tryReserveUsername(config)
     inputMethod = config.inputMethod or "controller",
     panels_dir = config.panels,
     character = config.character,
-    character_is_random = ((config.character == random_character_special_value or characters[config.character]:is_bundle()) and config.character or nil),
     stage = config.stage,
     ranked = config.ranked,
-    stage_is_random = ((config.stage == random_stage_special_value or stages[config.stage]:is_bundle()) and config.stage or nil),
     save_replays_publicly = config.save_replays_publicly
   }
 
-  -- despite all these other props, the actual point of this message is to validate the name and register the connection with it
+  if config.character then
+    if config.character == random_character_special_value then
+      userNameMessage.character_is_random = random_character_special_value
+    elseif characters[config.character] and characters[config.character]:is_bundle() then
+      userNameMessage.character_is_random = config.character
+    end
+  end
 
+  if config.stage then
+    if config.stage == random_stage_special_value then
+      userNameMessage.stage_is_random = random_stage_special_value
+    elseif stages[config.stage] and stages[config.stage]:is_bundle() then
+      userNameMessage.stage_is_random = config.stage
+    end
+  end
+
+  -- despite all these other props, the main point of this message is to validate the name and register the connection with it
   -- this is a poorly defined client-server interaction
   -- the server only responds if there is a problem but it does not respond if there is none, meaning we basically have to wait for timeout
-  local request = Request(msgTypes.jsonMessage, userNameMessage, {"choose_another_name"})
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = userNameMessage,
+    responseTypes = {"choose_another_name"}
+  }
 end
 
-function ClientRequests.requestVersionCompatibilityCheck()
-
-  local request = Request(msgTypes.versionCheck, nil, {"versionCompatible"})
-  return request:send()
+function ClientMessages.requestVersionCompatibilityCheck()
+  return {
+    messageType = msgTypes.versionCheck,
+    messageText = nil,
+    responseTypes = {"versionCompatible"}
+  }
 end
 
 -------------------------
@@ -55,7 +79,7 @@ end
 -------------------------
 
 -- players are challenged by their current name on the server
-function ClientRequests.challengePlayer(name)
+function ClientMessages.challengePlayer(name)
   local playerChallengeMessage =
   {
     game_request =
@@ -65,11 +89,13 @@ function ClientRequests.challengePlayer(name)
     }
   }
 
-  local request = Request(msgTypes.jsonMessage, playerChallengeMessage)
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = playerChallengeMessage,
+  }
 end
 
-function ClientRequests.requestSpectate(roomNumber)
+function ClientMessages.requestSpectate(roomNumber)
   local spectateRequestMessage =
   {
     spectate_request =
@@ -79,53 +105,69 @@ function ClientRequests.requestSpectate(roomNumber)
     }
   }
 
-  local request = Request(msgTypes.jsonMessage, spectateRequestMessage, {"spectate_request_granted"})
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = spectateRequestMessage,
+    responseTypes = {"spectate_request_granted"}
+  }
 end
 
-function ClientRequests.requestLeaderboard()
+function ClientMessages.requestLeaderboard()
   local leaderboardRequestMessage = {leaderboard_request = true}
 
-  local request = Request(msgTypes.jsonMessage, leaderboardRequestMessage, {"leaderboard_report"})
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = leaderboardRequestMessage,
+    responseTypes = {"leaderboard_report"}
+  }
 end
 
 ------------------------------
 -- BattleRoom related requests
 ------------------------------
-function ClientRequests.leaveRoom()
+function ClientMessages.leaveRoom()
   local leaveRoomMessage = {leave_room = true}
-  local request = Request(msgTypes.jsonMessage, leaveRoomMessage)
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = leaveRoomMessage,
+  }
 end
 
-function ClientRequests.reportLocalGameResult(outcome)
+function ClientMessages.reportLocalGameResult(outcome)
   local gameResultMessage = {game_over = true, outcome = outcome}
-  local request = Request(msgTypes.jsonMessage, gameResultMessage)
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = gameResultMessage,
+  }
 end
 
-function ClientRequests.sendMenuState(menuState)
+function ClientMessages.sendMenuState(menuState)
   local menuStateMessage = {menu_state = menuState}
-  local request = Request(msgTypes.jsonMessage, menuStateMessage)
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = menuStateMessage,
+  }
 end
 
-function ClientRequests.sendTaunt(direction, index)
+function ClientMessages.sendTaunt(direction, index)
   local type = "taunt_" .. string.lower(direction) .. "s"
   local tauntMessage = {taunt = true, type = type, index = index}
-  local request = Request(msgTypes.jsonMessage, tauntMessage)
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = tauntMessage,
+  }
 end
 
 -------------------------
 -- miscellaneous requests
 -------------------------
 
-function ClientRequests.sendErrorReport(errorData)
+function ClientMessages.sendErrorReport(errorData)
   local errorReportMessage = {error_report = errorData}
-  local request = Request(msgTypes.jsonMessage, errorReportMessage)
-  return request:send()
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = errorReportMessage,
+  }
 end
 
-return ClientRequests
+return ClientMessages

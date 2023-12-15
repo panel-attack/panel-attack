@@ -9,7 +9,7 @@ local input = require("inputManager")
 local logger = require("logger")
 local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
-local ClientRequests = require("network.ClientProtocol")
+local ClientMessages = require("network.ClientProtocol")
 local UiElement = require("ui.UIElement")
 
 local STATES = {Login = 1, Lobby = 2}
@@ -61,7 +61,7 @@ sceneManager:addScene(Lobby)
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  resetNetwork()
+  GAME.tcpClient:resetNetwork()
   sceneManager:switchToScene("MainMenu")
 end
 
@@ -74,7 +74,7 @@ end
 -------------
 
 function Lobby:load(sceneParams)
-  self.loginRoutine = LoginRoutine(sceneParams.serverIp, sceneParams.serverPort)
+  self.loginRoutine = LoginRoutine(GAME.tcpClient, sceneParams.serverIp, sceneParams.serverPort)
   self.messageListeners = {}
   self.messageListeners["create_room"] = MessageListener("create_room")
   self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)
@@ -127,7 +127,7 @@ function Lobby:toggleLeaderboard()
   Menu.playMoveSfx()
   if not self.leaderboardLabel.isVisible then
     self.leaderboardToggleLabel:setText("lb_hide_board")
-    self.leaderboardResponse = ClientRequests.requestLeaderboard()
+    self.leaderboardResponse = GAME.tcpClient:sendRequest(ClientMessages.requestLeaderboard())
     self.leaderboardLabel:setVisibility(true)
   else
     self.leaderboardToggleLabel:setText("lb_show_board")
@@ -239,7 +239,7 @@ end
 function Lobby:requestGameFunction(opponentName)
   return function()
     self.sentRequests[opponentName] = true
-    ClientRequests.challengePlayer(opponentName)
+    GAME.tcpClient:sendRequest(ClientMessages.challengePlayer(opponentName))
     self:onLobbyStateUpdate()
   end
 end
@@ -248,7 +248,7 @@ end
 function Lobby:requestSpectateFunction(room)
   return function()
     self.requestedSpectateRoom = room
-    self.spectateRequestResponse = ClientRequests.requestSpectate(room.roomNumber)
+    self.spectateRequestResponse = GAME.tcpClient:sendRequest(ClientMessages.requestSpectate(room.roomNumber))
   end
 end
 
@@ -316,7 +316,7 @@ function Lobby:processServerMessages()
   if self.leaderboardResponse then
     local status, value = self.leaderboardResponse:tryGetValue()
     if status == "timeout" then
-      self.leaderboardResponse = ClientRequests.requestLeaderboard()
+      self.leaderboardResponse = GAME.tcpClient:sendRequest(ClientMessages.requestLeaderboard())
     elseif status == "received" then
       self:updateLeaderboard(value)
     end
@@ -325,7 +325,7 @@ function Lobby:processServerMessages()
   if self.spectateRequestResponse then
     local status, value = self.spectateRequestResponse:tryGetValue()
     if status == "timeout" then
-      self.spectateRequestResponse = ClientRequests.requestSpectate(self.requestedSpectateRoom.roomNumber)
+      self.spectateRequestResponse = GAME.tcpClient:sendRequest(ClientMessages.requestSpectate(self.requestedSpectateRoom.roomNumber))
     elseif status == "received" then
       -- Not Yet Implemented
       self:spectate2pVsOnlineMatch(value)
@@ -350,11 +350,13 @@ function Lobby:update(dt)
     self.lobbyMenu:update()
   end
 
-  if not do_messages() then
-    -- automatic reconnect
-    self.state = STATES.Login
-    self.loginRoutine = LoginRoutine(GAME.connected_server_ip, GAME.connected_server_port)
-    resetNetwork()
+  if not GAME.tcpClient:processIncomingMessages() then
+    if not sceneManager.nextSceneName then
+      -- automatic reconnect if we're not about to switch scene
+      self.state = STATES.Login
+      self.loginRoutine = LoginRoutine(GAME.tcpClient, GAME.connected_server_ip, GAME.connected_server_port)
+      GAME.tcpClient:resetNetwork()
+    end
   end
 
   GAME.gfx_q:push({self.draw, {self}})

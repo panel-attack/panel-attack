@@ -1,11 +1,9 @@
-local consts = require("consts")
 local logger = require("logger")
-local input = require("inputManager")
 local NetworkProtocol = require("network.NetworkProtocol")
-local TouchDataEncoding = require("engine.TouchDataEncoding")
-local ClientRequests = require("network.ClientProtocol")
+local ClientMessages = require("network.ClientProtocol")
 require("TimeQueue")
 local class = require("class")
+local Request = require("network.Request")
 
 local TcpClient = class(function(tcpClient)
   -- holds data fragments
@@ -13,8 +11,7 @@ local TcpClient = class(function(tcpClient)
   --connectionUptime counts "E" messages, not seconds
   tcpClient.connectionUptime = 0
   tcpClient.receivedMessageQueue = ServerQueue()
-  tcpClient.sendNetworkQueue = TimeQueue()
-  tcpClient.receiveNetworkQueue = TimeQueue()
+  tcpClient.delayedProcessing = false
 end)
 
 -- setup the network connection on the given IP and port
@@ -77,29 +74,35 @@ function TcpClient:resetNetwork()
 end
 
 function TcpClient:sendMessage(stringData)
-  if GAME.tcpClient:isConnected() then
-    local fullMessageSent, error, partialBytesSent = GAME.tcpClient.socket:send(stringData)
+  if self:isConnected() then
+    local fullMessageSent, error, partialBytesSent = self.socket:send(stringData)
     if fullMessageSent then
       --logger.trace("json bytes sent in one go: " .. tostring(fullMessageSent))
+      return true
     else
       logger.error("Error sending network message: " .. (error or "") .. " only sent " .. (partialBytesSent or "0") .. "bytes")
+      return false
     end
+  else
+    return false
   end
 end
 
 function TcpClient:updateNetwork(dt)
-  self.sendNetworkQueue:update(dt)
-  local data = self.sendNetworkQueue:popIfReady()
-  while data do
-    self:sendMessage(data)
-    data = self.sendNetworkQueue:popIfReady()
-  end
+  if self.delayedProcessing then
+    self.sendNetworkQueue:update(dt)
+    local data = self.sendNetworkQueue:popIfReady()
+    while data do
+      self:sendMessage(data)
+      data = self.sendNetworkQueue:popIfReady()
+    end
 
-  self.receiveNetworkQueue:update(dt)
-  data = self.receiveNetworkQueue:popIfReady()
-  while data do
-    self:queueMessage(data[1], data[2])
+    self.receiveNetworkQueue:update(dt)
     data = self.receiveNetworkQueue:popIfReady()
+    while data do
+      self:queueMessage(data[1], data[2])
+      data = self.receiveNetworkQueue:popIfReady()
+    end
   end
 end
 
@@ -113,20 +116,29 @@ function TcpClient:send(stringData)
   if not self.socket then
     return false
   end
-  if not STONER_MODE then
-    self:sendMessage(stringData)
-  else
+  if self.delayedProcessing then
     local lagSeconds = (math.random() * (sendMaxLag - sendMinLag)) + sendMinLag
     self.sendNetworkQueue:push(stringData, lagSeconds)
+    -- bold assumption that the later send will work
+    return true
+  else
+    return self:sendMessage(stringData)
   end
-  return true
 end
 
--- Cleans up "stonermode" used for testing laggy sends
-function TcpClient:undoStonermode()
+--activate delayedProcessing, used for testing laggy sends and receives
+function TcpClient:activateDelayedProcessing()
+  self.sendNetworkQueue = TimeQueue()
+  self.receiveNetworkQueue = TimeQueue()
+  self.delayedProcessing = true
+end
+
+-- deactivate delayedProcessing
+function TcpClient:deactivateDelayedProcessing()
   self.sendNetworkQueue:clear()
   self.receiveNetworkQueue:clear()
-  STONER_MODE = false
+  self:updateNetwork(0)
+  self.delayedProcessing = false
 end
 
 -- Adds the message to the network queue or processes it immediately in a couple cases
@@ -192,7 +204,7 @@ function process_data_message(type, data)
 end
 
 function TcpClient:sendErrorReport(errorData)
-  ClientRequests.sendErrorReport(errorData)
+  self:sendRequest(ClientMessages.sendErrorReport(errorData))
 end
 
 -- Processes messages that came in from the server
@@ -206,11 +218,12 @@ function TcpClient:processIncomingMessages()
   while true do
     local type, message, remaining = NetworkProtocol.getMessageFromString(self.data, true)
     if type then
-      if not STONER_MODE then
-        self:queueMessage(type, message)
-      else
+      if self.delayedProcessing then
+        -- in stoner mode, don't directly send the message but add it to a timed queue with a delay instead
         local lagSeconds = (math.random() * (receiveMaxLag - receiveMinLag)) + receiveMinLag
         self.receiveNetworkQueue:push({type, message}, lagSeconds)
+      else
+        self:queueMessage(type, message)
       end
       self.data = remaining
     else
@@ -221,58 +234,9 @@ function TcpClient:processIncomingMessages()
   return true
 end
 
-function Stack.handle_input_taunt(self)
-
-  if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
-    self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
-    if GAME.tcpClient:isConnected() then
-      ClientRequests.sendTaunt("up", self.taunt_up)
-    end
-  elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
-    self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
-    if GAME.tcpClient:isConnected() then
-      ClientRequests.sendTaunt("down", self.taunt_down)
-    end
-  end
-end
-
-local touchIdleInput = TouchDataEncoding.touchDataToLatinString(false, 0, 0, 6)
-function Stack.idleInput(self) 
-  return (self.inputMethod == "touch" and touchIdleInput) or base64encode[1]
-end
-
-function Stack.send_controls(self)
-  if self.is_local and GAME.tcpClient:isConnected() and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
-    -- Send 1 frame at clock time 0 then wait till we get our first input from the other player.
-    -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
-    -- print("self.confirmedInput="..(self.confirmedInput or "nil"))
-    -- print("self.input_buffer="..(self.input_buffer or "nil"))
-    -- print("send_controls returned immediately")
-    return
-  end
-
-  local playerNumber = self.which
-  local to_send
-  if self.inputMethod == "controller" then
-    to_send = base64encode[
-      ((input.isDown["Raise1"] or input.isDown["Raise2"] or input.isPressed["Raise1"] or input.isPressed["Raise2"]) and 32 or 0) + 
-      ((input.isDown["Swap1"] or input.isDown["Swap2"]) and 16 or 0) + 
-      ((input.isDown["Up"] or input.isPressed["Up"]) and 8 or 0) + 
-      ((input.isDown["Down"] or input.isPressed["Down"]) and 4 or 0) + 
-      ((input.isDown["Left"] or input.isPressed["Left"]) and 2 or 0) + 
-      ((input.isDown["Right"] or input.isPressed["Right"]) and 1 or 0) + 1
-    ]
-  elseif self.inputMethod == "touch" then
-    to_send = self.touchInputController:encodedCharacterForCurrentTouchInput()
-  end
-  if GAME.tcpClient:isConnected() then
-    local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.playerInput.prefix, to_send)
-    GAME.tcpClient:send(message)
-  end
-
-  self:handle_input_taunt()
-
-  self:receiveConfirmedInput(to_send)
+function TcpClient:sendRequest(requestData)
+  local request = Request(self, requestData.messageType, requestData.messageText, requestData.responseTypes)
+  return request:send()
 end
 
 return TcpClient

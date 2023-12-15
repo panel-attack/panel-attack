@@ -18,7 +18,7 @@ local handleShortcuts = require("Shortcuts")
 local scenes = nil
 local Player = require("Player")
 local GameModes = require("GameModes")
-local TcpClient = require("network.network")
+local TcpClient = require("network.TcpClient")
 
 require("rich_presence.RichPresence")
 
@@ -322,7 +322,7 @@ function Game:update(dt)
     end
   end
 
-  updateNetwork(dt)
+  self.tcpClient:updateNetwork(dt)
 
   if sceneManager.activeScene then
     sceneManager.activeScene:update(dt)
@@ -475,12 +475,16 @@ function Game.detailedErrorLogString(errorData)
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
     "Love Version: " .. errorData.love_version .. newLine ..
-    "UTC Time: " .. formattedTime
+    "UTC Time: " .. formattedTime ..
+    "Scene: " .. sceneManager.activeScene.name
 
     if errorData.matchInfo then
       detailedErrorLogString = detailedErrorLogString .. newLine ..
-      errorData.matchInfo.mode.scene .. " Match Info: " .. newLine ..
+      "Match Info: " .. newLine ..
       "  Stage: " .. errorData.matchInfo.stage .. newLine ..
+      "  Stack Interaction: " .. errorData.matchInfo.stackInteraction ..
+      "  Time Limit: " .. errorData.matchInfo.timeLimit ..
+      "  Do Countdown: " .. errorData.matchInfo.doCountdown ..
       "  Stacks: "
       for i = 1, #errorData.matchInfo.stacks do
         local stack = errorData.matchInfo.stacks[i]

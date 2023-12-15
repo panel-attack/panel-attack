@@ -10,7 +10,6 @@ local GraphicsUtil = require("graphics_util")
 local GameModes = require("GameModes")
 local PanelGenerator = require("gen_panels")
 require("engine.panel")
-local levelPresets = require("LevelPresets")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -2586,3 +2585,6 @@ function Stack:makeStartingBoardPanels()
 
 return ret
 end
+
+-- this should find a better place lol
+require("network.Stack")

@@ -132,7 +132,7 @@ function MainMenu:load(sceneParams)
   end
   CharacterLoader.clear()
   StageLoader.clear()
-  resetNetwork()
+  GAME.tcpClient:resetNetwork()
   GAME.battleRoom = nil
   --GAME.input:clearInputConfigurationsForPlayers()
   --GAME.input:requestPlayerInputConfigurationAssignments(1)

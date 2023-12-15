@@ -3,13 +3,14 @@ local Response = require("network.Response")
 local NetworkProtocol = require("network.NetworkProtocol")
 local consts = require("consts")
 
-local Request = class(function(self, messageType, messageText, responseTypes)
+local Request = class(function(self, tcpClient, messageType, messageText, responseTypes)
+  self.tcpClient = tcpClient
   self.messageType = messageType
   self.messageText = messageText
   self.responseTypes = responseTypes
 end)
 
-local function toJsonMessage(messageText)
+function Request.toJsonMessage(messageText)
   local jsonResult = nil
   local status, errorString = pcall(
     function()
@@ -26,17 +27,17 @@ end
 function Request:send()
   local message
   if self.messageType.prefix == "J" then
-    message = toJsonMessage(self.messageText)
+    message = Request.toJsonMessage(self.messageText)
   elseif self.messageType.prefix == "H" then
     message = NetworkProtocol.clientMessageTypes.versionCheck.prefix .. consts.VERSION
   else
     error("Trying to send a message with message type " .. table_to_string(self.messageType) .. " that has no interaction defined")
   end
-  GAME.tcpClient:send(message)
+  self.tcpClient:send(message)
 
 
   -- in network, all responses from the server get mapped into "json" responses
-  if #self.responseTypes > 0 then
+  if self.responseTypes and #self.responseTypes > 0 then
     return Response(self.responseTypes)
   else
     return nil

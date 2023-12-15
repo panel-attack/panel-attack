@@ -5,7 +5,7 @@ local class = require("class")
 local Replay = require("replay")
 local logger = require("logger")
 local GameModes = require("GameModes")
-local ClientRequests = require("network.ClientProtocol")
+local ClientMessages = require("network.ClientProtocol")
 
 --@module puzzleGame
 -- Scene for a puzzle mode instance of the game
@@ -102,7 +102,7 @@ function OnlineVsGame:customRun()
   end
   --]]
 
-  if not do_messages() then
+  if not GAME.tcpClient:processIncomingMessages()  then
     sceneManager:switchToScene("MainMenu")
     return -- return {main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}}
   end
@@ -113,10 +113,10 @@ function OnlineVsGame:customRun()
   if self.match.P1.tooFarBehindError or self.match.P2.tooFarBehindError then
     Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, self.match, replay)
     GAME:clearMatch()
-    ClientRequests.leaveRoom()
+    GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
     local ip = GAME.connected_server_ip
     local port = GAME.connected_network_port
-    resetNetwork()
+    GAME.tcpClient:resetNetwork()
     return {main_dumb_transition, {
       main_net_vs_setup, -- next_func
       loc("ss_latency_error"), -- text
@@ -131,7 +131,7 @@ function OnlineVsGame:customRun()
 end
 
 function OnlineVsGame:customGameOverSetup()
-  ClientRequests.reportLocalGameResult(self.match:getOutcome()["outcome_claim"])
+  GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(self.match:getOutcome()["outcome_claim"]))
   self.maxDisplayTime = 8
   self.nextScene = "CharacterSelectOnline"
 end
