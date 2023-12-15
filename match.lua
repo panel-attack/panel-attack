@@ -28,8 +28,8 @@ Match =
     self.startTimestamp = os.time(os.date("*t"))
     if (P2 or self.stackInteraction == GameModes.StackInteraction.VERSUS) then
       GAME.rich_presence:setPresence(
-      (battleRoom.spectating and "Spectating" or "Playing") .. " a " .. battleRoom.mode.richPresenceLabel .. " match",
-      battleRoom.players[1].name .. " vs " .. (battleRoom.players[2].name),
+      (self:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. battleRoom.mode.richPresenceLabel .. " match",
+      self.players[1].name .. " vs " .. (self.players[2].name),
       true)
     else
       GAME.rich_presence:setPresence(
@@ -91,11 +91,11 @@ function Match:getOutcome()
     results["outcome_claim"] = 0
   elseif gameResult == -1 then -- P2 wins
     results["winSFX"] = self.P2:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.players[2].name)
+    results["end_text"] =  loc("ss_p_wins", self.players[2].name)
     results["outcome_claim"] = self.P2.player_number
   elseif gameResult == 1 then -- P1 wins
     results["winSFX"] = self.P1:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", GAME.battleRoom.players[1].name)
+    results["end_text"] =  loc("ss_p_wins", self.players[1].name)
     results["outcome_claim"] = self.P1.player_number
   else
     error("No win result")
@@ -363,7 +363,7 @@ function Match:render()
       gprint("P2 Average Latency: " .. P2Behind, 1, 34)
     end
 
-    if GAME.battleRoom.spectating and behind > MAX_LAG * 0.75 then
+    if not self:hasLocalPlayer() and behind > MAX_LAG * 0.75 then
       local iconSize = 20
       local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
       local x = (canvas_width / 2) - (iconSize / 2)
@@ -535,12 +535,13 @@ function Match:render()
         self.simulatedOpponent:render()
       end
 
+      -- should invert the relationship between trainingModeSettings and challengeMode in the future
       local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
       if challengeMode then
         challengeMode:render()
       end
 
-      if self.battleRoom then
+      if self.stackInteraction ~= GameModes.StackInteractions.NONE then
         if P1 and P1.telegraph then
           P1.telegraph:render()
         end
@@ -550,7 +551,7 @@ function Match:render()
       end
 
       -- Draw VS HUD
-      if self.battleRoom then
+      if self.stackInteraction == GameModes.StackInteractions.VERSUS then
         if not config.debug_mode then --this is printed in the same space as the debug details
           -- TODO: get spectator string from battleRoom
           --gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
@@ -558,7 +559,7 @@ function Match:render()
 
         self:drawMatchType()
       end
-      
+
       self:drawTimer()
     end
   end
@@ -616,14 +617,14 @@ function Match:start()
 
   for i = 1, #self.players do
     local stack = self.players[i]:createStackFromSettings(self)
-    stack.do_countdown = self.battleRoom.mode.doCountdown
+    stack.do_countdown = self.doCountdown
 
     if self.replay then
       if self.isFromReplay then
         -- watching a finished replay
         stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
         stack.max_runs_per_frame = 1
-      elseif self.battleRoom.spectating and self.replay.players[i].setting.inputs then
+      elseif not self:hasLocalPlayer() and self.replay.players[i].setting.inputs then
         -- catching up to a match in progress
         stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
         stack.play_to_end = true
@@ -724,4 +725,9 @@ function Match:removeCanvases()
   for i = 1, #self.players do
     self.players[i].stack.canvas = nil
   end
+end
+
+-- if there is no local player that means the client is either spectating (or watching a replay)
+function Match:hasLocalPlayer()
+  return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
 end
