@@ -14,9 +14,9 @@ local function endlessSaveTest()
   StackReplayTestingUtils:fullySimulateMatch(match)
 
   assert(match ~= nil)
-  assert(match.mode.stackInteraction == GameModes.StackInteraction.NONE)
-  assert(match.mode.timeLimit == nil)
-  assert(tableUtils.length(match.mode.winConditions) == 0)
+  assert(match.stackInteraction == GameModes.StackInteraction.NONE)
+  assert(match.timeLimit == nil)
+  assert(tableUtils.length(match.winConditions) == 0)
   assert(match.seed == 1)
   assert(match.P1.game_over_clock == 908)
 

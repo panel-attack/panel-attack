@@ -13,7 +13,10 @@ Match =
     self.engineVersion = VERSION
     assert(battleRoom)
     self.battleRoom = battleRoom
-    self.mode = battleRoom.mode
+    self.stackInteraction = battleRoom.mode.stackInteraction
+    self.timeLimit = battleRoom.mode.timeLimit
+    self.doCountdown = battleRoom.mode.doCountdown
+    self.winConditions = battleRoom.mode.winConditions
     GAME.droppedFrames = 0
     self.timeSpentRunning = 0
     self.maxTimeSpentRunning = 0
@@ -22,9 +25,8 @@ Match =
     self.currentMusicIsDanger = false
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
-    self.doCountdown = self.mode.doCountdown
     self.startTimestamp = os.time(os.date("*t"))
-    if (P2 or self.mode.stackInteraction == GameModes.StackInteraction.VERSUS) then
+    if (P2 or self.stackInteraction == GameModes.StackInteraction.VERSUS) then
       GAME.rich_presence:setPresence(
       (battleRoom.spectating and "Spectating" or "Playing") .. " a " .. battleRoom.mode.richPresenceLabel .. " match",
       battleRoom.players[1].name .. " vs " .. (battleRoom.players[2].name),
@@ -300,18 +302,18 @@ function Match:drawTimer()
   end
 
   -- Draw the timer for time attack
-  if self.mode == GameModes.ONE_PLAYER_PUZZLE then
+  if self.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
     -- puzzles don't have a timer...yet?
   else
     local frames = stack.game_stopwatch
-    if self.mode.timeLimit then
-      frames = (self.mode.timeLimit * 60) - stack.game_stopwatch
+    if self.timeLimit then
+      frames = (self.timeLimit * 60) - stack.game_stopwatch
       if frames < 0 then
         frames = 0
       end
     end
     --frames = frames + 60 * 60 * 80 -- debug large timer rendering
-    local timeString = frames_to_time_string(frames, not self.mode.timeLimit)
+    local timeString = frames_to_time_string(frames, not self.timeLimit)
     
     self:drawMatchLabel(stack.theme.images.IMG_time, stack.theme.timeLabel_Pos, stack.theme.timeLabel_Scale)
     self:drawMatchTime(timeString, self.time_quads, stack.theme.time_Pos, stack.theme.time_Scale)
@@ -580,7 +582,9 @@ end
 
 function Match:getInfo()
   local info = {}
-  info.mode = self.mode
+  info.stackInteraction = self.stackInteraction
+  info.timeLimit = self.timeLimit
+  info.doCountdown = self.doCountdown
   info.stage = current_stage
   info.stacks = {}
   if self.P1 then
@@ -627,11 +631,11 @@ function Match:start()
     end
   end
 
-  if self.mode.stackInteraction == GameModes.StackInteraction.SELF then
+  if self.stackInteraction == GameModes.StackInteraction.SELF then
     for i = 1, #self.players do
       self.players[i].stack:setGarbageTarget(self.players[i].stack)
     end
-  elseif self.mode.stackInteraction == GameModes.StackInteraction.VERSUS then
+  elseif self.stackInteraction == GameModes.StackInteraction.VERSUS then
     for i = 1, #self.players do
       for j = 1, #self.players do
         if i ~= j then
@@ -642,7 +646,7 @@ function Match:start()
         end
       end
     end
-  elseif self.mode.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
+  elseif self.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
     local trainingModeSettings = GAME.battleRoom.trainingModeSettings
     local attackEngine = AttackEngine:createEngineForTrainingModeSettings(trainingModeSettings)
     for i = 1, #self.players do
@@ -654,7 +658,7 @@ function Match:start()
   for i = 1, #self.players do
     local pString = "P" .. tostring(i)
     self[pString] = self.players[i].stack
-    if self.mode.selectFile ~= GameModes.FileSelection.PUZZLE then
+    if self.battleRoom.mode.selectFile ~= GameModes.FileSelection.PUZZLE then
       self.players[i].stack:starting_state()
     end
   end
@@ -664,7 +668,7 @@ function Match:setStage(stageId)
   if stageId then
     -- we got one from the server
     self.stageId = StageLoader.resolveStageSelection(stageId)
-  elseif self.mode.playerCount == 1 then
+  elseif #self.players == 1 then
     if self.players[1].settings.stageId == random_stage_special_value then
       self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
     else
@@ -682,8 +686,8 @@ function Match:generateSeed()
   local seed = 17
   seed = seed * 37 + self.players[1].rating.new
   seed = seed * 37 + self.players[2].rating.new
-  seed = seed * 37 + GAME.battleRoom.playerWinCounts[1]
-  seed = seed * 37 + GAME.battleRoom.playerWinCounts[2]
+  seed = seed * 37 + self.players[1].wins
+  seed = seed * 37 + self.players[2].wins
 
   return seed
 end

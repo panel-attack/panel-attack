@@ -22,7 +22,7 @@ local Player = class(function(self, name, publicId, isLocal)
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
-function Player:getWinCount()
+function Player:getWinCountForDisplay()
   return self.wins + self.modifiedWins
 end
 
