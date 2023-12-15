@@ -47,7 +47,7 @@ function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
   else
     battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_VS_SELF)
   end
-  LocalPlayer.settings.level = 1
+  battleRoom.players[1].settings.level = 1
   local match = battleRoom:createMatch()
   match:start()
   match.P1.health = stackHealth or 100000

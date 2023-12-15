@@ -63,6 +63,7 @@ modern[1] = {
     chainConstant = 80,
     dangerConstant = 160,
     coefficient = 20,
+    dangerCoefficient = 20,
   },
   frameConstants = {
     HOVER = 12,
@@ -86,6 +87,7 @@ modern[2] = {
     chainConstant = 77,
     dangerConstant = 152,
     coefficient = 18,
+    dangerCoefficient = 18,
   },
   frameConstants = {
     HOVER = 12,
@@ -109,6 +111,7 @@ modern[3] = {
     chainConstant = 74,
     dangerConstant = 144,
     coefficient = 16,
+    dangerCoefficient = 16,
   },
   frameConstants = {
     HOVER = 11,
@@ -131,7 +134,8 @@ modern[4] = {
     comboConstant = -8,
     chainConstant = 71,
     dangerConstant = 136,
-    coefficient = 20,
+    coefficient = 14,
+    dangerCoefficient = 14,
   },
   frameConstants = {
     HOVER = 10,
@@ -155,6 +159,7 @@ modern[5] = {
     chainConstant = 68,
     dangerConstant = 128,
     coefficient = 12,
+    dangerCoefficient = 12,
   },
   frameConstants = {
     HOVER = 9,
@@ -178,6 +183,7 @@ modern[6] = {
     chainConstant = 65,
     dangerConstant = 120,
     coefficient = 10,
+    dangerCoefficient = 10,
   },
   frameConstants = {
     HOVER = 6,
@@ -201,6 +207,7 @@ modern[7] = {
     chainConstant = 62,
     dangerConstant = 112,
     coefficient = 8,
+    dangerCoefficient = 8,
   },
   frameConstants = {
     HOVER = 5,
@@ -224,6 +231,7 @@ modern[8] = {
     chainConstant = 60,
     dangerConstant = 104,
     coefficient = 6,
+    dangerCoefficient = 6,
   },
   frameConstants = {
     HOVER = 4,
@@ -247,6 +255,7 @@ modern[9] = {
     chainConstant = 58,
     dangerConstant = 96,
     coefficient = 4,
+    dangerCoefficient = 4,
   },
   frameConstants = {
     HOVER = 3,
@@ -270,6 +279,7 @@ modern[10] = {
     chainConstant = 56,
     dangerConstant = 88,
     coefficient = 2,
+    dangerCoefficient = 2,
   },
   frameConstants = {
     HOVER = 6,
@@ -293,6 +303,7 @@ modern[11] = {
     chainConstant = 53,
     dangerConstant = 80,
     coefficient = 1,
+    dangerCoefficient = 0,
   },
   frameConstants = {
     HOVER = 3,
@@ -318,6 +329,7 @@ classic.easy = {
     chainConstant = 300,
     dangerConstant = 600,
     coefficient = 0,
+    dangerCoefficient = 0,
   },
   frameConstants = {
     HOVER = 12,
@@ -346,6 +358,7 @@ classic.normal = {
     chainConstant = 180,
     dangerConstant = 420,
     coefficient = 0,
+    dangerCoefficient = 0,
   },
   frameConstants = {
     HOVER = 9,
@@ -372,6 +385,7 @@ classic.hard = {
     chainConstant = 120,
     dangerConstant = 240,
     coefficient = 0,
+    dangerCoefficient = 0,
   },
   frameConstants = {
     HOVER = 6,
