@@ -439,7 +439,7 @@ function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
     if toppedOut and isChain then
       if stop.formula == 1 then
         local length = (chainCounter > 4) and 6 or chainCounter
-        stopTime = stop.dangerConstant + (length - 1) * stop.coefficient
+        stopTime = stop.dangerConstant + (length - 1) * stop.dangerCoefficient
       elseif stop.formula == 2 then
         stopTime = stop.dangerConstant
       end
