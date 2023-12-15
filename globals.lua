@@ -1,9 +1,3 @@
-require("consts")
-require("queue")
-require("server_queue")
-
-server_queue = ServerQueue()
-
 score_mode = SCOREMODE_TA
 
 GARBAGE_TELEGRAPH_TIME = 45 -- the amount of time the garbage stays in the telegraph after getting there from the attack animation

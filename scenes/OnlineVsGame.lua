@@ -50,7 +50,7 @@ local function handleTaunt()
     end
   end
 
-  local messages = server_queue:pop_all_with("taunt")
+  local messages = GAME.server_queue:pop_all_with("taunt")
   for _, msg in ipairs(messages) do
     if msg.taunt then -- receive taunts
       local character = getCharacter(msg.player_number)
@@ -62,7 +62,7 @@ local function handleTaunt()
 end
 
 local function handleLeaveMessage()
-  local messages = server_queue:pop_all_with("leave_room")
+  local messages = GAME.server_queue:pop_all_with("leave_room")
   for _, msg in ipairs(messages) do
     if msg.leave_room then -- lost room during game, go back to lobby
       Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.battleRoom.match, replay)

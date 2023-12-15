@@ -45,7 +45,7 @@ local states = {DEFAULT = 1, INITIALIZE_ROOM = 2, SWITCH_SCENE = 3}
 -- if a roomInitializationMessage is not received it returns a function to transition out of the room, otherwise returns nil
 function CharacterSelectOnline:pollInitializationMessage()
   -- Poll for the room setup messages from the server
-  local msg = server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
+  local msg = GAME.server_queue:pop_next_with("create_room", "character_select", "spectate_request_granted")
   if msg then
     self.roomInitializationMessage = msg
   end
@@ -141,7 +141,7 @@ end
 -- may return a function for transitioning into a different screen if the opponent left or the server confirmed the start of the game
 -- returns nil if staying in select_screen
 function CharacterSelectOnline:handleServerMessages()
-  local messages = server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
+  local messages = GAME.server_queue:pop_all_with("win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied")
   if self.roomInitializationMessage then
     messages[#messages+1] = self.roomInitializationMessage
     self.roomInitializationMessage = nil

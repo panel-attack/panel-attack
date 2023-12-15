@@ -144,15 +144,15 @@ end
 function Lobby:updateLeaderboard(leaderboardReport)
   if leaderboardReport.leaderboard_report then
     self.updated = true
-    leaderboard_report = leaderboardReport.leaderboard_report
+    local leaderboard_report = leaderboardReport.leaderboard_report
     for rank = #leaderboard_report, 1, -1 do
       local user = leaderboard_report[rank]
       if user.user_name == config.name then
         self.my_rank = rank
       end
     end
-    leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
-    leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
+    local leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
+    local leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
     self.leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
   end
 end
@@ -186,8 +186,8 @@ function Lobby:load(sceneParams)
   self.messageListeners = {}
   self.messageListeners["create_room"] = MessageListener("create_room")
   self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)
-  self.messageListeners["unpaired"] = MessageListener("unpaired")
-  self.messageListeners["unpaired"]:subscribe(self, self.updateLobbyState)
+  self.messageListeners["players"] = MessageListener("players")
+  self.messageListeners["players"]:subscribe(self, self.updateLobbyState)
   self.messageListeners["game_request"] = MessageListener("game_request")
   self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
 
@@ -208,7 +208,10 @@ function Lobby:drawBackground()
 end
 
 function Lobby:processServerMessages()
-  for _, listener in pairs(self.messageListeners) do
+  for message, listener in pairs(self.messageListeners) do
+    if message == "players" then
+      local phi = 5
+    end
     listener:listen()
   end
 
@@ -269,6 +272,7 @@ function Lobby:defaultUpdate(dt)
   self.updated = false
 end
 
+local i = 0
 local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
 function Lobby:update(dt)
   self.backgroundImg:update(dt)
@@ -292,11 +296,13 @@ function Lobby:update(dt)
       end
     end
   else
-    drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
+    -- We are in the lobby, we shouldn't have any game data messages
+    drop_old_data_messages()
 
     self:processServerMessages()
     self.lobbyMenu:update()
     self:defaultUpdate(dt)
+    i = i + 1
   end
 
   if not do_messages() then

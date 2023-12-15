@@ -115,13 +115,13 @@ function queue_message(type, data)
     local dataMessage = {}
     dataMessage[type] = data
     logger.debug("Queuing: " .. type .. " with data:" .. data)
-    server_queue:push(dataMessage)
+    GAME.server_queue:push(dataMessage)
   elseif type == NetworkProtocol.serverMessageTypes.versionCorrect.prefix then
-    -- make responses to client H messages processable via server_queue
-    server_queue:push({versionCompatible = true})
+    -- make responses to client H messages processable via GAME.server_queue
+    GAME.server_queue:push({versionCompatible = true})
   elseif type == NetworkProtocol.serverMessageTypes.versionWrong.prefix then
-    -- make responses to client H messages processable via server_queue
-    server_queue:push({versionCompatible = false})
+    -- make responses to client H messages processable via GAME.server_queue
+    GAME.server_queue:push({versionCompatible = false})
   elseif type == NetworkProtocol.serverMessageTypes.ping.prefix then
     net_send(NetworkProtocol.clientMessageTypes.acknowledgedPing.prefix)
     connection_up_time = connection_up_time + 1 --connection_up_time counts "E" messages, not seconds
@@ -131,14 +131,14 @@ function queue_message(type, data)
       error(loc("nt_msg_err", (data or "nil")))
     end
     logger.debug("Queuing JSON: " .. dump(current_message))
-    server_queue:push(current_message)
+    GAME.server_queue:push(current_message)
   end
 end
 
 -- Drops all "game data" messages prior to the next server "J" message.
 function drop_old_data_messages()
   while true do
-    local message = server_queue:top()
+    local message = GAME.server_queue:top()
     if not message then
       break
     end
@@ -146,14 +146,14 @@ function drop_old_data_messages()
     if not message[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not message[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
       break -- Found a non user input message. Stop. Future data is for next game
     else
-      server_queue:pop() -- old data, drop it
+      GAME.server_queue:pop() -- old data, drop it
     end
   end
 end
 
 -- Process all game data messages in the queue
 function process_all_data_messages()
-  local messages = server_queue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
+  local messages = GAME.server_queue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
       logger.debug("Processing: " .. type .. " with data:" .. data)
