@@ -105,7 +105,35 @@ function ServerMessages.sanitizeCreateRoom(message)
 end
 
 function ServerMessages.toServerMenuState(player)
+  -- what we're expected to send:
+  --[[
+    {
+      "character_is_random": "__RandomCharacter", -- optional
+      "stage_is_random": "__RandomStage",         -- optional
+      "character_display_name": "Dragon",
+      "cursor": "__Ready",                        -- uuuuuh
+      "ready": true,
+      "level": 5,
+      "wants_ready": true,
+      "ranked": true,
+      "panels_dir": "panelhd_basic_mizunoketsuban",
+      "character": "pa_characters_dragon",
+      "stage": "pa_stages_wind",
+      "loaded": true
+    }
+  --]]
+  local menuState = {}
+  menuState.stage = player.settings.stageId
+  menuState.character = player.settings.characterId
+  menuState.panels_dir = player.settings.panelId
+  menuState.wants_ready = player.settings.wantsReady
+  menuState.ranked = player.settings.wantsRanked
+  menuState.level = player.settings.level
+  menuState.loaded = GAME.battleRoom.allAssetsLoaded
+  menuState.ready = menuState.loaded and menuState.wants_ready
+  menuState.cursor = "__Ready" -- play pretend
 
+  return menuState
 end
 
 return ServerMessages
