@@ -19,23 +19,23 @@ local Lobby = class(
   function (self, sceneParams)
     -- lobby data from the server
     self.playerData = nil
-    self.unpaired_players = {} -- list
-    self.willing_players = {} -- set
-    self.spectatable_rooms = {}
+    self.unpairedPlayers = {} -- list
+    self.willingPlayers = {} -- set
+    self.spectatableRooms = {}
     -- requests to play a match, not web requests
-    self.sent_requests = {}
+    self.sentRequests = {}
 
     -- leaderboard data
     self.showingLeaderboard = false
-    self.my_rank = nil
-    self.leaderboard_string = ""
+    self.myRank = nil
+    self.leaderboardString = ""
     self.leaderboardResponse = nil
 
     -- ui
     self.backgroundImg = themes[config.theme].images.bg_main
+    self.yOffset = themes[config.theme].main_menu_screen_pos[2] + 10
     self.lobbyMenu = nil
-    self.lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-    self.lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
+    self.lobbyMenuXoffsetMap = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
     -- currently unused, need to find a new place to draw this later
     self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
 
@@ -101,7 +101,7 @@ function Lobby:initLobbyMenu()
     {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})},
   }
 
-  self.lobbyMenu = Menu({x = self.lobby_menu_x[self.showingLeaderboard], y = self.lobby_menu_y, menuItems = menuItems})
+  self.lobbyMenu = Menu({x = self.lobbyMenuXoffsetMap[self.showingLeaderboard], y = self.yOffset, menuItems = menuItems})
 end
 
 -----------------
@@ -118,7 +118,7 @@ function Lobby:toggleLeaderboard()
     self.leaderboardToggleLabel:setText("lb_show_board")
     self.showingLeaderboard = false
   end
-  self.lobbyMenu.x = self.lobby_menu_x[self.showingLeaderboard]
+  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.showingLeaderboard]
 end
 
 local function build_viewable_leaderboard_string(report, first_viewable_idx, last_viewable_idx)
@@ -148,12 +148,12 @@ function Lobby:updateLeaderboard(leaderboardReport)
     for rank = #leaderboard_report, 1, -1 do
       local user = leaderboard_report[rank]
       if user.user_name == config.name then
-        self.my_rank = rank
+        self.myRank = rank
       end
     end
-    local leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
+    local leaderboard_first_idx_to_show = math.max((self.myRank or 1) - 8, 1)
     local leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
-    self.leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+    self.leaderboardString = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
   end
 end
 
@@ -163,7 +163,7 @@ end
 
 function Lobby:processGameRequest(gameRequestMessage)
   if gameRequestMessage.game_request then
-    self.willing_players[gameRequestMessage.game_request.sender] = true
+    self.willingPlayers[gameRequestMessage.game_request.sender] = true
     love.window.requestAttention()
     play_optional_sfx(themes[config.theme].sounds.notification)
     -- this might be moot if the server sends a lobby update to everyone after receiving the challenge
@@ -171,25 +171,25 @@ function Lobby:processGameRequest(gameRequestMessage)
   end
 end
 
--- populates playerData, willing_players, sent_requests and unpaired_players from the server messages
+-- populates playerData, willingPlayers, sentRequests and unpairedPlayers from the server messages
 function Lobby:updateLobbyState(lobbyStateMessage)
   if lobbyStateMessage.players then
     self.playerData = lobbyStateMessage.players
   end
   if lobbyStateMessage.unpaired then
-    self.unpaired_players = lobbyStateMessage.unpaired
+    self.unpairedPlayers = lobbyStateMessage.unpaired
     -- players who leave the unpaired list no longer have standing invitations to us.\
-    -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
+    -- we also no longer have a standing invitation to them, so we'll remove them from sentRequests
     local new_willing = {}
     local new_sent_requests = {}
-    for _, player in ipairs(self.unpaired_players) do
-      new_willing[player] = self.willing_players[player]
-      new_sent_requests[player] = self.sent_requests[player]
+    for _, player in ipairs(self.unpairedPlayers) do
+      new_willing[player] = self.willingPlayers[player]
+      new_sent_requests[player] = self.sentRequests[player]
     end
-    self.willing_players = new_willing
-    self.sent_requests = new_sent_requests
+    self.willingPlayers = new_willing
+    self.sentRequests = new_sent_requests
     if lobbyStateMessage.spectatable then
-      self.spectatable_rooms = lobbyStateMessage.spectatable
+      self.spectatableRooms = lobbyStateMessage.spectatable
     end
   end
   self:onLobbyStateUpdate()
@@ -222,7 +222,7 @@ end
 -- challenges the opponent with that name
 function Lobby:requestGameFunction(opponentName)
   return function()
-    self.sent_requests[opponentName] = true
+    self.sentRequests[opponentName] = true
     ClientRequests.challengePlayer(opponentName)
     self:onLobbyStateUpdate()
   end
@@ -242,19 +242,19 @@ function Lobby:onLobbyStateUpdate()
     while #self.lobbyMenu.menuItems > 2 do
       self.lobbyMenu:removeMenuItemAtIndex(1)
     end
-    for _, v in ipairs(self.unpaired_players) do
+    for _, v in ipairs(self.unpairedPlayers) do
       if v ~= config.name then
         local unmatchedPlayer = v .. self:playerRatingString(v)
-        if self.sent_requests[v] then
+        if self.sentRequests[v] then
           unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_request")
         end
-        if self.willing_players[v] then
+        if self.willingPlayers[v] then
           unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
         end
         self.lobbyMenu:addMenuItem(1, {TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})})
       end
     end
-    for _, room in ipairs(self.spectatable_rooms) do
+    for _, room in ipairs(self.spectatableRooms) do
       if room.name then
         local playerA = room.a .. self:playerRatingString(room.a)
         local playerB = room.b .. self:playerRatingString(room.b)
@@ -351,8 +351,8 @@ end
 function Lobby:draw()
   if self.state == STATES.Lobby then
     self.lobbyMenu:draw()
-    if self.showingLeaderboard and self.leaderboard_string and self.leaderboard_string ~= "" then
-      gprint(self.leaderboard_string, self.lobby_menu_x[self.showingLeaderboard] + 400, self.lobby_menu_y)
+    if self.showingLeaderboard and self.leaderboardString and self.leaderboardString ~= "" then
+      gprint(self.leaderboardString, self.lobbyMenuXoffsetMap[true] + 400, self.yOffset)
     end
   elseif self.state == STATES.Login then
     loginStateLabel:draw()
