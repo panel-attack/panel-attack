@@ -36,7 +36,9 @@ end
 function BattleRoom:registerLeaveRoom(messageType)
   local listener = MessageListener(messageType)
   local update = function(battleRoom, message)
-    Replay.finalizeAndWriteVsReplay(0, true, battleRoom.match, battleRoom.match.replay)
+    if battleRoom.match then
+      --Replay.finalizeAndWriteVsReplay(0, true, battleRoom.match, battleRoom.match.replay)
+    end
 
     -- stable calculates the desync here and displays it
     -- need to figure out where to do that sensibly here
@@ -88,7 +90,7 @@ function BattleRoom:registerStartMatch(messageType)
         end
       end
     end
-    battleRoom:startMatch()
+    battleRoom:startMatch(message.stageId, message.seed)
   end
   listener:subscribe(self, update)
   return listener

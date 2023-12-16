@@ -19,12 +19,14 @@ Game2pVs.name = "Game2pVs"
 sceneManager:addScene(Game2pVs)
 
 function Game2pVs:customRun()
-  if not GAME.tcpClient:processIncomingMessages()  then
-    sceneManager:switchToScene("MainMenu")
-    return
-  end
+  if GAME.battleRoom.online then
+    if not GAME.tcpClient:processIncomingMessages()  then
+      sceneManager:switchToScene("MainMenu")
+      return
+    end
 
-  process_all_data_messages() -- Receive game play inputs from the network
+    process_all_data_messages() -- Receive game play inputs from the network
+  end
 end
 
 function Game2pVs:processGameResults(gameResult)
