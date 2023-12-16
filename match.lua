@@ -17,6 +17,7 @@ Match =
     self.timeLimit = battleRoom.mode.timeLimit
     self.doCountdown = battleRoom.mode.doCountdown
     self.winConditions = battleRoom.mode.winConditions
+    self.supportsPause = not battleRoom.online or #battleRoom.players == 1
 
     assert(battleRoom.players and #battleRoom.players > 0)
     for i = 1, #battleRoom.players do
@@ -27,7 +28,6 @@ Match =
     self.timeSpentRunning = 0
     self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
-    self.supportsPause = true
     self.currentMusicIsDanger = false
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
@@ -621,8 +621,16 @@ end
 function Match:start()
   self:waitForAssets()
 
+  table.sort(self.players, function(a, b)
+    if a.isLocal == b.isLocal then
+      return a.playerNumber < b.playerNumber
+    else
+      return a.isLocal
+    end
+  end)
+
   for i = 1, #self.players do
-    local stack = self.players[i]:createStackFromSettings(self)
+    local stack = self.players[i]:createStackFromSettings(self, i)
     stack.do_countdown = self.doCountdown
 
     if self.replay then

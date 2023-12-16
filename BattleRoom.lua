@@ -73,8 +73,7 @@ function BattleRoom.createFromServerMessage(message)
     battleRoom:addPlayer(player2)
   end
 
-  battleRoom:setupSettingsListeners()
-  battleRoom:registerCallbacks()
+  battleRoom:registerNetworkCallbacks()
 
   return battleRoom
 end
@@ -284,7 +283,7 @@ function BattleRoom:update()
     if self.online then
       if not GAME.tcpClient:processIncomingMessages() then
         -- oh no, we probably disconnected
-        self:shutdownOnline()
+        self:shutdownRoom()
         -- let's try to log in back via lobby
         sceneManager:switchToScene("Lobby")
       else

@@ -2,34 +2,69 @@ require("BattleRoom")
 local MessageListener = require("network.MessageListener")
 local ServerMessages = require("network.ServerMessages")
 local ClientMessages = require("network.ClientProtocol")
+local tableUtils = require("tableUtils")
+local sceneManager = require("scenes.sceneManager")
 -- the entire network part of BattleRoom
 -- this tries to hide away most of the "ugly" handling necessary for to the network communication
 
-function BattleRoom:setupSettingsListeners()
-  self.listeners = {}
-  local menuStateListener = MessageListener("menu_state")
-  self.listeners["menu_state"] = menuStateListener
-  -- "win_counts", "menu_state", "ranked_match_approved", "leave_room", "match_start", "ranked_match_denied"
-  local winCountListener = MessageListener("win_counts")
-  self.listeners["win_counts"] = winCountListener
-  local rankedMatchListener1 = MessageListener("ranked_match_approved")
-  self.listeners["ranked_match_approved"] = rankedMatchListener1
-  local rankedMatchListener2 = MessageListener("ranked_match_denied")
-  self.listeners["ranked_match_denied"] = rankedMatchListener2
-  local leaveRoomListener = MessageListener("leave_room")
-  self.listeners["leave_room"] = leaveRoomListener
-  local matchStartListener = MessageListener("match_start")
-  self.listeners["match_start"] = matchStartListener
+function BattleRoom:registerNetworkCallbacks()
+  local menuStateListener = self:registerPlayerUpdates("menu_state")
+  local winCountListener = self:registerWinCountUpdates("win_counts")
+  local rankedMatchListener1 = self:registerRankedStatusUpdates("ranked_match_approved")
+  local rankedMatchListener2 = self:registerRankedStatusUpdates("ranked_match_denied")
+  local leaveRoomListener = self:registerLeaveRoom("leave_room")
+  local matchStartListener = self:registerStartMatch("match_start")
+  local tauntListener = self:registerTaunts("taunt")
+
+  self.selectionListeners = {}
+
+  self.selectionListeners["menu_state"] = menuStateListener
+  self.selectionListeners["win_counts"] = winCountListener
+  self.selectionListeners["ranked_match_approved"] = rankedMatchListener1
+  self.selectionListeners["ranked_match_denied"] = rankedMatchListener2
+  self.selectionListeners["leave_room"] = leaveRoomListener
+  self.selectionListeners["match_start"] = matchStartListener
+  self.selectionListeners["taunt"] = tauntListener
+
+  self.ingameListeners = {}
+
+  self.selectionListeners["win_counts"] = winCountListener
+  self.selectionListeners["leave_room"] = leaveRoomListener
+  self.selectionListeners["taunt"] = tauntListener
 end
 
-function BattleRoom:registerCallbacks()
-  self:registerPlayerUpdates()
-  self:registerWinCountUpdates()
-  self:registerRankedStatusUpdates()
-  self:registerStartMatch()
+function BattleRoom:registerLeaveRoom(messageType)
+  local listener = MessageListener(messageType)
+  local update = function(battleRoom, message)
+    Replay.finalizeAndWriteVsReplay(0, true, battleRoom.match, battleRoom.match.replay)
+
+    -- stable calculates the desync here and displays it
+    -- need to figure out where to do that sensibly here
+    -- also need to make a call to properly abort the game and close the battleRoom before recovering to lobby
+    battleRoom.match = nil
+    battleRoom:shutdownOnline()
+    sceneManager:switchToScene("Lobby")
+  end
+  listener:subscribe(self, update)
+  return listener
 end
 
-function BattleRoom:registerStartMatch()
+-- by registering this one as a general handler, we can now taunt in character select too
+function BattleRoom:registerTaunts(messageType)
+  local listener = MessageListener(messageType)
+  local update = function(battleRoom, message)
+    local characterId = tableUtils.first(battleRoom.players, function(player)
+      return player.playerNumber == message.player_number
+    end)
+    characters[characterId]:playTaunt(message.type, message.index)
+  end
+  listener:subscribe(self, update)
+  return listener
+end
+
+function BattleRoom:registerStartMatch(messageType)
+  local listener = MessageListener(messageType)
+
   local update = function(battleRoom, message)
     message = ServerMessages.sanitizeStartMatch(message)
     for i = 1, #message.playerSettings do
@@ -55,17 +90,21 @@ function BattleRoom:registerStartMatch()
     end
     battleRoom:startMatch()
   end
-  self.listeners["match_start"]:subscribe(self, update)
+  listener:subscribe(self, update)
+  return listener
 end
 
-function BattleRoom:registerWinCountUpdates()
+function BattleRoom:registerWinCountUpdates(messageType)
+  local listener = MessageListener(messageType)
   local function update(battleRoom, winCountMessage)
     battleRoom:setWinCounts(winCountMessage.win_counts)
   end
-  self.listeners["win_counts"]:subscribe(self, update)
+  listener:subscribe(self, update)
+  return listener
 end
 
-function BattleRoom:registerRankedStatusUpdates()
+function BattleRoom:registerRankedStatusUpdates(messageType)
+  local listener = MessageListener(messageType)
   local update = function(battleRoom, message)
     local rankedStatus = message.ranked_match_approved or false
     local comments = ""
@@ -78,11 +117,12 @@ function BattleRoom:registerRankedStatusUpdates()
     battleRoom:updateRankedStatus(rankedStatus, comments)
   end
 
-  self.listeners["ranked_match_approved"]:subscribe(self, update)
-  self.listeners["ranked_match_denied"]:subscribe(self, update)
+  listener:subscribe(self, update)
+  return listener
 end
 
-function BattleRoom:registerPlayerUpdates()
+function BattleRoom:registerPlayerUpdates(messageType)
+  local listener = MessageListener(messageType)
   for i = 1, #self.players do
     local player = self.players[i]
     if player.isLocal then
@@ -117,20 +157,29 @@ function BattleRoom:registerPlayerUpdates()
           player:updateWithMenuState(menuState)
         end
       end
-      self.listeners["menu_state"]:subscribe(player, update)
+      listener:subscribe(player, update)
+    end
+  end
+
+  return listener
+end
+
+function BattleRoom:runNetworkTasks()
+  if self.match then
+    for messageType, listener in pairs(self.ingameListeners) do
+      listener:listen()
+    end
+  else
+    for messageType, listener in pairs(self.selectionListeners) do
+      listener:listen()
     end
   end
 end
 
-function BattleRoom:runNetworkTasks()
-  for messageType, listener in pairs(self.listeners) do
-    listener:listen()
-  end
-end
-
-function BattleRoom:shutdownOnline()
+function BattleRoom:shutdownRoom()
   for i = 1, #self.players do
     self.players[i]:unsubscribe(self.players[i])
   end
-  self.listeners = nil
+  self.selectionListeners = nil
+  self.ingameListeners = nil
 end

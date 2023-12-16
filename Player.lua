@@ -54,9 +54,9 @@ end
 
 -- creates a stack for the given match according to the player's settings and returns it
 -- the stack is also saved as a reference on player
-function Player:createStackFromSettings(match)
+function Player:createStackFromSettings(match, which)
   local args = {}
-  args.which = self.playerNumber
+  args.which = which
   args.player_number = self.playerNumber
   args.match = match
   args.is_local = self.isLocal

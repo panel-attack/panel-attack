@@ -74,7 +74,11 @@ end
 -------------
 
 function Lobby:load(sceneParams)
-  self.loginRoutine = LoginRoutine(GAME.tcpClient, sceneParams.serverIp, sceneParams.serverPort)
+  if not GAME.tcpClient:isConnected() then
+    self.loginRoutine = LoginRoutine(GAME.tcpClient, sceneParams.serverIp, sceneParams.serverPort)
+  else
+    self.state = STATES.Lobby
+  end
   self.messageListeners = {}
   self.messageListeners["create_room"] = MessageListener("create_room")
   self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)

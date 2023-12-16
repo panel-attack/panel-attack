@@ -2585,6 +2585,3 @@ function Stack:makeStartingBoardPanels()
 
 return ret
 end
-
--- this should find a better place lol
-require("network.Stack")

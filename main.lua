@@ -33,6 +33,7 @@ require("engine/GarbageQueue")
 require("engine/telegraph")
 require("engine")
 require("engine.checkMatches")
+require("network.Stack")
 require("AttackEngine")
 
 require("graphics")
