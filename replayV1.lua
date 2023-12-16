@@ -33,7 +33,8 @@ function ReplayV1.loadFromFile(legacyReplay)
   r.gameMode = {
     stackInteraction = gameMode.stackInteraction,
     winConditions = gameMode.winConditions,
-    doCountdown = v1r.do_countdown
+    gameOverConditions = gameMode.gameOverConditions,
+    doCountdown = v1r.do_countdown,
   }
 
   if mode == "time" then

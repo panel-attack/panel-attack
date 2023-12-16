@@ -1,94 +1,155 @@
 require("localization")
+local tableUtils = require("tableUtils")
 
 local GameModes = {}
 
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
 local StackInteraction = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
-local WinConditions = { GAME_OVER = 1, SCORE = 2, TIME = 3 }
+local WinConditions = { GAME_OVER = 1, SCORE = 2, TIME = 3, NO_MATCHABLE_PANELS = 4, NO_MATCHABLE_GARBAGE = 5 }
+local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, SCORE_REACHED = 3, NO_MOVES_LEFT = 4, CHAIN_DROPPED = 5 }
 
 local OnePlayerVsSelf = {
-  playerCount = 1,
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  stackInteraction = StackInteraction.SELF,
   scene = "VsSelfGame",
   richPresenceLabel = loc("mm_1_vs"),
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteraction.SELF,
   winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerTimeAttack = {
-  playerCount = 1,
   style = Styles.CHOOSE,
   selectFile = FileSelection.NONE,
-  stackInteraction = StackInteraction.NONE,
   scene = "TimeAttackGame",
   richPresenceLabel = loc("mm_1_time"),
-  winConditions = { }, -- for 2p vs Time Attack: { WinConditions.SCORE }
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteraction.NONE,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH, GameOverConditions.TIME_OUT },
   doCountdown = true,
   timeLimit = TIME_ATTACK_TIME,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerEndless = {
-  playerCount = 1,
   style = Styles.CHOOSE,
   selectFile = FileSelection.NONE,
-  stackInteraction = StackInteraction.NONE,
   scene = "EndlessGame",
   richPresenceLabel = loc("mm_1_endless"),
-  winConditions = { }, -- for 2p vs endless: { WinConditions.SCORE, WinConditions.TIME }
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteraction.NONE,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerTraining = {
-  playerCount = 1,
   style = Styles.MODERN,
   selectFile = FileSelection.TRAINING,
-  stackInteraction = StackInteraction.ATTACK_ENGINE,
   scene = "GameBase",
   richPresenceLabel = loc("mm_1_training"),
-  winConditions = { }, -- for 2p vs training: { WinConditions.TIME } 
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteraction.ATTACK_ENGINE,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = true,
+  needsHealth = false,
 }
 
 local OnePlayerPuzzle = {
-  playerCount = 1,
+  -- flags for battleRoom to evaluate and in some cases offer UI for
   style = Styles.MODERN,
   selectFile = FileSelection.PUZZLE,
-  stackInteraction = StackInteraction.NONE,
-  scene = "PuzzleGame",
   richPresenceLabel = loc("mm_1_puzzle"),
+  scene = "PuzzleGame",
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteraction.NONE,
+  -- these are extended based on the loaded puzzle
   winConditions = { },
+  -- these are extended based on the loaded puzzle
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = false,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = true,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerChallenge = {
-  playerCount = 1,
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  stackInteraction = StackInteraction.HEALTH_ENGINE,
   scene = "GameBase",
   richPresenceLabel = loc("mm_1_challenge_mode"),
-  winConditions = { WinConditions.GAME_OVER }, -- for 2p vs challenge: { WinConditions.TIME }
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteraction.HEALTH_ENGINE,
+  winConditions = { WinConditions.GAME_OVER },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = true,
+  needsHealth = true,
 }
 
 local TwoPlayerVersus = {
-  playerCount = 2,
   style = Styles.MODERN,
-  selectFile = FileSelection.NONE,
-  stackInteraction = StackInteraction.VERSUS,
   scene = "Game2pVs",
   richPresenceLabel = loc("mm_2_vs"),
+
+  -- already known match properties
+  playerCount = 2,
+  stackInteraction = StackInteraction.VERSUS,
   winConditions = { WinConditions.GAME_OVER},
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
 GameModes.StackInteraction = StackInteraction
 GameModes.WinCondition = WinConditions
+GameModes.GameOverCondition = GameOverConditions
 
 GameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
 GameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack

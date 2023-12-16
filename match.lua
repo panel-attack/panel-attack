@@ -6,22 +6,38 @@ local sceneManager = require("scenes.sceneManager")
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
-  function(self, battleRoom)
+  function(self, players, doCountdown, stackInteraction, winConditions, gameOverConditions, supportsPause, optionalArgs)
     self.players = {}
     self.P1 = nil
     self.P2 = nil
     self.engineVersion = VERSION
-    assert(battleRoom)
-    self.battleRoom = battleRoom
-    self.stackInteraction = battleRoom.mode.stackInteraction
-    self.timeLimit = battleRoom.mode.timeLimit
-    self.doCountdown = battleRoom.mode.doCountdown
-    self.winConditions = battleRoom.mode.winConditions
-    self.supportsPause = not battleRoom.online or #battleRoom.players == 1
 
-    assert(battleRoom.players and #battleRoom.players > 0)
-    for i = 1, #battleRoom.players do
-      self:addPlayer(battleRoom.players[i])
+    assert(doCountdown ~= nil)
+    assert(stackInteraction)
+    assert(winConditions)
+    assert(gameOverConditions)
+    assert(supportsPause ~= nil)
+    self.doCountdown = doCountdown
+    self.stackInteraction = stackInteraction
+    self.winConditions = winConditions
+    self.gameOverConditions = gameOverConditions
+    if tableUtils.contains(gameOverConditions, GameModes.GameOverCondition.TIME_OUT) then
+      assert(optionalArgs.timeLimit)
+      self.timeLimit = optionalArgs.timeLimit
+    end
+    self.supportsPause = supportsPause
+    if optionalArgs then
+      -- debatable if these couldn't be player settings instead
+      self.puzzle = optionalArgs.puzzle
+      self.attackEngineSettings = optionalArgs.attackEngineSettings
+      -- refers to the health portion of a challenge mode stage
+      -- maybe this isn't right here and battleRoom should just pass Health in as a Player substitute
+      self.health = optionalArgs.health
+    end
+
+    -- match needs its own table so it can sort players with impunity
+    for i = 1, #players do
+      self:addPlayer(players[i])
     end
 
     GAME.droppedFrames = 0
@@ -32,17 +48,6 @@ Match =
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
     self.startTimestamp = os.time(os.date("*t"))
-    if (P2 or self.stackInteraction == GameModes.StackInteraction.VERSUS) then
-      GAME.rich_presence:setPresence(
-      (self:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. battleRoom.mode.richPresenceLabel .. " match",
-      self.players[1].name .. " vs " .. (self.players[2].name),
-      true)
-    else
-      GAME.rich_presence:setPresence(
-      "Playing " .. battleRoom.mode.richPresenceLabel .. " mode",
-      nil,
-      true)
-    end
 
     self.time_quads = {}
   end
@@ -308,7 +313,7 @@ function Match:drawTimer()
   end
 
   -- Draw the timer for time attack
-  if self.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
+  if self.puzzle then
     -- puzzles don't have a timer...yet?
   else
     local frames = stack.game_stopwatch
@@ -542,10 +547,11 @@ function Match:render()
       end
 
       -- should invert the relationship between trainingModeSettings and challengeMode in the future
-      local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
-      if challengeMode then
-        challengeMode:render()
-      end
+      -- challenge mode should probably live on battleRoom instead as match only really runs a single ChallengeStage at a time
+      -- local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
+      -- if challengeMode then
+      --   challengeMode:render()
+      -- end
 
       if self.stackInteraction ~= GameModes.StackInteraction.NONE then
         if P1 and P1.telegraph then
@@ -665,10 +671,12 @@ function Match:start()
       end
     end
   elseif self.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
-    local trainingModeSettings = GAME.battleRoom.trainingModeSettings
-    local attackEngine = AttackEngine:createEngineForTrainingModeSettings(trainingModeSettings)
+    -- these are really dumb dummy values
+    -- we need a way to create an attackengine without immediately being forced to set all that graphics crap
+    self.attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackEngineSettings, nil, SimulatedOpponent(nil, CharacterLoader.resolveCharacterSelection(), 500, 200, -1))
+    -- eg creating an attack engine and then constructing a simulated opponent with it
     for i = 1, #self.players do
-      local attackEngineClone = deepcpy(attackEngine)
+      local attackEngineClone = deepcpy(self.attackEngine)
       attackEngineClone:setGarbageTarget(self.players[i].stack)
     end
   end
@@ -676,7 +684,7 @@ function Match:start()
   for i = 1, #self.players do
     local pString = "P" .. tostring(i)
     self[pString] = self.players[i].stack
-    if self.battleRoom.mode.selectFile ~= GameModes.FileSelection.PUZZLE then
+    if not self.puzzle then
       self.players[i].stack:starting_state()
     end
   end
@@ -715,9 +723,6 @@ function Match:setSeed(seed)
     self.seed = seed
   elseif self.online and #self.players > 1 then
     self.seed = self:generateSeed()
-  elseif self.battleRoom.online and self.battleRoom.ranked and #self.players == 1 then
-    -- not used yet but for future time attack leaderboard
-    error("Didn't get provided with a seed from the server")
   else
     -- Use the default random seed set up on match creation
   end

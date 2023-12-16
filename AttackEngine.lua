@@ -33,7 +33,9 @@ AttackEngine =
     CharacterLoader.load(self.character)
     CharacterLoader.wait()
     self.telegraph = Telegraph(sender)
-    self:setGarbageTarget(garbageTarget)
+    if garbageTarget then
+      self:setGarbageTarget(garbageTarget)
+    end
     self.shouldPlayAttackSfx = shouldPlayAttackSfx
   end
 )

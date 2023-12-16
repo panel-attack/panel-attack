@@ -1,4 +1,3 @@
-
 local logger = require("logger")
 local Player = require("Player")
 local tableUtils = require("tableUtils")
@@ -9,23 +8,20 @@ local ServerMessages = require("network.ServerMessages")
 local ClientMessages = require("network.ClientProtocol")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
-BattleRoom =
-  class(
-  function(self, mode)
-    assert(mode)
-    self.mode = mode
-    self.players = {}
-    self.spectators = {}
-    self.spectating = false
-    self.trainingModeSettings = nil
-    self.allAssetsLoaded = false
-    self.ranked = false
-    if GAME.tcpClient:isConnected() then
-      -- this is a bit naive but effective
-      self.online = true
-    end
+BattleRoom = class(function(self, mode)
+  assert(mode)
+  self.mode = mode
+  self.players = {}
+  self.spectators = {}
+  self.spectating = false
+  self.trainingModeSettings = nil
+  self.allAssetsLoaded = false
+  self.ranked = false
+  if GAME.tcpClient:isConnected() then
+    -- this is a bit naive but effective
+    self.online = true
   end
-)
+end)
 
 function BattleRoom.createFromReplay(replay)
   replay.gameMode.playerCount = #replay.players
@@ -47,7 +43,7 @@ function BattleRoom.createFromReplay(replay)
     player.settings.difficulty = rpp.settings.difficulty
     player.settings.levelData = rpp.settings.levelData
     player.settings.allowAdjacentColors = rpp.settings.allowAdjacentColors
-    --player.settings.levelData = rpp.settings.levelData
+    -- player.settings.levelData = rpp.settings.levelData
     battleRoom:addPlayer(player)
   end
 
@@ -134,22 +130,32 @@ end
 
 -- creates a match with the players in the BattleRoom
 function BattleRoom:createMatch()
-  self.match = Match(self)
+  local supportsPause = not self.online or #self.players == 1
+  local optionalArgs = {timeLimit = self.mode.timeLimit}
+  self.match = Match(
+    self.players,
+    self.mode.doCountdown,
+    self.mode.stackInteraction,
+    self.mode.winConditions,
+    self.mode.gameOverConditions,
+    supportsPause,
+    optionalArgs
+  )
   return self.match
 end
 
 -- creates a new Player based on their minimum information and adds them to the BattleRoom
 function BattleRoom:addNewPlayer(name, publicId, isLocal)
   local player = Player(name, publicId, isLocal)
-  player.playerNumber = #self.players+1
-  self.players[#self.players+1] = player
+  player.playerNumber = #self.players + 1
+  self.players[#self.players + 1] = player
   return player
 end
 
 -- adds an existing Player to the BattleRoom
 function BattleRoom:addPlayer(player)
-  player.playerNumber = #self.players+1
-  self.players[#self.players+1] = player
+  player.playerNumber = #self.players + 1
+  self.players[#self.players + 1] = player
 end
 
 function BattleRoom:updateLoadingState()
@@ -218,6 +224,13 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match.replay = replayOfMatch
   match:setStage(stageId)
   match:setSeed(seed)
+
+  if (#match.players > 1 or match.stackInteraction == GameModes.StackInteraction.VERSUS) then
+    GAME.rich_presence:setPresence((match:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. self.mode.richPresenceLabel ..
+                                       " match", match.players[1].name .. " vs " .. (match.players[2].name), true)
+  else
+    GAME.rich_presence:setPresence("Playing " .. self.mode.richPresenceLabel .. " mode", nil, true)
+  end
 
   if match_type == "Ranked" and not match.room_ratings then
     match.room_ratings = {}

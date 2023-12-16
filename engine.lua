@@ -59,7 +59,7 @@ Stack =
       s.panels_dir = config.panels
     end
 
-    if s.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
+    if s.match.puzzle then
       s.drawsAnalytics = false
     else
       s.do_first_row = true
@@ -189,7 +189,7 @@ Stack =
     s.cur_col = 3 -- the column the left half of the cursor's on
     s.queuedSwapColumn = 0 -- the left column of the two columns to swap or 0 if no swap queued
     s.queuedSwapRow = 0 -- the row of the queued swap or 0 if no swap queued
-    s.top_cur_row = s.height + (s.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE and 0 or -1)
+    s.top_cur_row = s.height + (s.match.puzzle and 0 or -1)
 
     s.poppedPanelIndex = s.poppedPanelIndex or 1
     s.panels_cleared = s.panels_cleared or 0
@@ -1194,7 +1194,7 @@ function Stack.updateDangerBounce(self)
     end
   end
   if self.danger then
-    if self.panels_in_top_row and self.speed ~= 0 and self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE then
+    if self.panels_in_top_row and self.speed ~= 0 and not self.match.puzzle then
       -- Player has topped out, panels hold the "flattened" frame
       self.danger_timer = 15
     elseif self.stop_time == 0 then
@@ -1334,7 +1334,7 @@ function Stack.simulate(self)
     -- Phase 0 //////////////////////////////////////////////////////////////
     -- Stack automatic rising
     if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
-      if self.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
+      if self.match.puzzle then
         -- only reduce health after the first swap to give the player a chance to strategize
         if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
           self.health = self.health - 1
@@ -1347,7 +1347,7 @@ function Stack.simulate(self)
             self:set_game_over()
           end
         else
-          if self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE then
+          if not self.match.puzzle then
             self.rise_timer = self.rise_timer - 1
             if self.rise_timer <= 0 then -- try to rise
               self.displacement = self.displacement - 1
@@ -1363,7 +1363,7 @@ function Stack.simulate(self)
       end
     end
 
-    if not self.panels_in_top_row and self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE and not self:has_falling_garbage() then
+    if not self.panels_in_top_row and not self.match.puzzle and not self:has_falling_garbage() then
       self.health = self.levelData.maxHealth
     end
 
@@ -1446,7 +1446,7 @@ function Stack.simulate(self)
     end
 
     -- MANUAL STACK RAISING
-    if self.manual_raise and self.match.battleRoom.mode ~= GameModes.ONE_PLAYER_PUZZLE then
+    if self.manual_raise and not self.match.puzzle then
       if not self.rise_lock then
         if self.panels_in_top_row then
           self:set_game_over()
@@ -1920,7 +1920,7 @@ end
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
 
-  if self.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
+  if self.match.puzzle then
     if self:puzzle_done() or self:puzzle_failed() then
       return true
     else
@@ -1990,7 +1990,7 @@ function Stack.gameResult(self)
     end
   end
 
-  if self.match.battleRoom.mode == GameModes.ONE_PLAYER_PUZZLE then
+  if self.match.puzzle then
     if self:puzzle_done() then
       return 1
     elseif self:puzzle_failed() then

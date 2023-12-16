@@ -1,14 +1,9 @@
-local utf8 = require("utf8Additions")
 local logger = require("logger")
 local GameModes = require("GameModes")
 local ReplayV1 = require("replayV1")
 local ReplayV2 = require("replayV2")
-local Player = require("Player")
 
 local REPLAY_VERSION = 2
-local tableUtils = require("tableUtils")
-local levelPresets = require("LevelPresets")
-local consts = require("consts")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =
@@ -27,9 +22,12 @@ function Replay.createNewReplay(match)
   result.gameMode = {
     stackInteraction = match.stackInteraction,
     winConditions = match.winConditions or {},
+    gameOverConditions = match.gameOverConditions,
     timeLimit = match.timeLimit,
     doCountdown = match.doCountdown or true
   }
+  result.puzzle = match.puzzle
+  result.attackEngineSettings = match.attackEngineSettings
 
   result.players = {}
   for i = 1, #match.players do

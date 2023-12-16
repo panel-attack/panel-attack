@@ -64,7 +64,7 @@ function Player:createStackFromSettings(match, which)
   args.character = self.settings.characterId
   if self.settings.style == GameModes.Styles.MODERN then
     args.level = self.settings.level
-    if match.battleRoom.mode.stackInteraction == GameModes.StackInteraction.NONE then
+    if match.stackInteraction == GameModes.StackInteraction.NONE then
       args.allowAdjacentColors = true
     else
       args.allowAdjacentColors = args.level < 8
@@ -82,6 +82,8 @@ function Player:createStackFromSettings(match, which)
   args.inputMethod = self.settings.inputMethod
 
   self.stack = Stack(args)
+  -- so the stack can draw player information
+  self.stack.player = self
 
   return self.stack
 end
