@@ -191,7 +191,7 @@ function BattleRoom:allReady()
 end
 
 function BattleRoom:updateRankedStatus(rankedStatus, comments)
-  if self.online and self.mode.selectRanked and rankedStatus ~= self.ranked then
+  if self.online then
     self.ranked = rankedStatus
     self.rankedComments = comments
     -- legacy crutches
@@ -201,7 +201,7 @@ function BattleRoom:updateRankedStatus(rankedStatus, comments)
       match_type = "Casual"
     end
   else
-    error("Trying to apply ranked state to the match even though it is either not online or does not support ranked")
+    error("Trying to apply ranked state to the room even though it is either not online or does not support ranked")
   end
 end
 
@@ -275,31 +275,39 @@ function BattleRoom:startLoadingNewAssets()
 end
 
 function BattleRoom:update()
-  -- here we fetch network updates and update the battleroom / match
-  if self.online then
-    if not GAME.tcpClient:processIncomingMessages() then
-      -- oh no, we probably disconnected
-      self:shutdownOnline()
-      -- let's try to log in back via lobby
-      sceneManager:switchToScene("Lobby")
-    else
-      self:runNetworkTasks()
-    end
-  end
-
   -- if there are still unloaded assets, we can load them 1 asset a frame in the background
   StageLoader.update()
   CharacterLoader.update()
 
   if not self.match then
+    -- here we fetch network updates and update the battleroom / match
+    if self.online then
+      if not GAME.tcpClient:processIncomingMessages() then
+        -- oh no, we probably disconnected
+        self:shutdownOnline()
+        -- let's try to log in back via lobby
+        sceneManager:switchToScene("Lobby")
+      else
+        self:runNetworkTasks()
+      end
+    end
+
     -- the setup phase of the room
     self:updateLoadingState()
     self:refreshReadyStates()
     if self:allReady() then
-      self:startMatch()
+      -- if online we have to wait for the server message
+      if not self.online then
+        self:startMatch()
+      end
     end
   else
     -- the game phase of the room
+    -- BattleRoom handles all network updates for online games!!!
+    -- that means fetching input messages, spectator updates etc.
+    if self.online then
+
+    end
   end
 end
 

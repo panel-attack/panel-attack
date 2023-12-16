@@ -99,6 +99,7 @@ function CharacterSelect:createReadyButton()
 
   -- assign player generic callback
   readyButton.onClick = function(self, inputSource)
+    local player
     if inputSource.player then
       player = inputSource.player
     else

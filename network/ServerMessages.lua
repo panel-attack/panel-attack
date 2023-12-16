@@ -108,10 +108,10 @@ function ServerMessages.toServerMenuState(player)
   -- what we're expected to send:
   --[[
     {
-      "character_is_random": "__RandomCharacter", -- optional
-      "stage_is_random": "__RandomStage",         -- optional
-      "character_display_name": "Dragon",
-      "cursor": "__Ready",                        -- uuuuuh
+      "character_is_random": "__RandomCharacter", -- somewhat optional (bundles only)
+      "stage_is_random": "__RandomStage",         -- somewhat optional (bundles only)
+      "character_display_name": "Dragon",         -- I think not even stable is processing this one
+      "cursor": "__Ready",                        -- this one uses a different grid system so I don't think it's worth the effort
       "ready": true,
       "level": 5,
       "wants_ready": true,
@@ -134,6 +134,54 @@ function ServerMessages.toServerMenuState(player)
   menuState.cursor = "__Ready" -- play pretend
 
   return menuState
+end
+
+function ServerMessages.sanitizeSettings(settings)
+  return
+  {
+    playerNumber = settings.player_number,
+    level = settings.level,
+    characterId = settings.character,
+    panelId = settings.panels_dir,
+    sanitized = true
+  }
+end
+
+function ServerMessages.sanitizeStartMatch(message)
+  --[[
+    "ranked": false,
+    "opponent_settings": {
+        "character_display_name": "Bumpty",
+        "player_number": 2,
+        "level": 8,
+        "panels_dir": "pdp_ta_common",
+        "character": "pa_characters_bumpty"
+    },
+    "stage": "pa_stages_fire",
+    "player_settings": {
+        "character_display_name": "Blargg",
+        "player_number": 1,
+        "level": 8,
+        "panels_dir": "panelhd_basic_mizunoketsuban",
+        "character": "pa_characters_blargg"
+    },
+    "seed": 3245472,
+    "match_start": true
+  --]]
+  local playerSettings = {}
+  playerSettings[1] = ServerMessages.sanitizeSettings(message.player_settings)
+  playerSettings[2] = ServerMessages.sanitizeSettings(message.opponent_settings)
+
+  local matchStart = {
+    playerSettings = playerSettings,
+    seed = message.seed,
+    ranked = message.ranked,
+    stageId = message.stage,
+    match_Start = true,
+    sanitized = true
+  }
+
+  return matchStart
 end
 
 return ServerMessages
