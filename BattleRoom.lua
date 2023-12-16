@@ -273,24 +273,26 @@ function BattleRoom:startLoadingNewAssets()
   end
 end
 
-function BattleRoom:update()
+function BattleRoom:update(dt)
   -- if there are still unloaded assets, we can load them 1 asset a frame in the background
   StageLoader.update()
   CharacterLoader.update()
 
-  if not self.match then
+  if self.online then
     -- here we fetch network updates and update the battleroom / match
-    if self.online then
-      if not GAME.tcpClient:processIncomingMessages() then
-        -- oh no, we probably disconnected
-        self:shutdownRoom()
-        -- let's try to log in back via lobby
-        sceneManager:switchToScene("Lobby")
-      else
-        self:runNetworkTasks()
-      end
+    if not GAME.tcpClient:processIncomingMessages() then
+      -- oh no, we probably disconnected
+      self:shutdownRoom()
+      -- let's try to log in back via lobby
+      sceneManager:switchToScene("Lobby")
+      return
+    else
+      GAME.tcpClient:updateNetwork(dt)
+      self:runNetworkTasks()
     end
+  end
 
+  if not self.match then
     -- the setup phase of the room
     self:updateLoadingState()
     self:refreshReadyStates()
@@ -301,12 +303,7 @@ function BattleRoom:update()
       end
     end
   else
-    -- the game phase of the room
-    -- BattleRoom handles all network updates for online games!!!
-    -- that means fetching input messages, spectator updates etc.
-    if self.online then
 
-    end
   end
 end
 

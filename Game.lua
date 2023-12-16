@@ -322,7 +322,9 @@ function Game:update(dt)
     end
   end
 
-  self.tcpClient:updateNetwork(dt)
+  if self.battleRoom then
+    self.battleRoom:update(dt)
+  end
 
   if sceneManager.activeScene then
     sceneManager.activeScene:update(dt)

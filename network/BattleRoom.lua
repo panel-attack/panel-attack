@@ -15,6 +15,7 @@ function BattleRoom:registerNetworkCallbacks()
   local leaveRoomListener = self:registerLeaveRoom("leave_room")
   local matchStartListener = self:registerStartMatch("match_start")
   local tauntListener = self:registerTaunts("taunt")
+  local characterSelectListener = self:registerCharacterSelect("character_select")
 
   self.selectionListeners = {}
 
@@ -31,6 +32,29 @@ function BattleRoom:registerNetworkCallbacks()
   self.selectionListeners["win_counts"] = winCountListener
   self.selectionListeners["leave_room"] = leaveRoomListener
   self.selectionListeners["taunt"] = tauntListener
+  self.selectionListeners["character_select"] = characterSelectListener
+end
+
+function BattleRoom:registerCharacterSelect(messageType)
+  local listener = MessageListener(messageType)
+  local update = function(battleRoom, message)
+    -- character_select and create_room are the same message
+    -- except that character_select has an additional character_select = true flag
+    message = ServerMessages.sanitizeCreateRoom(message)
+    for i = 1, #message.players do
+      for j = 1, #battleRoom.players do
+        if message.players[i].playerNumber == battleRoom.players[j].playerNumber then
+          battleRoom.players[j]:updateWithMenuState(message.players[i])
+          if message.players[i].ratingInfo then
+            battleRoom.players[j].rating = message.players[i].ratingInfo
+          end
+        end
+      end
+    end
+    sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = battleRoom})
+  end
+  listener:subscribe(self, update)
+  return listener
 end
 
 function BattleRoom:registerLeaveRoom(messageType)
@@ -44,7 +68,7 @@ function BattleRoom:registerLeaveRoom(messageType)
     -- need to figure out where to do that sensibly here
     -- also need to make a call to properly abort the game and close the battleRoom before recovering to lobby
     battleRoom.match = nil
-    battleRoom:shutdownOnline()
+    battleRoom:shutdownRoom()
     sceneManager:switchToScene("Lobby")
   end
   listener:subscribe(self, update)
@@ -168,8 +192,20 @@ end
 
 function BattleRoom:runNetworkTasks()
   if self.match then
+    -- the game phase of the room
+    -- BattleRoom handles all network updates for online games!!!
+    -- that means fetching input messages, spectator updates etc.
     for messageType, listener in pairs(self.ingameListeners) do
       listener:listen()
+    end
+
+    process_all_data_messages() -- Receive game play inputs from the network
+
+    local outcome = self.match:getOutcome()
+    if outcome then
+      -- we need to report the outcome to the server, otherwise the game won't end and we won't get a character selection message
+      -- this is probably flooding the server with messages every frame now
+      GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(outcome.outcome_claim))
     end
   else
     for messageType, listener in pairs(self.selectionListeners) do
