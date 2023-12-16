@@ -93,7 +93,7 @@ function BattleRoom.createLocalFromGameMode(gameMode)
 end
 
 function BattleRoom.setWinCounts(self, winCounts)
-  for i = 1, winCounts do
+  for i = 1, #winCounts do
     self.players[i].wins = winCounts[i]
   end
 end

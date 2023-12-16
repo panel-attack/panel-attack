@@ -22,6 +22,8 @@ GarbageQueue = class(function(s)
       for k,v in pairs(garbage) do
         local width, height, metal, from_chain, finalized = unpack(v)
         if width and height then
+          -- this being a global reference really sucks here, now that attackEngineSettings live on match
+          -- have to take care of that when getting to it
           if metal and (GAME.battleRoom.trainingModeSettings == nil or GAME.battleRoom.trainingModeSettings.attackSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
             self.metal:push(v)
           elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then

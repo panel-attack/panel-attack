@@ -1285,8 +1285,8 @@ function Stack.shouldDropGarbage(self)
       -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
       -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
       -- and because of that hack, we need to do another hack here and allow n-height combo garbage
-      -- but only if trainingmodesettings have been set on the GAME global
-      return next_garbage_block_height > 1 and GAME.battleRoom.trainingModeSettings ~= nil
+      -- but only if attackEngineSettings have been set on the match
+      return next_garbage_block_height > 1 and self.match.attackEngineSettings ~= nil
     end
   end
 end
