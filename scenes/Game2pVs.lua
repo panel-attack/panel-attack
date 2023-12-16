@@ -18,8 +18,17 @@ local Game2pVs = class(
 Game2pVs.name = "Game2pVs"
 sceneManager:addScene(Game2pVs)
 
+function Game2pVs:customRun()
+  if not GAME.tcpClient:processIncomingMessages()  then
+    sceneManager:switchToScene("MainMenu")
+    return
+  end
+
+  process_all_data_messages() -- Receive game play inputs from the network
+end
+
 function Game2pVs:processGameResults(gameResult)
-  Replay.finalizeAndWriteVsReplay(GAME.battleRoom, nil, false, self.match, replay)
+  Replay.finalizeAndWriteVsReplay(nil, false, self.match, replay)
 end
 
 function Game2pVs:abortGame()

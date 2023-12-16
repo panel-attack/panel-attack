@@ -621,6 +621,9 @@ end
 function Match:start()
   self:waitForAssets()
 
+  -- battle room may add the players in any order
+  -- match has to make sure the local player ends up as P1 (left side)
+  -- if both are local or both are not, order by playerNumber
   table.sort(self.players, function(a, b)
     if a.isLocal == b.isLocal then
       return a.playerNumber < b.playerNumber

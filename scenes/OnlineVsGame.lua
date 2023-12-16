@@ -65,7 +65,7 @@ local function handleLeaveMessage()
   local messages = GAME.server_queue:pop_all_with("leave_room")
   for _, msg in ipairs(messages) do
     if msg.leave_room then -- lost room during game, go back to lobby
-      Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, GAME.battleRoom.match, replay)
+      Replay.finalizeAndWriteVsReplay(0, true, GAME.battleRoom.match, replay)
 
       -- Show a message that the match connection was lost along with the average frames behind.
       local message = loc("ss_room_closed_in_game")
@@ -111,21 +111,10 @@ function OnlineVsGame:customRun()
 
   -- if not GAME.battleRoom.spectating then
   if self.match.P1.tooFarBehindError or self.match.P2.tooFarBehindError then
-    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, 0, true, self.match, replay)
+    Replay.finalizeAndWriteVsReplay(0, true, self.match, replay)
     GAME:clearMatch()
     GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
-    local ip = GAME.connected_server_ip
-    local port = GAME.connected_network_port
     GAME.tcpClient:resetNetwork()
-    return {main_dumb_transition, {
-      main_net_vs_setup, -- next_func
-      loc("ss_latency_error"), -- text
-      60, -- timemin
-      -1, -- timemax
-      nil, -- winnerSFX
-      false, -- keepMusic
-      {ip, port} -- args
-    }}
   end
   -- end
 end
@@ -146,7 +135,7 @@ function OnlineVsGame:processGameResults()
       GAME.battleRoom.playerWinCounts[outcome_claim] = GAME.battleRoom.playerWinCounts[outcome_claim] + 1
     end
 
-    Replay.finalizeAndWriteVsReplay(GAME.battleRoom, outcome_claim, false, self.match, replay)
+    Replay.finalizeAndWriteVsReplay(outcome_claim, false, self.match, replay)
   end
 end
 
