@@ -184,4 +184,102 @@ function ServerMessages.sanitizeStartMatch(message)
   return matchStart
 end
 
+function ServerMessages.sanitizeSpectatorJoin(message)
+  --[[
+    "rating_updates": true,
+    "spectate_request_rejected": false,
+    "win_counts": [1, 11],
+    "match_start": false,
+    "ranked": false,
+    "stage": "pa_stages_flower",
+    "spectate_request_granted": true,
+    "a_menu_state": { as usual },
+    "b_menu_state": { as usual },
+    "ratings": [{
+            "new": 0,
+            "old": 0,
+            "difference": 0,
+            "league": "Newcomer",
+            "placement_match_progress": "0/30 placement matches played."
+        }, {
+            "new": 0,
+            "old": 0,
+            "difference": 0,
+            "league": "Newcomer",
+            "placement_match_progress": "0/30 placement matches played."
+        }
+    ],
+    -- we can effectively ignore these in favor of menu state
+    -- only override the level just to be sure
+    "player_settings": {
+      anomaly: no panel id
+        "level": 5,
+        "character_display_name": "Froggy",
+        "character": "pa_characters_froggy",
+        "player_number": 1
+    },
+    "opponent_settings": {
+      anomaly: no panel id
+        "level": 5,
+        "character_display_name": "Yoshi",
+        "character": "pa_characters_yoshi",
+        "player_number": 2
+    },
+    "replay_of_match_so_far": {
+        "vs": {
+            "P2_level": 8,
+            "P2_name": "kornflakes_apk",
+            "P2_char": "pa_characters_bumpty",
+            "seed": 343818,
+            "P1_level": 8,
+            "in_buf": "omitted for brevity, in_buf contains encoded inputs for P1",
+            "I": "omitted for brevity, I contains encoded inputs for P2",
+            "Q": "",
+            "R": "",
+            "do_countdown": true,
+            "ranked": false,
+            "P": "",
+            "O": "",
+            "P1_name": "fightmeyoucoward",
+            "P1_char": "pa_characters_blargg"
+        }
+    },
+    "spectate_request_rejected": false
+  ]]--
+  local playerSettings = {}
+  playerSettings[1] = ServerMessages.sanitizeSettings(message.player_settings)
+  playerSettings[2] = ServerMessages.sanitizeSettings(message.opponent_settings)
+  local players = {}
+  players[1] = ServerMessages.sanitizeMenuState(message.a_menu_state)
+  -- "you" is player 1
+  players[1].playerNumber = message.your_player_number
+  -- yes, the server really doesn't send us the names
+  players[1].name = "Player 1"
+  players[1].playerNumber = playerSettings[1].playerNumber
+  players[1].ratingInfo = message.ratings[1]
+  players[1].level = playerSettings[1].level
+
+  players[2] = ServerMessages.sanitizeMenuState(message.b_menu_state)
+  -- yes, the server really doesn't send us the names
+  players[2].name = "Player 2"
+  players[2].playerNumber = playerSettings[2].playerNumber
+  players[2].ratingInfo = message.ratings[2]
+  players[2].level = playerSettings[2].level
+
+  if message.replay_of_match_so_far then
+    players[1].name = message.replay_of_match_so_far.vs.P1_name
+    players[2].name = message.replay_of_match_so_far.vs.P2_name
+  end
+
+
+  return{
+    spectate_request_granted = true,
+    stageId = message.stage,
+    ranked = message.ranked,
+    winCounts = message.win_counts,
+    players = players,
+    replay = message.replay_of_match_so_far
+  }
+end
+
 return ServerMessages

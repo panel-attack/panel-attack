@@ -51,13 +51,29 @@ function BattleRoom.createFromReplay(replay)
 end
 
 function BattleRoom.createFromServerMessage(message)
-  -- two player versus being the only option so far
-  -- in the future this information might be in the message!
-  local battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
-  -- TODO for networking
+  local battleRoom
   if message.spectate_request_granted then
+    message = ServerMessages.sanitizeSpectatorJoin(message)
+    if message.replay then
+      local match = Replay.loadFromFile(message.replay)
+      -- replay loading from file creates a battleRoom on the global 
+      -- probably bad behaviour, should only return the match and not create the battleRoom itself
+      battleRoom = GAME.battleRoom
+      battleRoom.match = match
+    else
+      battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
+    end
+    for i = 1, #message.players do
+      local player = Player(message.players[i].name, message.players[i].playerNumber, false)
+      player:updateWithMenuState(message.players[i])
+      battleRoom:addPlayer(player)
+    end
     battleRoom.spectating = true
   else
+    -- two player versus being the only option so far
+    -- in the future this information might be in the message!
+    battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
+
     message = ServerMessages.sanitizeCreateRoom(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)

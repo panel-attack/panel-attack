@@ -228,7 +228,11 @@ end
 function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
   -- Not yet implemented
   local battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
-  sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
+  if battleRoom.match then
+    sceneManager:switchToScene("Game2pVs", {match = battleRoom.match, nextScene = "CharacterSelectOnline"})
+  else
+    sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = battleRoom})
+  end
 end
 
 function Lobby:playerRatingString(playerName)
