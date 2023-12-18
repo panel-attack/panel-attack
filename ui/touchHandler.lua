@@ -6,14 +6,21 @@ local touchHandler = {
   touchedElement = nil
 }
 
+function touchHandler:getTouchedElement(x, y, elements)
+  for id, element in pairs(elements) do
+    if self.touchableElements[id] and element:inBounds(x, y) and element.isEnabled then
+      return self:getTouchedElement(x, y, element.children) or element
+    end
+  end
+end
+
 function touchHandler:touch(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
-  for id, element in pairs(self.touchableElements) do
-    if element:inBounds(canvasX, canvasY) and element.isEnabled then
-      self.touchedElement = element
-      if self.touchedElement.onTouch then
-        self.touchedElement:onTouch(canvasX, canvasY)
-      end
+  -- prevent multitouch
+  if not self.touchedElement then
+    self.touchedElement = self:getTouchedElement(canvasX, canvasY, self.touchableElements)
+    if self.touchedElement and self.touchedElement.onTouch then
+      self.touchedElement:onTouch(canvasX, canvasY)
     end
   end
 end
