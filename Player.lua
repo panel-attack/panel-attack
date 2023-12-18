@@ -290,6 +290,21 @@ function Player.getLocalPlayer()
   return player
 end
 
+function Player.createFromReplayPlayer(replayPlayer, playerNumber)
+  Player(replayPlayer.name, replayPlayer.publicId)
+  player.playerNumber = playerNumber
+  player.wins = replayPlayer.wins
+  player.settings.panelId = replayPlayer.settings.panelId
+  player.settings.characterId = CharacterLoader.resolveCharacterSelection(replayPlayer.settings.characterId)
+  player.settings.inputMethod = replayPlayer.settings.inputMethod
+  -- style will be obsolete for replays with style-independent levelData
+  player.settings.style = replayPlayer.settings.style
+  player.settings.level = replayPlayer.settings.level
+  player.settings.difficulty = replayPlayer.settings.difficulty
+  player.settings.levelData = replayPlayer.settings.levelData
+  player.settings.allowAdjacentColors = replayPlayer.settings.allowAdjacentColors
+end
+
 function Player:updateWithMenuState(menuState)
   if characters[menuState.characterId] then
     -- if we have their character, use it

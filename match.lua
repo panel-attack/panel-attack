@@ -769,3 +769,22 @@ end
 function Match:hasLocalPlayer()
   return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
 end
+
+function Match.createFromReplay(replay, supportsPause)
+  local optionalArgs = {
+    timeLimit = replay.gameMode.timeLimit,
+    puzzle = replay.gameMode.puzzle,
+    attackEngineSettings = replay.gameMode.attackEngineSettings
+  }
+  local match = Match(
+    replay.players,
+    replay.gameMode.doCountdown,
+    replay.gameMode.stackInteraction,
+    replay.gameMode.winConditions,
+    replay.gameMode.gameOverConditions,
+    supportsPause,
+    optionalArgs
+  )
+
+  return match
+end

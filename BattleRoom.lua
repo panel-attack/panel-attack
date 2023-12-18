@@ -23,26 +23,14 @@ BattleRoom = class(function(self, mode)
   end
 end)
 
-function BattleRoom.createFromReplay(replay)
+function BattleRoom.createFromMatch(match)
   replay.gameMode.playerCount = #replay.players
   replay.gameMode.richPresenceLabel = "Replay"
   replay.gameMode.scene = "ReplayGame"
   local battleRoom = BattleRoom(replay.gameMode)
 
   for i = 1, #replay.players do
-    local rpp = replay.players[i]
-    local player = Player(rpp.name, rpp.publicId)
-    player.playerNumber = i
-    player.wins = rpp.wins
-    player.settings.panelId = rpp.settings.panelId
-    player.settings.characterId = CharacterLoader.resolveCharacterSelection(rpp.settings.characterId)
-    player.settings.inputMethod = rpp.settings.inputMethod
-    -- style will be obsolete for replays with style-independent levelData
-    player.settings.style = rpp.settings.style
-    player.settings.level = rpp.settings.level
-    player.settings.difficulty = rpp.settings.difficulty
-    player.settings.levelData = rpp.settings.levelData
-    player.settings.allowAdjacentColors = rpp.settings.allowAdjacentColors
+    local player = Player.createFromReplayPlayer(replay.players[i], i)
     -- player.settings.levelData = rpp.settings.levelData
     battleRoom:addPlayer(player)
   end
@@ -51,29 +39,22 @@ function BattleRoom.createFromReplay(replay)
 end
 
 function BattleRoom.createFromServerMessage(message)
-  local battleRoom
+  -- two player versus being the only option so far
+  -- in the future this information should be in the message!
+  local battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
+
   if message.spectate_request_granted then
+    battleRoom.spectating = true
     message = ServerMessages.sanitizeSpectatorJoin(message)
-    if message.replay then
-      local match = Replay.loadFromFile(message.replay)
-      -- replay loading from file creates a battleRoom on the global 
-      -- probably bad behaviour, should only return the match and not create the battleRoom itself
-      battleRoom = GAME.battleRoom
-      battleRoom.match = match
-    else
-      battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
-    end
     for i = 1, #message.players do
       local player = Player(message.players[i].name, message.players[i].playerNumber, false)
       player:updateWithMenuState(message.players[i])
       battleRoom:addPlayer(player)
+      if message.replay then
+        battleRoom.match = Replay.loadFromFile(message.replay)
+      end
     end
-    battleRoom.spectating = true
   else
-    -- two player versus being the only option so far
-    -- in the future this information might be in the message!
-    battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
-
     message = ServerMessages.sanitizeCreateRoom(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)

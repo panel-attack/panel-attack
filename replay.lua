@@ -24,10 +24,10 @@ function Replay.createNewReplay(match)
     winConditions = match.winConditions or {},
     gameOverConditions = match.gameOverConditions,
     timeLimit = match.timeLimit,
-    doCountdown = match.doCountdown or true
+    doCountdown = match.doCountdown or true,
+    puzzle = match.puzzle,
+    attackEngineSettings = match.attackEngineSettings
   }
-  result.puzzle = match.puzzle
-  result.attackEngineSettings = match.attackEngineSettings
 
   result.players = {}
   for i = 1, #match.players do
@@ -89,8 +89,7 @@ function Replay.loadFromPath(path)
 end
 
 local function createMatchFromReplay(replay)
-  GAME.battleRoom = BattleRoom.createFromReplay(replay)
-  local match = GAME.battleRoom:createMatch()
+  local match = Match.createFromReplay(replay)
 
   match.isFromReplay = true
   match:setSeed(replay.seed)
