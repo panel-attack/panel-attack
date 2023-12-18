@@ -27,7 +27,7 @@ Telegraph = class(function(self, sender)
   end
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
-  self.garbage_queue = GarbageQueue(sender)
+  self.garbage_queue = GarbageQueue(sender.attackEngine ~= nil, self.mergeComboMetalQueue)
 
   -- Attacks must stay in the telegraph a certain amount of time before they can be sent, we track this with "stoppers"
   --note: keys for stoppers such as self.stoppers.chain[some_key]

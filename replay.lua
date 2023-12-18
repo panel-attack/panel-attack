@@ -79,7 +79,6 @@ function Replay.loadFromPath(path)
     -- there was a problem reading the file
     return false, replay
   else
-    replay.loadedFromFile = true
     if not replay.engineVersion then
       -- really really bold assumption LOL
       replay.engineVersion = "046"
@@ -89,6 +88,7 @@ function Replay.loadFromPath(path)
     else
       replay = ReplayV2.transform(replay)
     end
+    replay.loadedFromFile = true
   end
 
   return true, replay

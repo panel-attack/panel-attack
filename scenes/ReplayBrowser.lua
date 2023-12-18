@@ -185,7 +185,7 @@ function ReplayBrowser:update()
     local offsetX = 0
     for i = 1, #selectedReplay.players do
       gprint(loc("rp_browser_info_" .. i .. "p"), menu_x + offsetX, menu_y + 50)
-      gprint(loc("rp_browser_info_name", selectedReplay.players[i].name), menu_x + offsetX, menu_y + 65)
+      gprint(loc("rp_browser_info_name", selectedReplay.players[i].name or ("Player " .. i)), menu_x + offsetX, menu_y + 65)
       gprint(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId), menu_x + offsetX, menu_y + 80)
       if selectedReplay.players[i].settings.level then
         gprint(loc("rp_browser_info_level", selectedReplay.players[i].settings.level), menu_x + offsetX, menu_y + 95)
@@ -210,7 +210,7 @@ function ReplayBrowser:update()
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene("ReplayGame", {match = Match.createFromReplay(selectedReplay)})
+      sceneManager:switchToScene("ReplayGame", {match = Match.createFromReplay(selectedReplay, false)})
     end
   end
 end

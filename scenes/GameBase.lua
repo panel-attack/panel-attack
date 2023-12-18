@@ -112,6 +112,11 @@ function GameBase:initializeFrameInfo()
 end
 
 function GameBase:load(sceneParams)
+  self.match = sceneParams.match
+  self:customLoad(sceneParams)
+  self.S1 = self.match.players[1].stack
+  self.S2 = self.match.players[2] and self.match.players[2].stack or nil
+
   leftover_time = 1 / 120
   self.shouldAbortGame = false
   self.loadStageAndMusic = true
@@ -123,10 +128,6 @@ function GameBase:load(sceneParams)
     pickUseMusicFrom()
   end
 
-  self.match = sceneParams.match
-  self.S1 = self.match.players[1].stack
-  self.S2 = self.match.players[2] and self.match.players[2].stack or nil
-  self:customLoad(sceneParams)
   self:initializeFrameInfo()
 end
 

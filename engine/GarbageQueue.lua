@@ -1,17 +1,15 @@
 local logger = require("logger")
 
-GarbageQueue = class(function(s, sender)
+GarbageQueue = class(function(s, allowIllegalStuff, mergeComboMetalQueue)
     s.chain_garbage = Queue()
     s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and length represents how many of that width queued
     s.metal = Queue()
-    if sender.attackEngine then
-      s.illegalStuffIsAllowed = true
-      s.mergeComboMetalQueue = sender.attackEngine.mergeComboMetalQueue
-    end
+    s.illegalStuffIsAllowed = allowIllegalStuff
+    s.mergeComboMetalQueue = mergeComboMetalQueue
   end)
   
   function GarbageQueue.makeCopy(self)
-    local other = GarbageQueue()
+    local other = GarbageQueue(self.illegalStuffIsAllowed, self.mergeComboMetalQueue)
     other.chain_garbage = deepcpy(self.chain_garbage)
     for i=1, 6 do
       other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
