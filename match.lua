@@ -2,6 +2,7 @@ local logger = require("logger")
 local tableUtils = require("tableUtils")
 local GameModes = require("GameModes")
 local sceneManager = require("scenes.sceneManager")
+local Player = require("Player")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -21,7 +22,7 @@ Match =
     self.stackInteraction = stackInteraction
     self.winConditions = winConditions
     self.gameOverConditions = gameOverConditions
-    if tableUtils.contains(gameOverConditions, GameModes.GameOverCondition.TIME_OUT) then
+    if tableUtils.contains(gameOverConditions, GameModes.GameOverConditions.TIME_OUT) then
       assert(optionalArgs.timeLimit)
       self.timeLimit = optionalArgs.timeLimit
     end
@@ -553,7 +554,7 @@ function Match:render()
       --   challengeMode:render()
       -- end
 
-      if self.stackInteraction ~= GameModes.StackInteraction.NONE then
+      if self.stackInteraction ~= GameModes.StackInteractions.NONE then
         if P1 and P1.telegraph then
           P1.telegraph:render()
         end
@@ -563,7 +564,7 @@ function Match:render()
       end
 
       -- Draw VS HUD
-      if self.stackInteraction == GameModes.StackInteraction.VERSUS then
+      if self.stackInteraction == GameModes.StackInteractions.VERSUS then
         if not config.debug_mode then --this is printed in the same space as the debug details
           -- TODO: get spectator string from battleRoom
           --gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
@@ -647,7 +648,7 @@ function Match:start()
         -- watching a finished replay
         stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
         stack.max_runs_per_frame = 1
-      elseif not self:hasLocalPlayer() and self.replay.players[i].setting.inputs then
+      elseif not self:hasLocalPlayer() and self.replay.players[i].settings.inputs then
         -- catching up to a match in progress
         stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
         stack.play_to_end = true
@@ -655,11 +656,11 @@ function Match:start()
     end
   end
 
-  if self.stackInteraction == GameModes.StackInteraction.SELF then
+  if self.stackInteraction == GameModes.StackInteractions.SELF then
     for i = 1, #self.players do
       self.players[i].stack:setGarbageTarget(self.players[i].stack)
     end
-  elseif self.stackInteraction == GameModes.StackInteraction.VERSUS then
+  elseif self.stackInteraction == GameModes.StackInteractions.VERSUS then
     for i = 1, #self.players do
       for j = 1, #self.players do
         if i ~= j then
@@ -670,7 +671,7 @@ function Match:start()
         end
       end
     end
-  elseif self.stackInteraction == GameModes.StackInteraction.ATTACK_ENGINE then
+  elseif self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
     -- these are really dumb dummy values
     -- we need a way to create an attackengine without immediately being forced to set all that graphics crap
     self.attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackEngineSettings, nil, SimulatedOpponent(nil, CharacterLoader.resolveCharacterSelection(), 500, 200, -1))
@@ -684,7 +685,9 @@ function Match:start()
   for i = 1, #self.players do
     local pString = "P" .. tostring(i)
     self[pString] = self.players[i].stack
-    if not self.puzzle then
+    if self.puzzle then
+      self.players[i].stack:set_puzzle_state(self.puzzle)
+    else
       self.players[i].stack:starting_state()
     end
   end
@@ -776,8 +779,15 @@ function Match.createFromReplay(replay, supportsPause)
     puzzle = replay.gameMode.puzzle,
     attackEngineSettings = replay.gameMode.attackEngineSettings
   }
+
+  local players = {}
+
+  for i = 1, #replay.players do
+    players[i] = Player.createFromReplayPlayer(replay.players[i], i)
+  end
+
   local match = Match(
-    replay.players,
+    players,
     replay.gameMode.doCountdown,
     replay.gameMode.stackInteraction,
     replay.gameMode.winConditions,
@@ -785,6 +795,12 @@ function Match.createFromReplay(replay, supportsPause)
     supportsPause,
     optionalArgs
   )
+
+  match.isFromReplay = replay.loadedFromFile
+  match:setSeed(replay.seed)
+  match:setStage(replay.stageId)
+  match.engineVersion = replay.engineVersion
+  match.replay = replay
 
   return match
 end

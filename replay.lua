@@ -1,4 +1,5 @@
 local logger = require("logger")
+local fileUtils = require("FileUtils")
 local GameModes = require("GameModes")
 local ReplayV1 = require("replayV1")
 local ReplayV2 = require("replayV2")
@@ -72,44 +73,25 @@ function Replay.replayCanBeViewed(replay)
 end
 
 function Replay.loadFromPath(path)
-    local file, error_msg = love.filesystem.read(path)
+  local replay = fileUtils.readJsonFile(path)
 
-    if file == nil then
-        --print(loc("rp_browser_error_loading", error_msg))
-        return false
-    end
-
-    replay = {}
-    replay = json.decode(file)
-    if not replay.engineVersion then
-        replay.engineVersion = "046"
-    end
-
-    return true
-end
-
-local function createMatchFromReplay(replay)
-  local match = Match.createFromReplay(replay)
-
-  match.isFromReplay = true
-  match:setSeed(replay.seed)
-  match:setStage(replay.stageId)
-  match.engineVersion = replay.engineVersion
-  match.replay = replay
-
-  match:start()
-
-  return match
-end
-
-function Replay.loadFromFile(replay)
-  assert(replay ~= nil)
-  if not replay.replayVersion then
-    replay = ReplayV1.loadFromFile(replay)
+  if not replay then
+    -- there was a problem reading the file
+    return false, replay
   else
-    replay = ReplayV2.loadFromFile(replay)
+    replay.loadedFromFile = true
+    if not replay.engineVersion then
+      -- really really bold assumption LOL
+      replay.engineVersion = "046"
+    end
+    if not replay.replayVersion then
+      replay = ReplayV1.transform(replay)
+    else
+      replay = ReplayV2.transform(replay)
+    end
   end
-  return createMatchFromReplay(replay)
+
+  return true, replay
 end
 
 local function addReplayStatisticsToReplay(match, replay)

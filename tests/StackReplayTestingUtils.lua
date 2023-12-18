@@ -14,7 +14,7 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
   if playerCount == nil then
     playerCount = 1
   end
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_ENDLESS)
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
   battleRoom.players[1].settings.speed = speed
   battleRoom.players[1].settings.difficulty = difficulty
   battleRoom.players[1].settings.level = level
@@ -93,10 +93,10 @@ end
 function StackReplayTestingUtils:setupReplayWithPath(path)
   GAME.muteSoundEffects = true
 
-  Replay.loadFromPath(path)
-  local match = Replay.loadFromFile(replay)
-  match:removeCanvases()
+  local success, replay = Replay.loadFromPath(path)
+  local match = Match.createFromReplay(replay, false)
   match:start(replay)
+  match:removeCanvases()
 
   assert(GAME ~= nil)
   assert(match ~= nil)

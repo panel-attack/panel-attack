@@ -59,7 +59,7 @@ end
 testPanelGenForRegularBoard2()
 
 local function testStackStartingBoard1()
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_ENDLESS)
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
   local player = battleRoom.players[1]
   player:setSpeed(1)
   player:setDifficulty(1)
@@ -79,7 +79,7 @@ testStackStartingBoard1()
 
 
 local function testStackStartingBoard2()
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_VS_SELF)
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
   local player = battleRoom.players[1]
   player:setStyle(GameModes.Styles.MODERN)
   player:setLevel(10)

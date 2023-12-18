@@ -95,4 +95,27 @@ function fileUtils.recursiveRemoveFiles(folder, targetName)
   end
 end
 
+function fileUtils.readJsonFile(file)
+  if not love.filesystem.getInfo(file, "file") then
+    logger.info("No file at specified path " .. file)
+    return nil
+  else
+    local fileContent, info = love.filesystem.read(file)
+    if type(info) == "string" then
+      -- info is the number of read bytes if successful, otherwise an error string
+      -- thus, if it is of type string, that indicates an error
+      logger.warn("Could not read file at path " .. file)
+      return nil
+    else
+      local value, _, errorMsg = json.decode(fileContent)
+      if errorMsg then
+        logger.error(errorMsg .. ":\n" .. fileContent)
+        return nil
+      else
+        return value
+      end
+    end
+  end
+end
+
 return fileUtils

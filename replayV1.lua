@@ -5,23 +5,23 @@ require("util")
 
 local ReplayV1 = {}
 
-function ReplayV1.loadFromFile(legacyReplay)
+function ReplayV1.transform(legacyReplay)
   local r = {}
   local mode
   local gameMode
   if legacyReplay.vs then
     mode = "vs"
     if legacyReplay.vs.P2_char then
-      gameMode = GameModes.TWO_PLAYER_VS
+      gameMode = GameModes.getPreset("TWO_PLAYER_VS")
     else
-      gameMode = GameModes.ONE_PLAYER_VS_SELF
+      gameMode = GameModes.getPreset("ONE_PLAYER_VS_SELF")
     end
   elseif legacyReplay.time then
     mode = "time"
-    gameMode = GameModes.ONE_PLAYER_TIME_ATTACK
+    gameMode = GameModes.getPreset("ONE_PLAYER_TIME_ATTACK")
   elseif legacyReplay.endless then
     mode = "endless"
-    gameMode = GameModes.ONE_PLAYER_ENDLESS
+    gameMode = GameModes.getPreset("ONE_PLAYER_ENDLESS")
   end
   local v1r = legacyReplay[mode]
   r.engineVersion = legacyReplay.engineVersion
@@ -76,7 +76,7 @@ function ReplayV1.loadFromFile(legacyReplay)
     r.players[1].allowAdjacentColors = true
     r.players[1].settings.levelData = levelPresets.getClassic(v1r.difficulty)
     r.players[1].settings.levelData.startingSpeed = v1r.speed
-    if v1r.difficulty == 1 and gameMode == GameModes.ONE_PLAYER_ENDLESS then
+    if v1r.difficulty == 1 and mode == "endless" then
       r.players[1].settings.levelData.colors = 5
     end
   end

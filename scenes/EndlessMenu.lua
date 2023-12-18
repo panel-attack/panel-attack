@@ -7,7 +7,7 @@ local GameModes = require("GameModes")
 -- Scene for the endless game setup menu
 local EndlessMenu = class(
   function(self, sceneParams)
-    self.gameMode = GameModes.ONE_PLAYER_ENDLESS
+    self.gameMode = GameModes.getPreset("ONE_PLAYER_ENDLESS")
     self.gameScene = "EndlessGame"
 
     self:load(sceneParams)

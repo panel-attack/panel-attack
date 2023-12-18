@@ -219,7 +219,7 @@ Stack =
     s.opponentStack = nil -- the other stack you are playing against
     s.garbageTarget = nil -- the target you are sending attacks to
 
-    if s.match.stackInteraction ~= GameModes.StackInteraction.NONE then
+    if s.match.stackInteraction ~= GameModes.StackInteractions.NONE then
       s.telegraph = Telegraph(s)
       -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
       -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
@@ -1670,7 +1670,7 @@ function Stack.simulate(self)
       end
       if SFX_Cur_Move_Play == 1 then
         -- I have no idea why this makes a distinction for vs, like what?
-        if not (self.match.stackInteraction ~= GameModes.StackInteraction.NONE and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
+        if not (self.match.stackInteraction ~= GameModes.StackInteractions.NONE and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
           self.theme.sounds.cur_move:stop()
           self.theme.sounds.cur_move:play()
         end
@@ -1930,7 +1930,7 @@ function Stack.game_ended(self)
 
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
-  if self.match.StackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
+  if self.match.stackInteraction == GameModes.StackInteractions.HEALTH_ENGINE then
     if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
       return true
     end
@@ -1960,18 +1960,18 @@ function Stack.gameResult(self)
 
   local gameEndedClockTime = self.match:gameEndedClockTime()
 
-  if self.match.stackInteraction == GameModes.StackInteraction.HEALTH_ENGINE then
+  if self.match.stackInteraction == GameModes.StackInteractions.HEALTH_ENGINE then
     if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
       return 1
     end
   end
 
-  if self.match.stackInteraction == GameModes.StackInteraction.SELF then
+  if self.match.stackInteraction == GameModes.StackInteractions.SELF then
     -- can't win against yourself :-(
     return -1
   end
 
-  if self.match.stackInteraction == GameModes.StackInteraction.VERSUS then
+  if self.match.stackInteraction == GameModes.StackInteractions.VERSUS then
     if self.opponentStack:game_ended() then
       if self.game_over_clock == gameEndedClockTime and self.opponentStack.game_over_clock == gameEndedClockTime then
         return 0
@@ -2401,7 +2401,7 @@ function Stack.onPop(self, panel)
     self.score = self.score + 10
 
     self.panels_cleared = self.panels_cleared + 1
-    if self.match.stackInteraction ~= GameModes.StackInteraction.NONE
+    if self.match.stackInteraction ~= GameModes.StackInteractions.NONE
         and self.panels_cleared % self.levelData.shockFrequency == 0 then
           self.metal_panels_queued = min(self.metal_panels_queued + 1, self.levelData.shockCap)
     end

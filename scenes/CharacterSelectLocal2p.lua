@@ -20,7 +20,7 @@ sceneManager:addScene(CharacterSelectLocal2p)
 
 function CharacterSelectLocal2p:customLoad(sceneParams)
   if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.TWO_PLAYER_VS)
+    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
   else
     GAME.battleRoom.match = nil
   end

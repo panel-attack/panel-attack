@@ -130,7 +130,7 @@ function PuzzleMenu:load()
   reset_filters()
 
   if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_PUZZLE)
+    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
   end
 end
 

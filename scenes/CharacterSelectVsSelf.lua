@@ -19,7 +19,7 @@ sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)
   if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_VS_SELF)
+    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
   else
     GAME.battleRoom.match = nil
   end

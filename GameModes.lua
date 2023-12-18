@@ -5,7 +5,7 @@ local GameModes = {}
 
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
-local StackInteraction = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
+local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
 local WinConditions = { GAME_OVER = 1, SCORE = 2, TIME = 3, NO_MATCHABLE_PANELS = 4, NO_MATCHABLE_GARBAGE = 5 }
 local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, SCORE_REACHED = 3, NO_MOVES_LEFT = 4, CHAIN_DROPPED = 5 }
 
@@ -17,7 +17,7 @@ local OnePlayerVsSelf = {
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteraction.SELF,
+  stackInteraction = StackInteractions.SELF,
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
@@ -36,7 +36,7 @@ local OnePlayerTimeAttack = {
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteraction.NONE,
+  stackInteraction = StackInteractions.NONE,
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH, GameOverConditions.TIME_OUT },
   doCountdown = true,
@@ -56,7 +56,7 @@ local OnePlayerEndless = {
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteraction.NONE,
+  stackInteraction = StackInteractions.NONE,
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
@@ -75,7 +75,7 @@ local OnePlayerTraining = {
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteraction.ATTACK_ENGINE,
+  stackInteraction = StackInteractions.ATTACK_ENGINE,
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
@@ -95,7 +95,7 @@ local OnePlayerPuzzle = {
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteraction.NONE,
+  stackInteraction = StackInteractions.NONE,
   -- these are extended based on the loaded puzzle
   winConditions = { },
   -- these are extended based on the loaded puzzle
@@ -116,7 +116,7 @@ local OnePlayerChallenge = {
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteraction.HEALTH_ENGINE,
+  stackInteraction = StackInteractions.HEALTH_ENGINE,
   winConditions = { WinConditions.GAME_OVER },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
@@ -134,7 +134,7 @@ local TwoPlayerVersus = {
 
   -- already known match properties
   playerCount = 2,
-  stackInteraction = StackInteraction.VERSUS,
+  stackInteraction = StackInteractions.VERSUS,
   winConditions = { WinConditions.GAME_OVER},
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
@@ -147,16 +147,22 @@ local TwoPlayerVersus = {
 
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
-GameModes.StackInteraction = StackInteraction
+GameModes.StackInteractions = StackInteractions
 GameModes.WinCondition = WinConditions
-GameModes.GameOverCondition = GameOverConditions
+GameModes.GameOverConditions = GameOverConditions
 
-GameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
-GameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack
-GameModes.ONE_PLAYER_ENDLESS = OnePlayerEndless
-GameModes.ONE_PLAYER_TRAINING = OnePlayerTraining
-GameModes.ONE_PLAYER_PUZZLE = OnePlayerPuzzle
-GameModes.ONE_PLAYER_CHALLENGE = OnePlayerChallenge
-GameModes.TWO_PLAYER_VS = TwoPlayerVersus
+local privateGameModes = {}
+privateGameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
+privateGameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack
+privateGameModes.ONE_PLAYER_ENDLESS = OnePlayerEndless
+privateGameModes.ONE_PLAYER_TRAINING = OnePlayerTraining
+privateGameModes.ONE_PLAYER_PUZZLE = OnePlayerPuzzle
+privateGameModes.ONE_PLAYER_CHALLENGE = OnePlayerChallenge
+privateGameModes.TWO_PLAYER_VS = TwoPlayerVersus
+
+function GameModes.getPreset(mode)
+  assert(privateGameModes[mode], "Trying to access non existing mode " .. mode)
+  return deepcpy(privateGameModes[mode])
+end
 
 return GameModes

@@ -64,7 +64,7 @@ function Player:createStackFromSettings(match, which)
   args.character = self.settings.characterId
   if self.settings.style == GameModes.Styles.MODERN then
     args.level = self.settings.level
-    if match.stackInteraction == GameModes.StackInteraction.NONE then
+    if match.stackInteraction == GameModes.StackInteractions.NONE then
       args.allowAdjacentColors = true
     else
       args.allowAdjacentColors = args.level < 8
@@ -291,7 +291,8 @@ function Player.getLocalPlayer()
 end
 
 function Player.createFromReplayPlayer(replayPlayer, playerNumber)
-  Player(replayPlayer.name, replayPlayer.publicId)
+  local player = Player(replayPlayer.name, replayPlayer.publicId)
+
   player.playerNumber = playerNumber
   player.wins = replayPlayer.wins
   player.settings.panelId = replayPlayer.settings.panelId
@@ -303,6 +304,8 @@ function Player.createFromReplayPlayer(replayPlayer, playerNumber)
   player.settings.difficulty = replayPlayer.settings.difficulty
   player.settings.levelData = replayPlayer.settings.levelData
   player.settings.allowAdjacentColors = replayPlayer.settings.allowAdjacentColors
+
+  return player
 end
 
 function Player:updateWithMenuState(menuState)

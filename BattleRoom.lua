@@ -17,6 +17,7 @@ BattleRoom = class(function(self, mode)
   self.trainingModeSettings = nil
   self.allAssetsLoaded = false
   self.ranked = false
+  self.puzzles = {}
   if GAME.tcpClient:isConnected() then
     -- this is a bit naive but effective
     self.online = true
@@ -24,6 +25,13 @@ BattleRoom = class(function(self, mode)
 end)
 
 function BattleRoom.createFromMatch(match)
+  local gameMode = {}
+  gameMode.playerCount = #match.players
+  gameMode.doCountdown = match.doCountdown
+  gameMode.stackInteraction = match.stackInteraction
+  gameMode.winConditions = shallowcpy(match.winConditions)
+  gameMode.gameOverConditions = shallowcpy(match.gameOverConditions)
+
   replay.gameMode.playerCount = #replay.players
   replay.gameMode.richPresenceLabel = "Replay"
   replay.gameMode.scene = "ReplayGame"
@@ -41,7 +49,7 @@ end
 function BattleRoom.createFromServerMessage(message)
   -- two player versus being the only option so far
   -- in the future this information should be in the message!
-  local battleRoom = BattleRoom(GameModes.TWO_PLAYER_VS)
+  local battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
 
   if message.spectate_request_granted then
     battleRoom.spectating = true
@@ -51,7 +59,7 @@ function BattleRoom.createFromServerMessage(message)
       player:updateWithMenuState(message.players[i])
       battleRoom:addPlayer(player)
       if message.replay then
-        battleRoom.match = Replay.loadFromFile(message.replay)
+        battleRoom.match = Match.createFromReplay(message.replay)
       end
     end
   else
@@ -128,7 +136,11 @@ end
 -- creates a match with the players in the BattleRoom
 function BattleRoom:createMatch()
   local supportsPause = not self.online or #self.players == 1
-  local optionalArgs = {timeLimit = self.mode.timeLimit}
+  local optionalArgs = { timeLimit = self.mode.timeLimit }
+  if #self.puzzles > 0 then
+    optionalArgs.puzzle = table.remove(self.puzzles, 1)
+  end
+
   self.match = Match(
     self.players,
     self.mode.doCountdown,
@@ -222,7 +234,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:setStage(stageId)
   match:setSeed(seed)
 
-  if (#match.players > 1 or match.stackInteraction == GameModes.StackInteraction.VERSUS) then
+  if (#match.players > 1 or match.stackInteraction == GameModes.StackInteractions.VERSUS) then
     GAME.rich_presence:setPresence((match:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. self.mode.richPresenceLabel ..
                                        " match", match.players[1].name .. " vs " .. (match.players[2].name), true)
   else
@@ -262,6 +274,11 @@ end
 -- not player specific, so this gets a separate callback that can only be overwritten once
 -- so the UI can update and load up the different controls for it
 function BattleRoom.onStyleChanged(style, player)
+end
+
+function BattleRoom:addPuzzle(puzzle)
+  assert(self.mode.needsPuzzle, "Trying to set a puzzle for a non-puzzle mode")
+  self.puzzles[#self.puzzles + 1] = puzzle
 end
 
 function BattleRoom:startLoadingNewAssets()

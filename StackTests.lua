@@ -5,13 +5,13 @@ local Player = require("Player")
 
 local function puzzleTest()
   -- to stop rising
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_PUZZLE)
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+  local puzzle = Puzzle(nil, nil, 1, "011010")
+  battleRoom:addPuzzle(puzzle)
   battleRoom.players[1].settings.level = 5
   local match = battleRoom:createMatch()
   match:start()
   local stack = battleRoom.players[1].stack
-
-  stack:set_puzzle_state(Puzzle(nil, nil, 1, "011010"))
 
   assert(stack.panels[1][1].color == 0, "wrong color")
   assert(stack.panels[1][2].color == 1, "wrong color")
@@ -28,13 +28,13 @@ end
 puzzleTest()
 
 local function clearPuzzleTest()
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.ONE_PLAYER_PUZZLE)
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+  local puzzle = Puzzle("clear", false, 0, "[============================][====]246260[====]600016514213466313451511124242", 60, 0)
+  battleRoom:addPuzzle(puzzle)
   battleRoom.players[1].settings.level = 5
   local match = battleRoom:createMatch()
   match:start()
   local stack = battleRoom.players[1].stack
-
-  stack:set_puzzle_state(Puzzle("clear", false, 0, "[============================][====]246260[====]600016514213466313451511124242", 60, 0))
 
   assert(stack.panels[1][1].color == 1, "wrong color")
   assert(stack.panels[1][2].color == 2, "wrong color")
