@@ -52,15 +52,11 @@ function CharacterSelect:load(sceneParams)
   self.ui = {}
   self.ui.cursors = {}
   self.ui.characterIcons = {}
+  self.battleRoom = sceneParams.battleRoom
   self:customLoad(sceneParams)
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
   -- but should be ok for now
-  for i = 1, #GAME.battleRoom.players do
-    if GAME.battleRoom.players[i].inputConfiguration == input.allKeys then
-      GAME.battleRoom.players[i]:restrictInputs(GAME.input.inputConfigurations[i])
-    end
-  end
   self:playThemeMusic()
   reset_filters()
 end
@@ -313,12 +309,9 @@ end
 
 function CharacterSelect:update()
   GAME.battleRoom:update()
-  --if sceneManager.activeScene == self and not sceneManager.isTransitioning then
-    for i = 1, #self.ui.cursors do
-      self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
-    end
-  --end
-  GAME.gfx_q:push({self.draw, {self}})
+  for i = 1, #self.ui.cursors do
+    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
+  end
   if self:customUpdate() then
     return
   end

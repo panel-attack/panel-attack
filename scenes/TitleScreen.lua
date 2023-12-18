@@ -20,7 +20,7 @@ TitleScreen.name = "TitleScreen"
 sceneManager:addScene(TitleScreen)
 
 
-local function titleDrawPressStart(percent) 
+local function titleDrawPressStart(percent)
   local textMaxWidth = consts.CANVAS_WIDTH - 40
   local textHeight = 40
   local x = (consts.CANVAS_WIDTH / 2) - (textMaxWidth / 2)
@@ -28,19 +28,19 @@ local function titleDrawPressStart(percent)
   gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
 end
 
-function TitleScreen:drawBackground()
-  self.backgroundImg:draw()
-end
-
 function TitleScreen:update(dt)
   self.backgroundImg:update(dt)
-  titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then
     Menu.playValidationSfx()
     stop_the_music()
     sceneManager:switchToScene("MainMenu")
   end
+end
+
+function TitleScreen:draw()
+  self.backgroundImg:draw()
+  titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
 end
 
 function TitleScreen:load(sceneParams)

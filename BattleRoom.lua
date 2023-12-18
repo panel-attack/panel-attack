@@ -157,12 +157,21 @@ end
 function BattleRoom:addNewPlayer(name, publicId, isLocal)
   local player = Player(name, publicId, isLocal)
   player.playerNumber = #self.players + 1
-  self.players[#self.players + 1] = player
+  self:addPlayer(player)
   return player
 end
 
 -- adds an existing Player to the BattleRoom
 function BattleRoom:addPlayer(player)
+  if player.isLocal then
+    for i = 1, #GAME.input.inputConfigurations do
+      if not GAME.input.inputConfigurations[i].usedByPlayer then
+        player:restrictInputs(GAME.input.inputConfigurations[i])
+        break
+      end
+    end
+  end
+
   player.playerNumber = #self.players + 1
   self.players[#self.players + 1] = player
 end

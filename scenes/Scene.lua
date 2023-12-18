@@ -17,10 +17,17 @@ local Scene = class(
 function Scene:load(sceneParams) end
 
 -- Ran every frame while the scene is active
-function Scene:update() end
+function Scene:update(dt)
+  error("every scene MUST implement an update function, even " .. self.name)
+end
 
 -- Ran every frame before anything is drawn
 function Scene:drawBackground() end
+
+-- main draw
+function Scene:draw()
+  error("every scene MUST implement a draw function, even " .. self.name)
+end
 
 -- Ran every frame after everything is drawn
 function Scene:drawForeground() end

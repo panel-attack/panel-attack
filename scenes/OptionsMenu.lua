@@ -519,19 +519,16 @@ function OptionsMenu:load()
   menus[activeMenuName]:setVisibility(true)
 end
 
-function OptionsMenu:drawBackground()
-  backgroundImage:draw()
-end
-
 function OptionsMenu:update(dt)
   backgroundImage:update(dt)
   if optionsState == "menus" then
     menus[activeMenuName]:update()
   end
-  GAME.gfx_q:push({self.draw, {self}})
 end
 
 function OptionsMenu:draw()
+  backgroundImage:draw()
+
   if optionsState == "menus" then
     menus[activeMenuName]:draw()
   elseif optionsState == "info" then

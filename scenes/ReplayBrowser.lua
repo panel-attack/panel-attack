@@ -124,18 +124,8 @@ function ReplayBrowser:load()
   GAME.renderDuringPause = true
 end
 
-function ReplayBrowser:drawBackground()
-  themes[config.theme].images.bg_main:draw()
-end
-
 function ReplayBrowser:update()
-  local ret = nil
-
   if state == "browser" then
-    gprint(loc("rp_browser_header"), menu_x + 170, menu_y - 40)
-    gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
-    replayMenu()
-
     if input.isDown["MenuEsc"] then
       sceneManager:switchToScene("MainMenu")
     end
@@ -157,6 +147,25 @@ function ReplayBrowser:update()
       play_optional_sfx(themes[config.theme].sounds.menu_move)
       moveCursor(1)
     end
+  elseif state == "info" then
+    if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      state = "browser"
+    end
+    if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      sceneManager:switchToScene("ReplayGame", {match = Match.createFromReplay(selectedReplay, false)})
+    end
+  end
+end
+
+function ReplayBrowser:draw()
+  themes[config.theme].images.bg_main:draw()
+
+  if state == "browser" then
+    gprint(loc("rp_browser_header"), menu_x + 170, menu_y - 40)
+    gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
+    replayMenu()
   elseif state == "info" then
     local next_func = nil
     if Replay.replayCanBeViewed(selectedReplay) == false then
@@ -202,15 +211,6 @@ function ReplayBrowser:update()
 
     if Replay.replayCanBeViewed(selectedReplay) then
       gprint(loc("rp_browser_watch"), menu_x + 75, menu_y + 150)
-    end
-
-    if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      state = "browser"
-    end
-    if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene("ReplayGame", {match = Match.createFromReplay(selectedReplay, false)})
     end
   end
 end

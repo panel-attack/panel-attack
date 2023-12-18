@@ -372,6 +372,9 @@ function Game:draw()
   love.graphics.clear()
 
   self.isDrawing = true
+  if sceneManager.activeScene then
+    sceneManager.activeScene:draw()
+  end
   for i = self.gfx_q.first, self.gfx_q.last do
     local func = self.gfx_q[i][1]
     local args = self.gfx_q[i][2]

@@ -140,10 +140,6 @@ function MainMenu:load(sceneParams)
   match_type_message = ""
 end
 
-function MainMenu:drawBackground()
-  self.backgroundImg:draw()
-end
-
 function MainMenu:update(dt)
   if wait_game_update ~= nil then
     has_game_update = wait_game_update:pop()
@@ -154,6 +150,12 @@ function MainMenu:update(dt)
   end
 
   self.backgroundImg:update(dt)
+  self.menu:update()
+end
+
+function MainMenu:draw()
+  self.backgroundImg:draw()
+  self.menu:draw()
   local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight / 2
 
@@ -170,13 +172,6 @@ function MainMenu:update(dt)
       menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
     end
   end
-
-  self.menu:update()
-  GAME.gfx_q:push({self.draw, {self}})
-end
-
-function MainMenu:draw()
-  self.menu:draw()
 end
 
 function MainMenu:unload()

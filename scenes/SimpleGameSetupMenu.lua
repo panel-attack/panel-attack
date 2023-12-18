@@ -167,10 +167,6 @@ function SimpleGameSetupMenu:load()
   end
 end
 
-function SimpleGameSetupMenu:drawBackground() 
-  self.backgroundImg:draw() 
-end
-
 function SimpleGameSetupMenu:update(dt)
   self.backgroundImg:update(dt)
 
@@ -179,11 +175,11 @@ function SimpleGameSetupMenu:update(dt)
   else
     self.modernMenu:update()
   end
-
-  GAME.gfx_q:push({self.draw, {self}})
 end
 
 function SimpleGameSetupMenu:draw()
+  self.backgroundImg:draw()
+
   if self.typeButtons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
 
@@ -204,10 +200,6 @@ function SimpleGameSetupMenu:draw()
     self.classicMenu:draw()
   else
     self.modernMenu:draw()
-  end
-
-  if GAME.battleRoom then
-    GAME.battleRoom:update()
   end
 end
 

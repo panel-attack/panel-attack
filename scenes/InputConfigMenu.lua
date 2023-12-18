@@ -210,14 +210,9 @@ function InputConfigMenu:load(sceneParams)
   end
 end
 
-function InputConfigMenu:drawBackground()
-  themes[config.theme].images.bg_main:draw()
-end
-
 function InputConfigMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update()
-  GAME.gfx_q:push({self.draw, {self}})
 
   local noKeysHeld = next(input.allKeys.isDown) == nil and next(input.allKeys.isPressed) == nil
 
@@ -237,6 +232,7 @@ function InputConfigMenu:update(dt)
 end
 
 function InputConfigMenu:draw()
+  themes[config.theme].images.bg_main:draw()
   self.menu:draw()
 end
 

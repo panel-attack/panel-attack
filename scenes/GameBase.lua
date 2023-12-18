@@ -132,20 +132,7 @@ function GameBase:load(sceneParams)
 end
 
 function GameBase:drawForeground()
-  local foregroundOverlay = themes[config.theme].images.fg_overlay
-  if foregroundOverlay then
-    local scale = consts.CANVAS_WIDTH / math.max(foregroundOverlay:getWidth(), foregroundOverlay:getHeight()) -- keep image ratio
-    menu_drawf(foregroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
-  end
-end
-
-function GameBase:drawBackground()
-  backgroundImage:draw()
-  local backgroundOverlay = themes[config.theme].images.bg_overlay
-  if backgroundOverlay then
-    local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
-    menu_drawf(backgroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
-  end
+  
 end
 
 function GameBase:handlePause()
@@ -274,7 +261,7 @@ function GameBase:runGame(dt)
   if framesRun > 1 then
     GAME.droppedFrames = GAME.droppedFrames + framesRun - 1
   end
-  
+
   if not ((self.S1 and self.S1.play_to_end) or (self.match.players[2] and self.S2.play_to_end)) then
     self:handlePause()
 
@@ -284,21 +271,14 @@ function GameBase:runGame(dt)
       self.shouldAbortGame = true
     end
   end
-  
+
   if self.shouldAbortGame then
     return
   end
-  
+
   if self.S1:gameResult() then
-    GAME.gfx_q:push({self.match.render, {self.match}})
     self:setupGameOver()
     return
-  end
-  
-  -- Render only if we are not catching up to a current spectate match
-  if not (self.S1 and self.S1.play_to_end) and not (self.S2 and self.S2.play_to_end) then
-    GAME.gfx_q:push({self.match.render, {self.match}})
-    self:customDraw()
   end
 end
 
@@ -307,6 +287,26 @@ function GameBase:update(dt)
     self:runGameOver()
   else
     self:runGame(dt)
+  end
+end
+
+function GameBase:draw()
+  backgroundImage:draw()
+  local backgroundOverlay = themes[config.theme].images.bg_overlay
+  if backgroundOverlay then
+    local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
+    menu_drawf(backgroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  end
+-- Render only if we are not catching up to a current spectate match
+  if not (self.S1 and self.S1.play_to_end) and not (self.S2 and self.S2.play_to_end) then
+    self.match:render()
+    self:customDraw()
+  end
+
+  local foregroundOverlay = themes[config.theme].images.fg_overlay
+  if foregroundOverlay then
+    local scale = consts.CANVAS_WIDTH / math.max(foregroundOverlay:getWidth(), foregroundOverlay:getHeight()) -- keep image ratio
+    menu_drawf(foregroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
   end
 end
 
