@@ -15,7 +15,7 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, sender, character, shouldPlayAttackSfx)
+  function(self, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, sender, character, shouldPlayAttackSfx, mergeComboMetalQueue)
     -- The number of frames before the first attack starts. Note if this is changed after attack patterns are added their times won't be updated.
     self.delayBeforeStart = delayBeforeStart 
 
@@ -32,11 +32,13 @@ AttackEngine =
     self.character = CharacterLoader.resolveCharacterSelection(character)
     CharacterLoader.load(self.character)
     CharacterLoader.wait()
+    sender.attackEngine = self
     self.telegraph = Telegraph(sender)
     if garbageTarget then
       self:setGarbageTarget(garbageTarget)
     end
     self.shouldPlayAttackSfx = shouldPlayAttackSfx
+    self.mergeComboMetalQueue = mergeComboMetalQueue
   end
 )
 
@@ -44,7 +46,7 @@ function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, 
   local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
   local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
   local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, opponent, character, shouldPlayAttackSfx)
+  local attackEngine = AttackEngine(delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, opponent, character, shouldPlayAttackSfx, trainingModeSettings.attackSettings.mergeComboMetalQueue)
   attackEngine:addAttackPatternsFromTable(trainingModeSettings.attackPatterns)
   return attackEngine
 end

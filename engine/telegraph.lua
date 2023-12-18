@@ -10,10 +10,21 @@ local clone_pool = {}
 -- Sender is the sender of these attacks, must implement clock, frameOriginX, frameOriginY, and character
 Telegraph = class(function(self, sender)
 
-  assert(sender.clock ~= nil, "telegraph sender invalid")
+  -- A sender can be anything that
+  self.sender = sender
+  -- has some coordinates to originate the attack animation from
   assert(sender.frameOriginX ~= nil, "telegraph sender invalid")
   assert(sender.frameOriginY ~= nil, "telegraph sender invalid")
+  -- has a clock to figure out how far the attacks should have animated relative to when it was sent
+  -- (and also that non-cheating senders can only send attacks on the frame they're on)
+  assert(sender.clock ~= nil, "telegraph sender invalid")
+  -- has a character to source the telegraph images above the stack from
   assert(sender.character ~= nil, "telegraph sender invalid")
+  if sender.attackEngine then
+    -- o glory, we know this sender is cheating
+    -- and it might be doing wack stuff to enable armaggeddon mode
+    self.mergeComboMetalQueue = sender.attackEngine.mergeComboMetalQueue
+  end
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
   self.garbage_queue = GarbageQueue(sender)
@@ -24,7 +35,6 @@ Telegraph = class(function(self, sender)
   --keys for self.stoppers.combo[some_key] will be garbage widths, and values will be frame_to_release
   self.stoppers =  {chain = {}, combo = {}, metal = nil}
   
-  self.sender = sender -- The stack that sent this garbage
   self.attacks = {} -- A copy of the chains and combos earned used to render the animation of going to the telegraph
   self.senderCurrentlyChaining = false -- Set when we start a new chain, cleared when the sender is done chaining, used to know if we should grow a chain or start a new one, and to know if we are allowed to send the attack since the sender is done.
   -- (typically sending is prevented by garbage chaining)
@@ -146,7 +156,7 @@ function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
   local garbageToSend = {}
   -- this being a global reference really sucks here, now that attackEngineSettings live on match
   -- have to take care of that when getting to it
-  if garbage.isMetal and (GAME.battleRoom.trainingModeSettings == nil or GAME.battleRoom.trainingModeSettings.attackSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
+  if garbage.isMetal and not self.mergeComboMetalQueue then
     garbageToSend[#garbageToSend+1] = {garbage.width, garbage.height, true, false, timeAttackInteracts = timeAttackInteracts}
     self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
   else
@@ -160,7 +170,7 @@ end
 function Telegraph:chainingEnded(frameEnded)
   -- this being a global reference really sucks here, now that attackEngineSettings live on match
   -- have to take care of that when getting to it
-  if not GAME.battleRoom.trainingModeSettings then
+  if GAME.battleRoom and not GAME.battleRoom.trainingModeSettings then
     assert(frameEnded == self.sender.clock, "expected sender clock to equal attack")
   end
 

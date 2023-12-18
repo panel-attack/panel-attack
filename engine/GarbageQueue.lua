@@ -1,9 +1,13 @@
 local logger = require("logger")
 
-GarbageQueue = class(function(s)
+GarbageQueue = class(function(s, sender)
     s.chain_garbage = Queue()
     s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and length represents how many of that width queued
     s.metal = Queue()
+    if sender.attackEngine then
+      s.illegalStuffIsAllowed = true
+      s.mergeComboMetalQueue = sender.attackEngine.mergeComboMetalQueue
+    end
   end)
   
   function GarbageQueue.makeCopy(self)
@@ -24,9 +28,9 @@ GarbageQueue = class(function(s)
         if width and height then
           -- this being a global reference really sucks here, now that attackEngineSettings live on match
           -- have to take care of that when getting to it
-          if metal and (GAME.battleRoom.trainingModeSettings == nil or GAME.battleRoom.trainingModeSettings.attackSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
+          if metal and not self.mergeComboMetalQueue then
             self.metal:push(v)
-          elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then
+          elseif from_chain or (height > 1 and not self.illegalStuffIsAllowed) then
             if not from_chain then
               error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
             end
