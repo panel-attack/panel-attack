@@ -19,13 +19,13 @@ local Label = require("ui.Label")
 -- The character select screen scene
 local CharacterSelect = class(function(self, sceneParams)
   self.backgroundImg = themes[config.theme].images.bg_select_screen
+  self:load(sceneParams)
 end, Scene)
 
 -- begin abstract functions
 
 -- Initalization specific to the child scene
 function CharacterSelect:customLoad(sceneParams)
-  error("The function customLoad needs to be implemented on the scene")
 end
 
 -- updates specific to the child scene
@@ -319,15 +319,12 @@ function CharacterSelect:update()
 end
 
 function CharacterSelect:draw()
+  self.backgroundImg:draw()
   self.ui.grid:draw()
   for i = 1, #self.ui.cursors do
     self.ui.cursors[i]:draw()
   end
   self:customDraw()
-end
-
-function CharacterSelect:drawBackground()
-  self.backgroundImg:draw()
 end
 
 function CharacterSelect:drawForeground()
