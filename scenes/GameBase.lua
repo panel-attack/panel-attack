@@ -239,7 +239,13 @@ end
 function GameBase:runGame(dt)
   self.match:run()
 
-  if not ((self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end)) then
+  -- catchup
+  while (self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end) do
+    self.match:run()
+  end
+
+
+  --if not ((self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end)) then
     self:handlePause()
 
     if GAME.gameIsPaused and input.isDown["MenuEsc"] then
@@ -247,7 +253,7 @@ function GameBase:runGame(dt)
       Menu.playCancelSfx()
       self.shouldAbortGame = true
     end
-  end
+  --end
 
   if self.shouldAbortGame then
     return

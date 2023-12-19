@@ -105,7 +105,10 @@ function love.update(dt)
   inputManager:update(dt)
   inputFieldManager.update()
 
-  GAME:update(dt)
+  local status, err = xpcall(function() GAME:update(dt) end, debug.traceback)
+  if not status then
+    error(err)
+  end
 end
 
 -- Called whenever the game needs to draw.

@@ -30,19 +30,17 @@ function BattleRoom.createFromMatch(match)
   gameMode.playerCount = #match.players
   gameMode.doCountdown = match.doCountdown
   gameMode.stackInteraction = match.stackInteraction
-  gameMode.winConditions = shallowcpy(match.winConditions)
-  gameMode.gameOverConditions = shallowcpy(match.gameOverConditions)
+  gameMode.winConditions = deepcpy(match.winConditions)
+  gameMode.gameOverConditions = deepcpy(match.gameOverConditions)
+  gameMode.playerCount = #match.players
 
-  replay.gameMode.playerCount = #replay.players
-  replay.gameMode.richPresenceLabel = "Replay"
-  replay.gameMode.scene = "ReplayGame"
-  local battleRoom = BattleRoom(replay.gameMode)
+  local battleRoom = BattleRoom(gameMode)
 
-  for i = 1, #replay.players do
-    local player = Player.createFromReplayPlayer(replay.players[i], i)
-    -- player.settings.levelData = rpp.settings.levelData
-    battleRoom:addPlayer(player)
+  for i = 1, #match.players do
+    battleRoom:addPlayer(match.players[i])
   end
+
+  battleRoom.match = match
 
   return battleRoom
 end
@@ -50,22 +48,28 @@ end
 function BattleRoom.createFromServerMessage(message)
   -- two player versus being the only option so far
   -- in the future this information should be in the message!
-  local battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
+  local battleRoom
 
   if message.spectate_request_granted then
-    battleRoom.spectating = true
     message = ServerMessages.sanitizeSpectatorJoin(message)
-    for i = 1, #message.players do
-      local player = Player(message.players[i].name, message.players[i].playerNumber, false)
-      player:updateWithMenuState(message.players[i])
-      battleRoom:addPlayer(player)
-    end
     if message.replay then
       local replay = ReplayV1.transform(message.replay)
-      battleRoom.match = Match.createFromReplay(replay, false)
+      local match = Match.createFromReplay(replay, false)
+      -- need this to make sure both have the same player tables
+      -- there's like one stupid reference to battleRoom in engine that breaks otherwise
+      battleRoom = BattleRoom.createFromMatch(match)
       battleRoom.match:start()
+    else
+      battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
+      for i = 1, #message.players do
+        local player = Player(message.players[i].name, message.players[i].playerNumber, false)
+        player:updateWithMenuState(message.players[i])
+        battleRoom:addPlayer(player)
+      end
     end
+    battleRoom.spectating = true
   else
+    battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
     message = ServerMessages.sanitizeCreateRoom(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
