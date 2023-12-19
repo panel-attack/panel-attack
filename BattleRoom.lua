@@ -6,6 +6,7 @@ local GameModes = require("GameModes")
 local class = require("class")
 local ServerMessages = require("network.ServerMessages")
 local ClientMessages = require("network.ClientProtocol")
+local ReplayV1 = require("replayV1")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom = class(function(self, mode)
@@ -59,7 +60,8 @@ function BattleRoom.createFromServerMessage(message)
       player:updateWithMenuState(message.players[i])
       battleRoom:addPlayer(player)
       if message.replay then
-        battleRoom.match = Match.createFromReplay(message.replay)
+        local replay = ReplayV1.transform(message.replay)
+        battleRoom.match = Match.createFromReplay(replay, false)
       end
     end
   else
