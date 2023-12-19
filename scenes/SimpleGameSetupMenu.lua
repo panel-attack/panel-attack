@@ -57,17 +57,15 @@ function SimpleGameSetupMenu:startGame()
   GAME.localPlayer:setWantsReady(true)
 end
 
-local function exitMenu()
+function SimpleGameSetupMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  GAME.battleRoom = nil
+  self.battleRoom = nil
   sceneManager:switchToScene("MainMenu")
 end
 
-function SimpleGameSetupMenu:load()
-  if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(self.gameMode)
-  else
-    GAME.battleRoom.match = nil
+function SimpleGameSetupMenu:load(sceneParams)
+  if not self.battleRoom then
+    self.battleRoom = sceneParams.battleRoom
   end
 
   self.speedSlider = Slider({

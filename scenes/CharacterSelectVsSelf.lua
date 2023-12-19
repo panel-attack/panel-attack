@@ -18,16 +18,11 @@ CharacterSelectVsSelf.name = "VsSelfMenu"
 sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)
-  if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
-  else
-    GAME.battleRoom.match = nil
-  end
   self:loadUserInterface()
 end
 
 function CharacterSelectVsSelf:loadUserInterface()
-  local player = GAME.battleRoom.players[1]
+  local player = self.battleRoom.players[1]
 
   self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6})
 
@@ -81,8 +76,8 @@ function CharacterSelectVsSelf:customDraw()
   local xPosition1 = 196
   local xPosition2 = 320
   local yPosition = 24
-  local lastScore = tostring(GAME.scores:lastVsScoreForLevel(GAME.battleRoom.players[1].settings.level))
-  local record = tostring(GAME.scores:recordVsScoreForLevel(GAME.battleRoom.players[1].settings.level))
+  local lastScore = tostring(GAME.scores:lastVsScoreForLevel(self.battleRoom.players[1].settings.level))
+  local record = tostring(GAME.scores:recordVsScoreForLevel(self.battleRoom.players[1].settings.level))
   draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastLinesLabelQuads)
   draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastLinesQuads)
   draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)

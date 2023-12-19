@@ -68,7 +68,7 @@ function BattleRoom:registerLeaveRoom(messageType)
     -- need to figure out where to do that sensibly here
     -- also need to make a call to properly abort the game and close the battleRoom before recovering to lobby
     battleRoom.match = nil
-    battleRoom:shutdownRoom()
+    battleRoom:shutdown()
     sceneManager:switchToScene("Lobby")
   end
   listener:subscribe(self, update)
@@ -214,9 +214,10 @@ function BattleRoom:runNetworkTasks()
   end
 end
 
-function BattleRoom:shutdownRoom()
-  for i = 1, #self.players do
-    self.players[i]:unsubscribe(self.players[i])
+function BattleRoom:shutdownNetwork()
+  GAME.tcpClient.receivedMessageQueue:clear()
+  if self.online and GAME.tcpClient:isConnected() then
+    GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
   end
   self.selectionListeners = nil
   self.ingameListeners = nil

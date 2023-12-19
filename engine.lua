@@ -1562,6 +1562,8 @@ function Stack.simulate(self)
           SFX_Go_Play = 0
         end
       else
+        -- this has no business being here
+        -- picking music source should be a match functionality
         local winningPlayer = self
         if GAME.battleRoom then
           winningPlayer = GAME.battleRoom:winningPlayer().stack

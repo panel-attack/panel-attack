@@ -48,17 +48,15 @@ function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
     battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
   end
   battleRoom.players[1].settings.level = 1
+  battleRoom.players[1].settings.levelData.maxHealth = stackHealth or 100000
   local match = battleRoom:createMatch()
   match:start()
-  match.P1.health = stackHealth or 100000
   match.P1.run = stackRunOverride
   match.P1.shouldRun = stackShouldRunOverride
 
   -- make some space for garbage to fall
   GarbageQueueTestingUtils.reduceRowsTo(match.P1, 0)
 
-  -- cause telegraph is very global needy
-  GAME.battleRoom = battleRoom
   return match
 end
 

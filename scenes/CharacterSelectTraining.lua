@@ -18,12 +18,4 @@ local CharacterSelectTraining = class(
 CharacterSelectTraining.name = "CharacterSelectTraining"
 sceneManager:addScene(CharacterSelectTraining)
 
-function CharacterSelectTraining:customLoad(sceneParams)
-  GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
-  if sceneParams.trainingModeSettings then
-    GAME.battleRoom.trainingModeSettings = sceneParams.trainingModeSettings
-  end
-  GAME.battleRoom.playerNames[2] = nil
-end
-
 return CharacterSelectTraining

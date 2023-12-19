@@ -318,7 +318,7 @@ function BattleRoom:update(dt)
     -- here we fetch network updates and update the battleroom / match
     if not GAME.tcpClient:processIncomingMessages() then
       -- oh no, we probably disconnected
-      self:shutdownRoom()
+      self:shutdown()
       -- let's try to log in back via lobby
       sceneManager:switchToScene("Lobby")
       return
@@ -341,6 +341,17 @@ function BattleRoom:update(dt)
   else
 
   end
+end
+
+function BattleRoom:shutdown()
+  for i = 1, #self.players do
+    local player = self.players[i]
+    -- this is mostly to clear the input configs for future use
+    player:unrestrictInputs()
+  end
+  self:shutdownNetwork()
+  GAME:initializeLocalPlayer()
+  self = nil
 end
 
 return BattleRoom

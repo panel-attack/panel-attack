@@ -19,11 +19,6 @@ CharacterSelectLocal2p.name = "Local2pMenu"
 sceneManager:addScene(CharacterSelectLocal2p)
 
 function CharacterSelectLocal2p:customLoad(sceneParams)
-  if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
-  else
-    GAME.battleRoom.match = nil
-  end
   self:loadUserInterface()
 end
 
@@ -51,8 +46,8 @@ function CharacterSelectLocal2p:loadUserInterface()
   self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
 
   self.ui.characterIcons = {}
-  for i = 1, #GAME.battleRoom.players do
-    local player = GAME.battleRoom.players[i]
+  for i = 1, #self.battleRoom.players do
+    local player = self.battleRoom.players[i]
 
     local panelCarousel = self:createPanelCarousel(player, 48)
     self.ui.panelSelection:addElement(panelCarousel, player)

@@ -2,6 +2,7 @@ local class = require("class")
 local GameModes = require("GameModes")
 local LevelPresets = require("LevelPresets")
 local input = require("inputManager")
+local util = require("util")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -36,7 +37,7 @@ local Player = class(function(self, name, publicId, isLocal)
   -- a player has only one configuration at a time
   -- this is either keys or a single input configuration
   self.inputConfiguration = input.allKeys
-  self.subscriptionList = {}
+  self.subscriptionList = util.getWeaklyKeyedTable()
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -114,6 +115,11 @@ function Player:unsubscribe(subscriber, property)
       self.subscriptionList[property][subscriber] = nil
     end
   end
+end
+
+-- clears all subscriptions 
+function Player:clearSubscriptions()
+  self.subscriptionList = util.getWeaklyKeyedTable()
 end
 
 -- the callback is executed with the new property value as the argument whenever a property is modified via its setter

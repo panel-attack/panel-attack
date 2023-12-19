@@ -29,4 +29,8 @@ function MessageListener:unsubscribe(subscriber)
   self.subscriptionList[subscriber] = nil
 end
 
+function MessageListener:clearSubscriptions()
+  self.subscriptionList = util.getWeaklyKeyedTable()
+end
+
 return MessageListener

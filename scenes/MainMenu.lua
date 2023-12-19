@@ -6,6 +6,7 @@ local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
 local GraphicsUtil = require("graphics_util")
 local class = require("class")
+local GameModes = require("GameModes")
 
 -- @module MainMenu
 -- Scene for the main menu
@@ -34,27 +35,33 @@ end
 local menuItems = {
   {
     createMainMenuButton("mm_1_endless", function()
-      switchToScene("EndlessMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
+      switchToScene("EndlessMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_1_puzzle", function()
-      switchToScene("PuzzleMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+      switchToScene("PuzzleMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_1_time", function()
-      switchToScene("TimeAttackMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"))
+      switchToScene("TimeAttackMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_1_vs", function()
-      switchToScene("VsSelfMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
+      switchToScene("VsSelfMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_1_training", function()
-      switchToScene("TrainingMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
+      switchToScene("TrainingMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_1_challenge_mode", function()
-      switchToScene("ChallengeModeMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_CHALLENGE"))
+      switchToScene("ChallengeModeMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_2_vs_online", function()
@@ -62,7 +69,8 @@ local menuItems = {
     end, {""})
   }, {
     createMainMenuButton("mm_2_vs_local", function()
-      switchToScene("Local2pMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
+      switchToScene("Local2pMenu", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_replay_browser", function()

@@ -64,13 +64,16 @@ function PuzzleMenu:startGame(puzzleSet)
   GAME.localPlayer:setWantsReady(true)
 end
 
-local function exitMenu()
+function PuzzleMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  GAME.battleRoom = nil
+  self.battleRoom = nil
   sceneManager:switchToScene("MainMenu")
 end
 
-function PuzzleMenu:load()
+function PuzzleMenu:load(sceneParams)
+  if not self.battleRoom then
+    self.battleRoom = sceneParams.battleRoom
+  end
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
@@ -128,10 +131,6 @@ function PuzzleMenu:load()
     find_and_add_music(themes[config.theme].musics, "main")
   end
   reset_filters()
-
-  if not GAME.battleRoom then
-    GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
-  end
 end
 
 function PuzzleMenu:drawBackground()
@@ -143,10 +142,6 @@ function PuzzleMenu:update()
       
   self.menu:update()
   self.menu:draw()
-
-  if GAME.battleRoom then
-    GAME.battleRoom:update()
-  end
 end
 
 function PuzzleMenu:unload()

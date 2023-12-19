@@ -117,7 +117,7 @@ function CharacterSelect:createLeaveButton()
     outlineColor = {1, 1, 1, 1},
     onClick = function()
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      GAME.battleRoom = nil
+      self.battleRoom = nil
       sceneManager:switchToScene("MainMenu")
     end
   })
@@ -308,7 +308,6 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
 end
 
 function CharacterSelect:update()
-  GAME.battleRoom:update()
   for i = 1, #self.ui.cursors do
     self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
   end
@@ -342,12 +341,7 @@ function CharacterSelect:unload()
 end
 
 function CharacterSelect:leave()
-  for i = 1, #GAME.battleRoom.players do
-    local player = GAME.battleRoom.players[i]
-    player:unrestrictInputs()
-    player:unsubscribe(player.cursor)
-    player:unsubscribe(self.ui.characterIcons[i])
-  end
+  self.battleRoom:shutdown()
   play_optional_sfx(themes[config.theme].sounds.menu_cancel)
   sceneManager:switchToScene("MainMenu")
 end

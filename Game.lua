@@ -226,7 +226,6 @@ function Game:createScenes()
     require("scenes.CharacterSelectChallenge"),
     require("scenes.Lobby"),
     require("scenes.CharacterSelectOnline"),
-    require("scenes.OnlineVsGame"),
     require("scenes.CharacterSelectLocal2p"),
     require("scenes.ReplayBrowser"),
     require("scenes.ReplayGame"),
