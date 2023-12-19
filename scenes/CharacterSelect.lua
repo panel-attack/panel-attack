@@ -52,7 +52,9 @@ function CharacterSelect:load(sceneParams)
   self.ui = {}
   self.ui.cursors = {}
   self.ui.characterIcons = {}
-  self.battleRoom = sceneParams.battleRoom
+  if not self.battleRoom then
+    self.battleRoom = sceneParams.battleRoom
+  end
   self:customLoad(sceneParams)
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
