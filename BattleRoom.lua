@@ -59,10 +59,11 @@ function BattleRoom.createFromServerMessage(message)
       local player = Player(message.players[i].name, message.players[i].playerNumber, false)
       player:updateWithMenuState(message.players[i])
       battleRoom:addPlayer(player)
-      if message.replay then
-        local replay = ReplayV1.transform(message.replay)
-        battleRoom.match = Match.createFromReplay(replay, false)
-      end
+    end
+    if message.replay then
+      local replay = ReplayV1.transform(message.replay)
+      battleRoom.match = Match.createFromReplay(replay, false)
+      battleRoom.match:start()
     end
   else
     message = ServerMessages.sanitizeCreateRoom(message)
