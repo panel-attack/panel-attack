@@ -66,14 +66,11 @@ end
 
 function PuzzleMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  self.battleRoom = nil
+  GAME.battleRoom:shutdown()
   sceneManager:switchToScene("MainMenu")
 end
 
 function PuzzleMenu:load(sceneParams)
-  if not self.battleRoom then
-    self.battleRoom = sceneParams.battleRoom
-  end
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,

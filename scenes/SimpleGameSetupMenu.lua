@@ -59,15 +59,11 @@ end
 
 function SimpleGameSetupMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  self.battleRoom = nil
+  GAME.battleRoom:shutdown()
   sceneManager:switchToScene("MainMenu")
 end
 
 function SimpleGameSetupMenu:load(sceneParams)
-  if not self.battleRoom then
-    self.battleRoom = sceneParams.battleRoom
-  end
-
   self.speedSlider = Slider({
     min = 1, 
     max = 99, 

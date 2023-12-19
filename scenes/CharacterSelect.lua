@@ -52,10 +52,6 @@ function CharacterSelect:load(sceneParams)
   self.ui = {}
   self.ui.cursors = {}
   self.ui.characterIcons = {}
-  if not self.battleRoom then
-    assert(sceneParams.battleRoom)
-    self.battleRoom = sceneParams.battleRoom
-  end
   self:customLoad(sceneParams)
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
@@ -119,7 +115,7 @@ function CharacterSelect:createLeaveButton()
     outlineColor = {1, 1, 1, 1},
     onClick = function()
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      self.battleRoom = nil
+      GAME.battleRoom:shutdown()
       sceneManager:switchToScene("MainMenu")
     end
   })
@@ -327,20 +323,8 @@ function CharacterSelect:draw()
   self:customDraw()
 end
 
-function CharacterSelect:drawForeground()
-
-end
-
-function CharacterSelect:unload()
-  self.ui.grid:setVisibility(false)
-  stop_the_music()
-  if self.customUnload then
-    self:customUnload()
-  end
-end
-
 function CharacterSelect:leave()
-  self.battleRoom:shutdown()
+  GAME.battleRoom:shutdown()
   play_optional_sfx(themes[config.theme].sounds.menu_cancel)
   sceneManager:switchToScene("MainMenu")
 end
