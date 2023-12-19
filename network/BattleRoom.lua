@@ -205,7 +205,10 @@ function BattleRoom:runNetworkTasks()
     if outcome then
       -- we need to report the outcome to the server, otherwise the game won't end and we won't get a character selection message
       -- this is probably flooding the server with messages every frame now
-      GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(outcome.outcome_claim))
+      if tableUtils.trueForAny(self.match.players, function(p) return p.isLocal end) then
+        GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(outcome.outcome_claim))
+      end
+      sceneManager:switchToScene("CharacterSelectOnline")
     end
   else
     for messageType, listener in pairs(self.selectionListeners) do
