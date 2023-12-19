@@ -507,11 +507,6 @@ function set_color(r, g, b, a)
     end
 end
 
-function reset_filters()
-  GAME.background_overlay = nil
-  GAME.foreground_overlay = nil
-end
-
 -- temporary work around to drawing clearer text until we use better fonts
 -- draws multiple copies of the same text slightly offset from each other
 -- to simultate thickness

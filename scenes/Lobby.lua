@@ -93,7 +93,6 @@ function Lobby:load(sceneParams)
       find_and_add_music(themes[config.theme].musics, "main")
     end
   end
-  reset_filters()
 
   self:initLobbyMenu()
 end

@@ -130,7 +130,6 @@ function PuzzleMenu:load(sceneParams)
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  reset_filters()
 end
 
 function PuzzleMenu:drawBackground()

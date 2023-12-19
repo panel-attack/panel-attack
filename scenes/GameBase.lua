@@ -146,7 +146,7 @@ function GameBase:handlePause()
     Menu.playValidationSfx()
     if not GAME.renderDuringPause then
       if GAME.gameIsPaused then
-        reset_filters()
+        -- unpause?
       end
     end
   end

@@ -154,7 +154,6 @@ function SimpleGameSetupMenu:load(sceneParams)
     self.modernMenu:setVisibility(true)
   end
   
-  reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end

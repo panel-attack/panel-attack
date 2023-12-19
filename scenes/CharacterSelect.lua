@@ -53,6 +53,7 @@ function CharacterSelect:load(sceneParams)
   self.ui.cursors = {}
   self.ui.characterIcons = {}
   if not self.battleRoom then
+    assert(sceneParams.battleRoom)
     self.battleRoom = sceneParams.battleRoom
   end
   self:customLoad(sceneParams)
@@ -60,7 +61,6 @@ function CharacterSelect:load(sceneParams)
   -- ideally the local player can use all configs in menus until game start
   -- but should be ok for now
   self:playThemeMusic()
-  reset_filters()
 end
 
 function CharacterSelect:createSelectedCharacterIcon(player)

@@ -15,10 +15,10 @@ local input = require("inputManager")
 local save = require("save")
 local fileUtils = require("FileUtils")
 local handleShortcuts = require("Shortcuts")
-local scenes = nil
 local Player = require("Player")
 local GameModes = require("GameModes")
 local TcpClient = require("network.TcpClient")
+local StartUp = require("scenes.StartUp")
 
 require("rich_presence.RichPresence")
 
@@ -38,7 +38,6 @@ local Game = class(
     self.battleRoom = nil -- BattleRoom - the current room being used for battles
     self.focused = true -- if the window is focused
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
-    self.foreground_overlay = nil
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
     self.gameIsPaused = false -- game can be paused while playing on local
@@ -95,34 +94,30 @@ function Game:load(game_updater)
   if user_input_conf then
     self.input:importConfigurations(user_input_conf)
   end
+  --self:createScenes()
+  sceneManager.activeScene = StartUp({setupRoutine = self.setupRoutine})
 end
 
-function Game:setupCoroutine()
+function Game:setupRoutine()
   -- loading various assets into the game
-  self:drawLoadingString("Loading localization...")
-  coroutine.yield()
+  coroutine.yield("Loading localization...")
   Localization.init(localization)
   fileUtils.copyFile("readme_puzzles.txt", "puzzles/README.txt")
   
-  self:drawLoadingString(loc("ld_theme"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_theme"))
   theme_init()
   
   -- stages and panels before characters since they are part of their loading!
-  self:drawLoadingString(loc("ld_stages"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_stages"))
   stages_init()
   
-  self:drawLoadingString(loc("ld_panels"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_panels"))
   panels_init()
   
-  self:drawLoadingString(loc("ld_characters"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_characters"))
   CharacterLoader.initCharacters()
   
-  self:drawLoadingString(loc("ld_analytics"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_analytics"))
   analytics.init()
 
   apply_config_volume()
@@ -130,9 +125,6 @@ function Game:setupCoroutine()
   self:createDirectoriesIfNeeded()
 
   self:checkForUpdates()
-
-  self:createScenes()
-
   -- Run all unit tests now that we have everything loaded
   if TESTS_ENABLED then
     self:runUnitTests()
@@ -166,8 +158,7 @@ function Game:initializeLocalPlayer()
 end
 
 function Game:createDirectoriesIfNeeded()
-  self:drawLoadingString("Creating Folders")
-  coroutine.yield()
+  coroutine.yield("Creating Folders")
 
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
@@ -205,44 +196,8 @@ function Game:checkForUpdates()
   end
 end
 
-function Game:createScenes()
-  self:drawLoadingString("Creating Scenes")
-  coroutine.yield()
-
-  -- must be here until globally initiallized structures get resolved into local requires
-  scenes = {
-    require("scenes.TitleScreen"),
-    require("scenes.MainMenu"),
-    require("scenes.EndlessMenu"),
-    require("scenes.EndlessGame"),
-    require("scenes.PuzzleMenu"),
-    require("scenes.PuzzleGame"),
-    require("scenes.TimeAttackMenu"),
-    require("scenes.TimeAttackGame"),
-    require("scenes.CharacterSelectVsSelf"),
-    require("scenes.TrainingMenu"),
-    require("scenes.CharacterSelectTraining"),
-    require("scenes.ChallengeModeMenu"),
-    require("scenes.CharacterSelectChallenge"),
-    require("scenes.Lobby"),
-    require("scenes.CharacterSelectOnline"),
-    require("scenes.CharacterSelectLocal2p"),
-    require("scenes.ReplayBrowser"),
-    require("scenes.ReplayGame"),
-    require("scenes.InputConfigMenu"),
-    require("scenes.SetNameMenu"),
-    require("scenes.OptionsMenu"),
-    require("scenes.SoundTest"),
-    require("scenes.DesignHelper"),
-    require("scenes.VsSelfGame"),
-    require("scenes.SetUserIdMenu"),
-    require("scenes.Game2pVs")
-  }
-end
-
 function Game:runUnitTests()
-  self:drawLoadingString("Running Unit Tests")
-  coroutine.yield()
+  coroutine.yield("Running Unit Tests")
 
   -- GAME.localPlayer is the standard player for battleRooms that don't get started from replays/spectate
   -- basically the player that is operating the client
@@ -258,8 +213,7 @@ function Game:runUnitTests()
 end
 
 function Game:runPerformanceTests()
-  GAME:drawLoadingString("Running Performance Tests")
-  coroutine.yield()
+  coroutine.yield("Running Performance Tests")
   require("tests.StackReplayPerformanceTests")
   -- Disabled since they just prove lua tables are faster for rapid concatenation of strings
   --require("tests.StringPerformanceTests")
@@ -308,34 +262,11 @@ function Game:update(dt)
     leftover_time = 0
   end
 
-  if coroutine.status(self.setupCoroutineObject) ~= "dead" then
-    local status, err = coroutine.resume(self.setupCoroutineObject)
-    -- loading bar setup finished
-    if status and coroutine.status(self.setupCoroutineObject) == "dead" then
-      self:switchToStartScene()
-    elseif not status then
-      self.crashTrace = debug.traceback(self.setupCoroutineObject)
-      error(err)
-    else
-      return
-    end
-  end
-
   if self.battleRoom then
     self.battleRoom:update(dt)
   end
 
-  if sceneManager.activeScene then
-    sceneManager.activeScene:update(dt)
-    -- update transition to use draw priority queue
-    if sceneManager.isTransitioning then
-      sceneManager:transition()
-    end
-  elseif sceneManager.isTransitioning then
-    sceneManager:transition()
-  else
-    error("No active scene and no active transition")
-  end
+  sceneManager:update(dt)
 
   if self.backgroundImage then
     self.backgroundImage:update(dt)
@@ -356,37 +287,40 @@ function Game:switchToStartScene()
 end
 
 function Game:draw()
-  if sceneManager.activeScene then
-    sceneManager.activeScene:drawForeground()
-  else
-    if self.foreground_overlay then
-      local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
-    end
-  end
-
-  -- Clear the screen
+  -- Setting the canvas means everything we draw is drawn to the canvas instead of the screen
   love.graphics.setCanvas(self.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
+  -- With this, self.globalCanvas is clear and set as our active canvas everything is being drawn to
   self.isDrawing = true
-  if sceneManager.activeScene then
-    sceneManager.activeScene:draw()
-  end
-  for i = self.gfx_q.first, self.gfx_q.last do
-    local func = self.gfx_q[i][1]
-    local args = self.gfx_q[i][2]
-    func(unpack(args))
-  end
-  self.gfx_q:clear()
+  sceneManager:draw()
   self.isDrawing = false
-  
+  self:processGraphicsQueue()
+
+  self:drawFPS()
+  self:drawScaleInfo()
+
+  -- resetting the canvas means everything we draw is drawn to the screen
+  love.graphics.setCanvas()
+  -- clear in preparation for the next render (is this really necessary with the clear further up?)
+  love.graphics.clear(love.graphics.getBackgroundColor())
+
+  love.graphics.setBlendMode("alpha", "premultiplied")
+  -- now we draw the finished canvas at scale
+  -- this way we don't have to worry about scaling singular elements, just draw everything at 1280x720 to the canvas
+  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+end
+
+function Game:drawFPS()
   -- Draw the FPS if enabled
   if self.config.show_fps then
     love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
   end
-  
+end
+
+function Game:drawScaleInfo()
   if self.showGameScaleUntil > self.timer or config.debug_mode then
     local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
@@ -396,32 +330,19 @@ function Game:draw()
     end
     love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
+end
 
-  if DEBUG_ENABLED and love.system.getOS() == "Android" then
-    local saveDir = love.filesystem.getSaveDirectory()
-    love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
+function Game:processGraphicsQueue()
+  -- the isDrawing flag is important so the graphics util funcs know to call the love.graphics funcs directly instead of pushing to gfx_q
+  self.isDrawing = true
+  -- ideally the only things remaining in the gfx_q are text prints and Match:render
+  for i = self.gfx_q.first, self.gfx_q.last do
+    local func = self.gfx_q[i][1]
+    local args = self.gfx_q[i][2]
+    func(unpack(args))
   end
-
-  love.graphics.setCanvas() -- render everything thats been added
-  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
-  
-  love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
-  love.graphics.setBlendMode("alpha", "alphamultiply")
-
-  -- draw background and its overlay
-  if sceneManager.activeScene then
-    sceneManager.activeScene:drawBackground()
-  else
-    if self.backgroundImage then
-      self.backgroundImage:draw()
-    end
-    
-    if self.background_overlay then
-      local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
-    end
-  end
+  self.gfx_q:clear()
+  self.isDrawing = false
 end
 
 function Game:clearMatch()

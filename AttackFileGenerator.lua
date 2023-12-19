@@ -28,7 +28,6 @@ local function finishedMatchForPath(path)
       matchOutcome = match:getOutcome()
     end
 
-    reset_filters()
     stop_the_music()
     GAME:clearMatch()
     return match

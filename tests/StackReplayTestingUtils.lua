@@ -106,7 +106,6 @@ function StackReplayTestingUtils:setupReplayWithPath(path)
 end
 
 function StackReplayTestingUtils:cleanupReplay()
-  reset_filters()
   stop_the_music()
   replay = {}
   GAME:reset()

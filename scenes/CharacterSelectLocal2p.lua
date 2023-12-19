@@ -15,7 +15,7 @@ local CharacterSelectLocal2p = class(
   CharacterSelect
 )
 
-CharacterSelectLocal2p.name = "Local2pMenu"
+CharacterSelectLocal2p.name = "CharacterSelectLocal2p"
 sceneManager:addScene(CharacterSelectLocal2p)
 
 function CharacterSelectLocal2p:customLoad(sceneParams)

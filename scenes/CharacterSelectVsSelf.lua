@@ -14,7 +14,7 @@ local CharacterSelectVsSelf = class(
   CharacterSelect
 )
 
-CharacterSelectVsSelf.name = "VsSelfMenu"
+CharacterSelectVsSelf.name = "CharacterSelectVsSelf"
 sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)

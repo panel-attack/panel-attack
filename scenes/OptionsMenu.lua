@@ -122,7 +122,6 @@ end
 local function setupDrawThemesInfo()
   Menu.playValidationSfx()
   backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
 
   if not love.filesystem.getInfo("themes/" .. prefix_of_ignored_dirs .. consts.DEFAULT_THEME_DIRECTORY) then
     --print("Hold on. Copying example folders to make this easier...\n This make take a few seconds.")
@@ -141,7 +140,6 @@ end
 local function setupInfo(infoType)
   Menu.playValidationSfx()
   backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
   infoOffset = 0
   optionsState = "info"
   infoName = infoType
@@ -151,7 +149,6 @@ end
 local function setupSystemInfo()
   Menu.playValidationSfx()
   backgroundImage = themes[config.theme].images.bg_readme
-  reset_filters()
   local rendererName, rendererVersion, graphicsCardVender, graphicsCardName = love.graphics.getRendererInfo()
   local sysInfo = {}
   sysInfo[#sysInfo + 1] = {name = "Operating System", value = love.system.getOS()} 
@@ -179,7 +176,6 @@ local function drawSystemInfo()
   if inputManager.isDown["MenuEsc"] then
     Menu.playCancelSfx()
     backgroundImage = themes[config.theme].images.bg_main
-    reset_filters()
     optionsState = "menus"
     menus["aboutMenu"]:setVisibility(true)
   end
@@ -190,7 +186,6 @@ local function drawInfo(text)
   if inputManager.isDown["MenuEsc"] then
     Menu.playCancelSfx()
     backgroundImage = themes[config.theme].images.bg_main
-    reset_filters()
     optionsState = "menus"
     menus["aboutMenu"]:setVisibility(true)
   end

@@ -112,8 +112,6 @@ local function selectMenuItem()
 end
 
 function ReplayBrowser:load()
-  reset_filters()
-  
   if Replay.lastPath then
     current_path = string.sub(Replay.lastPath, (string.len(base_path) + 1)) .. "/"
   end

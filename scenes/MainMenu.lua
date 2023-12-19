@@ -51,7 +51,7 @@ local menuItems = {
   }, {
     createMainMenuButton("mm_1_vs", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
-      switchToScene("VsSelfMenu", {battleRoom = GAME.battleRoom})
+      switchToScene("CharacterSelectVsSelf", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_1_training", function()
@@ -70,7 +70,7 @@ local menuItems = {
   }, {
     createMainMenuButton("mm_2_vs_local", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
-      switchToScene("Local2pMenu", {battleRoom = GAME.battleRoom})
+      switchToScene("CharacterSelectLocal2p", {battleRoom = GAME.battleRoom})
     end)
   }, {
     createMainMenuButton("mm_replay_browser", function()
@@ -144,7 +144,6 @@ function MainMenu:load(sceneParams)
   GAME.battleRoom = nil
   --GAME.input:clearInputConfigurationsForPlayers()
   --GAME.input:requestPlayerInputConfigurationAssignments(1)
-  reset_filters()
   match_type_message = ""
 end
 

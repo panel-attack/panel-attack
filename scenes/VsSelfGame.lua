@@ -7,7 +7,7 @@ local class = require("class")
 -- Scene for an endless mode instance of the game
 local VsSelfGame = class(
   function (self, sceneParams)
-    self.nextScene = "VsSelfMenu"
+    self.nextScene = "CharacterSelectVsSelf"
     
     self:load(sceneParams)
     self.winnerSFX = self.S1:pick_win_sfx()
