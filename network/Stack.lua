@@ -1,10 +1,9 @@
-local input = require("inputManager")
 local NetworkProtocol = require("network.NetworkProtocol")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local ClientMessages = require("network.ClientProtocol")
 
 function Stack.handle_input_taunt(self)
-
+  local input = self.player.inputConfiguration
   if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
     self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
     if GAME.tcpClient:isConnected() then
@@ -36,6 +35,7 @@ function Stack.send_controls(self)
   local playerNumber = self.which
   local to_send
   if self.inputMethod == "controller" then
+    local input = self.player.inputConfiguration
     to_send = base64encode[
       ((input.isDown["Raise1"] or input.isDown["Raise2"] or input.isPressed["Raise1"] or input.isPressed["Raise2"]) and 32 or 0) + 
       ((input.isDown["Swap1"] or input.isDown["Swap2"]) and 16 or 0) + 
