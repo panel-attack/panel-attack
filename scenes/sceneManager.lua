@@ -24,6 +24,9 @@ function sceneManager:addScene(scene)
 end
 
 function sceneManager:createScene(sceneName, sceneParams)
+  if not self.scenes[sceneName] then
+    self.scenes[sceneName] = require("scenes." .. sceneName)
+  end
   return self.scenes[sceneName](sceneParams)
 end
 
