@@ -9,6 +9,8 @@ local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
 -- The character select screen scene
 local CharacterSelectVsSelf = class(
   function (self, sceneParams)
+    self.lastScore = nil
+    self.record = nil
     self:load()
   end,
   CharacterSelect
@@ -40,6 +42,12 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.ui.stageSelection)
 
   local levelSlider = self:createLevelSlider(player, 20)
+  local oldOnValueChange = levelSlider.onValueChange
+  levelSlider.onValueChange = function(ls)
+    oldOnValueChange(ls)
+    self.lastScore = GAME.scores:lastVsScoreForLevel(ls.value)
+    self.record = GAME.scores:recordVsScoreForLevel(ls.value)
+  end
   self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
   self.ui.levelSelection:addElement(levelSlider, player)
   self.ui.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.ui.levelSelection)
@@ -76,8 +84,8 @@ function CharacterSelectVsSelf:customDraw()
   local xPosition1 = 196
   local xPosition2 = 320
   local yPosition = 24
-  local lastScore = tostring(GAME.scores:lastVsScoreForLevel(GAME.battleRoom.players[1].settings.level))
-  local record = tostring(GAME.scores:recordVsScoreForLevel(GAME.battleRoom.players[1].settings.level))
+  local lastScore = tostring(self.lastScore)
+  local record = tostring(self.record)
   draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastLinesLabelQuads)
   draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastLinesQuads)
   draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
