@@ -144,11 +144,6 @@ function GameBase:handlePause()
 
     setMusicPaused(GAME.gameIsPaused)
     Menu.playValidationSfx()
-    if not GAME.renderDuringPause then
-      if GAME.gameIsPaused then
-        -- unpause?
-      end
-    end
   end
 end
 
@@ -238,13 +233,18 @@ function GameBase:runGameOver()
 end
 
 function GameBase:runGame(dt)
-  self.match:run()
-
-  -- catchup
-  while (self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end) do
-    self.match:run()
+  if self.frameInfo.startTime == nil then
+    self.frameInfo.startTime = love.timer.getTime()
   end
 
+  local framesRun = 0
+  self.frameInfo.currentTime = love.timer.getTime()
+  self.frameInfo.expectedFrameCount = math.ceil((self.frameInfo.currentTime - self.frameInfo.startTime) * 60)
+  repeat
+    self.frameInfo.frameCount = self.frameInfo.frameCount + 1
+    framesRun = framesRun + 1
+    GAME.match:run()
+  until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
 
   --if not ((self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end)) then
     self:handlePause()
@@ -285,16 +285,6 @@ function GameBase:draw()
   if not (self.S1 and self.S1.play_to_end) and not (self.S2 and self.S2.play_to_end) then
     self.match:render()
     self:customDraw()
-  else
-    gprintf(loc("pl_spectate_join"), 0, 350, GAME.canvasX, "center")
-    gprintf("current at frame " .. self.S1.clock .. " of " .. #self.S1.confirmedInput, 0, 400, GAME.canvasX, "center")
-    if self.S1.play_to_end then
-      gprintf("S1.playToEnd " .. tostring((self.S1.play_to_end or false)), 0, 450, GAME.canvasX, "center")
-    end
-    if self.S2 and self.S2.play_to_end then
-      gprintf("S2.playToEnd " .. tostring((self.S2.play_to_end or false)), 0, 500, GAME.canvasX, "center")
-    end
-
   end
 
   local foregroundOverlay = themes[config.theme].images.fg_overlay

@@ -18,22 +18,22 @@ function BattleRoom:registerNetworkCallbacks()
   local tauntListener = self:registerTaunts("taunt")
   local characterSelectListener = self:registerCharacterSelect("character_select")
 
-  self.selectionListeners = {}
+  self.setupListeners = {}
 
-  self.selectionListeners["menu_state"] = menuStateListener
-  self.selectionListeners["win_counts"] = winCountListener
-  self.selectionListeners["ranked_match_approved"] = rankedMatchListener1
-  self.selectionListeners["ranked_match_denied"] = rankedMatchListener2
-  self.selectionListeners["leave_room"] = leaveRoomListener
-  self.selectionListeners["match_start"] = matchStartListener
-  self.selectionListeners["taunt"] = tauntListener
+  self.setupListeners["menu_state"] = menuStateListener
+  self.setupListeners["win_counts"] = winCountListener
+  self.setupListeners["ranked_match_approved"] = rankedMatchListener1
+  self.setupListeners["ranked_match_denied"] = rankedMatchListener2
+  self.setupListeners["leave_room"] = leaveRoomListener
+  self.setupListeners["match_start"] = matchStartListener
+  self.setupListeners["taunt"] = tauntListener
 
-  self.ingameListeners = {}
+  self.runningMatchListeners = {}
 
-  self.selectionListeners["win_counts"] = winCountListener
-  self.selectionListeners["leave_room"] = leaveRoomListener
-  self.selectionListeners["taunt"] = tauntListener
-  self.selectionListeners["character_select"] = characterSelectListener
+  self.runningMatchListeners["win_counts"] = winCountListener
+  self.runningMatchListeners["leave_room"] = leaveRoomListener
+  self.runningMatchListeners["taunt"] = tauntListener
+  self.runningMatchListeners["character_select"] = characterSelectListener
 end
 
 function BattleRoom:registerCharacterSelect(messageType)
@@ -52,7 +52,6 @@ function BattleRoom:registerCharacterSelect(messageType)
         end
       end
     end
-    sceneManager:switchToScene(sceneManager:createScene("CharacterSelectOnline"))
   end
   listener:subscribe(self, update)
   return listener
@@ -192,11 +191,11 @@ function BattleRoom:registerPlayerUpdates(messageType)
 end
 
 function BattleRoom:runNetworkTasks()
-  if self.match then
+  if self.state == BattleRoom.states.MatchInProgress then
     -- the game phase of the room
     -- BattleRoom handles all network updates for online games!!!
     -- that means fetching input messages, spectator updates etc.
-    for messageType, listener in pairs(self.ingameListeners) do
+    for messageType, listener in pairs(self.runningMatchListeners) do
       listener:listen()
     end
 
@@ -209,10 +208,10 @@ function BattleRoom:runNetworkTasks()
       if tableUtils.trueForAny(self.match.players, function(p) return p.isLocal end) then
         GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(outcome.outcome_claim))
       end
-      sceneManager:switchToScene(sceneManager:createScene("CharacterSelectOnline"))
+      self.state = BattleRoom.states.Setup
     end
-  else
-    for messageType, listener in pairs(self.selectionListeners) do
+  elseif self.state == BattleRoom.states.Setup then
+    for messageType, listener in pairs(self.setupListeners) do
       listener:listen()
     end
   end
@@ -223,6 +222,6 @@ function BattleRoom:shutdownNetwork()
   if self.online and GAME.tcpClient:isConnected() then
     GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
   end
-  self.selectionListeners = nil
-  self.ingameListeners = nil
+  self.setupListeners = nil
+  self.runningMatchListeners = nil
 end

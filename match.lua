@@ -806,3 +806,9 @@ function Match.createFromReplay(replay, supportsPause)
 
   return match
 end
+
+function Match:abort()
+  if GAME.battleRoom and GAME.battleRoom.match == self then
+    
+  end
+end
