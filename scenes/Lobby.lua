@@ -11,6 +11,9 @@ local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
 local ClientMessages = require("network.ClientProtocol")
 local UiElement = require("ui.UIElement")
+local Game2pVs = require("scenes.Game2pVs")
+local CharacterSelectOnline = require("scenes.CharacterSelectOnline")
+local CatchUpTransition = require("scenes.Transitions.CatchUpTransition")
 
 local STATES = {Login = 1, Lobby = 2}
 
@@ -62,7 +65,7 @@ sceneManager:addScene(Lobby)
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   GAME.tcpClient:resetNetwork()
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 function Lobby:unload()
@@ -74,7 +77,7 @@ end
 -------------
 
 function Lobby:load(sceneParams)
-  if not GAME.tcpClient:isConnected() then
+  if not GAME.tcpClient:isConnected() and sceneParams.serverIp then
     self.loginRoutine = LoginRoutine(GAME.tcpClient, sceneParams.serverIp, sceneParams.serverPort)
   else
     self.state = STATES.Lobby
@@ -220,7 +223,7 @@ function Lobby:start2pVsOnlineMatch(createRoomMessage)
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   love.window.requestAttention()
   play_optional_sfx(themes[config.theme].sounds.notification)
-  sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
+  sceneManager:switchToScene(sceneManager:createScene("CharacterSelectOnline"))
 end
 
 -- starts to spectate a 2p vs online match
@@ -228,9 +231,11 @@ function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
   -- Not yet implemented
   GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
   if GAME.battleRoom.match then
-    sceneManager:switchToScene("Game2pVs", {match = GAME.battleRoom.match, nextScene = "CharacterSelectOnline"})
+    local vsScene = Game2pVs({match = GAME.battleRoom.match, nextScene = "CharacterSelectOnline"})
+    local transition = CatchUpTransition(self, vsScene)
+    sceneManager:switchToScene(vsScene, transition)
   else
-    sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = GAME.battleRoom})
+    sceneManager:switchToScene(CharacterSelectOnline())
   end
 end
 
@@ -309,7 +314,7 @@ function Lobby:handleLogin()
       end
       if GAME.timer > self.loginScreenTimer then
         self.loginScreenTimer = nil
-        sceneManager:switchToScene("MainMenu")
+        sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
       end
     end
   end

@@ -42,7 +42,7 @@ function DesignHelper:loadGrid()
   })
   self.cursor.escapeCallback = function()
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    sceneManager:switchToScene("MainMenu")
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
 
@@ -61,7 +61,7 @@ end
 
 function DesignHelper:update()
   if input.allKeys.isDown["MenuEsc"] then
-    sceneManager:switchToScene("MainMenu")
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
   GAME.gfx_q:push({self.grid.draw, {self.grid}})
 end

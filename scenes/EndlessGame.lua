@@ -28,8 +28,4 @@ function EndlessGame:processGameResults(gameResult)
   end
 end
 
-function EndlessGame:abortGame()
-  sceneManager:switchToScene("EndlessMenu")
-end
-
 return EndlessGame

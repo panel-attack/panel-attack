@@ -11,24 +11,9 @@ local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
 --@module CharacterSelectOnline
 -- 
 local CharacterSelectOnline = class(
-  function (self, sceneParams)
+  function (self)
     
-    self.roomInitializationMessage = sceneParams.roomInitializationMessage
-    self.players = {{}, {}}
-    
-    self.transitioning = false
-    self.stateParams = {
-      maxDisplayTime = nil,
-      minDisplayTime = nil,
-      sceneName = nil,
-      sceneParams = nil,
-      switchSceneLabel = nil
-    }
-    
-    self.startTime = love.timer.getTime()
-    self.state = nil -- set in customLoad
-
-    self:load(sceneParams)
+    self:load()
   end,
   CharacterSelect
 )

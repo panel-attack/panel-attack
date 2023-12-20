@@ -8,6 +8,7 @@ local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local tableUtils = require("tableUtils")
+local CharacterSelectChallenge = require("scenes.CharacterSelectChallenge")
 
 --@module ChallengeModeMenu
 -- 
@@ -24,7 +25,7 @@ sceneManager:addScene(ChallengeModeMenu)
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 function ChallengeModeMenu:load(sceneParams)
@@ -46,7 +47,7 @@ function ChallengeModeMenu:load(sceneParams)
 
   local menuItems = {
     {Label({text = "difficulty"}), difficultyStepper},
-    {TextButton({label = Label({text = "go_"}), onClick = function() sceneManager:switchToScene("CharacterSelectChallenge", {challengeMode = difficultyStepper.value}) end})},
+    {TextButton({label = Label({text = "go_"}), onClick = function() sceneManager:switchToScene(sceneManager:createScene("CharacterSelectChallenge", {challengeMode = difficultyStepper.value})) end})},
     {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 

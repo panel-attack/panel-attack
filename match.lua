@@ -691,6 +691,8 @@ function Match:start()
       self.players[i].stack:starting_state()
     end
   end
+
+  self.replay = Replay.createNewReplay(self)
 end
 
 function Match:setStage(stageId)

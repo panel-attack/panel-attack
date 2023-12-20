@@ -5,6 +5,7 @@ local input = require("inputManager")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local class = require("class")
+require("scenes.MainMenu")
 
 --@module titleScreen
 -- The title screen scene
@@ -34,7 +35,7 @@ function TitleScreen:update(dt)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then
     Menu.playValidationSfx()
     stop_the_music()
-    sceneManager:switchToScene("MainMenu")
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
 

@@ -4,6 +4,7 @@ local ServerMessages = require("network.ServerMessages")
 local ClientMessages = require("network.ClientProtocol")
 local tableUtils = require("tableUtils")
 local sceneManager = require("scenes.sceneManager")
+
 -- the entire network part of BattleRoom
 -- this tries to hide away most of the "ugly" handling necessary for to the network communication
 
@@ -51,7 +52,7 @@ function BattleRoom:registerCharacterSelect(messageType)
         end
       end
     end
-    sceneManager:switchToScene("CharacterSelectOnline", {battleRoom = battleRoom})
+    sceneManager:switchToScene(sceneManager:createScene("CharacterSelectOnline"))
   end
   listener:subscribe(self, update)
   return listener
@@ -69,7 +70,7 @@ function BattleRoom:registerLeaveRoom(messageType)
     -- also need to make a call to properly abort the game and close the battleRoom before recovering to lobby
     battleRoom.match = nil
     battleRoom:shutdown()
-    sceneManager:switchToScene("Lobby")
+    sceneManager:switchToScene(sceneManager:createScene("Lobby"))
   end
   listener:subscribe(self, update)
   return listener
@@ -208,7 +209,7 @@ function BattleRoom:runNetworkTasks()
       if tableUtils.trueForAny(self.match.players, function(p) return p.isLocal end) then
         GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(outcome.outcome_claim))
       end
-      sceneManager:switchToScene("CharacterSelectOnline")
+      sceneManager:switchToScene(sceneManager:createScene("CharacterSelectOnline"))
     end
   else
     for messageType, listener in pairs(self.selectionListeners) do

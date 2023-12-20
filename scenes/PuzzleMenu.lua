@@ -31,7 +31,6 @@ sceneManager:addScene(PuzzleMenu)
 
 local BUTTON_WIDTH = 60
 local BUTTON_HEIGHT = 25
-local font = GraphicsUtil.getGlobalFont()
 
 function PuzzleMenu:startGame(puzzleSet)
   if config.puzzle_level ~= self.levelSlider.value or config.puzzle_randomColors ~= self.randomColorsButtons.value then
@@ -67,7 +66,7 @@ end
 function PuzzleMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   GAME.battleRoom:shutdown()
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 function PuzzleMenu:load(sceneParams)

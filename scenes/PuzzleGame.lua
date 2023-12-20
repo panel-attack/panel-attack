@@ -30,7 +30,7 @@ function PuzzleGame:customLoad(sceneParams)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                       .. validationError
-    sceneManager:switchToScene("PuzzleMenu")
+    sceneManager:switchToScene(sceneManager:createScene("PuzzleMenu"))
   end
 end
 
@@ -39,12 +39,8 @@ function PuzzleGame:customRun()
   if (input.isDown["TauntUp"] or input.isDown["TauntDown"]) and not GAME.gameIsPaused then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     -- The character and stage and music and background should all state the same until you complete the whole puzzle set
-    sceneManager:switchToScene("PuzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.S1.character, loadStageAndMusic = false})
+    sceneManager:switchToScene(sceneManager:createScene("PuzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.S1.character, loadStageAndMusic = false}))
   end
-end
-
-function PuzzleGame:abortGame()
-  sceneManager:switchToScene("PuzzleMenu")
 end
 
 function PuzzleGame:customGameOverSetup()

@@ -83,10 +83,6 @@ function ReplayGame:customDraw()
   gprintf(playbackText, textPos[0], textPos[1], canvas_width, "center", nil, 1, large_font)
 end
 
-function ReplayGame:abortGame()
-  sceneManager:switchToScene("ReplayBrowser")
-end
-
 function ReplayGame:customGameOverSetup()
   self.nextScene = "ReplayBrowser"
   self.nextSceneParams = nil

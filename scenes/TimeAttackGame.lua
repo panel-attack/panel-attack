@@ -28,8 +28,4 @@ function TimeAttackGame:processGameResults(gameResult)
   end
 end
 
-function TimeAttackGame:abortGame()
-  sceneManager:switchToScene("TimeAttackMenu")
-end
-
 return TimeAttackGame

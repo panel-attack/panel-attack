@@ -22,8 +22,4 @@ function Game2pVs:processGameResults(gameResult)
   Replay.finalizeAndWriteVsReplay(nil, false, self.match, replay)
 end
 
-function Game2pVs:abortGame()
-  sceneManager:switchToScene(self.nextScene)
-end
-
 return Game2pVs

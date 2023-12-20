@@ -7,6 +7,7 @@ local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local class = require("class")
 local tableUtils = require("tableUtils")
+local CharacterSelectTraining = require("scenes.CharacterSelectTraining")
 
 --@module TrainingMenu
 -- 
@@ -24,7 +25,7 @@ sceneManager:addScene(TrainingMenu)
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 local function createBasicTrainingMode(name, width, height)
@@ -46,7 +47,7 @@ function TrainingMenu:goToCharacterSelect(value, width, height)
   if value == nil then
     value = createBasicTrainingMode("", width, height)
   end
-  sceneManager:switchToScene("CharacterSelectTraining", value)
+  sceneManager:switchToScene(CharacterSelectTraining({value}))
 end
 
 function TrainingMenu:load(sceneParams)

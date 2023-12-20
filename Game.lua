@@ -20,6 +20,7 @@ local GameModes = require("GameModes")
 local TcpClient = require("network.TcpClient")
 local StartUp = require("scenes.StartUp")
 
+
 require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -280,9 +281,9 @@ end
 
 function Game:switchToStartScene()
   if themes[config.theme].images.bg_title then
-    sceneManager:switchToScene("TitleScreen")
+    sceneManager:switchToScene(sceneManager:createScene("TitleScreen"))
   else
-    sceneManager:switchToScene("MainMenu")
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
 

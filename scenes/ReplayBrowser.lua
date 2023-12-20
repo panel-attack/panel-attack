@@ -6,6 +6,7 @@ local fileUtils = require("FileUtils")
 local Replay = require("replay")
 local class = require("class")
 local GameModes = require("GameModes")
+local ReplayGame = require("scenes.ReplayGame")
 
 --@module replayBrowser
 local ReplayBrowser = class(
@@ -125,7 +126,7 @@ end
 function ReplayBrowser:update()
   if state == "browser" then
     if input.isDown["MenuEsc"] then
-      sceneManager:switchToScene("MainMenu")
+      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
     if input.isDown["MenuSelect"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -152,7 +153,7 @@ function ReplayBrowser:update()
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene("ReplayGame", {match = Match.createFromReplay(selectedReplay, false)})
+      sceneManager:switchToScene(ReplayGame({match = Match.createFromReplay(selectedReplay, false)}))
     end
   end
 end

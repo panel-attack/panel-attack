@@ -156,7 +156,7 @@ end
 
 local function exitMenu()
   Menu.playValidationSfx()
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 function InputConfigMenu:load(sceneParams)

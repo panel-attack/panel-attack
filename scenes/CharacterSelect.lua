@@ -17,15 +17,15 @@ local Label = require("ui.Label")
 
 -- @module CharacterSelect
 -- The character select screen scene
-local CharacterSelect = class(function(self, sceneParams)
+local CharacterSelect = class(function(self)
   self.backgroundImg = themes[config.theme].images.bg_select_screen
-  self:load(sceneParams)
+  self:load()
 end, Scene)
 
 -- begin abstract functions
 
 -- Initalization specific to the child scene
-function CharacterSelect:customLoad(sceneParams)
+function CharacterSelect:customLoad()
 end
 
 -- updates specific to the child scene
@@ -48,11 +48,11 @@ function CharacterSelect:playThemeMusic()
   end
 end
 
-function CharacterSelect:load(sceneParams)
+function CharacterSelect:load()
   self.ui = {}
   self.ui.cursors = {}
   self.ui.characterIcons = {}
-  self:customLoad(sceneParams)
+  self:customLoad()
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
   -- but should be ok for now
@@ -116,7 +116,7 @@ function CharacterSelect:createLeaveButton()
     onClick = function()
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
       GAME.battleRoom:shutdown()
-      sceneManager:switchToScene("MainMenu")
+      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
   })
   leaveButton.onSelect = leaveButton.onClick
@@ -326,7 +326,7 @@ end
 function CharacterSelect:leave()
   GAME.battleRoom:shutdown()
   play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 return CharacterSelect

@@ -152,7 +152,6 @@ function GameBase:handlePause()
   end
 end
 
-local font = GraphicsUtil.getGlobalFont()
 local gameOverStartTime = nil -- timestamp for when game over screen was first displayed
 local initialMusicVolumes = {}
 
@@ -180,6 +179,8 @@ function GameBase:setupGameOver()
 end
 
 function GameBase:runGameOver()
+  local font = GraphicsUtil.getGlobalFont()
+
   gprint(self.text, (canvas_width - font:getWidth(self.text)) / 2, 10)
   gprint(loc("continue_button"), (canvas_width - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
@@ -230,7 +231,7 @@ function GameBase:runGameOver()
     end
     SFX_GameOver_Play = 0
     self.transitioning = true
-    sceneManager:switchToScene(self.nextScene, self.nextSceneParams)
+    sceneManager:switchToScene(sceneManager:createScene(self.nextScene, self.nextSceneParams))
   end
   
   GAME.gfx_q:push({self.match.render, {self.match}})

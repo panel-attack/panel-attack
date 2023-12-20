@@ -16,6 +16,8 @@ local analytics = require("analytics")
 local class = require("class")
 local tableUtils = require("tableUtils")
 local utf8 = require("utf8")
+local SoundTest = require("scenes.SoundTest")
+local SetUserIdMenu = require("scenes.SetUserIdMenu")
 
 --@module optionsMenu
 -- Scene for the options menu
@@ -64,11 +66,9 @@ local aboutText = {}
 local infoString
 local infoOffset = 0
 
-local font = GraphicsUtil.getGlobalFont()
-
 local function exitMenu()
   Menu.playValidationSfx()
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 local function updateMenuLanguage()
@@ -460,7 +460,7 @@ function OptionsMenu:load()
     {Label({width = MENU_WIDTH, text = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function() apply_config_volume() end)},
     {Label({width = MENU_WIDTH, text = "op_use_music_from"}), musicFrequencyStepper},
     {Label({width = MENU_WIDTH, text = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")},
-    {TextButton({width = MENU_WIDTH, label = Label({text = "mm_music_test"}), onClick = function() sceneManager:switchToScene("SoundTest") end})},
+    {TextButton({width = MENU_WIDTH, label = Label({text = "mm_music_test"}), onClick = function() sceneManager:switchToScene(sceneManager:createScene("SoundTest")) end})},
     {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function() switchMenu("baseMenu") end})},
   }
   
@@ -486,7 +486,7 @@ function OptionsMenu:load()
   local modifyUserIdOptions = {}
   local userIDDirectories = fileUtils.getFilteredDirectoryItems("servers")
   for i = 1, #userIDDirectories do
-    modifyUserIdOptions[#modifyUserIdOptions+1] = {TextButton({width = MENU_WIDTH, label = Label({text = userIDDirectories[i], translate = false}), onClick = function() sceneManager:switchToScene("SetUserIdMenu", {serverIp = userIDDirectories[i]}) end})}
+    modifyUserIdOptions[#modifyUserIdOptions+1] = {TextButton({width = MENU_WIDTH, label = Label({text = userIDDirectories[i], translate = false}), onClick = function() sceneManager:switchToScene(SetUserIdMenu({serverIp = userIDDirectories[i]})) end})}
   end
   modifyUserIdOptions[#modifyUserIdOptions + 1] = {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = function() switchMenu("baseMenu") end})}
 

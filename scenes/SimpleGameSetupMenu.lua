@@ -60,7 +60,7 @@ end
 function SimpleGameSetupMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   GAME.battleRoom:shutdown()
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 function SimpleGameSetupMenu:load(sceneParams)

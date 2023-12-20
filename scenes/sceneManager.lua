@@ -6,28 +6,25 @@ local BlackFadeTransition = require("scenes.Transitions.BlackFadeTransition")
 local sceneManager = {
   activeScene = nil,
   nextSceneName = nil,
-  transition = nil
+  transition = nil,
+  scenes = {}
 }
 
-local scenes = {}
-
-function sceneManager:switchToScene(sceneName, sceneParams, transition)
-  GAME.rich_presence:setPresence(nil, sceneName, true)
-  if not scenes[sceneName] then
-    scenes[sceneName] = require("scenes." .. sceneName)
-  end
-  local newScene = scenes[sceneName](sceneParams or {})
+function sceneManager:switchToScene(newScene, transition)
+  GAME.rich_presence:setPresence(nil, newScene.name, true)
   if not transition or type(transition) ~= "table" then
     self.transition = BlackFadeTransition(GAME.timer, 0.4, self.activeScene, newScene, Easings.linear)
   else
     self.transition = transition
-    self.transition.oldScene = self.activeScene
-    self.transition.newScene = newScene
   end
 end
 
 function sceneManager:addScene(scene)
-  scenes[scene.name] = scene
+  self.scenes[scene.name] = scene
+end
+
+function sceneManager:createScene(sceneName, sceneParams)
+  return self.scenes[sceneName](sceneParams)
 end
 
 function sceneManager:draw()

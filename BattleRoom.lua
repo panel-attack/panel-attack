@@ -19,11 +19,17 @@ BattleRoom = class(function(self, mode)
   self.allAssetsLoaded = false
   self.ranked = false
   self.puzzles = {}
+  self.state = 1
   if GAME.tcpClient:isConnected() then
     -- this is a bit naive but effective
     self.online = true
   end
 end)
+
+-- defining these here so they're available in network.BattleRoom too
+-- maybe splitting BattleRoom wasn't so smart after all
+BattleRoom.states = { Setup = 1, MatchInProgress = 2, Issue = 3 }
+
 
 function BattleRoom.createFromMatch(match)
   local gameMode = {}
@@ -41,6 +47,8 @@ function BattleRoom.createFromMatch(match)
   end
 
   battleRoom.match = match
+  battleRoom.match:start()
+  battleRoom.state = BattleRoom.states.MatchInProgress
 
   return battleRoom
 end
@@ -58,7 +66,6 @@ function BattleRoom.createFromServerMessage(message)
       -- need this to make sure both have the same player tables
       -- there's like one stupid reference to battleRoom in engine that breaks otherwise
       battleRoom = BattleRoom.createFromMatch(match)
-      battleRoom.match:start()
     else
       battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
       for i = 1, #message.players do
@@ -262,10 +269,10 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   end
 
   match:start()
-
-  replay = Replay.createNewReplay(match)
+  self.state = BattleRoom.states.MatchInProgress
+  local scene = sceneManager:createScene(self.mode.scene, {match = self.match})
   -- game dies when using the fade transition for unclear reasons
-  sceneManager:switchToScene(self.mode.scene, {match = self.match, nextScene = sceneManager.activeScene.name}, "none")
+  sceneManager:switchToScene(scene)
 
   -- to prevent the game from instantly restarting, unready all players
   for i = 1, #self.players do
@@ -327,7 +334,7 @@ function BattleRoom:update(dt)
       -- oh no, we probably disconnected
       self:shutdown()
       -- let's try to log in back via lobby
-      sceneManager:switchToScene("Lobby")
+      sceneManager:switchToScene(sceneManager:createScene("Lobby"))
       return
     else
       GAME.tcpClient:updateNetwork(dt)
@@ -335,7 +342,7 @@ function BattleRoom:update(dt)
     end
   end
 
-  if not self.match then
+  if self.state == BattleRoom.states.Setup then
     -- the setup phase of the room
     self:updateLoadingState()
     self:refreshReadyStates()

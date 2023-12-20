@@ -23,9 +23,11 @@ function StartUp:update(dt)
 
   if coroutine.status(self.setupRoutine) == "dead" then
     if themes[config.theme].images.bg_title then
-      sceneManager:switchToScene("TitleScreen")
+      local titleScreen = require("scenes.TitleScreen")()
+      sceneManager:switchToScene(titleScreen)
     else
-      sceneManager:switchToScene("MainMenu")
+      local mainMenu = require("scenes.MainMenu")()
+      sceneManager:switchToScene(mainMenu)
     end
   end
 end

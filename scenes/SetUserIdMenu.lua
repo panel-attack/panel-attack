@@ -16,9 +16,9 @@ end, Scene)
 SetUserIdMenu.name = "SetUserIdMenu"
 sceneManager:addScene(SetUserIdMenu)
 
-local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
 
 function SetUserIdMenu:load(sceneParams)
+  local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
   backgroundImg = themes[config.theme].images.bg_main
   self.serverIp = sceneParams.serverIp
 
@@ -44,21 +44,17 @@ function SetUserIdMenu:update(dt)
       Menu.playValidationSfx()
       write_user_id_file(self.idInputField.value, self.serverIp)
       -- this is dirty but with how stupid nested OptionsMenu is, there is no way to get back right to where we came from
-      sceneManager:switchToScene("MainMenu")
+      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     else
       Menu.playCancelSfx()
     end
   elseif input.allKeys.isDown["escape"] then
-    sceneManager:switchToScene("MainMenu")
-  elseif input.allKeys.isDown["a"] then
-    local phi = 5
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
-
-  GAME.gfx_q:push({self.draw, {self}})
 end
 
 function SetUserIdMenu:drawBackground()
-  backgroundImg:draw()
+  self.backgroundImg:draw()
 end
 
 function SetUserIdMenu:draw()

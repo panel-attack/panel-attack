@@ -206,7 +206,7 @@ function SoundTest:load()
     {Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup},
     {Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup},
     {TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper},
-    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function() sceneManager:switchToScene("OptionsMenu") end})},
+    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function() sceneManager:switchToScene(sceneManager:createScene("OptionsMenu")) end})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)

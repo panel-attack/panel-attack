@@ -24,8 +24,4 @@ function VsSelfGame:processGameResults(gameResult)
   Replay.finalizeAndWriteVsReplay(nil, false, self.match, replay)
 end
 
-function VsSelfGame:abortGame()
-  sceneManager:switchToScene(self.nextScene)
-end
-
 return VsSelfGame
