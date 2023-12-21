@@ -142,7 +142,7 @@ end
 
 function TrainingMenu:draw()
   self.backgroundImg:draw()
-  GAME.gfx_q:push({self.menu.draw, {self.menu}})
+  self.menu.draw()
 end
 
 function TrainingMenu:unload()

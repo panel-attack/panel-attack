@@ -60,7 +60,10 @@ function DesignHelper:update()
   if input.allKeys.isDown["MenuEsc"] then
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
-  GAME.gfx_q:push({self.grid.draw, {self.grid}})
+end
+
+function DesignHelper:draw()
+  self.grid.draw()
 end
 
 return DesignHelper

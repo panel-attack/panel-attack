@@ -370,8 +370,6 @@ function Lobby:update(dt)
       GAME.tcpClient:resetNetwork()
     end
   end
-
-  GAME.gfx_q:push({self.draw, {self}})
 end
 
 function Lobby:draw()

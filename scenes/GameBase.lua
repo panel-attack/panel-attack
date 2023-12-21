@@ -228,8 +228,6 @@ function GameBase:runGameOver()
     self.transitioning = true
     sceneManager:switchToScene(sceneManager:createScene(self.nextScene, self.nextSceneParams))
   end
-  
-  GAME.gfx_q:push({self.match.render, {self.match}})
 end
 
 function GameBase:runGame(dt)
