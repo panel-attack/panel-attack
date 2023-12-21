@@ -2,8 +2,6 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local CharacterSelect = require("scenes.CharacterSelect")
 local class = require("class")
-local logger = require("logger")
-local Label = require("ui.Label")
 local GameModes = require("GameModes")
 local Grid = require("ui.Grid")
 local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
@@ -12,7 +10,6 @@ local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
 -- 
 local CharacterSelectOnline = class(
   function (self)
-    
     self:load()
   end,
   CharacterSelect
@@ -30,24 +27,18 @@ function CharacterSelectOnline:loadUserInterface()
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
-  self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
 
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
-  self.ui.grid:createElementAt(5, 2, 2, 1, "stageSelection", self.ui.stageSelection)
 
   self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
-  self.ui.grid:createElementAt(7, 2, 2, 1, "levelSelection", self.ui.levelSelection)
 
   self.ui.readyButton = self:createReadyButton()
-  self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)
 
   local characterButtons = self:getCharacterButtons()
   local characterGridWidth, characterGridHeight = 9, 3
   self.ui.characterGrid = self:createCharacterGrid(characterButtons, self.ui.grid, characterGridWidth, characterGridHeight)
-  self.ui.grid:createElementAt(1, 3, characterGridWidth, characterGridHeight, "characterSelection", self.ui.characterGrid, true)
 
   self.ui.leaveButton = self:createLeaveButton()
-  self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
 
   self.ui.characterIcons = {}
   for i = 1, #GAME.battleRoom.players do

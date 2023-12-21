@@ -12,7 +12,8 @@ local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, SCORE_REACHED = 
 local OnePlayerVsSelf = {
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  scene = "VsSelfGame",
+  gameScene = "VsSelfGame",
+  setupScene = "CharacterSelectVsSelf",
   richPresenceLabel = loc("mm_1_vs"),
 
   -- already known match properties
@@ -31,7 +32,8 @@ local OnePlayerVsSelf = {
 local OnePlayerTimeAttack = {
   style = Styles.CHOOSE,
   selectFile = FileSelection.NONE,
-  scene = "TimeAttackGame",
+  gameScene = "TimeAttackGame",
+  setupScene = "TimeAttackMenu",
   richPresenceLabel = loc("mm_1_time"),
 
   -- already known match properties
@@ -51,7 +53,8 @@ local OnePlayerTimeAttack = {
 local OnePlayerEndless = {
   style = Styles.CHOOSE,
   selectFile = FileSelection.NONE,
-  scene = "EndlessGame",
+  gameScene = "EndlessGame",
+  setupScene = "EndlessMenu",
   richPresenceLabel = loc("mm_1_endless"),
 
   -- already known match properties
@@ -70,7 +73,8 @@ local OnePlayerEndless = {
 local OnePlayerTraining = {
   style = Styles.MODERN,
   selectFile = FileSelection.TRAINING,
-  scene = "GameBase",
+  gameScene = "GameBase",
+  setupScene = "CharacterSelectTraining",
   richPresenceLabel = loc("mm_1_training"),
 
   -- already known match properties
@@ -91,7 +95,8 @@ local OnePlayerPuzzle = {
   style = Styles.MODERN,
   selectFile = FileSelection.PUZZLE,
   richPresenceLabel = loc("mm_1_puzzle"),
-  scene = "PuzzleGame",
+  gameScene = "PuzzleGame",
+  setupScene = "PuzzleMenu",
 
   -- already known match properties
   playerCount = 1,
@@ -111,7 +116,8 @@ local OnePlayerPuzzle = {
 local OnePlayerChallenge = {
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  scene = "GameBase",
+  gameScene = "GameBase",
+  setupScene = "CharacterSelectChallenge",
   richPresenceLabel = loc("mm_1_challenge_mode"),
 
   -- already known match properties
@@ -129,7 +135,8 @@ local OnePlayerChallenge = {
 
 local TwoPlayerVersus = {
   style = Styles.MODERN,
-  scene = "Game2pVs",
+  gameScene = "Game2pVs",
+  setupScene = "CharacterSelect2p",
   richPresenceLabel = loc("mm_2_vs"),
 
   -- already known match properties

@@ -14,6 +14,7 @@ local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local ImageContainer = require("ui.ImageContainer")
 local Label = require("ui.Label")
+local BoolSelector = require("ui.BoolSelector")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -304,6 +305,19 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
   player:subscribe(levelSlider, "level", levelSlider.setValue)
 
   return levelSlider
+end
+
+function CharacterSelect:createRankedSelection(player, width)
+  local trueLabel = Label({text = "ss_ranked"})
+  local falseLabel = Label({text = "ss_casual"})
+  local rankedSelector = BoolSelector({trueLabel = trueLabel, falseLabel = falseLabel, startValue = player.settings.wantsRanked, vFill = true, width = width})
+  rankedSelector.onValueChange = function(boolSelector, value)
+    player:setWantsRanked(value)
+  end
+
+  player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
+
+  return rankedSelector
 end
 
 function CharacterSelect:update()

@@ -14,7 +14,7 @@ local CharacterSelectVsSelf = require("scenes.CharacterSelectVsSelf")
 local TrainingMenu = require("scenes.TrainingMenu")
 local ChallengeModeMenu = require("scenes.ChallengeModeMenu")
 local Lobby = require("scenes.Lobby")
-local CharacterSelectLocal2p = require("scenes.CharacterSelectLocal2p")
+local CharacterSelect2p = require("scenes.CharacterSelect2p")
 local ReplayBrowser = require("scenes.ReplayBrowser")
 local InputConfigMenu = require("scenes.InputConfigMenu")
 local SetNameMenu = require("scenes.SetNameMenu")
@@ -84,7 +84,7 @@ local menuItems = {
   }, {
     createMainMenuButton("mm_2_vs_local", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
-      switchToScene(CharacterSelectLocal2p())
+      switchToScene(CharacterSelect2p())
     end)
   }, {
     createMainMenuButton("mm_replay_browser", function()
