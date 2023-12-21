@@ -42,8 +42,8 @@ end
 
 -- push a server message in queue
 function ServerQueue.push(self, msg)
-  if not msg[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not msg [NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
-    logger.debug("message received: " .. msg)
+  if not msg[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not msg[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
+    logger.debug("message received:\n" .. table_to_string(msg))
   end
   local last = self.last + 1
   self.last = last
