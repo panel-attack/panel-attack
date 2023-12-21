@@ -15,19 +15,18 @@ end)
 function CatchUpTransition:update(dt)
   self.timePassed = self.timePassed + dt
   if not self.match.P1.play_to_end then
-    self.progress = 2
+    self.progress = 1
   else
     self.progress = self.match.P1.clock / #self.match.P1.confirmedInput
   end
   local t = love.timer.getTime()
-    -- spend 90% of frame time on catchup
-    -- since we're not drawing anything big that should be realistic for catching ASAP
-    local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end))
-    local hasTimeLeft = function() return love.timer.getTime() < t + 0.9*dt end
-    local timeLeft = hasTimeLeft()
-    while shouldCatchUp and hasTimeLeft() do
-      self.match:run()
-    end
+  local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end))
+  -- spend 90% of frame time on catchup
+  -- since we're not drawing anything big that should be realistic for catching ASAP
+  local hasTimeLeft = function() return love.timer.getTime() < t + 0.9*dt end
+  while shouldCatchUp and hasTimeLeft() do
+    self.match:run()
+  end
 end
 
 function CatchUpTransition:draw()

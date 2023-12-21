@@ -48,7 +48,7 @@ function sceneManager:update(dt)
   if self.transition then
     self.transition:update(dt)
 
-    if self.transition.progress > 1 then
+    if self.transition.progress >= 1 then
       -- doing this here again for good measure
       -- more complex transitions might find out a transition can't go through and switch oldScene and newScene to go back instead
       touchHandler:unregisterTree(self.transition.oldScene.uiRoot)

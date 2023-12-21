@@ -224,11 +224,11 @@ function Menu:update()
   if not self.isEnabled then
     return
   end
-  
+
   if input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self:scrollUp()
   end
-  
+
   if input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self:scrollDown()
   end
