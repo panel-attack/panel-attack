@@ -370,6 +370,7 @@ function BattleRoom:shutdown()
   end
   self:shutdownNetwork()
   GAME:initializeLocalPlayer()
+  GAME.battleRoom = nil
   self = nil
 end
 
