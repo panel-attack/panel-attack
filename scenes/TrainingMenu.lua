@@ -135,13 +135,13 @@ function TrainingMenu:load(sceneParams)
   })
 end
 
-function TrainingMenu:drawBackground()
-  self.backgroundImg:draw()
-end
-
 function TrainingMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update(dt)
+end
+
+function TrainingMenu:draw()
+  self.backgroundImg:draw()
   GAME.gfx_q:push({self.menu.draw, {self.menu}})
 end
 

@@ -128,14 +128,14 @@ function PuzzleMenu:load(sceneParams)
   end
 end
 
-function PuzzleMenu:drawBackground()
-  themes[config.theme].images.bg_main:draw()
-end
-
 function PuzzleMenu:update()
   gprint(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
-      
+  
   self.menu:update()
+end
+
+function PuzzleMenu:draw()
+  themes[config.theme].images.bg_main:draw()
   self.menu:draw()
 end
 

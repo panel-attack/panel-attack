@@ -60,13 +60,13 @@ function ChallengeModeMenu:load(sceneParams)
   })
 end
 
-function ChallengeModeMenu:drawBackground()
-  self.backgroundImg:draw()
-end
-
 function ChallengeModeMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update(dt)
+end
+
+function ChallengeModeMenu:draw()
+  self.backgroundImg:draw()
   self.menu:draw()
 end
 

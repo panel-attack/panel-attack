@@ -27,8 +27,6 @@ local soundTestMenu
 
 local menuValidateSound
 
-local backgroundImg = nil -- set in load
-
 local function playMusic(source, id, musicType)
   local musicToUse
   local musicStyle
@@ -82,7 +80,7 @@ local function createSfxMenuInfo(characterId)
 end
 
 function SoundTest:load()
-    local characterLabels = {}
+  local characterLabels = {}
   local characterIds = {}
   for _, character in pairs(characters) do
     characterLabels[#characterLabels + 1] = Label({
@@ -217,7 +215,7 @@ function SoundTest:load()
     maxHeight = themes[config.theme].main_menu_max_height
   })
   
-  backgroundImg = themes[config.theme].images.bg_main
+  self.backgroundImg = themes[config.theme].images.bg_main
 
   -- stop main music
   stop_all_audio()
@@ -229,14 +227,14 @@ function SoundTest:load()
   gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
 end
 
-function SoundTest:drawBackground()
-  backgroundImg:draw()
+function SoundTest:update(dt)
+  soundTestMenu:update(dt)
+  self.backgroundImg:update(dt)
 end
 
-function SoundTest:update(dt)
-  soundTestMenu:update()
+function SoundTest:draw()
+  self.backgroundImg:draw()
   soundTestMenu:draw()
-  backgroundImg:update(dt)
 end
 
 --fallback to main theme if nothing is playing or if dynamic music is playing, dynamic music cannot cleanly be "carried out" of the sound test due to the master volume reapplication in the audio options menu

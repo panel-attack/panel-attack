@@ -56,9 +56,6 @@ function DesignHelper:loadStages()
   self.stageCarousel:loadCurrentStages()
 end
 
-function DesignHelper:drawBackground()
-end
-
 function DesignHelper:update()
   if input.allKeys.isDown["MenuEsc"] then
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))

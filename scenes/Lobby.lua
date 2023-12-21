@@ -374,11 +374,8 @@ function Lobby:update(dt)
   GAME.gfx_q:push({self.draw, {self}})
 end
 
-function Lobby:drawBackground()
-  self.backgroundImg:draw()
-end
-
 function Lobby:draw()
+  self.backgroundImg:draw()
   if self.state == STATES.Lobby then
     self.lobbyScreen:draw()
   elseif self.state == STATES.Login then

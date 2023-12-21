@@ -1,4 +1,5 @@
 local class = require("class")
+local UiElement = require("ui.UIElement")
 
 --@module Scene
 -- Base class for a container representing a single screen of PanelAttack.
@@ -7,6 +8,7 @@ local class = require("class")
 -- and call sceneManager.addScene(<Scene>)
 local Scene = class(
   function (self, sceneParams)
+    self.uiRoot = UiElement({x = 0, y = 0, width = GAME.canvasX, GAME.canvasY})
   end
 )
 
@@ -20,9 +22,6 @@ function Scene:load(sceneParams) end
 function Scene:update(dt)
   error("every scene MUST implement an update function, even " .. self.name)
 end
-
--- Ran every frame before anything is drawn
-function Scene:drawBackground() end
 
 -- main draw
 function Scene:draw()
