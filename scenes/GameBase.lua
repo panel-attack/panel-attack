@@ -244,15 +244,13 @@ function GameBase:runGame(dt)
     self.match:run()
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
 
-  --if not ((self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end)) then
-    self:handlePause()
+  self:handlePause()
 
-    if GAME.gameIsPaused and input.isDown["MenuEsc"] then
-      self:abortGame()
-      Menu.playCancelSfx()
-      self.shouldAbortGame = true
-    end
-  --end
+  if GAME.gameIsPaused and input.isDown["MenuEsc"] then
+    self:abortGame()
+    Menu.playCancelSfx()
+    self.shouldAbortGame = true
+  end
 
   if self.shouldAbortGame then
     return

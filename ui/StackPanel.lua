@@ -49,6 +49,7 @@ end
 function StackPanel:addElement(uiElement)
   self:applyStackPanelSettings(uiElement)
   self:addChild(uiElement)
+  self:resize()
 end
 
 

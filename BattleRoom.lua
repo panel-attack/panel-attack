@@ -67,7 +67,8 @@ function BattleRoom.createFromServerMessage(message)
       -- need this to make sure both have the same player tables
       -- there's like one stupid reference to battleRoom in engine that breaks otherwise
       battleRoom = BattleRoom.createFromMatch(match)
-      battleRoom.mode.scene = gameMode.scene
+      battleRoom.mode.gameScene = gameMode.gameScene
+      battleRoom.mode.setupScene = gameMode.setupScene
       battleRoom.mode.richPresenceLabel = gameMode.richPresenceLabel
     else
       battleRoom = BattleRoom(gameMode)
@@ -263,7 +264,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:setSeed(seed)
 
   if (#match.players > 1 or match.stackInteraction == GameModes.StackInteractions.VERSUS) then
-    GAME.rich_presence:setPresence((match:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. (self.mode.richPresenceLabel or self.mode.scene) ..
+    GAME.rich_presence:setPresence((match:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. (self.mode.richPresenceLabel or self.mode.gameScene) ..
                                        " match", match.players[1].name .. " vs " .. (match.players[2].name), true)
   else
     GAME.rich_presence:setPresence("Playing " .. self.mode.richPresenceLabel .. " mode", nil, true)
@@ -275,8 +276,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
 
   match:start()
   self.state = BattleRoom.states.MatchInProgress
-  local scene = sceneManager:createScene(self.mode.scene, {match = self.match})
-  -- game dies when using the fade transition for unclear reasons
+  local scene = sceneManager:createScene(self.mode.gameScene, {match = self.match, nextScene = self.mode.setupScene})
   sceneManager:switchToScene(scene)
 
   -- to prevent the game from instantly restarting, unready all players

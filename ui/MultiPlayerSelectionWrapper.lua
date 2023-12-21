@@ -19,6 +19,7 @@ function MultiPlayerSelectionWrapper:addElement(uiElement, player)
   end
   self:applyStackPanelSettings(uiElement)
   self:addChild(uiElement)
+  self:resize()
 end
 
 -- the parent makes sure this is only called while focused

@@ -5,6 +5,7 @@ local class = require("class")
 local GameModes = require("GameModes")
 local Grid = require("ui.Grid")
 local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
+local Label = require("ui.Label")
 
 --@module CharacterSelect2p
 -- 
@@ -34,7 +35,11 @@ function CharacterSelect2p:loadUserInterface()
   local characterGridWidth, characterGridHeight = self.ui.grid.gridWidth, 3
   self.ui.characterGrid = self:createCharacterGrid(characterButtons, self.ui.grid, characterGridWidth, characterGridHeight)
   self.ui.leaveButton = self:createLeaveButton()
-  self.ui.rankedSelection = MultiPlayerSelectionWrapper({hfill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.rankedSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
+  local trueLabel = Label({text = "ss_ranked", vAlign = "top", hAlign = "center"})
+  local falseLabel = Label({text = "ss_casual", vAlign = "bottom", hAlign = "center"})
+  self.ui.rankedSelection:addChild(trueLabel)
+  self.ui.rankedSelection:addChild(falseLabel)
 
   local levelHeight
   local panelHeight
@@ -43,7 +48,7 @@ function CharacterSelect2p:loadUserInterface()
 
   if GAME.battleRoom.online then
     self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
-    self.ui.grid.createElementAt(3, 2, 2, 1, "rankedSelection", self.ui.rankedSelection)
+    self.ui.grid:createElementAt(3, 2, 2, 1, "rankedSelection", self.ui.rankedSelection)
     self.ui.grid:createElementAt(5, 2, 2, 1, "stageSelection", self.ui.stageSelection)
     self.ui.grid:createElementAt(7, 2, 2, 1, "levelSelection", self.ui.levelSelection)
 

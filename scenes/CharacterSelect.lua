@@ -308,11 +308,22 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
 end
 
 function CharacterSelect:createRankedSelection(player, width)
-  local trueLabel = Label({text = "ss_ranked"})
-  local falseLabel = Label({text = "ss_casual"})
-  local rankedSelector = BoolSelector({trueLabel = trueLabel, falseLabel = falseLabel, startValue = player.settings.wantsRanked, vFill = true, width = width})
+  
+  local rankedSelector = BoolSelector({startValue = player.settings.wantsRanked, vFill = true, width = width, vAlign = "center", hAlign = "center"})
   rankedSelector.onValueChange = function(boolSelector, value)
     player:setWantsRanked(value)
+  end
+
+  Focusable(rankedSelector)
+
+  rankedSelector.receiveInputs = function(self, inputs)
+    if inputs.isDown["Up"] then
+      self:setValue(true)
+    elseif inputs.isDown["Down"] then
+      self:setValue(false)
+    elseif inputs.isDown["Swap2"] then
+      self:yieldFocus()
+    end
   end
 
   player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
@@ -330,7 +341,7 @@ function CharacterSelect:update()
 end
 
 function CharacterSelect:draw()
-  self.backgroundImg:draw()
+  --self.backgroundImg:draw()
   self.uiRoot:draw()
   self:customDraw()
 end

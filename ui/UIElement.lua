@@ -50,11 +50,11 @@ function UIElement:addChild(uiElement)
 end
 
 function UIElement:resize()
-  if self.hFill then
+  if self.hFill and self.parent then
     self.width = self.parent.width
   end
 
-  if self.vFill then
+  if self.vFill and self.parent then
     self.height = self.parent.height
   end
 
