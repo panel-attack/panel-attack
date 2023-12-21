@@ -15,7 +15,9 @@ local function addNewPage(pagedUniGrid)
 end
 
 local function goToPage(pagedUniGrid, pageNumber)
-  pagedUniGrid:detach(pagedUniGrid.pages[pagedUniGrid.currentPage])
+  if pagedUniGrid.currentPage then
+    pagedUniGrid.pages[pagedUniGrid.currentPage]:detach()
+  end
   pagedUniGrid:addChild(pagedUniGrid.pages[pageNumber])
   pagedUniGrid.currentPage = pageNumber
 end

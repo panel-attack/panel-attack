@@ -1,5 +1,6 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
+local consts = require("consts")
 
 --@module Scene
 -- Base class for a container representing a single screen of PanelAttack.
@@ -7,7 +8,7 @@ local UiElement = require("ui.UIElement")
 -- Each scene must add its UiElements as children to its uiRoot property
 local Scene = class(
   function (self, sceneParams)
-    self.uiRoot = UiElement({x = 0, y = 0, width = GAME.canvasX, GAME.canvasY})
+    self.uiRoot = UiElement({x = 0, y = 0, width = consts.CANVAS_WIDTH, height = consts.CANVAS_HEIGHT})
   end
 )
 

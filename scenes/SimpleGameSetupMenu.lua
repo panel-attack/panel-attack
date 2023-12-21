@@ -99,11 +99,11 @@ function SimpleGameSetupMenu:load(sceneParams)
     {
       buttons = {
         TextButton({label = Label({text = "endless_classic"}), onClick = function()
-              self.uiRoot:detach(self.modernMenu)
+              self.modernMenu:detach()
               self.uiRoot:addChild(self.classicMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
         TextButton({label = Label({text = "endless_modern"}), onClick = function()
-          self.uiRoot:detach(self.classicMenu)
+              self.classicMenu:detach()
               self.uiRoot:addChild(self.modernMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
