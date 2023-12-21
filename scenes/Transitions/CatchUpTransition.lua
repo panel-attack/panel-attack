@@ -22,7 +22,10 @@ function CatchUpTransition:update(dt)
   local t = love.timer.getTime()
     -- spend 90% of frame time on catchup
     -- since we're not drawing anything big that should be realistic for catching ASAP
-    while love.timer.getTime() < t + 0.9*dt and ((self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end)) do
+    local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end))
+    local hasTimeLeft = function() return love.timer.getTime() < t + 0.9*dt end
+    local timeLeft = hasTimeLeft()
+    while shouldCatchUp and hasTimeLeft() do
       self.match:run()
     end
 end
@@ -31,7 +34,7 @@ function CatchUpTransition:draw()
   love.graphics.setColor(1, 1, 1, 1)
   love.graphics.rectangle("line", consts.CANVAS_WIDTH / 4 - 5, consts.CANVAS_HEIGHT / 2 - 25, consts.CANVAS_WIDTH / 2 + 5, 50)
   love.graphics.rectangle("fill", consts.CANVAS_WIDTH / 4, consts.CANVAS_HEIGHT / 2 - 20, consts.CANVAS_WIDTH / 2 * self.progress, 40)
-  gprintf("Catching up: " .. #self.match.P1.confirmedInput - self.match.P1.clock .. " frames to go", 0, 500, consts.CANVAS_WIDTH, "center")
+  gprintf("Catching up: " .. self.match.P1.clock .. " out of " .. #self.match.P1.confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
 end
 
 return CatchUpTransition

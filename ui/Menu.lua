@@ -233,6 +233,7 @@ function Menu:update()
     self:scrollDown()
   end
 
+  -- apparently this can crash here with the offset bug
   local itemController = self.menuItems[self.selectedIndex].children[1]
   if itemController then
     if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
