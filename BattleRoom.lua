@@ -54,9 +54,10 @@ function BattleRoom.createFromMatch(match)
 end
 
 function BattleRoom.createFromServerMessage(message)
+  local battleRoom
   -- two player versus being the only option so far
   -- in the future this information should be in the message!
-  local battleRoom
+  local gameMode = GameModes.getPreset("TWO_PLAYER_VS")
 
   if message.spectate_request_granted then
     message = ServerMessages.sanitizeSpectatorJoin(message)
@@ -66,17 +67,21 @@ function BattleRoom.createFromServerMessage(message)
       -- need this to make sure both have the same player tables
       -- there's like one stupid reference to battleRoom in engine that breaks otherwise
       battleRoom = BattleRoom.createFromMatch(match)
+      battleRoom.mode.scene = gameMode.scene
+      battleRoom.mode.richPresenceLabel = gameMode.richPresenceLabel
     else
-      battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
+      battleRoom = BattleRoom(gameMode)
       for i = 1, #message.players do
         local player = Player(message.players[i].name, message.players[i].playerNumber, false)
-        player:updateWithMenuState(message.players[i])
         battleRoom:addPlayer(player)
       end
     end
+    for i = 1, #battleRoom.players do
+      battleRoom.players[i]:updateWithMenuState(message.players[i])
+    end
     battleRoom.spectating = true
   else
-    battleRoom = BattleRoom(GameModes.getPreset("TWO_PLAYER_VS"))
+    battleRoom = BattleRoom(gameMode)
     message = ServerMessages.sanitizeCreateRoom(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
@@ -258,7 +263,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:setSeed(seed)
 
   if (#match.players > 1 or match.stackInteraction == GameModes.StackInteractions.VERSUS) then
-    GAME.rich_presence:setPresence((match:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. self.mode.richPresenceLabel ..
+    GAME.rich_presence:setPresence((match:hasLocalPlayer() and "Playing" or "Spectating") .. " a " .. (self.mode.richPresenceLabel or self.mode.scene) ..
                                        " match", match.players[1].name .. " vs " .. (match.players[2].name), true)
   else
     GAME.rich_presence:setPresence("Playing " .. self.mode.richPresenceLabel .. " mode", nil, true)

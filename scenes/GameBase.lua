@@ -241,7 +241,7 @@ function GameBase:runGame(dt)
   repeat
     self.frameInfo.frameCount = self.frameInfo.frameCount + 1
     framesRun = framesRun + 1
-    GAME.match:run()
+    self.match:run()
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
 
   --if not ((self.S1 and self.S1.play_to_end) or (self.S2 and self.S2.play_to_end)) then
