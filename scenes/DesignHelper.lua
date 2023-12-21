@@ -33,6 +33,7 @@ end
 
 function DesignHelper:loadGrid()
   self.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitMargin = 6})
+  self.uiRoot:addChild(self.grid)
   self.cursor = GridCursor({
     grid = self.grid,
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
@@ -40,6 +41,7 @@ function DesignHelper:loadGrid()
     startPosition = {x = 9, y = 2},
     playerNumber = 1
   })
+  self.uiRoot:addChild(self.cursor)
   self.cursor.escapeCallback = function()
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))

@@ -204,6 +204,8 @@ function InputConfigMenu:load(sceneParams)
     menuItems = menuOptions,
   })
 
+  self.uiRoot:addChild(self.menu)
+
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -233,10 +235,6 @@ end
 function InputConfigMenu:draw()
   themes[config.theme].images.bg_main:draw()
   self.menu:draw()
-end
-
-function InputConfigMenu:unload()
-  self.menu:setVisibility(false)
 end
 
 return InputConfigMenu

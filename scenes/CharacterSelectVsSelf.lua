@@ -27,6 +27,7 @@ function CharacterSelectVsSelf:loadUserInterface()
   local player = GAME.battleRoom.players[1]
 
   self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6})
+  self.uiRoot:addChild(self.ui.grid)
 
   self.ui.characterIcons[1] = self:createSelectedCharacterIcon(player)
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.characterIcons[1])

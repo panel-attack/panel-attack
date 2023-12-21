@@ -68,10 +68,6 @@ local function exitMenu()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
-function Lobby:unload()
-  self.lobbyMenu:setVisibility(false)
-end
-
 -------------
 -- startup --
 -------------
@@ -101,8 +97,6 @@ function Lobby:load(sceneParams)
 end
 
 function Lobby:initLobbyMenu()
-  self.lobbyScreen = UiElement({x = 0, y = 0, width = canvas_width, height = canvas_height})
-
   self.leaderboardLabel = Label({text = "", translate = false, hAlign = "center", vAlign = "center", x = 200, isVisible = false})
   self.leaderboardToggleLabel = Label({text = "lb_show_board"})
   self.leaderboardToggleButton = TextButton({
@@ -121,8 +115,8 @@ function Lobby:initLobbyMenu()
     hAlign = "center",
     vAlign = "center",
   })
-  self.lobbyScreen:addChild(self.lobbyMenu)
-  self.lobbyScreen:addChild(self.leaderboardLabel)
+  self.uiRoot:addChild(self.lobbyMenu)
+  self.uiRoot:addChild(self.leaderboardLabel)
 end
 
 -----------------
@@ -375,7 +369,7 @@ end
 function Lobby:draw()
   self.backgroundImg:draw()
   if self.state == STATES.Lobby then
-    self.lobbyScreen:draw()
+    self.uiRoot:draw()
   elseif self.state == STATES.Login then
     loginStateLabel:draw()
   end

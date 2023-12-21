@@ -76,12 +76,16 @@ function UIElement:detach()
     for i, child in ipairs(self.parent.children) do
       if child.id == self.id then
         table.remove(self.parent.children, i)
+        self:onDetach()
         self.parent = nil
         break
       end
     end
     return self
   end
+end
+
+function UIElement:onDetach()
 end
 
 function UIElement:getScreenPos()

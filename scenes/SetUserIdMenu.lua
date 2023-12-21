@@ -31,9 +31,9 @@ function SetUserIdMenu:load(sceneParams)
     isVisible = false
   })
 
-  self.idInputField:setVisibility(true)
   self.idInputField:setFocus(0, 0)
   self.idInputField.offset = utf8.len(self.idInputField.value)
+  self.uiRoot:addChild(self.idInputField)
 end
 
 function SetUserIdMenu:update(dt)

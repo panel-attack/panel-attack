@@ -19,7 +19,6 @@ local function setLabels(self, labels, values, selectedIndex)
   end
   if #self.labels > 0 then
     self:addChild(self.labels[self.selectedIndex])
-    self.labels[self.selectedIndex]:setVisibility(self.isVisible)
     self.value = self.values[self.selectedIndex]
   end
 end
@@ -30,11 +29,8 @@ local function setState(self, i)
     return
   end
 
-  self.labels[self.selectedIndex]:setVisibility(false)
-  self.labels[self.selectedIndex]:detach()
   self.selectedIndex = new_index
   self.value = self.values[new_index]
-  self.labels[new_index]:setVisibility(true)
   self:addChild(self.labels[new_index])
   self.rightButton.x = self.leftButton.width + BUTTON_PADDING + self.labels[self.selectedIndex].width + BUTTON_PADDING
   self.onChange(self.value)
@@ -59,12 +55,7 @@ local Stepper = class(
     setLabels(self, options.labels, options.values, self.selectedIndex)
     
     if #self.labels > 0 then
-      self.labels[self.selectedIndex]:setVisibility(self.isVisible)
       self.rightButton.x = self.labels[self.selectedIndex].width + 25 + 10
-    end
-
-    for i, label in ipairs(self.labels) do
-      label:setVisibility(false)
     end
 
     self.TYPE = "Stepper"

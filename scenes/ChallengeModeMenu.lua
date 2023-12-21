@@ -58,6 +58,7 @@ function ChallengeModeMenu:load(sceneParams)
     y = y,
     menuItems = menuItems,
   })
+  self.uiRoot:addChild(self.menu)
 end
 
 function ChallengeModeMenu:update(dt)
@@ -67,11 +68,7 @@ end
 
 function ChallengeModeMenu:draw()
   self.backgroundImg:draw()
-  self.menu:draw()
-end
-
-function ChallengeModeMenu:unload()
-  
+  self.uiRoot:draw()
 end
 
 return ChallengeModeMenu

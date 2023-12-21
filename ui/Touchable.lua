@@ -15,7 +15,12 @@ local function onVisibilityChanged(uiElement)
   end
 end
 
+local function onDetach(uiElement)
+  touchHandler.touchableElements[uiElement.id] = nil
+end
+
 local function canBeTouched(uiElement)
+  uiElement.canBeTouched = true
   uiElement.inBounds = inBounds
   if uiElement.onVisibilityChanged then
     local ogFunc = uiElement.onVisibilityChanged
@@ -26,8 +31,15 @@ local function canBeTouched(uiElement)
   else
     uiElement.onVisibilityChanged = onVisibilityChanged
   end
-  uiElement:onVisibilityChanged()
-
+  if uiElement.onDetach then
+    local ogFunc = uiElement.onDetach
+    uiElement.onDetach = function(uiElement)
+      onDetach(uiElement)
+      ogFunc(uiElement)
+    end
+  else
+    uiElement.onDetach = onDetach
+  end
   -- any touchable element is expected to implement at least one touch callback for the touch handler
   assert(uiElement.onTouch
     --or uiElement.onHold

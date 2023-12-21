@@ -99,12 +99,12 @@ function SimpleGameSetupMenu:load(sceneParams)
     {
       buttons = {
         TextButton({label = Label({text = "endless_classic"}), onClick = function()
-              self.modernMenu:setVisibility(false)
-              self.classicMenu:setVisibility(true)
+              self.uiRoot:detach(self.modernMenu)
+              self.uiRoot:addChild(self.classicMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
         TextButton({label = Label({text = "endless_modern"}), onClick = function()
-              self.classicMenu:setVisibility(false) 
-              self.modernMenu:setVisibility(true)
+          self.uiRoot:detach(self.classicMenu)
+              self.uiRoot:addChild(self.modernMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {"Classic", "Modern"},
@@ -117,7 +117,7 @@ function SimpleGameSetupMenu:load(sceneParams)
     {Label({text = "endless_type"}), self.typeButtons},
     {Label({text = "level"}), self.levelSlider},
     {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
-    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
+    {TextButton({label = Label({text = "back"}), onClick = self.exit})},
   }
   
   local classicMenuOptions = {
@@ -125,7 +125,7 @@ function SimpleGameSetupMenu:load(sceneParams)
     {Label({text = "speed", isVisible = false}), self.speedSlider},
     {Label({text = "difficulty", isVisible = false}), self.difficultyButtons},
     {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
-    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
+    {TextButton({label = Label({text = "back"}), onClick = self.exit})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -143,11 +143,9 @@ function SimpleGameSetupMenu:load(sceneParams)
     maxHeight = themes[config.theme].main_menu_max_height
   })
   if self.typeButtons.value == "Classic" then
-    self.modernMenu:setVisibility(false)
-    self.classicMenu:setVisibility(true)
+    self.uiRoot:addChild(self.classicMenu)
   else
-    self.classicMenu:setVisibility(false)
-    self.modernMenu:setVisibility(true)
+    self.uiRoot:addChild(self.modernMenu)
   end
   
   if themes[config.theme].musics["main"] then
@@ -194,15 +192,6 @@ function SimpleGameSetupMenu:draw()
   else
     self.modernMenu:draw()
   end
-end
-
-function SimpleGameSetupMenu:unload()
-  if self.typeButtons.value == "Classic" then
-    self.classicMenu:setVisibility(false)
-  else
-    self.modernMenu:setVisibility(false)
-  end
-  stop_the_music()
 end
 
 return SimpleGameSetupMenu

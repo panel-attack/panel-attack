@@ -42,4 +42,22 @@ function touchHandler:release(x, y)
   end
 end
 
+function touchHandler:unregisterTree(uiElement)
+  for i, child in ipairs(uiElement.children) do
+    if self.touchableElements[child.id] then
+      self.touchableElements[child.id] = nil
+    end
+    self:unregisterTree(child)
+  end
+end
+
+function touchHandler:registerTree(uiElement)
+  for i, child in ipairs(uiElement.children) do
+    if child.canBeTouched then
+      self.touchableElements[child.id] = child
+    end
+    self:registerTree(child)
+  end
+end
+
 return touchHandler

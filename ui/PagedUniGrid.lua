@@ -11,22 +11,13 @@ local function addNewPage(pagedUniGrid)
   })
   pagedUniGrid.pages[#pagedUniGrid.pages + 1] = grid
   pagedUniGrid.lastFilledUnit = {x = 0, y = 0}
-  pagedUniGrid:addChild(grid)
   pagedUniGrid.TYPE = "PagedUniGrid"
 end
 
 local function goToPage(pagedUniGrid, pageNumber)
+  pagedUniGrid:detach(pagedUniGrid.pages[pagedUniGrid.currentPage])
+  pagedUniGrid:addChild(pagedUniGrid.pages[pageNumber])
   pagedUniGrid.currentPage = pageNumber
-  local elementsPerPage = pagedUniGrid.gridHeight * pagedUniGrid.gridWidth
-  for i = 1, #pagedUniGrid.elements do
-    if i <= pageNumber * elementsPerPage and i > (pageNumber - 1) * elementsPerPage then
-      -- is on current page
-      pagedUniGrid.elements[i]:setVisibility(true)
-    else
-      -- is not on current page
-      pagedUniGrid.elements[i]:setVisibility(false)
-    end
-  end
 end
 
 -- A paged uniform grid is a grid that only has grid elements of constant size
@@ -62,9 +53,6 @@ function PagedUniGrid:addElement(element)
   end
 
   self.pages[#self.pages]:createElementAt(self.lastFilledUnit.x, self.lastFilledUnit.y, 1, 1, #self.elements, element)
-  if self.currentPage ~= #self.pages then
-    element:setVisibility(false)
-  end
 end
 
 function PagedUniGrid:turnPage(sign)

@@ -65,6 +65,7 @@ end
 
 function PuzzleMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  stop_the_music()
   GAME.battleRoom:shutdown()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
@@ -112,7 +113,7 @@ function PuzzleMenu:load(sceneParams)
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
     menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = puzzleSetName, translate = false}), onClick = function() self:startGame(puzzleSet) end})}
   end
-  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = exitMenu})}
+  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = self.exit})}
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 20
@@ -122,7 +123,9 @@ function PuzzleMenu:load(sceneParams)
     menuItems = menuOptions,
     maxHeight = themes[config.theme].main_menu_max_height
   })
-  
+
+  self.uiRoot:addChild(self.menu)
+
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -137,11 +140,6 @@ end
 function PuzzleMenu:draw()
   themes[config.theme].images.bg_main:draw()
   self.menu:draw()
-end
-
-function PuzzleMenu:unload()
-  self.menu:setVisibility(false)
-  stop_the_music()
 end
 
 return PuzzleMenu

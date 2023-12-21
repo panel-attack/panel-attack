@@ -25,7 +25,7 @@ sceneManager:addScene(SetNameMenu)
 
 local warningText = ""
 
-function SetNameMenu:load(sceneParams)
+function SetNameMenu:load()
   local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
   self.nameField = InputField({
     x = menuX - 25,
@@ -37,10 +37,9 @@ function SetNameMenu:load(sceneParams)
     isVisible = false
   })
   self.backgroundImg = themes[config.theme].images.bg_main
-  self.nameField:setVisibility(true)
   self.nameField:setFocus(0, 0)
   self.nameField.offset = utf8.len(self.nameField.value)
-  self.prevScene = sceneParams.prevScene
+  self.uiRoot:addChild(self.nameField)
 end
 
 function SetNameMenu:update(dt)
@@ -56,11 +55,13 @@ function SetNameMenu:update(dt)
       Menu.playValidationSfx()
       config.name = self.nameField.value
       write_conf_file()
+      self.nameField:unfocus()
       sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
   end
   if input.allKeys.isDown["escape"] then
     Menu.playCancelSfx()
+    self.nameField:unfocus()
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
@@ -70,11 +71,6 @@ function SetNameMenu:draw()
   local toPrint = loc("op_enter_name") .. " (" .. self.nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
   gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
   self.nameField:draw()
-end
-
-function SetNameMenu:unload()
-  self.nameField:setVisibility(false)
-  self.nameField:unfocus()
 end
 
 return SetNameMenu

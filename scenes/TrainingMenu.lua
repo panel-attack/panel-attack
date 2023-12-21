@@ -145,8 +145,4 @@ function TrainingMenu:draw()
   self.menu.draw()
 end
 
-function TrainingMenu:unload()
-  self.menu:setVisibility(false)
-end
-
 return TrainingMenu

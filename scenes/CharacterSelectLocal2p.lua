@@ -24,6 +24,7 @@ end
 
 function CharacterSelectLocal2p:loadUserInterface()
   self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6})
+  self.uiRoot:addChild(self.ui.grid)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
   self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)

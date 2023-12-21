@@ -204,7 +204,11 @@ function SoundTest:load()
     {Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup},
     {Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup},
     {TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper},
-    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function() sceneManager:switchToScene(sceneManager:createScene("OptionsMenu")) end})},
+    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function()
+      stop_all_audio()
+      themes[config.theme].sounds.menu_validate = menuValidateSound
+      sceneManager:switchToScene(sceneManager:createScene("OptionsMenu"))
+    end})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -214,6 +218,8 @@ function SoundTest:load()
     menuItems = soundTestMenuOptions, 
     maxHeight = themes[config.theme].main_menu_max_height
   })
+
+  self.uiRoot:addChild(soundTestMenu)
   
   self.backgroundImg = themes[config.theme].images.bg_main
 
@@ -235,13 +241,6 @@ end
 function SoundTest:draw()
   self.backgroundImg:draw()
   soundTestMenu:draw()
-end
-
---fallback to main theme if nothing is playing or if dynamic music is playing, dynamic music cannot cleanly be "carried out" of the sound test due to the master volume reapplication in the audio options menu
-function SoundTest:unload()
-  stop_all_audio()
-  themes[config.theme].sounds.menu_validate = menuValidateSound
-  soundTestMenu:setVisibility(false)
 end
 
 return SoundTest

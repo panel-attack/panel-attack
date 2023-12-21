@@ -36,7 +36,6 @@ local Menu = class(
     
     self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
     self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/"}), translate = false, onClick = function() self:scrollDown() end})
-    self:setVisibility(self.isVisible)
     
     self:updateNavButtonPos()
     self.menuItemContainer:addChild(self.upButton)
@@ -106,8 +105,7 @@ function Menu:addMenuItem(index, menuItem)
   end
   table.insert(self.menuItems, index, menuItem[1])
   self.menuItemContainer:addChild(menuItem[1])
-  menuItem[1]:setVisibility(self.isVisible)
-  
+
   self:updateMenuItemPositions(index)
 end
 
@@ -220,18 +218,6 @@ function Menu:scrollDown()
   end
   self:updateNavButtonPos()
   play_optional_sfx(themes[config.theme].sounds.menu_move)
-end
-
-function Menu:setVisibility(isVisible)
-  self.isVisible = isVisible
-  for _, uiElement in ipairs(self.children) do
-    uiElement:setVisibility(isVisible)
-  end
-  if isVisible then
-    self:resetMenuScroll()
-    self.upButton:setVisibility(self.maxItems < #self.menuItems)
-    self.downButton:setVisibility(self.maxItems < #self.menuItems)
-  end
 end
 
 function Menu:update()

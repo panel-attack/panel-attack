@@ -145,7 +145,7 @@ function MainMenu:load(sceneParams)
     menuItems = menuItems,
     maxHeight = themes[config.theme].main_menu_max_height
   })
-  self.menu:setVisibility(true)
+  self.uiRoot:addChild(self.menu)
 
   self:addDebugMenuItems()
 
@@ -193,10 +193,6 @@ function MainMenu:draw()
       menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
     end
   end
-end
-
-function MainMenu:unload()
-  self.menu:setVisibility(false)
 end
 
 return MainMenu

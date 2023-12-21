@@ -221,6 +221,7 @@ function CharacterSelect:createCursor(grid, player)
       cursor:updatePosition(9, 6)
     end
   end
+  self.uiRoot:addChild(cursor)
 
   return cursor
 end
@@ -316,10 +317,7 @@ end
 
 function CharacterSelect:draw()
   self.backgroundImg:draw()
-  self.ui.grid:draw()
-  for i = 1, #self.ui.cursors do
-    self.ui.cursors[i]:draw()
-  end
+  self.uiRoot:draw()
   self:customDraw()
 end
 
