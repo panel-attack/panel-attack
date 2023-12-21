@@ -131,6 +131,9 @@ function UIElement:drawChildren()
   end
 end
 
+-- setVisibility is to used on children that are temporarily "offscreen", e.g. as part of a scrolling UiElement
+-- if you want to stop drawing an element, e.g. due to changing a subscreen, 
+--  the more opportune method is to simply remove it from the ui tree via detach()
 function UIElement:setVisibility(isVisible)
   self.isVisible = isVisible
   for _, uiElement in ipairs(self.children) do
@@ -140,7 +143,6 @@ function UIElement:setVisibility(isVisible)
 end
 
 function UIElement:onVisibilityChanged()
-
 end
 
 function UIElement:setEnabled(isEnabled)
