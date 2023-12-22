@@ -6,7 +6,7 @@ local GameModes = {}
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
 local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
-local WinConditions = { GAME_OVER = 1, SCORE = 2, TIME = 3, NO_MATCHABLE_PANELS = 4, NO_MATCHABLE_GARBAGE = 5 }
+local WinConditions = { LAST_ALIVE = 1, SCORE = 2, TIME = 3, NO_MATCHABLE_PANELS = 4, NO_MATCHABLE_GARBAGE = 5 }
 local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, SCORE_REACHED = 3, NO_MOVES_LEFT = 4, CHAIN_DROPPED = 5 }
 
 local OnePlayerVsSelf = {
@@ -123,7 +123,7 @@ local OnePlayerChallenge = {
   -- already known match properties
   playerCount = 1,
   stackInteraction = StackInteractions.HEALTH_ENGINE,
-  winConditions = { WinConditions.GAME_OVER },
+  winConditions = { WinConditions.LAST_ALIVE },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
 
@@ -142,7 +142,7 @@ local TwoPlayerVersus = {
   -- already known match properties
   playerCount = 2,
   stackInteraction = StackInteractions.VERSUS,
-  winConditions = { WinConditions.GAME_OVER},
+  winConditions = { WinConditions.LAST_ALIVE},
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
 
@@ -155,7 +155,7 @@ local TwoPlayerVersus = {
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
 GameModes.StackInteractions = StackInteractions
-GameModes.WinCondition = WinConditions
+GameModes.WinConditions = WinConditions
 GameModes.GameOverConditions = GameOverConditions
 
 local privateGameModes = {}

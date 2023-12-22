@@ -94,12 +94,8 @@ function Replay.loadFromPath(path)
   return true, replay
 end
 
-local function addReplayStatisticsToReplay(match, replay)
+function Replay.addAnalyticsDataToReplay(match, replay)
   replay.duration = match:gameEndedClockTime()
-  local winner = match:getWinner()
-  if winner then
-    replay.winner = winner.publicId or winner.playerNumber
-  end
 
   for i = 1, #match.players do
     local stack = match.players[i].stack
@@ -114,8 +110,10 @@ local function addReplayStatisticsToReplay(match, replay)
   return replay
 end
 
-function Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)
-  Replay.finalizeReplay(match, replay)
+function Replay.finalizeAndWriteReplay(extraPath, extraFilename, replay)
+  if replay.incomplete then
+    extraFilename = extraFilename .. "-INCOMPLETE"
+  end
   local path, filename = Replay.finalReplayFilename(extraPath, extraFilename)
   local replayJSON = json.encode(replay)
   Replay.writeReplayFile(path, filename, replayJSON)
@@ -138,50 +136,11 @@ function Replay.finalReplayFilename(extraPath, extraFilename)
 end
 
 function Replay.finalizeReplay(match, replay)
-  replay = addReplayStatisticsToReplay(match, replay)
+  replay = Replay.addAnalyticsDataToReplay(match, replay)
   replay.stage = current_stage
   for i = 1, #match.players do
     replay.players[i].settings.inputs = compress_input_string(table.concat(match.players[i].stack.confirmedInput))
   end
-end
-
-function Replay.finalizeAndWriteVsReplay(outcome_claim, incompleteGame, match, replay)
-
-  incompleteGame = incompleteGame or false
-
-  local extraPath, extraFilename = "", ""
-
-  if match:warningOccurred() then
-    extraFilename = extraFilename .. "-WARNING-OCCURRED"
-  end
-
-  if match.P2 then
-    local rep_a_name, rep_b_name = match.players[1].name, match.players[2].name
-    --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
-    if rep_b_name < rep_a_name then
-      extraPath = rep_b_name .. "-vs-" .. rep_a_name
-    else
-      extraPath = rep_a_name .. "-vs-" .. rep_b_name
-    end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. match.P2.level
-    if match_type and match_type ~= "" then
-      extraFilename = extraFilename .. "-" .. match_type
-    end
-    if incompleteGame then
-      extraFilename = extraFilename .. "-INCOMPLETE"
-    else
-      if outcome_claim == 1 or outcome_claim == 2 then
-        extraFilename = extraFilename .. "-P" .. outcome_claim .. "wins"
-      elseif outcome_claim == 0 then
-        extraFilename = extraFilename .. "-draw"
-      end
-    end
-  else -- vs Self
-    extraPath = "Vs Self"
-    extraFilename = extraFilename .. "vsSelf-" .. "L" .. match.P1.level
-  end
-
-  Replay.finalizeAndWriteReplay(extraPath, extraFilename, match, replay)
 end
 
 -- writes a replay file of the given path and filename

@@ -24,7 +24,7 @@ function TimeAttackGame:processGameResults(gameResult)
     GAME.scores:saveTimeAttack1PScoreForLevel(self.S1.score, self.S1.difficulty)
     extraPath = "Time Attack"
     extraFilename = "Spd" .. self.S1.speed .. "-Dif" .. self.S1.difficulty .. "-timeattack"
-    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match, replay)
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
   end
 end
 

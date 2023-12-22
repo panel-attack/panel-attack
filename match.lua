@@ -3,6 +3,7 @@ local tableUtils = require("tableUtils")
 local GameModes = require("GameModes")
 local sceneManager = require("scenes.sceneManager")
 local Player = require("Player")
+local Replay = require("replay")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -54,6 +55,8 @@ Match =
   end
 )
 
+require("match_graphics")
+
 -- Should be called prior to clearing the match.
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
@@ -89,31 +92,88 @@ function Match:gameEndedClockTime()
   return result
 end
 
-function Match:getOutcome()
-  
-  local gameResult = self.P1:gameResult()
-
-  if gameResult == nil then
-    return nil
+function Match:getWinners()
+  if self.winners then
+    return self.winners
   end
 
-  local results = {}
-  if gameResult == 0 then -- draw
-    results["end_text"] = loc("ss_draw")
-    results["outcome_claim"] = 0
-  elseif gameResult == -1 then -- P2 wins
-    results["winSFX"] = self.P2:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", self.players[2].name)
-    results["outcome_claim"] = self.P2.player_number
-  elseif gameResult == 1 then -- P1 wins
-    results["winSFX"] = self.P1:pick_win_sfx()
-    results["end_text"] =  loc("ss_p_wins", self.players[1].name)
-    results["outcome_claim"] = self.P1.player_number
+  -- game over is handled on the stack level and results in stack.game_over = true
+  -- win conditions are in ORDER, meaning if player A met win condition 1 and player B met win condition 2, player A wins
+  -- while if both players meet win condition 1 and player B meets win condition 2, player B wins
+
+  local winners = {}
+  if #self.players == 1 then
+    -- with only a single player, they always win I guess
+    winners[1] = self.players[1]
   else
-    error("No win result")
+    -- the winner is determined through process of elimination
+    -- for each win condition in sequence, all players not meeting that win condition are purged from potentialWinners
+    -- this happens until there is only 1 winner left or until there are no win conditions left to check which may result in a tie
+    local potentialWinners = shallowcpy(self.players)
+    for i = 1, #self.winConditions do
+      local metCondition = {}
+      local winCon = self.winConditions[i]
+      for j = 1, #potentialWinners do
+        local potentialWinner = potentialWinners[j]
+
+        -- now we check for this player whether they meet the current winCondition
+        if winCon == GameModes.WinConditions.LAST_ALIVE then
+          if not potentialWinner.stack.game_over then
+            table.insert(metCondition, potentialWinner)
+          end
+        elseif winCon == GameModes.WinConditions.SCORE then
+          local hasHighestScore = true
+          for k = 1, #potentialWinners do
+            if k ~= j then
+              -- only if someone else has a higher score than me do I lose
+              -- makes sure to cover score ties
+              if potentialWinner.stack.score < potentialWinners[k].stack.score then
+                hasHighestScore = false
+                break
+              end
+            end
+          end
+          if hasHighestScore then
+            table.insert(metCondition, potentialWinner)
+          end
+        elseif winCon == GameModes.WinConditions.TIME then
+          -- this currently assumes less time is better which would be correct for endless max score or challenge
+          -- probably need an alternative for a survival vs against an attack engine where more time wins
+          local hasLowestTime = true
+          for k = 1, #potentialWinners do
+            if k ~= j then
+              if #potentialWinner.stack.confirmedInput < #potentialWinners[k].stack.confirmedInput then
+                hasLowestTime = false
+                break
+              end
+            end
+          end
+          if hasLowestTime then
+            table.insert(metCondition, potentialWinner)
+          end
+        elseif winCon == GameModes.WinConditions.NO_MATCHABLE_PANELS then
+        elseif winCon == GameModes.WinConditions.NO_MATCHABLE_GARBAGE then
+          -- both of these are positive game-ending conditions on the stack level
+          -- should rethink these when looking at puzzle vs (if ever)
+        end
+      end
+      if #metCondition == 1 then
+        potentialWinners = metCondition
+        -- only one winner, we're done
+        break
+      elseif #metCondition > 1 then
+        -- there is a tie in a condition, move on to the next one with only the ones still eligible
+        potentialWinners = metCondition
+      elseif #metCondition == 0 then
+        -- none met the condition, keep going with the current set of potential winners
+      end
+    end
+    winners = potentialWinners
   end
 
-  return results
+  self.winners = winners
+
+  return winners
 end
 
 function Match:debugRollbackAndCaptureState(clockGoal)
@@ -183,85 +243,67 @@ function Match:debugCheckDivergence()
 end
 
 function Match:run()
-  local P1 = self.P1
-  local P2 = self.P2
-
   if GAME.gameIsPaused then
     return
   end
 
   local startTime = love.timer.getTime()
 
-  -- We need to save clock 0 as a base case
-  if P1.clock == 0 then  
-    P1:saveForRollback()
-  end
-  if P2 and P2.clock == 0 then  
-    P2:saveForRollback()
-  end
+  if not self:hasEnded() then
+    local checkRun = {}
 
-  if self.P1CPU then
-    self.P1CPU:run(P1)
-  end
+    for i = 1, #self.players do
+      local stack = self.players[i].stack
+      checkRun[i] = true
 
-  if self.P2CPU then
-    self.P2CPU:run(P2)
-  end
+      -- if self.players[i].cpu then
+      --   self.players[i].cpu:run(stack)
+      -- end
 
-  if P1 and P1.is_local and not self.P1CPU and P1:game_ended() == false then
-    P1:send_controls()
-  end
-  if P2 and P2.is_local and not self.P2CPU and P2:game_ended() == false then
-    P2:send_controls()
-  end
-
-  local ranP1 = true
-  local ranP2 = true
-  local runsSoFar = 0
-  while ranP1 or ranP2 do
-    
-    ranP1 = false
-    if P1 and P1:shouldRun(runsSoFar) then
-      P1:run()
-      ranP1 = true
-    end
-
-    ranP2 = false
-    if P2 and P2:shouldRun(runsSoFar) then
-      P2:run()
-      ranP2 = true
-    end
-
-    if ranP1 and P1:gameResult() == nil then
-      if self.simulatedOpponent then
-        self.simulatedOpponent:run()
+      if stack and stack.is_local and not stack.game_over --[[and not self.players[i].cpu]] then
+        stack:send_controls()
       end
     end
 
-    -- Since the stacks can affect each other, don't save rollback until after both have run
-    if ranP1 then
-      P1:updateFramesBehind()
-      P1:saveForRollback()
+    local runsSoFar = 0
+    while tableUtils.trueForAny(checkRun, function(b) return b end) do
+      for i = 1, #self.players do
+        local stack = self.players[i].stack
+        if stack and stack:shouldRun(runsSoFar) then
+          stack:run()
+          checkRun[i] = true
+        else
+          checkRun[i] = false
+        end
+      end
+
+      -- Since the stacks can affect each other, don't save rollback until after all have run
+      for i = 1, #self.players do
+        if checkRun[i] then
+          local stack = self.players[i].stack
+          stack:updateFramesBehind()
+          stack:saveForRollback()
+        end
+      end
+
+      --   if self.simulatedOpponent then
+      --     self.simulatedOpponent:run()
+      --   end
+
+      self:debugCheckDivergence()
+
+      runsSoFar = runsSoFar + 1
     end
 
-    if ranP2 then
-      P2:updateFramesBehind()
-      P2:saveForRollback()
-    end
+    -- for i = 1, #self.players do
+    --   local stack = self.players[i].stack
+    --   if stack and stack.is_local not stack.game_over then
+    --     assert(#stack.input_buffer == 0, "Local games should always simulate all inputs")
+    --   end
+    -- end
 
-    self:debugCheckDivergence()
-
-    runsSoFar = runsSoFar + 1
-  end
-
-  if P1 then
-    if P1.is_local and not P1:game_ended() then
-      assert(#P1.input_buffer == 0, "Local games should always simulate all inputs")
-    end
-  end
-  if P2 then
-    if P2.is_local and not P2:game_ended() then
-      assert(#P2.input_buffer == 0, "Local games should always simulate all inputs")
+    if self:hasEnded() then
+      self:handleMatchEnd()
     end
   end
 
@@ -269,329 +311,6 @@ function Match:run()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
-end
-
-
-function Match:matchelementOriginX()
-  local x = 375 + (464) / 2
-  if themes[config.theme]:offsetsAreFixed() then
-    x = 0
-  end
-  return x
-end
-
-function Match:matchelementOriginY()
-  local y = 118
-  if themes[config.theme]:offsetsAreFixed() then
-    y = 0
-  end
-  return y
-end
-
-function Match:drawMatchLabel(drawable, themePositionOffset, scale)
-  local x = self:matchelementOriginX() + themePositionOffset[1]
-  local y = self:matchelementOriginY() + themePositionOffset[2]
-
-  local hAlign = "left"
-  local vAlign = "left"
-  if themes[config.theme]:offsetsAreFixed() then
-    hAlign = "center"
-  end
-  menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
-end
-
-function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
-  local x = self:matchelementOriginX() + themePositionOffset[1]
-  local y = self:matchelementOriginY() + themePositionOffset[2]
-  GraphicsUtil.draw_time(timeString, quads, x, y, scale)
-end
-
-function Match:drawTimer()
-  local stack = self.P1
-  if stack == nil or stack.game_stopwatch == nil or tonumber(stack.game_stopwatch) == nil then
-    -- Make sure we have a valid time to base off of
-    return
-  end
-
-  -- Draw the timer for time attack
-  if self.puzzle then
-    -- puzzles don't have a timer...yet?
-  else
-    local frames = stack.game_stopwatch
-    if self.timeLimit then
-      frames = (self.timeLimit * 60) - stack.game_stopwatch
-      if frames < 0 then
-        frames = 0
-      end
-    end
-    --frames = frames + 60 * 60 * 80 -- debug large timer rendering
-    local timeString = frames_to_time_string(frames, not self.timeLimit)
-    
-    self:drawMatchLabel(stack.theme.images.IMG_time, stack.theme.timeLabel_Pos, stack.theme.timeLabel_Scale)
-    self:drawMatchTime(timeString, self.time_quads, stack.theme.time_Pos, stack.theme.time_Scale)
-  end
-end
-
-function Match:drawMatchType()
-  if match_type ~= "" then
-    local matchImage = nil
-    if match_type == "Ranked" then
-      matchImage = themes[config.theme].images.IMG_ranked
-    end
-    if match_type == "Casual" then
-      matchImage = themes[config.theme].images.IMG_casual
-    end
-    if matchImage then
-      self:drawMatchLabel(matchImage, themes[config.theme].matchtypeLabel_Pos, themes[config.theme].matchtypeLabel_Scale)
-    end
-  end
-end
-
-function Match:drawCommunityMessage()
-  -- Draw the community message
-  if not config.debug_mode then
-    gprintf(join_community_msg or "", 0, 668, canvas_width, "center")
-  end
-end
-
-function Match:render()
-  local P1 = self.P1
-  local P2 = self.P2
-  
-  if GAME.droppedFrames > 0 and config.show_fps then
-    gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
-  end
-
-  if config.show_fps and P1 and P2 then
-
-    local P1Behind = P1:averageFramesBehind()
-    local P2Behind = P2:averageFramesBehind()
-    local behind = math.abs(P1.clock - P2.clock)
-
-    if P1Behind > 0 then
-      gprint("P1 Average Latency: " .. P1Behind, 1, 23)
-    end
-    if P2Behind > 0 then
-      gprint("P2 Average Latency: " .. P2Behind, 1, 34)
-    end
-
-    if not self:hasLocalPlayer() and behind > MAX_LAG * 0.75 then
-      local iconSize = 20
-      local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-      local x = (canvas_width / 2) - (iconSize / 2)
-      local y = (canvas_height / 2) - (iconSize / 2)
-      draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    end
-  end
-
-  self:drawCommunityMessage()
-
-  if config.debug_mode then
-
-    local drawX = 240
-    local drawY = 10
-    local padding = 14
-
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
-    
-    gprintf("Clock " .. P1.clock, drawX, drawY)
-
-
-    drawY = drawY + padding
-    gprintf("Confirmed " .. #P1.confirmedInput , drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("input_buffer " .. #P1.input_buffer , drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("rollbackCount " .. P1.rollbackCount , drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Confirmed " .. #P1.confirmedInput , drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
-    
-    -- drawY = drawY + padding
-    -- gprintf("P1 attacks: " .. #P1.telegraph.attacks, drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Garbage Q: " .. P1.garbage_q:len(), drawX, drawY)
-
-    if P1.game_over_clock > 0 then
-      drawY = drawY + padding
-      gprintf("game_over_clock " .. P1.game_over_clock, drawX, drawY)
-    end
-
-    drawY = drawY + padding
-    gprintf("has chain panels " .. tostring(P1:hasChainingPanels()), drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("has active panels " .. tostring(P1:hasActivePanels()), drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("riselock " .. tostring(P1.rise_lock), drawX, drawY)
-
-    -- if P1.telegraph then
-    --   drawY = drawY + padding
-    --   gprintf("incoming chains " .. P1.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
-
-    --   for combo_garbage_width=3,6 do
-    --     drawY = drawY + padding
-    --     gprintf("incoming combos " .. P1.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-    --   end
-    -- end
-
-
-
-    drawX = 500
-    drawY = 10 - padding
-    -- drawY = drawY + padding
-    -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- local totalTime = love.timer.getTime() - self.createTime
-    -- gprintf("Total Time " .. totalTime * 1000, drawX, drawY)
-
-    drawY = drawY + padding
-    local totalTime = love.timer.getTime() - self.createTime
-    local timePercent = round(self.timeSpentRunning / totalTime, 5)
-    gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
-
-    drawY = drawY + padding
-    local maxTime = round(self.maxTimeSpentRunning, 5)
-    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("Seed " .. self.seed, drawX, drawY)
-
-    local gameEndedClockTime = self:gameEndedClockTime()
-
-    if gameEndedClockTime > 0 then
-      drawY = drawY + padding
-      gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
-    end
-
-    -- drawY = drawY + padding
-    -- local memoryCount = collectgarbage("count")
-    -- memoryCount = round(memoryCount / 1000, 1)
-    -- gprintf("Memory " .. memoryCount .. " MB", drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("quadPool " .. #GraphicsUtil.quadPool, drawX, drawY)
-
-    if P2 then 
-      drawX = 800
-      drawY = 10 - padding
-
-      drawY = drawY + padding
-      gprintf("Clock " .. P2.clock, drawX, drawY)
-
-      drawY = drawY + padding
-      local framesAhead = P1.clock - P2.clock
-      gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
-
-      drawY = drawY + padding
-      gprintf("Confirmed " .. #P2.confirmedInput , drawX, drawY)
-
-      drawY = drawY + padding
-      gprintf("input_buffer " .. #P2.input_buffer , drawX, drawY)
-
-      drawY = drawY + padding
-      gprintf("rollbackCount " .. P2.rollbackCount , drawX, drawY)
-
-      if P2.game_over_clock > 0 then
-        drawY = drawY + padding
-        gprintf("game_over_clock " .. P2.game_over_clock, drawX, drawY)
-      end
-
-      -- if P2.telegraph then
-      --   drawY = drawY + padding
-      --   gprintf("incoming chains " .. P2.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
-  
-      --   for combo_garbage_width=3,6 do
-      --     drawY = drawY + padding
-      --     gprintf("incoming combos " .. P2.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-      --   end
-      -- end
-  
-    end
-  end
-  
-  if GAME.gameIsPaused then
-    draw_pause()
-  end
-
-  if GAME.gameIsPaused == false or GAME.renderDuringPause then
-    -- Don't allow rendering if either player is loading for spectating
-    local renderingAllowed = true
-    if P1 and P1.play_to_end then
-      renderingAllowed = false
-    end
-    if P2 and P2.play_to_end then
-      renderingAllowed = false
-    end
-
-    if renderingAllowed then
-      if P1 then
-        P1:render()
-      end
-      if P2 then
-        P2:render()
-      end
-      
-      if self.simulatedOpponent then
-        self.simulatedOpponent:render()
-      end
-
-      -- should invert the relationship between trainingModeSettings and challengeMode in the future
-      -- challenge mode should probably live on battleRoom instead as match only really runs a single ChallengeStage at a time
-      -- local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
-      -- if challengeMode then
-      --   challengeMode:render()
-      -- end
-
-      if self.stackInteraction ~= GameModes.StackInteractions.NONE then
-        if P1 and P1.telegraph then
-          P1.telegraph:render()
-        end
-        if P2 and P2.telegraph then
-          P2.telegraph:render()
-        end
-      end
-
-      -- Draw VS HUD
-      if self.stackInteraction == GameModes.StackInteractions.VERSUS then
-        if not config.debug_mode then --this is printed in the same space as the debug details
-          -- TODO: get spectator string from battleRoom
-          --gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
-        end
-
-        self:drawMatchType()
-      end
-
-      self:drawTimer()
-    end
-  end
-
-  if (self:warningOccurred()) then
-    local iconSize = 20
-    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-    local x = 5
-    local y = 5
-    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
-  elseif P2 and P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
-    -- let the player know that rollback is active
-    local iconSize = 20
-    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-    local x = 5
-    local y = 30
-    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-  end
 end
 
 function Match:getInfo()
@@ -689,6 +408,8 @@ function Match:start()
       self.players[i].stack:set_puzzle_state(self.puzzle)
     else
       self.players[i].stack:starting_state()
+      -- always need clock 0 as a base for rollback
+      self.players[i].stack:saveForRollback()
     end
   end
 
@@ -730,27 +451,6 @@ function Match:setSeed(seed)
     self.seed = self:generateSeed()
   else
     -- Use the default random seed set up on match creation
-  end
-end
-
-function Match:getWinner()
-  if #self.players < 2 then
-    -- no winner in 1p matches except puzzles
-    return nil
-  else
-    for i = 1, #self.players do
-      if not self.players[i].stack.game_over then
-        return self.players[i]
-      end
-    end
-  end
-end
-
--- a helper function for tests
--- prevents running graphics related processes, e.g. cards, popFX
-function Match:removeCanvases()
-  for i = 1, #self.players do
-    self.players[i].stack.canvas = nil
   end
 end
 
@@ -811,4 +511,57 @@ function Match:abort()
   if GAME.battleRoom and GAME.battleRoom.match == self then
     
   end
+end
+
+function Match:hasEnded()
+    local aliveCount = 0
+  local deadCount = 0
+  for i = 1, #self.players do
+    if self.players[i].stack.game_over then
+      deadCount = deadCount + 1
+    else
+      aliveCount = aliveCount + 1
+    end
+  end
+
+  if tableUtils.contains(self.winConditions, GameModes.WinConditions.LAST_ALIVE) then
+    if aliveCount == 1 then
+      return true
+    end
+  end
+
+  if deadCount == #self.players then
+    -- everyone died, match is over!
+    return true
+  end
+end
+
+function Match:handleMatchEnd(aborted)
+  -- finalize the replay for saving
+  Replay.finalizeReplay(self, self.replay)
+
+  if not aborted then
+    -- determine result
+    local winners = self:getWinners()
+    -- play win sfx (or not)
+    for i = 1, #winners do
+      winners[i].stack:pick_win_sfx():play()
+    end
+    if #winners == 1 then
+      -- increment win count on winning player if there is only one
+      winners[1]:incrementWinCount()
+      -- ideally this would be public player id
+      self.replay.winnerIndex = tableUtils.indexOf(self.players, function(p) return p.name == winners[1].name end)
+    end
+  else
+    self.replay.incomplete = true
+  end
+
+
+  -- execute callbacks
+  self:onMatchEnded()
+end
+
+-- callbacks to implement!
+function Match:onMatchEnded()
 end

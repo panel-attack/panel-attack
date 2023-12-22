@@ -21,7 +21,7 @@ sceneManager:addScene(VsSelfGame)
 function VsSelfGame:processGameResults(gameResult)
   local P1 = self.match.players[1].stack
   GAME.scores:saveVsSelfScoreForLevel(P1.analytic.data.sent_garbage_lines, P1.level)
-  Replay.finalizeAndWriteVsReplay(nil, false, self.match, replay)
+  Replay.finalizeAndWriteReplay("Vs Self", "vsSelf-L" .. P1.level, self.match.replay)
 end
 
 return VsSelfGame

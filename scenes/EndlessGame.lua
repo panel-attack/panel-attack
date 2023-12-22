@@ -18,13 +18,13 @@ local EndlessGame = class(
 EndlessGame.name = "EndlessGame"
 sceneManager:addScene(EndlessGame)
 
-function EndlessGame:processGameResults(gameResult) 
+function EndlessGame:processGameResults(gameResult)
   local extraPath, extraFilename
   if self.S1.level == nil then
     GAME.scores:saveEndlessScoreForLevel(self.S1.score, self.S1.difficulty)
     extraPath = "Endless"
     extraFilename = "Spd" .. self.S1.speed .. "-Dif" .. self.S1.difficulty .. "-endless"
-    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match, replay)
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
   end
 end
 
