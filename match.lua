@@ -1,9 +1,11 @@
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
   function(self, mode, battleRoom)
+    self.players = {}
     self.P1 = nil
     self.P2 = nil
     self.engineVersion = VERSION
@@ -15,10 +17,9 @@ Match =
     self.maxTimeSpentRunning = 0
     self.createTime = love.timer.getTime()
     self.supportsPause = true
-    self.current_music_is_casual = true
+    self.currentMusicIsDanger = false
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
-    self.current_music_is_casual = true
     self.startTimestamp = os.time(os.date("*t"))
     if (P2 or mode == "vs") and GAME.battleRoom then
       GAME.rich_presence:setPresence(
@@ -49,6 +50,19 @@ function Match:deinit()
   for _, quad in ipairs(self.time_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
+  if self.simulatedOpponent then
+    self.simulatedOpponent:deinit()
+  end
+end
+
+function Match:addPlayer(stack)
+  if stack.which == 1 then
+    self.P1 = stack
+  elseif stack.which == 2 then
+    self.P2 = stack
+  end
+  assert(#self.players == stack.which-1, "Player was added to match before previous player")
+  self.players[#self.players+1] = stack
 end
 
 function Match:gameEndedClockTime()
@@ -123,7 +137,7 @@ function Match:warningOccurred()
   local P1 = self.P1
   local P2 = self.P2
   
-  if (P1 and table.length(P1.warningsTriggered) > 0) or (P2 and table.length(P2.warningsTriggered) > 0) then
+  if (P1 and tableUtils.length(P1.warningsTriggered) > 0) or (P2 and tableUtils.length(P2.warningsTriggered) > 0) then
     return true
   end
   return false
@@ -357,7 +371,7 @@ function Match.render(self)
     if P2Behind > 0 then
       gprint("P2 Average Latency: " .. P2Behind, 1, 34)
     end
-    
+
     if GAME.battleRoom.spectating and behind > MAX_LAG * 0.75 then
       local iconSize = 20
       local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
@@ -366,7 +380,7 @@ function Match.render(self)
       draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     end
   end
-  
+
   self:drawCommunityMessage()
 
   if config.debug_mode then
@@ -525,7 +539,7 @@ function Match.render(self)
       if P2 then
         P2:render()
       end
-      
+
       if self.simulatedOpponent then
         self.simulatedOpponent:render()
       end
@@ -564,6 +578,13 @@ function Match.render(self)
     local y = 5
     draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize, y)
+  elseif P2 and P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
+    -- let the player know that rollback is active
+    local iconSize = 20
+    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+    local x = 5
+    local y = 30
+    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   end
 end
 

@@ -573,24 +573,6 @@ deadState.update = function(panel, panels)
   -- dead is dead
 end
 
--- returns false if this panel can be matched
--- true if it cannot be matched
-function Panel.canMatch(self)
-  -- panels without colors can't match
-  if self.color == 0 or self.color == 9 then
-    return false
-  else
-    if self.state == "normal"
-      or self.state == "landing"
-      or (self.matchAnyway and self.state == "hovering")  then
-      return true
-    else
-      -- swapping, matched, popping, popped, hover, falling, dimmed, dead
-      return false
-    end
-  end
-end
-
 -- returns false if this panel can be swapped
 -- true if it can not be swapped
 function Panel.canSwap(self)

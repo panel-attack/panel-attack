@@ -1,8 +1,10 @@
+local consts = require("consts")
 local logger = require("logger")
 require("ChallengeMode")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
+local tableUtils = require("tableUtils")
 local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
@@ -18,7 +20,6 @@ GAME.connected_network_port = nil -- the port of the server you are connected to
 my_user_id = nil -- your user id
 leaderboard_report = nil
 replay_of_match_so_far = nil -- current replay of spectatable replay
-spectator_list = nil
 spectators_string = ""
 leftover_time = 0
 local wait_game_update = nil
@@ -42,20 +43,13 @@ function fmainloop()
   panels_init()
   GAME:drawLoadingString(loc("ld_characters"))
   wait()
-  characters_init()
+  CharacterLoader.initCharacters()
   GAME:drawLoadingString(loc("ld_analytics"))
   wait()
   analytics.init()
   apply_config_volume()
-  -- create folders in appdata for those who don't have them already
-  love.filesystem.createDirectory("characters")
-  love.filesystem.createDirectory("panels")
-  love.filesystem.createDirectory("themes")
-  love.filesystem.createDirectory("stages")
-  love.filesystem.createDirectory("training")
-  if #FileUtil.getFilteredDirectoryItems("training") == 0 then
-    recursive_copy("default_data/training", "training")
-  end
+
+  GAME:setupFileSystem()
 
   --check for game updates
   if GAME_UPDATER_CHECK_UPDATE_INGAME then
@@ -67,24 +61,7 @@ function fmainloop()
     -- Run all unit tests now that we have everything loaded
     GAME:drawLoadingString("Running Unit Tests")
     wait()
-    -- Small tests (unit tests)
-    require("PuzzleTests")
-    require("ServerQueueTests")
-    require("StackTests")
-    require("tests.StackGraphicsTests")
-    require("tests.JsonEncodingTests")
-    require("tests.NetworkProtocolTests")
-    require("tests.ThemeTests")
-    require("tests.TouchDataEncodingTests")
-    require("tests.utf8AdditionsTests")
-    require("table_util_tests")
-    require("utilTests")
-    --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
-    -- Medium level tests (integration tests)
-    -- require("tests.ReplayTests")
-    -- require("tests.StackReplayTests")
-    -- require("tests.StackRollbackReplayTests")
-    -- require("tests.StackTouchReplayTests")
+    require("tests.Tests")
   end
   if PERFORMANCE_TESTS_ENABLED then
     GAME:drawLoadingString("Running Performance Tests")
@@ -173,7 +150,7 @@ function main_title()
         end
         percent =  bound(0, percent + increment, 1)
         
-        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (table.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
+        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (tableUtils.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
           stop_the_music()
           ret = {main_select_mode}
         end
@@ -194,8 +171,8 @@ do
         find_and_add_music(themes[config.theme].musics, "main")
       end
     end
-    character_loader_clear()
-    stage_loader_clear()
+    CharacterLoader.clear()
+    StageLoader.clear()
     resetNetwork()
     undo_stonermode()
     GAME.backgroundImage = themes[config.theme].images.bg_main
@@ -227,7 +204,7 @@ do
       {loc("mm_1_vs"), main_local_vs_yourself_setup},
       {loc("mm_1_training"), training_setup},
       {loc("mm_1_challenge_mode"), challenge_mode_setup},
-      {loc("mm_2_vs_online", ""), main_net_vs_setup, {"18.188.43.50"}},
+      {loc("mm_2_vs_online", ""), main_net_vs_setup, {consts.SERVER_LOCATION}},
       {loc("mm_2_vs_local"), main_local_vs_setup},
       {loc("mm_replay_browser"), replay_browser.main},
       {loc("mm_configure"), main_config_input},
@@ -236,7 +213,7 @@ do
     }
 
     if config.debugShowServers then
-      table.insert(items, 8, {"Beta Server", main_net_vs_setup, {"betaserver.panelattack.com", 59569}})
+      table.insert(items, 8, {"Beta Server", main_net_vs_setup, {"betaserver." .. consts.SERVER_LOCATION, 59569}})
       table.insert(items, 9, {"Localhost Server", main_net_vs_setup, {"localhost"}})
     end
 
@@ -283,9 +260,9 @@ do
       local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
       local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
       if runningFromAutoUpdater and autoUpdaterOutOfDate then
-        local downloadLink = "panelattack.com/panel.zip"
+        local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
         if GAME_UPDATER.name == "panel-beta" then
-          downloadLink = "panelattack.com/panel-beta.zip"
+          downloadLink = consts.SERVER_LOCATION .. "/panel-beta.zip"
         end
         gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
         infoYPosition = infoYPosition - fontHeight
@@ -309,8 +286,8 @@ local function use_current_stage()
   if current_stage == nil then
     pick_random_stage()
   else
-    stage_loader_load(current_stage)
-    stage_loader_wait()
+    StageLoader.load(current_stage)
+    StageLoader.wait()
     GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
     GAME.background_overlay = themes[config.theme].images.bg_overlay
     GAME.foreground_overlay = themes[config.theme].images.fg_overlay
@@ -318,9 +295,9 @@ local function use_current_stage()
 end
 
 function pick_random_stage()
-  current_stage = table.getRandomElement(stages_ids_for_current_theme)
+  current_stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
   if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
+    current_stage = tableUtils.getRandomElement(stages[current_stage].sub_stages)
   end
   use_current_stage()
 end
@@ -431,7 +408,7 @@ local function main_endless_time_setup(mode, speed, difficulty, level)
 
   P1 = Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, inputMethod=config.inputMethod}
 
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P1:wait_for_random_character()
   P1.do_countdown = config.ready_countdown_1P or false
   P2 = nil
@@ -921,8 +898,8 @@ function main_net_vs_lobby()
   GAME.battleRoom = nil
   undo_stonermode()
   reset_filters()
-  character_loader_clear()
-  stage_loader_clear()
+  CharacterLoader.clear()
+  StageLoader.clear()
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
@@ -1007,7 +984,9 @@ function main_net_vs_lobby()
           love.window.requestAttention()
           play_optional_sfx(themes[config.theme].sounds.notification)
         end
-        lobby_menu:remove_self()
+        if lobby_menu then
+          lobby_menu:remove_self()
+        end
         return select_screen.main, {select_screen, "2p_net_vs", msg}
       end
       if msg.players then
@@ -1054,11 +1033,9 @@ function main_net_vs_lobby()
     local function toggleLeaderboard()
       updated = true
       if not showing_leaderboard then
-        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
         showing_leaderboard = true
         json_send({leaderboard_request = true})
       else
-        --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
         showing_leaderboard = false
         lobby_menu.x = lobby_menu_x[showing_leaderboard]
       end
@@ -1066,7 +1043,6 @@ function main_net_vs_lobby()
 
     -- If we got an update to the lobby, refresh the menu
     if updated then
-      spectator_list = {}
       spectators_string = ""
       local oldLobbyMenu = nil
       if lobby_menu then
@@ -1075,19 +1051,16 @@ function main_net_vs_lobby()
         lobby_menu = nil
       end
 
-      local function commonSelectLobby()
-        updated = true
-        spectator_list = {}
-        spectators_string = ""
-        lobby_menu:remove_self()
-      end
-
       local function goEscape()
         lobby_menu:set_active_idx(#lobby_menu.buttons)
       end
 
       local function exitLobby()
-        commonSelectLobby()
+        updated = true
+        spectators_string = ""
+        if lobby_menu then
+          lobby_menu:remove_self()
+        end
         ret = {main_select_mode}
       end
 
@@ -1591,17 +1564,27 @@ function main_replay()
 
   Replay.loadFromFile(replay, true)
 
+  local playbackSpeeds = {-1,0,1,2,3,4,8,16}
+  local selectedSpeedIndex = 3 --index of the selected speed
+
   local function update()
+    local textY = unpack(themes[config.theme].gameover_text_Pos)
+    local playbackText = playbackSpeeds[selectedSpeedIndex] .. "x"
+    gprintf(playbackText, 0, textY, canvas_width, "center", nil, 1, large_font)
   end
 
   local frameAdvance = false
-  local playbackSpeed = 1
-  local maximumSpeed = 20
   local function variableStep()
-    -- If we just finished a frame advance, pause again
+    -- If we just finished a frame advance, pause again and restore the value of max_runs
     if frameAdvance then
       frameAdvance = false
       GAME.gameIsPaused = true
+      if P1 then
+        P1.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
+      end
+      if P2 then
+        P2.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
+      end
     end
 
     -- Advance one frame
@@ -1609,37 +1592,36 @@ function main_replay()
       frameAdvance = true
       GAME.gameIsPaused = false
       if P1 then
-        P1.max_runs_per_frame = 1
+        P1.max_runs_per_frame = math.sign(playbackSpeeds[selectedSpeedIndex])
       end
       if P2 then
-        P2.max_runs_per_frame = 1
+        P2.max_runs_per_frame = math.sign(playbackSpeeds[selectedSpeedIndex])
       end
     elseif menu_right() then
-      playbackSpeed = bound(-1, playbackSpeed + 1, maximumSpeed)
+      selectedSpeedIndex = bound(1, selectedSpeedIndex + 1, #playbackSpeeds)
       if P1 then
-        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P1.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
       if P2 then
-        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P2.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
     elseif menu_left() then
-      playbackSpeed = bound(-1, playbackSpeed - 1, maximumSpeed)
+      selectedSpeedIndex = bound(1, selectedSpeedIndex - 1, #playbackSpeeds)
       if P1 then
-        P1.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P1.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
       if P2 then
-        P2.max_runs_per_frame = math.max(playbackSpeed, 0)
+        P2.max_runs_per_frame = playbackSpeeds[selectedSpeedIndex]
       end
     end
 
-    if playbackSpeed == -1 and not GAME.gameIsPaused then
-      if P1 and P1.clock > 0 and P1.prev_states[P1.clock-1] then
-        P1:rollbackToFrame(P1.clock-1)
-        P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-      end
-      if P2 and P2.clock > 0 and P2.prev_states[P2.clock-1] then
-        P2:rollbackToFrame(P2.clock-1)
-        P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+    -- If playback is negative than we need to rollback to "rewind"
+    if playbackSpeeds[selectedSpeedIndex] == -1 and not GAME.gameIsPaused then
+      for _, stack in ipairs(GAME.match.players) do
+        if stack.clock > 0 and stack.prev_states[stack.clock-1] then
+          stack:rollbackToFrame(stack.clock-1)
+          stack.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+        end
       end
     end
   end
@@ -1709,7 +1691,7 @@ function makeSelectPuzzleSetFunction(puzzleSet, awesome_idx)
 
     GAME.match = Match("puzzle")
     P1 = Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=character, inputMethod=config.inputMethod}
-    GAME.match.P1 = P1
+    GAME.match:addPlayer(P1)
     P1:wait_for_random_character()
     if not character then
       character = P1.character
@@ -2074,7 +2056,7 @@ function game_over_transition(next_func, gameResultText, winnerSFX, timemax, kee
         local left_select_menu = false -- Whether a message has been sent that indicates a match has started or the room has closed
         if this_frame_messages then
           for _, msg in ipairs(this_frame_messages) do
-            -- if a new match has started or the room is being closed, flag the left select menu variavle
+            -- if a new match has started or the room is being closed, flag the left select menu variable
             if msg.match_start or replay_of_match_so_far or msg.leave_room then
               left_select_menu = true
             end

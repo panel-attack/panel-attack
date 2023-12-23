@@ -1,8 +1,8 @@
 require("class")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 local NetworkProtocol = require("NetworkProtocol")
 
-require("table_util")
 local time = os.time
 local utf8 = require("utf8Additions")
 require("tests.utf8AdditionsTests")
@@ -132,9 +132,9 @@ function Connection:I(message)
   local spectatorMessage = iMessage
   if self.player_number == 1 then
     spectatorMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix, message)
-    self.room.replay.vs.in_buf = self.room.replay.vs.in_buf .. message
+    self.room.inputs[self.player_number][#self.room.inputs[self.player_number] + 1] = message
   elseif self.player_number == 2 then
-    self.room.replay.vs.I = self.room.replay.vs.I .. message
+    self.room.inputs[self.player_number][#self.room.inputs[self.player_number] + 1] = message
   end
   self.room:send_to_spectators(spectatorMessage)
 end
@@ -180,7 +180,7 @@ function Connection:J(message)
 end
 
 function Connection:handleErrorReport(errorReport)
-  logger.warn("Recieved an error report.")
+  logger.warn("Received an error report.")
   if not write_error_report(errorReport) then
     logger.error("The error report was either too large or had an I/O failure when attempting to write the file.")
   end
@@ -284,7 +284,7 @@ function Connection:login(user_id)
 
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     local serverUnseenBans = self.server.database:getPlayerUnseenBans(self.player.publicPlayerID)
-    if table.length(serverNotices) > 0 or table.length(serverUnseenBans) > 0 then
+    if tableUtils.length(serverNotices) > 0 or tableUtils.length(serverUnseenBans) > 0 then
       local noticeString = ""
       for messageID, serverNotice in pairs(serverNotices) do
         noticeString = noticeString .. serverNotice .. "\n\n"
@@ -355,6 +355,7 @@ function Connection:handleMenuStateMessage(message)
   end
 
   if self.ready and self.opponent.ready then
+    self.room.inputs = {{},{}}
     self.room.replay = {}
     self.room.replay.vs = {
       P = "",

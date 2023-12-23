@@ -5,7 +5,7 @@ local consts = require("consts")
 local logger = require("logger")
 local utf8 = require("utf8")
 require("engine.panel")
-require("table_util")
+local tableUtils = require("tableUtils")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -286,9 +286,42 @@ Stack =
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
+    s.multiBarFrameCount = s:calculateMultibarFrameCount()
 
     s:createCursors()
   end)
+
+-- calculates at how many frames the stack's multibar tops out
+function Stack:calculateMultibarFrameCount()
+  -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
+  local maxStop = 0
+
+  -- for a realistic max stop, let's only compare obtainable stop while topped out - while not topped out, stop doesn't matter after all
+  -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
+  maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
+
+  -- while topped out, stop from combos is capped at 10 combo
+  maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
+
+  -- if we wanted to include stop in non-topped out states:
+  -- combo stop is linear with combosize but +27 is a reasonable cutoff (garbage cap for combos)
+  -- maxStop = math.max(maxStop, self:calculateStopTime(27, false, false))
+  -- ...but this would produce insanely high values on low levels
+
+  -- bonus stop from extra chain links caps out at x13
+  -- maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
+  -- this too produces insanely high values on low levels
+
+  -- prestop does not need to be represented fully as there is visual representation via popping panels
+  -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
+  -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
+  --local preStopFrameCount = 30 + (10 - self.level) * 5
+
+  local minFrameCount = maxStop + (level_to_hang_time[self.level] or 1) --+ preStopFrameCount
+
+  --return minFrameCount + preStopFrameCount
+  return math.max(240, minFrameCount)
+end
 
 function Stack:createCursors()
   local cursorImage = self.theme.images.IMG_cursor[1]
@@ -420,11 +453,11 @@ function Stack.divergenceString(stackToTest)
   if stackToTest.telegraph then
     result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
     result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
-    result = result .. "telegraph.attacks " .. table.length(stackToTest.telegraph.attacks) .. "\n"
+    result = result .. "telegraph.attacks " .. tableUtils.length(stackToTest.telegraph.attacks) .. "\n"
   end
   
   result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
-  result = result .. "later_garbage " .. table.length(stackToTest.later_garbage) .. "\n"
+  result = result .. "later_garbage " .. tableUtils.length(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
@@ -829,6 +862,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
   for row = 1, self.height do
     for col = 1, self.width do
       panels[row][col].stateChanged = true
+      panels[row][col].shake_time = nil
     end
   end
 end
@@ -1121,8 +1155,8 @@ function Stack.receiveConfirmedInput(self, input)
     self.input_buffer[#self.input_buffer+1] = input
   else
     local inputs = string.toCharTable(input)
-    table.appendToList(self.confirmedInput, inputs)
-    table.appendToList(self.input_buffer, inputs)
+    tableUtils.appendToList(self.confirmedInput, inputs)
+    tableUtils.appendToList(self.input_buffer, inputs)
   end
   --logger.debug("Player " .. self.which .. " got new input. Total length: " .. #self.confirmedInput)
 end
@@ -1144,7 +1178,9 @@ function Stack.enqueue_card(self, chain, x, y, n)
 end
 
 function Stack:wait_for_random_character()
-  self.character = wait_for_random_character(self.character)
+  self.character = CharacterLoader.resolveCharacterSelection(self.character)
+  CharacterLoader.load(self.character)
+  CharacterLoader.wait()
 end
 
 -- Enqueue a pop animation
@@ -1615,7 +1651,7 @@ function Stack.simulate(self)
           local fadeLength = 60
           if not self.fade_music_clock then
             self.fade_music_clock = fadeLength -- start fully faded in
-            self.match.current_music_is_casual = true
+            self.match.currentMusicIsDanger = false
           end
 
           local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
@@ -1627,8 +1663,8 @@ function Stack.simulate(self)
           end
 
           -- Do we need to switch music?
-          if self.match.current_music_is_casual ~= wantsDangerMusic then
-            self.match.current_music_is_casual = not self.match.current_music_is_casual
+          if self.match.currentMusicIsDanger ~= wantsDangerMusic then
+            self.match.currentMusicIsDanger = not self.match.currentMusicIsDanger
 
             if self.fade_music_clock >= fadeLength then
               self.fade_music_clock = 0 -- Do a full fade
@@ -1652,20 +1688,20 @@ function Stack.simulate(self)
           end
         else -- classic music
           if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-            if (self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
+            if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
               stop_the_music()
               find_and_add_music(musics_to_use, "danger_music")
-              self.match.current_music_is_casual = false
+              self.match.currentMusicIsDanger = true
             elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
               stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              self.match.current_music_is_casual = true
+              self.match.currentMusicIsDanger = false
             end
           else --we should be playing normal_music or normal_music_start
-            if (not self.match.current_music_is_casual or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
+            if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
               stop_the_music()
               find_and_add_music(musics_to_use, "normal_music")
-              self.match.current_music_is_casual = true
+              self.match.currentMusicIsDanger = false
             end
           end
         end
@@ -2451,7 +2487,7 @@ function Stack.onGarbageLand(self, panel)
     -- only parts of the garbage that are on the visible board can be considered for shake
     and panel.row <= self.height then
     --runtime optimization to not repeatedly update shaketime for the same piece of garbage
-    if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
+    if not tableUtils.contains(self.garbageLandedThisFrame, panel.garbageId) then
       if self:shouldChangeSoundEffects() then
         if panel.height > 3 then
           self.sfx_garbage_thud = 3
@@ -2543,7 +2579,7 @@ function Stack:getInfo()
   info.panels = self.panels_dir
   info.rollbackCount = self.rollbackCount
   if self.prev_states then
-    info.rollbackCopyCount = table.length(self.prev_states)
+    info.rollbackCopyCount = tableUtils.length(self.prev_states)
   else
     info.rollbackCopyCount = 0
   end

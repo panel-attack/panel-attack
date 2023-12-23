@@ -1,5 +1,6 @@
 local logger = require("logger")
 local Replay = require("replay")
+local tableUtils = require("tableUtils")
 local graphics = require("select_screen.select_screen_graphics")
 require("SimulatedOpponent")
 
@@ -40,22 +41,22 @@ function refreshBasedOnOwnMods(player)
   -- Resolve the current character if it is random
   local function resolveRandomCharacter()
       if characters[player.character] == nil and player.selectedCharacter == random_character_special_value then
-        player.character = table.getRandomElement(characters_ids_for_current_theme)
+        player.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
       end
 
       if characters[player.character]:is_bundle() then
-        player.character = table.getRandomElement(characters[player.character].sub_characters)
+        player.character = tableUtils.getRandomElement(characters[player.character].sub_characters)
       end
   end
 
   -- Resolve the current stage if it is random
   local function resolveRandomStage()
     if player.selectedStage == random_stage_special_value and stages[player.stage] == nil then
-      player.stage = table.getRandomElement(stages_ids_for_current_theme)
+      player.stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
     end
 
     if stages[player.stage]:is_bundle() then
-      player.stage = table.getRandomElement(stages[player.stage].sub_stages)
+      player.stage = tableUtils.getRandomElement(stages[player.stage].sub_stages)
     end
   end
 
@@ -89,7 +90,7 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomStage()
       player.stage_display_name = stages[player.stage].stage_display_name
-      stage_loader_load(player.stage)
+      StageLoader.load(player.stage)
     end
 
     -- character
@@ -118,21 +119,21 @@ function refreshBasedOnOwnMods(player)
 
       resolveRandomCharacter()
       player.character_display_name = characters[player.character].character_display_name
-      character_loader_load(player.character)
+      CharacterLoader.load(player.character)
     end
   end
 end
 
--- Updates the ready state for all players
+-- Each player sends "wants_ready" when they have selected the ready button.
+-- Each player is "loaded" when the character and stage are fully loaded
+-- The player isn't actually ready to start though until both players have selected "wants_ready" and are loaded.
+-- After that happens each player sends "ready"
+-- When the server gets the "ready" it tells both players to start the game.
+-- Its important to not send "ready" before both players want ready and are loaded so the server doesn't tell you 
+-- to start before everything is for sure not going to change and everything is loaded.
 function select_screen.refreshReadyStates(self)
   for playerNumber = 1, #self.players do
-    if self:isNetPlay() then
-      self.players[playerNumber].ready =
-          self.players[playerNumber].wants_ready and
-          table.trueForAll(self.players, function(pc) return pc.loaded end)
-    else
-      self.players[playerNumber].ready = self.players[playerNumber].wants_ready and self.players[playerNumber].loaded
-    end
+    self.players[playerNumber].ready = tableUtils.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
   end
 end
 
@@ -182,14 +183,18 @@ function select_screen.on_select(self, player, super)
   if selectable[player.cursor.positionId] then
     if player.cursor.selected and player.cursor.positionId == "__Stage" then
       -- load stage even if hidden!
-      stage_loader_load(player.stage)
+      StageLoader.load(player.stage)
     end
-    player.cursor.selected = not player.cursor.selected
+    -- Don't let the player stop ready if both players have already told the server to start the game
+    if player.cursor.positionId ~= "__Ready" or player.ready == false then 
+      player.cursor.selected = not player.cursor.selected
+    end
   elseif player.cursor.positionId == "__Leave" then
     return true
   elseif player.cursor.positionId == "__Random" then
     player.selectedCharacter = random_character_special_value
-    refreshBasedOnOwnMods(player)
+    player.character = CharacterLoader.resolveCharacterSelection(player.selectedCharacter)
+    CharacterLoader.load(player.character)
     player.cursor.positionId = "__Ready"
     player.cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
     player.cursor.can_super_select = false
@@ -199,17 +204,21 @@ function select_screen.on_select(self, player, super)
     player.selectedCharacter = player.cursor.positionId
     local character = characters[player.selectedCharacter]
     if character then
-      characterSelectionSoundHasBeenPlayed = characters[player.selectedCharacter]:play_selection_sfx()
+      player.character = CharacterLoader.resolveCharacterSelection(character.id)
+      CharacterLoader.load(player.character)
+      characterSelectionSoundHasBeenPlayed = character:play_selection_sfx()
       if super then
         if character.stage then
           player.selectedStage = character.stage
+          player.stage = StageLoader.resolveStageSelection(player.selectedStage)
+          StageLoader.load(player.stage)
         end
-        if character.panels then
+        if character.panels and panels[character.panels] then
           player.panels_dir = character.panels
         end
       end
-      refreshBasedOnOwnMods(player)
     end
+    
     --When we select a character, move cursor to "__Ready"
     player.cursor.positionId = "__Ready"
     player.cursor.position = shallowcpy(self.name_to_xy_per_page[self.current_page]["__Ready"])
@@ -233,7 +242,7 @@ function select_screen.isMultiplayer(self)
   -- vs cpu is not really multiplayer but it has 2 stacks so we need to set both "players" up
 end
 
--- Makes sure all the client data is up to date and ready
+-- Marks when the player's stage and character are loaded
 function select_screen.refreshLoadingState(self, playerNumber)
   self.players[playerNumber].loaded = characters[self.players[playerNumber].character] and characters[self.players[playerNumber].character].fully_loaded and stages[self.players[playerNumber].stage] and stages[self.players[playerNumber].stage].fully_loaded
 end
@@ -262,10 +271,11 @@ function select_screen.change_stage(player, increment)
   -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and selectedStage=true
   local stages = shallowcpy(stages_ids_for_current_theme)
   stages[#stages + 1] = random_stage_special_value
-  local currentId = table.indexOf(stages, player.selectedStage)
+  local currentId = tableUtils.indexOf(stages, player.selectedStage)
   currentId = wrap(1, currentId + increment, #stages)
   player.selectedStage = stages[currentId]
-  refreshBasedOnOwnMods(player)
+  player.stage = StageLoader.resolveStageSelection(player.selectedStage)
+  StageLoader.load(player.stage)
   logger.trace("stage and selectedStage: " .. player.stage .. " / " .. (player.selectedStage or "nil"))
 end
 
@@ -494,8 +504,8 @@ end
 function select_screen.initializeFromPlayerConfig(self, playerNumber)
   self.players[playerNumber].stage = config.stage
   self.players[playerNumber].selectedStage = config.stage
-  self.players[playerNumber].character = config.character
   self.players[playerNumber].selectedCharacter = config.character
+  self.players[playerNumber].character = config.character
   self.players[playerNumber].level = config.level
   self.players[playerNumber].inputMethod = config.inputMethod or "controller"
   self.players[playerNumber].panels_dir = config.panels
@@ -545,6 +555,7 @@ function select_screen.setUpOpponentPlayer(self)
       self.players[self.op_player_number].selectedCharacter = global_op_state.character
       self.players[self.op_player_number].character = global_op_state.character
       self.players[self.op_player_number].stage = global_op_state.stage
+      self.players[self.op_player_number].level = global_op_state.level
       self.players[self.op_player_number].panels_dir = global_op_state.panels_dir
     end
   end
@@ -796,11 +807,11 @@ function select_screen.startNetPlayMatch(self, msg)
   logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
   refreshBasedOnOwnMods(msg.opponent_settings)
   refreshBasedOnOwnMods(msg.player_settings)
-  refreshBasedOnOwnMods(msg) -- for stage only, other data are meaningless to us
+  current_stage = StageLoader.resolveStageSelection(msg.stage)
+  StageLoader.load(current_stage)
   -- mainly for spectator mode, those characters have already been loaded otherwise
-  current_stage = msg.stage
-  character_loader_wait()
-  stage_loader_wait()
+  CharacterLoader.wait()
+  StageLoader.wait()
   GAME.match = Match("vs", GAME.battleRoom)
 
   GAME.match.seed = self:getSeed(msg)
@@ -813,10 +824,10 @@ function select_screen.startNetPlayMatch(self, msg)
     is_local = false
   end
   P1 = Stack{which = 1, match = GAME.match, is_local = is_local, panels_dir = msg.player_settings.panels_dir, level = msg.player_settings.level, inputMethod = msg.player_settings.inputMethod or "controller", character = msg.player_settings.character, player_number = msg.player_settings.player_number}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P1.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   P2 = Stack{which = 2, match = GAME.match, is_local = false, panels_dir = msg.opponent_settings.panels_dir, level = msg.opponent_settings.level, inputMethod = msg.opponent_settings.inputMethod or "controller", character = msg.opponent_settings.character, player_number = msg.opponent_settings.player_number}
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   P2.cur_wait_time = default_input_repeat_delay -- this enforces default cur_wait_time for online games.  It is yet to be decided if we want to allow this to be custom online.
   
   P1:setOpponent(P2)
@@ -856,17 +867,17 @@ end
 function select_screen.start2pLocalMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, inputMethod = config.inputMethod, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, inputMethod = "controller", character = self.players[self.op_player_number].character, player_number = 2}
   --note: local P2 not currently allowed to use "touch" input method
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   P1:setOpponent(P2)
   P1:setGarbageTarget(P2)
   P2:setOpponent(P1)
   P2:setGarbageTarget(P1)
   current_stage = self.players[math.random(1, #self.players)].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   P1:starting_state()
@@ -894,8 +905,8 @@ function select_screen.start1pLocalMatch(self)
     if challengeMode then
       health = challengeStage:createHealth()
       character = challengeStage:characterForStageNumber(P1.character)
-      character_loader_load(character)
-      character_loader_wait()
+      CharacterLoader.load(character)
+      CharacterLoader.wait()
     end
 
     local xPosition = 796
@@ -912,7 +923,7 @@ function select_screen.start1pLocalMatch(self)
     GAME.match.simulatedOpponent = simulatedOpponent
   end
   
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   if not GAME.match.simulatedOpponent then
     P1:setGarbageTarget(P1)
   else
@@ -920,8 +931,8 @@ function select_screen.start1pLocalMatch(self)
   end
   P2 = nil
   current_stage = self.players[self.my_player_number].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
 
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
 
@@ -932,17 +943,17 @@ end
 function select_screen.start1pCpuMatch(self)
   GAME.match = Match("vs", GAME.battleRoom)
   P1 = Stack{which = 1, match = GAME.match, is_local = true, panels_dir = self.players[self.my_player_number].panels_dir, level = self.players[self.my_player_number].level, character = self.players[self.my_player_number].character, player_number = 1}
-  GAME.match.P1 = P1
+  GAME.match:addPlayer(P1)
   P2 = Stack{which = 2, match = GAME.match, is_local = true, panels_dir = self.players[self.op_player_number].panels_dir, level = self.players[self.op_player_number].level, character = self.players[self.op_player_number].character, player_number = 2}
   P2.max_runs_per_frame = 1
-  GAME.match.P2 = P2
+  GAME.match:addPlayer(P2)
   GAME.match.P2CPU = ComputerPlayer("DummyCpu", "DummyConfig", P2)
 
   P1.garbageTarget = P2
   P2.garbageTarget = P1
   current_stage = self.players[self.my_player_number].stage
-  stage_loader_load(current_stage)
-  stage_loader_wait()
+  StageLoader.load(current_stage)
+  StageLoader.wait()
   P2:moveForPlayerNumber(2)
 
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
@@ -1027,8 +1038,8 @@ function select_screen.main(self, character_select_mode, roomInitializationMessa
       function()
         self.menu_clock = self.menu_clock + 1
 
-        character_loader_update()
-        stage_loader_update()
+        CharacterLoader.update()
+        StageLoader.update()
         self:refreshLoadingState(self.my_player_number)
         if self:isMultiplayer() then
           self:refreshLoadingState(self.op_player_number)

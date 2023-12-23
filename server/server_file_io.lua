@@ -1,6 +1,6 @@
 local lfs = require("lfs")
 local logger = require("logger")
-local csvfile = require("simplecsv")
+local csvfile = require("libraries.simplecsv")
 require("table_util")
 
 function makeDirectory(path) 

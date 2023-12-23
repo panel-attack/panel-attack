@@ -2,6 +2,7 @@
 -- simulated for one minute without restorefromrollbackcopy and debugmode off
 
 local utf8 = require("utf8")
+local tableUtils = require("tableUtils")
 
 local function testPerformanceString(seconds)
   local confirmedInputsP1 = ""
@@ -40,7 +41,7 @@ local function testPerformanceTable(seconds)
     local len2 = #confirmedInputsP1
     -- receiveConfirmedInput, called in send_controls
     local inputs = string.toCharTable("A")
-    table.appendToList(confirmedInputsP1, inputs)
+    tableUtils.appendToList(confirmedInputsP1, inputs)
     local loopTime = love.timer.getTime() - time
     totalTime = totalTime + loopTime
     if i == loopCount then
@@ -68,7 +69,7 @@ local function testPerformanceTableStringLen(seconds)
       confirmedInputsP1[#confirmedInputsP1+1] = input
     else
       local inputs = string.toCharTable(input)
-      table.appendToList(confirmedInputsP1, inputs)
+      tableUtils.appendToList(confirmedInputsP1, inputs)
     end
     local loopTime = love.timer.getTime() - time
     totalTime = totalTime + loopTime

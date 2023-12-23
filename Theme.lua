@@ -88,6 +88,7 @@ function Theme:configurableKeys()
   result["multibar_Pos"] = "table"
   result["multibar_Scale"] = "number"
   result["multibar_is_absolute"] = "boolean"
+  result["multibar_LeftoverTime_Pos"] = "table"
   result["font_size"] = "number"
   result["bg_title_speed_x"] = "number"
   result["bg_title_speed_y"] = "number"
@@ -283,13 +284,11 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = self:load_theme_img("random_stage")
   self.images.IMG_random_character = self:load_theme_img("random_character")
 
-  if self.multibar_is_absolute then
-    self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P_absolute")
-    self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P_absolute")
-  else
-    self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
-    self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
-  end
+  self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
+  self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
+  self.images.IMG_healthbar_frame_1P_absolute = self:load_theme_img("healthbar_frame_1P_absolute")
+  self.images.IMG_healthbar_frame_2P_absolute = self:load_theme_img("healthbar_frame_2P_absolute")
+  
   self.images.IMG_healthbar = self:load_theme_img("healthbar")
 
   self.images.IMG_multibar_frame = self:load_theme_img("multibar_frame")
@@ -313,22 +312,29 @@ function Theme.graphics_init(self)
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
-  for i = 4, 66 do
+  for i = 4, 72 do
     self.images.IMG_cards[false][i] = self:load_theme_img("combo/combo" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
   -- mystery chain
   self.images.IMG_cards[true][0] = self:load_theme_img("chain/chain00")
+  -- mystery combo
+  self.images.IMG_cards[false][0] = self:load_theme_img("combo/combo00")
+
+  -- Chain card loading
+  -- load as many chain cards as there are available until 99
+  -- we assume if the theme provided any chains, they want to control all of them so don't load backups
+  local hasChainCards = love.filesystem.getInfo(Theme.themeDirectoryPath .. self.name .. "/chain")
+  local wantsBackupChainCards = hasChainCards == nil
   for i = 2, 13 do
     -- with backup from default theme
     self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "")
   end
-  -- load as many more chain cards as there are available until 99, we will substitue in the mystery card if a card is missing
+  -- load as many more chain cards as there are available until 99, we will substitute in the mystery card if a card is missing
   self.chainCardLimit = 99
   for i = 14, 99 do
     -- without backup from default theme
-    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", false)
+    self.images.IMG_cards[true][i] = self:load_theme_img("chain/chain" .. tostring(math.floor(i / 10)) .. tostring(i % 10) .. "", wantsBackupChainCards)
     if self.images.IMG_cards[true][i] == nil then
-      self.images.IMG_cards[true][i] = self.images.IMG_cards[true][0]
       self.chainCardLimit = i - 1
       break
     end
@@ -551,7 +557,7 @@ function Theme:final_init()
   end
 
   self.images.bg_main = UpdatingImage(self:load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, canvas_width, canvas_height)
-  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_speed_x, self.bg_select_speed_y, canvas_width, canvas_height)
+  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_screen_speed_x, self.bg_select_screen_speed_y, canvas_width, canvas_height)
   self.images.bg_readme = UpdatingImage(self:load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
 
   local menuYPadding = 10
@@ -572,6 +578,22 @@ end
 
 function Theme:offsetsAreFixed()
   return self.version >= self.VERSIONS.fixedOffsets
+end
+
+function Theme:chainImage(chainAmount)
+  local cardImage = self.images.IMG_cards[true][chainAmount]
+  if cardImage == nil then
+   cardImage = self.images.IMG_cards[true][0]
+  end
+  return cardImage
+end
+
+function Theme:comboImage(comboAmount)
+  local cardImage = self.images.IMG_cards[false][comboAmount]
+  if cardImage == nil then
+   cardImage = self.images.IMG_cards[false][0]
+  end
+  return cardImage
 end
 
 -- loads a theme into the game
