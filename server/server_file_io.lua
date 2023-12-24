@@ -1,7 +1,7 @@
 local lfs = require("lfs")
 local logger = require("logger")
 local csvfile = require("libraries.simplecsv")
-require("table_util")
+local tableUtils = require("tableUtils")
 
 function makeDirectory(path) 
   local status, error = pcall(
@@ -22,10 +22,24 @@ function makeDirectoryRecursive(path)
   end
 end
 
+function file_exists(name)
+  local f=io.open(name,"r")
+  if f ~= nil then
+    io.close(f)
+    return true
+  else
+    return false
+  end
+end
+
 function write_players_file(playerbase)
+  if playerbase.filename == nil then
+    return
+  end
+
   local status, error = pcall(
     function()
-      local f = assert(io.open("players.txt", "w"))
+      local f = assert(io.open(playerbase.filename, "w"))
       io.output(f)
       io.write(json.encode(playerbase.players))
       io.close(f)
@@ -37,14 +51,20 @@ function write_players_file(playerbase)
 end
 
 function read_players_file(playerbase)
+  if playerbase.filename == nil then
+    return
+  end
+  
   pcall(
     function()
-      local f = assert(io.open("players.txt", "r"))
-      io.input(f)
-      local data = io.read("*all")
-      playerbase.players = json.decode(data)
-      logger.info(table.length(playerbase.players) .. " players loaded")
-      io.close(f)
+      local f = io.open(playerbase.filename, "r")
+      if f then
+        io.input(f)
+        local data = io.read("*all")
+        playerbase.players = json.decode(data)
+        logger.info(table.length(playerbase.players) .. " players loaded")
+        io.close(f)
+      end
     end
   )
 end
@@ -65,10 +85,17 @@ function logGameResult(player1ID, player2ID, player1Won, rankedValue)
 end
 
 function readGameResults()
+
+  local filename = "GameResults.csv"
+
+  if file_exists(filename) == false then
+    return nil
+  end
+
   local gameResults
   pcall(
     function()
-      gameResults = csvfile.read("GameResults.csv")
+      gameResults = csvfile.read()
     end
   )
   return gameResults

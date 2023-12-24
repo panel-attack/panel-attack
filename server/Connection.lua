@@ -11,25 +11,36 @@ local Player = require("server.Player")
 -- Represents a connection to a specific player. Responsible for sending and receiving messages
 Connection =
   class(
-  function(s, socket, index, server)
-    s.index = index -- the connection number
-    s.socket = socket -- the socket object
-    s.leftovers = "" -- remaining data from the socket that hasn't been processed yet
+  function(self, socket, index, server)
+    self.index = index -- the connection number
+    self.socket = socket -- the socket object
+    self.leftovers = "" -- remaining data from the socket that hasn't been processed yet
 
     -- connections current state, whether they are logged in, playing, spectating etc.
-    -- "needs_name" -> "not_logged_in" -> "lobby" -> "character select" -> "playing" or "spectating" -> "lobby"
-    s.state = "needs_name"
-    
-    s.room = nil -- the room object the connection currently is in
-    s.lastCommunicationTime = time()
-    s.player_number = 0 -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
-    s.user_id = nil -- private user ID of the connection
-    s.wants_ranked_match = false
-    s.server = server
-    s.inputMethod = "controller"
-    s.player = nil -- the player object for this connection
-    s.opponent = nil -- the opponents connection object
-    s.name = nil
+    -- "not_logged_in" -> "lobby" -> "character select" -> "playing" or "spectating" -> "lobby"
+    self.state = "not_logged_in"
+    self.room = nil -- the room object the connection currently is in
+    self.lastCommunicationTime = time()
+    self.player_number = 0 -- 0 if not a player in a room, 1 if player "a" in a room, 2 if player "b" in a room
+    self.user_id = nil -- private user ID of the connection
+    self.wants_ranked_match = false
+    self.server = server
+    self.player = nil -- the player object for this connection
+    self.opponent = nil -- the opponents connection object
+    self.name = nil
+
+    -- Player Settings
+    self.character = nil
+    self.character_is_random = nil
+    self.character_display_name = nil
+    self.cursor = nil
+    self.inputMethod = "controller"
+    self.level = nil
+    self.panels_dir = nil
+    self.ready = nil
+    self.stage = nil
+    self.stage_is_random = nil
+    self.wants_ranked_match = nil
   end
 )
 
@@ -149,11 +160,11 @@ function Connection:J(message)
   message = json.decode(message)
   if message.error_report then -- Error report is checked for first so that a full login is not required
     self:handleErrorReport(message.error_report)
-  elseif self.state == "needs_name" then
-    self:handleUsername(message)
   elseif self.state == "not_logged_in" then 
     if message.login_request then
-      self:login(message.user_id)
+      self:handleUsername(message)
+      local IP_logging_in, port = self.socket:getpeername()
+      self:login(message.name, message.user_id, IP_logging_in, port)
     end
   elseif message.logout then
     self:close()
@@ -187,93 +198,42 @@ function Connection:handleErrorReport(errorReport)
   self:close() -- After sending the error report, the client will throw the error, so end the connection.
 end
 
--- Moves the player to the lobby if the given username is allowed
-function Connection:handleUsername(message)
-  local denyReason = nil
-  if not message.name or message.name == "" then
-    denyReason = "Name cannot be blank"
-  elseif string.lower(message.name) == "anonymous" then
-    denyReason = 'Username cannot be "anonymous"'
-  elseif message.name:lower():match("d+e+f+a+u+l+t+n+a+m+e?") then
-    denyReason = 'Username cannot be "defaultname" or a variation of it'
-  elseif message.name:find("[^_%w]") then
-    denyReason = "Usernames are limited to alphanumeric and underscores"
-  elseif utf8.len(message.name) > NAME_LENGTH_LIMIT then
-    denyReason = "The name length limit is " .. NAME_LENGTH_LIMIT .. " characters"
-  end
-
-  if denyReason ~= nil then
-    self.server:denyLogin(self, denyReason)
-  else
-    self.name = message.name
-    self.character = message.character
-    self.character_is_random = message.character_is_random
-    self.character_display_name = message.character_display_name
-    self.stage = message.stage
-    self.stage_is_random = message.stage_is_random
-    self.panels_dir = message.panels_dir
-    self.level = message.level
-    self.inputMethod = (message.inputMethod or "controller")
-    self.save_replays_publicly = message.save_replays_publicly
-    self.wants_ranked_match = message.ranked
-    self.state = "not_logged_in"
-    self.server.nameToConnectionIndex[self.name] = self.index
-  end
-end
-
 --returns whether the login was successful
-function Connection:login(user_id)
+function Connection:login(user_id, name, IP_logging_in, port, playerSettings)
   local logged_in = false
   local message = {}
-  local IP_logging_in, port = self.socket:getpeername()
+
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
 
-  local playerBan = self.server.database:isPlayerBanned(IP_logging_in, nil)
-  if playerBan then
-    if self.server.playerbase.players[user_id] then -- TODO: TEMPORARY Remove once we only use the database
-      self.server:changeUsername(user_id, "defaultname")
-    end
-    self.server:denyLogin(self, nil, playerBan)
-  elseif not user_id then
-    self.server:denyLogin(self, "Client did not send a user_id in the login request")
-  elseif user_id == "need a new user id" then
-    if self.server.playerbase:nameTaken("", self.name) then
-      self.server:denyLogin(self, "That player name is already taken")
-      logger.warn("Login failure: Player tried to create a new user with an already taken name: " .. self.name)
-    else 
-      user_id = self.server:createNewUser(self.name)
+  local denyReason, playerBan = self:canLogin(user_id, name, IP_logging_in)
 
-      logger.info("New user: " .. self.name .. " was created")
+  if denyReason ~= nil or playerBan ~= nil then
+    self.server:denyLogin(self, denyReason, playerBan)
+  else
+    logged_in = true
 
+    if user_id == "need a new user id" then
+      assert(self.server.playerbase:nameTaken("", name))
+      user_id = self.server:createNewUser(name)
+      logger.info("New user: " .. name .. " was created")
       message.new_user_id = user_id
-      logged_in = true
     end
-  elseif not self.server.playerbase.players[user_id] then
-    self.server:denyLogin(self, nil, self.server.database:insertBan(IP_logging_in, "The user_id provided was not found on this server", os.time() + 60))
-    logger.warn("Login failure: " .. self.name .. " specified an invalid user_id")
-  elseif self.server.playerbase.players[user_id] ~= self.name then
-    if self.server.playerbase:nameTaken(user_id, self.name) then
-      self.server:denyLogin(self, "That player name is already taken")
-      logger.warn("Login failure: Player (" .. user_id .. ") tried to use already taken name: " .. self.name)
-    else 
+
+    -- Name change is allowed because it was already checked above
+    if self.server.playerbase.players[user_id] ~= name then
       local oldName = self.server.playerbase.players[user_id]
-      self.server:changeUsername(user_id, self.name)
+      self.server:changeUsername(user_id, name)
       
-      logger.warn(user_id .. " changed name " .. oldName .. " to " .. self.name)
+      logger.warn(user_id .. " changed name " .. oldName .. " to " .. name)
 
       message.name_changed = true
       message.old_name = oldName
-      message.new_name = self.name
-
-      logged_in = true
+      message.new_name = name
     end
-  elseif self.server.playerbase.players[user_id] then
-    logged_in = true
-  else
-    self.server:denyLogin(self, "Unknown")
-  end
-
-  if logged_in then
+    
+    self.name = name
+    self.server.nameToConnectionIndex[name] = self.index
+    self:updatePlayerSettings(playerSettings)
     self.user_id = user_id
     self.player = Player(user_id)
     assert(self.player.publicPlayerID ~= nil)
@@ -300,10 +260,56 @@ function Connection:login(user_id)
     message.login_successful = true
     self:send(message)
 
-    logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
+    logger.warn("Login from " .. name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
   end
 
   return logged_in
+end
+
+function Connection:canLogin(userID, name, IP_logging_in)
+  local playerBan = self.server:isPlayerBanned(IP_logging_in)
+  local denyReason = nil
+  if playerBan then
+  elseif not name or name == "" then
+    denyReason = "Name cannot be blank"
+  elseif string.lower(name) == "anonymous" then
+    denyReason = 'Username cannot be "anonymous"'
+  elseif name:lower():match("d+e+f+a+u+l+t+n+a+m+e?") then
+    denyReason = 'Username cannot be "defaultname" or a variation of it'
+  elseif name:find("[^_%w]") then
+    denyReason = "Usernames are limited to alphanumeric and underscores"
+  elseif utf8.len(name) > NAME_LENGTH_LIMIT then
+    denyReason = "The name length limit is " .. NAME_LENGTH_LIMIT .. " characters"
+  elseif not userID then
+    denyReason = "Client did not send a user ID in the login request"
+  elseif userID == "need a new user id" then
+    if self.server.playerbase:nameTaken("", name) then
+      denyReason = "That player name is already taken"
+      logger.warn("Login failure: Player tried to create a new user with an already taken name: " .. name)
+    end
+  elseif not self.server.playerbase.players[userID] then
+    playerBan = self.server:insertBan(IP_logging_in, "The user ID provided was not found on this server", os.time() + 60)
+    logger.warn("Login failure: " .. name .. " specified an invalid user ID")
+  elseif self.server.playerbase.players[userID] ~= name and self.server.playerbase:nameTaken(userID, name) then
+    denyReason = "That player name is already taken"
+    logger.warn("Login failure: Player (" .. userID .. ") tried to use already taken name: " .. name)
+  end
+
+  return denyReason, playerBan
+end
+
+function Connection:updatePlayerSettings(playerSettings) 
+  self.character = playerSettings.character
+  self.character_is_random = playerSettings.character_is_random
+  self.character_display_name = playerSettings.character_display_name
+  self.cursor = playerSettings.cursor -- nil when from login
+  self.inputMethod = (playerSettings.inputMethod or "controller") --one day we will require message to include input method, but it is not this day.
+  self.level = playerSettings.level
+  self.panels_dir = playerSettings.panels_dir
+  self.ready = playerSettings.ready -- nil when from login
+  self.stage = playerSettings.stage
+  self.stage_is_random = playerSettings.stage_is_random
+  self.wants_ranked_match = playerSettings.ranked
 end
 
 function Connection:handleSpectateRequest(message)
@@ -330,17 +336,9 @@ function Connection:handleSpectateRequest(message)
 end
 
 function Connection:handleMenuStateMessage(message)
-  self.level = message.menu_state.level
-  self.inputMethod = (message.menu_state.inputMethod or "controller") --one day we will require message to include input method, but it is not this day.
-  self.character = message.menu_state.character
-  self.character_is_random = message.menu_state.character_is_random
-  self.character_display_name = message.menu_state.character_display_name
-  self.stage = message.menu_state.stage
-  self.stage_is_random = message.menu_state.stage_is_random
-  self.ready = message.menu_state.ready
-  self.cursor = message.menu_state.cursor
-  self.panels_dir = message.menu_state.panels_dir
-  self.wants_ranked_match = message.menu_state.ranked
+  local playerSettings = message.menu_state
+  self:updatePlayerSettings(playerSettings)
+
   logger.debug("about to check for rating_adjustment_approval for " .. self.name .. " and " .. self.opponent.name)
   if self.wants_ranked_match or self.opponent.wants_ranked_match then
     local ranked_match_approved, reasons = self.room:rating_adjustment_approved()

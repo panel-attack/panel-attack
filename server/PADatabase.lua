@@ -257,15 +257,12 @@ function PADatabase.getIDBans(self, publicPlayerID)
   return bans
 end
 
--- Checks if a logging in player is banned based off their IP or publicPlayerID.
-function PADatabase.isPlayerBanned(self, ip, publicPlayerID)
+-- Checks if a logging in player is banned based off their IP.
+function PADatabase.isPlayerBanned(self, ip)
   -- all ids associated with the information given
   local publicPlayerIDs = {}
   if ip then
     publicPlayerIDs = self:getIPIDS(ip)
-  end
-  if publicPlayerID then
-    publicPlayerIDs[#publicPlayerIDs+1] = publicPlayerID
   end
 
   local bans = {}

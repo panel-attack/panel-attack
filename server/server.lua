@@ -51,7 +51,7 @@ Server =
       self.socket:setoption("tcp-nodelay", true)
     end
 
-    self.playerbase = Playerbase("playerbase")
+    self.playerbase = Playerbase("playerbase", "players.txt")
     read_players_file(self.playerbase)
     leaderboard = Leaderboard("leaderboard", self)
     read_leaderboard_file()
@@ -320,14 +320,14 @@ function Server:createNewUser(name)
   while not user_id or self.playerbase.players[user_id] do
     user_id = self:generate_new_user_id()
   end
-  self.playerbase:update(user_id, name)
+  self.playerbase:updatePlayer(user_id, name)
   self.database:insertNewPlayer(user_id, name)
   self.database:insertPlayerELOChange(user_id, 0, 0)
   return user_id
 end
 
 function Server:changeUsername(privateUserID, username)
-  self.playerbase:update(privateUserID, username)
+  self.playerbase:updatePlayer(privateUserID, username)
   if leaderboard.players[privateUserID] then
     leaderboard.players[privateUserID].user_name = username
   end
@@ -339,7 +339,17 @@ function Server:generate_new_user_id()
   return tostring(new_user_id)
 end
 
+-- Checks if a logging in player is banned based off their IP.
+function Server:isPlayerBanned(ip)
+  return self.database:isPlayerBanned(ip)
+end
+
+function Server:insertBan(ip, reason, completionTime)
+  return self.database:insertBan(ip, reason, completionTime)
+end
+
 function Server:denyLogin(connection, reason, ban)
+  assert(ban == nil or reason == nil)
   local message = {login_denied = true, reason = reason }
   if ban then
     local banRemainingString = "Ban Remaining: "
@@ -688,6 +698,7 @@ function Server:acceptNewConnections()
   end
 end
 
+-- Process any data on all active connections
 function Server:readSockets()
   -- Make a list of all the sockets to listen to
   local socketsToCheck = {self.socket}
@@ -700,7 +711,8 @@ function Server:readSockets()
   assert(type(socketsWithData) == "table")
   for _, currentSocket in ipairs(socketsWithData) do
     if self.socketToConnectionIndex[currentSocket] then
-      self.connections[self.socketToConnectionIndex[currentSocket]]:read()
+      local connectionIndex = self.socketToConnectionIndex[currentSocket]
+      self.connections[connectionIndex]:read()
     end
   end
 end
