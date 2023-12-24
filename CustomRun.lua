@@ -20,8 +20,6 @@ CustomRun.runTimeGraph = nil
 
 leftover_time = 0
 
-local should_quit = false
-
 -- Sleeps just the right amount of time to make our next update step be one frame long.
 -- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
 function CustomRun.sleep()
@@ -77,7 +75,7 @@ function CustomRun.processEvents()
     for name, a, b, c, d, e, f in love.event.poll() do
       if name == "quit" then
         if not love.quit or not love.quit() then
-          should_quit = true
+          return a or 0
         end
       end
       love.handlers[name](a, b, c, d, e, f)
@@ -90,9 +88,9 @@ local dt = 0
 local mem = 0
 local prevMem = 0
 function CustomRun.innerRun()
-  CustomRun.processEvents()
-  if should_quit then
-    return 0
+  local shouldQuit = CustomRun.processEvents()
+  if shouldQuit then
+    return shouldQuit
   end
   mem = collectgarbage("count")
 
