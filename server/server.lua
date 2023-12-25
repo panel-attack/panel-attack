@@ -218,6 +218,18 @@ function Server:clear_proposals(name)
   end
 end
 
+function Server:playerSettingFromTable(data)
+  local playerSettings = {
+    character = data.character,
+    character_display_name = data.character_display_name,
+    level = data.level,
+    panels_dir = data.panels_dir,
+    player_number = data.player_number,
+    inputMethod = data.inputMethod
+  }
+  return playerSettings
+end
+
 -- a and be are connection objects
 function Server:create_room(a, b)
   self:setLobbyChanged()
@@ -264,26 +276,14 @@ function Server:start_match(a, b)
   end
 
   a.room.stage = math.random(1, 2) == 1 and a.stage or b.stage
+  local playerSettings = self:playerSettingFromTable(a)
+  local opponentSettings = self:playerSettingFromTable(b)
   local msg = {
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {
-      character = a.character,
-      character_display_name = a.character_display_name,
-      level = a.level,
-      panels_dir = a.panels_dir,
-      player_number = a.player_number,
-      inputMethod = a.inputMethod
-    },
-    opponent_settings = {
-      character = b.character,
-      character_display_name = b.character_display_name,
-      level = b.level,
-      panels_dir = b.panels_dir,
-      player_number = b.player_number,
-      inputMethod = b.inputMethod
-    }
+    player_settings = playerSettings,
+    opponent_settings = opponentSettings
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then

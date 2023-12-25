@@ -102,6 +102,8 @@ function Room:add_spectator(new_spectator_connection)
   new_spectator_connection.room = self
   self.spectators[#self.spectators + 1] = new_spectator_connection
   logger.debug(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
+  local playerSettings = self.server:playerSettingFromTable(self.a)
+  local opponentSettings = self.server:playerSettingFromTable(self.b)
   local msg = {
     spectate_request_granted = true,
     spectate_request_rejected = false,
@@ -114,26 +116,16 @@ function Room:add_spectator(new_spectator_connection)
     stage = self.stage,
     replay_of_match_so_far = self.replay,
     ranked = self:rating_adjustment_approved(),
-    player_settings = {
-      character = self.a.character,
-      character_display_name = self.a.character_display_name,
-      level = self.a.level,
-      player_number = self.a.player_number,
-      inputMethod = self.a.inputMethod
-    },
-    opponent_settings = {
-      character = self.b.character,
-      character_display_name = self.b.character_display_name,
-      level = self.b.level,
-      player_number = self.b.player_number,
-      inputMethod = self.b.inputMethod
-    }
+    player_settings = playerSettings,
+    opponent_settings = opponentSettings
   }
-  msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[1])
-  msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[2])
-  if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
-    msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
-    msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+  if msg.replay_of_match_so_far ~= nil then
+    msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[1])
+    msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[2])
+    if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
+      msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
+      msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+    end
   end
   new_spectator_connection:send(msg)
   msg = {spectators = self:spectator_names()}
