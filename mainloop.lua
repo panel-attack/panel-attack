@@ -926,16 +926,6 @@ function main_net_vs_lobby()
   local requestedSpectateRoom = nil
   local playerData = nil
 
-  --attempt login
-  local my_user_id = read_user_id_file(GAME.connected_server_ip)
-  if not my_user_id then
-    my_user_id = "need a new user id"
-  end
-  if CUSTOM_USER_ID then
-    my_user_id = CUSTOM_USER_ID
-  end
-  json_send({login_request = true, user_id = my_user_id})
-
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
     local messages = server_queue:pop_all_with("login_successful", "login_denied", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
@@ -1246,7 +1236,12 @@ function main_net_vs_setup(ip, network_port)
   if not network_init(ip, network_port) then
     return main_dumb_transition, {main_select_mode, loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
-  local timeout_counter = 0
+  
+  GAME.connected_server_ip = ip
+  GAME.connected_network_port = network_port
+
+  sendLoginRequest()
+
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
@@ -1254,8 +1249,6 @@ function main_net_vs_setup(ip, network_port)
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
   end
-  GAME.connected_server_ip = ip
-  GAME.connected_network_port = network_port
   return main_net_vs_lobby
 end
 

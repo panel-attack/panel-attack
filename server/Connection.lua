@@ -162,9 +162,8 @@ function Connection:J(message)
     self:handleErrorReport(message.error_report)
   elseif self.state == "not_logged_in" then 
     if message.login_request then
-      self:handleUsername(message)
       local IP_logging_in, port = self.socket:getpeername()
-      self:login(message.name, message.user_id, IP_logging_in, port)
+      self:login(message.user_id, message.name, IP_logging_in, port, message)
     end
   elseif message.logout then
     self:close()
@@ -213,7 +212,7 @@ function Connection:login(user_id, name, IP_logging_in, port, playerSettings)
     logged_in = true
 
     if user_id == "need a new user id" then
-      assert(self.server.playerbase:nameTaken("", name))
+      assert(self.server.playerbase:nameTaken("", name) == false)
       user_id = self.server:createNewUser(name)
       logger.info("New user: " .. name .. " was created")
       message.new_user_id = user_id

@@ -201,8 +201,24 @@ function network_init(ip, network_port)
   TCP_sock:settimeout(0)
   got_H = false
   net_send(NetworkProtocol.clientMessageTypes.versionCheck.prefix .. VERSION)
+  return true
+end
+
+function sendLoginRequest()
   assert(config.name and config.save_replays_publicly)
+
+  --attempt login
+  local my_user_id = read_user_id_file(GAME.connected_server_ip)
+  if not my_user_id then
+    my_user_id = "need a new user id"
+  end
+  if CUSTOM_USER_ID then
+    my_user_id = CUSTOM_USER_ID
+  end
+
   local sent_json = {
+    login_request = true,
+    user_id = my_user_id,
     name = config.name,
     level = config.level,
     inputMethod = config.inputMethod or "controller",
@@ -216,7 +232,6 @@ function network_init(ip, network_port)
   }
   sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name
   json_send(sent_json)
-  return true
 end
 
 function send_error_report(errorData)

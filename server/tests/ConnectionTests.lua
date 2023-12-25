@@ -29,7 +29,7 @@ function testLoginInvalidName()
   -- Anonymous
   denyReason, _ = connection:canLogin(2, "Anonymous", "1.1.1.1")
   assert(denyReason ~= nil)
-
+    
   -- defaultnam
   denyReason, _ = connection:canLogin(2, "defaultnam", "1.1.1.1")
   assert(denyReason ~= nil)
@@ -81,6 +81,11 @@ function testLoginAllowed()
   -- can login if have account and name isn't changed
   denyReason, playerBan = connection:canLogin(2, "Ben", "1.1.1.1")
   assert(denyReason == nil and playerBan == nil)
+
+  -- can login with new account if name not taken
+  denyReason, playerBan = connection:canLogin("need a new user id", "Joseph", "1.1.1.1")
+  assert(denyReason == nil and playerBan == nil)
+  
 end
 
 testLoginAllowed()

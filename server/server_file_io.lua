@@ -22,7 +22,7 @@ function makeDirectoryRecursive(path)
   end
 end
 
-function file_exists(name)
+function fileExists(name)
   local f=io.open(name,"r")
   if f ~= nil then
     io.close(f)
@@ -88,7 +88,7 @@ function readGameResults()
 
   local filename = "GameResults.csv"
 
-  if file_exists(filename) == false then
+  if fileExists(filename) == false then
     return nil
   end
 
@@ -148,10 +148,16 @@ function write_leaderboard_file()
 end
 
 function read_leaderboard_file()
+  local filename = "./leaderboard.csv"
+
+  if fileExists(filename) == false then
+    return nil
+  end
+
   local csv_table = {}
   local status, error = pcall(
     function()
-      csv_table = csvfile.read("./leaderboard.csv")
+      csv_table = csvfile.read(filename)
     end
   )
   if not status then
