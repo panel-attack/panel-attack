@@ -88,14 +88,10 @@ function readGameResults()
 
   local filename = "GameResults.csv"
 
-  if fileExists(filename) == false then
-    return nil
-  end
-
-  local gameResults
+  local gameResults = nil
   pcall(
     function()
-      gameResults = csvfile.read()
+      gameResults = csvfile.read(filename)
     end
   )
   return gameResults
@@ -150,10 +146,6 @@ end
 function read_leaderboard_file()
   local filename = "./leaderboard.csv"
 
-  if fileExists(filename) == false then
-    return nil
-  end
-
   local csv_table = {}
   local status, error = pcall(
     function()
@@ -161,7 +153,7 @@ function read_leaderboard_file()
     end
   )
   if not status then
-  elseif csv_table[2] then
+  elseif csv_table ~= nil and csv_table[2] then
     logger.debug("loading leaderboard.csv")
     for row = 2, #csv_table do
       csv_table[row][1] = tostring(csv_table[row][1])
@@ -193,11 +185,11 @@ function read_user_placement_match_file(user_id)
       local sep = package.config:sub(1, 1)
       local csv_table = csvfile.read("./placement_matches/incomplete/" .. user_id .. ".csv")
       if not csv_table or #csv_table < 2 then
-        logger.warn("csv_table from read_user_placement_match_file was nil or <2 length")
+        logger.debug("csv_table from read_user_placement_match_file was nil or <2 length")
         return nil
       else
-        logger.warn("csv_table from read_user_placement_match_file :")
-        logger.warn(json.encode(csv_table))
+        logger.debug("csv_table from read_user_placement_match_file :")
+        logger.debug(json.encode(csv_table))
       end
       local ret = {}
       for row = 2, #csv_table do
@@ -223,9 +215,9 @@ function read_user_placement_match_file(user_id)
           end
         end
       end
-      logger.warn("read_user_placement_match_file ret: ")
-      logger.warn(tostring(ret))
-      logger.warn(json.encode(ret))
+      logger.debug("read_user_placement_match_file ret: ")
+      logger.debug(tostring(ret))
+      logger.debug(json.encode(ret))
       return ret
     end
   )
