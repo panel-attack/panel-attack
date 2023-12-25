@@ -45,7 +45,19 @@ Connection =
 )
 
 function Connection:menu_state()
-  local state = {cursor = self.cursor, stage = self.stage, stage_is_random = self.stage_is_random, ready = self.ready, character = self.character, character_is_random = self.character_is_random, character_display_name = self.character_display_name, panels_dir = self.panels_dir, level = self.level, ranked = self.wants_ranked_match, inputMethod = self.inputMethod}
+  local state = {
+    cursor = self.cursor,
+    stage = self.stage,
+    stage_is_random = self.stage_is_random,
+    ready = self.ready,
+    character = self.character,
+    character_is_random = self.character_is_random,
+    character_display_name = self.character_display_name,
+    panels_dir = self.panels_dir,
+    level = self.level,
+    ranked = self.wants_ranked_match,
+    inputMethod = self.inputMethod
+  }
   return state
   --note: player_number here is the player_number of the connection as according to the server, not the "which" of any Stack
 end
@@ -453,4 +465,3 @@ function Connection:processMessage(messageType, data)
     logger.error("pcall error results: " .. tostring(error))
   end
 end
-

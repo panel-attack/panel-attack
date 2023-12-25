@@ -55,7 +55,14 @@ end
 
 function Room:character_select()
   self:prepare_character_select()
-  self:send({character_select = true, create_room = true, rating_updates = true, ratings = self.ratings, a_menu_state = self.a:menu_state(), b_menu_state = self.b:menu_state()})
+  self:send({
+    character_select = true,
+    create_room = true,
+    rating_updates = true,
+    ratings = self.ratings,
+    a_menu_state = self.a:menu_state(),
+    b_menu_state = self.b:menu_state()
+  })
 end
 
 function Room:prepare_character_select()
@@ -107,8 +114,20 @@ function Room:add_spectator(new_spectator_connection)
     stage = self.stage,
     replay_of_match_so_far = self.replay,
     ranked = self:rating_adjustment_approved(),
-    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number, inputMethod = self.a.inputMethod},
-    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number, inputMethod = self.b.inputMethod}
+    player_settings = {
+      character = self.a.character,
+      character_display_name = self.a.character_display_name,
+      level = self.a.level,
+      player_number = self.a.player_number,
+      inputMethod = self.a.inputMethod
+    },
+    opponent_settings = {
+      character = self.b.character,
+      character_display_name = self.b.character_display_name,
+      level = self.b.level,
+      player_number = self.b.player_number,
+      inputMethod = self.b.inputMethod
+    }
   }
   msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[1])
   msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[2])
