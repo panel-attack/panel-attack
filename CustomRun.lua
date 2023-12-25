@@ -88,7 +88,10 @@ local dt = 0
 local mem = 0
 local prevMem = 0
 function CustomRun.innerRun()
-  CustomRun.processEvents()
+  local shouldQuit = CustomRun.processEvents()
+  if shouldQuit then
+    return shouldQuit
+  end
   mem = collectgarbage("count")
 
   -- Update dt, as we'll be passing it to update
