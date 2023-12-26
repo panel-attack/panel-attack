@@ -38,6 +38,12 @@ function tableUtils.filter(tab, filter)
   return filteredTable 
 end 
  
+-- returns all elements in a new table that fulfill the filter condition 
+function tableUtils.subtractTable(tab, otherTable) 
+  local result = tableUtils.filter(tab, function (value) return tableUtils.contains(otherTable, value) == false end)
+  return result
+end 
+ 
 -- returns true if the table contains at least one value that fulfills the condition, otherwise false 
 function tableUtils.trueForAny(tab, condition) 
   for _, value in pairs(tab) do 
@@ -106,6 +112,12 @@ function tableUtils.getRandomElement(tab)
       end
     end
   end
+end
+
+-- Randomly grabs a value from the table skipping the given values
+function tableUtils.getRandomElementExcludingValues(tab, values) 
+  local pairedTable = tableUtils.subtractTable(tab, values)
+  return tableUtils.getRandomElement(pairedTable)
 end
  
 -- returns all keys of a table, sorted using the standard comparator to account for sequence based tables 

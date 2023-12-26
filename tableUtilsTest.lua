@@ -108,6 +108,42 @@ local function testTableFilterDict()
   logger.trace("passed test testTableFilterDict")
 end
 
+
+local function testTableSubtractTable()
+  local testData = getTestDataList()
+  local excludes = {{row = 2, column = 1, color = 3},{row = 2, column = 2, color = 3}}
+  local expected = {
+    {row = 1, column = 1, color = 2},
+    {row = 1, column = 2, color = 1},
+    {row = 3, column = 1, color = 4}
+  }
+
+  local filteredTable = tableUtils.subtractTable(testData, excludes)
+  assert(#filteredTable == 3)
+  for i = 1, #expected do
+    assert(deep_content_equal(filteredTable[i], expected[i]))
+  end
+
+  logger.trace("passed test testTableSubtractTable")
+end
+
+local function testTableDictSubtractTable()
+  local testData = getTestDataDict()
+  local excludes = { "330000" }
+  local expected = {}
+  expected["row1"] = "210000"
+  expected["row3"] = "400000"
+
+  local filteredTable = tableUtils.subtractTable(testData, excludes)
+  
+  assert(tableUtils.length(filteredTable) == 2)
+  for key, _ in pairs(expected) do
+    assert(deep_content_equal(filteredTable[key], expected[key]))
+  end
+
+  logger.trace("passed test testTableDictSubtractTable")
+end
+
 local function testTableTrueForAnyList()
   local testData = getTestDataList()
   assert(
@@ -371,6 +407,8 @@ end
 testTableGetKeys()
 testTableTrueForAllList()
 testTableTrueForAllDict()
+testTableSubtractTable()
+testTableDictSubtractTable()
 testTableTrueForAnyList()
 testTableTrueForAnyDict()
 testTableContainsList()
@@ -388,3 +426,34 @@ testTableMapDict()
 testRandomElementEmpty()
 testRandomElementList()
 testRandomElementDict()
+
+-- Proves that getRandomElementExcludingValues evenly distributes
+-- local testData = {key1 = "bob", key2 = "jerry", key3 = "tim"}
+
+-- local results = {}
+-- for _, value in pairs(testData) do
+--   results[value] = 0
+-- end
+-- for _ = 1, 1000 do
+--   local result = tableUtils.getRandomElementExcludingValues(testData, {"jerry"})
+--   results[result] = results[result] + 1
+-- end
+
+-- for index, value in pairs(results) do
+--   print(index .. " - " .. value)
+-- end
+
+-- testData = {1, 2, 3, 4}
+
+-- local results = {}
+-- for _, value in pairs(testData) do
+--   results[value] = 0
+-- end
+-- for _ = 1, 1000 do
+--   local result = tableUtils.getRandomElementExcludingValues(testData, {1})
+--   results[result] = results[result] + 1
+-- end
+
+-- for index, value in ipairs(results) do
+--   print(index .. " - " .. value)
+-- end

@@ -37,15 +37,23 @@ end
 
 -- sets player.panels_dir / player.character / player.stage based on the respective selection values player.panels_dir, player.selectedCharacter and player.selectedStage
 -- Automatically goes to a fallback or random mod if the selected one is not found
-function refreshBasedOnOwnMods(player)
+function refreshBasedOnOwnMods(player, players)
+
+  local usedCharacters = {}
+  for _, value in pairs(players) do
+    if value.character then
+      usedCharacters[#usedCharacters+1] = value.character
+    end
+  end
+
   -- Resolve the current character if it is random
   local function resolveRandomCharacter()
       if characters[player.character] == nil and player.selectedCharacter == random_character_special_value then
-        player.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
+        player.character = tableUtils.getRandomElementExcludingValues(characters_ids_for_current_theme, usedCharacters)
       end
 
       if characters[player.character]:is_bundle() then
-        player.character = tableUtils.getRandomElement(characters[player.character].sub_characters)
+        player.character = tableUtils.getRandomElementExcludingValues(characters[player.character].sub_characters, usedCharacters)
       end
   end
 
@@ -397,8 +405,8 @@ function select_screen.updatePlayerStatesFromMessage(self, msg)
     self:initializeFromMenuState(self.op_player_number, msg.b_menu_state)
   end
 
-  refreshBasedOnOwnMods(self.players[self.my_player_number])
-  refreshBasedOnOwnMods(self.players[self.op_player_number])
+  refreshBasedOnOwnMods(self.players[self.my_player_number], self.players)
+  refreshBasedOnOwnMods(self.players[self.op_player_number], self.players)
 end
 
 function select_screen.updateReplayInfoFromMessage(self, msg)
@@ -540,7 +548,7 @@ function select_screen.setUpMyPlayer(self)
     self:initializeFromPlayerConfig(self.my_player_number)
   end
 
-  refreshBasedOnOwnMods(self.players[self.my_player_number])
+  refreshBasedOnOwnMods(self.players[self.my_player_number], self.players)
   self:refreshLoadingState(self.my_player_number)
 end
 
@@ -561,7 +569,7 @@ function select_screen.setUpOpponentPlayer(self)
     end
   end
 
-  refreshBasedOnOwnMods(self.players[self.op_player_number])
+  refreshBasedOnOwnMods(self.players[self.op_player_number], self.players)
   self:refreshLoadingState(self.op_player_number)
 end
 
@@ -761,7 +769,7 @@ function select_screen.updatePlayerFromMenuStateMessage(self, msg)
   end
 
   self:initializeFromMenuState(player_number, msg.menu_state)
-  refreshBasedOnOwnMods(self.players[player_number])
+  refreshBasedOnOwnMods(self.players[player_number], self.players)
   self:refreshLoadingState(player_number)
   self:refreshReadyStates()
 end
@@ -806,8 +814,8 @@ end
 
 function select_screen.startNetPlayMatch(self, msg)
   logger.debug("spectating: " .. tostring(GAME.battleRoom.spectating))
-  refreshBasedOnOwnMods(msg.opponent_settings)
-  refreshBasedOnOwnMods(msg.player_settings)
+  refreshBasedOnOwnMods(msg.opponent_settings, {msg.opponent_settings, msg.player_settings})
+  refreshBasedOnOwnMods(msg.player_settings, {msg.opponent_settings, msg.player_settings})
   current_stage = StageLoader.resolveStageSelection(msg.stage)
   StageLoader.load(current_stage)
   -- mainly for spectator mode, those characters have already been loaded otherwise
