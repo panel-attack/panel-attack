@@ -1,5 +1,6 @@
 require("queue")
 require("globals")
+local tableUtils = require("tableUtils")
 
 StageLoader = {}
 
@@ -66,19 +67,18 @@ function StageLoader.clear()
 end
 
 function StageLoader.resolveStageSelection(stageId)
-  if stageId and stages[stageId] then
-    stageId = StageLoader.resolveBundle(stageId)
-  else
+  if not stageId or not stages[stageId] then
     -- resolve via random selection
-    stageId = table.getRandomElement(stages_ids_for_current_theme)
+    stageId = tableUtils.getRandomElement(stages_ids_for_current_theme)
   end
+  stageId = StageLoader.resolveBundle(stageId)
 
   return stageId
 end
 
 function StageLoader.resolveBundle(stageId)
   while stages[stageId]:is_bundle() do
-    stageId = table.getRandomElement(stages[stageId].sub_stages)
+    stageId = tableUtils.getRandomElement(stages[stageId].sub_stages)
   end
 
   return stageId

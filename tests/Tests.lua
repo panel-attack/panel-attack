@@ -1,5 +1,5 @@
 -- In Development, so you don't have to wait for all other tests to debug (move to correct location later)
-
+require("tests.InputTests")
 -- Small tests (unit tests)
 require("PuzzleTests")
 require("ServerQueueTests")
@@ -12,7 +12,7 @@ require("tests.TouchDataEncodingTests")
 require("tests.utf8AdditionsTests")
 require("tests.QueueTests")
 require("tests.TimeQueueTests")
-require("table_util_tests")
+require("tableUtilsTest")
 require("utilTests")
 --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
 -- Medium level tests (integration tests)

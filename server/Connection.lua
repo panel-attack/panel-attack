@@ -1,8 +1,8 @@
 require("class")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 local NetworkProtocol = require("NetworkProtocol")
 
-require("table_util")
 local time = os.time
 local utf8 = require("utf8Additions")
 require("tests.utf8AdditionsTests")
@@ -94,7 +94,7 @@ function Connection:login(user_id)
     logger.warn("Login from " .. self.name .. " with ip: " .. IP_logging_in .. " publicPlayerID: " .. self.player.publicPlayerID)
     local serverNotices = self.server.database:getPlayerMessages(self.player.publicPlayerID)
     local serverUnseenBans = self.server.database:getPlayerUnseenBans(self.player.publicPlayerID)
-    if table.length(serverNotices) > 0 or table.length(serverUnseenBans) > 0 then
+    if tableUtils.length(serverNotices) > 0 or tableUtils.length(serverUnseenBans) > 0 then
       local noticeString = ""
       for messageID, message in pairs(serverNotices) do
         noticeString = noticeString .. message .. "\n\n"
@@ -218,10 +218,10 @@ function Connection:I(message)
     if self.player_number == 1 and self.room then
       local uMessage = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix, message)
       self.room:send_to_spectators(uMessage)
-      self.room.replay.vs.in_buf = self.room.replay.vs.in_buf .. message
+      self.room.inputs[self.player_number][#self.room.inputs[self.player_number] + 1] = message
     elseif self.player_number == 2 and self.room then
       self.room:send_to_spectators(iMessage)
-      self.room.replay.vs.I = self.room.replay.vs.I .. message
+      self.room.inputs[self.player_number][#self.room.inputs[self.player_number] + 1] = message
     end
   end
 end
@@ -374,6 +374,7 @@ function Connection:handleMenuStateMessage(message)
   end
 
   if self.ready and self.opponent.ready then
+    self.room.inputs = {{},{}}
     self.room.replay = {}
     self.room.replay.vs = {
       P = "",

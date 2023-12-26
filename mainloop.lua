@@ -4,6 +4,7 @@ require("ChallengeMode")
 local select_screen = require("select_screen.select_screen")
 local replay_browser = require("replay_browser")
 local options = require("options")
+local tableUtils = require("tableUtils")
 local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
@@ -150,7 +151,7 @@ function main_title()
         end
         percent =  bound(0, percent + increment, 1)
         
-        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (table.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
+        if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or (tableUtils.length(this_frame_released_keys) > 0 and totalTime > 0.1) then
           stop_the_music()
           ret = {main_select_mode}
         end
@@ -295,9 +296,9 @@ local function use_current_stage()
 end
 
 function pick_random_stage()
-  current_stage = table.getRandomElement(stages_ids_for_current_theme)
+  current_stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
   if stages[current_stage]:is_bundle() then -- may pick a bundle!
-    current_stage = table.getRandomElement(stages[current_stage].sub_stages)
+    current_stage = tableUtils.getRandomElement(stages[current_stage].sub_stages)
   end
   use_current_stage()
 end

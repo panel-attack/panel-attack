@@ -64,3 +64,7 @@ function SimulatedOpponent:receiveGarbage(frameToReceive, garbageList)
     self.health:receiveGarbage(frameToReceive, garbageList)
   end
 end
+
+function SimulatedOpponent:deinit()
+  self.health:deinit()
+end

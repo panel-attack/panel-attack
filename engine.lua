@@ -5,7 +5,7 @@ local consts = require("consts")
 local logger = require("logger")
 local utf8 = require("utf8")
 require("engine.panel")
-require("table_util")
+local tableUtils = require("tableUtils")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -454,11 +454,11 @@ function Stack.divergenceString(stackToTest)
   if stackToTest.telegraph then
     result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
     result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
-    result = result .. "telegraph.attacks " .. table.length(stackToTest.telegraph.attacks) .. "\n"
+    result = result .. "telegraph.attacks " .. tableUtils.length(stackToTest.telegraph.attacks) .. "\n"
   end
   
   result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
-  result = result .. "later_garbage " .. table.length(stackToTest.later_garbage) .. "\n"
+  result = result .. "later_garbage " .. tableUtils.length(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
@@ -863,6 +863,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
   for row = 1, self.height do
     for col = 1, self.width do
       panels[row][col].stateChanged = true
+      panels[row][col].shake_time = nil
     end
   end
 end
@@ -1155,8 +1156,8 @@ function Stack.receiveConfirmedInput(self, input)
     self.input_buffer[#self.input_buffer+1] = input
   else
     local inputs = string.toCharTable(input)
-    table.appendToList(self.confirmedInput, inputs)
-    table.appendToList(self.input_buffer, inputs)
+    tableUtils.appendToList(self.confirmedInput, inputs)
+    tableUtils.appendToList(self.input_buffer, inputs)
   end
   --logger.debug("Player " .. self.which .. " got new input. Total length: " .. #self.confirmedInput)
 end
@@ -2488,7 +2489,7 @@ function Stack.onGarbageLand(self, panel)
     -- only parts of the garbage that are on the visible board can be considered for shake
     and panel.row <= self.height then
     --runtime optimization to not repeatedly update shaketime for the same piece of garbage
-    if not table.contains(self.garbageLandedThisFrame, panel.garbageId) then
+    if not tableUtils.contains(self.garbageLandedThisFrame, panel.garbageId) then
       if self:shouldChangeSoundEffects() then
         if panel.height > 3 then
           self.sfx_garbage_thud = 3
@@ -2580,7 +2581,7 @@ function Stack:getInfo()
   info.panels = self.panels_dir
   info.rollbackCount = self.rollbackCount
   if self.prev_states then
-    info.rollbackCopyCount = table.length(self.prev_states)
+    info.rollbackCopyCount = tableUtils.length(self.prev_states)
   else
     info.rollbackCopyCount = 0
   end
