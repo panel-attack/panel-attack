@@ -426,6 +426,8 @@ function string.toCharTable(self)
 end
 
 local metaTableForWeakKeys = { __mode = "k"}
+local metaTableForWeakValues = { __mode = "v"}
+local metaTableForWeakKeysAndValues = { __mode = "kv" }
 -- a table having weak keys means 
 --  that references to a table in the key portion of that table are ignored for the purpose of garbage collection
 --  that these tables will get collected if the reference in the key portion of the table is the only remaining reference
@@ -434,6 +436,18 @@ local metaTableForWeakKeys = { __mode = "k"}
 function util.getWeaklyKeyedTable()
   local t = {}
   setmetatable(t, metaTableForWeakKeys)
+  return t
+end
+
+function util.getWeaklyValuedTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakValues)
+  return t
+end
+
+function util.getWeakTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakKeysAndValues)
   return t
 end
 

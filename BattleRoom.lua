@@ -7,6 +7,7 @@ local class = require("class")
 local ServerMessages = require("network.ServerMessages")
 local ClientMessages = require("network.ClientProtocol")
 local ReplayV1 = require("replayV1")
+local Signal = require("helpers.signal")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom = class(function(self, mode)
@@ -170,7 +171,16 @@ function BattleRoom:createMatch()
     supportsPause,
     optionalArgs
   )
+  Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+
   return self.match
+end
+
+
+function BattleRoom:onMatchEnded()
+  self.state = BattleRoom.states.Setup
+  local winners = self.match:getWinners()
+  -- apply wins and possibly statistical data up for collection
 end
 
 -- creates a new Player based on their minimum information and adds them to the BattleRoom

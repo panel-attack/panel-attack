@@ -4,6 +4,7 @@ local GameModes = require("GameModes")
 local sceneManager = require("scenes.sceneManager")
 local Player = require("Player")
 local Replay = require("replay")
+local Signal = require("helpers.signal")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -52,6 +53,8 @@ Match =
     self.startTimestamp = os.time(os.date("*t"))
 
     self.time_quads = {}
+
+    Signal.addSignal(self, "onMatchEnded")
   end
 )
 
