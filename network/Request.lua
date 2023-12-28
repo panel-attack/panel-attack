@@ -2,6 +2,7 @@ local class = require("class")
 local Response = require("network.Response")
 local NetworkProtocol = require("network.NetworkProtocol")
 local consts = require("consts")
+local logger = require("logger")
 
 local Request = class(function(self, tcpClient, messageType, messageText, responseTypes)
   self.tcpClient = tcpClient
@@ -33,6 +34,7 @@ function Request:send()
   else
     error("Trying to send a message with message type " .. table_to_string(self.messageType) .. " that has no interaction defined")
   end
+  logger.debug("Sending message: " .. message)
   self.tcpClient:send(message)
 
 

@@ -77,7 +77,7 @@ end
 function BattleRoom:processTauntMessage(message)
   local characterId = tableUtils.first(self.players, function(player)
     return player.playerNumber == message.player_number
-  end)
+  end).settings.characterId
   characters[characterId]:playTaunt(message.type, message.index)
 end
 
