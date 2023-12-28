@@ -146,7 +146,7 @@ function TcpClient:queueMessage(type, data)
   if type == NetworkProtocol.serverMessageTypes.opponentInput.prefix or type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
     local dataMessage = {}
     dataMessage[type] = data
-    logger.debug("Queuing: " .. type .. " with data:" .. data)
+    logger.trace("Queuing: " .. type .. " with data:" .. data)
     self.receivedMessageQueue:push(dataMessage)
   elseif type == NetworkProtocol.serverMessageTypes.versionCorrect.prefix then
     -- make responses to client H messages processable by treating them like a json response
@@ -188,7 +188,7 @@ function process_all_data_messages()
   local messages = GAME.tcpClient.receivedMessageQueue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
   for _, msg in ipairs(messages) do
     for type, data in pairs(msg) do
-      logger.debug("Processing: " .. type .. " with data:" .. data)
+      logger.trace("Processing: " .. type .. " with data:" .. data)
       process_data_message(type, data)
     end
   end
