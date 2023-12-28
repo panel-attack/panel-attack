@@ -195,35 +195,18 @@ function GameBase:runGameOver()
     end
   end
 
-  
-  -- Play the winner sound effect after a delay
-  if not SFX_mute then
-    if displayTime >= self.winnerTime then
-      if self.winnerSFX ~= nil then -- play winnerSFX then nil it so it doesn't loop
-        self.winnerSFX:play()
-        self.winnerSFX = nil
-      end
-    end
-  end
-
   self.match:run()
-
-
-  if GAME.tcpClient:isConnected() then
-    GAME.tcpClient:processIncomingMessages()  -- recieve messages so we know if the next game is in the queue
-  end
 
   -- if conditions are met, leave the game over screen
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
-  
-  if not self.transitioning and ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed)) then
+
+  if ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed)) then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     setMusicFadePercentage(1) -- reset the music back to normal config volume
     if not self.keepMusic then
       stop_the_music()
     end
     SFX_GameOver_Play = 0
-    self.transitioning = true
     sceneManager:switchToScene(sceneManager:createScene(self.nextScene, self.nextSceneParams))
   end
 end
@@ -250,16 +233,28 @@ function GameBase:runGame(dt)
     return
   end
 
-  if self.S1:gameResult() then
+  if self.match:hasEnded() then
     self:setupGameOver()
     return
   end
 end
 
 function GameBase:update(dt)
-  if self.S1:gameResult() then
+  if self.match:hasEnded() then
     self:runGameOver()
   else
+    if not self.match:hasLocalPlayer() then
+      if input.isDown["MenuEsc"] then
+        Menu.playCancelSfx()
+        self.match:abort()
+        if GAME.tcpClient:isConnected() then
+          GAME.battleRoom:shutdown()
+          sceneManager:switchToScene(sceneManager:createScene("Lobby"))
+        else
+          sceneManager:switchToScene(sceneManager:createScene("ReplayBrowser"))
+        end
+      end
+    end
     self:runGame(dt)
   end
 end

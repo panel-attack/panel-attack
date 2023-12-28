@@ -61,10 +61,14 @@ function BattleRoom:processCharacterSelectMessage(message)
 end
 
 function BattleRoom:processLeaveRoomMessage(message)
-  -- we're ending the game from battleRoom side via an abort so we don't want to enter the standard onMatchEnd callback
-  Signal.disconnectSignal(self.match, "onMatchEnded", self)
-  self.match:abort()
-  self.match:deinit()
+  if self.match then
+    -- we're ending the game from battleRoom side via an abort so we don't want to enter the standard onMatchEnd callback
+    Signal.disconnectSignal(self.match, "onMatchEnded", self)
+    -- instead we actively abort the match ourselves
+    self.match:abort()
+    self.match:deinit()
+  end
+  -- and then shutdown the room
   self.match = nil
   self:shutdown()
   sceneManager:switchToScene(sceneManager:createScene("Lobby"))

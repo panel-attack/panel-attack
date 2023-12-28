@@ -32,7 +32,6 @@ function Stack.send_controls(self)
     return
   end
 
-  local playerNumber = self.which
   local to_send
   if self.inputMethod == "controller" then
     local input = self.player.inputConfiguration
