@@ -246,11 +246,11 @@ function Match:render()
     end
   end
 
-  if GAME.gameIsPaused then
-    draw_pause()
+  if self.isPaused then
+    self:draw_pause()
   end
 
-  if GAME.gameIsPaused == false or GAME.renderDuringPause then
+  if self.isPaused == false or self.renderDuringPause then
     -- Don't allow rendering if either player is loading for spectating
     local renderingAllowed = true
     if P1 and P1.play_to_end then
@@ -323,7 +323,18 @@ end
 -- a helper function for tests
 -- prevents running graphics related processes, e.g. cards, popFX
 function Match:removeCanvases()
-    for i = 1, #self.players do
-      self.players[i].stack.canvas = nil
-    end
+  for i = 1, #self.players do
+    self.players[i].stack.canvas = nil
   end
+end
+
+  -- Draw the pause menu
+function Match:draw_pause()
+  if not self.renderDuringPause then
+    local image = themes[config.theme].images.pause
+    local scale = canvas_width / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
+    menu_drawf(image, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+  end
+  gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
+  gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
+end

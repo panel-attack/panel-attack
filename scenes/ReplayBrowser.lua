@@ -120,7 +120,7 @@ function ReplayBrowser:load()
   state = "browser"
   updateBrowsingPath()
 
-  GAME.renderDuringPause = true
+  self.match.renderDuringPause = true
 end
 
 function ReplayBrowser:update()

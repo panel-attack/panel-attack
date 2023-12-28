@@ -38,7 +38,7 @@ end
 
 -- connects to a signal so the callback is executed with the data and arguments passed to the signal whenever the signal emits
 function Signal.connectSignal(emitter, signalName, data, callback)
-  assert(emitter.transmitsSignals and emitter.signalSubscriptions, "trying to connect to a table that does not emit signals")
+  assert(emitter.emitsSignals and emitter.signalSubscriptions, "trying to connect to a table that does not emit signals")
   assert(emitter[signalName], "trying to connect to undefined signal " .. signalName)
   --local 
   table.insert(emitter.signalSubscriptions[signalName], {callback = callback, data = data})

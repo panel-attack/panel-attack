@@ -1059,7 +1059,7 @@ end
 
 -- Runs one step of the stack.
 function Stack.run(self)
-  if GAME.gameIsPaused then
+  if self.match.isPaused then
     return
   end
 
@@ -1883,7 +1883,7 @@ function Stack.behindRollback(self)
 end
 
 function Stack.shouldChangeMusic(self)
-  local result = not GAME.gameIsPaused and not GAME.preventSounds
+  local result = not self.match.isPaused and not GAME.preventSounds
 
   if result then
     if self:game_ended() or self.canvas == nil then

@@ -141,6 +141,7 @@ function Replay.finalizeReplay(match, replay)
   for i = 1, #match.players do
     replay.players[i].settings.inputs = compress_input_string(table.concat(match.players[i].stack.confirmedInput))
   end
+  replay.incomplete = match.aborted
 end
 
 -- writes a replay file of the given path and filename

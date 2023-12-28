@@ -51,6 +51,8 @@ Match =
     self.seed = math.random(1,9999999)
     self.isFromReplay = false
     self.startTimestamp = os.time(os.date("*t"))
+    self.isPaused = false
+    self.renderDuringPause = false
 
     self.time_quads = {}
 
@@ -95,6 +97,10 @@ function Match:gameEndedClockTime()
   return result
 end
 
+-- returns the players that won the match in a table
+-- returns a single winner if there was a clear winner
+-- returns multiple winners if there was a tie (or the game mode had no win conditions)
+-- returns an empty table if there was no winner due to the game not finishing / getting aborted
 function Match:getWinners()
   if self.winners then
     return self.winners
@@ -246,68 +252,66 @@ function Match:debugCheckDivergence()
 end
 
 function Match:run()
-  if GAME.gameIsPaused then
+  if self.isPaused or self.aborted or self:hasEnded() then
     return
   end
 
   local startTime = love.timer.getTime()
 
-  if not self:hasEnded() then
-    local checkRun = {}
+  local checkRun = {}
 
-    for i = 1, #self.players do
-      local stack = self.players[i].stack
-      checkRun[i] = true
+  for i = 1, #self.players do
+    local stack = self.players[i].stack
+    checkRun[i] = true
 
-      -- if self.players[i].cpu then
-      --   self.players[i].cpu:run(stack)
-      -- end
-
-      if stack and stack.is_local and not stack.game_over --[[and not self.players[i].cpu]] then
-        stack:send_controls()
-      end
-    end
-
-    local runsSoFar = 0
-    while tableUtils.trueForAny(checkRun, function(b) return b end) do
-      for i = 1, #self.players do
-        local stack = self.players[i].stack
-        if stack and stack:shouldRun(runsSoFar) then
-          stack:run()
-          checkRun[i] = true
-        else
-          checkRun[i] = false
-        end
-      end
-
-      -- Since the stacks can affect each other, don't save rollback until after all have run
-      for i = 1, #self.players do
-        if checkRun[i] then
-          local stack = self.players[i].stack
-          stack:updateFramesBehind()
-          stack:saveForRollback()
-        end
-      end
-
-      --   if self.simulatedOpponent then
-      --     self.simulatedOpponent:run()
-      --   end
-
-      self:debugCheckDivergence()
-
-      runsSoFar = runsSoFar + 1
-    end
-
-    -- for i = 1, #self.players do
-    --   local stack = self.players[i].stack
-    --   if stack and stack.is_local not stack.game_over then
-    --     assert(#stack.input_buffer == 0, "Local games should always simulate all inputs")
-    --   end
+    -- if self.players[i].cpu then
+    --   self.players[i].cpu:run(stack)
     -- end
 
-    if self:hasEnded() then
-      self:handleMatchEnd()
+    if stack and stack.is_local and not stack.game_over --[[and not self.players[i].cpu]] then
+      stack:send_controls()
     end
+  end
+
+  local runsSoFar = 0
+  while tableUtils.trueForAny(checkRun, function(b) return b end) do
+    for i = 1, #self.players do
+      local stack = self.players[i].stack
+      if stack and stack:shouldRun(runsSoFar) then
+        stack:run()
+        checkRun[i] = true
+      else
+        checkRun[i] = false
+      end
+    end
+
+    -- Since the stacks can affect each other, don't save rollback until after all have run
+    for i = 1, #self.players do
+      if checkRun[i] then
+        local stack = self.players[i].stack
+        stack:updateFramesBehind()
+        stack:saveForRollback()
+      end
+    end
+
+    --   if self.simulatedOpponent then
+    --     self.simulatedOpponent:run()
+    --   end
+
+    self:debugCheckDivergence()
+
+    runsSoFar = runsSoFar + 1
+  end
+
+  -- for i = 1, #self.players do
+  --   local stack = self.players[i].stack
+  --   if stack and stack.is_local not stack.game_over then
+  --     assert(#stack.input_buffer == 0, "Local games should always simulate all inputs")
+  --   end
+  -- end
+
+  if self:hasEnded() then
+    self:handleMatchEnd()
   end
 
   local endTime = love.timer.getTime()
@@ -511,13 +515,12 @@ function Match.createFromReplay(replay, supportsPause)
 end
 
 function Match:abort()
-  if GAME.battleRoom and GAME.battleRoom.match == self then
-    
-  end
+  self.aborted = true
+  self:handleMatchEnd()
 end
 
 function Match:hasEnded()
-    local aliveCount = 0
+  local aliveCount = 0
   local deadCount = 0
   for i = 1, #self.players do
     if self.players[i].stack.game_over then
@@ -537,34 +540,70 @@ function Match:hasEnded()
     -- everyone died, match is over!
     return true
   end
+
+  if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+    self.aborted = true
+    self.desyncError = true
+    return true
+  end
 end
 
-function Match:handleMatchEnd(aborted)
+function Match:handleMatchEnd()
   -- finalize the replay for saving
+  self:checkAborted()
   Replay.finalizeReplay(self, self.replay)
 
-  if not aborted then
-    -- determine result
+  if not self.aborted then
     local winners = self:getWinners()
-    -- play win sfx (or not)
+    -- determine result
+    -- play win sfx
     for i = 1, #winners do
       winners[i].stack:pick_win_sfx():play()
     end
     if #winners == 1 then
-      -- increment win count on winning player if there is only one
-      winners[1]:incrementWinCount()
       -- ideally this would be public player id
       self.replay.winnerIndex = tableUtils.indexOf(self.players, function(p) return p.name == winners[1].name end)
     end
-  else
-    self.replay.incomplete = true
   end
-
 
   -- execute callbacks
   self:onMatchEnded()
 end
 
--- callbacks to implement!
-function Match:onMatchEnded()
+function Match:checkAborted()
+  -- the aborted flag may get set if the game is aborted through outside causes (usually network)
+  -- this function checks if the match got aborted through inside causes (local player abort or local desync)
+  if not self.aborted then
+    if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+      -- someone got a desync error, this definitely died
+      self.aborted = true
+      self.winners = {}
+    elseif tableUtils.contains(self.winConditions, GameModes.WinConditions.LAST_ALIVE) then
+      local alive = 0
+      for i = 1, #self.players do
+        if not self.players[i].stack.game_over then
+          alive = alive + 1
+        end
+        -- if there is more than 1 alive with a last alive win condition, this must have been aborted
+        if alive > 1 then
+          self.aborted = true
+          self.winners = {}
+          break
+        end
+      end
+    else
+      -- if this is not last alive and no desync that means we expect EVERY stack to be game over
+      if tableUtils.trueForAny(self.players, function(p) return not p.stack.game_over end) then
+        -- someone didn't game_over so this got aborted (e.g. through a pause -> leave)
+        self.aborted = true
+        self.winners = {}
+      end
+    end
+  end
+
+  return self.aborted
+end
+
+function Match:togglePause()
+  self.isPaused = not self.isPaused
 end

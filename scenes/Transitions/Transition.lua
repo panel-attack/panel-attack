@@ -1,4 +1,6 @@
 local class = require("class")
+local UiElement = require("ui.UIElement")
+local consts = require("consts")
 
 -- A transition, or more specifically a scene transition represents an object that handles going from one scene to the next
 -- For the duration of handover, the transition is responsible for handling both update and draw calls on the scenes
@@ -10,6 +12,8 @@ local Transition = class(function(transition, startTime, duration, oldScene, new
   transition.progress = 0
   transition.oldScene = oldScene
   transition.newScene = newScene
+  transition.uiRoot = UiElement({x = 0, y = 0, width = consts.CANVAS_WIDTH, height = consts.CANVAS_HEIGHT})
+
 end)
 
 function Transition:update(dt)
@@ -19,7 +23,7 @@ function Transition:update(dt)
 end
 
 function Transition:updateScenes(dt)
-  error("A transition must implement an updateScenes function")
+  -- error("A transition should probably implement an updateScenes function")
 end
 
 function Transition:draw()

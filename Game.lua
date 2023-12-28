@@ -41,8 +41,6 @@ local Game = class(
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
-    self.gameIsPaused = false -- game can be paused while playing on local
-    self.renderDuringPause = false -- if the game can render when you are paused
     self.gfx_q = Queue()
     self.tcpClient = TcpClient()
     self.server_queue = ServerQueue()
@@ -355,8 +353,6 @@ function Game:clearMatch()
 end
 
 function Game:reset()
-  self.gameIsPaused = false
-  self.renderDuringPause = false
   self.preventSounds = false
   self.currently_paused_tracks = {}
   self.muteSoundEffects = false

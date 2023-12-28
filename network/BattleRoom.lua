@@ -217,6 +217,16 @@ function BattleRoom:runNetworkTasks()
   end
 end
 
+function BattleRoom:reportLocalGameResult(winners)
+  if #winners == 2 then
+    -- we need to translate the result for the server to understand it
+    -- two winners means a draw which the server thinks of as 0
+    GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(0))
+  elseif #winners == 1 then
+    GAME.tcpClient:sendRequest(ClientMessages.reportLocalGameResult(winners[1].playerNumber))
+  end
+end
+
 function BattleRoom:shutdownNetwork()
   GAME.tcpClient.receivedMessageQueue:clear()
   if self.online and GAME.tcpClient:isConnected() then

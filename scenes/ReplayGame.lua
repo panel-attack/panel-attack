@@ -30,7 +30,7 @@ function ReplayGame:customRun()
   -- If we just finished a frame advance, pause again
   if self.frameAdvance then
     self.frameAdvance = false
-    GAME.gameIsPaused = true
+    self.match.isPaused = true
   end
 
   local playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
@@ -38,7 +38,7 @@ function ReplayGame:customRun()
   -- Advance one frame
   if input:isPressedWithRepeat("FrameAdvance", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
     self.frameAdvance = true
-    GAME.gameIsPaused = false
+    self.match.isPaused = false
     if self.match.P1 then
       self.match.P1.max_runs_per_frame = 1
     end
@@ -65,7 +65,7 @@ function ReplayGame:customRun()
     end
   end
 
-  if playbackSpeed < 0 and not GAME.gameIsPaused then
+  if playbackSpeed < 0 and not self.match.isPaused then
     if self.match.P1 and self.match.P1.clock > 0 and self.match.P1.prev_states[match.P1.clock-1] then
       self.match.P1:rollbackToFrame(match.P1.clock + playbackSpeed)
       self.match.P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup

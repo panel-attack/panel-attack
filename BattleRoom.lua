@@ -8,6 +8,7 @@ local ServerMessages = require("network.ServerMessages")
 local ClientMessages = require("network.ClientProtocol")
 local ReplayV1 = require("replayV1")
 local Signal = require("helpers.signal")
+local MessageTransition = require("scenes.Transitions.MessageTransition")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom = class(function(self, mode)
@@ -21,8 +22,9 @@ BattleRoom = class(function(self, mode)
   self.ranked = false
   self.puzzles = {}
   self.state = 1
+  self.matchesPlayed = 0
   if GAME.tcpClient:isConnected() then
-    -- this is a bit naive but effective
+    -- this is a bit naive but effective for now
     self.online = true
   end
 end)
@@ -174,13 +176,6 @@ function BattleRoom:createMatch()
   Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
 
   return self.match
-end
-
-
-function BattleRoom:onMatchEnded()
-  self.state = BattleRoom.states.Setup
-  local winners = self.match:getWinners()
-  -- apply wins and possibly statistical data up for collection
 end
 
 -- creates a new Player based on their minimum information and adds them to the BattleRoom
@@ -382,6 +377,55 @@ function BattleRoom:shutdown()
   GAME:initializeLocalPlayer()
   GAME.battleRoom = nil
   self = nil
+end
+
+function BattleRoom:onMatchEnded(match)
+  self.matchesPlayed = self.matchesPlayed + 1
+
+  if not match.aborted then
+    local winners = match:getWinners()
+    -- apply wins and possibly statistical data up for collection
+    if #winners == 1 then
+      -- increment win count on winning player if there is only one
+      winners[1]:incrementWinCount()
+    end
+    if self.online and match:hasLocalPlayer() then
+      self:reportLocalGameResult(winners)
+    end
+
+    self.state = BattleRoom.states.Setup
+  else
+    match:deinit()
+    -- in the case of a network based abort, the network part of the battleRoom would unsubscribe from the onMatchEnded signal
+    -- and initialise the transition to wherever else before calling abort on the match to finalize it
+    -- that means whenever we land here, it was a match-side local abort that leaves the room intact
+    local setupScene = sceneManager:createScene(self.mode.setupScene)
+    if match.desyncError then
+      -- match could have a desync error
+      -- -> back to select screen, battleRoom stays intact
+      -- ^ this behaviour is different to the past but until the server tells us the room is dead there is no reason to assume it to be dead
+      sceneManager:switchToScene(setupScene, MessageTransition(GAME.timer, 5, sceneManager.activeScene, setupScene, "ss_latency_error"))
+    else
+      -- local player could pause and leave
+      -- -> back to select screen, battleRoom stays intact
+      sceneManager:switchToScene(setupScene)
+    end
+    self.match = nil
+    self.state = BattleRoom.states.Setup
+
+    -- abort could come from network messages:
+    -- server sends message for the next match before the current one finished catching up
+    -- -> start the new match; we don't really want to handle this match end at all, not even abort it
+    -- -> just overwrite the transition catching up to the match with a new transition
+    -- -> deinit the old match, overwrite the reference to it with the new one and leave it for the garbage collector
+
+    -- server sends leaveRoom message for the other player
+    -- -> if we're the last remaining player in the room, close the room and back to lobby
+    -- local client failed to process network messages
+    -- -> we disconnected locally; close the room, then either try to go into lobby to reconnect or go to main menu
+    -- assuming lobby handles connection state sensibly, just returning to lobby should be fine
+  end
+
 end
 
 return BattleRoom

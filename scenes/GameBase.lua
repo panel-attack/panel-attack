@@ -20,7 +20,6 @@ local GameBase = class(
     self.nextSceneParams = {}
     
     -- set in load
-    self.shouldAbortGame = false
     self.text = ""
     self.winnerSFX = nil
     self.keepMusic = false
@@ -118,7 +117,6 @@ function GameBase:load(sceneParams)
   self.S2 = self.match.players[2] and self.match.players[2].stack or nil
 
   leftover_time = 1 / 120
-  self.shouldAbortGame = false
   self.loadStageAndMusic = true
   if sceneParams.loadStageAndMusic ~= nil then
     self.loadStageAndMusic = sceneParams.loadStageAndMusic
@@ -136,13 +134,13 @@ function GameBase:drawForeground()
 end
 
 function GameBase:handlePause()
-  if self.match.supportsPause and (input.isDown["MenuPause"] or (not GAME.focused and not GAME.gameIsPaused)) then
-    if GAME.gameIsPaused then
+  if self.match.supportsPause and (input.isDown["MenuPause"] or (not GAME.focused and not self.match.isPaused)) then
+    if self.match.isPaused then
       self:initializeFrameInfo()
     end
-    GAME.gameIsPaused = not GAME.gameIsPaused
+    self.match:togglePause()
 
-    setMusicPaused(GAME.gameIsPaused)
+    setMusicPaused(self.match.isPaused)
     Menu.playValidationSfx()
   end
 end
@@ -246,13 +244,9 @@ function GameBase:runGame(dt)
 
   self:handlePause()
 
-  if GAME.gameIsPaused and input.isDown["MenuEsc"] then
-    self:abortGame()
+  if self.match.isPaused and input.isDown["MenuEsc"] then
     Menu.playCancelSfx()
-    self.shouldAbortGame = true
-  end
-
-  if self.shouldAbortGame then
+    self.match:abort()
     return
   end
 
