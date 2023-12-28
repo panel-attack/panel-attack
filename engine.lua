@@ -2576,7 +2576,7 @@ function Stack:makeStartingBoardPanels()
   -- in the starting board, due to the board having 0s, in the top row it may not be possible for assignMetalLocations to find a placement
   -- in that case it would try that line the next time (and fail) and while doing that, advance the RNG
   -- to prevent that, convert the first number to its letter equivalent
-  if not string.match(ret:sub(1, self.width), "%s") then
+  if not string.match(ret:sub(1, self.width), "%a") then
     local char = ret:sub(1, 1)
     ret = ret:gsub(ret:sub(1, 1), PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[tonumber(char)], 1)
   end

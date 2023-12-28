@@ -252,7 +252,7 @@ function Match:debugCheckDivergence()
 end
 
 function Match:run()
-  if self.isPaused or self.aborted or self:hasEnded() then
+  if self.isPaused or self:hasEnded() then
     return
   end
 
@@ -520,6 +520,10 @@ function Match:abort()
 end
 
 function Match:hasEnded()
+  if self.aborted then
+    return true
+  end
+
   local aliveCount = 0
   local deadCount = 0
   for i = 1, #self.players do
@@ -546,6 +550,8 @@ function Match:hasEnded()
     self.desyncError = true
     return true
   end
+
+  return false
 end
 
 function Match:handleMatchEnd()

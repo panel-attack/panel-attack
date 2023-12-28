@@ -98,3 +98,19 @@ local function testStackStartingBoard2()
 end
 
 testStackStartingBoard2()
+
+local function testStackStartingBoard3()
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
+  local player = battleRoom.players[1]
+  player:setStyle(GameModes.Styles.MODERN)
+  player:setLevel(10)
+
+  local stack = player:createStackFromSettings(battleRoom:createMatch())
+  -- this seed tests for a certain bug that occured when the first character was a possible metal location for generating the starting board
+  -- you'd think testStackStartingBoard2 would catch that as it starts with J too but it did not, don't ask me why
+  stack.match:setSeed(351545)
+  stack.panel_buffer = stack:makeStartingBoardPanels()
+  assert(stack.panel_buffer == "c0D000505000D0f4005F310115D21e3d23F4e6462A")
+end
+
+testStackStartingBoard3()

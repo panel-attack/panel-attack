@@ -20,12 +20,10 @@ local function finishedMatchForPath(path)
   assert(match.players ~= nil)
 
   if #match.players > 1 then
-    local matchOutcome = match:getOutcome()
     local lastClock = -1
-    while matchOutcome == nil and lastClock ~= match.P1.clock do
+    while not match:hasEnded() and lastClock ~= match.P1.clock do
       lastClock = match.P1.clock
       match:run()
-      matchOutcome = match:getOutcome()
     end
 
     stop_the_music()
