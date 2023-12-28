@@ -257,7 +257,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
       logger.debug("committing chain at " .. time_to_check)
       ready_garbage[#ready_garbage+1] = subject.garbage_queue:pop()
     else 
-      logger.debug("could be chaining or stopper")
+      logger.trace("could be chaining or stopper")
       --there was a stopper here or their chain could still be going, stop and return.
       if ready_garbage[1] then
         return ready_garbage

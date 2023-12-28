@@ -52,7 +52,7 @@ function Replay.createNewReplay(match)
     end
   end
 
-  match.replay = replay
+  match.replay = result
 
   return result
 end
