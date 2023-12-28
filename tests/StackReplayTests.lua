@@ -3,6 +3,7 @@ local tableUtils = require("tableUtils")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
 local GameModes = require("GameModes")
+local logger = require("logger")
 
 local function test(func)
   func()
@@ -23,6 +24,7 @@ local function testChainingPropagationThroughSwap1()
   assert(match.P2.panels[5][5].matchAnyway == true)
 end
 
+logger.info("running testChainingPropagationThroughSwap1")
 test(testChainingPropagationThroughSwap1)
 
 local function testHoverInheritanceOverSwapOverGarbageHover()
@@ -42,6 +44,7 @@ local function testHoverInheritanceOverSwapOverGarbageHover()
   assert(match.P2.panels[10][4].timer == 13)
 end
 
+logger.info("running testHoverInheritanceOverSwapOverGarbageHover")
 test(testHoverInheritanceOverSwapOverGarbageHover)
 
 local function testFirstHoverFrameMatch()
@@ -59,6 +62,7 @@ local function testFirstHoverFrameMatch()
   assert(match.P1.combos[4269][1].width == 5)
 end
 
+logger.info("running testFirstHoverFrameMatch")
 test(testFirstHoverFrameMatch)
 
 local function testHoverChainOverGarbageClear()
@@ -86,6 +90,7 @@ local function testHoverChainOverGarbageClear()
   assert(match.P2.game_over == true, "P2 should have died here")
 end
 
+logger.info("running testHoverChainOverGarbageClear")
 test(testHoverChainOverGarbageClear)
 
 local function horizontalSwapIntoHoverTest()
@@ -113,6 +118,7 @@ local function horizontalSwapIntoHoverTest()
   assert(match.P2.chain_counter == 0, "chain counter should reset here as all other falling panels lost their chaining status by now")
 end
 
+logger.info("running horizontalSwapIntoHoverTest")
 test(horizontalSwapIntoHoverTest)
 
 local function basicEndlessTest()
@@ -128,8 +134,8 @@ local function basicEndlessTest()
   assert(match.P1.difficulty == 3)
 end
 
+logger.info("running basicEndlessTest")
 test(basicEndlessTest)
-
 
 local function basicTimeAttackTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2022-09-12-04-02-30-Spd11-Dif1-timeattack.txt")
@@ -147,8 +153,8 @@ local function basicTimeAttackTest()
   assert(tableUtils.length(match.P1.combos) == 4)
 end
 
+logger.info("running basicTimeAttackTest")
 test(basicTimeAttackTest)
-
 
 local function basicVsTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
@@ -167,6 +173,7 @@ local function basicVsTest()
   assert(match.P1:gameResult() == -1)
 end
 
+logger.info("running basicVsTest")
 test(basicVsTest)
 
 --the above replay did not succeed in throwing errors for some of the bugs I coded in during the checkMatches refactor
@@ -188,6 +195,7 @@ local function basicVsTest2()
   assert(match.P1:gameResult() == -1)
 end
 
+logger.info("running basicVsTest2")
 test(basicVsTest2)
 
 local function noInputsInVsIsDrawTest()
@@ -207,6 +215,7 @@ local function noInputsInVsIsDrawTest()
   assert(match.P1:gameResult() == 0)
 end
 
+logger.info("running noInputsInVsIsDrawTest")
 test(noInputsInVsIsDrawTest)
 
 -- Tests a bunch of different frame specific tricks and makes sure we still end at the expected time.
@@ -225,6 +234,7 @@ local function frameTricksTest()
   assert(tableUtils.length(match.P1.combos) == 7)
 end
 
+logger.info("running frameTricksTest")
 test(frameTricksTest)
 
 -- Tests a catch that also did a "sync" (two separate matches on the same frame)
@@ -245,6 +255,7 @@ local function catchAndSyncTest()
   assert(match.P1:gameResult() == 1)
 end
 
+logger.info("running catchAndSyncTest")
 test(catchAndSyncTest)
 
 -- Moving the cursor before ready is done
@@ -290,6 +301,7 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   assert(match.P1.cur_col == 3)
 end
 
+logger.info("running movingBeforeInPositionDisallowedPriorToTouch")
 test(movingBeforeInPositionDisallowedPriorToTouch)
 
 -- Test that down stacking under garbage makes everything fall even if panels are sandwiched between.
@@ -320,7 +332,9 @@ local function downStackDropsSandwichedGarbageAllTogether()
   assert(match.P2.panels[8][4].isGarbage == true)
 end
 
+logger.info("running downStackDropsSandwichedGarbageAllTogether")
 test(downStackDropsSandwichedGarbageAllTogether)
+
 -- Test that a match that touches metal and a garbage block that also matches the metal still clears the whole metal
 local function matchMetalAndGarbageClearsAllMetalTest()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "matchMetalAndGarbageClearsAllMetal.txt")
@@ -351,6 +365,7 @@ local function matchMetalAndGarbageClearsAllMetalTest()
   assert(match.P1.panels[8][6].state == "matched")
 end
 
+logger.info("running matchMetalAndGarbageClearsAllMetalTest")
 test(matchMetalAndGarbageClearsAllMetalTest)
 
 -- Test that a panel that is still falling when it starts hovering doesn't get the chain flag.
@@ -382,4 +397,5 @@ local function fallingWhileHoverBeginsDoesNotChain()
   assert(match.P2.panels[7][3].chaining == true)
 end
 
+logger.info("running fallingWhileHoverBeginsDoesNotChain")
 test(fallingWhileHoverBeginsDoesNotChain)
