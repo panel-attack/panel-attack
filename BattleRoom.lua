@@ -31,7 +31,7 @@ end)
 
 -- defining these here so they're available in network.BattleRoom too
 -- maybe splitting BattleRoom wasn't so smart after all
-BattleRoom.states = { Setup = 1, MatchInProgress = 2, Issue = 3 }
+BattleRoom.states = { Setup = 1, MatchInProgress = 2 }
 
 
 function BattleRoom.createFromMatch(match)
@@ -257,12 +257,7 @@ end
 function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   -- TODO: lock down configuration to one per player to avoid macro like abuses via multiple configs
 
-  local match
-  if not self.match then
-    match = self:createMatch()
-  else
-    match = self.match
-  end
+  local match = self:createMatch()
 
   match.replay = replayOfMatch
   match:setStage(stageId)
@@ -373,12 +368,18 @@ function BattleRoom:shutdown()
     -- this is mostly to clear the input configs for future use
     player:unrestrictInputs()
   end
+  if self.match then
+    self.match:deinit()
+    self.match = nil
+  end
   self:shutdownNetwork()
   GAME:initializeLocalPlayer()
   GAME.battleRoom = nil
   self = nil
 end
 
+-- a callback function that is getting registered to the Match:onMatchEnded signal
+-- may get unregistered from the match in case of abortion
 function BattleRoom:onMatchEnded(match)
   self.matchesPlayed = self.matchesPlayed + 1
 
@@ -392,9 +393,8 @@ function BattleRoom:onMatchEnded(match)
     if self.online and match:hasLocalPlayer() then
       self:reportLocalGameResult(winners)
     end
-
-    self.state = BattleRoom.states.Setup
   else
+  -- match:deinit is the responsibility of the one switching out of the game scene
     match:deinit()
     -- in the case of a network based abort, the network part of the battleRoom would unsubscribe from the onMatchEnded signal
     -- and initialise the transition to wherever else before calling abort on the match to finalize it
@@ -410,22 +410,13 @@ function BattleRoom:onMatchEnded(match)
       -- -> back to select screen, battleRoom stays intact
       sceneManager:switchToScene(setupScene)
     end
-    self.match = nil
-    self.state = BattleRoom.states.Setup
 
-    -- abort could come from network messages:
-    -- server sends message for the next match before the current one finished catching up
-    -- -> start the new match; we don't really want to handle this match end at all, not even abort it
-    -- -> just overwrite the transition catching up to the match with a new transition
-    -- -> deinit the old match, overwrite the reference to it with the new one and leave it for the garbage collector
-
-    -- server sends leaveRoom message for the other player
-    -- -> if we're the last remaining player in the room, close the room and back to lobby
-    -- local client failed to process network messages
-    -- -> we disconnected locally; close the room, then either try to go into lobby to reconnect or go to main menu
-    -- assuming lobby handles connection state sensibly, just returning to lobby should be fine
+    -- other aborts come via network and are directly handled in response to the network message (or lack thereof)
   end
 
+  -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference
+  self.match = nil
+  self.state = BattleRoom.states.Setup
 end
 
 return BattleRoom

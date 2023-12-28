@@ -549,8 +549,8 @@ function Match:hasEnded()
 end
 
 function Match:handleMatchEnd()
-  -- finalize the replay for saving
   self:checkAborted()
+  -- this prepares everything about the replay except the save location
   Replay.finalizeReplay(self, self.replay)
 
   if not self.aborted then
