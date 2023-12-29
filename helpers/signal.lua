@@ -15,7 +15,7 @@ function Signal.addSignal(t, signalName)
 
   t.signalSubscriptions[signalName] = {}
   local emissionFunc = function(...)
-    for subscriber, callback in ipairs(t.signalSubscriptions[signalName]) do
+    for subscriber, callback in pairs(t.signalSubscriptions[signalName]) do
       callback(subscriber, ...)
     end
   end

@@ -119,8 +119,6 @@ function ReplayBrowser:load()
 
   state = "browser"
   updateBrowsingPath()
-
-  self.match.renderDuringPause = true
 end
 
 function ReplayBrowser:update()
@@ -153,7 +151,9 @@ function ReplayBrowser:update()
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene(ReplayGame({match = Match.createFromReplay(selectedReplay, false)}))
+      local match = Match.createFromReplay(selectedReplay, false)
+      match.renderDuringPause = true
+      sceneManager:switchToScene(ReplayGame({match = match}))
     end
   end
 end

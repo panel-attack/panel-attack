@@ -19,7 +19,7 @@ function Replay.createNewReplay(match)
   result.replayVersion = REPLAY_VERSION
   result.seed = match.seed
   result.ranked = match_type == "Ranked"
-  result.stage = match.stageId
+  result.stageId = match.stageId
   result.gameMode = {
     stackInteraction = match.stackInteraction,
     winConditions = match.winConditions or {},
@@ -137,7 +137,7 @@ end
 
 function Replay.finalizeReplay(match, replay)
   replay = Replay.addAnalyticsDataToReplay(match, replay)
-  replay.stage = current_stage
+  replay.stageId = current_stage
   for i = 1, #match.players do
     replay.players[i].settings.inputs = compress_input_string(table.concat(match.players[i].stack.confirmedInput))
   end
