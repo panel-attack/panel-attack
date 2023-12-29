@@ -539,13 +539,21 @@ function Match:hasEnded()
     if aliveCount == 1 and gameEndedClockTime then
       -- make sure everyone has run to the currently known game over clock
       -- because if they haven't they might still go gameover before that time
-      if tableUtils.trueForAll(self.players, function(p) return p.clock and p.clock >= gameEndedClockTime end) then
+      if tableUtils.trueForAll(self.players, function(p) return p.stack.clock and p.stack.clock >= gameEndedClockTime end) then
         return true
       end
     end
-  elseif deadCount == #self.players then
+  end
+
+  if deadCount == #self.players then
     -- everyone died, match is over!
     return true
+  end
+
+  if self.timeLimit then
+    if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch > TIME_ATTACK_TIME * 60 end) then
+      return true
+    end
   end
 
   if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then

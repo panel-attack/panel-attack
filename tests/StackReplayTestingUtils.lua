@@ -53,10 +53,8 @@ end
 function StackReplayTestingUtils:fullySimulateMatch(match)
   local startTime = love.timer.getTime()
 
-  local gameResult = match.P1:gameResult()
-  while gameResult == nil do
+  while not match:hasEnded() do
     match:run()
-    gameResult = match.P1:gameResult()
   end
   local endTime = love.timer.getTime()
 
