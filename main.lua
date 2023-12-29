@@ -207,7 +207,7 @@ function love.errorhandler(msg)
     local detailedErrorLogString = Game.detailedErrorLogString(errorData)
     errorData.detailedErrorLogString = detailedErrorLogString
     if GAME_UPDATER_GAME_VERSION then
-      if GAME.tcpClient:isConnected() then
+      if not GAME.tcpClient:isConnected() then
         GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
       end
       GAME.tcpClient:sendErrorReport(errorData)
