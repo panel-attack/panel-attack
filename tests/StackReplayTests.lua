@@ -169,7 +169,9 @@ local function basicVsTest()
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 4)
   assert(tableUtils.length(match.P2.combos) == 4)
-  assert(match.P1:gameResult() == -1)
+  local winners = match:getWinners()
+  assert(#winners == 1)
+  assert(winners[1].playerNumber == 2)
 end
 
 logger.info("running basicVsTest")
@@ -191,7 +193,9 @@ local function basicVsTest2()
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 5)
   assert(tableUtils.length(match.P2.combos) == 8)
-  assert(match.P1:gameResult() == -1)
+  local winners = match:getWinners()
+  assert(#winners == 1)
+  assert(winners[1].playerNumber == 2)
 end
 
 logger.info("running basicVsTest2")
@@ -211,7 +215,8 @@ local function noInputsInVsIsDrawTest()
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 0)
   assert(tableUtils.length(match.P2.combos) == 0)
-  assert(match.P1:gameResult() == 0)
+  local winners = match:getWinners()
+  assert(#winners == 2)
 end
 
 logger.info("running noInputsInVsIsDrawTest")
@@ -251,7 +256,9 @@ local function catchAndSyncTest()
   assert(match.P2.level == 8)
   assert(tableUtils.length(match.P2.chains) == 2)
   assert(tableUtils.length(match.P2.combos) == 2)
-  assert(match.P1:gameResult() == 1)
+  local winners = match:getWinners()
+  assert(#winners == 1)
+  assert(winners[1].playerNumber == 1)
 end
 
 logger.info("running catchAndSyncTest")

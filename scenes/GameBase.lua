@@ -42,10 +42,6 @@ local GameBase = class(
 
 -- begin abstract functions
 
--- Game mode specific post processing on the final game result (saving scores, replays, etc.)
--- Called during unload()
-function GameBase:processGameResults(gameResult) end
-
 -- Game mode specific game state setup
 -- Called during load()
 function GameBase:customLoad(sceneParams) end

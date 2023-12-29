@@ -100,6 +100,7 @@ end
 function ChallengeMode:recordStageResult(gameResult, gameLength)
   local lastStageIndex = self.currentStageIndex
 
+  -- TODO: gameResult was phased out, needs different if conditions / parameter
   if gameResult > 0 then
     self.nextStageIndex = self.currentStageIndex + 1
   elseif gameResult < 0 then

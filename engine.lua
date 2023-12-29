@@ -1005,8 +1005,7 @@ function Stack.controls(self)
   end
 end
 
-function Stack.shouldRun(self, runsSoFar) 
-
+function Stack.shouldRun(self, runsSoFar)
   -- We want to run after game over to show game over effects.
   if self:game_ended() then
     return runsSoFar == 0
@@ -1039,7 +1038,7 @@ function Stack.shouldRun(self, runsSoFar)
       end
     end
   end
-    
+
   -- If we are not local, we want to run faster to catch up.
   if buffer_len >= 15 - runsSoFar then
     -- way behind, run at max speed.
@@ -1928,85 +1927,32 @@ function Stack.game_ended(self)
     else
       return false
     end
+  else
+    return self.game_over
   end
 
-  local gameEndedClockTime = self.match:gameEndedClockTime()
+  -- local gameEndedClockTime = self.match:gameEndedClockTime()
 
-  if self.match.stackInteraction == GameModes.StackInteractions.HEALTH_ENGINE then
-    if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
-      return true
-    end
-  elseif self.match.timeLimit then
-    if self.game_stopwatch then
-      if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
-        return true
-      end
-    end
-  end
+  -- if self.match.stackInteraction == GameModes.StackInteractions.HEALTH_ENGINE then
+  --   if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
+  --     return true
+  --   end
+  -- elseif self.match.timeLimit then
+  --   if self.game_stopwatch then
+  --     if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
+  --       return true
+  --     end
+  --   end
+  -- end
 
   -- The universal game end condition for everything but puzzles, one of the stacks went game over
   -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
   -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
-  if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-    return true
-  end
+  -- if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
+  --   return true
+  -- end
 
-  return false
-end
-
--- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
-function Stack.gameResult(self)
-  if self:game_ended() == false then
-    return nil
-  end
-
-  local gameEndedClockTime = self.match:gameEndedClockTime()
-
-  if self.match.stackInteraction == GameModes.StackInteractions.HEALTH_ENGINE then
-    if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
-      return 1
-    end
-  end
-
-  if self.match.stackInteraction == GameModes.StackInteractions.SELF then
-    -- can't win against yourself :-(
-    return -1
-  end
-
-  if self.match.stackInteraction == GameModes.StackInteractions.VERSUS then
-    if self.opponentStack:game_ended() then
-      if self.game_over_clock == gameEndedClockTime and self.opponentStack.game_over_clock == gameEndedClockTime then
-        return 0
-      elseif self.game_over_clock == gameEndedClockTime then
-        return -1
-      elseif self.opponentStack.game_over_clock == gameEndedClockTime then
-        return 1
-      end
-    end
-  end
-
-  if self.match.timeLimit and self.game_stopwatch then
-    if self.game_stopwatch > self.match.timeLimit * 60 then
-      -- we didn't die within the time limit so that's a win I guess?
-      return 1
-    end
-  end
-
-  if self.puzzle then
-    if self:puzzle_done() then
-      return 1
-    elseif self:puzzle_failed() then
-      return -1
-    end
-  end
-
-  if #self.match.players == 1 then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return -1
-    end
-  end
-
-  return nil
+  -- return false
 end
 
 -- Sets the current stack as "lost"
