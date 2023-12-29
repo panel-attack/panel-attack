@@ -325,7 +325,7 @@ function Match:getInfo()
   info.stackInteraction = self.stackInteraction
   info.timeLimit = self.timeLimit
   info.doCountdown = self.doCountdown
-  info.stage = current_stage
+  info.stage = self.stageId
   info.stacks = {}
   if self.P1 then
     info.stacks[1] = self.P1:getInfo()

@@ -36,7 +36,7 @@ function ReplayGame:customRun()
   local playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
 
   -- Advance one frame
-  if input:isPressedWithRepeat("FrameAdvance", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
+  if input:isPressedWithRepeat("Swap1", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
     self.frameAdvance = true
     self.match.isPaused = false
     if self.match.P1 then
@@ -45,7 +45,7 @@ function ReplayGame:customRun()
     if self.match.P2 then
       self.match.P2.max_runs_per_frame = 1
     end
-  elseif input:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  elseif input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex + 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
     if self.match.P1 then
@@ -54,7 +54,7 @@ function ReplayGame:customRun()
     if self.match.P2 then
       self.match.P2.max_runs_per_frame = math.max(playbackSpeed, 0)
     end
-  elseif input:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  elseif input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex - 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
     if self.match.P1 then

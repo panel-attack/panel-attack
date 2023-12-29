@@ -29,7 +29,7 @@ function ReplayV1.transform(legacyReplay)
   r.replayVersion = 1
   r.seed = v1r.seed
   r.ranked = v1r.match_type == "Ranked"
-  r.stageId = v1r.stage
+  r.stageId = v1r.stage or random_stage_special_value
   r.gameMode = {
     stackInteraction = gameMode.stackInteraction,
     winConditions = gameMode.winConditions,
