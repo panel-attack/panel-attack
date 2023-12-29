@@ -1209,43 +1209,37 @@ end
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
 function Stack.shouldPlayDangerMusic(self)
-  if self.match.timeLimit then
-    if self.game_stopwatch > TIME_ATTACK_TIME * 60 - 900 --[[15 seconds assuming 60 FPS]] then
-      return true
+  if not self.danger_music then
+    -- currently playing normal music
+    for row = self.height - 2, self.height do
+      local panelRow = self.panels[row]
+      for column = 1, self.width do
+        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
+          if self.shake_time > 0 then
+            return false
+          else
+            return true
+          end
+        end
+      end
     end
   else
-    if not self.danger_music then
-      -- currently playing normal music
-      for row = self.height - 2, self.height do
-        local panelRow = self.panels[row]
+    --currently playing danger
+    local minRowForDangerMusic = self.height - 2
+    if config.danger_music_changeback_delay then
+      minRowForDangerMusic = self.height - 3
+    end
+    for row = minRowForDangerMusic, self.height do
+      local panelRow = self.panels[row]
+      if panelRow ~= nil and type(panelRow) == "table" then
         for column = 1, self.width do
-          if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
-            if self.shake_time > 0 then
-              return false
-            else
-              return true
-            end
+          if panelRow[column].color ~= 0 then
+            return true
           end
         end
-      end
-    else
-      --currently playing danger
-      local minRowForDangerMusic = self.height - 2
-      if config.danger_music_changeback_delay then
-        minRowForDangerMusic = self.height - 3
-      end
-      for row = minRowForDangerMusic, self.height do
-        local panelRow = self.panels[row]
-        if panelRow ~= nil and type(panelRow) == "table" then
-          for column = 1, self.width do
-            if panelRow[column].color ~= 0 then
-              return true
-            end
-          end
-        elseif self.warningsTriggered["Panels Invalid"] == nil then
-          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
-          self.warningsTriggered["Panels Invalid"] = true
-        end
+      elseif self.warningsTriggered["Panels Invalid"] == nil then
+        logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+        self.warningsTriggered["Panels Invalid"] = true
       end
     end
   end
@@ -1744,32 +1738,6 @@ function Stack.behindRollback(self)
 
   return false
 end
-
-function Stack.shouldChangeMusic(self)
-  local result = not self.match.isPaused and not GAME.muteSoundEffects
-
-  if result then
-    if self:game_ended() or self.canvas == nil then
-      result = false
-    end
-
-    -- If we are still catching up from rollback don't play sounds again
-    if self:behindRollback() then
-      result = false
-    end
-
-    if self.play_to_end then
-      result = false
-    end
-
-    if self.opponentStack and self.opponentStack.play_to_end then
-      result = false
-    end
-  end
-
-  return result
-end
-
 
 function Stack:canPlaySfx()
   -- this should be superfluous because there is no code being run that would play sfx

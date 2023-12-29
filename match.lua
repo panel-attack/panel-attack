@@ -372,6 +372,11 @@ function Match:updateMusic()
     -- but only if we actually have danger music
     local wantsDangerMusic = self.musicSource.musics["danger_music"] and tableUtils.trueForAny(self.players, function(p) return p.stack.danger_music end)
 
+    if self.timeLimit and not wantsDangerMusic then
+      -- danger music is played during panic time even if none is in danger
+      wantsDangerMusic = self.musicSource.musics["danger_music"] and self.clock >= self.panicTickStartTime
+    end
+
     if self.musicSource.music_style == "dynamic" then
       local fadeLength = 60
       if not self.fade_music_clock then
