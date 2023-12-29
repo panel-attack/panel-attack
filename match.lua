@@ -302,6 +302,7 @@ function Match:run()
   end
 
   self:playCountdownSfx()
+  self:playTimeLimitDepletingSfx()
   local endTime = love.timer.getTime()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
@@ -318,7 +319,7 @@ function Match:updateClock()
 end
 
 function Match:playCountdownSfx()
-  if self.doCountdown then
+  if not GAME.muteSoundEffects and self.doCountdown then
     if self.clock < 200 then
       local tickIndex = math.floor(self.clock / 60)
       if not self.ticksPlayed[tickIndex] then
@@ -336,7 +337,17 @@ function Match:playCountdownSfx()
 end
 
 function Match:playTimeLimitDepletingSfx()
-
+  if not GAME.muteSoundEffects and self.timeLimit then
+    -- have to account for countdown
+    if self.clock >= self.panicTickStartTime then
+      local tickIndex = math.ceil((self.clock - self.panicTickStartTime) / 60)
+      if self.panicTicksPlayed[tickIndex] == false then
+        themes[config.theme].sounds.countdown:stop()
+        themes[config.theme].sounds.countdown:play()
+        self.panicTicksPlayed[tickIndex] = true
+      end
+    end
+  end
 end
 
 function Match:getInfo()
@@ -447,6 +458,11 @@ function Match:start()
     self.panicTicksPlayed = {}
     for i = 1, 15 do
       self.panicTicksPlayed[i] = false
+    end
+
+    self.panicTickStartTime = (self.timeLimit - 15) * 60
+    if self.doCountdown then
+      self.panicTickStartTime = self.panicTickStartTime + 180
     end
   end
 

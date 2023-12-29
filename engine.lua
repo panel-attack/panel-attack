@@ -1675,15 +1675,15 @@ function Stack.simulate(self)
       end
       if SFX_Countdown_Play == 1 then
         if self.which == 1 then
-          self.theme.sounds.countdown:stop()
-          self.theme.sounds.countdown:play()
+          -- self.theme.sounds.countdown:stop()
+          -- self.theme.sounds.countdown:play()
         end
         SFX_Countdown_Play = 0
       end
       if SFX_Go_Play == 1 then
         if self.which == 1 then
-          self.theme.sounds.go:stop()
-          self.theme.sounds.go:play()
+          -- self.theme.sounds.go:stop()
+          -- self.theme.sounds.go:play()
         end
         SFX_Go_Play = 0
       end
