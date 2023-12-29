@@ -1643,16 +1643,6 @@ function Stack.simulate(self)
       end
     end
 
-    -- In time attack, play countdown sound every second when there's 15 seconds left
-    if  self.match.timeLimit and
-        self.game_stopwatch and
-        self.game_stopwatch >= TIME_ATTACK_TIME * 60 - 900 and
-        self.game_stopwatch % 60 == 0 and 
-        self.game_stopwatch ~= TIME_ATTACK_TIME * 60 and           -- don't play on the last frame
-        self:shouldChangeSoundEffects() then
-      SFX_Countdown_Play = 1
-    end
-
     -- Update Sound FX
     if self:shouldChangeSoundEffects() then
       if SFX_Swap_Play == 1 then
@@ -1672,20 +1662,6 @@ function Stack.simulate(self)
         self.theme.sounds.land:stop()
         self.theme.sounds.land:play()
         self.sfx_land = false
-      end
-      if SFX_Countdown_Play == 1 then
-        if self.which == 1 then
-          -- self.theme.sounds.countdown:stop()
-          -- self.theme.sounds.countdown:play()
-        end
-        SFX_Countdown_Play = 0
-      end
-      if SFX_Go_Play == 1 then
-        if self.which == 1 then
-          -- self.theme.sounds.go:stop()
-          -- self.theme.sounds.go:play()
-        end
-        SFX_Go_Play = 0
       end
       if self.combo_chain_play then
         -- stop ongoing landing sound
@@ -1813,14 +1789,6 @@ function Stack:runCountDownIfNeeded()
         self.countdown_timer = nil
         self.countdown_clock = nil
         self.game_stopwatch_running = true
-        if self.which == 1 and self:shouldChangeSoundEffects() then
-          SFX_Go_Play = 1
-        end
-      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
-        --play beep for timer dropping to next second in 3-2-1 countdown
-        if self.which == 1 and self:shouldChangeSoundEffects() then
-          SFX_Countdown_Play = 1
-        end
       end
       if self.countdown_timer then
         self.countdown_timer = self.countdown_timer - 1
