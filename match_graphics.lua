@@ -193,11 +193,9 @@ function Match:render()
     drawY = drawY + padding
     gprintf("Seed " .. self.seed, drawX, drawY)
 
-    local gameEndedClockTime = self:gameEndedClockTime()
-
-    if gameEndedClockTime > 0 then
+    if self.gameOverClock > 0 then
       drawY = drawY + padding
-      gprintf("gameEndedClockTime " .. gameEndedClockTime, drawX, drawY)
+      gprintf("gameOverClock " .. self.gameOverClock, drawX, drawY)
     end
 
     -- drawY = drawY + padding

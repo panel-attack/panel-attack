@@ -53,6 +53,7 @@ Match =
     self.startTimestamp = os.time(os.date("*t"))
     self.isPaused = false
     self.renderDuringPause = false
+    self.clock = 0
 
     self.time_quads = {}
 
@@ -79,22 +80,6 @@ end
 
 function Match:addPlayer(player)
   self.players[#self.players+1] = player
-end
-
-function Match:gameEndedClockTime()
-
-  local result = self.P1.game_over_clock
-  
-  if self.P1.opponentStack then
-    local otherPlayer = self.P1.opponentStack
-    if otherPlayer.game_over_clock > 0 then
-      if result == 0 or otherPlayer.game_over_clock < result then
-        result = otherPlayer.game_over_clock
-      end
-    end
-  end
-
-  return result
 end
 
 -- returns the players that won the match in a table
@@ -277,13 +262,15 @@ function Match:run()
   while tableUtils.trueForAny(checkRun, function(b) return b end) do
     for i = 1, #self.players do
       local stack = self.players[i].stack
-      if stack and stack:shouldRun(runsSoFar) then
+      if stack and self:shouldRun(stack, runsSoFar) then
         stack:run()
         checkRun[i] = true
       else
         checkRun[i] = false
       end
     end
+
+    self:updateClock()
 
     -- Since the stacks can affect each other, don't save rollback until after all have run
     for i = 1, #self.players do
@@ -314,10 +301,42 @@ function Match:run()
     self:handleMatchEnd()
   end
 
+  self:playCountdownSfx()
   local endTime = love.timer.getTime()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
+end
+
+-- updates the match clock to the clock time of the player furthest into the game
+function Match:updateClock()
+  for i = 1, #self.players do
+    if self.players[i].stack.clock > self.clock then
+      self.clock = self.players[i].stack.clock
+    end
+  end
+end
+
+function Match:playCountdownSfx()
+  if self.doCountdown then
+    if self.clock < 200 then
+      local tickIndex = math.floor(self.clock / 60)
+      if not self.ticksPlayed[tickIndex] then
+        if tickIndex < 3 then
+          themes[config.theme].sounds.countdown:stop()
+          themes[config.theme].sounds.countdown:play()
+        else
+          themes[config.theme].sounds.go:stop()
+          themes[config.theme].sounds.go:play()
+        end
+        self.ticksPlayed[tickIndex] = true
+      end
+    end
+  end
+end
+
+function Match:playTimeLimitDepletingSfx()
+
 end
 
 function Match:getInfo()
@@ -420,6 +439,17 @@ function Match:start()
     end
   end
 
+  if self.doCountdown then
+    self.ticksPlayed = { [0] = false, false, false, false }
+  end
+
+  if self.timeLimit then
+    self.panicTicksPlayed = {}
+    for i = 1, 15 do
+      self.panicTicksPlayed[i] = false
+    end
+  end
+
   self.replay = Replay.createNewReplay(self)
 end
 
@@ -515,12 +545,18 @@ function Match.createFromReplay(replay, supportsPause)
 end
 
 function Match:abort()
+  self.ended = true
   self.aborted = true
   self:handleMatchEnd()
 end
 
 function Match:hasEnded()
+  if self.ended then
+    return true
+  end
+
   if self.aborted then
+    self.ended = true
     return true
   end
 
@@ -535,11 +571,18 @@ function Match:hasEnded()
   end
 
   if tableUtils.contains(self.winConditions, GameModes.WinConditions.LAST_ALIVE) then
-    local gameEndedClockTime = self:gameEndedClockTime()
-    if aliveCount == 1 and gameEndedClockTime then
+    if aliveCount == 1 then
+      local gameOverClock = 0
+      for i = 1, #self.players do
+        if self.players[i].stack.game_over_clock > gameOverClock then
+          gameOverClock = self.players[i].stack.game_over_clock
+        end
+      end
+      self.gameOverClock = gameOverClock
       -- make sure everyone has run to the currently known game over clock
       -- because if they haven't they might still go gameover before that time
-      if tableUtils.trueForAll(self.players, function(p) return p.stack.clock and p.stack.clock >= gameEndedClockTime end) then
+      if tableUtils.trueForAll(self.players, function(p) return p.stack.clock and p.stack.clock >= gameOverClock end) then
+        self.ended = true
         return true
       end
     end
@@ -547,16 +590,19 @@ function Match:hasEnded()
 
   if deadCount == #self.players then
     -- everyone died, match is over!
+    self.ended = true
     return true
   end
 
   if self.timeLimit then
     if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch > TIME_ATTACK_TIME * 60 end) then
+      self.ended = true
       return true
     end
   end
 
   if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+    self.ended = true
     self.aborted = true
     self.desyncError = true
     return true
@@ -623,4 +669,26 @@ end
 
 function Match:togglePause()
   self.isPaused = not self.isPaused
+end
+
+-- returns true if the stack should run once more during the current match:run
+-- returns false otherwise
+function Match:shouldRun(stack, runsSoFar)
+  -- check the match specific conditions in match
+  if not stack:game_ended() then
+    if self.timeLimit then
+      if stack.game_stopwatch > self.timeLimit * 60 then
+        -- the stack should only run 1 frame beyond the time limit (excluding countdown)
+        return false
+      end
+    else
+      -- gameOverClock is set in Match:hasEnded when there is only 1 alive in LAST_ALIVE modes
+      if self.gameOverClock and self.gameOverClock < stack.clock then
+        return false
+      end
+    end
+  end
+
+  -- and then the stack specific conditions in stack
+  return stack:shouldRun(runsSoFar)
 end

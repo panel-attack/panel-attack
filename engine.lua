@@ -1005,10 +1005,19 @@ function Stack.controls(self)
   end
 end
 
-function Stack.shouldRun(self, runsSoFar)
-  -- We want to run after game over to show game over effects.
+function Stack:shouldRun(runsSoFar)
   if self:game_ended() then
-    return runsSoFar == 0
+    if self.game_over_clock > 0 then
+      -- run one more frame than game over to apply panel states
+      return self.clock <= self.game_over_clock
+    else
+      -- at the current point in time this means a puzzle ended in some way
+      return false
+    end
+  end
+
+  if self:behindRollback() then
+    return true
   end
 
   -- Decide how many frames of input we should run.
@@ -1017,40 +1026,32 @@ function Stack.shouldRun(self, runsSoFar)
   -- If we are local we always want to catch up and run the new input which is already appended
   if self.is_local then
     return buffer_len > 0
-  end
-
-  if self:behindRollback() then
-    return true
-  end
-
-  -- In debug mode allow forcing a certain number of frames behind
-  if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
-    if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
-      -- Don't fall behind if the game is over for the other player
+  else
+    -- In debug mode allow non-local player 2 to fall a certain number of frames behind
+    if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and self.which == 2 then
+      -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
       if self.opponentStack and self.opponentStack:game_ended() == false then
-        -- If we are at the end of the replay we want to catch up
-        if GAME.tcpClient:isConnected() or #self.opponentStack.input_buffer > 0 then
-          local framesBehind = math.abs(config.debug_vsFramesBehind)
-          if self.clock >= self.opponentStack.clock - framesBehind then
+        if GAME.tcpClient:isConnected() then
+          if self.clock + config.debug_vsFramesBehind >= self.opponentStack.clock then
             return false
           end
         end
       end
     end
-  end
 
-  -- If we are not local, we want to run faster to catch up.
-  if buffer_len >= 15 - runsSoFar then
-    -- way behind, run at max speed.
-    return runsSoFar < self.max_runs_per_frame
-  elseif buffer_len >= 10 - runsSoFar then
-    -- When we're closer, run fewer times per frame, so things are less choppy.
-    -- This might have a side effect of taking a little longer to catch up
-    -- since we don't always run at top speed.
-    local maxRuns = math.min(2, self.max_runs_per_frame)
-    return runsSoFar < maxRuns
-  elseif buffer_len >= 1 then
-    return runsSoFar == 0
+    -- If we are not local, we want to run faster to catch up.
+    if buffer_len >= 15 - runsSoFar then
+      -- way behind, run at max speed.
+      return runsSoFar < self.max_runs_per_frame
+    elseif buffer_len >= 10 - runsSoFar then
+      -- When we're closer, run fewer times per frame, so things are less choppy.
+      -- This might have a side effect of taking a little longer to catch up
+      -- since we don't always run at top speed.
+      local maxRuns = math.min(2, self.max_runs_per_frame)
+      return runsSoFar < maxRuns
+    elseif buffer_len >= 1 then
+      return runsSoFar == 0
+    end
   end
 
   return false
@@ -1550,17 +1551,7 @@ function Stack.simulate(self)
 
     -- Update Music
     if self:shouldChangeMusic() then
-      if self.do_countdown then
-        if SFX_Go_Play == 1 then
-          self.theme.sounds.go:stop()
-          self.theme.sounds.go:play()
-          SFX_Go_Play = 0
-        elseif SFX_Countdown_Play == 1 then
-          self.theme.sounds.countdown:stop()
-          self.theme.sounds.countdown:play()
-          SFX_Go_Play = 0
-        end
-      else
+      if not self.do_countdown then
         -- this has no business being here
         -- picking music source should be a match functionality
         local winningPlayer = self
@@ -1767,8 +1758,7 @@ function Stack.simulate(self)
       self.opponentStack.tooFarBehindError = true
     end
 
-    local gameEndedClockTime = self.match:gameEndedClockTime()
-    if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.clock <= gameEndedClockTime) then
+    if self.game_stopwatch_running and (not self.match.gameOverClock or self.clock <= self.match.gameOverClock) then
       self.game_stopwatch = (self.game_stopwatch or -1) + 1
     end
   end
@@ -1930,29 +1920,6 @@ function Stack.game_ended(self)
   else
     return self.game_over
   end
-
-  -- local gameEndedClockTime = self.match:gameEndedClockTime()
-
-  -- if self.match.stackInteraction == GameModes.StackInteractions.HEALTH_ENGINE then
-  --   if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
-  --     return true
-  --   end
-  -- elseif self.match.timeLimit then
-  --   if self.game_stopwatch then
-  --     if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
-  --       return true
-  --     end
-  --   end
-  -- end
-
-  -- The universal game end condition for everything but puzzles, one of the stacks went game over
-  -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
-  -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
-  -- if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-  --   return true
-  -- end
-
-  -- return false
 end
 
 -- Sets the current stack as "lost"

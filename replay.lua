@@ -95,7 +95,7 @@ function Replay.loadFromPath(path)
 end
 
 function Replay.addAnalyticsDataToReplay(match, replay)
-  replay.duration = match:gameEndedClockTime()
+  replay.duration = match.gameOverClock
 
   for i = 1, #match.players do
     local stack = match.players[i].stack

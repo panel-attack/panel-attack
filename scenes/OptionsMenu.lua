@@ -101,7 +101,7 @@ local function createConfigSlider(configField, min, max, onValueChangeFn)
   return Slider({
     min = min,
     max = max,
-    value = config[configField] or 20,
+    value = config[configField] or 0,
     tickLength = math.ceil(100 / max),
     onValueChange = function(slider)
       config[configField] = slider.value
@@ -502,7 +502,7 @@ end
 function OptionsMenu:loadDebugMenu()
   local debugMenuOptions = {
     {Label({width = MENU_WIDTH, text = "op_debug"}), createToggleButtonGroup("debug_mode")},
-    {Label({width = MENU_WIDTH, text = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", -200, 200)},
+    {Label({width = MENU_WIDTH, text = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", 0, 200)},
     {Label({width = MENU_WIDTH, text = "Show Debug Servers", translate = false}), createToggleButtonGroup("debugShowServers")},
     {Label({width = MENU_WIDTH, text = "Show Design Helper", translate = false}), createToggleButtonGroup("debugShowDesignHelper")}, {
       TextButton({
