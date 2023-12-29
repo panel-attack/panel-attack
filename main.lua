@@ -202,20 +202,28 @@ function love.errorhandler(msg)
   end
   local sanitizedTrace = table.concat(traceLines, "\n")
   
-  local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
-  local detailedErrorLogString = Game.detailedErrorLogString(errorData)
-  errorData.detailedErrorLogString = detailedErrorLogString
-  if GAME_UPDATER_GAME_VERSION then
-    if GAME.tcpClient:isConnected() then
-      GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
+  local function getGameErrorData(sanitizedMessage, sanitizedTrace)
+    local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
+    local detailedErrorLogString = Game.detailedErrorLogString(errorData)
+    errorData.detailedErrorLogString = detailedErrorLogString
+    if GAME_UPDATER_GAME_VERSION then
+      if GAME.tcpClient:isConnected() then
+        GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
+      end
+      GAME.tcpClient:sendErrorReport(errorData)
+      GAME.tcpClient:resetNetwork()
     end
-    GAME.tcpClient:sendErrorReport(errorData)
-    GAME.tcpClient:resetNetwork()
+    return detailedErrorLogString
   end
 
+  local success, detailedErrorLogString = pcall(getGameErrorData, sanitizedMessage, sanitizedTrace)
   local errorLines = {}
   table.insert(errorLines, "Error\n")
-  table.insert(errorLines, detailedErrorLogString)
+  if success then
+    table.insert(errorLines, detailedErrorLogString)
+  else
+    table.insert(errorLines, sanitizedMessage)
+  end
   if #sanitizedMessage ~= #msg then
     table.insert(errorLines, "Invalid UTF-8 string in error message.")
   end
