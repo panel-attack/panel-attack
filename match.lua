@@ -76,6 +76,7 @@ function Match:deinit()
   for _, quad in ipairs(self.time_quads) do
     GraphicsUtil:releaseQuad(quad)
   end
+  stop_the_music()
 end
 
 function Match:addPlayer(player)
@@ -357,19 +358,25 @@ function Match:shouldChangeMusic()
     return false
   end
 
+  if self.ended then
+    return false
+  end
+
   return true
 end
 
 function Match:updateMusic()
   -- Update Music
   if self.musicSource and self:shouldChangeMusic() then
-    local wantsDangerMusic = tableUtils.trueForAny(self.players, function(p) return p.stack.danger_music end)
+    -- danger music is played the moment one player is in danger
+    -- but only if we actually have danger music
+    local wantsDangerMusic = self.musicSource.musics["danger_music"] and tableUtils.trueForAny(self.players, function(p) return p.stack.danger_music end)
 
     if self.musicSource.music_style == "dynamic" then
       local fadeLength = 60
       if not self.fade_music_clock then
         self.fade_music_clock = fadeLength -- start fully faded in
-        self.match.currentMusicIsDanger = false
+        self.currentMusicIsDanger = false
       end
 
       local normalMusic = {self.musicSource.musics["normal_music"], self.musicSource.musics["normal_music_start"]}
@@ -406,20 +413,16 @@ function Match:updateMusic()
       end
     else -- classic music
       if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-        if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and self.musicSource.musics["danger_music"] then -- disabled when danger_music is unspecified
+        if (self.currentMusicIsDanger == false or #currently_playing_tracks == 0) then
           stop_the_music()
           find_and_add_music(self.musicSource.musics, "danger_music")
-          self.match.currentMusicIsDanger = true
-        elseif #currently_playing_tracks == 0 and self.musicSource.musics["normal_music"] then
-          stop_the_music()
-          find_and_add_music(self.musicSource.musics, "normal_music")
-          self.match.currentMusicIsDanger = false
+          self.currentMusicIsDanger = true
         end
       else --we should be playing normal_music or normal_music_start
-        if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and self.musicSource.musics["normal_music"] then
+        if (self.currentMusicIsDanger or #currently_playing_tracks == 0) and self.musicSource.musics["normal_music"] then
           stop_the_music()
           find_and_add_music(self.musicSource.musics, "normal_music")
-          self.match.currentMusicIsDanger = false
+          self.currentMusicIsDanger = false
         end
       end
     end

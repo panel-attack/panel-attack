@@ -335,7 +335,7 @@ function CharacterSelect:update()
   for i = 1, #self.ui.cursors do
     self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
   end
-  if GAME.battleRoom.spectating then
+  if GAME.battleRoom and GAME.battleRoom.spectating then
     if input.isDown["MenuEsc"] then
       GAME.battleRoom:shutdown()
       sceneManager:switchToScene(sceneManager:createScene("Lobby"))
