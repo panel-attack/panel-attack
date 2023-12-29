@@ -26,7 +26,7 @@ function PuzzleGame:customLoad(sceneParams)
   local puzzle = self.puzzleSet.puzzles[self.puzzleIndex]
   local isValid, validationError = puzzle:validate()
   if isValid then
-    self.S1:set_puzzle_state(puzzle)
+    self.match.players[1].stack:set_puzzle_state(puzzle)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                       .. validationError
@@ -39,14 +39,13 @@ function PuzzleGame:customRun()
   if (input.isDown["TauntUp"] or input.isDown["TauntDown"]) and not self.match.isPaused then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     -- The character and stage and music and background should all state the same until you complete the whole puzzle set
-    sceneManager:switchToScene(sceneManager:createScene("PuzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.S1.character, loadStageAndMusic = false}))
+    sceneManager:switchToScene(sceneManager:createScene("PuzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.match.players[1].stack.character, loadStageAndMusic = false}))
   end
 end
 
 function PuzzleGame:customGameOverSetup()
   if self.match.P1:puzzle_done() then -- writes successful puzzle replay and ends game
     self.text = loc("pl_you_win")
-    self.winnerSFX = self.S1:pick_win_sfx()
     if self.puzzleIndex == #self.puzzleSet.puzzles then
       self.keepMusic = false
       self.nextScene = "PuzzleMenu"
@@ -57,16 +56,16 @@ function PuzzleGame:customGameOverSetup()
       local match = GAME.battleRoom:createMatch()
       match:start()
       -- The character and stage and music and background should all state the same until you complete the whole puzzle set
-      self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1, character = self.S1.character, loadStageAndMusic = false, match = match}
+      self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1, character = self.match.players[1].stack.character, loadStageAndMusic = false, match = match}
     end
-  elseif self.S1:puzzle_failed() then
+  elseif self.match.players[1].stack:puzzle_failed() then
     SFX_GameOver_Play = 1
     self.text = loc("pl_you_lose")
     self.keepMusic = true
     self.nextScene = "PuzzleGame"
     local match = GAME.battleRoom:createMatch()
     match:start()
-    self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.S1.character, loadStageAndMusic = false, match = match}
+    self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.match.players[1].stack.character, loadStageAndMusic = false, match = match}
   end
 end
 

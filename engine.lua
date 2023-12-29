@@ -1065,10 +1065,10 @@ function Stack.run(self)
 
   if self.is_local == false then
     if self.play_to_end then
-      GAME.preventSounds = true
+      GAME.muteSoundEffects = true
       if #self.input_buffer < 4 then
         self.play_to_end = nil
-        GAME.preventSounds = false
+        GAME.muteSoundEffects = false
       end
     end
   end
@@ -1883,7 +1883,7 @@ function Stack.behindRollback(self)
 end
 
 function Stack.shouldChangeMusic(self)
-  local result = not self.match.isPaused and not GAME.preventSounds
+  local result = not self.match.isPaused and not GAME.muteSoundEffects
 
   if result then
     if self:game_ended() or self.canvas == nil then
@@ -1909,7 +1909,7 @@ end
 
 
 function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic() and not GAME.muteSoundEffects
+  local result = self:shouldChangeMusic()
 
   return result
 end

@@ -2,6 +2,8 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 local Replay = require("replay")
 local class = require("class")
+local GameModes = require("GameModes")
+local Signal = require("helpers.signal")
 
 --@module endlessGame
 -- Scene for an endless mode instance of the game
@@ -10,7 +12,7 @@ local EndlessGame = class(
     self.nextScene = "EndlessMenu"
 
     self:load(sceneParams)
-    self.winnerSFX = self.S1:pick_win_sfx()
+    Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
   end,
   GameBase
 )
@@ -18,12 +20,15 @@ local EndlessGame = class(
 EndlessGame.name = "EndlessGame"
 sceneManager:addScene(EndlessGame)
 
-function EndlessGame:processGameResults(gameResult)
-  local extraPath, extraFilename
-  if self.S1.level == nil then
-    GAME.scores:saveEndlessScoreForLevel(self.S1.score, self.S1.difficulty)
-    extraPath = "Endless"
-    extraFilename = "Spd" .. self.S1.speed .. "-Dif" .. self.S1.difficulty .. "-endless"
+function EndlessGame:onMatchEnded(match)
+  local extraPath = "Endless"
+  local extraFilename = "-endless"
+  if match.players[1].style == GameModes.Styles.CLASSIC then
+    GAME.scores:saveEndlessScoreForLevel(match.players[1].stack.score, match.players[1].stack.difficulty)
+    extraFilename = "Spd" .. match.players[1].settings.levelData.startingSpeed .. "-Dif" .. match.players[1].stack.difficulty .. extraFilename
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
+  elseif match.players[1].style == GameModes.Styles.MODERN then
+    extraFilename = "Spd" .. match.players[1].settings.levelData.startingSpeed .. "-Lev" .. match.players[1].stack.level .. extraFilename
     Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
   end
 end

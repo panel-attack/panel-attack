@@ -7,7 +7,6 @@ local logger = require("logger")
 
 local function test(func)
   func()
-  GAME:clearMatch()
 end
 
 -- Swap finishing the frame chaining is applied should not apply to swapped panel

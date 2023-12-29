@@ -10,6 +10,7 @@ local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
 local Replay = require("replay")
+local Signal = require("helpers.signal")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
@@ -18,26 +19,23 @@ local GameBase = class(
     -- must be set in child class
     self.nextScene = nil
     self.nextSceneParams = {}
-    
+
     -- set in load
     self.text = ""
-    self.winnerSFX = nil
     self.keepMusic = false
     self.currentStage = config.stage
     self.loadStageAndMusic = true
-    
+
     self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
     self.maxDisplayTime = -1 -- the maximum amount of seconds the game over screen will be displayed for, -1 means no max time
     self.winnerTime = 1
-    
+
     self.frameInfo = {
       frameCount = nil,
       startTime = nil,
       currentTime = nil,
       expectedFrameCount = nil
     }
-    
-    self.transition = false
   end,
   Scene
 )
@@ -70,26 +68,6 @@ function GameBase:customGameOverSetup() end
 
 -- end abstract functions
 
-local backgroundImage = nil
-
-function GameBase:pickRandomStage()
-  self.currentStage = tableUtils.getRandomElement(stages_ids_for_current_theme)
-  if stages[self.currentStage]:is_bundle() then -- may pick a bundle!
-    self.currentStage = tableUtils.getRandomElement(stages[self.currentStage].sub_stages)
-  end
-end
-
-function GameBase:useCurrentStage()
-  if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
-    self:pickRandomStage()
-  end
-  current_stage = self.currentStage
-  
-  StageLoader.load(self.currentStage)
-  StageLoader.wait()
-  backgroundImage = UpdatingImage(stages[self.currentStage].images.background, false, 0, 0, canvas_width, canvas_height)
-end
-
 local function pickUseMusicFrom()
   if config.use_music_from == "stage" or config.use_music_from == "characters" then
     current_use_music_from = config.use_music_from
@@ -112,25 +90,17 @@ end
 
 function GameBase:load(sceneParams)
   self.match = sceneParams.match
+  Signal.connectSignal(self.match, "onMatchEnded", self, self.genericOnMatchEnded)
+
+  self.stage = stages[self.match.stageId]
+  self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, canvas_width, canvas_height)
+  pickUseMusicFrom()
+
   self:customLoad(sceneParams)
-  self.S1 = self.match.players[1].stack
-  self.S2 = self.match.players[2] and self.match.players[2].stack or nil
 
   leftover_time = 1 / 120
-  self.loadStageAndMusic = true
-  if sceneParams.loadStageAndMusic ~= nil then
-    self.loadStageAndMusic = sceneParams.loadStageAndMusic
-  end
-  if self.loadStageAndMusic then
-    self:useCurrentStage()
-    pickUseMusicFrom()
-  end
 
   self:initializeFrameInfo()
-end
-
-function GameBase:drawForeground()
-  
 end
 
 function GameBase:handlePause()
@@ -149,7 +119,7 @@ local gameOverStartTime = nil -- timestamp for when game over screen was first d
 local initialMusicVolumes = {}
 
 function GameBase:setupGameOver()
-  gameOverStartTime = love.timer.getTime() 
+  gameOverStartTime = love.timer.getTime()
   self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
   self.maxDisplayTime = -1
   self.winnerTime = 60
@@ -260,14 +230,16 @@ function GameBase:update(dt)
 end
 
 function GameBase:draw()
-  backgroundImage:draw()
+  if self.backgroundImage then
+    self.backgroundImage:draw()
+  end
   local backgroundOverlay = themes[config.theme].images.bg_overlay
   if backgroundOverlay then
     local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
     menu_drawf(backgroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
   end
 -- Render only if we are not catching up to a current spectate match
-  if not (self.S1 and self.S1.play_to_end) and not (self.S2 and self.S2.play_to_end) then
+  if tableUtils.trueForAll(self.match.players, function(p) return p.stack and not p.stack.play_to_end end) then
     self.match:render()
     self:customDraw()
   end
@@ -279,13 +251,11 @@ function GameBase:draw()
   end
 end
 
-function GameBase:unload()
-  local gameResult = self.S1:gameResult()
-  if gameResult then
-    self:processGameResults(gameResult)
+function GameBase:genericOnMatchEnded(match)
+  -- matches always sort players to have locals in front so if 1 isn't local, none is
+  if match.players[1].isLocal then
+    analytics.game_ends(match.players[1].stack.analytic)
   end
-  analytics.game_ends(self.S1.analytic)
-  GAME:clearMatch()
 end
 
 return GameBase

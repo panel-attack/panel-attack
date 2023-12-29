@@ -344,16 +344,7 @@ function Game:processGraphicsQueue()
   self.isDrawing = false
 end
 
-function Game:clearMatch()
-  if self.match then
-    self.match:deinit()
-    self.match = nil
-  end
-  self:reset()
-end
-
 function Game:reset()
-  self.preventSounds = false
   self.currently_paused_tracks = {}
   self.muteSoundEffects = false
 end

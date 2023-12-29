@@ -58,7 +58,7 @@ function StackReplayTestingUtils:fullySimulateMatch(match)
   end
   local endTime = love.timer.getTime()
 
-  self:cleanupReplay()
+  self:cleanup(match)
 
   return match, endTime - startTime
 end
@@ -103,9 +103,11 @@ function StackReplayTestingUtils:setupReplayWithPath(path)
   return match
 end
 
-function StackReplayTestingUtils:cleanupReplay()
+function StackReplayTestingUtils:cleanup(match)
+  if match then
+    match:deinit()
+  end
   stop_the_music()
-  replay = {}
   GAME:reset()
 end
 

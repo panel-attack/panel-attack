@@ -2,6 +2,7 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 local Replay = require("replay")
 local class = require("class")
+local Signal = require("helpers.signal")
 
 --@module endlessGame
 -- Scene for an endless mode instance of the game
@@ -10,7 +11,7 @@ local Game2pVs = class(
     self.nextScene = sceneParams.nextScene
 
     self:load(sceneParams)
-    self.winnerSFX = self.S1:pick_win_sfx()
+    Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
   end,
   GameBase
 )
@@ -18,27 +19,27 @@ local Game2pVs = class(
 Game2pVs.name = "Game2pVs"
 sceneManager:addScene(Game2pVs)
 
-function Game2pVs:processGameResults(gameResult)
+function Game2pVs:onMatchEnded(match)
   local extraPath, extraFilename = "", ""
-  local rep_a_name, rep_b_name = self.match.players[1].name, self.match.players[2].name
+  local rep_a_name, rep_b_name = match.players[1].name, match.players[2].name
     --sort player names alphabetically for folder name so we don't have a folder "a-vs-b" and also "b-vs-a"
     if rep_b_name < rep_a_name then
       extraPath = rep_b_name .. "-vs-" .. rep_a_name
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. self.match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. self.match.P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. match.P2.level
     if match_type and match_type ~= "" then
       extraFilename = extraFilename .. "-" .. match_type
     end
-    if not self.match.replay.incomplete then
-      if self.match.replay.winnerIndex then
-        extraFilename = extraFilename .. "-P" .. self.match.replay.winnerIndex .. "wins"
+    if not match.replay.incomplete then
+      if match.replay.winnerIndex then
+        extraFilename = extraFilename .. "-P" .. match.replay.winnerIndex .. "wins"
       else
         extraFilename = extraFilename .. "-draw"
       end
     end
-  Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
+  Replay.finalizeAndWriteReplay(extraPath, extraFilename, match.replay)
 end
 
 return Game2pVs

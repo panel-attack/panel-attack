@@ -27,7 +27,7 @@ local function finishedMatchForPath(path)
     end
 
     stop_the_music()
-    GAME:clearMatch()
+    match:deinit()
     return match
   end
 end

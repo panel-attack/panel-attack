@@ -5,7 +5,6 @@ local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 
 local function test(func)
   func()
-  GAME:clearMatch()
 end
 
 local legacyScoreX = 546

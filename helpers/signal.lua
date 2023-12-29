@@ -15,8 +15,8 @@ function Signal.addSignal(t, signalName)
 
   t.signalSubscriptions[signalName] = {}
   local emissionFunc = function(...)
-    for _, pair in ipairs(t.signalSubscriptions[signalName]) do
-      pair.callback(pair.data, ...)
+    for subscriber, callback in ipairs(t.signalSubscriptions[signalName]) do
+      callback(subscriber, ...)
     end
   end
 
@@ -37,11 +37,11 @@ function Signal.addSignal(t, signalName)
 end
 
 -- connects to a signal so the callback is executed with the data and arguments passed to the signal whenever the signal emits
-function Signal.connectSignal(emitter, signalName, data, callback)
+function Signal.connectSignal(emitter, signalName, subscriber, callback)
   assert(emitter.emitsSignals and emitter.signalSubscriptions, "trying to connect to a table that does not emit signals")
   assert(emitter[signalName], "trying to connect to undefined signal " .. signalName)
-  --local 
-  table.insert(emitter.signalSubscriptions[signalName], {callback = callback, data = data})
+
+  emitter.signalSubscriptions[signalName][subscriber] = callback
 end
 
 -- we don't need to actively disconnect from a signal as subscriptions automatically get removed when their subscriber is collected
