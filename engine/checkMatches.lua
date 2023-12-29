@@ -314,7 +314,7 @@ end
 function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onScreenCount)
   garbagePanels = sortByPopOrder(garbagePanels, true)
 
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     SFX_garbage_match_play = true
   end
   
@@ -477,7 +477,7 @@ function Stack:awardStopTime(isChain, comboSize)
 end
 
 function Stack:queueAttackSoundEffect(isChainLink, chainSize, comboSize, metalCount)
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     self.combo_chain_play = Stack.attackSoundInfoForMatch(isChainLink, chainSize, comboSize, metalCount)
   end
 end

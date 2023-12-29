@@ -1403,7 +1403,7 @@ function Stack.simulate(self)
         local prev_col = self.cur_col
         self:moveCursorInDirection(self.cur_dir)
         if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-          if self:shouldChangeSoundEffects() then
+          if self:canPlaySfx() then
             SFX_Cur_Move_Play = 1
           end
           if self.cur_timer ~= self.cur_wait_time then
@@ -1419,7 +1419,7 @@ function Stack.simulate(self)
       self.cur_timer = self.cur_timer + 1
     end
     -- TAUNTING
-    if self:shouldChangeSoundEffects() then
+    if self:canPlaySfx() then
       if self.taunt_up ~= nil then
         characters[self.character]:playTauntUpSfx(self.taunt_up)
         self:taunt("taunt_up")
@@ -1475,7 +1475,7 @@ function Stack.simulate(self)
       self.chains[self.currentChainStartFrame].finish = self.clock
       self.chains[self.currentChainStartFrame].size = self.chain_counter
       self.currentChainStartFrame = nil
-      if self:shouldChangeSoundEffects() then
+      if self:canPlaySfx() then
         SFX_Fanfare_Play = self.chain_counter
       end
       self.analytic:register_chain(self.chain_counter)
@@ -1549,102 +1549,8 @@ function Stack.simulate(self)
       end
     end
 
-    -- Update Music
-    if self:shouldChangeMusic() then
-      if not self.do_countdown then
-        -- this has no business being here
-        -- picking music source should be a match functionality
-        local winningPlayer = self
-        if GAME.battleRoom then
-          winningPlayer = GAME.battleRoom:winningPlayer().stack
-        end
-
-        local musics_to_use = nil
-        local dynamicMusic = false
-        local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
-        local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
-        if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
-          if stages[current_stage].music_style == "dynamic" then
-            dynamicMusic = true
-          end
-          musics_to_use = stages[current_stage].musics
-        elseif characterHasMusic then
-          if characters[winningPlayer.character].music_style == "dynamic" then
-            dynamicMusic = true
-          end
-          musics_to_use = characters[winningPlayer.character].musics
-        else
-          -- no music loaded
-        end
-
-        local wantsDangerMusic = self.danger_music
-        if self.opponentStack and self.opponentStack.danger_music then
-          wantsDangerMusic = true
-        end
-
-        if dynamicMusic then
-          local fadeLength = 60
-          if not self.fade_music_clock then
-            self.fade_music_clock = fadeLength -- start fully faded in
-            self.match.currentMusicIsDanger = false
-          end
-
-          local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
-          local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
-
-          if #currently_playing_tracks == 0 then
-            find_and_add_music(musics_to_use, "normal_music")
-            find_and_add_music(musics_to_use, "danger_music")
-          end
-
-          -- Do we need to switch music?
-          if self.match.currentMusicIsDanger ~= wantsDangerMusic then
-            self.match.currentMusicIsDanger = not self.match.currentMusicIsDanger
-
-            if self.fade_music_clock >= fadeLength then
-              self.fade_music_clock = 0 -- Do a full fade
-            else
-              -- switched music before we fully faded, so start part way through
-              self.fade_music_clock = fadeLength - self.fade_music_clock
-            end
-          end
-
-          if self.fade_music_clock < fadeLength then
-            self.fade_music_clock = self.fade_music_clock + 1
-          end
-
-          local fadePercentage = self.fade_music_clock / fadeLength
-          if wantsDangerMusic then
-            setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
-            setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
-          else
-            setFadePercentageForGivenTracks(fadePercentage, normalMusic)
-            setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
-          end
-        else -- classic music
-          if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-            if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
-              stop_the_music()
-              find_and_add_music(musics_to_use, "danger_music")
-              self.match.currentMusicIsDanger = true
-            elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
-              stop_the_music()
-              find_and_add_music(musics_to_use, "normal_music")
-              self.match.currentMusicIsDanger = false
-            end
-          else --we should be playing normal_music or normal_music_start
-            if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
-              stop_the_music()
-              find_and_add_music(musics_to_use, "normal_music")
-              self.match.currentMusicIsDanger = false
-            end
-          end
-        end
-      end
-    end
-
     -- Update Sound FX
-    if self:shouldChangeSoundEffects() then
+    if self:canPlaySfx() then
       if SFX_Swap_Play == 1 then
         self.theme.sounds.swap:stop()
         self.theme.sounds.swap:play()
@@ -1722,7 +1628,7 @@ function Stack.simulate(self)
         SFX_Garbage_Pop_Play = nil
       end
       if self.game_over or (self.opponentStack and self.opponentStack.game_over) then
-        if self:shouldChangeSoundEffects() then
+        if self:canPlaySfx() then
           SFX_GameOver_Play = 1
         end
       end
@@ -1865,10 +1771,23 @@ function Stack.shouldChangeMusic(self)
 end
 
 
-function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic()
+function Stack:canPlaySfx()
+  -- this should be superfluous because there is no code being run that would play sfx
+  -- if self:game_ended() then
+  --   return false
+  -- end
 
-  return result
+  -- If we are still catching up from rollback don't play sounds again
+  if self:behindRollback() then
+    return false
+  end
+
+  -- this is catchup mode, don't play sfx during this
+  if self.play_to_end then
+    return false
+  end
+
+  return true
 end
 
 function Stack:averageFramesBehind()
@@ -1971,7 +1890,7 @@ function Stack:swap(row, col)
   rightPanel:startSwap(false)
   Panel.switch(leftPanel, rightPanel, panels)
 
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     SFX_Swap_Play = 1
   end
 
@@ -2265,7 +2184,7 @@ function Stack.onPop(self, panel)
     if config.popfx == true then
       self:enqueue_popfx(panel.column, panel.row, self.popSizeThisFrame)
     end
-    if self:shouldChangeSoundEffects() then
+    if self:canPlaySfx() then
       SFX_Garbage_Pop_Play = panel.pop_index
     end
   else
@@ -2288,7 +2207,7 @@ function Stack.onPop(self, panel)
         and self.panels_cleared % self.levelData.shockFrequency == 0 then
           self.metal_panels_queued = min(self.metal_panels_queued + 1, self.levelData.shockCap)
     end
-    if self:shouldChangeSoundEffects() then
+    if self:canPlaySfx() then
       SFX_Pop_Play = 1
     end
     self.poppedPanelIndex = panel.combo_index
@@ -2302,7 +2221,7 @@ function Stack.onPopped(self, panel)
 end
 
 function Stack.onLand(self, panel)
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     self.sfx_land = true
   end
 end
@@ -2313,7 +2232,7 @@ function Stack.onGarbageLand(self, panel)
     and panel.row <= self.height then
     --runtime optimization to not repeatedly update shaketime for the same piece of garbage
     if not tableUtils.contains(self.garbageLandedThisFrame, panel.garbageId) then
-      if self:shouldChangeSoundEffects() then
+      if self:canPlaySfx() then
         if panel.height > 3 then
           self.sfx_garbage_thud = 3
         else

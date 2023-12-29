@@ -301,6 +301,7 @@ function Match:run()
     self:handleMatchEnd()
   end
 
+  self:updateMusic()
   self:playCountdownSfx()
   self:playTimeLimitDepletingSfx()
   local endTime = love.timer.getTime()
@@ -314,6 +315,113 @@ function Match:updateClock()
   for i = 1, #self.players do
     if self.players[i].stack.clock > self.clock then
       self.clock = self.players[i].stack.clock
+    end
+  end
+end
+
+function Match:getWinningPlayerCharacter()
+  local character = random_character_special_value
+  local maxWins = -1
+  for i = 1, #self.players do
+    if self.players[i].wins > maxWins then
+      character = self.players[i].stack.character
+      maxWins = self.players[i].wins
+    end
+  end
+
+  return characters[character]
+end
+
+function Match:shouldChangeMusic()
+  if GAME.muteSoundEffects then
+    return false
+  end
+
+  if self.isPaused then
+    return false
+  end
+
+  -- someone is still catching up
+  if tableUtils.trueForAny(self.players, function(p) return p.stack.play_to_end end) then
+    return false
+  end
+
+  -- we don't have to cover the rollback case because music updates are only called once per match:run()
+  -- meaning any stack that did a rollback should have caught up again by the time it is called
+  -- if tableUtils.trueForAny(self.players, function(p) return p:behindRollback() end) then
+  --   return false
+  -- end
+
+  -- music waits until countdown is over
+  if self.doCountdown and self.clock < 180 then
+    return false
+  end
+
+  return true
+end
+
+function Match:updateMusic()
+  -- Update Music
+  if self.musicSource and self:shouldChangeMusic() then
+    local wantsDangerMusic = tableUtils.trueForAny(self.players, function(p) return p.stack.danger_music end)
+
+    if self.musicSource.music_style == "dynamic" then
+      local fadeLength = 60
+      if not self.fade_music_clock then
+        self.fade_music_clock = fadeLength -- start fully faded in
+        self.match.currentMusicIsDanger = false
+      end
+
+      local normalMusic = {self.musicSource.musics["normal_music"], self.musicSource.musics["normal_music_start"]}
+      local dangerMusic = {self.musicSource.musics["danger_music"], self.musicSource.musics["danger_music_start"]}
+
+      if #currently_playing_tracks == 0 then
+        find_and_add_music(self.musicSource.musics, "normal_music")
+        find_and_add_music(self.musicSource.musics, "danger_music")
+      end
+
+      -- Do we need to switch music?
+      if self.currentMusicIsDanger ~= wantsDangerMusic then
+        self.currentMusicIsDanger = not self.currentMusicIsDanger
+
+        if self.fade_music_clock >= fadeLength then
+          self.fade_music_clock = 0 -- Do a full fade
+        else
+          -- switched music before we fully faded, so start part way through
+          self.fade_music_clock = fadeLength - self.fade_music_clock
+        end
+      end
+
+      if self.fade_music_clock < fadeLength then
+        self.fade_music_clock = self.fade_music_clock + 1
+      end
+
+      local fadePercentage = self.fade_music_clock / fadeLength
+      if wantsDangerMusic then
+        setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
+        setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
+      else
+        setFadePercentageForGivenTracks(fadePercentage, normalMusic)
+        setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
+      end
+    else -- classic music
+      if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
+        if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and self.musicSource.musics["danger_music"] then -- disabled when danger_music is unspecified
+          stop_the_music()
+          find_and_add_music(self.musicSource.musics, "danger_music")
+          self.match.currentMusicIsDanger = true
+        elseif #currently_playing_tracks == 0 and self.musicSource.musics["normal_music"] then
+          stop_the_music()
+          find_and_add_music(self.musicSource.musics, "normal_music")
+          self.match.currentMusicIsDanger = false
+        end
+      else --we should be playing normal_music or normal_music_start
+        if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and self.musicSource.musics["normal_music"] then
+          stop_the_music()
+          find_and_add_music(self.musicSource.musics, "normal_music")
+          self.match.currentMusicIsDanger = false
+        end
+      end
     end
   end
 end
@@ -466,7 +574,25 @@ function Match:start()
     end
   end
 
+  self.musicSource = self:getMusicSource()
+
   self.replay = Replay.createNewReplay(self)
+end
+
+-- gets the stage or character the music is used of
+-- returns the character or stage or, in case none of them has music, nil
+function Match:getMusicSource()
+  local character = self:getWinningPlayerCharacter()
+  local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
+  local characterHasMusic = character and character.musics and character.musics["normal_music"]
+  if not stageHasMusic and not characterHasMusic then
+    -- no music loaded, early return
+    return nil
+  elseif ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
+    return stages[self.stageId]
+  else --if characterHasMusic then
+    return character
+  end
 end
 
 function Match:setStage(stageId)

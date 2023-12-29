@@ -116,3 +116,12 @@ function stopIfPlaying(audioSource)
     audioSource:stop()
   end
 end
+
+SoundController = {}
+
+function SoundController.playSfx(sfx)
+  if not GAME.muteSoundEffects then
+    stopIfPlaying(sfx)
+    sfx:play()
+  end
+end
