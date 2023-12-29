@@ -535,12 +535,15 @@ function Match:hasEnded()
   end
 
   if tableUtils.contains(self.winConditions, GameModes.WinConditions.LAST_ALIVE) then
-    if aliveCount == 1 then
-      return true
+    local gameEndedClockTime = self:gameEndedClockTime()
+    if aliveCount == 1 and gameEndedClockTime then
+      -- make sure everyone has run to the currently known game over clock
+      -- because if they haven't they might still go gameover before that time
+      if tableUtils.trueForAll(self.players, function(p) return p.clock and p.clock >= gameEndedClockTime end) then
+        return true
+      end
     end
-  end
-
-  if deadCount == #self.players then
+  elseif deadCount == #self.players then
     -- everyone died, match is over!
     return true
   end

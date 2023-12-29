@@ -55,9 +55,6 @@ function StackReplayTestingUtils:fullySimulateMatch(match)
 
   local gameResult = match.P1:gameResult()
   while gameResult == nil do
-    if match.P1.clock == 2039 then
-      local phi = 5
-    end
     match:run()
     gameResult = match.P1:gameResult()
   end
