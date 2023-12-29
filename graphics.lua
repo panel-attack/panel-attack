@@ -722,7 +722,7 @@ function Stack.render(self)
 
   local function drawMoveCount()
     -- draw outside of stack's frame canvas
-    if self.match.puzzle then
+    if self.puzzle then
       self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale, false, true)
       local moveNumber = math.abs(self.puzzle.remaining_moves)
       if self.puzzle.puzzleType == "moves" then
@@ -910,7 +910,7 @@ function Stack.render(self)
   drawMoveCount()
   -- Draw the "extra" game info
   if config.show_ingame_infos then
-    if not self.match.puzzle then
+    if not self.puzzle then
       drawScore()
       drawSpeed()
     end
@@ -1018,7 +1018,7 @@ function Stack:drawMultibar()
   local shake_time = self.shake_time
 
   -- before the first move, display the stop time from the puzzle, not the stack
-  if self.match.puzzle and self.puzzle.puzzleType == "clear" and self.puzzle.moves == self.puzzle.remaining_moves then
+  if self.puzzle and self.puzzle.puzzleType == "clear" and self.puzzle.moves == self.puzzle.remaining_moves then
     stop_time = self.puzzle.stop_time
     shake_time = self.puzzle.shake_time
   end
