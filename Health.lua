@@ -45,6 +45,20 @@ function Health:run()
   self.clock = self.clock + 1
 end
 
+function Health:damageForHeight(height)
+  if height >= 6 then
+    local damage = 5
+    for i = 1, height-5 do
+      if i > 4 then
+        break
+      end
+      damage = damage + (1 - i * .2)
+    end
+    return damage
+  end
+  return height
+end
+
 function Health:receiveGarbage(frameToReceive, garbageList)
   for k,v in pairs(garbageList) do
     local width, height, metal, from_chain, finalized = unpack(v)
@@ -65,7 +79,7 @@ function Health:receiveGarbage(frameToReceive, garbageList)
       end
 
       if countGarbage then
-        self.currentLines = self.currentLines + height
+        self.currentLines = self.currentLines + self:damageForHeight(height)
       end
     end
   end

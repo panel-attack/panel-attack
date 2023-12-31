@@ -42,8 +42,9 @@ local function saveStack(stack, match)
   local level = stack.level
   local savePath = "dumpedAttackPatterns/" ..
       data.extraInfo.gpm ..
-      "GPM" .. "-Level" .. level .. "-" .. data.extraInfo.matchLength .. "-" .. data.extraInfo.playerName .. ".json"
+      "GPM" .. "-Level" .. level .. "-" .. data.extraInfo.matchLength .. "-" .. data.extraInfo.playerName
   savePath = savePath:gsub(":", "-"):gsub("%.", "-")
+  savePath = savePath .. ".json"
   love.filesystem.createDirectory("dumpedAttackPatterns")
   saveJSONToPath(data, state, savePath)
   --logger.info("Saved " .. savePath)
@@ -85,4 +86,4 @@ local function analyzePathRecursive(path)
   end
 end
 
-analyzePathRecursive("replays/v046/2022/10")
+analyzePathRecursive("replays/v047/2023/12/27")

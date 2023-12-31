@@ -1,4 +1,4 @@
-require("analytics")
+local analytics = require("analytics")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local TouchInputController = require("engine.TouchInputController")
 local consts = require("consts")
@@ -1624,15 +1624,17 @@ function Stack.simulate(self)
           winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
         end
 
-        local musics_to_use = nil
+        local musics_to_use = {}
         local dynamicMusic = false
         local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
         local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
         if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
-          if stages[current_stage].music_style == "dynamic" then
-            dynamicMusic = true
+          if stageHasMusic then
+            if stages[current_stage].music_style == "dynamic" then
+              dynamicMusic = true
+            end
+            musics_to_use = stages[current_stage].musics
           end
-          musics_to_use = stages[current_stage].musics
         elseif characterHasMusic then
           if characters[winningPlayer.character].music_style == "dynamic" then
             dynamicMusic = true
