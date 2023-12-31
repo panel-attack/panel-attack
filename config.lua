@@ -63,7 +63,7 @@ config = {
     -- Whether to show the popfx from panels
     popfx                         = true,
     -- How much to divide the shake animation
-    shakeReduction = 1,
+    shakeReduction = 4,
     -- Not currently settable in game, spacing of popfx
     cardfx_scale                  = 100,
     -- Whether to render the telegraph
