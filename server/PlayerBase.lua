@@ -23,11 +23,6 @@ function Playerbase:updatePlayer(user_id, user_name)
   write_players_file(self)
 end
 
-function Playerbase:getPlayer(user_id, user_name)
-  self.players[user_id] = user_name
-  write_players_file(self)
-end
-
 -- returns true if the name is taken by a different user already
 function Playerbase:nameTaken(userID, playerName)
 
