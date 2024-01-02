@@ -923,7 +923,6 @@ function main_net_vs_lobby()
   local lobby_menu = nil
   local updated = true -- need update when first entering
   local ret = nil
-  local requestedSpectateRoom = nil
   local playerData = nil
 
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
@@ -962,12 +961,9 @@ function main_net_vs_lobby()
       if msg.create_room or msg.spectate_request_granted then
         GAME.battleRoom = BattleRoom()
         if msg.spectate_request_granted then
-          if not requestedSpectateRoom then
-            error("expected requested room")
-          end
           GAME.battleRoom.spectating = true
-          GAME.battleRoom.playerNames[1] = requestedSpectateRoom.a
-          GAME.battleRoom.playerNames[2] = requestedSpectateRoom.b
+          GAME.battleRoom.playerNames[1] = msg.a_name
+          GAME.battleRoom.playerNames[2] = msg.b_name
         else
           GAME.battleRoom.playerNames[1] = config.name
           GAME.battleRoom.playerNames[2] = msg.opponent
@@ -1064,7 +1060,6 @@ function main_net_vs_lobby()
 
       local function requestSpectateFunction(room)
         return function()
-          requestedSpectateRoom = room
           request_spectate(room.roomNumber)
         end
       end

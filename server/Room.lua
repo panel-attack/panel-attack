@@ -107,10 +107,13 @@ function Room:add_spectator(new_spectator_connection)
   local msg = {
     spectate_request_granted = true,
     spectate_request_rejected = false,
+    room_number = self.roomNumber,
     rating_updates = true,
     ratings = self.ratings,
     a_menu_state = self.a:menu_state(),
     b_menu_state = self.b:menu_state(),
+    a_name = self.a.name,
+    b_name = self.b.name,
     win_counts = self.win_counts,
     match_start = replay_of_match_so_far ~= nil,
     stage = self.stage,

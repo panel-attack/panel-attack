@@ -239,6 +239,8 @@ function Server:create_room(a, b)
   self.roomNumberIndex = self.roomNumberIndex + 1
   self.rooms[new_room.roomNumber] = new_room
   local a_msg, b_msg = {create_room = true}, {create_room = true}
+  a_msg.room_number = new_room.roomNumber
+  b_msg.room_number = new_room.roomNumber
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
