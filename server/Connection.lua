@@ -5,7 +5,6 @@ local NetworkProtocol = require("NetworkProtocol")
 
 local time = os.time
 local utf8 = require("utf8Additions")
-require("tests.utf8AdditionsTests")
 local Player = require("server.Player")
 
 -- Represents a connection to a specific player. Responsible for sending and receiving messages

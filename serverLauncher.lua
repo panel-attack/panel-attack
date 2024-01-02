@@ -5,7 +5,7 @@ require("developer") -- Require developer here so we can debug if the debug flag
 local database = require("server.PADatabase")
 local Server = require("server.server")
 
-require("server.tests.Tests")
+require("tests.Tests")
 
 local currentServer = Server(database)
 while true do

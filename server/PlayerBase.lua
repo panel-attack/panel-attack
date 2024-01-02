@@ -1,4 +1,5 @@
 require("class")
+require("server.server_file_io")
 local logger = require("logger")
 
 -- Represents all player accounts on the server.
