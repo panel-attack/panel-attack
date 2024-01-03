@@ -536,7 +536,7 @@ function Match:start()
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
       local attackEngineHost = SimulatedOpponent(500, 200, -1)
-      local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
+      local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings.attackSettings)
       attackEngine:setGarbageTarget(stack)
       self.attackEngines[player] = attackEngineHost
     end
