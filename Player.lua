@@ -15,6 +15,8 @@ local Player = class(function(self, name, publicId, isLocal)
   self.modifiedWins = 0
   self.settings = {
     -- these need to all be initialized so subscription works
+    -- the gist is that all settings inside here are modifiable clientside for local players as part of match setup
+    -- while everything outside settings is static or dictated server side
     level = 1,
     difficulty = 1,
     speed = 1,
@@ -25,11 +27,11 @@ local Player = class(function(self, name, publicId, isLocal)
     panelId = "",
     wantsReady = false,
     wantsRanked = true,
-    inputMethod = "controller"
+    inputMethod = "controller",
+    attackEngineSettings = nil
   }
   -- planned for the future, players don't have public ids yet
   self.publicId = publicId or -1
-  self.trainingModeSettings = nil
   self.rating = nil
   self.stack = nil
   self.playerNumber = nil
@@ -310,6 +312,7 @@ function Player.createFromReplayPlayer(replayPlayer, playerNumber)
   player.settings.difficulty = replayPlayer.settings.difficulty
   player.settings.levelData = replayPlayer.settings.levelData
   player.settings.allowAdjacentColors = replayPlayer.settings.allowAdjacentColors
+  player.settings.attackEngineSettings = replayPlayer.settings.attackEngineSettings
 
   return player
 end
@@ -347,6 +350,10 @@ function Player:updateWithMenuState(menuState)
 
   self:setLevel(menuState.level)
   self:setInputMethod(menuState.inputMethod)
+end
+
+function Player:setAttackEngineSettings(attackEngineSettings)
+
 end
 
 return Player

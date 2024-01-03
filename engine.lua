@@ -97,7 +97,7 @@ Stack =
     s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
-    s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
+    s.garbage_q = GarbageQueue() -- Queue of garbage that is about to be dropped
     
     s.inputMethod = inputMethod
     if s.inputMethod == "touch" then
@@ -1279,8 +1279,8 @@ function Stack.shouldDropGarbage(self)
       -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
       -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
       -- and because of that hack, we need to do another hack here and allow n-height combo garbage
-      -- but only if attackEngineSettings have been set on the match
-      return next_garbage_block_height > 1 and self.match.attackEngineSettings ~= nil
+      -- but only if the player is targetted by a detached attackengine
+      return next_garbage_block_height > 1 and self.match.attackEngines[self.player] ~= nil
     end
   end
 end

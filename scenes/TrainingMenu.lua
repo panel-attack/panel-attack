@@ -7,7 +7,8 @@ local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local class = require("class")
 local tableUtils = require("tableUtils")
-local CharacterSelectTraining = require("scenes.CharacterSelectTraining")
+local CharacterSelectVsSelf = require("scenes.CharacterSelectVsSelf")
+local GameModes = require("GameModes")
 
 --@module TrainingMenu
 -- 
@@ -47,7 +48,9 @@ function TrainingMenu:goToCharacterSelect(value, width, height)
   if value == nil then
     value = createBasicTrainingMode("", width, height)
   end
-  sceneManager:switchToScene(CharacterSelectTraining({value}))
+  GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
+  GAME.localPlayer.settings.attackEngineSettings = value
+  sceneManager:switchToScene(CharacterSelectVsSelf())
 end
 
 function TrainingMenu:load(sceneParams)
@@ -142,7 +145,7 @@ end
 
 function TrainingMenu:draw()
   self.backgroundImg:draw()
-  self.menu.draw()
+  self.menu:draw()
 end
 
 return TrainingMenu

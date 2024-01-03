@@ -3,18 +3,32 @@ local logger = require("logger")
 -- A simulated opponent sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedOpponent =
   class(
-  function(self, health, character, positionX, positionY, mirror)
-    self.health = health
-    self.character = character
+  function(self, positionX, positionY, mirror, character)
     self.frameOriginX = positionX / GFX_SCALE
     self.frameOriginY = positionY / GFX_SCALE
     self.mirror_x = mirror
     self.clock = 0
+    self.character = CharacterLoader.resolveCharacterSelection(character)
+    CharacterLoader.load(self.character)
+    CharacterLoader.wait()
   end
 )
 
-function SimulatedOpponent:setAttackEngine(attackEngine) 
-  self.attackEngine = attackEngine
+-- adds an attack engine to the simulated opponent
+function SimulatedOpponent:addAttackEngine(attackSettings, shouldPlayAttackSfx)
+  self.telegraph = Telegraph(self)
+
+  if shouldPlayAttackSfx then
+    self.attackEngine = AttackEngine(attackSettings, self.telegraph, characters[self.character])
+  else
+    self.attackEngine = AttackEngine(attackSettings, self.telegraph)
+  end
+
+  return self.attackEngine
+end
+
+function SimulatedOpponent:addHealth(health)
+  self.health = health
 end
 
 function SimulatedOpponent:stackCanvasWidth()
@@ -64,3 +78,5 @@ function SimulatedOpponent:receiveGarbage(frameToReceive, garbageList)
     self.health:receiveGarbage(frameToReceive, garbageList)
   end
 end
+
+return SimulatedOpponent

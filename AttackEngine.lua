@@ -15,41 +15,40 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 AttackEngine =
   class(
-  function(self, delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, sender, character, shouldPlayAttackSfx, mergeComboMetalQueue)
+  function(self, attackSettings, telegraph, character)
     -- The number of frames before the first attack starts. Note if this is changed after attack patterns are added their times won't be updated.
-    self.delayBeforeStart = delayBeforeStart 
+    self.delayBeforeStart = attackSettings.delayBeforeStart or 0
 
     -- The number of frames at the end until the whole attack engine repeats.
-    self.delayBeforeRepeat = delayBeforeRepeat
+    self.delayBeforeRepeat = attackSettings.delayBeforeRepeat or 0
 
     -- Attack patterns that put out a crazy amount of garbage can slow down the game, so by default we don't queue more than 72 attacks
     -- This flag can be optionally set to disable that.
-    self.disableQueueLimit = disableQueueLimit
+    self.disableQueueLimit = attackSettings.disableQueueLimit or false
+
+    -- whether the metal garbage is treated the same as combo garbage (aka they can mix)
+    self.mergeComboMetalQueue = attackSettings.mergeComboMetalQueue
 
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
+    self:addAttackPatternsFromTable(attackSettings.attackPatterns)
+
+    -- the clock to control the continuity of the sending process
     self.clock = 0
-    self.character = CharacterLoader.resolveCharacterSelection(character)
-    CharacterLoader.load(self.character)
-    CharacterLoader.wait()
-    sender.attackEngine = self
-    self.telegraph = Telegraph(sender)
-    if garbageTarget then
-      self:setGarbageTarget(garbageTarget)
-    end
-    self.shouldPlayAttackSfx = shouldPlayAttackSfx
-    self.mergeComboMetalQueue = mergeComboMetalQueue
+
+    -- the telegraph the attack engine sends its garbage to
+    self.telegraph = telegraph
+
+    -- using an attackengine means we're cheating and breaking some rules that regular stacks have to adhere to
+    -- modify the telegraph and the attached garbage queue accordingly so it knows
+    self.telegraph.mergeComboMetalQueue = self.mergeComboMetalQueue
+    self.telegraph.garbage_queue.mergeComboMetalQueue = self.mergeComboMetalQueue
+    self.telegraph.garbage_queue.illegalStuffIsAllowed = true
+
+    -- a character table (not id) to send sfx, should be nil if no sfx should play
+    self.character = character
   end
 )
-
-function AttackEngine.createEngineForTrainingModeSettings(trainingModeSettings, garbageTarget, opponent, character, shouldPlayAttackSfx)
-  local delayBeforeStart = trainingModeSettings.delayBeforeStart or 0
-  local delayBeforeRepeat = trainingModeSettings.delayBeforeRepeat or 0
-  local disableQueueLimit = trainingModeSettings.disableQueueLimit or false
-  local attackEngine = AttackEngine(delayBeforeStart, delayBeforeRepeat, disableQueueLimit, garbageTarget, opponent, character, shouldPlayAttackSfx, trainingModeSettings.attackSettings.mergeComboMetalQueue)
-  attackEngine:addAttackPatternsFromTable(trainingModeSettings.attackPatterns)
-  return attackEngine
-end
 
 function AttackEngine:addAttackPatternsFromTable(attackPatternsTable)
   for _, values in ipairs(attackPatternsTable) do
@@ -107,7 +106,7 @@ end
 
 function AttackEngine.run(self)
   assert(self.garbageTarget, "No target set on attack engine")
-  
+
   local highestStartTime = self.attackPatterns[#self.attackPatterns].startTime
 
   -- Finds the greatest startTime value found from all the attackPatterns
@@ -150,8 +149,8 @@ function AttackEngine.run(self)
     metalCount = 3
   end
   local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)    
-  if newComboChainInfo and self.shouldPlayAttackSfx then
-    characters[self.character]:playAttackSfx(newComboChainInfo)
+  if newComboChainInfo and self.character then
+    self.character:playAttackSfx(newComboChainInfo)
   end
 
   self.clock = self.clock + 1

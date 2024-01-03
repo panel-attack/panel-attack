@@ -26,8 +26,7 @@ function Replay.createNewReplay(match)
     gameOverConditions = match.gameOverConditions,
     timeLimit = match.timeLimit,
     doCountdown = match.doCountdown or true,
-    puzzle = match.puzzle,
-    attackEngineSettings = match.attackEngineSettings
+    puzzle = match.puzzle
   }
 
   result.players = {}
@@ -42,7 +41,8 @@ function Replay.createNewReplay(match)
         panelId = player.stack.panels_dir,
         levelData = player.stack.levelData,
         inputMethod = player.stack.inputMethod,
-        allowAdjacentColors = player.stack.allowAdjacentColors
+        allowAdjacentColors = player.stack.allowAdjacentColors,
+        attackEngineSettings = player.settings.attackEngineSettings
       }
     }
     if player.settings.style == GameModes.Styles.MODERN then

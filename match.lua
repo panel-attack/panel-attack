@@ -5,12 +5,16 @@ local sceneManager = require("scenes.sceneManager")
 local Player = require("Player")
 local Replay = require("replay")
 local Signal = require("helpers.signal")
+local SimulatedOpponent = require("SimulatedOpponent")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
   class(
   function(self, players, doCountdown, stackInteraction, winConditions, gameOverConditions, supportsPause, optionalArgs)
     self.players = {}
+    self.stacks = {}
+    -- holds detached attackEngines, meaning attack engines that only deal; indexed via the player they're targeting
+    self.attackEngines = {}
     self.P1 = nil
     self.P2 = nil
     self.engineVersion = VERSION
@@ -32,7 +36,6 @@ Match =
     if optionalArgs then
       -- debatable if these couldn't be player settings instead
       self.puzzle = optionalArgs.puzzle
-      self.attackEngineSettings = optionalArgs.attackEngineSettings
       -- refers to the health portion of a challenge mode stage
       -- maybe this isn't right here and battleRoom should just pass Health in as a Player substitute
       self.health = optionalArgs.health
@@ -246,12 +249,12 @@ function Match:run()
 
   local checkRun = {}
 
-  for i = 1, #self.players do
-    local stack = self.players[i].stack
+  for i, player in ipairs(self.players) do
+    local stack = player.stack
     checkRun[i] = true
 
-    -- if self.players[i].cpu then
-    --   self.players[i].cpu:run(stack)
+    -- if player.cpu then
+    --   player.cpu:run(stack)
     -- end
 
     if stack and stack.is_local and not stack.game_over --[[and not self.players[i].cpu]] then
@@ -261,10 +264,13 @@ function Match:run()
 
   local runsSoFar = 0
   while tableUtils.trueForAny(checkRun, function(b) return b end) do
-    for i = 1, #self.players do
-      local stack = self.players[i].stack
+    for i, player in ipairs(self.players) do
+      local stack = player.stack
       if stack and self:shouldRun(stack, runsSoFar) then
         stack:run()
+        if self.attackEngines[player] then
+          self.attackEngines[player]:run()
+        end
         checkRun[i] = true
       else
         checkRun[i] = false
@@ -274,9 +280,9 @@ function Match:run()
     self:updateClock()
 
     -- Since the stacks can affect each other, don't save rollback until after all have run
-    for i = 1, #self.players do
+    for i, player in ipairs(self.players) do
       if checkRun[i] then
-        local stack = self.players[i].stack
+        local stack = player.stack
         stack:updateFramesBehind()
         stack:saveForRollback()
       end
@@ -511,8 +517,9 @@ function Match:start()
     end
   end)
 
-  for i = 1, #self.players do
-    local stack = self.players[i]:createStackFromSettings(self, i)
+  for i, player in ipairs(self.players) do
+    local stack = player:createStackFromSettings(self, i)
+    self.stacks[#self.stacks + 1] = stack
     stack.do_countdown = self.doCountdown
 
     if self.replay then
@@ -526,6 +533,14 @@ function Match:start()
         stack.play_to_end = true
       end
     end
+
+    if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
+      local attackEngineHost = SimulatedOpponent(500, 200, -1)
+      local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
+      attackEngine:setGarbageTarget(stack)
+      self.attackEngines[player] = attackEngineHost
+    end
+
   end
 
   if self.stackInteraction == GameModes.StackInteractions.SELF then
@@ -542,15 +557,6 @@ function Match:start()
           self.players[i].stack:setOpponent(self.players[j].stack)
         end
       end
-    end
-  elseif self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
-    -- these are really dumb dummy values
-    -- we need a way to create an attackengine without immediately being forced to set all that graphics crap
-    self.attackEngine = AttackEngine.createEngineForTrainingModeSettings(self.attackEngineSettings, nil, SimulatedOpponent(nil, CharacterLoader.resolveCharacterSelection(), 500, 200, -1))
-    -- eg creating an attack engine and then constructing a simulated opponent with it
-    for i = 1, #self.players do
-      local attackEngineClone = deepcpy(self.attackEngine)
-      attackEngineClone:setGarbageTarget(self.players[i].stack)
     end
   end
 
@@ -666,7 +672,6 @@ function Match.createFromReplay(replay, supportsPause)
   local optionalArgs = {
     timeLimit = replay.gameMode.timeLimit,
     puzzle = replay.gameMode.puzzle,
-    attackEngineSettings = replay.gameMode.attackEngineSettings
   }
 
   local players = {}

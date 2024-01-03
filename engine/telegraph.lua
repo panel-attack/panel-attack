@@ -20,14 +20,9 @@ Telegraph = class(function(self, sender)
   assert(sender.clock ~= nil, "telegraph sender invalid")
   -- has a character to source the telegraph images above the stack from
   assert(sender.character ~= nil, "telegraph sender invalid")
-  if sender.attackEngine then
-    -- o glory, we know this sender is cheating
-    -- and it might be doing wack stuff to enable armaggeddon mode
-    self.mergeComboMetalQueue = sender.attackEngine.mergeComboMetalQueue
-  end
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
-  self.garbage_queue = GarbageQueue(sender.attackEngine ~= nil, self.mergeComboMetalQueue)
+  self.garbage_queue = GarbageQueue()
 
   -- Attacks must stay in the telegraph a certain amount of time before they can be sent, we track this with "stoppers"
   --note: keys for stoppers such as self.stoppers.chain[some_key]
@@ -154,8 +149,6 @@ end
 function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
   logger.debug("Telegraph.add_combo_garbage "..(garbage.width or "nil").." "..(garbage.isMetal and "true" or "false"))
   local garbageToSend = {}
-  -- this being a global reference really sucks here, now that attackEngineSettings live on match
-  -- have to take care of that when getting to it
   if garbage.isMetal and not self.mergeComboMetalQueue then
     garbageToSend[#garbageToSend+1] = {garbage.width, garbage.height, true, false, timeAttackInteracts = timeAttackInteracts}
     self.stoppers.metal = timeAttackInteracts + GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
@@ -168,7 +161,7 @@ function Telegraph.add_combo_garbage(self, garbage, timeAttackInteracts)
 end
 
 function Telegraph:chainingEnded(frameEnded)
-  -- this being a global reference really sucks here, now that attackEngineSettings live on match
+  -- this being a global reference really sucks here, now that attackEngines live on match
   -- have to take care of that when getting to it
   if GAME.battleRoom and not GAME.battleRoom.trainingModeSettings then
     assert(frameEnded == self.sender.clock, "expected sender clock to equal attack")

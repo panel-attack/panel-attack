@@ -7,7 +7,7 @@ GarbageQueue = class(function(s, allowIllegalStuff, mergeComboMetalQueue)
     s.illegalStuffIsAllowed = allowIllegalStuff
     s.mergeComboMetalQueue = mergeComboMetalQueue
   end)
-  
+
   function GarbageQueue.makeCopy(self)
     local other = GarbageQueue(self.illegalStuffIsAllowed, self.mergeComboMetalQueue)
     other.chain_garbage = deepcpy(self.chain_garbage)
@@ -24,7 +24,7 @@ GarbageQueue = class(function(s, allowIllegalStuff, mergeComboMetalQueue)
       for k,v in pairs(garbage) do
         local width, height, metal, from_chain, finalized = unpack(v)
         if width and height then
-          -- this being a global reference really sucks here, now that attackEngineSettings live on match
+          -- this being a global reference really sucks here, now that attackEngines live on match
           -- have to take care of that when getting to it
           if metal and not self.mergeComboMetalQueue then
             self.metal:push(v)

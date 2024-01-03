@@ -73,8 +73,8 @@ local OnePlayerEndless = {
 local OnePlayerTraining = {
   style = Styles.MODERN,
   selectFile = FileSelection.TRAINING,
-  gameScene = "GameBase",
-  setupScene = "CharacterSelectTraining",
+  gameScene = "Game1pTraining",
+  setupScene = "CharacterSelectVsSelf",
   richPresenceLabel = loc("mm_1_training"),
 
   -- already known match properties
