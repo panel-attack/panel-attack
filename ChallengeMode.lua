@@ -1,11 +1,13 @@
 local logger = require("logger")
 local class = require("class")
 local ChallengeModePlayer = require("ChallengeModePlayer")
+local GameModes = require("GameModes")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =
   class(
   function(self, difficulty)
+    self.mode = GameModes.getPreset("ONE_PLAYER_CHALLENGE")
     self.currentStageIndex = 0
     self.nextStageIndex = self.currentStageIndex + 1
     self.stages = self:createStages(difficulty)
@@ -16,7 +18,8 @@ local ChallengeMode =
 
     self.stageTimeQuads = {}
     self.totalTimeQuads = {}
-  end
+  end,
+  BattleRoom
 )
 
 ChallengeMode.numDifficulties = 6
@@ -113,10 +116,6 @@ function ChallengeMode:getAttackSettings(difficulty, stageIndex)
   return attackFile
 end
 
-function ChallengeMode:beginStage()
-  self.currentStageIndex = self.nextStageIndex
-end
-
 function ChallengeMode:recordStageResult(winners, gameLength)
   self.player:updateExpendedTime(gameLength)
   self.expendedTime = self.expendedTime + gameLength
@@ -128,7 +127,7 @@ function ChallengeMode:recordStageResult(winners, gameLength)
       self.player:advanceStage()
     end
   else
-    -- draw, stay on the same stage
+    -- tie, stay on the same stage
   end
 end
 
@@ -194,6 +193,10 @@ function ChallengeMode:drawTimeSplits()
   set_color(1,1,0.8,1)
   GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), self.totalTimeQuads, xPosition, yPosition + yOffset * row, themes[config.theme].time_Scale)
   set_color(1,1,1,1)
+end
+
+function ChallengeMode:onMatchEnded(match)
+  -- call recordStageResult on top of what the regular BattleRoom does
 end
 
 return ChallengeMode

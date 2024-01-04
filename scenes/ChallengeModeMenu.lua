@@ -8,7 +8,7 @@ local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local tableUtils = require("tableUtils")
-local CharacterSelectChallenge = require("scenes.CharacterSelectChallenge")
+local GameModes = require("GameModes")
 
 --@module ChallengeModeMenu
 -- 
@@ -26,6 +26,13 @@ sceneManager:addScene(ChallengeModeMenu)
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+end
+
+function ChallengeMode:goToCharacterSelect()
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_CHALLENGE"))
+  
+  local scene = sceneManager:createScene("CharacterSelectVsSelf")
+  sceneManager:switchToScene(scene)
 end
 
 function ChallengeModeMenu:load(sceneParams)
@@ -47,7 +54,7 @@ function ChallengeModeMenu:load(sceneParams)
 
   local menuItems = {
     {Label({text = "difficulty"}), difficultyStepper},
-    {TextButton({label = Label({text = "go_"}), onClick = function() sceneManager:switchToScene(sceneManager:createScene("CharacterSelectChallenge", {challengeMode = difficultyStepper.value})) end})},
+    {TextButton({label = Label({text = "go_"}), onClick = self.goToCharacterSelect})},
     {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 
