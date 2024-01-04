@@ -1,6 +1,6 @@
 local logger = require("logger")
-require("ChallengeStage")
 local class = require("class")
+local ChallengeModePlayer = require("ChallengeModePlayer")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =
@@ -8,74 +8,94 @@ local ChallengeMode =
   function(self, difficulty)
     self.currentStageIndex = 0
     self.nextStageIndex = self.currentStageIndex + 1
-    self.stages = {}
+    self.stages = self:createStages(difficulty)
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
-    local stageCount = 10
-    local secondsToppedOutToLoseBase = 1
-    local secondsToppedOutToLoseIncrement = 0.1
-    local lineClearGPMBase = 4
-    local lineClearGPMIncrement = 0.4
-    local lineHeightToKill = 6
-    local panelLevel = 2
+    self.player = ChallengeModePlayer(self.stages)
+    self.expendedTime = 0
 
-    if difficulty == 1 then
-      secondsToppedOutToLoseBase = 1
-      secondsToppedOutToLoseIncrement = 0.05
-      lineClearGPMBase = 3.3
-      lineClearGPMIncrement = 0.45
-      panelLevel = 2
-    elseif difficulty == 2 then
-      stageCount = 11
-      secondsToppedOutToLoseBase = 1.1
-      secondsToppedOutToLoseIncrement = 0.1
-      lineClearGPMBase = 5
-      lineClearGPMIncrement = 0.7
-      panelLevel = 4
-    elseif difficulty == 3 then
-      stageCount = 12
-      secondsToppedOutToLoseBase = 1.2
-      secondsToppedOutToLoseIncrement = 0.2
-      lineClearGPMBase = 15.5
-      lineClearGPMIncrement = 0.7
-      panelLevel = 6
-    elseif difficulty == 4 then
-      stageCount = 12
-      secondsToppedOutToLoseBase = 1.2
-      secondsToppedOutToLoseIncrement = 0.5
-      lineClearGPMBase = 15.5
-      lineClearGPMIncrement = 1.5
-      panelLevel = 6
-    elseif difficulty == 5 then
-      stageCount = 12
-      secondsToppedOutToLoseBase = 1.2
-      secondsToppedOutToLoseIncrement = 4.0
-      lineClearGPMBase = 30
-      lineClearGPMIncrement = 1.5
-      panelLevel = 8
-    elseif difficulty == 6 then
-      stageCount = 12
-      secondsToppedOutToLoseBase = 1.2
-      secondsToppedOutToLoseIncrement = 4.0
-      lineClearGPMBase = 35
-      lineClearGPMIncrement = 1.5
-      panelLevel = 10
-    end
-
-    for stageIndex = 1, stageCount, 1 do
-      local incrementMultiplier = stageIndex - 1
-      local attackSettings = self:attackFile(difficulty, stageIndex)
-      local secondsToppedOutToLose = secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier
-      local lineClearGPM = lineClearGPMBase + lineClearGPMIncrement * incrementMultiplier
-      self.stages[#self.stages+1] = ChallengeStage(stageIndex, secondsToppedOutToLose, lineClearGPM, lineHeightToKill, panelLevel, attackSettings)
-    end
-    
     self.stageTimeQuads = {}
     self.totalTimeQuads = {}
   end
 )
 
 ChallengeMode.numDifficulties = 6
+
+function ChallengeMode:createStages(difficulty)
+  local stages = {}
+
+  local stageCount
+  local secondsToppedOutToLoseBase 
+  local secondsToppedOutToLoseIncrement
+  local lineClearGPMBase
+  local lineClearGPMIncrement
+  local lineHeightToKill
+  local panelLevel
+
+  if difficulty == 1 then
+    stageCount = 10
+    secondsToppedOutToLoseBase = 1
+    secondsToppedOutToLoseIncrement = 0.05
+    lineClearGPMBase = 3.3
+    lineClearGPMIncrement = 0.45
+    panelLevel = 2
+  elseif difficulty == 2 then
+    stageCount = 11
+    secondsToppedOutToLoseBase = 1.1
+    secondsToppedOutToLoseIncrement = 0.1
+    lineClearGPMBase = 5
+    lineClearGPMIncrement = 0.7
+    panelLevel = 4
+  elseif difficulty == 3 then
+    stageCount = 12
+    secondsToppedOutToLoseBase = 1.2
+    secondsToppedOutToLoseIncrement = 0.2
+    lineClearGPMBase = 15.5
+    lineClearGPMIncrement = 0.7
+    panelLevel = 6
+  elseif difficulty == 4 then
+    stageCount = 12
+    secondsToppedOutToLoseBase = 1.2
+    secondsToppedOutToLoseIncrement = 0.5
+    lineClearGPMBase = 15.5
+    lineClearGPMIncrement = 1.5
+    panelLevel = 6
+  elseif difficulty == 5 then
+    stageCount = 12
+    secondsToppedOutToLoseBase = 1.2
+    secondsToppedOutToLoseIncrement = 4.0
+    lineClearGPMBase = 30
+    lineClearGPMIncrement = 1.5
+    panelLevel = 8
+  elseif difficulty == 6 then
+    stageCount = 12
+    secondsToppedOutToLoseBase = 1.2
+    secondsToppedOutToLoseIncrement = 4.0
+    lineClearGPMBase = 35
+    lineClearGPMIncrement = 1.5
+    panelLevel = 10
+  else
+    error("Invalid challenge mode difficulty level of " .. difficulty)
+  end
+
+  for stageIndex = 1, stageCount, 1 do
+    local incrementMultiplier = stageIndex - 1
+    local stage = {}
+    stage.attackSettings = self:getAttackSettings(difficulty, stageIndex)
+    stage.healthSettings = {
+      secondsToppedOutToLose = secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier,
+      lineClearGPM = lineClearGPMBase + lineClearGPMIncrement * incrementMultiplier,
+      lineHeightToKill = lineHeightToKill,
+      riseDifficulty = panelLevel
+    }
+    stage.expendedTime = 0
+
+    stages[stageIndex] = stage
+  end
+
+  return stages
+end
+
 function ChallengeMode:attackFilePath(difficulty, stageIndex)
   for i = stageIndex, 1, -1 do
     local path = "default_data/training/challenge-" .. difficulty .. "-" .. i .. ".json"
@@ -87,7 +107,7 @@ function ChallengeMode:attackFilePath(difficulty, stageIndex)
   return nil
 end
 
-function ChallengeMode:attackFile(difficulty, stageIndex)
+function ChallengeMode:getAttackSettings(difficulty, stageIndex)
   local attackFile = readAttackFile(self:attackFilePath(difficulty, stageIndex))
   assert(attackFile ~= nil, "could not find attack file for challenge mode")
   return attackFile
@@ -97,18 +117,19 @@ function ChallengeMode:beginStage()
   self.currentStageIndex = self.nextStageIndex
 end
 
-function ChallengeMode:recordStageResult(gameResult, gameLength)
-  local lastStageIndex = self.currentStageIndex
+function ChallengeMode:recordStageResult(winners, gameLength)
+  self.player:updateExpendedTime(gameLength)
+  self.expendedTime = self.expendedTime + gameLength
 
-  -- TODO: gameResult was phased out, needs different if conditions / parameter
-  if gameResult > 0 then
-    self.nextStageIndex = self.currentStageIndex + 1
-  elseif gameResult < 0 then
-    self.continues = self.continues + 1
+  if #winners == 1 then
+    if winners[1] == self.player then
+      self.continues = self.continues + 1
+    else
+      self.player:advanceStage()
+    end
+  else
+    -- draw, stay on the same stage
   end
-
-  local challengeStage = self.stages[lastStageIndex]
-  challengeStage.expendedTime = gameLength + challengeStage.expendedTime
 end
 
 local stageQuads = {}

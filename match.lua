@@ -1,7 +1,6 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local GameModes = require("GameModes")
-local sceneManager = require("scenes.sceneManager")
 local Player = require("Player")
 local Replay = require("replay")
 local Signal = require("helpers.signal")
@@ -249,8 +248,7 @@ function Match:run()
 
   local checkRun = {}
 
-  for i, player in ipairs(self.players) do
-    local stack = player.stack
+  for i, stack in ipairs(self.stacks) do
     checkRun[i] = true
 
     -- if player.cpu then
@@ -280,9 +278,8 @@ function Match:run()
     self:updateClock()
 
     -- Since the stacks can affect each other, don't save rollback until after all have run
-    for i, player in ipairs(self.players) do
+    for i, stack in ipairs(self.stacks) do
       if checkRun[i] then
-        local stack = player.stack
         stack:updateFramesBehind()
         stack:saveForRollback()
       end
