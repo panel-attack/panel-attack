@@ -27,7 +27,7 @@ AttackEngine =
     self.disableQueueLimit = attackSettings.disableQueueLimit or false
 
     -- whether the metal garbage is treated the same as combo garbage (aka they can mix)
-    self.mergeComboMetalQueue = attackSettings.mergeComboMetalQueue
+    self.mergeComboMetalQueue = attackSettings.mergeComboMetalQueue or false
 
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
@@ -81,9 +81,9 @@ function AttackEngine:setGarbageTarget(garbageTarget)
   assert(garbageTarget.receiveGarbage ~= nil)
 
   self.garbageTarget = garbageTarget
-  if self.telegraph then
-    self.telegraph:updatePositionForGarbageTarget(garbageTarget)
-  end
+  self.garbageTarget.garbage_q.illegalStuffIsAllowed = true
+  self.garbageTarget.garbage_q.mergeComboMetalQueue = self.mergeComboMetalQueue
+  self.telegraph:updatePositionForGarbageTarget(garbageTarget)
 end
 
 -- Adds an attack pattern that happens repeatedly on a timer.
