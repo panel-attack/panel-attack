@@ -5,7 +5,7 @@ local sceneManager = require("scenes.sceneManager")
 local Player = require("Player")
 local Replay = require("replay")
 local Signal = require("helpers.signal")
-local SimulatedOpponent = require("SimulatedOpponent")
+local SimulatedStack = require("SimulatedStack")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -535,7 +535,7 @@ function Match:start()
     end
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
-      local attackEngineHost = SimulatedOpponent(500, 200, -1)
+      local attackEngineHost = SimulatedStack(500, 200, -1)
       local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings.attackSettings)
       attackEngine:setGarbageTarget(stack)
       self.attackEngines[player] = attackEngineHost

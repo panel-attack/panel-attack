@@ -3,6 +3,7 @@ local GameModes = require("GameModes")
 local LevelPresets = require("LevelPresets")
 local input = require("inputManager")
 local util = require("util")
+local MatchParticipant = require("MatchParticipant")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -11,8 +12,6 @@ local util = require("util")
 -- Due to this, unless for a good reason, all properties on Player should be set using the setters
 local Player = class(function(self, name, publicId, isLocal)
   self.name = name
-  self.wins = 0
-  self.modifiedWins = 0
   self.settings = {
     -- these need to all be initialized so subscription works
     -- the gist is that all settings inside here are modifiable clientside for local players as part of match setup
@@ -40,20 +39,8 @@ local Player = class(function(self, name, publicId, isLocal)
   -- this is either keys or a single input configuration
   self.inputConfiguration = input.allKeys
   self.subscriptionList = util.getWeaklyKeyedTable()
-end)
-
--- returns the count of wins modified by the `modifiedWins` property
-function Player:getWinCountForDisplay()
-  return self.wins + self.modifiedWins
-end
-
-function Player:setWinCount(count)
-  self.wins = count
-end
-
-function Player:incrementWinCount()
-  self.wins = self.wins + 1
-end
+end,
+MatchParticipant)
 
 -- creates a stack for the given match according to the player's settings and returns it
 -- the stack is also saved as a reference on player
