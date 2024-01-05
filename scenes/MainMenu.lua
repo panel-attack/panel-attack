@@ -74,7 +74,6 @@ local menuItems = {
     end)
   }, {
     createMainMenuButton("mm_1_challenge_mode", function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_CHALLENGE"))
       switchToScene(ChallengeModeMenu())
     end)
   }, {

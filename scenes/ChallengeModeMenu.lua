@@ -28,8 +28,8 @@ local function exitMenu()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
-function ChallengeMode:goToCharacterSelect()
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_CHALLENGE"))
+function ChallengeModeMenu:goToCharacterSelect(difficulty)
+  GAME.battleRoom = ChallengeMode(difficulty)
   
   local scene = sceneManager:createScene("CharacterSelectVsSelf")
   sceneManager:switchToScene(scene)
@@ -40,7 +40,7 @@ function ChallengeModeMenu:load(sceneParams)
   local challengeModes = {}
   for i = 1, ChallengeMode.numDifficulties do
     table.insert(difficultyLabels, Label({text = "challenge_difficulty_" .. i}))
-    table.insert(challengeModes, ChallengeMode(i))
+    table.insert(challengeModes, i)
   end
 
   local difficultyStepper = Stepper({
@@ -54,7 +54,9 @@ function ChallengeModeMenu:load(sceneParams)
 
   local menuItems = {
     {Label({text = "difficulty"}), difficultyStepper},
-    {TextButton({label = Label({text = "go_"}), onClick = self.goToCharacterSelect})},
+    {TextButton({label = Label({text = "go_"}), onClick = function()
+      self:goToCharacterSelect(difficultyStepper.value)
+    end})},
     {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 

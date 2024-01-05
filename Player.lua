@@ -82,64 +82,6 @@ function Player:getRatingDiff()
   return self.rating.new - self.rating.old
 end
 
--- Other elements (ui, network) can subscribe to properties in Player.settings by passing a callback
-function Player:subscribe(subscriber, property, callback)
-  if self.settings[property] ~= nil then
-    if not self.subscriptionList[property] then
-      self.subscriptionList[property] = {}
-    end
-    self.subscriptionList[property][subscriber] = callback
-    return true
-  end
-
-  return false
-end
-
-function Player:unsubscribe(subscriber, property)
-  if property then
-    self.subscriptionList[property][subscriber] = nil
-  else
-    -- if no property is given, unsubscribe everything for that subscriber
-    for property, _ in pairs(self.subscriptionList) do
-      self.subscriptionList[property][subscriber] = nil
-    end
-  end
-end
-
--- clears all subscriptions 
-function Player:clearSubscriptions()
-  self.subscriptionList = util.getWeaklyKeyedTable()
-end
-
--- the callback is executed with the new property value as the argument whenever a property is modified via its setter
-function Player:onPropertyChanged(property)
-  if self.subscriptionList[property] then
-    for subscriber, callback in pairs(self.subscriptionList[property]) do
-      callback(subscriber, self.settings[property])
-    end
-  end
-end
-
-function Player:setStage(stageId)
-  if stageId ~= self.settings.stageId then
-    stageId = StageLoader.resolveStageSelection(stageId)
-    self.settings.stageId = stageId
-    StageLoader.load(stageId)
-
-    self:onPropertyChanged("stageId")
-  end
-end
-
-function Player:setCharacter(characterId)
-  if characterId ~= self.settings.characterId then
-    characterId = CharacterLoader.resolveCharacterSelection(characterId)
-    self.settings.characterId = characterId
-    CharacterLoader.load(characterId)
-
-    self:onPropertyChanged("characterId")
-  end
-end
-
 function Player:setPanels(panelId)
   if panelId ~= self.settings.panelId then
     if panels[panelId] then

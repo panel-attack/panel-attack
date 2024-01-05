@@ -2,22 +2,29 @@ local logger = require("logger")
 local class = require("class")
 local ChallengeModePlayer = require("ChallengeModePlayer")
 local GameModes = require("GameModes")
+local sceneManager = require("scenes.sceneManager")
+local MessageTransition = require("scenes.Transitions.MessageTransition")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =
   class(
   function(self, difficulty)
     self.mode = GameModes.getPreset("ONE_PLAYER_CHALLENGE")
+    -- always use the game client's local player
     self.currentStageIndex = 0
     self.nextStageIndex = self.currentStageIndex + 1
     self.stages = self:createStages(difficulty)
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
-    self.player = ChallengeModePlayer(self.stages)
     self.expendedTime = 0
 
     self.stageTimeQuads = {}
     self.totalTimeQuads = {}
+
+    self:addPlayer(GAME.localPlayer)
+    GAME.localPlayer:setLevel(self.stages[1].playerLevel)
+    self.player = ChallengeModePlayer(self.stages)
+    self:addPlayer(self.player)
   end,
   BattleRoom
 )
@@ -91,6 +98,7 @@ function ChallengeMode:createStages(difficulty)
       lineHeightToKill = lineHeightToKill,
       riseDifficulty = panelLevel
     }
+    stage.playerLevel = panelLevel
     stage.expendedTime = 0
 
     stages[stageIndex] = stage
@@ -114,21 +122,6 @@ function ChallengeMode:getAttackSettings(difficulty, stageIndex)
   local attackFile = readAttackFile(self:attackFilePath(difficulty, stageIndex))
   assert(attackFile ~= nil, "could not find attack file for challenge mode")
   return attackFile
-end
-
-function ChallengeMode:recordStageResult(winners, gameLength)
-  self.player:updateExpendedTime(gameLength)
-  self.expendedTime = self.expendedTime + gameLength
-
-  if #winners == 1 then
-    if winners[1] == self.player then
-      self.continues = self.continues + 1
-    else
-      self.player:advanceStage()
-    end
-  else
-    -- tie, stay on the same stage
-  end
 end
 
 local stageQuads = {}
@@ -195,8 +188,67 @@ function ChallengeMode:drawTimeSplits()
   set_color(1,1,1,1)
 end
 
+function ChallengeMode:recordStageResult(winners, gameLength)
+  self.player:updateExpendedTime(gameLength)
+  self.expendedTime = self.expendedTime + gameLength
+
+  if #winners == 1 then
+    if winners[1] == self.player then
+      self.continues = self.continues + 1
+    else
+      self.player:advanceStage()
+    end
+  elseif #winners == 2 then
+    -- tie, stay on the same stage
+    -- but since the player didn't lose, they shouldn't have to pay the timer
+    self.expendedTime = self.expendedTime - gameLength
+  elseif #winners == 0 then
+    -- this means an abort which is a LOSS because it's a local game and only manual abort is possible
+    self.continues = self.continues + 1
+  end
+end
+
 function ChallengeMode:onMatchEnded(match)
-  -- call recordStageResult on top of what the regular BattleRoom does
+  -- TODO: call recordStageResult on top of what the regular BattleRoom does
+  self.matchesPlayed = self.matchesPlayed + 1
+
+  -- an abort is always the responsibility of the local player in challenge mode
+  -- so always add the time on top
+  self.expendedTime = self.expendedTime + match.clock
+  if not match.aborted then
+    local winners = match:getWinners()
+    -- apply wins and possibly statistical data up for collection
+    if #winners == 1 then
+      -- increment win count on winning player if there is only one
+      winners[1]:incrementWinCount()
+    end
+    if self.online and match:hasLocalPlayer() then
+      self:reportLocalGameResult(winners)
+    end
+  else
+  -- match:deinit is the responsibility of the one switching out of the game scene
+    match:deinit()
+    -- in the case of a network based abort, the network part of the battleRoom would unsubscribe from the onMatchEnded signal
+    -- and initialise the transition to wherever else before calling abort on the match to finalize it
+    -- that means whenever we land here, it was a match-side local abort that leaves the room intact
+    local setupScene = sceneManager:createScene(self.mode.setupScene)
+    if match.desyncError then
+      -- match could have a desync error
+      -- -> back to select screen, battleRoom stays intact
+      -- ^ this behaviour is different to the past but until the server tells us the room is dead there is no reason to assume it to be dead
+      sceneManager:switchToScene(setupScene, MessageTransition(GAME.timer, 5, sceneManager.activeScene, setupScene, "ss_latency_error"))
+    else
+      -- local player could pause and leave
+      -- -> back to select screen, battleRoom stays intact
+      sceneManager:switchToScene(setupScene)
+    end
+
+    -- other aborts come via network and are directly handled in response to the network message (or lack thereof)
+  end
+
+  -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference
+  self.match = nil
+  self.state = BattleRoom.states.Setup
 end
 
 return ChallengeMode

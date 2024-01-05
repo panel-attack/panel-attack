@@ -8,6 +8,8 @@ local ChallengeModePlayer = class(function(self, stages)
   self.settings.attackEngineSettings = nil
   self.settings.healthSettings = nil
   self.usedCharacterIds = {}
+  self:setCharacterForStage(self.stageIndex)
+  self:setStage("")
 end,
 MatchParticipant)
 
@@ -54,8 +56,13 @@ function ChallengeModePlayer:setCharacter(characterId)
   end
 end
 
+function ChallengeModePlayer:setCharacterForStage(stageNumber)
+  self:setCharacter(characterForStageNumber(stageNumber))
+end
+
 function ChallengeModePlayer:advanceStage()
   self.stageIndex = self.stageIndex + 1
+  self.usedCharacterIds[#self.usedCharacterIds + 1] = self.settings.characterId
   if self.stages[self.stageIndex] then
     local stageSettings = self.stages[self.stageIndex]
     self.settings.attackEngineSettings = stageSettings.attackEngineSettings
