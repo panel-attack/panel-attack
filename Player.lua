@@ -39,6 +39,7 @@ local Player = class(function(self, name, publicId, isLocal)
   -- this is either keys or a single input configuration
   self.inputConfiguration = input.allKeys
   self.subscriptionList = util.getWeaklyKeyedTable()
+  self.human = true
 end,
 MatchParticipant)
 
@@ -100,13 +101,6 @@ function Player:setWantsRanked(wantsRanked)
   if wantsRanked ~= self.settings.wantsRanked then
     self.settings.wantsRanked = wantsRanked
     self:onPropertyChanged("wantsRanked")
-  end
-end
-
-function Player:setWantsReady(wantsReady)
-  if wantsReady ~= self.settings.wantsReady then
-    self.settings.wantsReady = wantsReady
-    self:onPropertyChanged("wantsReady")
   end
 end
 

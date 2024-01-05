@@ -8,9 +8,11 @@ local MatchParticipant = class(function(self)
   self.modifiedWins = 0
   self.settings = {
     characterId = random_character_special_value,
-    stageId = random_stage_special_value
+    stageId = random_stage_special_value,
+    wantsReady = false
   }
   self.subscriptionList = util.getWeaklyKeyedTable()
+  self.human = false
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -86,6 +88,13 @@ function MatchParticipant:setCharacter(characterId)
     CharacterLoader.load(characterId)
 
     self:onPropertyChanged("characterId")
+  end
+end
+
+function MatchParticipant:setWantsReady(wantsReady)
+  if wantsReady ~= self.settings.wantsReady then
+    self.settings.wantsReady = wantsReady
+    self:onPropertyChanged("wantsReady")
   end
 end
 

@@ -116,13 +116,13 @@ local OnePlayerPuzzle = {
 local OnePlayerChallenge = {
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  gameScene = "GameBase",
+  gameScene = "Game1pChallenge",
   setupScene = "CharacterSelectChallenge",
   richPresenceLabel = loc("mm_1_challenge_mode"),
 
   -- already known match properties
   playerCount = 1,
-  stackInteraction = StackInteractions.HEALTH_ENGINE,
+  stackInteraction = StackInteractions.VERSUS,
   winConditions = { WinConditions.LAST_ALIVE },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,

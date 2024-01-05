@@ -5,6 +5,7 @@ local Player = require("Player")
 local Replay = require("replay")
 local Signal = require("helpers.signal")
 local SimulatedStack = require("SimulatedStack")
+local ChallengeModePlayer = require("ChallengeModePlayer")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -194,16 +195,6 @@ function Match:debugRollbackAndCaptureState(clockGoal)
   end
 end
 
-function Match:warningOccurred()
-  local P1 = self.P1
-  local P2 = self.P2
-  
-  if (P1 and tableUtils.length(P1.warningsTriggered) > 0) or (P2 and tableUtils.length(P2.warningsTriggered) > 0) then
-    return true
-  end
-  return false
-end
-
 function Match:debugAssertDivergence(stack, savedStack)
 
   for k,v in pairs(savedStack) do
@@ -280,14 +271,12 @@ function Match:run()
     -- Since the stacks can affect each other, don't save rollback until after all have run
     for i, stack in ipairs(self.stacks) do
       if checkRun[i] then
-        stack:updateFramesBehind()
-        stack:saveForRollback()
+        self:updateFramesBehind(stack)
+        if self:shouldSaveRollback(stack) then
+          stack:saveForRollback()
+        end
       end
     end
-
-    --   if self.simulatedOpponent then
-    --     self.simulatedOpponent:run()
-    --   end
 
     self:debugCheckDivergence()
 
@@ -312,6 +301,31 @@ function Match:run()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
+end
+
+function Match:updateFramesBehind(stack)
+  local framesBehind = self.clock - stack.clock
+  stack.framesBehindArray[self.clock] = framesBehind
+  stack.framesBehind = framesBehind
+end
+
+function Match:shouldSaveRollback(stack)
+  if self.isFromReplay then
+    return true
+  end
+
+  -- rollback needs to happen if any sender is more than the garbage delay behind is
+  for i = 1, #self.stacks do
+    if self.stacks[i] ~= stack then
+      if self.stacks[i].garbageTarget == stack then
+        if self.stacks[i].clock + GARBAGE_DELAY_LAND_TIME <= stack.clock then
+          return true
+        end
+      end
+    end
+  end
+
+  return false
 end
 
 -- updates the match clock to the clock time of the player furthest into the game
@@ -548,10 +562,9 @@ function Match:start()
     for i = 1, #self.players do
       for j = 1, #self.players do
         if i ~= j then
-          -- once we have more than 2P in a single mode, setGarbageTarget/setOpponent needs to put these into an array
+          -- once we have more than 2P in a single mode, setGarbageTarget needs to put these into an array
           -- or we rework it anyway for team play
           self.players[i].stack:setGarbageTarget(self.players[j].stack)
-          self.players[i].stack:setOpponent(self.players[j].stack)
         end
       end
     end
@@ -674,7 +687,11 @@ function Match.createFromReplay(replay, supportsPause)
   local players = {}
 
   for i = 1, #replay.players do
-    players[i] = Player.createFromReplayPlayer(replay.players[i], i)
+    if replay.players[i].human then
+      players[i] = Player.createFromReplayPlayer(replay.players[i], i)
+    else
+      players[i] = ChallengeModePlayer.createFromReplayPlayer(replay.players[i], i)
+    end
   end
 
   local match = Match(

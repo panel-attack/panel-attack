@@ -1,13 +1,19 @@
 local logger = require("logger")
 local Health = require("Health")
+require("queue")
 
--- A simulated opponent sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
+-- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedStack =
   class(
   function(self, playerNumber, character)
     self:moveForPlayerNumber(playerNumber)
+    self.framesBehindArray = {}
+    self.framesBehind = 0
     self.clock = 0
     self.character = CharacterLoader.resolveCharacterSelection(character)
+    self.rollbackCopies = {}
+    self.rollbackCopyPool = Queue()
+    self.panels_dir = config.panels
     CharacterLoader.load(self.character)
     CharacterLoader.wait()
   end
@@ -46,7 +52,12 @@ function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
 end
 
 function SimulatedStack:addHealth(healthSettings)
-  self.health = Health(unpack(healthSettings))
+  self.health = Health(
+    healthSettings.secondsToppedOutToLose,
+    healthSettings.lineClearGPM,
+    healthSettings.lineHeightToKill,
+    healthSettings.riseSpeed
+  )
 end
 
 function SimulatedStack:stackCanvasWidth()
@@ -57,7 +68,7 @@ function SimulatedStack:run()
   if self.health then
     self.health:run()
   end
-  if not self:isDefeated() then
+  if not self:game_ended() then
     if self.attackEngine then
       self.attackEngine:run()
     end
@@ -65,7 +76,11 @@ function SimulatedStack:run()
   end
 end
 
-function SimulatedStack:isDefeated()
+function SimulatedStack:shouldRun(runsSoFar)
+  return runsSoFar < 1
+end
+
+function SimulatedStack:game_ended()
   if not self.health then
     return false
   end
@@ -94,6 +109,54 @@ end
 function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
   if self.health and self.health:isFullyDepleted() == false then
     self.health:receiveGarbage(frameToReceive, garbageList)
+  end
+end
+
+function SimulatedStack:saveForRollback()
+  local copy = {}
+
+  if self.health then
+    self.health:saveRollbackCopy()
+  end
+
+  if self.telegraph then
+    -- this is pretty stupid, telegraph should just save its own rollback on itself
+    -- so that when rollback happens we just telegraph:rollbackToFrame
+    copy.telegraph = self.telegraph:rollbackCopy()
+  end
+
+  self.rollbackCopies[self.clock] = copy
+end
+
+function SimulatedStack:rollbackToFrame(frame)
+  local copy = self.rollbackCopies[frame]
+
+  if copy then
+    if self.telegraph then
+      copy.telegraph:rollbackCopy(self.telegraph)
+    end
+  end
+
+  if self.health then
+    self.health:rollbackToFrame(frame)
+  end
+end
+
+function SimulatedStack:starting_state()
+end
+
+function SimulatedStack:setGarbageTarget(garbageTarget)
+  if garbageTarget ~= nil then
+    assert(garbageTarget.frameOriginX ~= nil)
+    assert(garbageTarget.frameOriginY ~= nil)
+    assert(garbageTarget.mirror_x ~= nil)
+    assert(garbageTarget.stackCanvasWidth ~= nil)
+    assert(garbageTarget.receiveGarbage ~= nil)
+  end
+  self.garbageTarget = garbageTarget
+  if self.telegraph then
+    self.attackEngine:setGarbageTarget(garbageTarget)
+    self.telegraph:updatePositionForGarbageTarget(garbageTarget)
   end
 end
 

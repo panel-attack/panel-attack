@@ -31,7 +31,7 @@ end
 function ChallengeModeMenu:goToCharacterSelect(difficulty)
   GAME.battleRoom = ChallengeMode(difficulty)
   
-  local scene = sceneManager:createScene("CharacterSelectVsSelf")
+  local scene = sceneManager:createScene("CharacterSelectChallenge")
   sceneManager:switchToScene(scene)
 end
 

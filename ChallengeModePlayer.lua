@@ -2,14 +2,14 @@ local MatchParticipant = require("MatchParticipant")
 local class = require("class")
 local SimulatedStack = require("SimulatedStack")
 
-local ChallengeModePlayer = class(function(self, stages)
-  self.stages = stages
-  self.stageIndex = 1
+local ChallengeModePlayer = class(function(self, playerNumber)
+  self.playerNumber = playerNumber
+  self.isLocal = true
   self.settings.attackEngineSettings = nil
   self.settings.healthSettings = nil
+  self.settings.wantsReady = true
   self.usedCharacterIds = {}
-  self:setCharacterForStage(self.stageIndex)
-  self:setStage("")
+  self.human = false
 end,
 MatchParticipant)
 
@@ -77,6 +77,19 @@ end
 
 function ChallengeModePlayer:updateExpendedTime(time)
   self.stages[self.stageIndex].expendedTime = self.stages[self.stageIndex].expendedTime + time
+end
+
+-- challenge mode players are always ready
+function ChallengeModePlayer:setWantsReady(wantsReady)
+  self.settings.wantsReady = true
+  self:onPropertyChanged("wantsReady")
+end
+
+function ChallengeModePlayer.createFromReplayPlayer(replayPlayer, playerNumber)
+  local player = ChallengeModePlayer(playerNumber)
+  player:addAttackEngine(replayPlayer.settings.attackEngineSettings)
+  player:addHealth(replayPlayer.settings.healthSettings)
+  return player
 end
 
 return ChallengeModePlayer

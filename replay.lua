@@ -37,13 +37,15 @@ function Replay.createNewReplay(match)
       wins = player.wins,
       publicId = player.publicId,
       settings = {
-        characterId = player.stack.character,
-        panelId = player.stack.panels_dir,
-        levelData = player.stack.levelData,
-        inputMethod = player.stack.inputMethod,
+        characterId = player.settings.characterId,
+        panelId = player.settings.panelId,
+        levelData = player.settings.levelData,
+        inputMethod = player.settings.inputMethod,
         allowAdjacentColors = player.stack.allowAdjacentColors,
-        attackEngineSettings = player.settings.attackEngineSettings
-      }
+        attackEngineSettings = player.settings.attackEngineSettings,
+        healthSettings = player.settings.healthSettings
+      },
+      human = player.human
     }
     if player.settings.style == GameModes.Styles.MODERN then
       result.players[i].settings.level = player.settings.level

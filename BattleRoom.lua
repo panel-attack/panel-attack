@@ -188,7 +188,7 @@ end
 
 -- adds an existing Player to the BattleRoom
 function BattleRoom:addPlayer(player)
-  if player.isLocal then
+  if player.isLocal and player.restrictInputs then
     for i = 1, #GAME.input.inputConfigurations do
       if not GAME.input.inputConfigurations[i].usedByPlayer then
         player:restrictInputs(GAME.input.inputConfigurations[i])

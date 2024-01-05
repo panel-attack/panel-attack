@@ -92,8 +92,8 @@ function Match:render()
 
   if config.show_fps and P1 and P2 then
 
-    local P1Behind = P1:averageFramesBehind()
-    local P2Behind = P2:averageFramesBehind()
+    local P1Behind = P1.framesBehind
+    local P2Behind = P2.framesBehind
     local behind = math.abs(P1.clock - P2.clock)
 
     if P1Behind > 0 then
@@ -300,15 +300,7 @@ function Match:render()
     end
   end
 
-  if (self:warningOccurred()) then
-    local iconSize = 20
-    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-    local x = 5
-    local y = 5
-    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprint("A warning has occurred, please post your warnings.txt file and this replay to #panel-attack-bugs in the discord.", x + iconSize,
-           y)
-  elseif P2 and P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
+  if P2 and P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
     -- let the player know that rollback is active
     local iconSize = 20
     local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()

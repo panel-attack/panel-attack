@@ -1,11 +1,10 @@
 local logger = require("logger")
-local levelPresets = require("LevelPresets")
 
 local HEALTH_BAR_WIDTH = 50
 
 Health =
   class(
-  function(self, secondsToppedOutToLose, lineClearGPM, height, riseLevel)
+  function(self, secondsToppedOutToLose, lineClearGPM, height, riseSpeed)
     self.secondsToppedOutToLose = secondsToppedOutToLose -- Number of seconds currently remaining of being "topped" out before we are defeated.
     self.maxSecondsToppedOutToLose = secondsToppedOutToLose -- Starting value of secondsToppedOutToLose
     self.lineClearRate = lineClearGPM / 60 -- How many "lines" we clear per second. Essentially how fast we recover.
@@ -13,13 +12,13 @@ Health =
     self.height = height -- How many "lines" need to be accumulated before we are "topped" out.
     self.lastWasFourCombo = false -- Tracks if the last combo was a +4. If two +4s hit in a row, it only counts as 1 "line"
     self.clock = 0 -- Current clock time, this should match the opponent
-    self.riseLevel = riseLevel -- The current level used to simulate "rise speed"
-    self.currentRiseSpeed = levelPresets.getModern(riseLevel).startingSpeed -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
+    self.currentRiseSpeed = riseSpeed -- rise speed is just like the normal game for now, lines are added faster the longer the match goes
+    self.rollbackCopies = {}
+    self.rollbackCopyPool = Queue()
   end
 )
 
 function Health:run()
-
   -- Increment rise speed if needed
   if self.clock > 0 and self.clock % (15 * 60) == 0 then
     self.currentRiseSpeed = math.min(self.currentRiseSpeed + 1, 99)
@@ -102,8 +101,40 @@ function Health:renderTopOut(xPosition)
 end
 
 function Health:render(xPosition)
-
   self:renderHealth(xPosition)
   self:renderTopOut(xPosition)
-
 end
+
+function Health:saveRollbackCopy()
+  local copy
+
+  if self.rollbackCopyPool:len() > 0 then
+    copy = self.rollbackCopyPool:pop()
+  else
+    copy = {}
+  end
+
+  copy.currentRiseSpeed = self.currentRiseSpeed
+  copy.currentLines = self.currentLines
+  copy.secondsToppedOutToLose = self.secondsToppedOutToLose
+  copy.lastWasFourCombo = self.lastWasFourCombo
+
+  self.rollbackCopies[self.clock] = copy
+end
+
+function Health:rollbackToFrame(frame)
+  local copy = self.rollbackCopies[frame]
+
+  for i = frame, self.clock do
+    self.rollbackCopyPool:push(self.rollbackCopies[i])
+    self.rollbackCopies[i] = nil
+  end
+
+  self.currentRiseSpeed = copy.currentRiseSpeed
+  self.currentLines = copy.currentLines
+  self.secondsToppedOutToLose = copy.secondsToppedOutToLose
+  self.lastWasFourCombo = copy.lastWasFourCombo
+  self.clock = frame
+end
+
+return Health

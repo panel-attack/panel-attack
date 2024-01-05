@@ -245,7 +245,7 @@ Stack =
     s.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
     s.framesBehindArray = {}
-    s.totalFramesBehind = 0
+    s.framesBehind = 0
     s.warningsTriggered = {}
 
     s.move_quads = {}
@@ -613,37 +613,9 @@ function Stack.rollbackToFrame(self, frame)
   return true
 end
 
-function Stack:shouldSaveRollback()
-  if not self.match then
-    return false
-  end
-
-  if self.match.isFromReplay then
-    return true
-  end
-
-  local opponentStack = self.opponentStack
-  -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
-  if not opponentStack then
-    return false
-  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
-  -- don't save the rollback info for performance reasons
-  -- this also includes local play and single player, since the clocks are <= 1 difference
-  elseif opponentStack.clock + GARBAGE_DELAY_LAND_TIME > self.clock then
-    return false
-  end
-
-  return true
-end
-
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the clock time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
-
-  if self:shouldSaveRollback() == false then
-    return
-  end
-
   local opponentStack = self.opponentStack
   local prev_states = self.prev_states
   local attackTarget = self.garbageTarget
@@ -671,12 +643,6 @@ function Stack.deleteRollbackCopy(self, frame)
   end
 end
 
--- Sets the opponent stack we are playing against.
--- This object must be a full stack object, it is used to determine who is winning, clock value and more.
-function Stack.setOpponent(self, newOpponent)
-  self.opponentStack = newOpponent
-end
-
 -- Target must be able to take calls of
 -- receiveGarbage(frameToReceive, garbageList)
 -- and provide
@@ -696,6 +662,9 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
   if self.telegraph then
     self.telegraph:updatePositionForGarbageTarget(newGarbageTarget)
   end
+
+  -- in the longrun, opponentStack should not be known to the stack
+  self.opponentStack = newGarbageTarget
 end
 
 function Stack:stackCanvasWidth()
@@ -1721,16 +1690,6 @@ function Stack:receiveGarbage(frameToReceive, garbageList)
   self.later_garbage[frameToReceive] = garbage
 end
 
-function Stack:updateFramesBehind()
-  if self.opponentStack then
-    if not self.framesBehindArray[self.clock] then
-      local framesBehind = math.max(0, self.opponentStack.clock - self.clock)
-      self.framesBehindArray[self.clock] = framesBehind
-      self.totalFramesBehind = self.totalFramesBehind + framesBehind
-    end
-  end
-end
-
 function Stack.behindRollback(self)
   if self.lastRollbackFrame > self.clock then
     return true
@@ -1758,14 +1717,8 @@ function Stack:canPlaySfx()
   return true
 end
 
-function Stack:averageFramesBehind()
-  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.clock, 1)), 1))
-  return average
-end
-
 -- Returns true if the stack is simulated past the end of the match.
 function Stack.game_ended(self)
-
   if self.puzzle then
     if self:puzzle_done() or self:puzzle_failed() then
       return true

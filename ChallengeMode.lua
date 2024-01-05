@@ -4,15 +4,13 @@ local ChallengeModePlayer = require("ChallengeModePlayer")
 local GameModes = require("GameModes")
 local sceneManager = require("scenes.sceneManager")
 local MessageTransition = require("scenes.Transitions.MessageTransition")
+local levelPresets = require("LevelPresets")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =
   class(
-  function(self, difficulty)
+  function(self, difficulty, stageIndex)
     self.mode = GameModes.getPreset("ONE_PLAYER_CHALLENGE")
-    -- always use the game client's local player
-    self.currentStageIndex = 0
-    self.nextStageIndex = self.currentStageIndex + 1
     self.stages = self:createStages(difficulty)
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
@@ -22,9 +20,9 @@ local ChallengeMode =
     self.totalTimeQuads = {}
 
     self:addPlayer(GAME.localPlayer)
-    GAME.localPlayer:setLevel(self.stages[1].playerLevel)
-    self.player = ChallengeModePlayer(self.stages)
+    self.player = ChallengeModePlayer(#self.players + 1)
     self:addPlayer(self.player)
+    self:setStage(stageIndex or 1)
   end,
   BattleRoom
 )
@@ -49,6 +47,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 3.3
     lineClearGPMIncrement = 0.45
     panelLevel = 2
+    lineHeightToKill = 6
   elseif difficulty == 2 then
     stageCount = 11
     secondsToppedOutToLoseBase = 1.1
@@ -56,6 +55,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 5
     lineClearGPMIncrement = 0.7
     panelLevel = 4
+    lineHeightToKill = 6
   elseif difficulty == 3 then
     stageCount = 12
     secondsToppedOutToLoseBase = 1.2
@@ -63,6 +63,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 15.5
     lineClearGPMIncrement = 0.7
     panelLevel = 6
+    lineHeightToKill = 6
   elseif difficulty == 4 then
     stageCount = 12
     secondsToppedOutToLoseBase = 1.2
@@ -70,6 +71,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 15.5
     lineClearGPMIncrement = 1.5
     panelLevel = 6
+    lineHeightToKill = 6
   elseif difficulty == 5 then
     stageCount = 12
     secondsToppedOutToLoseBase = 1.2
@@ -77,6 +79,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 30
     lineClearGPMIncrement = 1.5
     panelLevel = 8
+    lineHeightToKill = 6
   elseif difficulty == 6 then
     stageCount = 12
     secondsToppedOutToLoseBase = 1.2
@@ -84,6 +87,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 35
     lineClearGPMIncrement = 1.5
     panelLevel = 10
+    lineHeightToKill = 6
   else
     error("Invalid challenge mode difficulty level of " .. difficulty)
   end
@@ -96,10 +100,11 @@ function ChallengeMode:createStages(difficulty)
       secondsToppedOutToLose = secondsToppedOutToLoseBase + secondsToppedOutToLoseIncrement * incrementMultiplier,
       lineClearGPM = lineClearGPMBase + lineClearGPMIncrement * incrementMultiplier,
       lineHeightToKill = lineHeightToKill,
-      riseDifficulty = panelLevel
+      riseSpeed = levelPresets.getModern(panelLevel).startingSpeed
     }
     stage.playerLevel = panelLevel
     stage.expendedTime = 0
+    stage.index = stageIndex
 
     stages[stageIndex] = stage
   end
@@ -137,7 +142,7 @@ function ChallengeMode.render(self)
 
   drawY = 520
   gprintf("Stage", drawX - limit/2, drawY, limit, "center", nil, nil, 10)
-  GraphicsUtil.draw_number(self.currentStageIndex, themes[config.theme].images.IMG_number_atlas_2P, stageQuads, drawX, drawY + 26, themes[config.theme].win_Scale, "center")
+  GraphicsUtil.draw_number(self.stageIndex, themes[config.theme].images.IMG_number_atlas_2P, stageQuads, drawX, drawY + 26, themes[config.theme].win_Scale, "center")
 
   drawY = 600
   gprintf("Continues", drawX - limit/2, drawY, limit, "center", nil, nil, 10)
@@ -160,13 +165,13 @@ function ChallengeMode:drawTimeSplits()
 
   yPosition = yPosition + padding
 
-  for i = 1, self.currentStageIndex do
+  for i = 1, self.stageIndex do
     if self.stageTimeQuads[i] == nil then
       self.stageTimeQuads[i] = {}
     end
     local time = self.stages[i].expendedTime
     local currentStageTime = time
-    local isCurrentStage = i == self.currentStageIndex
+    local isCurrentStage = i == self.stageIndex
     if isCurrentStage and GAME.battleRoom.match.P1:game_ended() == false then
       currentStageTime = currentStageTime + GAME.battleRoom.match.P1.game_stopwatch
     end
@@ -249,6 +254,16 @@ function ChallengeMode:onMatchEnded(match)
   -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference
   self.match = nil
   self.state = BattleRoom.states.Setup
+end
+
+function ChallengeMode:setStage(index)
+  self.stageIndex = index
+  GAME.localPlayer:setLevel(self.stages[index].playerLevel)
+
+  self.player:setCharacterForStage(index)
+  self.player:setStage("")
+  self.player.settings.healthSettings = self.stages[index].healthSettings
+  self.player.settings.attackEngineSettings = self.stages[index].attackSettings
 end
 
 return ChallengeMode

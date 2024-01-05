@@ -43,6 +43,7 @@ function ReplayV1.transform(legacyReplay)
 
   r.players = {}
   r.players[1] = {
+    human = true,
     name = v1r.P1_name,
     -- win count only started to be saved sometime in v046
     wins = v1r.P1_win_count or 0,
@@ -83,6 +84,7 @@ function ReplayV1.transform(legacyReplay)
 
   if v1r.P2_char then
     r.players[2] = {
+      human = true,
       name = v1r.P2_name,
     -- win count only started to be saved sometime in v046
       wins = v1r.P2_win_count or 0,
