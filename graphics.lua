@@ -529,6 +529,7 @@ function Stack.render(self)
   love.graphics.clear()
   love.graphics.stencil(frame_mask, "replace", 1)
   love.graphics.setStencilTest("greater", 0)
+  local characterObject = characters[self.character]
 
   local metals
   if self.opponentStack then
@@ -554,7 +555,7 @@ function Stack.render(self)
         if panel.isGarbage then
           local imgs = {flash = metals.flash}
           if not panel.metal then
-            if not self.garbageTarget then 
+            if not self.garbageTarget then
               imgs = characterObject.images
             else
               imgs = characters[self.garbageTarget.character].images
@@ -936,20 +937,20 @@ function Stack.render(self)
   -- Draw the "extra" game info
   if config.show_ingame_infos then
     if not self.puzzle then
-      drawScore()
-      drawSpeed()
+      --drawScore()
+      --drawSpeed()
     end
     self:drawMultibar()
   end
 
   -- Draw VS HUD
-  if self.player then
+  -- if self.player then
     self:drawPlayerName()
-    self:drawWinCount()
-    self:drawRating()
-  end
+  --   self:drawWinCount()
+  --   self:drawRating()
+  -- end
 
-  drawLevel()
+  --drawLevel()
   drawAnalyticData()
   self:drawDebug()
 end
@@ -1057,7 +1058,7 @@ function Stack:drawMultibar()
 end
 
 function Stack:drawRelativeMultibar(stop_time, shake_time)
-  self:drawLabel(self.theme.images.healthbarFrames.relative[self.which], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
+  self:drawLabel(self.theme.images.healthbarFrames, self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
 
   -- Healthbar
   local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.levelData.maxHealth)
