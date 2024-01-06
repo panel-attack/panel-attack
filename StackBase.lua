@@ -5,6 +5,152 @@ local StackBase = class(function(self)
   self.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
 end)
 
+-- Provides the X origin to draw an element of the stack
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+function StackBase:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  assert(cameFromLegacyScoreOffset ~= nil)
+  assert(legacyOffsetIsAlreadyScaled ~= nil)
+  local x = 546
+  if self.which == 2 then
+    x = 642
+  end
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    x = self.origin_x
+    if legacyOffsetIsAlreadyScaled == false or themes[config.theme]:offsetsAreFixed() then
+      x = x * GFX_SCALE
+    end
+  end
+  return x
+end
+
+-- Provides the Y origin to draw an element of the stack
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+function StackBase:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  assert(cameFromLegacyScoreOffset ~= nil)
+  assert(legacyOffsetIsAlreadyScaled ~= nil)
+  local y = 208
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    y = self.panelOriginY
+    if legacyOffsetIsAlreadyScaled == false or themes[config.theme]:offsetsAreFixed() then
+      y = y * GFX_SCALE
+    end
+  end
+  return y
+end
+
+-- Provides the X position to draw an element of the stack, shifted by the given offset and mirroring
+-- themePositionOffset - the theme offset array
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+-- legacyOffsetIsAlreadyScaled - set to true if the offset used to be already scaled in legacy themes
+function StackBase:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if legacyOffsetIsAlreadyScaled == nil then
+    legacyOffsetIsAlreadyScaled = false
+  end
+  local xOffset = themePositionOffset[1]
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    xOffset = xOffset * self.mirror_x
+  end
+  if cameFromLegacyScoreOffset == false and themes[config.theme]:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
+    xOffset = xOffset * GFX_SCALE
+  end
+  local x = self:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + xOffset
+  return x
+end
+
+-- Provides the Y position to draw an element of the stack, shifted by the given offset and mirroring
+-- themePositionOffset - the theme offset array
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+function StackBase:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if legacyOffsetIsAlreadyScaled == nil then
+    legacyOffsetIsAlreadyScaled = false
+  end
+  local yOffset = themePositionOffset[2]
+  if cameFromLegacyScoreOffset == false and themes[config.theme]:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
+    yOffset = yOffset * GFX_SCALE
+  end
+  local y = self:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + yOffset
+  return y
+end
+
+-- Provides the X position to draw a label of the stack, shifted by the given offset, mirroring and label width
+-- themePositionOffset - the theme offset array
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+-- width - width of the drawable
+-- percentWidthShift - the percent of the width you want shifted left
+function StackBase:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, percentWidthShift, legacyOffsetIsAlreadyScaled)
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+
+  if percentWidthShift > 0 then
+    x = x - math.floor((percentWidthShift * width * scale))
+  end
+
+  return x
+end
+
+function StackBase:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+
+  local percentWidthShift = 0
+  -- If we are mirroring from the right, move the full width left
+  if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
+    if self.multiplication > 0 then
+      percentWidthShift = 1
+    end
+  end
+
+  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+
+  menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
+end
+
+function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, rotate, scale)
+  local imageWidth, imageHeight = image:getDimensions()
+  local barYScale = height / imageHeight
+  local quadY = 0
+  if barYScale < 1 then
+    barYScale = 1
+    quadY = imageHeight - height
+  end
+  local x = self:elementOriginXWithOffset(themePositionOffset, false)
+  local y = self:elementOriginYWithOffset(themePositionOffset, false)
+  quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
+  qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
+end
+
+-- Positions the stack draw position for the given player
+function StackBase:moveForRenderIndex(renderIndex)
+  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
+  if renderIndex == 1 then
+    self.mirror_x = 1
+    self.multiplication = 0
+  elseif renderIndex == 2 then
+    self.mirror_x = -1
+    self.multiplication = 1
+  end
+  local centerX = (canvas_width / 2)
+  local stackWidth = self:stackCanvasWidth()
+  local innerStackXMovement = 100
+  local outerStackXMovement = stackWidth + innerStackXMovement
+  self.panelOriginXOffset = 4
+  self.panelOriginYOffset = 4
+
+  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
+  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+
+  local frameOriginNonScaled = outerNonScaled
+  if self.mirror_x == -1 then
+    frameOriginNonScaled = outerNonScaled - stackWidth
+  end
+  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
+  self.frameOriginY = 108 / GFX_SCALE
+
+  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
+  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
+end
+
 local mask_shader = love.graphics.newShader [[
    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
       if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
@@ -15,19 +161,20 @@ local mask_shader = love.graphics.newShader [[
    }
 ]]
 
-function StackBase:frameMask()
-  love.graphics.setShader(mask_shader)
-  love.graphics.setBackgroundColor(1, 1, 1)
-  local canvas_w, canvas_h = self.canvas:getDimensions()
-  love.graphics.rectangle("fill", 0, 0, canvas_w, canvas_h)
-  love.graphics.setBackgroundColor(unpack(global_background_color))
-  love.graphics.setShader()
-end
 
 function StackBase:setCanvas()
+  local function frameMask()
+    love.graphics.setShader(mask_shader)
+    love.graphics.setBackgroundColor(1, 1, 1)
+    local canvas_w, canvas_h = self.canvas:getDimensions()
+    love.graphics.rectangle("fill", 0, 0, canvas_w, canvas_h)
+    love.graphics.setBackgroundColor(unpack(global_background_color))
+    love.graphics.setShader()
+  end
+
   love.graphics.setCanvas({self.canvas, stencil = true})
   love.graphics.clear()
-  love.graphics.stencil(self.frameMask, "replace", 1)
+  love.graphics.stencil(frameMask, "replace", 1)
   love.graphics.setStencilTest("greater", 0)
 
   self:drawCharacter()
@@ -92,6 +239,14 @@ function StackBase:drawCountdown()
   end
 end
 
+function StackBase:stackCanvasWidth()
+  local stackCanvasWidth = 0
+  if self.canvas then 
+    stackCanvasWidth = math.floor(self.canvas:getWidth())
+  end
+  return stackCanvasWidth
+end
+
 function StackBase:drawCanvas()
   love.graphics.setStencilTest()
   love.graphics.setCanvas(GAME.globalCanvas)
@@ -101,7 +256,7 @@ function StackBase:drawCanvas()
 end
 
 function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
-  self:drawLabel(themes[config.theme].images["IMG_healthbar_frame" .. self.id .. "_absolute"], themes[config.theme].healthbar_frame_Pos, themes[config.theme].healthbar_frame_Scale)
+  self:drawLabel(themes[config.theme].images.healthbarFrames.absolute[self.which], themes[config.theme].healthbar_frame_Pos, themes[config.theme].healthbar_frame_Scale)
 
   local multiBarFrameCount = self.multiBarFrameCount
   local multiBarMaxHeight = 589 * themes[config.theme].multibar_Scale

@@ -31,25 +31,6 @@ SimulatedStack =
   StackBase
 )
 
-function SimulatedStack:moveForRenderIndex(renderIndex)
-  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  if renderIndex == 1 then
-    self.mirror_x = 1
-  elseif renderIndex == 2 then
-    self.mirror_x = -1
-  end
-  local centerX = (canvas_width / 2)
-  local stackWidth = self:stackCanvasWidth()
-  local innerStackXMovement = 100
-  local outerStackXMovement = stackWidth + innerStackXMovement
-  local frameOriginNonScaled = centerX - (outerStackXMovement * self.mirror_x)
-  if self.mirror_x == -1 then
-    frameOriginNonScaled = frameOriginNonScaled - stackWidth
-  end
-  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
-  self.frameOriginY = 108 / GFX_SCALE
-end
-
 -- adds an attack engine to the simulated opponent
 function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
   self.telegraph = Telegraph(self)
@@ -73,25 +54,22 @@ function SimulatedStack:addHealth(healthSettings)
   self.health = healthSettings.framesToppedOutToLose
 end
 
-function SimulatedStack:stackCanvasWidth()
-  return 288
-end
-
 function SimulatedStack:run()
-  if self.do_countdown and self.countdown_timer > 0 then
+  if not self:game_ended() then
+    if self.attackEngine then
+      self.attackEngine:run()
+    end
     self.clock = self.clock + 1
+  end
+
+  if self.do_countdown and self.countdown_timer > 0 then
+    self.healthEngine.clock = self.clock
     if self.clock > 8 then
       self.countdown_timer = self.countdown_timer - 1
     end
   else
     if self.healthEngine then
       self.health = self.healthEngine:run()
-    end
-    if not self:game_ended() then
-      if self.attackEngine then
-        self.attackEngine:run()
-      end
-      self.clock = self.clock + 1
     end
   end
 end
@@ -136,9 +114,10 @@ end
 function SimulatedStack:render()
   self:setCanvas()
   self:drawCharacter()
+  self:renderStackHeight()
   self:drawFrame()
   self:drawWall(0, 12)
-  self:renderStackHeight()
+  self:drawCanvas()
   self:drawAbsoluteMultibar(0, 0)
 
   if self.telegraph then
@@ -151,11 +130,10 @@ end
 function SimulatedStack:renderStackHeight()
   local percentage = self.healthEngine:getTopOutPercentage()
   local xScale = (self:stackCanvasWidth() - 8) / themes[config.theme].images.IMG_multibar_shake_bar:getWidth()
-  local yScale = (self:stackCanvasWidth() - 4) * 2 / themes[config.theme].images.IMG_multibar_shake_bar:getHeight() * percentage
+  local yScale = (self.canvas:getHeight() - 4) / themes[config.theme].images.IMG_multibar_shake_bar:getHeight() * percentage
 
-  --self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, self:stackCanvasWidth(), 590, 1, percentage)
-  love.graphics.setColor(1, 1, 1, 0.5)
-  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 0, 0, 0, xScale, yScale)
+  love.graphics.setColor(1, 1, 1, 0.6)
+  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale, - yScale)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -219,6 +197,8 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
 end
 
 function SimulatedStack:deinit()
+  self.healthQuad:release()
+  self.stackHeightQuad:release()
   if self.healthEngine then
     -- need to merge beta to get Health:deinit()
     --self.healthEngine:deinit()

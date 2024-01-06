@@ -735,7 +735,7 @@ function Character:playWinSfx()
   if #self.sounds.win > 0 then
     playRandomSfx(self.sounds.win)
   else
-    self.theme.sounds.fanfare1:play()
+    themes[config.theme].sounds.fanfare1:play()
   end
 end
 

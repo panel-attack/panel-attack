@@ -286,10 +286,13 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = self:load_theme_img("random_stage")
   self.images.IMG_random_character = self:load_theme_img("random_character")
 
-  self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
-  self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
-  self.images.IMG_healthbar_frame_1P_absolute = self:load_theme_img("healthbar_frame_1P_absolute")
-  self.images.IMG_healthbar_frame_2P_absolute = self:load_theme_img("healthbar_frame_2P_absolute")
+  self.images.healthbarFrames = {}
+  self.images.healthbarFrames.relative = {}
+  self.images.healthbarFrames.relative[1]  = self:load_theme_img("healthbar_frame_1P")
+  self.images.healthbarFrames.relative[2]  = self:load_theme_img("healthbar_frame_2P")
+  self.images.healthbarFrames.absolute = {}
+  self.images.healthbarFrames.absolute[1] = self:load_theme_img("healthbar_frame_1P_absolute")
+  self.images.healthbarFrames.absolute[2] = self:load_theme_img("healthbar_frame_2P_absolute")
   
   self.images.IMG_healthbar = self:load_theme_img("healthbar")
 
