@@ -4,9 +4,9 @@ local HEALTH_BAR_WIDTH = 50
 
 Health =
   class(
-  function(self, secondsToppedOutToLose, lineClearGPM, height, riseSpeed)
-    self.secondsToppedOutToLose = secondsToppedOutToLose -- Number of seconds currently remaining of being "topped" out before we are defeated.
-    self.maxSecondsToppedOutToLose = secondsToppedOutToLose -- Starting value of secondsToppedOutToLose
+  function(self, framesToppedOutToLose, lineClearGPM, height, riseSpeed)
+    self.framesToppedOutToLose = framesToppedOutToLose -- Number of seconds currently remaining of being "topped" out before we are defeated.
+    self.maxSecondsToppedOutToLose = framesToppedOutToLose -- Starting value of framesToppedOutToLose
     self.lineClearRate = lineClearGPM / 60 -- How many "lines" we clear per second. Essentially how fast we recover.
     self.currentLines = 0 -- The current number of "lines" simulated
     self.height = height -- How many "lines" need to be accumulated before we are "topped" out.
@@ -32,9 +32,10 @@ function Health:run()
   local decrementLines = (self.lineClearRate * (1/60.0)) * staminaPercent
   self.currentLines = math.max(0, self.currentLines - decrementLines)
   if self.currentLines >= self.height then
-    self.secondsToppedOutToLose = math.max(0, self.secondsToppedOutToLose - (1/60.0))
+    self.framesToppedOutToLose = math.max(0, self.framesToppedOutToLose - 1)
   end
   self.clock = self.clock + 1
+  return self.framesToppedOutToLose
 end
 
 function Health:receiveGarbage(frameToReceive, garbageList)
@@ -63,46 +64,8 @@ function Health:receiveGarbage(frameToReceive, garbageList)
   end
 end
 
-
-function Health:isFullyDepleted()
-  return self.secondsToppedOutToLose <= 0
-end
-
-function Health:renderPartialScaledImage(image, x, y, maxWidth, maxHeight, percentageX, percentageY)
-  local width = image:getWidth()
-  local height = image:getHeight()
-  local partialWidth = width * percentageX
-  local partialHeight = height * percentageY
-  local quad = love.graphics.newQuad(width - partialWidth, height - partialHeight, partialWidth, partialHeight, width, height)
-  
-  local scaleX = maxWidth / width
-  local scaleY = maxHeight / height
-  
-  local xPosition = x + (1 - percentageX) * maxWidth
-  local yPosition = y + (1 - percentageY) * maxHeight
-  love.graphics.draw(image, quad, xPosition, yPosition, 0, scaleX, scaleY)
-end
-
-function Health:renderHealth(xPosition)
-  local percentage = math.max(0, self.secondsToppedOutToLose) / self.maxSecondsToppedOutToLose
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_healthbar, xPosition, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
-end
-
-function Health:renderTopOut(xPosition)
-  local percentage = math.max(0, self.currentLines) / self.height
-  local x = xPosition + HEALTH_BAR_WIDTH
-  local y = 110
-  self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, HEALTH_BAR_WIDTH, 590, 1, percentage)
-
-  local height = 4
-  local grey = 0.8
-  local alpha = 1
-  grectangle_color("fill", x / GFX_SCALE, y / GFX_SCALE, HEALTH_BAR_WIDTH / GFX_SCALE, height / GFX_SCALE, grey, grey, grey, alpha)
-end
-
-function Health:render(xPosition)
-  self:renderHealth(xPosition)
-  self:renderTopOut(xPosition)
+function Health:getTopOutPercentage()
+  return math.max(0, self.currentLines) / self.height
 end
 
 function Health:saveRollbackCopy()
@@ -116,7 +79,7 @@ function Health:saveRollbackCopy()
 
   copy.currentRiseSpeed = self.currentRiseSpeed
   copy.currentLines = self.currentLines
-  copy.secondsToppedOutToLose = self.secondsToppedOutToLose
+  copy.framesToppedOutToLose = self.framesToppedOutToLose
   copy.lastWasFourCombo = self.lastWasFourCombo
 
   self.rollbackCopies[self.clock] = copy
@@ -132,7 +95,7 @@ function Health:rollbackToFrame(frame)
 
   self.currentRiseSpeed = copy.currentRiseSpeed
   self.currentLines = copy.currentLines
-  self.secondsToppedOutToLose = copy.secondsToppedOutToLose
+  self.framesToppedOutToLose = copy.framesToppedOutToLose
   self.lastWasFourCombo = copy.lastWasFourCombo
   self.clock = frame
 end

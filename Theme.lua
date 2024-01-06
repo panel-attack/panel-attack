@@ -301,10 +301,12 @@ function Theme.graphics_init(self)
   self.images.IMG_bug = self:load_theme_img("bug")
 
   --play field frames, plus the wall at the bottom.
-  self.images.IMG_frame1P = self:load_theme_img("frame/frame1P")
-  self.images.IMG_wall1P = self:load_theme_img("frame/wall1P")
-  self.images.IMG_frame2P = self:load_theme_img("frame/frame2P")
-  self.images.IMG_wall2P = self:load_theme_img("frame/wall2P")
+  self.images.frames = {}
+  self.images.walls = {}
+  self.images.frames[1] = self:load_theme_img("frame/frame1P")
+  self.images.frames[2] = self:load_theme_img("frame/frame2P")
+  self.images.walls[1] = self:load_theme_img("frame/wall1P")
+  self.images.walls[2] = self:load_theme_img("frame/wall2P")
 
   self.images.IMG_swap = self:load_theme_img("swap")
   self.images.IMG_apm = self:load_theme_img("apm")

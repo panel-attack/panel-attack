@@ -529,25 +529,6 @@ function Stack.render(self)
   love.graphics.clear()
   love.graphics.stencil(frame_mask, "replace", 1)
   love.graphics.setStencilTest("greater", 0)
-  local characterObject = characters[self.character]
-
-  -- Update portrait fade if needed
-  if self.do_countdown then
-    -- self.portraitFade starts at 0 (no fade)
-    if self.countdown_clock then
-      local desiredFade = config.portrait_darkness / 100
-      local startFrame = 50
-      local fadeDuration = 30
-      if self.countdown_clock <= 50 then
-        self.portraitFade = 0
-      elseif self.countdown_clock > 50 and self.countdown_clock <= startFrame + fadeDuration then
-        local percent = (self.countdown_clock - startFrame) / fadeDuration
-        self.portraitFade = desiredFade * percent
-      end
-    end
-  end
-
-  characterObject:drawPortrait(self.which, 4, 4, self.portraitFade)
 
   local metals
   if self.opponentStack then
@@ -691,15 +672,9 @@ function Stack.render(self)
   end
 
   -- Draw the frames and wall at the bottom
-  local frameImage = nil
-  local wallImage = nil
-  if self.which == 1 then
-    frameImage = self.theme.images.IMG_frame1P
-    wallImage = self.theme.images.IMG_wall1P
-  else
-    frameImage = self.theme.images.IMG_frame2P
-    wallImage = self.theme.images.IMG_wall2P
-  end
+  local frameImage = self.theme.images.frames[self.which]
+  local wallImage = self.theme.images.walls[self.which]
+
   if frameImage then
     graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
   end
@@ -1041,16 +1016,16 @@ end
 
 -- Draw the stacks countdown timer
 function Stack.render_countdown(self)
-  if self.do_countdown and self.countdown_clock then
+  if self.do_countdown and self.clock then
     local ready_x = 16
     local initial_ready_y = 4
     local ready_y_drop_speed = 6
-    local ready_y = initial_ready_y + (math.min(8, self.countdown_clock) - 1) * ready_y_drop_speed
+    local ready_y = initial_ready_y + (math.min(8, self.clock) - 1) * ready_y_drop_speed
     local countdown_x = 44
     local countdown_y = 68
-    if self.countdown_clock <= 8 then
+    if self.clock <= 8 then
       draw(self.theme.images.IMG_ready, ready_x, ready_y)
-    elseif self.countdown_clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
+    elseif self.clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
         draw(self.theme.images.IMG_ready, ready_x, ready_y)
       end

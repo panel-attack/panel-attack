@@ -487,7 +487,6 @@ function Stack.rollbackCopy(source, other)
     other.panels[i] = nil
   end
 
-  other.countdown_clock = source.countdown_clock
   other.countdown_timer = source.countdown_timer
   other.clock = source.clock
   other.game_stopwatch = source.game_stopwatch
@@ -1616,19 +1615,18 @@ function Stack:runCountDownIfNeeded()
   if self.do_countdown then
     self.game_stopwatch_running = false
     self.rise_lock = true
-    if not self.countdown_clock then
-      self.countdown_clock = self.clock
+    if self.clock == 0 then
       self.animatingCursorDuringCountdown = true
       if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
         self.cursorLock = true
       end
       self.cur_row = self.height
-      self.cur_col = self.width - 1
       if self.inputMethod == "touch" then
         self.cur_col = self.width
+      elseif self.inputMethod == "controller" then
+        self.cur_col = self.width - 1
       end
-    end
-    if self.countdown_clock == 8 then
+    elseif self.clock == 8 then
       self.countdown_timer = consts.COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
@@ -1656,15 +1654,11 @@ function Stack:runCountDownIfNeeded()
         --we are done counting down
         self.do_countdown = false
         self.countdown_timer = nil
-        self.countdown_clock = nil
         self.game_stopwatch_running = true
       end
       if self.countdown_timer then
         self.countdown_timer = self.countdown_timer - 1
       end
-    end
-    if self.countdown_clock then
-      self.countdown_clock = self.countdown_clock + 1
     end
   end
 end

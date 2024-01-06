@@ -1,25 +1,34 @@
 local logger = require("logger")
 local Health = require("Health")
+local graphicsUtil = require("graphics_util")
+local StackBase = require("StackBase")
+local class = require("class")
+local consts = require("consts")
 require("queue")
 
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedStack =
   class(
-  function(self, which, character)
+  function(self, which, characterId)
     self.which = which
     self:moveForRenderIndex(which)
     self.framesBehindArray = {}
     self.framesBehind = 0
     self.clock = 0
     self.game_over_clock = 0
-    self.character = CharacterLoader.resolveCharacterSelection(character)
+    self.character = CharacterLoader.resolveCharacterSelection(characterId)
     self.rollbackCopies = {}
     self.rollbackCopyPool = Queue()
     self.panels_dir = config.panels
     self.max_runs_per_frame = 1
+    self.multiBarFrameCount = 240
     CharacterLoader.load(self.character)
     CharacterLoader.wait()
-  end
+
+    self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
+    self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+  end,
+  StackBase
 )
 
 function SimulatedStack:moveForRenderIndex(renderIndex)
@@ -55,12 +64,13 @@ function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
 end
 
 function SimulatedStack:addHealth(healthSettings)
-  self.health = Health(
-    healthSettings.secondsToppedOutToLose,
+  self.healthEngine = Health(
+    healthSettings.framesToppedOutToLose,
     healthSettings.lineClearGPM,
     healthSettings.lineHeightToKill,
     healthSettings.riseSpeed
   )
+  self.health = healthSettings.framesToppedOutToLose
 end
 
 function SimulatedStack:stackCanvasWidth()
@@ -68,14 +78,21 @@ function SimulatedStack:stackCanvasWidth()
 end
 
 function SimulatedStack:run()
-  if self.health then
-    self.health:run()
-  end
-  if not self:game_ended() then
-    if self.attackEngine then
-      self.attackEngine:run()
-    end
+  if self.do_countdown and self.countdown_timer > 0 then
     self.clock = self.clock + 1
+    if self.clock > 8 then
+      self.countdown_timer = self.countdown_timer - 1
+    end
+  else
+    if self.healthEngine then
+      self.health = self.healthEngine:run()
+    end
+    if not self:game_ended() then
+      if self.attackEngine then
+        self.attackEngine:run()
+      end
+      self.clock = self.clock + 1
+    end
   end
 end
 
@@ -88,13 +105,10 @@ function SimulatedStack:game_ended()
     return self.game_over
   end
 
-  if not self.health then
-    return false
-  else
-    if self.health:isFullyDepleted() then
-      self:setGameOver()
-    end
+  if self.health <= 0 then
+    self:setGameOver()
   end
+
   return self.game_over
 end
 
@@ -103,11 +117,6 @@ function SimulatedStack:setGameOver()
     self.game_over = true
     self.game_over_clock = self.clock
   end
-end
-
-function SimulatedStack:drawCharacter()
-  local characterObject = characters[self.character]
-  characterObject:drawPortrait(2, self.frameOriginX, self.frameOriginY, 0)
 end
 
 function SimulatedStack:drawDebug()
@@ -124,32 +133,45 @@ function SimulatedStack:drawDebug()
   end
 end
 
-local healthBarXOffset = -56
-function SimulatedStack.render(self)
+function SimulatedStack:render()
+  self:setCanvas()
+  self:drawCharacter()
+  self:drawFrame()
+  self:drawWall(0, 12)
+  self:renderStackHeight()
+  self:drawAbsoluteMultibar(0, 0)
 
-  if self.health then
-    self:drawCharacter()
-    self.health:render(self.frameOriginX * GFX_SCALE + healthBarXOffset)
-  end
-
-  if self.attackEngine then
-    self.attackEngine:render()
+  if self.telegraph then
+    self.telegraph:render()
   end
 
   self:drawDebug()
 end
 
+function SimulatedStack:renderStackHeight()
+  local percentage = self.healthEngine:getTopOutPercentage()
+  local xScale = (self:stackCanvasWidth() - 8) / themes[config.theme].images.IMG_multibar_shake_bar:getWidth()
+  local yScale = (self:stackCanvasWidth() - 4) * 2 / themes[config.theme].images.IMG_multibar_shake_bar:getHeight() * percentage
+
+  --self:renderPartialScaledImage(themes[config.theme].images.IMG_multibar_shake_bar, x, 110, self:stackCanvasWidth(), 590, 1, percentage)
+  love.graphics.setColor(1, 1, 1, 0.5)
+  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 0, 0, 0, xScale, yScale)
+  love.graphics.setColor(1, 1, 1, 1)
+end
+
 function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
-  if self.health and self.health:isFullyDepleted() == false then
-    self.health:receiveGarbage(frameToReceive, garbageList)
+  if not self:game_ended() then
+    if self.healthEngine then
+      self.healthEngine:receiveGarbage(frameToReceive, garbageList)
+    end
   end
 end
 
 function SimulatedStack:saveForRollback()
   local copy = {}
 
-  if self.health then
-    self.health:saveRollbackCopy()
+  if self.healthEngine then
+    self.healthEngine:saveRollbackCopy()
   end
 
   if self.telegraph then
@@ -170,12 +192,15 @@ function SimulatedStack:rollbackToFrame(frame)
     end
   end
 
-  if self.health then
-    self.health:rollbackToFrame(frame)
+  if self.healthEngine then
+    self.healthEngine:rollbackToFrame(frame)
   end
 end
 
 function SimulatedStack:starting_state()
+  if self.do_countdown then
+    self.countdown_timer = consts.COUNTDOWN_LENGTH
+  end
 end
 
 function SimulatedStack:setGarbageTarget(garbageTarget)
@@ -194,9 +219,9 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
 end
 
 function SimulatedStack:deinit()
-  if self.health then
+  if self.healthEngine then
     -- need to merge beta to get Health:deinit()
-    --self.health:deinit()
+    --self.healthEngine:deinit()
   end
 end
 
