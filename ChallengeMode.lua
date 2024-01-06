@@ -14,7 +14,6 @@ local ChallengeMode =
     self.stages = self:createStages(difficulty)
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
-    self.expendedTime = 0
 
     self.stageTimeQuads = {}
     self.totalTimeQuads = {}
@@ -194,8 +193,8 @@ function ChallengeMode:drawTimeSplits()
 end
 
 function ChallengeMode:recordStageResult(winners, gameLength)
-  self.player:updateExpendedTime(gameLength)
-  self.expendedTime = self.expendedTime + gameLength
+  local stage = self.stages[self.stageIndex]
+  stage.expendedTime = stage.expendedTime + gameLength
 
   if #winners == 1 then
     -- increment win count on winning player if there is only one
@@ -204,12 +203,22 @@ function ChallengeMode:recordStageResult(winners, gameLength)
     if winners[1] == self.player then
       self.continues = self.continues + 1
     else
-      self.player:advanceStage()
+      self.stageIndex = self.stageIndex + 1
+      if self.stages[self.stageIndex] then
+        local stageSettings = self.stages[self.stageIndex]
+        self.player.settings.attackEngineSettings = stageSettings.attackEngineSettings
+        self.player.settings.healthSettings = stageSettings.healthSettings
+        if stageSettings.characterId then
+          self.player:setCharacter(stageSettings.characterId)
+        else
+          self.player:setCharacterForStage(self.stageIndex)
+        end
+      end
     end
   elseif #winners == 2 then
     -- tie, stay on the same stage
     -- but since the player didn't lose, they shouldn't have to pay the timer
-    self.expendedTime = self.expendedTime - gameLength
+    stage.expendedTime = stage.expendedTime - gameLength
   elseif #winners == 0 then
     -- this means an abort which is a LOSS because it's a local game and only manual abort is possible
     self.continues = self.continues + 1

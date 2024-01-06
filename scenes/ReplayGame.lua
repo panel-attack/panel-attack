@@ -21,11 +21,6 @@ local ReplayGame = class(
 ReplayGame.name = "ReplayGame"
 sceneManager:addScene(ReplayGame)
 
-function ReplayGame:customLoad()
-  -- replays don't have a battleRoom so the match is just loaded from replay but not started yet
-  self.match:start()
-end
-
 function ReplayGame:customRun()
   -- If we just finished a frame advance, pause again
   if self.frameAdvance then

@@ -538,7 +538,9 @@ function Match:start()
     if self.replay then
       if self.isFromReplay then
         -- watching a finished replay
-        stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
+        if player.human then
+          stack:receiveConfirmedInput(self.replay.players[i].settings.inputs)
+        end
         stack.max_runs_per_frame = 1
       elseif not self:hasLocalPlayer() and self.replay.players[i].settings.inputs then
         -- catching up to a match in progress
@@ -792,7 +794,7 @@ function Match:handleMatchEnd()
     -- determine result
     -- play win sfx
     for i = 1, #winners do
-      winners[i].stack:pick_win_sfx():play()
+      characters[winners[i].stack.character]:playWinSfx()
     end
     if #winners == 1 then
       -- ideally this would be public player id

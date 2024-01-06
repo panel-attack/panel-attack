@@ -153,6 +153,7 @@ function ReplayBrowser:update()
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       local match = Match.createFromReplay(selectedReplay, false)
       match.renderDuringPause = true
+      match:start()
       sceneManager:switchToScene(ReplayGame({match = match}))
     end
   end
@@ -195,11 +196,15 @@ function ReplayBrowser:draw()
       gprint(loc("rp_browser_info_" .. i .. "p"), menu_x + offsetX, menu_y + 50)
       gprint(loc("rp_browser_info_name", selectedReplay.players[i].name or ("Player " .. i)), menu_x + offsetX, menu_y + 65)
       gprint(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId), menu_x + offsetX, menu_y + 80)
-      if selectedReplay.players[i].settings.level then
-        gprint(loc("rp_browser_info_level", selectedReplay.players[i].settings.level), menu_x + offsetX, menu_y + 95)
+      if selectedReplay.players[i].human then
+        if selectedReplay.players[i].settings.level then
+          gprint(loc("rp_browser_info_level", selectedReplay.players[i].settings.level), menu_x + offsetX, menu_y + 95)
+        else
+          gprint(loc("rp_browser_info_speed", selectedReplay.players[i].settings.levelData.startingSpeed), menu_x + offsetX, menu_y + 95)
+          gprint(loc("rp_browser_info_difficulty", selectedReplay.players[i].settings.difficulty), menu_x + offsetX, menu_y + 110)
+        end
       else
-        gprint(loc("rp_browser_info_speed", selectedReplay.players[i].settings.levelData.startingSpeed), menu_x + offsetX, menu_y + 95)
-        gprint(loc("rp_browser_info_difficulty", selectedReplay.players[i].settings.difficulty), menu_x + offsetX, menu_y + 110)
+
       end
       offsetX = offsetX + 300
     end

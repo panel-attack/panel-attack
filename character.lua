@@ -731,6 +731,14 @@ function Character.playTaunt(self, tauntType, index)
   end
 end
 
+function Character:playWinSfx()
+  if #self.sounds.win > 0 then
+    playRandomSfx(self.sounds.win)
+  else
+    self.theme.sounds.fanfare1:play()
+  end
+end
+
 function Character.apply_config_volume(self)
   set_volume(self.sounds, config.SFX_volume / 100)
   set_volume(self.musics, config.music_volume / 100)

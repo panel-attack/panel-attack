@@ -364,9 +364,11 @@ end
 
 function BattleRoom:shutdown()
   for i = 1, #self.players do
-    local player = self.players[i]
-    -- this is mostly to clear the input configs for future use
-    player:unrestrictInputs()
+    if player.human then
+      local player = self.players[i]
+      -- this is to clear the input configs for future use
+      player:unrestrictInputs()
+    end
   end
   if self.match then
     self.match:deinit()

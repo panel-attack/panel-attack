@@ -11,10 +11,12 @@ SimulatedStack =
     self.framesBehindArray = {}
     self.framesBehind = 0
     self.clock = 0
+    self.game_over_clock = 0
     self.character = CharacterLoader.resolveCharacterSelection(character)
     self.rollbackCopies = {}
     self.rollbackCopyPool = Queue()
     self.panels_dir = config.panels
+    self.max_runs_per_frame = 1
     CharacterLoader.load(self.character)
     CharacterLoader.wait()
   end
@@ -78,7 +80,7 @@ function SimulatedStack:run()
 end
 
 function SimulatedStack:shouldRun(runsSoFar)
-  return runsSoFar < 1
+  return runsSoFar < self.max_runs_per_frame
 end
 
 function SimulatedStack:game_ended()
@@ -188,6 +190,12 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
   if self.telegraph then
     self.attackEngine:setGarbageTarget(garbageTarget)
     self.telegraph:updatePositionForGarbageTarget(garbageTarget)
+  end
+end
+
+function SimulatedStack:deinit()
+  if self.health then
+    self.health:deinit()
   end
 end
 

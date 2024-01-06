@@ -60,25 +60,6 @@ function ChallengeModePlayer:setCharacterForStage(stageNumber)
   self:setCharacter(characterForStageNumber(stageNumber))
 end
 
-function ChallengeModePlayer:advanceStage()
-  self.stageIndex = self.stageIndex + 1
-  self.usedCharacterIds[#self.usedCharacterIds + 1] = self.settings.characterId
-  if self.stages[self.stageIndex] then
-    local stageSettings = self.stages[self.stageIndex]
-    self.settings.attackEngineSettings = stageSettings.attackEngineSettings
-    self.settings.healthSettings = stageSettings.healthSettings
-    if stageSettings.characterId then
-      self:setCharacter(stageSettings.characterId)
-    else
-      self:setCharacter(characterForStageNumber(self.stageIndex))
-    end
-  end
-end
-
-function ChallengeModePlayer:updateExpendedTime(time)
-  self.stages[self.stageIndex].expendedTime = self.stages[self.stageIndex].expendedTime + time
-end
-
 -- challenge mode players are always ready
 function ChallengeModePlayer:setWantsReady(wantsReady)
   self.settings.wantsReady = true
@@ -87,8 +68,10 @@ end
 
 function ChallengeModePlayer.createFromReplayPlayer(replayPlayer, playerNumber)
   local player = ChallengeModePlayer(playerNumber)
-  player:addAttackEngine(replayPlayer.settings.attackEngineSettings)
-  player:addHealth(replayPlayer.settings.healthSettings)
+  player.settings.attackEngineSettings = replayPlayer.settings.attackEngineSettings
+  player.settings.healthSettings = replayPlayer.settings.healthSettings
+  player.settings.characterId = CharacterLoader.resolveCharacterSelection(replayPlayer.settings.characterId)
+  player.isLocal = false
   return player
 end
 
