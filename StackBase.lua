@@ -20,6 +20,8 @@ local StackBase = class(function(self, args)
   -- rollback
   self.rollbackCopies = {}
   self.rollbackCopyPool = Queue()
+  self.rollbackCount = 0
+  self.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
   -- graphics
   self.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})

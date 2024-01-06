@@ -132,10 +132,7 @@ Stack =
     end
     s:moveForRenderIndex(s.which)
 
-    s.clock = 0
-    s.game_stopwatch = 0
     s.game_stopwatch_running = true -- set to false if countdown starts
-    s.do_countdown = true
     s.max_runs_per_frame = 3
 
     s.displacement = 16
@@ -214,8 +211,6 @@ Stack =
     s.shake_time = 0
     s.shake_time_on_frame = 0
 
-    s.prev_states = {}
-
     s.analytic = AnalyticsInstance(s.is_local)
 
     s.opponentStack = nil -- the other stack you are playing against
@@ -242,12 +237,6 @@ Stack =
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
-    s.clonePool = {} -- pool of stale rollback copies, used to save memory on consecutive rollback
-    s.rollbackCount = 0 -- the number of times total we have done rollback
-    s.lastRollbackFrame = -1 -- the last frame we had to rollback from
-
-    s.framesBehindArray = {}
-    s.framesBehind = 0
     s.warningsTriggered = {}
 
     s.move_quads = {}
@@ -392,11 +381,11 @@ function Stack.rollbackCopy(source, other)
   local restoringStack = getmetatable(other) ~= nil
 
   if other == nil then
-    if #source.clonePool == 0 then
+    if #source.rollbackCopyPool == 0 then
       other = {}
     else
-      other = source.clonePool[#source.clonePool]
-      source.clonePool[#source.clonePool] = nil
+      other = source.rollbackCopyPool[#source.rollbackCopyPool]
+      source.rollbackCopyPool[#source.rollbackCopyPool] = nil
     end
   end
   other.queuedSwapColumn = source.queuedSwapColumn
@@ -525,10 +514,9 @@ function Stack.rollbackToFrame(self, frame)
   end
 
   if frame < currentFrame then
-    local prev_states = self.prev_states
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
-    assert(prev_states[frame])
-    self:restoreFromRollbackCopy(prev_states[frame])
+    assert(self.rollbackCopies[frame])
+    self:restoreFromRollbackCopy(self.rollbackCopies[frame])
 
     for f = frame, currentFrame do
       self:deleteRollbackCopy(f)
@@ -586,14 +574,14 @@ end
 -- NOTE: the clock time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
   local opponentStack = self.opponentStack
-  local prev_states = self.prev_states
+  local rollbackCopies = self.rollbackCopies
   local attackTarget = self.garbageTarget
   self.opponentStack = nil
   self.garbageTarget = nil
-  self.prev_states = nil
+  self.rollbackCopies = nil
   self:remove_extra_rows()
-  prev_states[self.clock] = Stack.rollbackCopy(self)
-  self.prev_states = prev_states
+  rollbackCopies[self.clock] = Stack.rollbackCopy(self)
+  self.rollbackCopies = rollbackCopies
   self.opponentStack = opponentStack
   self.garbageTarget = attackTarget
   local deleteFrame = self.clock - MAX_LAG - 1
@@ -601,14 +589,14 @@ function Stack.saveForRollback(self)
 end
 
 function Stack.deleteRollbackCopy(self, frame)
-  if self.prev_states[frame] then
-    Telegraph.saveClone(self.prev_states[frame].telegraph)
+  if self.rollbackCopies[frame] then
+    Telegraph.saveClone(self.rollbackCopies[frame].telegraph)
 
      -- Has a reference to stacks we don't want kept around
-    self.prev_states[frame].telegraph = nil
+    self.rollbackCopies[frame].telegraph = nil
 
-    self.clonePool[#self.clonePool + 1] = self.prev_states[frame]
-    self.prev_states[frame] = nil
+    self.rollbackCopyPool[#self.rollbackCopyPool + 1] = self.rollbackCopies[frame]
+    self.rollbackCopies[frame] = nil
   end
 end
 
@@ -2199,8 +2187,8 @@ function Stack:getInfo()
   info.character = self.character
   info.panels = self.panels_dir
   info.rollbackCount = self.rollbackCount
-  if self.prev_states then
-    info.rollbackCopyCount = tableUtils.length(self.prev_states)
+  if self.rollbackCopies then
+    info.rollbackCopyCount = tableUtils.length(self.rollbackCopies)
   else
     info.rollbackCopyCount = 0
   end
