@@ -9,6 +9,8 @@ local utf8 = require("utf8")
 local GraphicsUtil = require("graphics_util")
 local GameModes = require("GameModes")
 local PanelGenerator = require("gen_panels")
+local StackBase = require("StackBase")
+local class = require("class")
 require("engine.panel")
 
 -- Stuff defined in this file:
@@ -261,7 +263,9 @@ Stack =
     s.multiBarFrameCount = s:calculateMultibarFrameCount()
 
     s:createCursors()
-  end)
+  end,
+  StackBase
+)
 
 -- calculates at how many frames the stack's multibar tops out
 function Stack:calculateMultibarFrameCount()
@@ -664,14 +668,6 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
 
   -- in the longrun, opponentStack should not be known to the stack
   self.opponentStack = newGarbageTarget
-end
-
-function Stack:stackCanvasWidth()
-  local stackCanvasWidth = 0
-  if self.canvas then 
-    stackCanvasWidth = math.floor(self.canvas:getWidth())
-  end
-  return stackCanvasWidth
 end
 
 local MAX_TAUNT_PER_10_SEC = 4

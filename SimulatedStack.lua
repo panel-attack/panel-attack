@@ -9,23 +9,11 @@ require("queue")
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedStack =
   class(
-  function(self, which, characterId)
-    self.which = which
-    self:moveForRenderIndex(which)
-    self.framesBehindArray = {}
-    self.framesBehind = 0
-    self.clock = 0
-    self.game_over_clock = 0
-    self.character = CharacterLoader.resolveCharacterSelection(characterId)
-    self.rollbackCopies = {}
-    self.rollbackCopyPool = Queue()
+  function(self, arguments)
     self.panels_dir = config.panels
     self.max_runs_per_frame = 1
     self.multiBarFrameCount = 240
-    CharacterLoader.load(self.character)
-    CharacterLoader.wait()
 
-    self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
     self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
   end,
   StackBase

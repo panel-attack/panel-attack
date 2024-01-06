@@ -30,121 +30,6 @@ for i = 1, #shake_arr do
   shake_mult = shake_mult - shake_step
 end
 
--- Provides the X origin to draw an element of the stack
--- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-  assert(cameFromLegacyScoreOffset ~= nil)
-  assert(legacyOffsetIsAlreadyScaled ~= nil)
-  local x = 546
-  if self.which == 2 then
-    x = 642
-  end
-  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    x = self.origin_x
-    if legacyOffsetIsAlreadyScaled == false or self.theme:offsetsAreFixed() then
-      x = x * GFX_SCALE
-    end
-  end
-  return x
-end
-
--- Provides the Y origin to draw an element of the stack
--- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-  assert(cameFromLegacyScoreOffset ~= nil)
-  assert(legacyOffsetIsAlreadyScaled ~= nil)
-  local y = 208
-  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    y = self.panelOriginY
-    if legacyOffsetIsAlreadyScaled == false or self.theme:offsetsAreFixed() then
-      y = y * GFX_SCALE
-    end
-  end
-  return y
-end
-
--- Provides the X position to draw an element of the stack, shifted by the given offset and mirroring
--- themePositionOffset - the theme offset array
--- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
--- legacyOffsetIsAlreadyScaled - set to true if the offset used to be already scaled in legacy themes
-function Stack:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-  if legacyOffsetIsAlreadyScaled == nil then
-    legacyOffsetIsAlreadyScaled = false
-  end
-  local xOffset = themePositionOffset[1]
-  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    xOffset = xOffset * self.mirror_x
-  end
-  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
-    xOffset = xOffset * GFX_SCALE
-  end
-  local x = self:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + xOffset
-  return x
-end
-
--- Provides the Y position to draw an element of the stack, shifted by the given offset and mirroring
--- themePositionOffset - the theme offset array
--- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
-function Stack:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-  if legacyOffsetIsAlreadyScaled == nil then
-    legacyOffsetIsAlreadyScaled = false
-  end
-  local yOffset = themePositionOffset[2]
-  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
-    yOffset = yOffset * GFX_SCALE
-  end
-  local y = self:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + yOffset
-  return y
-end
-
--- Provides the X position to draw a label of the stack, shifted by the given offset, mirroring and label width
--- themePositionOffset - the theme offset array
--- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
--- width - width of the drawable
--- percentWidthShift - the percent of the width you want shifted left
-function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, percentWidthShift, legacyOffsetIsAlreadyScaled)
-  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-
-  if percentWidthShift > 0 then
-    x = x - math.floor((percentWidthShift * width * scale))
-  end
-
-  return x
-end
-
-function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-  if cameFromLegacyScoreOffset == nil then
-    cameFromLegacyScoreOffset = false
-  end
-
-  local percentWidthShift = 0
-  -- If we are mirroring from the right, move the full width left
-  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
-    if self.multiplication > 0 then
-      percentWidthShift = 1
-    end
-  end
-
-  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
-  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
-
-  menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
-end
-
-function Stack:drawBar(image, quad, themePositionOffset, height, yOffset, rotate, scale)
-  local imageWidth, imageHeight = image:getDimensions()
-  local barYScale = height / imageHeight
-  local quadY = 0
-  if barYScale < 1 then
-    barYScale = 1
-    quadY = imageHeight - height
-  end
-  local x = self:elementOriginXWithOffset(themePositionOffset, false)
-  local y = self:elementOriginYWithOffset(themePositionOffset, false)
-  quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
-  qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
-end
-
 function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
   if cameFromLegacyScoreOffset == nil then
     cameFromLegacyScoreOffset = false
@@ -516,19 +401,9 @@ function Stack.render(self)
     return
   end
 
-  local function frame_mask(x_pos, y_pos)
-    love.graphics.setShader(mask_shader)
-    love.graphics.setBackgroundColor(1, 1, 1)
-    local canvas_w, canvas_h = self.canvas:getDimensions()
-    love.graphics.rectangle("fill", 0, 0, canvas_w, canvas_h)
-    love.graphics.setBackgroundColor(unpack(global_background_color))
-    love.graphics.setShader()
-  end
+  self:setCanvas()
+  self:drawCharacter()
 
-  love.graphics.setCanvas({self.canvas, stencil = true})
-  love.graphics.clear()
-  love.graphics.stencil(frame_mask, "replace", 1)
-  love.graphics.setStencilTest("greater", 0)
   local characterObject = characters[self.character]
 
   local metals
@@ -672,33 +547,16 @@ function Stack.render(self)
     end
   end
 
-  -- Draw the frames and wall at the bottom
-  local frameImage = self.theme.images.frames[self.which]
-  local wallImage = self.theme.images.walls[self.which]
-
-  if frameImage then
-    graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
-  end
-  if wallImage then
-    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
-  end
+  self:drawFrame()
+  self:drawWall(shake, self.height)
 
   -- Draw the cursor
   if self:game_ended() == false then
     self:render_cursor()
   end
 
-  -- Draw the countdown timer
-  if self.do_countdown then
-    self:render_countdown()
-  end
-  -- ends here
-
-  love.graphics.setStencilTest()
-  love.graphics.setCanvas(GAME.globalCanvas)
-  love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.canvas, self.frameOriginX * GFX_SCALE, self.frameOriginY * GFX_SCALE)
-  love.graphics.setBlendMode("alpha", "alphamultiply")
+  self:drawCountdown()
+  self:drawCanvas()
 
   self:draw_popfxs()
   self:draw_cards()
@@ -944,11 +802,11 @@ function Stack.render(self)
   end
 
   -- Draw VS HUD
-  -- if self.player then
+  if self.player then
     self:drawPlayerName()
   --   self:drawWinCount()
   --   self:drawRating()
-  -- end
+  end
 
   --drawLevel()
   drawAnalyticData()
@@ -1011,29 +869,6 @@ function Stack.render_cursor(self)
     qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     if self.inputMethod == "touch" then
       qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
-    end
-  end
-end
-
--- Draw the stacks countdown timer
-function Stack.render_countdown(self)
-  if self.do_countdown and self.clock then
-    local ready_x = 16
-    local initial_ready_y = 4
-    local ready_y_drop_speed = 6
-    local ready_y = initial_ready_y + (math.min(8, self.clock) - 1) * ready_y_drop_speed
-    local countdown_x = 44
-    local countdown_y = 68
-    if self.clock <= 8 then
-      draw(self.theme.images.IMG_ready, ready_x, ready_y)
-    elseif self.clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
-      if self.countdown_timer >= 100 then
-        draw(self.theme.images.IMG_ready, ready_x, ready_y)
-      end
-      local IMG_number_to_draw = self.theme.images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
-      if IMG_number_to_draw then
-        draw(IMG_number_to_draw, countdown_x, countdown_y)
-      end
     end
   end
 end
@@ -1118,53 +953,5 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   -- Prestop
   if self.theme.images.IMG_multibar_prestop_bar then
     qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, ((y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
-  end
-end
-
-function Stack:drawAbsoluteMultibar(stop_time, shake_time)
-  self:drawLabel(themes[config.theme].images.healthbarFrames.absolute[self.which], themes[config.theme].healthbar_frame_Pos, themes[config.theme].healthbar_frame_Scale)
-
-  local multiBarFrameCount = self.multiBarFrameCount
-  local multiBarMaxHeight = 589 * self.theme.multibar_Scale
-  local bottomOffset = 0
-
-  local healthHeight = (self.health / multiBarFrameCount) * multiBarMaxHeight
-  self:drawBar(self.theme.images.IMG_healthbar, self.healthQuad, self.theme.multibar_Pos, healthHeight, 0, 0, self.theme.multibar_Scale)
-
-  bottomOffset = healthHeight
-
-  local stopHeight = 0
-  local preStopHeight = 0
-
-  if shake_time > 0 and shake_time > (stop_time + self.pre_stop_time) then
-    -- shake is only drawn if it is greater than prestop + stop
-    -- shake is always guaranteed to fit
-    local shakeHeight = (shake_time / multiBarFrameCount) * multiBarMaxHeight
-    self:drawBar(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, self.theme.multibar_Pos, shakeHeight, bottomOffset, 0, self.theme.multibar_Scale)
-  else
-    -- stop/prestop are only drawn if greater than shake
-    if stop_time > 0 then
-      stopHeight = math.min(stop_time, multiBarFrameCount - self.health) / multiBarFrameCount * multiBarMaxHeight
-      self:drawBar(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, self.theme.multibar_Pos, stopHeight, bottomOffset, 0, self.theme.multibar_Scale)
-
-      bottomOffset = bottomOffset + stopHeight
-    end
-    if self.pre_stop_time > 0 then
-      local totalInvincibility = self.health + self.stop_time + self.pre_stop_time
-      local remainingSeconds = 0
-      if totalInvincibility > multiBarFrameCount then
-        -- total invincibility exceeds what the multibar can display -> fill only the remaining space with prestop
-        preStopHeight = (1 - (self.health + stop_time) / multiBarFrameCount) * multiBarMaxHeight
-        remainingSeconds = (totalInvincibility - multiBarFrameCount) / 60
-      else
-        preStopHeight = self.pre_stop_time / multiBarFrameCount * multiBarMaxHeight
-      end
-
-      self:drawBar(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, self.theme.multibar_Pos, preStopHeight, bottomOffset, 0, self.theme.multibar_Scale)
-
-      if remainingSeconds > 0 then
-        self:drawString(tostring(math.floor(remainingSeconds)), self.theme.multibar_LeftoverTime_Pos, false, 20)
-      end
-    end
   end
 end

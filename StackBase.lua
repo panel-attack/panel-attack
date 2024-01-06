@@ -1,8 +1,30 @@
 local class = require("class")
 local graphicsUtil = require("graphics_util")
 
-local StackBase = class(function(self)
+local StackBase = class(function(self, args)
+  assert(args.which)
+  assert(args.is_local ~= nil)
+  assert(args.character)
+  self.which = args.which
+  self:moveForRenderIndex(self.which)
+  self.is_local = args.is_local
+  self.character = CharacterLoader.resolveCharacterSelection(args.character)
+  CharacterLoader.load(self.character)
+
+  -- basics
+  self.framesBehindArray = {}
+  self.framesBehind = 0
+  self.clock = 0
+  self.game_over_clock = 0
+
+
+  -- rollback
+  self.rollbackCopies = {}
+  self.rollbackCopyPool = Queue()
+
+  -- graphics
   self.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
+  self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
 end)
 
 -- Provides the X origin to draw an element of the stack
@@ -301,6 +323,46 @@ function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
       end
     end
   end
+end
+
+--------------------------------
+------ abstract functions ------
+--------------------------------
+
+function StackBase:receiveGarbage(frameToReceive, garbageArray)
+  error("did not implement receiveGarbage")
+end
+
+function StackBase:saveForRollback()
+  error("did not implement saveForRollback")
+end
+
+function StackBase:rollbackToFrame(frame)
+  error("did not implement rollbackToFrame")
+end
+
+function StackBase:starting_state()
+  error("did not implement starting_state")
+end
+
+function StackBase:deinit()
+  error("did not implement deinit")
+end
+
+function StackBase:render()
+  error("did not implement render")
+end
+
+function StackBase:game_ended()
+  error("did not implement game_ended")
+end
+
+function StackBase:shouldRun()
+  error("did not implement shouldRun")
+end
+
+function StackBase:run()
+  error("did not implement run")
 end
 
 return StackBase
