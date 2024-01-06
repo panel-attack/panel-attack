@@ -1,7 +1,6 @@
 require("util")
 local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
-local GameModes = require("GameModes")
 
 local floor = math.floor
 local ceil = math.ceil
@@ -28,40 +27,6 @@ for i = 1, #shake_arr do
   shake_arr[i] = shake_arr[i] * shake_mult
   -- print(shake_arr[i])
   shake_mult = shake_mult - shake_step
-end
-
-function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
-  if cameFromLegacyScoreOffset == nil then
-    cameFromLegacyScoreOffset = false
-  end
-  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
-end
-
-function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
-  if cameFromLegacyScoreOffset == nil then
-    cameFromLegacyScoreOffset = false
-  end
-  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  
-  local limit = canvas_width - x
-  local alignment = "left"
-  if self.theme:offsetsAreFixed() then
-    if self.which == 1 then
-      limit = x
-      x = 0
-      alignment = "right"
-    end
-  end
-
-  if fontSize == nil then
-    fontSize = GraphicsUtil.fontSize
-  end
-  local fontDelta = fontSize - GraphicsUtil.fontSize
-
-  gprintf(string, x, y, limit, alignment, nil, nil, fontDelta)
 end
 
 -- Update all the card frames used for doing the card animation
@@ -279,16 +244,6 @@ function Stack.draw_popfxs(self)
     end
   end
 end
-
-local mask_shader = love.graphics.newShader [[
-   vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
-         // a discarded pixel wont be applied as the stencil.
-         discard;
-      }
-      return vec4(1.0);
-   }
-]]
 
 function Stack:drawDebug()
   if config.debug_mode then
@@ -632,9 +587,9 @@ function Stack.render(self)
   
       local x = self:elementOriginXWithOffset(self.theme.level_Pos, false) / GFX_SCALE
       local y = self:elementOriginYWithOffset(self.theme.level_Pos, false) / GFX_SCALE
-      local level_atlas = self.theme.images["IMG_levelNumber_atlas" .. self.id]
-      self.level_quad:setViewport(tonumber(self.level - 1) * (level_atlas:getWidth() / 11), 0, level_atlas:getWidth() / 11, level_atlas:getHeight(), level_atlas:getDimensions())
-      qdraw(level_atlas, self.level_quad, x, y, 0, (28 / self.theme.images["levelNumberWidth" .. self.id] * self.theme.level_Scale) / GFX_SCALE, (26 / self.theme.images["levelNumberHeight" .. self.id] * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
+      local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
+      self.level_quad:setViewport(tonumber(self.level - 1) * levelAtlas.charWidth, 0, levelAtlas.charWidth, levelAtlas.charHeight, levelAtlas.image:getDimensions())
+      qdraw(levelAtlas.image, self.level_quad, x, y, 0, (28 / levelAtlas.charWidth * self.theme.level_Scale) / GFX_SCALE, (26 / levelAtlas.charHeight * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
     end
   end
 

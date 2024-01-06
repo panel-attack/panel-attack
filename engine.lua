@@ -130,7 +130,7 @@ Stack =
         s:createPanelAt(i, j)
       end
     end
-    s:moveForRenderIndex(which)
+    s:moveForRenderIndex(s.which)
 
     s.clock = 0
     s.game_stopwatch = 0
@@ -255,8 +255,7 @@ Stack =
     s.speed_quads = {}
     s.wins_quads = {}
     s.rating_quads = {}
-    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getHeight(), s.theme.images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
-    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight(), s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight())
+    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.levelNumberAtlas[s.which].charWidth, s.theme.images.levelNumberAtlas[s.which].charHeight, s.theme.images.levelNumberAtlas[s.which].image:getDimensions())
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
@@ -349,39 +348,6 @@ function Stack:deinit()
   for _, quad in ipairs(self.cursorQuads) do
     GraphicsUtil:releaseQuad(quad)
   end
-end
-
--- Positions the stack draw position for the given player
-function Stack:moveForRenderIndex(renderIndex)
-  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  if renderIndex == 1 then
-    self.mirror_x = 1
-    self.multiplication = 0
-    self.id = "_1P"
-  elseif renderIndex == 2 then
-    self.mirror_x = -1
-    self.multiplication = 1
-    self.id = "_2P"
-  end
-  local centerX = (canvas_width / 2)
-  local stackWidth = self:stackCanvasWidth()
-  local innerStackXMovement = 100
-  local outerStackXMovement = stackWidth + innerStackXMovement
-  self.panelOriginXOffset = 4
-  self.panelOriginYOffset = 4
-
-  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
-  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
-
-  local frameOriginNonScaled = outerNonScaled
-  if self.mirror_x == -1 then
-    frameOriginNonScaled = outerNonScaled - stackWidth
-  end
-  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
-  self.frameOriginY = 108 / GFX_SCALE
-
-  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
-  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
 end
 
 function Stack.divergenceString(stackToTest)

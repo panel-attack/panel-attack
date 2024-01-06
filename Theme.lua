@@ -269,15 +269,18 @@ function Theme.graphics_init(self)
 
   self.images.IMG_wins = self:load_theme_img("wins")
 
-  self.images.IMG_levelNumber_atlas_1P = self:load_theme_img("level_numbers_1P")
-  self.images.levelNumberWidth_1P = self.images.IMG_levelNumber_atlas_1P:getWidth() / 11
-  self.images.levelNumberHeight_1P = self.images.IMG_levelNumber_atlas_1P:getHeight()
-  self.images.IMG_levelNumber_atlas_2P = self:load_theme_img("level_numbers_2P")
-  self.images.levelNumberWidth_2P = self.images.IMG_levelNumber_atlas_2P:getWidth() / 11
-  self.images.levelNumberHeight_2P = self.images.IMG_levelNumber_atlas_2P:getHeight()
+  self.images.levelNumberAtlas = {}
+  self.images.levelNumberAtlas[1] = {}
+  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
+  self.images.levelNumberAtlas[1].charWidth = self.images.levelNumberAtlas[1].image:getWidth() / 11
+  self.images.levelNumberAtlas[1].charHeight = self.images.levelNumberAtlas[1].image:getHeight()
+
+  self.images.levelNumberAtlas[2] = {}
+  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
+  self.images.levelNumberAtlas[2].charWidth = self.images.levelNumberAtlas[2].image:getWidth() / 11
+  self.images.levelNumberAtlas[2].charHeight = self.images.levelNumberAtlas[2].image:getHeight()
 
   self.images.IMG_casual = self:load_theme_img("casual")
-
   self.images.IMG_ranked = self:load_theme_img("ranked")
 
   self.images.IMG_rating_1P = self:load_theme_img("rating_1P")

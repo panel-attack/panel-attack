@@ -6,7 +6,6 @@ local StackBase = class(function(self, args)
   assert(args.is_local ~= nil)
   assert(args.character)
   self.which = args.which
-  self:moveForRenderIndex(self.which)
   self.is_local = args.is_local
   self.character = CharacterLoader.resolveCharacterSelection(args.character)
   CharacterLoader.load(self.character)
@@ -142,35 +141,69 @@ function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, ro
   qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
 end
 
+function StackBase:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
+end
+
+function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  
+  local limit = canvas_width - x
+  local alignment = "left"
+  if self.theme:offsetsAreFixed() then
+    if self.which == 1 then
+      limit = x
+      x = 0
+      alignment = "right"
+    end
+  end
+
+  if fontSize == nil then
+    fontSize = GraphicsUtil.fontSize
+  end
+  local fontDelta = fontSize - GraphicsUtil.fontSize
+
+  gprintf(string, x, y, limit, alignment, nil, nil, fontDelta)
+end
+
 -- Positions the stack draw position for the given player
 function StackBase:moveForRenderIndex(renderIndex)
-  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  if renderIndex == 1 then
-    self.mirror_x = 1
-    self.multiplication = 0
-  elseif renderIndex == 2 then
-    self.mirror_x = -1
-    self.multiplication = 1
-  end
-  local centerX = (canvas_width / 2)
-  local stackWidth = self:stackCanvasWidth()
-  local innerStackXMovement = 100
-  local outerStackXMovement = stackWidth + innerStackXMovement
-  self.panelOriginXOffset = 4
-  self.panelOriginYOffset = 4
+    -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
+    if renderIndex == 1 then
+      self.mirror_x = 1
+      self.multiplication = 0
+    elseif renderIndex == 2 then
+      self.mirror_x = -1
+      self.multiplication = 1
+    end
+    local centerX = (canvas_width / 2)
+    local stackWidth = self:stackCanvasWidth()
+    local innerStackXMovement = 100
+    local outerStackXMovement = stackWidth + innerStackXMovement
+    self.panelOriginXOffset = 4
+    self.panelOriginYOffset = 4
 
-  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
-  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+    local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
+    self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
 
-  local frameOriginNonScaled = outerNonScaled
-  if self.mirror_x == -1 then
-    frameOriginNonScaled = outerNonScaled - stackWidth
-  end
-  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
-  self.frameOriginY = 108 / GFX_SCALE
+    local frameOriginNonScaled = outerNonScaled
+    if self.mirror_x == -1 then
+      frameOriginNonScaled = outerNonScaled - stackWidth
+    end
+    self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
+    self.frameOriginY = 108 / GFX_SCALE
 
-  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
-  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
+    self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
+    self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
 end
 
 local mask_shader = love.graphics.newShader [[
@@ -240,7 +273,7 @@ function StackBase:drawWall(displacement, rowCount)
 end
 
 function StackBase:drawCountdown()
-  if self.do_countdown and self.countdown_timer > 0 then
+  if self.do_countdown and self.countdown_timer and self.countdown_timer > 0 then
     local ready_x = 16
     local initial_ready_y = 4
     local ready_y_drop_speed = 6
@@ -263,7 +296,7 @@ end
 
 function StackBase:stackCanvasWidth()
   local stackCanvasWidth = 0
-  if self.canvas then 
+  if self.canvas then
     stackCanvasWidth = math.floor(self.canvas:getWidth())
   end
   return stackCanvasWidth

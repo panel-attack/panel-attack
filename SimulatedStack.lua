@@ -15,6 +15,8 @@ SimulatedStack =
     self.multiBarFrameCount = 240
 
     self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+    -- somehow bad things happen if this is called in the base class constructor instead
+    self:moveForRenderIndex(self.which)
   end,
   StackBase
 )

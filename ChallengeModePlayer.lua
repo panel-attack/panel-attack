@@ -40,7 +40,7 @@ end
 
 function ChallengeModePlayer:createStackFromSettings(match, which)
   assert(self.settings.healthSettings and self.settings.attackEngineSettings)
-  local simulatedStack = SimulatedStack(which, self.settings.characterId)
+  local simulatedStack = SimulatedStack({which = which, character = self.settings.characterId, is_local = true})
   simulatedStack:addAttackEngine(self.settings.attackEngineSettings, true)
   simulatedStack:addHealth(self.settings.healthSettings)
   self.stack = simulatedStack

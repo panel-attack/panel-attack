@@ -248,7 +248,7 @@ function Match:run()
     --   player.cpu:run(stack)
     -- end
 
-    if stack and stack.is_local and not stack.game_over --[[and not self.players[i].cpu]] then
+    if stack and stack.is_local and stack.send_controls and not stack.game_over --[[and not self.players[i].cpu]] then
       stack:send_controls()
     end
   end
