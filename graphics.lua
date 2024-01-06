@@ -29,6 +29,155 @@ for i = 1, #shake_arr do
   shake_mult = shake_mult - shake_step
 end
 
+-- Provides the X origin to draw an element of the stack
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+function Stack:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  assert(cameFromLegacyScoreOffset ~= nil)
+  assert(legacyOffsetIsAlreadyScaled ~= nil)
+  local x = 546
+  if self.which == 2 then
+    x = 642
+  end
+  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
+    x = self.origin_x
+    if legacyOffsetIsAlreadyScaled == false or self.theme:offsetsAreFixed() then
+      x = x * GFX_SCALE
+    end
+  end
+  return x
+end
+
+-- Provides the Y origin to draw an element of the stack
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+function Stack:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  assert(cameFromLegacyScoreOffset ~= nil)
+  assert(legacyOffsetIsAlreadyScaled ~= nil)
+  local y = 208
+  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
+    y = self.panelOriginY
+    if legacyOffsetIsAlreadyScaled == false or self.theme:offsetsAreFixed() then
+      y = y * GFX_SCALE
+    end
+  end
+  return y
+end
+
+-- Provides the X position to draw an element of the stack, shifted by the given offset and mirroring
+-- themePositionOffset - the theme offset array
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+-- legacyOffsetIsAlreadyScaled - set to true if the offset used to be already scaled in legacy themes
+function Stack:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if legacyOffsetIsAlreadyScaled == nil then
+    legacyOffsetIsAlreadyScaled = false
+  end
+  local xOffset = themePositionOffset[1]
+  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
+    xOffset = xOffset * self.mirror_x
+  end
+  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
+    xOffset = xOffset * GFX_SCALE
+  end
+  local x = self:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + xOffset
+  return x
+end
+
+-- Provides the Y position to draw an element of the stack, shifted by the given offset and mirroring
+-- themePositionOffset - the theme offset array
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+function Stack:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if legacyOffsetIsAlreadyScaled == nil then
+    legacyOffsetIsAlreadyScaled = false
+  end
+  local yOffset = themePositionOffset[2]
+  if cameFromLegacyScoreOffset == false and self.theme:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
+    yOffset = yOffset * GFX_SCALE
+  end
+  local y = self:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + yOffset
+  return y
+end
+
+-- Provides the X position to draw a label of the stack, shifted by the given offset, mirroring and label width
+-- themePositionOffset - the theme offset array
+-- cameFromLegacyScoreOffset - set to true if this used to use the "score" position in legacy themes
+-- width - width of the drawable
+-- percentWidthShift - the percent of the width you want shifted left
+function Stack:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, width, percentWidthShift, legacyOffsetIsAlreadyScaled)
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+
+  if percentWidthShift > 0 then
+    x = x - math.floor((percentWidthShift * width * scale))
+  end
+
+  return x
+end
+
+function Stack:drawLabel(drawable, themePositionOffset, scale, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+
+  local percentWidthShift = 0
+  -- If we are mirroring from the right, move the full width left
+  if cameFromLegacyScoreOffset == false or self.theme:offsetsAreFixed() then
+    if self.multiplication > 0 then
+      percentWidthShift = 1
+    end
+  end
+
+  local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
+
+  menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
+end
+
+function Stack:drawBar(image, quad, themePositionOffset, height, yOffset, rotate, scale)
+  local imageWidth, imageHeight = image:getDimensions()
+  local barYScale = height / imageHeight
+  local quadY = 0
+  if barYScale < 1 then
+    barYScale = 1
+    quadY = imageHeight - height
+  end
+  local x = self:elementOriginXWithOffset(themePositionOffset, false)
+  local y = self:elementOriginYWithOffset(themePositionOffset, false)
+  quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
+  qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
+end
+
+function Stack:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
+end
+
+function Stack:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
+  if cameFromLegacyScoreOffset == nil then
+    cameFromLegacyScoreOffset = false
+  end
+  local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
+  
+  local limit = canvas_width - x
+  local alignment = "left"
+  if self.theme:offsetsAreFixed() then
+    if self.which == 1 then
+      limit = x
+      x = 0
+      alignment = "right"
+    end
+  end
+
+  if fontSize == nil then
+    fontSize = GraphicsUtil.fontSize
+  end
+  local fontDelta = fontSize - GraphicsUtil.fontSize
+
+  gprintf(string, x, y, limit, alignment, nil, nil, fontDelta)
+end
+
 -- Update all the card frames used for doing the card animation
 function Stack.update_cards(self)
   if self.canvas == nil then
@@ -347,6 +496,61 @@ function Stack:drawDebug()
     --     gprintf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
     --   end
     -- end
+  end
+end
+
+function Stack:drawDebug()
+  local x = self.origin_x + 480
+  local y = self.frameOriginY + 160
+
+  if config.debug_mode and self.danger then
+    gprint("danger", x, y + 135)
+  end
+  if config.debug_mode and self.danger_music then
+    gprint("danger music", x, y + 150)
+  end
+  if config.debug_mode then
+    gprint(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
+  end
+  if config.debug_mode then
+    gprint(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
+  end
+  if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
+    local iraise, iswap, iup, idown, ileft, iright
+    if self.inputMethod == "touch" then
+      iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
+    else 
+      iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+    end
+    local inputs_to_print = "inputs:"
+    if iraise then
+      inputs_to_print = inputs_to_print .. "\nraise"
+    end --◄▲▼►
+    if iswap then
+      inputs_to_print = inputs_to_print .. "\nswap"
+    end
+    if iup then
+      inputs_to_print = inputs_to_print .. "\nup"
+    end
+    if idown then
+      inputs_to_print = inputs_to_print .. "\ndown"
+    end
+    if ileft then
+      inputs_to_print = inputs_to_print .. "\nleft"
+    end
+    if iright then
+      inputs_to_print = inputs_to_print .. "\nright"
+    end
+    if self.taunt_down then
+      inputs_to_print = inputs_to_print .. "\ntaunt_down"
+    end
+    if self.taunt_up then
+      inputs_to_print = inputs_to_print .. "\ntaunt_up"
+    end
+    if self.inputMethod == "touch" then
+      inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
+    end
+    gprint(inputs_to_print, x, y + 195)
   end
 end
 

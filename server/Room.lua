@@ -114,6 +114,8 @@ function Room.add_spectator(self, new_spectator_connection)
     player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number, inputMethod = self.a.inputMethod},
     opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number, inputMethod = self.b.inputMethod}
   }
+  msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[1])
+  msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[2])
   if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
     msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
     msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
@@ -244,14 +246,18 @@ function Room.resolve_game_outcome(self)
       elseif outcome == 0 then
         filename = filename .. "-draw"
       end
-      filename = filename .. ".txt"
-      if self.replay.vs and COMPRESS_REPLAYS_ENABLED then
-        self.replay.vs.I = compress_input_string(self.replay.vs.I)
-        self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
-        logger.debug("Compressed vs I/in_buf")
-        logger.debug("saving compressed replay as " .. path .. sep .. filename)
-      else
-        logger.debug("saving replay as " .. path .. sep .. filename)
+      filename = filename .. ".json"
+      if self.replay.vs then
+        self.replay.vs.I = table.concat(self.inputs[1])
+        self.replay.vs.in_buf = table.concat(self.inputs[2])
+        if COMPRESS_REPLAYS_ENABLED then
+          self.replay.vs.I = compress_input_string(self.replay.vs.I)
+          self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
+          logger.debug("Compressed vs I/in_buf")
+          logger.debug("saving compressed replay as " .. path .. sep .. filename)
+        else
+          logger.debug("saving replay as " .. path .. sep .. filename)
+        end
       end
       write_replay_file(self.replay, path, filename)
     else

@@ -287,8 +287,40 @@ function Stack:calculateMultibarFrameCount()
   return math.max(240, minFrameCount)
 end
 
+-- calculates at how many frames the stack's multibar tops out
+function Stack:calculateMultibarFrameCount()
+  -- the multibar needs a realistic height that can encompass the sum of health and a realistic maximum stop time
+  local maxStop = 0
+
+  -- for a realistic max stop, let's only compare obtainable stop while topped out - while not topped out, stop doesn't matter after all
+  -- x5 chain while topped out (bonus stop from extra chain links is capped at x5)
+  maxStop = math.max(maxStop, self:calculateStopTime(3, true, true, 5))
+
+  -- while topped out, stop from combos is capped at 10 combo
+  maxStop = math.max(maxStop, self:calculateStopTime(10, true, false))
+
+  -- if we wanted to include stop in non-topped out states:
+  -- combo stop is linear with combosize but +27 is a reasonable cutoff (garbage cap for combos)
+  -- maxStop = math.max(maxStop, self:calculateStopTime(27, false, false))
+  -- ...but this would produce insanely high values on low levels
+
+  -- bonus stop from extra chain links caps out at x13
+  -- maxStop = math.max(maxStop, self:calculateStopTime(3, false, true, 13))
+  -- this too produces insanely high values on low levels
+
+  -- prestop does not need to be represented fully as there is visual representation via popping panels
+  -- we want a fair but not overly large buffer relative to human time perception to represent prestop in maxstop scenarios
+  -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
+  --local preStopFrameCount = 30 + (10 - self.level) * 5
+
+  local minFrameCount = maxStop + (level_to_hang_time[self.level] or 1) --+ preStopFrameCount
+
+  --return minFrameCount + preStopFrameCount
+  return math.max(240, minFrameCount)
+end
+
 function Stack:createCursors()
-  local cursorImage = themes[config.theme].images.IMG_cursor[1]
+  local cursorImage = self.theme.images.IMG_cursor[1]
   local imageWidth = cursorImage:getWidth()
   local imageHeight = cursorImage:getHeight()
   self.cursorQuads = {}
@@ -1127,37 +1159,43 @@ end
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
 function Stack.shouldPlayDangerMusic(self)
-  if not self.danger_music then
-    -- currently playing normal music
-    for row = self.height - 2, self.height do
-      local panelRow = self.panels[row]
-      for column = 1, self.width do
-        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
-          if self.shake_time > 0 then
-            return false
-          else
-            return true
+  if self.match.mode == "time" then
+    if self.game_stopwatch > TIME_ATTACK_TIME * 60 - 900 --[[15 seconds assuming 60 FPS]] then
+      return true
+    end
+  else
+    if not self.danger_music then
+      -- currently playing normal music
+      for row = self.height - 2, self.height do
+        local panelRow = self.panels[row]
+        for column = 1, self.width do
+          if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
+            if self.shake_time > 0 then
+              return false
+            else
+              return true
+            end
           end
         end
       end
-    end
-  else
-    --currently playing danger
-    local minRowForDangerMusic = self.height - 2
-    if config.danger_music_changeback_delay then
-      minRowForDangerMusic = self.height - 3
-    end
-    for row = minRowForDangerMusic, self.height do
-      local panelRow = self.panels[row]
-      if panelRow ~= nil and type(panelRow) == "table" then
-        for column = 1, self.width do
-          if panelRow[column].color ~= 0 then
-            return true
+    else
+      --currently playing danger
+      local minRowForDangerMusic = self.height - 2
+      if config.danger_music_changeback_delay then
+        minRowForDangerMusic = self.height - 3
+      end
+      for row = minRowForDangerMusic, self.height do
+        local panelRow = self.panels[row]
+        if panelRow ~= nil and type(panelRow) == "table" then
+          for column = 1, self.width do
+            if panelRow[column].color ~= 0 then
+              return true
+            end
           end
+        elseif self.warningsTriggered["Panels Invalid"] == nil then
+          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+          self.warningsTriggered["Panels Invalid"] = true
         end
-      elseif self.warningsTriggered["Panels Invalid"] == nil then
-        logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
-        self.warningsTriggered["Panels Invalid"] = true
       end
     end
   end
@@ -1464,8 +1502,8 @@ function Stack.simulate(self)
     -- Update Sound FX
     if self:canPlaySfx() then
       if SFX_Swap_Play == 1 then
-        themes[config.theme].sounds.swap:stop()
-        themes[config.theme].sounds.swap:play()
+        self.theme.sounds.swap:stop()
+        self.theme.sounds.swap:play()
         SFX_Swap_Play = 0
       end
       if SFX_Cur_Move_Play == 1 then
@@ -1477,16 +1515,16 @@ function Stack.simulate(self)
         SFX_Cur_Move_Play = 0
       end
       if self.sfx_land then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.land:play()
+        self.theme.sounds.land:stop()
+        self.theme.sounds.land:play()
         self.sfx_land = false
       end
       if self.combo_chain_play then
         -- stop ongoing landing sound
-        themes[config.theme].sounds.land:stop()
+        self.theme.sounds.land:stop()
         -- and cancel it because an attack is performed on the exact same frame (takes priority)
         self.sfx_land = false
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         characters[self.character]:playAttackSfx(self.combo_chain_play)
         self.combo_chain_play = nil
       end
@@ -1497,25 +1535,25 @@ function Stack.simulate(self)
       if SFX_Fanfare_Play == 0 then
         --do nothing
       elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.fanfare3:play()
+        self.theme.sounds.fanfare3:play()
       elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.fanfare2:play()
+        self.theme.sounds.fanfare2:play()
       elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.fanfare1:play()
+        self.theme.sounds.fanfare1:play()
       end
       SFX_Fanfare_Play = 0
       if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i = 1, 3 do
-          if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-            themes[config.theme].sounds.garbage_thud[i]:stop()
+          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+            self.theme.sounds.garbage_thud[i]:stop()
             interrupted_thud = i
           end
         end
         if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+          self.theme.sounds.garbage_thud[interrupted_thud]:play()
         else
-          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
+          self.theme.sounds.garbage_thud[self.sfx_garbage_thud]:play()
         end
         if interrupted_thud == nil then
           characters[self.character]:playGarbageLandSfx()
@@ -1531,9 +1569,9 @@ function Stack.simulate(self)
           popIndex = min(self.poppedPanelIndex, 10)
         end
         --stop the previous pop sound
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
         --play the appropriate pop sound
-        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
+        self.theme.sounds.pops[popLevel][popIndex]:play()
         self.lastPopLevelPlayed = popLevel
         self.lastPopIndexPlayed = popIndex
         SFX_Pop_Play = nil
@@ -1705,7 +1743,7 @@ function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.win ~= 0 then
     return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else
-    return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
+    return self.theme.sounds.fanfare1 -- TODO add a default win sound
   end
 end
 

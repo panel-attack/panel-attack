@@ -55,10 +55,10 @@ local Game = class(
     self.canvasY = 0
     self.canvasXScale = 1
     self.canvasYScale = 1
-    
+
     -- depends on canvasXScale
     self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
-    
+
     self.availableScales = {1, 1.5, 2, 2.5, 3}
     -- specifies a time that is compared against self.timer to determine if GameScale should be shown
     self.showGameScaleUntil = 0
@@ -67,7 +67,7 @@ local Game = class(
     self.previousWindowHeight = 0
 
     self.crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
-    
+
     -- private members
     self.pointer_hidden = false
     self.last_x = 0
