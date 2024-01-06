@@ -67,7 +67,7 @@ local function testStackStartingBoard1()
   -- endless easy deviates by 1 color from time attack easy
   player:setColorCount(5)
 
-  local stack = player:createStackFromSettings(battleRoom:createMatch())
+  local stack = player:createStackFromSettings(battleRoom:createMatch(), 1)
   stack.match:setSeed(7)
   stack.panel_buffer = stack:makeStartingBoardPanels()
   assert(stack.panel_buffer == "J400000bC00201240a0D3305e32E114D535d21aD12")
@@ -84,7 +84,7 @@ local function testStackStartingBoard2()
   player:setStyle(GameModes.Styles.MODERN)
   player:setLevel(10)
 
-  local stack = player:createStackFromSettings(battleRoom:createMatch())
+  local stack = player:createStackFromSettings(battleRoom:createMatch(), 1)
   stack.match:setSeed(8)
   stack.panel_buffer = stack:makeStartingBoardPanels()
   assert(stack.panel_buffer == "J000004043E0C06130604Fd320145f614Cf446c52A")
@@ -105,7 +105,7 @@ local function testStackStartingBoard3()
   player:setStyle(GameModes.Styles.MODERN)
   player:setLevel(10)
 
-  local stack = player:createStackFromSettings(battleRoom:createMatch())
+  local stack = player:createStackFromSettings(battleRoom:createMatch(), 1)
   -- this seed tests for a certain bug that occured when the first character was a possible metal location for generating the starting board
   -- you'd think testStackStartingBoard2 would catch that as it starts with J too but it did not, don't ask me why
   stack.match:setSeed(351545)

@@ -221,7 +221,7 @@ Stack =
     s.opponentStack = nil -- the other stack you are playing against
     s.garbageTarget = nil -- the target you are sending attacks to
 
-    if s.match.stackInteraction == GameModes.StackInteractions.VERSUS then
+    if s.match.stackInteraction == GameModes.StackInteractions.VERSUS or s.match.stackInteraction == GameModes.StackInteractions.SELF then
       s.telegraph = Telegraph(s)
       -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
       -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
