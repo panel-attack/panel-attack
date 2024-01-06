@@ -6,7 +6,6 @@ local tableUtils = require("tableUtils")
 StageLoader = {}
 
 StageLoader.loading_queue = Queue() -- stages to load
-
 StageLoader.loading_stage = nil -- currently loading stage
 
 -- loads the stages of the specified id
@@ -20,9 +19,9 @@ local instant_load_enabled = false
 
 -- return true if there is still data to load
 function StageLoader.update()
-  if not loading_stage and StageLoader.loading_queue:len() > 0 then
+  if not StageLoader.loading_stage and StageLoader.loading_queue:len() > 0 then
     local stage_id = StageLoader.loading_queue:pop()
-    loading_stage = {
+    StageLoader.loading_stage = {
       stage_id,
       coroutine.create(
         function()
@@ -32,12 +31,12 @@ function StageLoader.update()
     }
   end
 
-  if loading_stage then
-    if coroutine.status(loading_stage[2]) == "suspended" then
-      coroutine.resume(loading_stage[2])
+  if StageLoader.loading_stage then
+    if coroutine.status(StageLoader.loading_stage[2]) == "suspended" then
+      coroutine.resume(StageLoader.loading_stage[2])
       return true
-    elseif coroutine.status(loading_stage[2]) == "dead" then
-      loading_stage = nil
+    elseif coroutine.status(StageLoader.loading_stage[2]) == "dead" then
+      StageLoader.loading_stage = nil
       return StageLoader.loading_queue:len() > 0
     -- TODO: unload stages if too much data have been loaded (be careful not to release currently-used stages)
     end

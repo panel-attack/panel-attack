@@ -1,4 +1,5 @@
 local logger = require("logger")
+local GraphicsUtil = require("graphics_util")
 
 local HEALTH_BAR_WIDTH = 50
 
@@ -17,6 +18,10 @@ Health =
     self.rollbackCopyPool = Queue()
   end
 )
+
+function Health:deinit()
+
+end
 
 function Health:run()
   -- Increment rise speed if needed
