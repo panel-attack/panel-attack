@@ -206,7 +206,7 @@ function ChallengeMode:recordStageResult(winners, gameLength)
       self.stageIndex = self.stageIndex + 1
       if self.stages[self.stageIndex] then
         local stageSettings = self.stages[self.stageIndex]
-        self.player.settings.attackEngineSettings = stageSettings.attackEngineSettings
+        self.player.settings.attackEngineSettings = stageSettings.attackSettings
         self.player.settings.healthSettings = stageSettings.healthSettings
         if stageSettings.characterId then
           self.player:setCharacter(stageSettings.characterId)

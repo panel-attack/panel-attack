@@ -195,7 +195,8 @@ end
 
 function SimulatedStack:deinit()
   if self.health then
-    self.health:deinit()
+    -- need to merge beta to get Health:deinit()
+    --self.health:deinit()
   end
 end
 

@@ -363,9 +363,8 @@ function BattleRoom:update(dt)
 end
 
 function BattleRoom:shutdown()
-  for i = 1, #self.players do
+  for i, player in ipairs(self.players) do
     if player.human then
-      local player = self.players[i]
       -- this is to clear the input configs for future use
       player:unrestrictInputs()
     end

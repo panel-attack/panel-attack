@@ -68,7 +68,6 @@ function CharacterSelectChallenge:loadUserInterface()
     local stageCarousel = self:createStageCarousel(player, stageWidth)
     self.ui.stageSelection:addElement(stageCarousel, player)
 
-
     self.ui.characterIcons[i] = self:createSelectedCharacterIcon(player)
   end
 
