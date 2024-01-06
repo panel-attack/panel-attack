@@ -5,8 +5,9 @@ require("queue")
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedStack =
   class(
-  function(self, playerNumber, character)
-    self:moveForPlayerNumber(playerNumber)
+  function(self, which, character)
+    self.which = which
+    self:moveForRenderIndex(which)
     self.framesBehindArray = {}
     self.framesBehind = 0
     self.clock = 0
@@ -19,11 +20,11 @@ SimulatedStack =
   end
 )
 
-function SimulatedStack:moveForPlayerNumber(playerNumber)
+function SimulatedStack:moveForRenderIndex(renderIndex)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  if playerNumber == 1 then
+  if renderIndex == 1 then
     self.mirror_x = 1
-  elseif playerNumber == 2 then
+  elseif renderIndex == 2 then
     self.mirror_x = -1
   end
   local centerX = (canvas_width / 2)
@@ -81,15 +82,44 @@ function SimulatedStack:shouldRun(runsSoFar)
 end
 
 function SimulatedStack:game_ended()
+  if self.game_over then
+    return self.game_over
+  end
+
   if not self.health then
     return false
+  else
+    if self.health:isFullyDepleted() then
+      self:setGameOver()
+    end
   end
-  return self.health:isFullyDepleted()
+  return self.game_over
+end
+
+function SimulatedStack:setGameOver()
+  if not self.game_over then
+    self.game_over = true
+    self.game_over_clock = self.clock
+  end
 end
 
 function SimulatedStack:drawCharacter()
   local characterObject = characters[self.character]
   characterObject:drawPortrait(2, self.frameOriginX, self.frameOriginY, 0)
+end
+
+function SimulatedStack:drawDebug()
+  if config.debug_mode then
+    local drawX = self.frameOriginX + self:stackCanvasWidth() / 2
+    local drawY = 10
+    local padding = 14
+
+    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
+    gprintf("Clock " .. self.clock, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+  end
 end
 
 local healthBarXOffset = -56
@@ -104,6 +134,7 @@ function SimulatedStack.render(self)
     self.attackEngine:render()
   end
 
+  self:drawDebug()
 end
 
 function SimulatedStack:receiveGarbage(frameToReceive, garbageList)

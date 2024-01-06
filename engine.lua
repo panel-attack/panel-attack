@@ -128,7 +128,7 @@ Stack =
         s:createPanelAt(i, j)
       end
     end
-    s:moveForPlayerNumber(which)
+    s:moveForRenderIndex(which)
 
     s.clock = 0
     s.game_stopwatch = 0
@@ -348,13 +348,13 @@ function Stack:deinit()
 end
 
 -- Positions the stack draw position for the given player
-function Stack:moveForPlayerNumber(player_num)
+function Stack:moveForRenderIndex(renderIndex)
   -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  if player_num == 1 then
+  if renderIndex == 1 then
     self.mirror_x = 1
     self.multiplication = 0
     self.id = "_1P"
-  elseif player_num == 2 then
+  elseif renderIndex == 2 then
     self.mirror_x = -1
     self.multiplication = 1
     self.id = "_2P"

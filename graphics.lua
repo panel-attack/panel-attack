@@ -406,57 +406,107 @@ local mask_shader = love.graphics.newShader [[
 ]]
 
 function Stack:drawDebug()
-  local x = self.origin_x + 480
-  local y = self.frameOriginY + 160
+  if config.debug_mode then
+    local x = self.origin_x + 480
+    local y = self.frameOriginY + 160
 
-  if config.debug_mode and self.danger then
-    gprint("danger", x, y + 135)
-  end
-  if config.debug_mode and self.danger_music then
-    gprint("danger music", x, y + 150)
-  end
-  if config.debug_mode then
+    if self.danger then
+      gprint("danger", x, y + 135)
+    end
+    if self.danger_music then
+      gprint("danger music", x, y + 150)
+    end
+
     gprint(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
-  end
-  if config.debug_mode then
     gprint(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
-  end
-  if config.debug_mode and (self.input_state or self.taunt_up or self.taunt_down) then
-    local iraise, iswap, iup, idown, ileft, iright
-    if self.inputMethod == "touch" then
-      iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
-    else 
-      iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+
+    if self.input_state or self.taunt_up or self.taunt_down then
+      local iraise, iswap, iup, idown, ileft, iright
+      if self.inputMethod == "touch" then
+        iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
+      else 
+        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+      end
+      local inputs_to_print = "inputs:"
+      if iraise then
+        inputs_to_print = inputs_to_print .. "\nraise"
+      end --◄▲▼►
+      if iswap then
+        inputs_to_print = inputs_to_print .. "\nswap"
+      end
+      if iup then
+        inputs_to_print = inputs_to_print .. "\nup"
+      end
+      if idown then
+        inputs_to_print = inputs_to_print .. "\ndown"
+      end
+      if ileft then
+        inputs_to_print = inputs_to_print .. "\nleft"
+      end
+      if iright then
+        inputs_to_print = inputs_to_print .. "\nright"
+      end
+      if self.taunt_down then
+        inputs_to_print = inputs_to_print .. "\ntaunt_down"
+      end
+      if self.taunt_up then
+        inputs_to_print = inputs_to_print .. "\ntaunt_up"
+      end
+      if self.inputMethod == "touch" then
+        inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
+      end
+      gprint(inputs_to_print, x, y + 195)
     end
-    local inputs_to_print = "inputs:"
-    if iraise then
-      inputs_to_print = inputs_to_print .. "\nraise"
-    end --◄▲▼►
-    if iswap then
-      inputs_to_print = inputs_to_print .. "\nswap"
-    end
-    if iup then
-      inputs_to_print = inputs_to_print .. "\nup"
-    end
-    if idown then
-      inputs_to_print = inputs_to_print .. "\ndown"
-    end
-    if ileft then
-      inputs_to_print = inputs_to_print .. "\nleft"
-    end
-    if iright then
-      inputs_to_print = inputs_to_print .. "\nright"
-    end
-    if self.taunt_down then
-      inputs_to_print = inputs_to_print .. "\ntaunt_down"
-    end
-    if self.taunt_up then
-      inputs_to_print = inputs_to_print .. "\ntaunt_up"
-    end
-    if self.inputMethod == "touch" then
-      inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
-    end
-    gprint(inputs_to_print, x, y + 195)
+
+    local drawX = self.frameOriginX + self:stackCanvasWidth() / 2
+    local drawY = 10
+    local padding = 14
+
+    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
+    gprintf("Clock " .. self.clock, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("Confirmed " .. #self.confirmedInput, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("input_buffer " .. #self.input_buffer, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("rollbackCount " .. self.rollbackCount, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("game_over_clock " .. (self.game_over_clock or 0), drawX, drawY)
+
+    drawY = drawY + padding
+      gprintf("has chain panels " .. tostring(self:hasChainingPanels()), drawX, drawY)
+
+    drawY = drawY + padding
+      gprintf("has active panels " .. tostring(self:hasActivePanels()), drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("riselock " .. tostring(self.rise_lock), drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("P" .. stack.which .." Panels: " .. stack.panel_buffer, drawX, drawY)
+
+    drawY = drawY + padding
+    gprintf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
+
+    -- drawY = drawY + padding
+    -- gprintf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
+
+    -- if stack.telegraph then
+    --   drawY = drawY + padding
+    --   gprintf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+
+    --   for combo_garbage_width=3,6 do
+    --     drawY = drawY + padding
+    --     gprintf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+    --   end
+    -- end
   end
 end
 
