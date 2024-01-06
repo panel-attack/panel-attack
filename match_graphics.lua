@@ -1,4 +1,5 @@
 local GameModes = require("GameModes")
+local tableUtils = require("tableUtils")
 
 function Match:matchelementOriginX()
   local x = 375 + (464) / 2
@@ -35,7 +36,7 @@ function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
 end
 
 function Match:drawTimer()
-  local stack = self.P1
+  local stack = self.stacks[1]
   if stack == nil or stack.game_stopwatch == nil or tonumber(stack.game_stopwatch) == nil then
     -- Make sure we have a valid time to base off of
     return
@@ -83,94 +84,116 @@ function Match:drawCommunityMessage()
 end
 
 function Match:render()
-  local P1 = self.P1
-  local P2 = self.P2
-
   if GAME.droppedFrames > 0 and config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 
-  if config.show_fps and P1 and P2 then
-
-    local P1Behind = P1.framesBehind
-    local P2Behind = P2.framesBehind
-    local behind = math.abs(P1.clock - P2.clock)
-
-    if P1Behind > 0 then
-      gprint("P1 Average Latency: " .. P1Behind, 1, 23)
-    end
-    if P2Behind > 0 then
-      gprint("P2 Average Latency: " .. P2Behind, 1, 34)
+  if config.show_fps and #self.stacks > 1 then
+    local drawY = 23
+    for i = 1, #self.stacks do
+      local stack = self.stacks[i]
+      gprint("P" .. stack.which .." Average Latency: " .. stack.framesBehind, 1, drawY)
+      drawY = drawY + 11
     end
 
-    if not self:hasLocalPlayer() and behind > MAX_LAG * 0.75 then
-      local iconSize = 20
-      local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-      local x = (canvas_width / 2) - (iconSize / 2)
-      local y = (canvas_height / 2) - (iconSize / 2)
-      draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    if self:hasLocalPlayer() then
+      if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > GARBAGE_DELAY_LAND_TIME end) then
+        -- let the player know that rollback is active
+        local iconSize = 20
+        local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+        local x = 5
+        local y = 30
+        draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+      end
+    else
+      if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > MAX_LAG * 0.75 end) then
+        -- let the spectator know the game is about to die
+        local iconSize = 20
+        local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
+        local x = (canvas_width / 2) - (iconSize / 2)
+        local y = (canvas_height / 2) - (iconSize / 2)
+        draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+      end
     end
   end
 
   self:drawCommunityMessage()
 
   if config.debug_mode then
-
-    local drawX = 240
-    local drawY = 10
     local padding = 14
+    local drawX
+    local drawY
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
-
-    gprintf("Clock " .. P1.clock, drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("Confirmed " .. #P1.confirmedInput, drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("input_buffer " .. #P1.input_buffer, drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("rollbackCount " .. P1.rollbackCount, drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Panels: " .. P1.panel_buffer, drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Confirmed " .. #P1.confirmedInput , drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Ended?: " .. tostring(P1:game_ended()), drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 attacks: " .. #P1.telegraph.attacks, drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("P1 Garbage Q: " .. P1.garbage_q:len(), drawX, drawY)
-
-    if P1.game_over_clock > 0 then
+    for i = 1, #self.stacks do
+      local stack = self.stacks[i]
+      drawX = stack.frameOriginX
+      drawY = 10
+      
+      grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
+      gprintf("Clock " .. stack.clock, drawX, drawY)
+      
       drawY = drawY + padding
-      gprintf("game_over_clock " .. P1.game_over_clock, drawX, drawY)
+      if stack.confirmedInput then
+        gprintf("Confirmed " .. #stack.confirmedInput, drawX, drawY)
+      end
+
+      drawY = drawY + padding
+      if stack.input_buffer then
+        gprintf("input_buffer " .. #stack.input_buffer, drawX, drawY)
+      end
+
+      drawY = drawY + padding
+      if stack.rollbackCount then
+        gprintf("rollbackCount " .. stack.rollbackCount, drawX, drawY)
+      end
+
+      if stack.game_over_clock and stack.game_over_clock > 0 then
+        drawY = drawY + padding
+        gprintf("game_over_clock " .. stack.game_over_clock, drawX, drawY)
+      end
+
+      drawY = drawY + padding
+      if stack.hasChainingPanels then
+        gprintf("has chain panels " .. tostring(stack:hasChainingPanels()), drawX, drawY)
+      end
+
+      drawY = drawY + padding
+      if stack.hasActivePanels then
+        gprintf("has active panels " .. tostring(stack:hasActivePanels()), drawX, drawY)
+      end
+
+      drawY = drawY + padding
+      if stack.rise_lock then
+        gprintf("riselock " .. tostring(stack.rise_lock), drawX, drawY)
+      end
+
+      -- drawY = drawY + padding
+      -- if stack.panel_buffer then
+      --   gprintf("P" .. stack.which .." Panels: " .. stack.panel_buffer, drawX, drawY)
+      -- end
+
+      drawY = drawY + padding
+      gprintf("P" .. stack.which .." Ended?: " .. tostring(stack:game_ended()), drawX, drawY)
+
+      -- drawY = drawY + padding
+      -- gprintf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
+
+      -- drawY = drawY + padding
+      -- if stack.garbage_q then
+      --   gprintf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
+      -- end
+
+      -- if stack.telegraph then
+      --   drawY = drawY + padding
+      --   gprintf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+
+      --   for combo_garbage_width=3,6 do
+      --     drawY = drawY + padding
+      --     gprintf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+      --   end
+      -- end
     end
 
-    drawY = drawY + padding
-    gprintf("has chain panels " .. tostring(P1:hasChainingPanels()), drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("has active panels " .. tostring(P1:hasActivePanels()), drawX, drawY)
-
-    drawY = drawY + padding
-    gprintf("riselock " .. tostring(P1.rise_lock), drawX, drawY)
-
-    -- if P1.telegraph then
-    --   drawY = drawY + padding
-    --   gprintf("incoming chains " .. P1.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
-
-    --   for combo_garbage_width=3,6 do
-    --     drawY = drawY + padding
-    --     gprintf("incoming combos " .. P1.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-    --   end
-    -- end
 
     drawX = 500
     drawY = 10 - padding
@@ -193,54 +216,9 @@ function Match:render()
     drawY = drawY + padding
     gprintf("Seed " .. self.seed, drawX, drawY)
 
-    if self.gameOverClock > 0 then
+    if self.gameOverClock and self.gameOverClock > 0 then
       drawY = drawY + padding
       gprintf("gameOverClock " .. self.gameOverClock, drawX, drawY)
-    end
-
-    -- drawY = drawY + padding
-    -- local memoryCount = collectgarbage("count")
-    -- memoryCount = round(memoryCount / 1000, 1)
-    -- gprintf("Memory " .. memoryCount .. " MB", drawX, drawY)
-
-    -- drawY = drawY + padding
-    -- gprintf("quadPool " .. #GraphicsUtil.quadPool, drawX, drawY)
-
-    if P2 then
-      drawX = 800
-      drawY = 10 - padding
-
-      drawY = drawY + padding
-      gprintf("Clock " .. P2.clock, drawX, drawY)
-
-      drawY = drawY + padding
-      local framesAhead = P1.clock - P2.clock
-      gprintf("P1 Ahead: " .. framesAhead, drawX, drawY)
-
-      drawY = drawY + padding
-      gprintf("Confirmed " .. #P2.confirmedInput, drawX, drawY)
-
-      drawY = drawY + padding
-      gprintf("input_buffer " .. #P2.input_buffer, drawX, drawY)
-
-      drawY = drawY + padding
-      gprintf("rollbackCount " .. P2.rollbackCount, drawX, drawY)
-
-      if P2.game_over_clock > 0 then
-        drawY = drawY + padding
-        gprintf("game_over_clock " .. P2.game_over_clock, drawX, drawY)
-      end
-
-      -- if P2.telegraph then
-      --   drawY = drawY + padding
-      --   gprintf("incoming chains " .. P2.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
-
-      --   for combo_garbage_width=3,6 do
-      --     drawY = drawY + padding
-      --     gprintf("incoming combos " .. P2.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-      --   end
-      -- end
-
     end
   end
 
@@ -250,41 +228,22 @@ function Match:render()
 
   if self.isPaused == false or self.renderDuringPause then
     -- Don't allow rendering if either player is loading for spectating
-    local renderingAllowed = true
-    if P1 and P1.play_to_end then
-      renderingAllowed = false
-    end
-    if P2 and P2.play_to_end then
-      renderingAllowed = false
-    end
+    local renderingAllowed = tableUtils.trueForAll(self.stacks, function(s) return not s.play_to_end end)
 
     if renderingAllowed then
-      if P1 then
-        P1:render()
-      end
-      if P2 then
-        P2:render()
-      end
-
-      if self.simulatedOpponent then
-        self.simulatedOpponent:render()
+      for i = 1, #self.stacks do
+        local stack = self.stacks[i]
+        stack:render()
+        if self.stackInteraction ~= GameModes.StackInteractions.NONE then
+          stack.telegraph:render()
+        end
       end
 
-      -- should invert the relationship between trainingModeSettings and challengeMode in the future
-      -- challenge mode should probably live on battleRoom instead as match only really runs a single ChallengeStage at a time
       -- local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
       -- if challengeMode then
       --   challengeMode:render()
       -- end
 
-      if self.stackInteraction ~= GameModes.StackInteractions.NONE then
-        if P1 and P1.telegraph then
-          P1.telegraph:render()
-        end
-        if P2 and P2.telegraph then
-          P2.telegraph:render()
-        end
-      end
 
       -- Draw VS HUD
       if self.stackInteraction == GameModes.StackInteractions.VERSUS then
@@ -298,15 +257,6 @@ function Match:render()
 
       self:drawTimer()
     end
-  end
-
-  if P2 and P1.clock >= P2.clock + GARBAGE_DELAY_LAND_TIME then
-    -- let the player know that rollback is active
-    local iconSize = 20
-    local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-    local x = 5
-    local y = 30
-    draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
   end
 end
 

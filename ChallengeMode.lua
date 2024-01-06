@@ -198,6 +198,9 @@ function ChallengeMode:recordStageResult(winners, gameLength)
   self.expendedTime = self.expendedTime + gameLength
 
   if #winners == 1 then
+    -- increment win count on winning player if there is only one
+    winners[1]:incrementWinCount()
+
     if winners[1] == self.player then
       self.continues = self.continues + 1
     else
@@ -217,38 +220,27 @@ function ChallengeMode:onMatchEnded(match)
   -- TODO: call recordStageResult on top of what the regular BattleRoom does
   self.matchesPlayed = self.matchesPlayed + 1
 
+  local winners = match:getWinners()
   -- an abort is always the responsibility of the local player in challenge mode
-  -- so always add the time on top
-  self.expendedTime = self.expendedTime + match.clock
-  if not match.aborted then
-    local winners = match:getWinners()
-    -- apply wins and possibly statistical data up for collection
-    if #winners == 1 then
-      -- increment win count on winning player if there is only one
-      winners[1]:incrementWinCount()
-    end
-    if self.online and match:hasLocalPlayer() then
-      self:reportLocalGameResult(winners)
-    end
-  else
+  -- so always record the result, even if it may have been an abort
+  local gameTime = match.clock
+  if match.doCountdown then
+    gameTime = gameTime - 180
+  end
+  self:recordStageResult(winners, gameTime)
+  if self.online and match:hasLocalPlayer() then
+    self:reportLocalGameResult(winners)
+  end
+
+  if match.aborted then
   -- match:deinit is the responsibility of the one switching out of the game scene
     match:deinit()
-    -- in the case of a network based abort, the network part of the battleRoom would unsubscribe from the onMatchEnded signal
-    -- and initialise the transition to wherever else before calling abort on the match to finalize it
-    -- that means whenever we land here, it was a match-side local abort that leaves the room intact
-    local setupScene = sceneManager:createScene(self.mode.setupScene)
-    if match.desyncError then
-      -- match could have a desync error
-      -- -> back to select screen, battleRoom stays intact
-      -- ^ this behaviour is different to the past but until the server tells us the room is dead there is no reason to assume it to be dead
-      sceneManager:switchToScene(setupScene, MessageTransition(GAME.timer, 5, sceneManager.activeScene, setupScene, "ss_latency_error"))
-    else
-      -- local player could pause and leave
-      -- -> back to select screen, battleRoom stays intact
-      sceneManager:switchToScene(setupScene)
-    end
 
-    -- other aborts come via network and are directly handled in response to the network message (or lack thereof)
+    -- in challenge mode, an abort is always a manual pause and leave by the local player
+    local setupScene = sceneManager:createScene(self.mode.setupScene)
+    sceneManager:switchToScene(setupScene)
+
+    -- when challenge mode becomes spectatable, there needs to be a network abort that isn't leave_room for spectators
   end
 
   -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference

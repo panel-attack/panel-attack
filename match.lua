@@ -90,7 +90,9 @@ end
 -- returns a single winner if there was a clear winner
 -- returns multiple winners if there was a tie (or the game mode had no win conditions)
 -- returns an empty table if there was no winner due to the game not finishing / getting aborted
+-- the function caches the result of the first call so it should only be called when the match has ended
 function Match:getWinners()
+  -- return a cached result if the function was already called before
   if self.winners then
     return self.winners
   end

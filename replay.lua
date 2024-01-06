@@ -100,12 +100,14 @@ function Replay.addAnalyticsDataToReplay(match, replay)
   replay.duration = match.gameOverClock
 
   for i = 1, #match.players do
-    local stack = match.players[i].stack
-    local playerTable = replay.players[i]
-    playerTable.analytics = stack.analytic.data
-    playerTable.analytics.score = stack.score
-    if match.room_ratings and match.room_ratings[i] then
-      playerTable.analytics.rating = match.room_ratings[i]
+    if match.players[i].human then
+      local stack = match.players[i].stack
+      local playerTable = replay.players[i]
+      playerTable.analytics = stack.analytic.data
+      playerTable.analytics.score = stack.score
+      if match.room_ratings and match.room_ratings[i] then
+        playerTable.analytics.rating = match.room_ratings[i]
+      end
     end
   end
 
