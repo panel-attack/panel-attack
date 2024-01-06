@@ -1,9 +1,3 @@
-require("consts")
-require("queue")
-require("server_queue")
-
-server_queue = ServerQueue()
-
 score_mode = SCOREMODE_TA
 
 GARBAGE_TELEGRAPH_TIME = 45 -- the amount of time the garbage stays in the telegraph after getting there from the attack animation
@@ -41,6 +35,3 @@ SFX_GameOver_Play = 0
 global_op_state = nil
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
-
--- this should probably live on match in the future
-spectators_string = ""

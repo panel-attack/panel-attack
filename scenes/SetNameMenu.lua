@@ -1,5 +1,4 @@
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
 local InputField = require("ui.InputField")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
@@ -24,8 +23,11 @@ local SetNameMenu = class(
 SetNameMenu.name = "SetNameMenu"
 sceneManager:addScene(SetNameMenu)
 
-local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
-local nameField = InputField({
+local warningText = ""
+
+function SetNameMenu:load()
+  local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
+  self.nameField = InputField({
     x = menuX - 25,
     y = menuY + 50,
     width = 200,
@@ -33,53 +35,42 @@ local nameField = InputField({
     placeholder = "username",
     value = config.name,
     isVisible = false
-})
-
-local warningText = ""
-local backgroundImg = nil -- set in load
-
-function SetNameMenu:load(sceneParams)
-  backgroundImg = themes[config.theme].images.bg_main
-  nameField:setVisibility(true)
-  nameField:setFocus(0, 0)
-  nameField.offset = utf8.len(nameField.value)
-  self.prevScene = sceneParams.prevScene
-end
-
-function SetNameMenu:drawBackground()
-  backgroundImg:draw()
+  })
+  self.backgroundImg = themes[config.theme].images.bg_main
+  self.nameField:setFocus(0, 0)
+  self.nameField.offset = utf8.len(self.nameField.value)
+  self.uiRoot:addChild(self.nameField)
 end
 
 function SetNameMenu:update(dt)
-  backgroundImg:update(dt)
+  self.backgroundImg:update(dt)
   if not input.allKeys.isDown["return"] and tableUtils.trueForAny(input.allKeys.isDown, function(val) return val end) then
     warningText = ""
   end
 
-  local toPrint = loc("op_enter_name") .. " (" .. nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
-  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
-  
   if input.allKeys.isDown["return"] then
-    if nameField.value == "" then
+    if self.nameField.value == "" then
       warningText = loc("op_username_blank_warning")
     else
       Menu.playValidationSfx()
-      config.name = nameField.value
+      config.name = self.nameField.value
       write_conf_file()
-      sceneManager:switchToScene(self.prevScene)
+      self.nameField:unfocus()
+      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
   end
   if input.allKeys.isDown["escape"] then
     Menu.playCancelSfx()
-    sceneManager:switchToScene("MainMenu")
+    self.nameField:unfocus()
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
-  
-  nameField:draw()
 end
 
-function SetNameMenu:unload()  
-  nameField:setVisibility(false)
-  nameField:unfocus()
+function SetNameMenu:draw()
+  self.backgroundImg:draw()
+  local toPrint = loc("op_enter_name") .. " (" .. self.nameField.value:len() .. "/" .. NAME_LENGTH_LIMIT .. ")" .. "\n" .. warningText
+  gprint(toPrint, unpack(themes[config.theme].main_menu_screen_pos))
+  self.nameField:draw()
 end
 
 return SetNameMenu

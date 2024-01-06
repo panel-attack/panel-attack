@@ -13,56 +13,48 @@ local consts = require("consts")
 -- Key groups: 
 --   allKeys: every key read in by LOVE (includes keyboard, controller, and joystick) 
 --   base (top level): all keys mapped by the input.configuration aliased to the consts.KEY_NAMES 
---   player: list of individual input.configuration mappings also aliased by consts.KEY_NAMES 
 --   mouse: all mouse buttons and the position of the mouse
-local inputManager = { 
-  isDown = {}, 
-  isPressed = {}, 
-  isUp = {}, 
-  allKeys = { 
-    isDown = {}, 
-    isPressed = {}, 
-    isUp = {} 
+local inputManager = {
+  isDown = {},
+  isPressed = {},
+  isUp = {},
+  allKeys = {
+    isDown = {},
+    isPressed = {},
+    isUp = {}
   },
-  player = {},
   mouse = {
-    isDown = {}, 
-    isPressed = {}, 
+    isDown = {},
+    isPressed = {},
     isUp = {},
     x = 0,
     y = 0
   },
+  inputConfigurations = {},
   maxConfigurations = 8,
   defaultKeys = {Up="up", Down="down", Left="left", Right="right", Swap1="z", Swap2="x", TauntUp="y", TauntDown="u", Raise1="c", Raise2="v", Start="p"}
-} 
+}
 
 -- Represents the state of love.run while the key in isDown/isUp is active
 -- DETECTED: set when the key state is first changed within the event handler
 -- APPLIED: set in update immediately after the key state was just DETECTED 
 -- This is only used within this file, external users should simply treat isDown/isUp as a boolean
 local KEY_CHANGE = { NONE = nil, DETECTED = 1, APPLIED = 2 }
- 
+
 local currentDt
- 
-for i = 1, inputManager.maxConfigurations do 
-  inputManager.player[i] = { 
-    isDown = {}, 
-    isPressed = {}, 
-    isUp = {} 
-  } 
-end
+
 
 -- map of menu key names (used in inputManager.isDown/Up/Pressed & isPressedWithRepeat)
 -- and a tuple of {list of reserved keys, configured game key}
 local menuReservedKeysMap = {
-  MenuUp = {{"up"}, "Up"}, 
-  MenuDown = {{"down"}, "Down"}, 
-  MenuLeft = {{"left"}, "Left"}, 
-  MenuRight = {{"right"}, "Right"}, 
+  MenuUp = {{"up"}, "Up"},
+  MenuDown = {{"down"}, "Down"},
+  MenuLeft = {{"left"}, "Left"},
+  MenuRight = {{"right"}, "Right"},
   MenuEsc = {{"escape", "x"}, "Swap2"},
-  MenuNextPage = {{"pageup"}, "Raise1"}, 
-  MenuPrevPage = {{"pagedown"}, "Raise2"}, 
-  MenuBack = {{"backspace"}, ""}, 
+  MenuNextPage = {{"pageup"}, "Raise1"},
+  MenuPrevPage = {{"pagedown"}, "Raise2"},
+  MenuBack = {{"backspace"}, ""},
   MenuSelect = {{"return", "kpenter", "z"}, "Swap1"},
   MenuPause = {{"return", "kpenter"}, "Start"},
   FrameAdvance = {{"\\"}, "TauntUp"},
@@ -224,18 +216,18 @@ function inputManager:updateKeyMaps()
     end 
   end
 
-  for _, keyAlias in ipairs(consts.KEY_NAMES) do 
-    self.isDown[keyAlias] = KEY_CHANGE.NONE 
-    self.isUp[keyAlias] = KEY_CHANGE.NONE 
+  for _, keyAlias in ipairs(consts.KEY_NAMES) do
+    self.isDown[keyAlias] = KEY_CHANGE.NONE
+    self.isUp[keyAlias] = KEY_CHANGE.NONE
     self.isPressed[keyAlias] = KEY_CHANGE.NONE
-    for i = 1, #GAME.input.inputConfigurations do
-      local key = GAME.input.inputConfigurations[i][keyAlias]
-      self.player[i].isDown[keyAlias] = self.allKeys.isDown[key] 
-      self.player[i].isUp[keyAlias] = self.allKeys.isUp[key] 
-      self.player[i].isPressed[keyAlias] = self.allKeys.isPressed[key] 
-      
+    for i = 1, #self.inputConfigurations do
+      local key = self.inputConfigurations[i][keyAlias]
+      self.inputConfigurations[i].isDown[keyAlias] = self.allKeys.isDown[key]
+      self.inputConfigurations[i].isUp[keyAlias] = self.allKeys.isUp[key]
+      self.inputConfigurations[i].isPressed[keyAlias] = self.allKeys.isPressed[key]
+
       self:aliasKey(key, keyAlias)
-      
+
       -- copy over configured keys into the menu reserved key aliases if they are not menu reserved keys themselves
       if keyNameToMenuKeys[keyAlias] and not menuReservedKeys[key] then
         local menuKeyAlias = keyNameToMenuKeys[keyAlias]
@@ -274,24 +266,32 @@ function inputManager:mouseMoved(x, y)
   self.mouse.x = x
   self.mouse.y = y
 end
- 
-local function quantize(x, period) 
-  return math.floor(x / period) * period 
-end 
- 
-function inputManager:isPressedWithRepeat(key, delay, repeatPeriod) 
-  local inputs = self.allKeys 
-  if tableUtils.trueForAny(consts.KEY_NAMES, function(k) return k == key end) or 
-     tableUtils.trueForAny(menuKeyNames, function(k) return k == key end) then 
-    inputs = inputManager 
-  end 
-  if inputs.isPressed[key] then 
-    local prevDuration = quantize(inputs.isPressed[key] - currentDt, repeatPeriod) 
-    local currDuration = quantize(inputs.isPressed[key], repeatPeriod) 
-    return inputs.isPressed[key] > delay and prevDuration ~= currDuration 
-  else 
-    return inputs.isDown[key] 
-  end 
+
+local function quantize(x, period)
+  return math.floor(x / period) * period
+end
+
+local function isPressedWithRepeat(inputs, key, delay, repeatPeriod)
+  if tableUtils.trueForAny(menuKeyNames, function(k) return k == key end) then
+    -- menu inputs always need to work, override the given (even though it might be the same)
+    inputs = inputManager
+  end
+
+  if inputs.isPressed[key] then
+    local prevDuration = quantize(inputs.isPressed[key] - currentDt, repeatPeriod)
+    local currDuration = quantize(inputs.isPressed[key], repeatPeriod)
+    return inputs.isPressed[key] > delay and prevDuration ~= currDuration
+  else
+    return inputs.isDown[key]
+  end
+end
+
+function inputManager:isPressedWithRepeat(key, delay, repeatPeriod, inputs)
+  if not inputs then
+    inputs = self.allKeys
+  end
+
+  return isPressedWithRepeat(inputs, key, delay, repeatPeriod)
 end
 
 -- input migration utils
@@ -355,6 +355,26 @@ function inputManager:migrateInputConfigs(inputConfigs)
     end
   end
   return inputConfigs
+end
+
+for i = 1, inputManager.maxConfigurations do
+  inputManager.inputConfigurations[i] = {
+    isDown = {},
+    isPressed = {},
+    isUp = {},
+    isPressedWithRepeat = isPressedWithRepeat,
+    usedByPlayer = nil
+  }
+end
+
+inputManager.allKeys.isPressedWithRepeat = isPressedWithRepeat
+
+function inputManager:importConfigurations(configurations)
+  for i = 1, #configurations do
+    for key, value in pairs(configurations[i]) do
+      self.inputConfigurations[i][key] = value
+    end
+  end
 end
  
 return inputManager

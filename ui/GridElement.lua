@@ -4,8 +4,6 @@ local UiElement = require("ui.UIElement")
 local GridElement = class(function(gridElement, options)
   if options.content then
     gridElement.content = options.content
-    gridElement.content.width = options.width
-    gridElement.content.height = options.height
     -- we still need to add it for the relative offset
     gridElement:addChild(gridElement.content)
   end
@@ -17,27 +15,13 @@ local GridElement = class(function(gridElement, options)
   gridElement.TYPE = "GridElement"
 end, UiElement)
 
-function GridElement:getScreenPos()
-  local x, y = self.parent:getScreenPos()
-  return x + self.x, y + self.y
-end
-
 function GridElement:drawBorders()
-  local x, y = self:getScreenPos()
-  grectangle("line", x, y, self.width, self.height)
+  grectangle("line", self.x, self.y, self.width, self.height)
 end
 
-function GridElement:draw()
+function GridElement:drawSelf()
   if DEBUG_ENABLED then
     self:drawBorders()
-  end
-  -- TODO match size of contents to the available space
-  if self.content then
-    if self.content.draw then
-      self.content:draw()
-    elseif self.content:typeOf("Drawable") then
-      draw(self.content, self:getScreenPos())
-    end
   end
 end
 

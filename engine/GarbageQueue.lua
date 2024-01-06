@@ -1,13 +1,15 @@
 local logger = require("logger")
 
-GarbageQueue = class(function(s)
+GarbageQueue = class(function(s, allowIllegalStuff, mergeComboMetalQueue)
     s.chain_garbage = Queue()
     s.combo_garbage = {Queue(),Queue(),Queue(),Queue(),Queue(),Queue()} --index here represents width, and length represents how many of that width queued
     s.metal = Queue()
+    s.illegalStuffIsAllowed = allowIllegalStuff
+    s.mergeComboMetalQueue = mergeComboMetalQueue
   end)
-  
+
   function GarbageQueue.makeCopy(self)
-    local other = GarbageQueue()
+    local other = GarbageQueue(self.illegalStuffIsAllowed, self.mergeComboMetalQueue)
     other.chain_garbage = deepcpy(self.chain_garbage)
     for i=1, 6 do
       other.combo_garbage[i] = deepcpy(self.combo_garbage[i])
@@ -22,9 +24,11 @@ GarbageQueue = class(function(s)
       for k,v in pairs(garbage) do
         local width, height, metal, from_chain, finalized = unpack(v)
         if width and height then
-          if metal and (GAME.battleRoom.trainingModeSettings == nil or GAME.battleRoom.trainingModeSettings.attackSettings == nil or not GAME.battleRoom.trainingModeSettings.attackSettings.mergeComboMetalQueue) then
+          -- this being a global reference really sucks here, now that attackEngines live on match
+          -- have to take care of that when getting to it
+          if metal and not self.mergeComboMetalQueue then
             self.metal:push(v)
-          elseif from_chain or (height > 1 and not GAME.battleRoom.trainingModeSettings) then
+          elseif from_chain or (height > 1 and not self.illegalStuffIsAllowed) then
             if not from_chain then
               error("ERROR: garbage with height > 1 was not marked as 'from_chain'")
             end

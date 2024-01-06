@@ -2,15 +2,17 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 local Replay = require("replay")
 local class = require("class")
+local GameModes = require("GameModes")
+local Signal = require("helpers.signal")
 
 --@module timeAttackGame
 -- Scene for an time attack mode instance of the game
 local TimeAttackGame = class(
   function (self, sceneParams)
-    self.winnerSFX = GAME.match.P1:pick_win_sfx()
     self.nextScene = "TimeAttackMenu"
-  
+    
     self:load(sceneParams)
+    Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
   end,
   GameBase
 )
@@ -18,18 +20,17 @@ local TimeAttackGame = class(
 TimeAttackGame.name = "TimeAttackGame"
 sceneManager:addScene(TimeAttackGame)
 
-function TimeAttackGame:processGameResults(gameResult) 
-  local extraPath, extraFilename
-  if GAME.match.P1.level == nil then
-    GAME.scores:saveTimeAttack1PScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
-    extraPath = "Time Attack"
-    extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-timeattack"
-    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
+function TimeAttackGame:onMatchEnded(match)
+  local extraPath = "Time Attack"
+  local extraFilename = "-timeattack"
+  if match.players[1].settings.style == GameModes.Styles.CLASSIC then
+    GAME.scores:saveTimeAttack1PScoreForLevel(match.players[1].stack.score, match.players[1].stack.difficulty)
+    extraFilename = "Spd" .. match.players[1].settings.levelData.startingSpeed .. "-Dif" .. match.players[1].stack.difficulty .. extraFilename
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
+  elseif match.players[1].settings.style == GameModes.Styles.MODERN then
+    extraFilename = "Spd" .. match.players[1].settings.levelData.startingSpeed .. "-Lev" .. match.players[1].stack.level .. extraFilename
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
   end
-end
-
-function TimeAttackGame:abortGame()
-  sceneManager:switchToScene("TimeAttackMenu")
 end
 
 return TimeAttackGame

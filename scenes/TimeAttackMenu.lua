@@ -1,12 +1,13 @@
 local SimpleGameSetupMenu = require("scenes.SimpleGameSetupMenu")
 local sceneManager = require("scenes.sceneManager")
 local class = require("class")
+local GameModes = require("GameModes")
 
 --@module timeAttackMenu
 -- Scene for the time attack game setup menu
 local TimeAttackMenu = class(
   function(self, sceneParams)
-    self.gameMode = "time"
+    self.gameMode = GameModes.getPreset("ONE_PLAYER_TIME_ATTACK")
     self.gameScene = "TimeAttackGame"
     
     self:load(sceneParams)

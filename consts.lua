@@ -3,7 +3,7 @@ local tableUtils = require("tableUtils")
 
 --- @module consts
 local consts = {
-  VERSION = "046",
+  VERSION = "047",
   CANVAS_WIDTH = 1280,
   CANVAS_HEIGHT = 720,
   DEFAULT_THEME_DIR = "Panel Attack",
@@ -18,7 +18,7 @@ local consts = {
   MENU_PADDING = 10
 }
 
--- TODO: Move all values below to the above table
+-- TODO: Move all values below to the above table or to other files if they are only used in 1
 
 -- The values in this file are constants (except in this file perhaps) and are expected never to change during the game, not to be confused with globals!
 
@@ -26,6 +26,7 @@ consts.ENGINE_VERSIONS = {}
 consts.ENGINE_VERSIONS.PRE_TELEGRAPH = "045"
 consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE = "046"
 consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
+consts.ENGINE_VERSIONS.LEVELDATA = "048"
 
 VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
@@ -124,19 +125,6 @@ card_animation = {false,
 
   popfx_fade_animation = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
 
-FC_HOVER = {12,  9,  6, 3}
--- TODO: delete FC_MATCH?
---FC_MATCH = {61, 49, 37}
-FC_FLASH = {44, 36, 22, 16}
-FC_FACE  = {17, 13, 15, 10} -- idk this is just MATCH-FLASH
-FC_POP   = { 9,  8,  7, 6}
-stop_time_combo =  {120, 120, 120, 90}
-stop_time_chain =  {300, 180, 120, 90}
-stop_time_danger = {600, 420, 240, 180}
-
-difficulty_to_ncolors_endless = {5,6,6,6}
-difficulty_to_ncolors_1Ptime = {6,6,6,6}
-
 TIME_ATTACK_TIME = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
 speed_to_rise_time = tableUtils.map(
@@ -171,43 +159,12 @@ panels_to_next_speed =
   45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
   45, 45, 45, 45, 45, 45, 45, 45, math.huge}
 
--- What speed level you start on.
-level_to_starting_speed        = {  1,  5,  9, 13, 17, 21, 25, 29, 27, 32, 45}
--- How long you can spend at the top of the screen without dying, in frames ("Health").
-level_to_hang_time             = {121,101, 81, 66, 51, 41, 31, 21, 11,  1, 1}
--- How many colors of panels can spawn in VS mode, not including metal panels.
-level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6, 6}
--- How many colors of panels can spawn in time trial mode.
-level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6, 6}
--- How long panels will hover if not supported by anything, in frames.
-level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6, 3}
--- How long newly-transformed panels from garbage will hover before falling, in frames.
-level_to_garbage_panel_hover   = { 41, 36, 31, 26, 21, 16, 13, 10,  7,  4, 3}
--- How long panels flash for before popping, in frames.
-level_to_flash                 = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28, 22}
--- How long panels remain in their "face" frame before popping, in frames.
--- (They actually stay in their face frame for five frames longer than the numbers in this table for some reason...
---  This makes timings accurate with Tetris Attack / Panel de Pon SFC.)
-level_to_face                  = { 20, 18, 17, 16, 15, 14, 13, 12, 11, 10, 8}
--- How long panels take to pop after finishing their "face" frame, in frames.
-level_to_pop                   = {  9,  9,  8,  8,  8,  8,  8,  7,  7,  7, 6}
--- How long the stack stops when you clear combos, in frames.
-level_to_combo_constant        = {-20,-16,-12, -8, -3,  2,  7, 12, 17, 22, 27}
-level_to_combo_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2, 1}
--- How long the stack stops when you clear chains, in frames.
-level_to_chain_constant        = { 80, 77, 74, 71, 68, 65, 62, 60, 58, 56, 53}
-level_to_chain_coefficient     = { 20, 18, 16, 14, 12, 10,  8,  6,  4,  2, 1}
--- How many panels you have to pop to earn a metal panel in your next row.
-level_to_metal_panel_frequency = { 12, 14, 16, 19, 23, 26, 29, 33, 37, 41, 18}
--- How many panels you can have at most in your metal panel queue.
-level_to_metal_panel_cap       = { 21, 18, 18, 15, 15, 12,  9,  6,  6,  3, 3}
-
 -- Stage clear seems to use a variant of vs mode's speed system,
 -- except that the amount of time between increases is not constant.
 -- on stage 1, the increases occur at increments of:
 -- 20, 15, 15, 15, 10, 10, 10
 
--- The following are level settings for vs cpu:
+-- The following are level settings for vs cpu in:
 -- vs easy cpu -> vs level 2 for all levels
 -- vs normal cpu -> vs level 4 for all levels
 -- vs hard cpu -> vs level 6 for all levels

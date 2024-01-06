@@ -1,16 +1,16 @@
-local buttonManager = require("ui.buttonManager")
-local sliderManager = require("ui.sliderManager")
+local touchHandler = require("ui.touchHandler")
 local inputFieldManager = require("ui.inputFieldManager")
 local inputManager = require("inputManager")
 local logger = require("logger")
 local consts = require("consts")
-
 require("developer")
 require("class")
 socket = require("socket")
+require("localization")
 require("match")
 local RunTimeGraph = require("RunTimeGraph")
 require("BattleRoom")
+require("network.BattleRoom")
 require("util")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
@@ -19,10 +19,10 @@ require("character_loader") -- after globals!
 require("stage_loader") -- after globals!
 local CustomRun = require("CustomRun")
 
-require("localization")
 require("queue")
 local save = require("save")
 local Game = require("Game")
+local ClientMessages = require("network.ClientProtocol")
 -- move to load once global dependencies have been resolved
 GAME = Game()
 -- temp hack to keep modules dependent on the global gfx_q working, please use GAME:gfx_q instead
@@ -33,21 +33,19 @@ require("engine/GarbageQueue")
 require("engine/telegraph")
 require("engine")
 require("engine.checkMatches")
+require("network.Stack")
 require("AttackEngine")
 
 require("graphics")
 require("replay")
-require("network")
 require("Puzzle")
 require("PuzzleSet")
 require("puzzles")
 require("sound")
 require("timezones")
-require("gen_panels")
 require("panels")
 require("Theme")
 local utf8 = require("utf8Additions")
-require("click_menu")
 require("computerPlayers.computerPlayer")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
@@ -105,10 +103,12 @@ function love.update(dt)
   end
 
   inputManager:update(dt)
-  buttonManager.update()
   inputFieldManager.update()
 
-  GAME:update(dt)
+  local status, err = xpcall(function() GAME:update(dt) end, debug.traceback)
+  if not status then
+    error(err)
+  end
 end
 
 -- Called whenever the game needs to draw.
@@ -118,27 +118,20 @@ end
 
 -- Handle a mouse or touch press
 function love.mousepressed(x, y, button)
-  buttonManager.mousePressed(x, y)
-  sliderManager.mousePressed(x, y)
-  inputFieldManager.mousePressed(x, y)
+  touchHandler:touch(x, y)
   inputManager:mousePressed(x, y, button)
-
-  for menu_name, menu in pairs(CLICK_MENUS) do
-    menu:click_or_tap(GAME:transform_coordinates(x, y))
-  end
 end
 
 function love.mousereleased(x, y, button)
   if button == 1 then
-    sliderManager.mouseReleased(x, y)
-    buttonManager.mouseReleased(x, y)
+    touchHandler:release(x, y)
     inputManager:mouseReleased(x, y, button)
   end
 end
 
 function love.mousemoved( x, y, dx, dy, istouch )
   if love.mouse.isDown(1) then
-    sliderManager.mouseDragged(x, y)
+    touchHandler:drag(x, y)
   end
   inputManager:mouseMoved(x, y)
 end
@@ -163,8 +156,8 @@ function love.quit()
   if PROFILING_ENABLED then
     GAME.profiler.report("profiler.log")
   end
-  if network_connected() then
-    json_send({logout = true})
+  if GAME.tcpClient:isConnected() then
+    GAME.tpcClient:sendRequest(ClientMessages.logout())
   end
   love.audio.stop()
   if love.window.getFullscreen() then
@@ -209,16 +202,28 @@ function love.errorhandler(msg)
   end
   local sanitizedTrace = table.concat(traceLines, "\n")
   
-  local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
-  local detailedErrorLogString = Game.detailedErrorLogString(errorData)
-  errorData.detailedErrorLogString = detailedErrorLogString
-  if GAME_UPDATER_GAME_VERSION then
-    send_error_report(errorData)
+  local function getGameErrorData(sanitizedMessage, sanitizedTrace)
+    local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
+    local detailedErrorLogString = Game.detailedErrorLogString(errorData)
+    errorData.detailedErrorLogString = detailedErrorLogString
+    if GAME_UPDATER_GAME_VERSION then
+      if not GAME.tcpClient:isConnected() then
+        GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
+      end
+      GAME.tcpClient:sendErrorReport(errorData)
+      GAME.tcpClient:resetNetwork()
+    end
+    return detailedErrorLogString
   end
 
+  local success, detailedErrorLogString = pcall(getGameErrorData, sanitizedMessage, sanitizedTrace)
   local errorLines = {}
   table.insert(errorLines, "Error\n")
-  table.insert(errorLines, detailedErrorLogString)
+  if success then
+    table.insert(errorLines, detailedErrorLogString)
+  else
+    table.insert(errorLines, sanitizedMessage)
+  end
   if #sanitizedMessage ~= #msg then
     table.insert(errorLines, "Invalid UTF-8 string in error message.")
   end

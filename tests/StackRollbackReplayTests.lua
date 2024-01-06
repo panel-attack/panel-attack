@@ -1,6 +1,8 @@
 local tableUtils = require("tableUtils")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
+local GameModes = require("GameModes")
+local logger = require("logger")
 
 
 -- Vs rollback one player way behind
@@ -31,7 +33,7 @@ local function rollbackPastAttackTest()
   StackReplayTestingUtils:fullySimulateMatch(match)
 
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 2992240)
   assert(match.P1.game_over_clock == 2039)
   assert(match.P1.level == 10)
@@ -43,8 +45,8 @@ local function rollbackPastAttackTest()
   assert(tableUtils.length(match.P2.combos) == 4)
 end
 
+logger.info("running rollbackPastAttackTest")
 rollbackPastAttackTest()
-
 
 -- Vs rollback just one frame on both stacks
 -- We need to make sure we don't remove garbage if we didn't rollback far enough to mess with it.
@@ -72,7 +74,7 @@ local function rollbackNotPastAttackTest()
   StackReplayTestingUtils:fullySimulateMatch(match)
 
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 2992240)
   assert(match.P1.game_over_clock == 2039)
   assert(match.P1.level == 10)
@@ -84,6 +86,7 @@ local function rollbackNotPastAttackTest()
   assert(tableUtils.length(match.P2.combos) == 4)
 end
 
+logger.info("running rollbackNotPastAttackTest")
 rollbackNotPastAttackTest()
 
 -- Vs rollback before attack even happened
@@ -136,7 +139,7 @@ local function rollbackFullyPastAttack()
   assert(match.P1.chains[428].finish == 636)
   assert(match.P1.combos[344] ~= nil and match.P1.combos[344][1].width == 3)
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.SELF)
   assert(match.seed == 3917661)
   assert(match.P1.game_over_clock == 797)
   assert(match.P1.level == 8)
@@ -144,4 +147,5 @@ local function rollbackFullyPastAttack()
   assert(tableUtils.length(match.P1.combos) == 1)
 end
 
+logger.info("running rollbackFullyPastAttack")
 rollbackFullyPastAttack()

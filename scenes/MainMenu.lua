@@ -1,10 +1,26 @@
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
+local Label = require("ui.Label")
 local consts = require("consts")
 local Menu = require("ui.Menu")
 local sceneManager = require("scenes.sceneManager")
 local GraphicsUtil = require("graphics_util")
 local class = require("class")
+local GameModes = require("GameModes")
+local EndlessMenu = require("scenes.EndlessMenu")
+local PuzzleMenu = require("scenes.PuzzleMenu")
+local TimeAttackMenu = require("scenes.TimeAttackMenu")
+local CharacterSelectVsSelf = require("scenes.CharacterSelectVsSelf")
+local TrainingMenu = require("scenes.TrainingMenu")
+local ChallengeModeMenu = require("scenes.ChallengeModeMenu")
+local Lobby = require("scenes.Lobby")
+local CharacterSelect2p = require("scenes.CharacterSelect2p")
+local ReplayBrowser = require("scenes.ReplayBrowser")
+local InputConfigMenu = require("scenes.InputConfigMenu")
+local SetNameMenu = require("scenes.SetNameMenu")
+local OptionsMenu = require("scenes.OptionsMenu")
+local DesignHelper = require("scenes.DesignHelper")
+
 
 -- @module MainMenu
 -- Scene for the main menu
@@ -17,80 +33,86 @@ end, Scene)
 MainMenu.name = "MainMenu"
 sceneManager:addScene(MainMenu)
 
-local function switchToScene(scene, sceneParams)
+local function switchToScene(sceneName, transition)
   Menu.playValidationSfx()
-  sceneManager:switchToScene(scene, sceneParams)
+  sceneManager:switchToScene(sceneName, transition)
 end
 
 local BUTTON_WIDTH = 140
-local function createMainMenuButton(label, onClick, extraLabels, translate)
+local function createMainMenuButton(text, onClick, extraLabels, translate)
   if translate == nil then
     translate = true
   end
-  return Button({label = label, extraLabels = extraLabels, translate = translate, onClick = onClick, width = BUTTON_WIDTH})
+  return TextButton({label = Label({text = text, extraLabels = extraLabels, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick, width = BUTTON_WIDTH})
 end
 
 local menuItems = {
   {
     createMainMenuButton("mm_1_endless", function()
-      switchToScene("EndlessMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
+      switchToScene(EndlessMenu())
     end)
   }, {
     createMainMenuButton("mm_1_puzzle", function()
-      switchToScene("PuzzleMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+      switchToScene(PuzzleMenu())
     end)
   }, {
     createMainMenuButton("mm_1_time", function()
-      switchToScene("TimeAttackMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"))
+      switchToScene(TimeAttackMenu())
     end)
   }, {
     createMainMenuButton("mm_1_vs", function()
-      switchToScene("VsSelfMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
+      switchToScene(CharacterSelectVsSelf())
     end)
   }, {
     createMainMenuButton("mm_1_training", function()
-      switchToScene("TrainingMenu")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
+      switchToScene(TrainingMenu())
     end)
   }, {
     createMainMenuButton("mm_1_challenge_mode", function()
-      switchToScene("ChallengeModeMenu")
+      switchToScene(ChallengeModeMenu())
     end)
   }, {
     createMainMenuButton("mm_2_vs_online", function()
-      switchToScene("Lobby", {serverIp = "panelattack.com"})
+      switchToScene(Lobby({serverIp = "panelattack.com"}))
     end, {""})
   }, {
     createMainMenuButton("mm_2_vs_local", function()
-      switchToScene("CharacterSelectLocal2p")
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
+      switchToScene(CharacterSelect2p())
     end)
   }, {
     createMainMenuButton("mm_replay_browser", function()
-      switchToScene("ReplayBrowser")
+      switchToScene(ReplayBrowser())
     end)
   }, {
     createMainMenuButton("mm_configure", function()
-      switchToScene("InputConfigMenu")
+      switchToScene(InputConfigMenu())
     end)
   }, {
     createMainMenuButton("mm_set_name", function()
-      Menu.playValidationSfx()
-      sceneManager:switchToScene("SetNameMenu", {prevScene = "MainMenu"})
+      switchToScene(SetNameMenu())
     end)
   }, {
     createMainMenuButton("mm_options", function()
-      switchToScene("OptionsMenu")
+      switchToScene(OptionsMenu())
     end)
   }, {
     createMainMenuButton("mm_fullscreen", function()
       Menu.playValidationSfx()
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     end, {"\n(Alt+Enter)"})
-  }, {createMainMenuButton("mm_quit", love.event.quit)}
+  },
+  {createMainMenuButton("mm_quit", love.event.quit)}
 }
 
 local debugMenuItems = {
-  {createMainMenuButton("Beta Server", switchToScene("Lobby", {serverIp = "betaserver.panelattack.com", serverPort = 59569}), {""}, false)},
-  {createMainMenuButton("Localhost Server", switchToScene("Lobby", {serverIp = "Localhost"}), {""}, false)}
+  {createMainMenuButton("Beta Server", switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})))},
+  {createMainMenuButton("Localhost Server", switchToScene(Lobby({serverIp = "Localhost"})))}
 }
 
 function MainMenu:addDebugMenuItems()
@@ -102,7 +124,7 @@ function MainMenu:addDebugMenuItems()
   if config.debugShowDesignHelper then
     self.menu:addMenuItem(#self.menu.menuItems, {
       createMainMenuButton("Design Helper", function()
-        switchToScene("DesignHelper")
+        switchToScene(DesignHelper())
       end)
     })
   end
@@ -122,7 +144,7 @@ function MainMenu:load(sceneParams)
     menuItems = menuItems,
     maxHeight = themes[config.theme].main_menu_max_height
   })
-  self.menu:setVisibility(true)
+  self.uiRoot:addChild(self.menu)
 
   self:addDebugMenuItems()
 
@@ -131,16 +153,11 @@ function MainMenu:load(sceneParams)
   end
   CharacterLoader.clear()
   StageLoader.clear()
-  resetNetwork()
+  GAME.tcpClient:resetNetwork()
   GAME.battleRoom = nil
   --GAME.input:clearInputConfigurationsForPlayers()
   --GAME.input:requestPlayerInputConfigurationAssignments(1)
-  reset_filters()
   match_type_message = ""
-end
-
-function MainMenu:drawBackground()
-  self.backgroundImg:draw()
 end
 
 function MainMenu:update(dt)
@@ -153,6 +170,12 @@ function MainMenu:update(dt)
   end
 
   self.backgroundImg:update(dt)
+  self.menu:update()
+end
+
+function MainMenu:draw()
+  self.backgroundImg:draw()
+  self.menu:draw()
   local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight / 2
 
@@ -169,13 +192,6 @@ function MainMenu:update(dt)
       menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
     end
   end
-
-  self.menu:update()
-  self.menu:draw()
-end
-
-function MainMenu:unload()
-  self.menu:setVisibility(false)
 end
 
 return MainMenu

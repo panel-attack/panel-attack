@@ -1,5 +1,6 @@
-local consts = require("consts")
 require("TimeQueue")
+require("queue")
+require("server_queue")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
@@ -14,7 +15,12 @@ local input = require("inputManager")
 local save = require("save")
 local fileUtils = require("FileUtils")
 local handleShortcuts = require("Shortcuts")
-local scenes = nil
+local Player = require("Player")
+local GameModes = require("GameModes")
+local TcpClient = require("network.TcpClient")
+local StartUp = require("scenes.StartUp")
+
+
 require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -28,17 +34,15 @@ end
 local Game = class(
   function(self)
     self.scores = require("scores")
-    self.input = { maxConfigurations = 8, inputConfigurations = {}}
+    self.input = input
     self.match = nil -- Match - the current match going on or nil if inbetween games
     self.battleRoom = nil -- BattleRoom - the current room being used for battles
     self.focused = true -- if the window is focused
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
-    self.foreground_overlay = nil
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
-    self.gameIsPaused = false -- game can be paused while playing on local
-    self.renderDuringPause = false -- if the game can render when you are paused
     self.gfx_q = Queue()
+    self.tcpClient = TcpClient()
     self.server_queue = ServerQueue()
     self.main_menu_screen_pos = {consts.CANVAS_WIDTH / 2 - 108 + 50, consts.CANVAS_HEIGHT / 2 - 111}
     self.config = config
@@ -56,12 +60,11 @@ local Game = class(
     self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
     
     self.availableScales = {1, 1.5, 2, 2.5, 3}
-    self.showGameScale = false
+    -- specifies a time that is compared against self.timer to determine if GameScale should be shown
+    self.showGameScaleUntil = 0
     self.needsAssetReload = false
     self.previousWindowWidth = 0
     self.previousWindowHeight = 0
-    self.sendNetworkQueue = TimeQueue()
-    self.receiveNetworkQueue = TimeQueue()
 
     self.crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
     
@@ -76,6 +79,8 @@ local Game = class(
 
     -- misc
     self.rich_presence = RichPresence()
+    -- time in seconds, can be used by other elements to track the passing of time beyond dt
+    self.timer = love.timer.getTime()
   end
 )
 
@@ -86,55 +91,73 @@ function Game:load(game_updater)
   self.game_updater = game_updater
   local user_input_conf = save.read_key_file()
   if user_input_conf then
-    self.input.inputConfigurations = user_input_conf
+    self.input:importConfigurations(user_input_conf)
   end
+  --self:createScenes()
+  sceneManager.activeScene = StartUp({setupRoutine = self.setupRoutine})
 end
 
-function Game:setupCoroutine()
+function Game:setupRoutine()
   -- loading various assets into the game
-  self:drawLoadingString("Loading localization...")
-  coroutine.yield()
+  coroutine.yield("Loading localization...")
   Localization.init(localization)
   fileUtils.copyFile("readme_puzzles.txt", "puzzles/README.txt")
   
-  self:drawLoadingString(loc("ld_theme"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_theme"))
   theme_init()
   
   -- stages and panels before characters since they are part of their loading!
-  self:drawLoadingString(loc("ld_stages"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_stages"))
   stages_init()
   
-  self:drawLoadingString(loc("ld_panels"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_panels"))
   panels_init()
   
-  self:drawLoadingString(loc("ld_characters"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_characters"))
   CharacterLoader.initCharacters()
   
-  self:drawLoadingString(loc("ld_analytics"))
-  coroutine.yield()
+  coroutine.yield(loc("ld_analytics"))
   analytics.init()
 
   apply_config_volume()
 
   self:createDirectoriesIfNeeded()
-  
+
   self:checkForUpdates()
-
-  self:createScenes()
-
   -- Run all unit tests now that we have everything loaded
   if TESTS_ENABLED then
     self:runUnitTests()
   end
+  if PERFORMANCE_TESTS_ENABLED then
+    self:runPerformanceTests()
+  end
+
+  self:initializeLocalPlayer()
+end
+
+-- GAME.localPlayer is the standard player for battleRooms that don't get started from replays/spectate
+-- it basically represents the player that is operating the client (and thus binds to its configuration)
+function Game:initializeLocalPlayer()
+  self.localPlayer = Player.getLocalPlayer()
+  self.localPlayer:subscribe(config, "characterId", function(config, newId) config.character = newId end)
+  self.localPlayer:subscribe(config, "stageId", function(config, newId) config.stage = newId end)
+  self.localPlayer:subscribe(config, "panelId", function(config, newId) config.panels = newId end)
+  self.localPlayer:subscribe(config, "inputMethod", function(config, inputMethod) config.inputMethod = inputMethod end)
+  self.localPlayer:subscribe(config, "speed", function(config, speed) config.endless_speed = speed end)
+  self.localPlayer:subscribe(config, "difficulty", function(config, difficulty) config.endless_difficulty = difficulty end)
+  self.localPlayer:subscribe(config, "level", function(config, level) config.level = level end)
+  self.localPlayer:subscribe(config, "wantsRanked", function(config, wantsRanked) config.ranked = wantsRanked end)
+  self.localPlayer:subscribe(config, "style", function(config, style)
+    if style == GameModes.Styles.CLASSIC then
+      config.endless_level = nil
+    else
+      config.endless_level = config.level
+    end
+  end)
 end
 
 function Game:createDirectoriesIfNeeded()
-  self:drawLoadingString("Creating Folders")
-  coroutine.yield()
+  coroutine.yield("Creating Folders")
 
   -- create folders in appdata for those who don't have them already
   love.filesystem.createDirectory("characters")
@@ -172,68 +195,27 @@ function Game:checkForUpdates()
   end
 end
 
-function Game:createScenes()
-  self:drawLoadingString("Creating Scenes")
-  coroutine.yield()
-
-  -- must be here until globally initiallized structures get resolved into local requires
-  scenes = {
-    require("scenes.TitleScreen"),
-    require("scenes.MainMenu"),
-    require("scenes.EndlessMenu"),
-    require("scenes.EndlessGame"),
-    require("scenes.PuzzleMenu"),
-    require("scenes.PuzzleGame"),
-    require("scenes.TimeAttackMenu"),
-    require("scenes.TimeAttackGame"),
-    require("scenes.CharacterSelectVsSelf"),
-    require("scenes.TrainingMenu"),
-    require("scenes.CharacterSelectTraining"),
-    require("scenes.ChallengeModeMenu"),
-    require("scenes.CharacterSelectChallenge"),
-    require("scenes.Lobby"),
-    require("scenes.CharacterSelectOnline"),
-    require("scenes.OnlineVsGame"),
-    require("scenes.CharacterSelectLocal2p"),
-    require("scenes.ReplayBrowser"),
-    require("scenes.ReplayGame"),
-    require("scenes.InputConfigMenu"),
-    require("scenes.SetNameMenu"),
-    require("scenes.OptionsMenu"),
-    require("scenes.SoundTest"),
-    require("scenes.DesignHelper"),
-    require("scenes.VsSelfGame")
-  }
-end
-
 function Game:runUnitTests()
-  self:drawLoadingString("Running Unit Tests")
-  coroutine.yield()
+  coroutine.yield("Running Unit Tests")
+
+  -- GAME.localPlayer is the standard player for battleRooms that don't get started from replays/spectate
+  -- basically the player that is operating the client
+  GAME.localPlayer = Player.getLocalPlayer()
+  -- we need to overwrite the local player as all replay related tests need a non-local player
+  GAME.localPlayer.isLocal = false
 
   logger.info("Running Unit Tests...")
-  -- Small tests (unit tests)
-  require("PuzzleTests")
-  require("ServerQueueTests")
-  require("StackTests")
-  require("tests.StackGraphicsTests")
-  require("tests.JsonEncodingTests")
-  require("tests.NetworkProtocolTests")
-  require("tests.ThemeTests")
-  require("tests.TouchDataEncodingTests")
-  require("tests.utf8AdditionsTests")
-  require("tests.QueueTests")
-  require("tests.TimeQueueTests")
-  require("tableUtilsTest")
-  require("utilTests")
-  -- Medium level tests (integration tests)
-  require("tests.ReplayTests")
-  require("tests.StackReplayTests")
-  require("tests.StackRollbackReplayTests")
-  require("tests.StackTouchReplayTests")
-  -- Performance Tests
-  if PERFORMANCE_TESTS_ENABLED then
-    require("tests/performanceTests")
+  local status, err = xpcall(function() require("tests.Tests") end, debug.traceback)
+  if not status then
+    error(err)
   end
+end
+
+function Game:runPerformanceTests()
+  coroutine.yield("Running Performance Tests")
+  require("tests.StackReplayPerformanceTests")
+  -- Disabled since they just prove lua tables are faster for rapid concatenation of strings
+  --require("tests.StringPerformanceTests")
 end
 
 function Game:updateMouseVisibility(dt)
@@ -265,45 +247,25 @@ function Game:handleResize(newWidth, newHeight)
     else
       self:refreshCanvasAndImagesForNewScale()
     end
-    self.showGameScale = true
+    self.showGameScaleUntil = self.timer + 5
   end
 end
 
 -- Called every few fractions of a second to update the game
 -- dt is the amount of time in seconds that has passed.
 function Game:update(dt)
-    if sceneManager.activeScene == nil then
+  self.timer = love.timer.getTime()
+  if sceneManager.activeScene == nil then
     leftover_time = leftover_time + dt
   else
     leftover_time = 0
   end
 
-  if coroutine.status(self.setupCoroutineObject) ~= "dead" then
-    local status, err = coroutine.resume(self.setupCoroutineObject)
-    -- loading bar setup finished
-    if status and coroutine.status(self.setupCoroutineObject) == "dead" then
-      self:switchToStartScene()
-    elseif not status then
-      self.crashTrace = debug.traceback(self.setupCoroutineObject)
-      error(err)
-    else
-      return
-    end
+  if self.battleRoom then
+    self.battleRoom:update(dt)
   end
 
-  updateNetwork(dt)
-
-  if sceneManager.activeScene then
-    sceneManager.activeScene:update(dt)
-    -- update transition to use draw priority queue
-    if sceneManager.isTransitioning then
-      sceneManager:transition()
-    end
-  elseif sceneManager.isTransitioning then
-    sceneManager:transition()
-  else
-    error("No active scene and no active transition")
-  end
+  sceneManager:update(dt)
 
   if self.backgroundImage then
     self.backgroundImage:update(dt)
@@ -317,40 +279,48 @@ end
 
 function Game:switchToStartScene()
   if themes[config.theme].images.bg_title then
-    sceneManager:switchToScene("TitleScreen")
+    sceneManager:switchToScene(sceneManager:createScene("TitleScreen"))
   else
-    sceneManager:switchToScene("MainMenu")
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
 
 function Game:draw()
-  if sceneManager.activeScene then
-    sceneManager.activeScene:drawForeground()
-  else
-    if self.foreground_overlay then
-      local scale = consts.CANVAS_WIDTH / math.max(self.foreground_overlay:getWidth(), self.foreground_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.foreground_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
-    end
-  end
-
-  -- Clear the screen
+  -- Setting the canvas means everything we draw is drawn to the canvas instead of the screen
   love.graphics.setCanvas(self.globalCanvas)
   love.graphics.setBackgroundColor(unpack(global_background_color))
   love.graphics.clear()
 
+  -- With this, self.globalCanvas is clear and set as our active canvas everything is being drawn to
   self.isDrawing = true
-  for i = self.gfx_q.first, self.gfx_q.last do
-    self.gfx_q[i][1](unpack(self.gfx_q[i][2]))
-  end
-  self.gfx_q:clear()
+  sceneManager:draw()
   self.isDrawing = false
-  
+  self:processGraphicsQueue()
+
+  self:drawFPS()
+  self:drawScaleInfo()
+
+  -- resetting the canvas means everything we draw is drawn to the screen
+  love.graphics.setCanvas()
+  -- clear in preparation for the next render (is this really necessary with the clear further up?)
+  love.graphics.clear(love.graphics.getBackgroundColor())
+
+  love.graphics.setBlendMode("alpha", "premultiplied")
+  -- now we draw the finished canvas at scale
+  -- this way we don't have to worry about scaling singular elements, just draw everything at 1280x720 to the canvas
+  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
+  love.graphics.setBlendMode("alpha", "alphamultiply")
+end
+
+function Game:drawFPS()
   -- Draw the FPS if enabled
   if self.config.show_fps then
     love.graphics.print("FPS: " .. love.timer.getFPS(), 1, 1)
   end
-  
-  if self.showGameScale or config.debug_mode then
+end
+
+function Game:drawScaleInfo()
+  if self.showGameScaleUntil > self.timer or config.debug_mode then
     local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
 
@@ -359,46 +329,22 @@ function Game:draw()
     end
     love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
-
-  if DEBUG_ENABLED and love.system.getOS() == "Android" then
-    local saveDir = love.filesystem.getSaveDirectory()
-    love.graphics.printf(saveDir, get_global_font_with_size(30), 5, 50, 2000, "left")
-  end
-
-  love.graphics.setCanvas() -- render everything thats been added
-  love.graphics.clear(love.graphics.getBackgroundColor()) -- clear in preperation for the next render
-  
-  love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.globalCanvas, self.canvasX, self.canvasY, 0, self.canvasXScale, self.canvasYScale)
-  love.graphics.setBlendMode("alpha", "alphamultiply")
-
-  -- draw background and its overlay
-  if sceneManager.activeScene then
-    sceneManager.activeScene:drawBackground()
-  else
-    if self.backgroundImage then
-      self.backgroundImage:draw()
-    end
-    
-    if self.background_overlay then
-      local scale = consts.CANVAS_WIDTH / math.max(self.background_overlay:getWidth(), self.background_overlay:getHeight()) -- keep image ratio
-    menu_drawf(self.background_overlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
-    end
-  end
 end
 
-function Game:clearMatch()
-  if self.match then
-    self.match:deinit()
-    self.match = nil
+function Game:processGraphicsQueue()
+  -- the isDrawing flag is important so the graphics util funcs know to call the love.graphics funcs directly instead of pushing to gfx_q
+  self.isDrawing = true
+  -- ideally the only things remaining in the gfx_q are text prints and Match:render
+  for i = self.gfx_q.first, self.gfx_q.last do
+    local func = self.gfx_q[i][1]
+    local args = self.gfx_q[i][2]
+    func(unpack(args))
   end
-  self:reset()
+  self.gfx_q:clear()
+  self.isDrawing = false
 end
 
 function Game:reset()
-  self.gameIsPaused = false
-  self.renderDuringPause = false
-  self.preventSounds = false
   self.currently_paused_tracks = {}
   self.muteSoundEffects = false
 end
@@ -421,8 +367,8 @@ function Game.errorData(errorString, traceBack)
       theme = config.theme
     }
 
-  if GAME.match then
-    errorData.matchInfo = GAME.match:getInfo()
+  if GAME.battleRoom and GAME.battleRoom.match then
+    errorData.matchInfo = GAME.battleRoom.match:getInfo()
   end
 
   return errorData
@@ -442,12 +388,16 @@ function Game.detailedErrorLogString(errorData)
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
     "Love Version: " .. errorData.love_version .. newLine ..
-    "UTC Time: " .. formattedTime
+    "UTC Time: " .. formattedTime ..
+    "Scene: " .. sceneManager.activeScene.name
 
     if errorData.matchInfo then
       detailedErrorLogString = detailedErrorLogString .. newLine ..
-      errorData.matchInfo.mode .. " Match Info: " .. newLine ..
+      "Match Info: " .. newLine ..
       "  Stage: " .. errorData.matchInfo.stage .. newLine ..
+      "  Stack Interaction: " .. errorData.matchInfo.stackInteraction ..
+      "  Time Limit: " .. errorData.matchInfo.timeLimit ..
+      "  Do Countdown: " .. errorData.matchInfo.doCountdown ..
       "  Stacks: "
       for i = 1, #errorData.matchInfo.stacks do
         local stack = errorData.matchInfo.stacks[i]
@@ -547,9 +497,6 @@ function Game:refreshCanvasAndImagesForNewScale()
   
   -- Reload loc to get the new font
   localization:set_language(config.language_code)
-  for _, menu in pairs(CLICK_MENUS) do
-    menu:reloadGraphics()
-  end
 end
 
 -- Transform from window coordinates to game coordinates

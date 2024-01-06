@@ -9,21 +9,24 @@ local LevelSlider = require("ui.LevelSlider")
 local PanelCarousel = require("ui.PanelCarousel")
 local PagedUniGrid = require("ui.PagedUniGrid")
 local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local GridCursor = require("ui.GridCursor")
 local Focusable = require("ui.Focusable")
 local ImageContainer = require("ui.ImageContainer")
+local Label = require("ui.Label")
+local BoolSelector = require("ui.BoolSelector")
 
 -- @module CharacterSelect
 -- The character select screen scene
-local CharacterSelect = class(function(self, sceneParams)
+local CharacterSelect = class(function(self)
   self.backgroundImg = themes[config.theme].images.bg_select_screen
+  self:load()
 end, Scene)
 
 -- begin abstract functions
 
 -- Initalization specific to the child scene
-function CharacterSelect:customLoad(sceneParams)
-  error("The function customLoad needs to be implemented on the scene")
+function CharacterSelect:customLoad()
 end
 
 -- updates specific to the child scene
@@ -46,183 +49,313 @@ function CharacterSelect:playThemeMusic()
   end
 end
 
-function CharacterSelect:load(sceneParams)
-  self:loadUserInterface()
-  -- "2p_net_vs", msg
-  -- "2p_local_vs"
-  -- "2p_local_computer_vs"
-  -- "1p_vs_yourself"
-  self:customLoad(sceneParams)
-  -- we need to refresh the position once so it fetches the current element after all grid elements were loaded in customLoad
-  self.ui.cursor:updatePosition(self.ui.cursor.selectedGridPos.x, self.ui.cursor.selectedGridPos.y)
-  self:playThemeMusic()
-  reset_filters()
-end
-
-function CharacterSelect:loadUserInterface()
+function CharacterSelect:load()
   self.ui = {}
-  self:loadGrid()
-  self:loadPanels()
-  self:loadStandardButtons()
-  self:loadStages()
-  self:loadCharacters()
-
-  self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.selectedCharacter)
-  self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)
-  self.ui.grid:createElementAt(1, 3, 9, 3, "characterSelection", self.ui.characterGrid, true)
-  self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
+  self.ui.cursors = {}
+  self.ui.characterIcons = {}
+  self:customLoad()
+  -- assign input configs
+  -- ideally the local player can use all configs in menus until game start
+  -- but should be ok for now
+  self:playThemeMusic()
 end
 
-function CharacterSelect:loadStandardButtons()
+function CharacterSelect:createSelectedCharacterIcon(player)
   local icon
-  if config.character == random_character_special_value then
+  if player.settings.characterId == random_character_special_value then
     icon = themes[config.theme].images.IMG_random_character
   else
-    icon = characters[config.character].images.icon
+    icon = characters[player.settings.characterId].images.icon
   end
 
-  self.ui.selectedCharacter = ImageContainer({
-    width = 96,
-    height = 96,
+  local selectedCharacterIcon = ImageContainer({
+    hFill = true,
+    vFill = true,
     image = icon,
     drawBorders = true,
     outlineColor = {1, 1, 1, 1}
   })
 
-  self.ui.readyButton = Button({width = 96, height = 96, label = "ready", backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
-  self.ui.readyButton.onSelect = function()
-    self.ui.readyButton.onClick()
+   -- character image
+   selectedCharacterIcon.updateImage = function(image, characterId)
+    if characterId == random_character_special_value then
+      image:setImage(themes[config.theme].images.IMG_random_character)
+    else
+      image:setImage(characters[characterId].images.icon)
+    end
   end
+  player:subscribe(selectedCharacterIcon, "characterId", selectedCharacterIcon.updateImage)
 
-  self.ui.leaveButton = Button({
+  return selectedCharacterIcon
+end
+
+function CharacterSelect:createReadyButton()
+  local readyButton = TextButton({width = 96, height = 96, label = Label({text = "ready"}), backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
+
+  -- assign player generic callback
+  readyButton.onClick = function(self, inputSource)
+    local player
+    if inputSource and inputSource.player then
+      player = inputSource.player
+    else
+      player = GAME.localPlayer
+    end
+    player:setWantsReady(not player.settings.wantsReady)
+  end
+  readyButton.onSelect = readyButton.onClick
+
+  return readyButton
+end
+
+function CharacterSelect:createLeaveButton()
+  leaveButton = TextButton({
     width = 96,
     height = 96,
-    label = "leave",
+    label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1},
     onClick = function()
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      sceneManager:switchToScene("MainMenu")
+      GAME.battleRoom:shutdown()
+      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
   })
-  self.ui.leaveButton.onSelect = self.ui.leaveButton.onClick
+  leaveButton.onSelect = leaveButton.onClick
+
+  return leaveButton
 end
 
-function CharacterSelect:loadStages()
-  self.ui.stageCarousel = StageCarousel({})
-  self.ui.stageCarousel:loadCurrentStages()
+function CharacterSelect:createStageCarousel(player, width)
+  local stageCarousel = StageCarousel({hAlign = "center", vAlign = "center", width = width, vFill = true})
+  stageCarousel:loadCurrentStages()
+
+  -- stage carousel
+  stageCarousel.onSelectCallback = function()
+    player:setStage(stageCarousel:getSelectedPassenger().id)
+  end
+
+  stageCarousel.onBackCallback = function()
+    stageCarousel:setPassengerById(player.settings.stageId)
+  end
+
+  stageCarousel.onPassengerUpdateCallback = function ()
+    player:setStage(stageCarousel:getSelectedPassenger().id)
+  end
+
+  -- to update the UI if code gets changed from the backend (e.g. network messages)
+  player:subscribe(stageCarousel, "stageId", stageCarousel.setPassengerById)
+
+  return stageCarousel
 end
 
-function CharacterSelect:loadCharacters()
-  self.ui.characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = 102, gridWidth = 9, gridHeight = 3, unitPadding = 6})
+function CharacterSelect:getCharacterButtons()
+  local characterButtons = {}
 
-  local randomCharacterButton = Button({image = themes[config.theme].images.IMG_random_character, width = 96, height = 96})
+  local randomCharacterButton = Button({hFill = true, vFill = true})
   randomCharacterButton.characterId = random_character_special_value
-  self.ui.characterGrid:addElement(randomCharacterButton)
+  randomCharacterButton.image = ImageContainer({image = themes[config.theme].images.IMG_random_character, hFill = true, vFill = true})
+  randomCharacterButton:addChild(randomCharacterButton.image)
+  randomCharacterButton.label = Label({text = "random", translate = true, vAlign = "bottom", hAlign = "center"})
+  randomCharacterButton:addChild(randomCharacterButton.label)
+
+  characterButtons[#characterButtons + 1] = randomCharacterButton
 
   for i = 1, #characters_ids_for_current_theme do
     local characterButton = Button({
-      image = characters[characters_ids_for_current_theme[i]].images.icon,
       width = 96,
       height = 96,
-      valign = "bottom",
-      label = characters[characters_ids_for_current_theme[i]].display_name,
-      translate = false
     })
+    characterButton.image = ImageContainer({image = characters[characters_ids_for_current_theme[i]].images.icon, hFill = true, vFill = true})
+    characterButton:addChild(characterButton.image)
+    characterButton.label = Label({text = characters[characters_ids_for_current_theme[i]].display_name, translate = false, vAlign = "bottom", hAlign = "center"})
+    characterButton:addChild(characterButton.label)
     characterButton.characterId = characters_ids_for_current_theme[i]
-    self.ui.characterGrid:addElement(characterButton)
+    characterButtons[#characterButtons + 1] = characterButton
   end
+
+  -- assign player generic callbacks
+  for i = 1, #characterButtons do
+    local characterButton = characterButtons[i]
+    characterButton.onClick = function(self, inputSource)
+      if inputSource and inputSource.player then
+        player = inputSource.player
+      else
+        player = GAME.localPlayer
+      end
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      player:setCharacter(self.characterId)
+      player.cursor:updatePosition(9, 2)
+    end
+    characterButton.onSelect = characterButton.onClick
+  end
+
+  return characterButtons
 end
 
-function CharacterSelect:loadGrid()
-  self.ui.grid = Grid({x = 180, y = 60, unitSize = 102, gridWidth = 9, gridHeight = 6, unitPadding = 6})
-  self.ui.cursor = GridCursor({
-    grid = self.ui.grid,
+function CharacterSelect:createCharacterGrid(characterButtons, grid, width, height)
+  local characterGrid = PagedUniGrid({x = 0, y = 0, unitSize = grid.unitSize, gridWidth = width, gridHeight = height, unitMargin = grid.unitMargin})
+
+  for i = 1, #characterButtons do
+    characterGrid:addElement(characterButtons[i])
+  end
+
+  return characterGrid
+end
+
+function CharacterSelect:createCursor(grid, player)
+  local cursor = GridCursor({
+    grid = grid,
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
     translateSubGrids = true,
     startPosition = {x = 9, y = 2},
-    playerNumber = 1
+    player = player
   })
-  self.ui.cursor.escapeCallback = function()
-    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    sceneManager:switchToScene("MainMenu")
+
+  player:subscribe(cursor, "wantsReady", cursor.setRapidBlinking)
+
+  cursor.escapeCallback = function()
+    if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
+      self:leave()
+    elseif player.settings.wantsReady then
+      player:setWantsReady(false)
+    else
+      cursor:updatePosition(9, 6)
+    end
   end
+  self.uiRoot:addChild(cursor)
+
+  return cursor
 end
 
-function CharacterSelect:loadPanels()
-  self.ui.panelCarousel = PanelCarousel({})
-  self.ui.panelCarousel:loadPanels()
+function CharacterSelect:createPanelCarousel(player, height)
+  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = true, height = height})
+  panelCarousel:loadPanels()
+
+  -- panel carousel
+  panelCarousel.onSelectCallback = function()
+    player:setPanels(panelCarousel:getSelectedPassenger().id)
+  end
+
+  panelCarousel.onBackCallback = function()
+    self.ui.panelCarousel:setPassengerById(player.settings.panelId)
+  end
+
+  panelCarousel.onPassengerUpdateCallback = function ()
+    player:setPanels(panelCarousel:getSelectedPassenger().id)
+  end
+
+  -- to update the UI if code gets changed from the backend (e.g. network messages)
+  player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
+
+  return panelCarousel
 end
 
-function CharacterSelect:loadLevels(unitWidth)
-  local gridElementWidth = self.ui.grid.unitSize * unitWidth - self.ui.grid.unitPadding * 2
-  local tickLength = 20
-  self.ui.levelSlider = LevelSlider({
-    tickLength = tickLength,
-    x = (gridElementWidth - tickLength * #level_to_pop) / 2,
-    -- 10 is tickLength / 2, level images are forced into squares
-    y = (self.ui.grid.unitSize) / 2 - tickLength / 2 - self.ui.grid.unitPadding,
+function CharacterSelect:createLevelSlider(player, imageWidth)
+  local levelSlider = LevelSlider({
+    tickLength = imageWidth,
     value = config.level or 5,
     onValueChange = function(s)
       play_optional_sfx(themes[config.theme].sounds.menu_move)
-    end
+    end,
+    hAlign = "center",
+    vAlign = "center"
   })
-  Focusable(self.ui.levelSlider)
-  self.ui.levelSlider.receiveInputs = function()
-    if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      self.ui.levelSlider:setValue(self.ui.levelSlider.value - 1)
+  Focusable(levelSlider)
+  levelSlider.receiveInputs = function(self, inputs)
+    if inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+      levelSlider:setValue(levelSlider.value - 1)
     end
 
-    if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      self.ui.levelSlider:setValue(self.ui.levelSlider.value + 1)
+    if inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+      levelSlider:setValue(levelSlider.value + 1)
     end
 
-    if input.isDown["MenuEsc"] then
-      if self.ui.levelSlider.onBackCallback then
-        self.ui.levelSlider.onBackCallback()
+    if inputs.isDown["Swap2"] then
+      if levelSlider.onBackCallback then
+        levelSlider.onBackCallback()
       end
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      self.ui.levelSlider:yieldFocus()
+      levelSlider:yieldFocus()
     end
 
-    if input.isDown["Swap1"] or input.isDown["MenuEnter"] then
-      if self.ui.levelSlider.onSelectCallback then
-        self.ui.levelSlider.onSelectCallback()
+    if inputs.isDown["Swap1"] or inputs.isDown["MenuEnter"] then
+      if levelSlider.onSelectCallback then
+        levelSlider.onSelectCallback()
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      self.ui.levelSlider:yieldFocus()
+      levelSlider:yieldFocus()
     end
   end
-  self.ui.levelSlider.drawInternal = self.ui.levelSlider.draw
-  self.ui.levelSlider.draw = function(self)
-    local x, y = self.parent:getScreenPos()
-    grectangle("line", x, y, self.width, self.height)
-    self:drawInternal()
+
+  -- level slider
+  levelSlider.onSelectCallback = function ()
+    player:setLevel(levelSlider.value)
   end
+
+  levelSlider.onValueChange = function()
+    -- using this makes the onBackCallback pointless
+    --player:setLevel(levelSlider.value)
+  end
+
+  levelSlider.onBackCallback = function ()
+    levelSlider:setValue(player.settings.level)
+  end
+
+  -- to update the UI if code gets changed from the backend (e.g. network messages)
+  player:subscribe(levelSlider, "level", levelSlider.setValue)
+
+  return levelSlider
+end
+
+function CharacterSelect:createRankedSelection(player, width)
+  
+  local rankedSelector = BoolSelector({startValue = player.settings.wantsRanked, vFill = true, width = width, vAlign = "center", hAlign = "center"})
+  rankedSelector.onValueChange = function(boolSelector, value)
+    player:setWantsRanked(value)
+  end
+
+  Focusable(rankedSelector)
+
+  rankedSelector.receiveInputs = function(self, inputs)
+    if inputs.isDown["Up"] then
+      self:setValue(true)
+    elseif inputs.isDown["Down"] then
+      self:setValue(false)
+    elseif inputs.isDown["Swap2"] then
+      self:yieldFocus()
+    end
+  end
+
+  player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
+
+  return rankedSelector
 end
 
 function CharacterSelect:update()
-  self.matchSetup:update()
-  self.ui.cursor:receiveInputs()
-  GAME.gfx_q:push({self.ui.grid.draw, {self.ui.grid}})
-  GAME.gfx_q:push({self.ui.cursor.draw, {self.ui.cursor}})
-  self:customDraw()
+  for i = 1, #self.ui.cursors do
+    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
+  end
+  if GAME.battleRoom and GAME.battleRoom.spectating then
+    if input.isDown["MenuEsc"] then
+      GAME.battleRoom:shutdown()
+      sceneManager:switchToScene(sceneManager:createScene("Lobby"))
+    end
+  end
   if self:customUpdate() then
     return
   end
 end
 
-function CharacterSelect:drawBackground()
-  self.backgroundImg:draw()
+function CharacterSelect:draw()
+  --self.backgroundImg:draw()
+  self.uiRoot:draw()
+  self:customDraw()
 end
 
-function CharacterSelect:drawForeground()
-
-end
-
-function CharacterSelect:unload()
-  self.ui.grid:setVisibility(false)
-  stop_the_music()
+function CharacterSelect:leave()
+  GAME.battleRoom:shutdown()
+  play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 return CharacterSelect

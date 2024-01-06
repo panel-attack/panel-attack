@@ -2,11 +2,13 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local Label = require("ui.Label")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
 local Slider = require("ui.Slider")
 local class = require("class")
 local tableUtils = require("tableUtils")
+local CharacterSelectVsSelf = require("scenes.CharacterSelectVsSelf")
+local GameModes = require("GameModes")
 
 --@module TrainingMenu
 -- 
@@ -22,28 +24,9 @@ local TrainingMenu = class(
 TrainingMenu.name = "TrainingMenu"
 sceneManager:addScene(TrainingMenu)
 
---[[trainingSettingsMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
-  trainingSettingsMenu:add_button("Custom", goToStart, goEscape, custom_left, custom_right)
-  trainingSettingsMenu:add_button(loc("width"), nextMenu, goEscape, decrease_width, increase_width)
-  trainingSettingsMenu:add_button(loc("height"), nextMenu, goEscape, decrease_height, increase_height)
-  trainingSettingsMenu:add_button(loc("go_"), start_training, goEscape)
-  trainingSettingsMenu:add_button(loc("back"), exitSettings, exitSettings)
-  trainingSettingsMenu:set_button_setting(1, customTrainingModes[customModeID].name)
-  trainingSettingsMenu:set_button_setting(2, trainingModeSettings.width)
-  trainingSettingsMenu:set_button_setting(3, trainingModeSettings.height)
-
-customTrainingModes[0] = {name = "None"}
-  customTrainingModes[1] = createBasicTrainingMode(loc("combo_storm"), 4, 1)
-  customTrainingModes[2] = createBasicTrainingMode(loc("factory"), 6, 2)
-  customTrainingModes[3] = createBasicTrainingMode(loc("large_garbage"), 6, 12)
-  for _, value in ipairs(readAttackFiles("training")) do
-    customTrainingModes[#customTrainingModes+1] = {name = value.name, attackSettings = value}
-  end
-  --]]
-  
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 local function createBasicTrainingMode(name, width, height)
@@ -65,7 +48,8 @@ function TrainingMenu:goToCharacterSelect(value, width, height)
   if value == nil then
     value = createBasicTrainingMode("", width, height)
   end
-  sceneManager:switchToScene("CharacterSelectTraining", value)
+  GAME.localPlayer.settings.attackEngineSettings = value
+  sceneManager:switchToScene(CharacterSelectVsSelf())
 end
 
 function TrainingMenu:load(sceneParams)
@@ -85,14 +69,14 @@ function TrainingMenu:load(sceneParams)
   local garbagePatternLabels = {}
   for _, garbagepatternName in ipairs(garbagePatternNames) do
     table.insert(garbagePatternLabels, Label({
-        label = garbagepatternName,
+        text = garbagepatternName,
         translate = tableUtils.contains(translatableGarbagePatternNames, garbagepatternName),
         width = 70,
         height = 25}))
   end
 
-  local widthLabel = Label({label = "width"})
-  local heightLabel = Label({label = "height"})
+  local widthLabel = Label({text = "width"})
+  local heightLabel = Label({text = "height"})
 
   local lightBlue = {.7, .7, 1, .7}
   local darkBlue = {.5, .5, 1, .7}
@@ -137,11 +121,11 @@ function TrainingMenu:load(sceneParams)
   })
 
   local menuItems = {
-    {Label({label = "Garbage Pattern", translate = false,}), garbagePatternStepper},
+    {Label({text = "Garbage Pattern", translate = false,}), garbagePatternStepper},
     {widthLabel, widthSlider},
     {heightLabel, heightSlider},
-    {Button({label = "go_", onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {TextButton({label = Label({text = "go_"}), onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})},
+    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -153,18 +137,14 @@ function TrainingMenu:load(sceneParams)
   })
 end
 
-function TrainingMenu:drawBackground()
-  self.backgroundImg:draw()
-end
-
 function TrainingMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update(dt)
-  self.menu:draw()
 end
 
-function TrainingMenu:unload()
-  self.menu:setVisibility(false)
+function TrainingMenu:draw()
+  self.backgroundImg:draw()
+  self.menu:draw()
 end
 
 return TrainingMenu

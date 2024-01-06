@@ -1,7 +1,8 @@
 local class = require("class")
 local util = require("util")
 local UIElement = require("ui.UIElement")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
+local Label = require("ui.Label")
 
 local BUTTON_PADDING = 5
 
@@ -18,7 +19,6 @@ local function setLabels(self, labels, values, selectedIndex)
   end
   if #self.labels > 0 then
     self:addChild(self.labels[self.selectedIndex])
-    self.labels[self.selectedIndex]:setVisibility(self.isVisible)
     self.value = self.values[self.selectedIndex]
   end
 end
@@ -29,11 +29,8 @@ local function setState(self, i)
     return
   end
 
-  self.labels[self.selectedIndex]:setVisibility(false)
-  self.labels[self.selectedIndex]:detach()
   self.selectedIndex = new_index
   self.value = self.values[new_index]
-  self.labels[new_index]:setVisibility(true)
   self:addChild(self.labels[new_index])
   self.rightButton.x = self.leftButton.width + BUTTON_PADDING + self.labels[self.selectedIndex].width + BUTTON_PADDING
   self.onChange(self.value)
@@ -47,20 +44,18 @@ local Stepper = class(
     self.selectedIndex = options.selectedIndex or 1
     
     local navButtonWidth = 25
-    self.leftButton = Button({width = navButtonWidth, label = "<", translate = false, onClick = function() setState(self, self.selectedIndex - 1) end})
-    self.rightButton = Button({width = navButtonWidth, label = ">", translate = false, onClick = function() setState(self, self.selectedIndex + 1) end})
+    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function() setState(self, self.selectedIndex - 1) end})
+    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function() setState(self, self.selectedIndex + 1) end})
     self:addChild(self.leftButton)
     self:addChild(self.rightButton)
+
+    self.color = {.5, .5, 1, .7}
+    self.borderColor = {.7, .7, 1, .7}
     
     setLabels(self, options.labels, options.values, self.selectedIndex)
     
     if #self.labels > 0 then
-      self.labels[self.selectedIndex]:setVisibility(self.isVisible)
       self.rightButton.x = self.labels[self.selectedIndex].width + 25 + 10
-    end
-
-    for i, label in ipairs(self.labels) do
-      label:setVisibility(false)
     end
 
     self.TYPE = "Stepper"
@@ -71,20 +66,19 @@ local Stepper = class(
 Stepper.setLabels = setLabels
 Stepper.setState = setState
 
-function Stepper:updateLabel()
+function Stepper:refreshLocalization()
   for i, label in ipairs(self.labels) do
-    label:updateLabel()
+    label:refreshLocalization()
   end
-  UIElement.updateLabel(self)
+  UIElement.refreshLocalization(self)
 end
 
-function Stepper:draw()
-  if not self.isVisible then
-    return
-  end
-
-  -- draw children
-  UIElement.draw(self)
+function Stepper:drawSelf()
+  love.graphics.setColor(self.color)
+  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(self.borderColor)
+  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return Stepper

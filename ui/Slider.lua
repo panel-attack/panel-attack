@@ -1,7 +1,9 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
-local sliderManager = require("ui.sliderManager")
 local util = require("util")
+local touchable = require("ui.Touchable")
+
+local handleRadius = 7.5
 
 --@module Slider
 local Slider = class(
@@ -16,8 +18,12 @@ local Slider = class(
     self.minText = love.graphics.newText(love.graphics.getFont(), self.min)
     self.maxText = love.graphics.newText(love.graphics.getFont(), self.max)
     self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
-    
-    sliderManager.sliders[self.id] = self.isVisible and self or nil
+
+    self.width = self.tickLength * (self.max - self.min + 1)
+    self.height = handleRadius * 2
+
+    touchable(self)
+
     self.TYPE = "Slider"
   end,
   UIElement
@@ -27,16 +33,17 @@ local xOffset = 0
 local yOffset = 15
 local textOffset = -3
 local sliderBarThickness = 5
-local handleRadius = 7.5
 
-function Slider:setVisibility(isVisible)
-  sliderManager.sliders[self.id] = isVisible and self or nil
-  UIElement.setVisibility(self, isVisible)
+function Slider:onTouch(x, y)
+  self:setValueFromPos(x)
 end
 
-function Slider:isSelected(x, y)
-  local screenX, screenY = self:getScreenPos()
-  return x >= screenX and x <= screenX + (self.max - self.min + 1) * self.tickLength and y >= screenY + yOffset + sliderBarThickness / 2 - handleRadius and y <= screenY + yOffset + sliderBarThickness / 2 + handleRadius
+function Slider:onDrag(x, y)
+  self:setValueFromPos(x)
+end
+
+function Slider:onRelease(x, y)
+  self:setValueFromPos(x)
 end
 
 function Slider:setValueFromPos(x)
@@ -45,42 +52,32 @@ function Slider:setValueFromPos(x)
 end
 
 function Slider:setValue(value)
-  local prevValue = self.value
-  self.value = util.bound(self.min, value, self.max)
-  self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
-  if self.value ~= prevValue then
+  if value ~= self.value then
+    self.value = util.bound(self.min, value, self.max)
+    self.valueText:set(self.value)
     self:onValueChange()
   end
 end
 
-function Slider:draw()
-  if not self.isVisible then
-    return
-  end
-
-  local screenX, screenY = self:getScreenPos()
-  
+function Slider:drawSelf()
   local dark_gray = .3
   local light_gray = .5
   local alpha = .7
-  GAME.gfx_q:push({love.graphics.setColor, {light_gray, light_gray, light_gray, alpha}})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness}})
-  
-  GAME.gfx_q:push({love.graphics.setColor, {dark_gray, dark_gray, dark_gray, .9}})
-  GAME.gfx_q:push({love.graphics.circle, {"fill", screenX + (self.value - self.min + .5) * self.tickLength, screenY + yOffset + sliderBarThickness / 2, handleRadius, 32}})
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  love.graphics.setColor(light_gray, light_gray, light_gray, alpha)
+  love.graphics.rectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
+
+  love.graphics.setColor(dark_gray, dark_gray, dark_gray, .9)
+  love.graphics.circle("fill", self.x + (self.value - self.min + .5) * self.tickLength, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)
+  love.graphics.setColor(1, 1, 1, 1)
   
   local textWidth, textHeight = self.minText:getDimensions()
-  GAME.gfx_q:push({love.graphics.draw, {self.minText, screenX - textWidth * .3, screenY + textOffset, 0, 1, 1, 0, 0}})
+  love.graphics.draw(self.minText, self.x - textWidth * .3, self.y + textOffset, 0, 1, 1, 0, 0)
   
   textWidth, textHeight = self.maxText:getDimensions()
-  GAME.gfx_q:push({love.graphics.draw, {self.maxText, screenX + (self.max - self.min + 1) * self.tickLength - textWidth, screenY + textOffset, 0, 1, 1, 0, 0}})
+  love.graphics.draw(self.maxText, self.x + (self.max - self.min + 1) * self.tickLength - textWidth, self.y + textOffset, 0, 1, 1, 0, 0)
   
   textWidth, textHeight = self.valueText:getDimensions()
-  GAME.gfx_q:push({love.graphics.draw, {self.valueText, screenX + ((self.max - self.min + 1) / 2.0) * self.tickLength - textWidth / 2, screenY + textOffset, 0, 1, 1, 0, 0}})
-  
-  -- draw children
-  UIElement.draw(self)
+  love.graphics.draw(self.valueText, self.x + ((self.max - self.min + 1) / 2.0) * self.tickLength - textWidth / 2, self.y + textOffset, 0, 1, 1, 0, 0)
 end
 
 return Slider

@@ -5,6 +5,7 @@ local consts = require("consts")
 require("class")
 local logger = require("logger")
 local fileUtils = require("FileUtils")
+local levelPresets = require("LevelPresets")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 
@@ -227,7 +228,7 @@ function Theme.graphics_init(self)
   self.images.IMG_levels_unfocus = {}
   self.images.IMG_levels[1] = self:load_theme_img("level/level1")
   self.images.IMG_levels_unfocus[1] = nil -- meaningless by design
-  for i = 2, #level_to_starting_speed do --which should equal the number of levels in the game
+  for i = 2, levelPresets.modernPresetCount do --which should equal the number of levels in the game
     self.images.IMG_levels[i] = self:load_theme_img("level/level" .. i .. "")
     self.images.IMG_levels_unfocus[i] = self:load_theme_img("level/level" .. i .. "unfocus")
   end
@@ -268,15 +269,18 @@ function Theme.graphics_init(self)
 
   self.images.IMG_wins = self:load_theme_img("wins")
 
-  self.images.IMG_levelNumber_atlas_1P = self:load_theme_img("level_numbers_1P")
-  self.images.levelNumberWidth_1P = self.images.IMG_levelNumber_atlas_1P:getWidth() / 11
-  self.images.levelNumberHeight_1P = self.images.IMG_levelNumber_atlas_1P:getHeight()
-  self.images.IMG_levelNumber_atlas_2P = self:load_theme_img("level_numbers_2P")
-  self.images.levelNumberWidth_2P = self.images.IMG_levelNumber_atlas_2P:getWidth() / 11
-  self.images.levelNumberHeight_2P = self.images.IMG_levelNumber_atlas_2P:getHeight()
+  self.images.levelNumberAtlas = {}
+  self.images.levelNumberAtlas[1] = {}
+  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
+  self.images.levelNumberAtlas[1].charWidth = self.images.levelNumberAtlas[1].image:getWidth() / 11
+  self.images.levelNumberAtlas[1].charHeight = self.images.levelNumberAtlas[1].image:getHeight()
+
+  self.images.levelNumberAtlas[2] = {}
+  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
+  self.images.levelNumberAtlas[2].charWidth = self.images.levelNumberAtlas[2].image:getWidth() / 11
+  self.images.levelNumberAtlas[2].charHeight = self.images.levelNumberAtlas[2].image:getHeight()
 
   self.images.IMG_casual = self:load_theme_img("casual")
-
   self.images.IMG_ranked = self:load_theme_img("ranked")
 
   self.images.IMG_rating_1P = self:load_theme_img("rating_1P")
@@ -285,10 +289,13 @@ function Theme.graphics_init(self)
   self.images.IMG_random_stage = self:load_theme_img("random_stage")
   self.images.IMG_random_character = self:load_theme_img("random_character")
 
-  self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
-  self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
-  self.images.IMG_healthbar_frame_1P_absolute = self:load_theme_img("healthbar_frame_1P_absolute")
-  self.images.IMG_healthbar_frame_2P_absolute = self:load_theme_img("healthbar_frame_2P_absolute")
+  self.images.healthbarFrames = {}
+  self.images.healthbarFrames.relative = {}
+  self.images.healthbarFrames.relative[1]  = self:load_theme_img("healthbar_frame_1P")
+  self.images.healthbarFrames.relative[2]  = self:load_theme_img("healthbar_frame_2P")
+  self.images.healthbarFrames.absolute = {}
+  self.images.healthbarFrames.absolute[1] = self:load_theme_img("healthbar_frame_1P_absolute")
+  self.images.healthbarFrames.absolute[2] = self:load_theme_img("healthbar_frame_2P_absolute")
   
   self.images.IMG_healthbar = self:load_theme_img("healthbar")
 
@@ -300,10 +307,12 @@ function Theme.graphics_init(self)
   self.images.IMG_bug = self:load_theme_img("bug")
 
   --play field frames, plus the wall at the bottom.
-  self.images.IMG_frame1P = self:load_theme_img("frame/frame1P")
-  self.images.IMG_wall1P = self:load_theme_img("frame/wall1P")
-  self.images.IMG_frame2P = self:load_theme_img("frame/frame2P")
-  self.images.IMG_wall2P = self:load_theme_img("frame/wall2P")
+  self.images.frames = {}
+  self.images.walls = {}
+  self.images.frames[1] = self:load_theme_img("frame/frame1P")
+  self.images.frames[2] = self:load_theme_img("frame/frame2P")
+  self.images.walls[1] = self:load_theme_img("frame/wall1P")
+  self.images.walls[2] = self:load_theme_img("frame/wall2P")
 
   self.images.IMG_swap = self:load_theme_img("swap")
   self.images.IMG_apm = self:load_theme_img("apm")

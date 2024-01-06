@@ -15,7 +15,7 @@ function write_key_file()
     function()
       local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
-      file:write(json.encode(GAME.input.inputConfigurations))
+      file:write(json.encode(inputManager.inputConfigurations))
       file:close()
     end
   )
@@ -34,7 +34,7 @@ function save.read_key_file()
   end
   
   if not ok then
-    return GAME.input.inputConfigurations
+    return inputManager.inputConfigurations
   end
   
   local jsonInputConfig = file:read(file:getSize())

@@ -1,6 +1,7 @@
 local input = require("inputManager")
 local sceneManager = require("scenes.sceneManager")
 local tableUtils = require("tableUtils")
+local inputFieldManager = require("ui.inputFieldManager")
 
 local function runSystemCommands()
   -- toggle debug mode
@@ -41,26 +42,34 @@ end
 
 local function handleCopy()
   local stacks = {}
-  if GAME.match.P1 then
-    stacks["P1"] = GAME.match.P1:toPuzzleInfo()
-  end
-  if GAME.match.P2 then
-    stacks["P2"] = GAME.match.P2:toPuzzleInfo()
-  end
-  if tableUtils.length(stacks) > 0 then
-    love.system.setClipboardText(json.encode(stacks))
-    return true
+  if GAME.battleRoom and GAME.battleRoom.match and GAME.battleRoom.match.P1 then
+    local match = GAME.battleRoom.match
+
+    for i = 1, #match.players do
+      local player = match.players[i]
+      stacks["P" .. i] = player.stack:toPuzzleInfo()
+      stacks["P" .. i]["Player"] = player.name
+    end
+
+    if tableUtils.length(stacks) > 0 then
+      love.system.setClipboardText(json.encode(stacks))
+      return true
+    end
   end
 end
 
 local function handleDumpAttackPattern(playerNumber)
-  local stack = GAME.match.players[playerNumber]
+  if GAME.battleRoom and GAME.battleRoom.match and GAME.battleRoom.match.players[playerNumber] then
+    local player = GAME.battleRoom.match.players[playerNumber]
 
-  if stack then
-    local data, state = stack:getAttackPatternData()
-    saveJSONToPath(data, state, "dumpAttackPattern.json")
-    return true
+    if player.stack then
+      local data, state = player.stack:getAttackPatternData()
+      data.extraInfo.playerName = player.name
+      saveJSONToPath(data, state, "dumpAttackPattern.json")
+      return true
+    end
   end
+
 end
 
 local function modifyWinCounts(functionIndex)
@@ -102,6 +111,11 @@ function handleShortcuts()
       handleDumpAttackPattern(1)
     elseif input.allKeys.isDown["2"] then
       handleDumpAttackPattern(2)
+    elseif input.allKeys.isDown["v"] then
+      local clipboard = love.system.getClipboardText()
+      if clipboard then
+        inputFieldManager.textInput(clipboard)
+      end
     end
   elseif input.isPressed["Alt"] then
     if input.isDown["return"] then

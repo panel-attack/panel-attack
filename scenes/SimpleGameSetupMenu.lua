@@ -1,6 +1,6 @@
 local class = require("class")
 local Scene = require("scenes.Scene")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
@@ -9,6 +9,7 @@ local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local save = require("save")
 local GraphicsUtil = require("graphics_util")
+local GameModes = require("GameModes")
 
 --@module SimpleGameSetupMenu
 -- A Scene that contains menus for basic game configuation (speed, difficulty, level, etc.)
@@ -45,36 +46,24 @@ local BUTTON_HEIGHT = 25
 
 function SimpleGameSetupMenu:startGame()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  config.endless_speed = self.speedSlider.value
-  config.endless_difficulty = self.difficultyButtons.value
+  GAME.localPlayer:setSpeed(self.speedSlider.value)
+  GAME.localPlayer:setDifficulty(self.difficultyButtons.value)
   if self.typeButtons.value == "Classic" then
-    config.endless_level = nil
+    GAME.localPlayer:setStyle(GameModes.Styles.CLASSIC)
   else
-    config.endless_level = self.levelSlider.value
+    GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
   end
   write_conf_file()
-  GAME.match = Match(self.gameMode)
-  current_stage = config.stage
-  if current_stage == random_stage_special_value then
-    current_stage = nil
-  end
-  if self.typeButtons.value == "Classic" then
-    GAME.match:addPlayer(Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, speed=self.speedSlider.value, difficulty=self.difficultyButtons.value, character=config.character, inputMethod=config.inputMethod})
-  else
-    GAME.match:addPlayer(Stack{which=1, match=GAME.match, is_local=true, panels_dir=config.panels, level=self.levelSlider.value, character=config.character, inputMethod=config.inputMethod})
-  end
-  GAME.match.P1:wait_for_random_character()
-  GAME.match.P1.do_countdown = config.ready_countdown_1P or false
-  GAME.match.P1:starting_state()
-  sceneManager:switchToScene(self.gameScene, {})
+  GAME.localPlayer:setWantsReady(true)
 end
 
-local function exitMenu()
+function SimpleGameSetupMenu:exit()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+  GAME.battleRoom:shutdown()
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
-function SimpleGameSetupMenu:load()
+function SimpleGameSetupMenu:load(sceneParams)
   self.speedSlider = Slider({
     min = 1, 
     max = 99, 
@@ -85,11 +74,11 @@ function SimpleGameSetupMenu:load()
   self.difficultyButtons = ButtonGroup(
       {
         buttons = {
-          Button({label = "easy", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-          Button({label = "normal", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-          Button({label = "hard", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          TextButton({label = Label({text = "easy"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          TextButton({label = Label({text = "normal"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+          TextButton({label = Label({text = "hard"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
           -- TODO: localize "EX Mode"
-          Button({label = "EX Mode", translate = false}),
+          TextButton({label = Label({text = "EX Mode"}), translate = false}),
         },
         values = {1, 2, 3, 4},
         selectedIndex = GAME.config.endless_difficulty or 1,
@@ -109,13 +98,13 @@ function SimpleGameSetupMenu:load()
   self.typeButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "endless_classic", onClick = function()
-              self.modernMenu:setVisibility(false)
-              self.classicMenu:setVisibility(true)
+        TextButton({label = Label({text = "endless_classic"}), onClick = function()
+              self.modernMenu:detach()
+              self.uiRoot:addChild(self.classicMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        Button({label = "endless_modern", onClick = function()
-              self.classicMenu:setVisibility(false) 
-              self.modernMenu:setVisibility(true)
+        TextButton({label = Label({text = "endless_modern"}), onClick = function()
+              self.classicMenu:detach()
+              self.uiRoot:addChild(self.modernMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {"Classic", "Modern"},
@@ -125,18 +114,18 @@ function SimpleGameSetupMenu:load()
   )
   
   local modernMenuOptions = {
-    {Label({label = "endless_type"}), self.typeButtons},
-    {Label({label = "level"}), self.levelSlider},
-    {Button({label = "go_", onClick = function() self:startGame() end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {Label({text = "endless_type"}), self.typeButtons},
+    {Label({text = "level"}), self.levelSlider},
+    {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
+    {TextButton({label = Label({text = "back"}), onClick = self.exit})},
   }
   
   local classicMenuOptions = {
     modernMenuOptions[1],
-    {Label({label = "speed", isVisible = false}), self.speedSlider},
-    {Label({label = "difficulty", isVisible = false}), self.difficultyButtons},
-    {Button({label = "go_", onClick = function() self:startGame() end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {Label({text = "speed", isVisible = false}), self.speedSlider},
+    {Label({text = "difficulty", isVisible = false}), self.difficultyButtons},
+    {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
+    {TextButton({label = Label({text = "back"}), onClick = self.exit})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -154,14 +143,11 @@ function SimpleGameSetupMenu:load()
     maxHeight = themes[config.theme].main_menu_max_height
   })
   if self.typeButtons.value == "Classic" then
-    self.modernMenu:setVisibility(false)
-    self.classicMenu:setVisibility(true)
+    self.uiRoot:addChild(self.classicMenu)
   else
-    self.classicMenu:setVisibility(false)
-    self.modernMenu:setVisibility(true)
+    self.uiRoot:addChild(self.modernMenu)
   end
   
-  reset_filters()
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
   end
@@ -172,21 +158,27 @@ function SimpleGameSetupMenu:load()
   end
 end
 
-function SimpleGameSetupMenu:drawBackground() 
-  self.backgroundImg:draw() 
-end
-
 function SimpleGameSetupMenu:update(dt)
   self.backgroundImg:update(dt)
 
   if self.typeButtons.value == "Classic" then
+    self.classicMenu:update()
+  else
+    self.modernMenu:update()
+  end
+end
+
+function SimpleGameSetupMenu:draw()
+  self.backgroundImg:draw()
+
+  if self.typeButtons.value == "Classic" then
     local lastScore, record = unpack(self:getScores(self.difficultyButtons.value))
-  
+
     local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
     local xPosition1 = menu_x
     local xPosition2 = xPosition1 + 150
     local yPosition = menu_y + 50
-  
+
     local lastScoreLabelQuads = {}
     local lastScoreQuads = {}
     local recordLabelQuads = {}
@@ -195,23 +187,11 @@ function SimpleGameSetupMenu:update(dt)
     draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastScoreQuads)
     draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
     draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
-  
-    self.classicMenu:update()
+
     self.classicMenu:draw()
   else
-    self.modernMenu:update()
     self.modernMenu:draw()
   end
-  
-end
-
-function SimpleGameSetupMenu:unload() 
-  if self.typeButtons.value == "Classic" then
-    self.classicMenu:setVisibility(false)
-  else
-    self.modernMenu:setVisibility(false)
-  end
-  stop_the_music()
 end
 
 return SimpleGameSetupMenu

@@ -1,12 +1,14 @@
 local class = require("class")
+local UiElement = require("ui.UIElement")
+local consts = require("consts")
 
 --@module Scene
 -- Base class for a container representing a single screen of PanelAttack.
--- Each scene needs to be registered in Game.lua 
--- Each scene also needs to add a field called <Scene>.name = <Scene>
--- and call sceneManager.addScene(<Scene>)
+-- Each scene should have a field called <Scene>.name = <Scene> (for identification in errors and debugging)
+-- Each scene must add its UiElements as children to its uiRoot property
 local Scene = class(
   function (self, sceneParams)
+    self.uiRoot = UiElement({x = 0, y = 0, width = consts.CANVAS_WIDTH, height = consts.CANVAS_HEIGHT})
   end
 )
 
@@ -17,13 +19,18 @@ local Scene = class(
 function Scene:load(sceneParams) end
 
 -- Ran every frame while the scene is active
-function Scene:update() end
+function Scene:update(dt)
+  error("every scene MUST implement an update function, even " .. self.name)
+end
 
--- Ran every frame before anything is drawn
-function Scene:drawBackground() end
+-- main draw
+function Scene:draw()
+  error("every scene MUST implement a draw function, even " .. self.name)
+end
 
--- Ran every frame after everything is drawn
-function Scene:drawForeground() end
+function Scene:refreshLocalization()
+  self.uiRoot:refreshLocalization()
+end
 
 -- Ran every time the scene is ending
 -- used to clean up resources/global state used within the scene (stopping audio, hiding menus, etc.)

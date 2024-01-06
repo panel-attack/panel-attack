@@ -1,5 +1,6 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
+local PanelGenerator = require("gen_panels")
 
 local function sortByPopOrder(panelList, isGarbage)
   table.sort(panelList, function(a, b)
@@ -60,6 +61,7 @@ function Stack:checkMatches()
   local comboSize = #matchingPanels
 
   if comboSize > 0 then
+    local frameConstants = self.levelData.frameConstants
     local metalCount = getMetalCount(matchingPanels)
     local isChainLink = isNewChainLink(matchingPanels)
     if isChainLink then
@@ -73,11 +75,11 @@ function Stack:checkMatches()
     local garbagePanelCountOnScreen = 0
     if #garbagePanels > 0 then
       garbagePanelCountOnScreen = getOnScreenCount(self.height, garbagePanels)
-      local garbageMatchTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCountOnScreen)
+      local garbageMatchTime = frameConstants.FLASH + frameConstants.FACE + frameConstants.POP * (comboSize + garbagePanelCountOnScreen)
       self:matchGarbagePanels(garbagePanels, garbageMatchTime, isChainLink, garbagePanelCountOnScreen)
     end
 
-    local preStopTime = self.FRAMECOUNTS.MATCH + self.FRAMECOUNTS.POP * (comboSize + garbagePanelCountOnScreen)
+    local preStopTime = frameConstants.FLASH + frameConstants.FACE + frameConstants.POP * (comboSize + garbagePanelCountOnScreen)
     self.pre_stop_time = math.max(self.pre_stop_time, preStopTime)
     self:awardStopTime(isChainLink, comboSize)
 
@@ -312,7 +314,7 @@ end
 function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onScreenCount)
   garbagePanels = sortByPopOrder(garbagePanels, true)
 
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     SFX_garbage_match_play = true
   end
   
@@ -324,7 +326,7 @@ function Stack:matchGarbagePanels(garbagePanels, garbageMatchTime, isChain, onSc
     panel:setTimer(garbageMatchTime + 1)
     panel.initial_time = garbageMatchTime
     -- these two may end up with nonsense values for off-screen garbage but it doesn't matter
-    panel.pop_time = self.FRAMECOUNTS.POP * (onScreenCount - i)
+    panel.pop_time = self.levelData.frameConstants.POP * (onScreenCount - i)
     panel.pop_index = math.min(i, 10)
   end
 
@@ -353,10 +355,24 @@ function Stack:convertGarbagePanels(isChain)
 end
 
 function Stack:refillGarbagePanelBuffer()
-  local garbagePanels = PanelGenerator.makeGarbagePanels(self.match.seed + self.garbageGenCount, self.NCOLORS, self.gpanel_buffer,
-                                                         self.match.mode, self.level)
+  PanelGenerator:setSeed(self.match.seed + self.garbageGenCount)
+  -- privateGeneratePanels already appends to the existing self.gpanel_buffer
+  local garbagePanels = PanelGenerator.privateGeneratePanels(20, self.width, self.levelData.colors, self.gpanel_buffer, not self.allowAdjacentColors)
+  -- and then we append that result to the remaining buffer
   self.gpanel_buffer = self.gpanel_buffer .. garbagePanels
-  logger.debug("Generating garbage with seed: " .. self.match.seed + self.garbageGenCount .. " buffer: " .. self.gpanel_buffer)
+  -- that means the next 10 rows of garbage will use the same colors as the 10 rows after
+  -- that's a bug but it cannot be fixed without breaking replays
+  -- it is also hard to abuse as 
+  -- a) players would need to accurately track the 10 row cycles
+  -- b) "solve into the same thing" only applies to a limited degree:
+  --   a garbage panel row of 123456 solves into 1234 for ====00 but into 3456 for 00====
+  --   that means information may be incomplete and partial memorization may prove unreliable
+  -- c) garbage panels change every (10 + n * 20 rows) with n>0 in ℕ 
+  --    so the player needs to always survive 20 rows to start abusing
+  --    and can then only abuse for every 10 rows out of 20
+  -- overall it is to be expected that the strain of trying to memorize outweighs the gains
+  -- this bug should be fixed with the next breaking change to the engine
+
   self.garbageGenCount = self.garbageGenCount + 1
 end
 
@@ -418,33 +434,34 @@ end
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings
 function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
   local stopTime = 0
+  local stop = self.levelData.stop
   if comboSize > 3 or isChain then
     if toppedOut and isChain then
-      if self.level then
+      if stop.formula == 1 then
         local length = (chainCounter > 4) and 6 or chainCounter
-        stopTime = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
-      else
-        stopTime = stop_time_danger[self.difficulty]
+        stopTime = stop.dangerConstant + (length - 1) * stop.dangerCoefficient
+      elseif stop.formula == 2 then
+        stopTime = stop.dangerConstant
       end
     elseif toppedOut then
-      if self.level then
+      if stop.formula == 1 then
         local length = (comboSize < 9) and 2 or 3
-        stopTime = self.chain_coefficient * length + self.chain_constant
-      else
-        stopTime = stop_time_danger[self.difficulty]
+        stopTime = stop.coefficient * length + stop.chainConstant
+      elseif stop.formula == 2 then
+        stopTime = stop.dangerConstant
       end
     elseif isChain then
-      if self.level then
+      if stop.formula == 1 then
         local length = math.min(chainCounter, 13)
-        stopTime = self.chain_coefficient * length + self.chain_constant
-      else
-        stopTime = stop_time_chain[self.difficulty]
+        stopTime = stop.coefficient * length + stop.chainConstant
+      elseif stop.formula == 2 then
+        stopTime = stop.chainConstant
       end
     else
-      if self.level then
-        stopTime = self.combo_coefficient * comboSize + self.combo_constant
-      else
-        stopTime = stop_time_combo[self.difficulty]
+      if stop.formula == 1 then
+        stopTime = stop.coefficient * comboSize + stop.comboConstant
+      elseif stop.formula == 2 then
+        stopTime = stop.comboConstant
       end
     end
   end
@@ -460,7 +477,7 @@ function Stack:awardStopTime(isChain, comboSize)
 end
 
 function Stack:queueAttackSoundEffect(isChainLink, chainSize, comboSize, metalCount)
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     self.combo_chain_play = Stack.attackSoundInfoForMatch(isChainLink, chainSize, comboSize, metalCount)
   end
 end

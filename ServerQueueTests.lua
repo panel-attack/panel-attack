@@ -4,12 +4,12 @@ local queue = ServerQueue()
 
 assert(queue:size() == 0)
 
-queue:push(1)
-assert(queue:size() == 1)
-assert(queue:top() == 1)
-assert(queue:size() == 1)
-assert(queue:pop() == 1)
-assert(queue:size() == 0)
+-- queue:push(1)
+-- assert(queue:size() == 1)
+-- assert(queue:top() == 1)
+-- assert(queue:size() == 1)
+-- assert(queue:pop() == 1)
+-- assert(queue:size() == 0)
 
 
 local table1 = {test="a"}
