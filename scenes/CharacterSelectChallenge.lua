@@ -72,7 +72,7 @@ function CharacterSelectChallenge:loadUserInterface()
   end
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "p1 icon", self.ui.characterIcons[1])
-  self.ui.grid:createElementAt(8, 1, 1, 1, "p2 icon", self.ui.characterIcons[2])
+  self.ui.grid:createElementAt(9, 1, 1, 1, "p2 icon", self.ui.characterIcons[2])
 end
 
 return CharacterSelectChallenge

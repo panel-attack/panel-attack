@@ -48,14 +48,6 @@ function ChallengeModePlayer:createStackFromSettings(match, which)
   return simulatedStack
 end
 
-function ChallengeModePlayer:setCharacter(characterId)
-  if characterId ~= self.settings.characterId then
-    characterId = CharacterLoader.resolveCharacterSelection(characterId)
-    self.settings.characterId = characterId
-    CharacterLoader.load(characterId)
-  end
-end
-
 function ChallengeModePlayer:setCharacterForStage(stageNumber)
   self:setCharacter(characterForStageNumber(stageNumber))
 end
