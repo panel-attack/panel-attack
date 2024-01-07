@@ -9,6 +9,9 @@ end
 
 local function onVisibilityChanged(uiElement)
   if uiElement.isVisible then
+    if uiElement.TYPE == "StackPanel" or uiElement.id == 33 then
+      local phi = 5
+    end
     touchHandler.touchableElements[uiElement.id] = uiElement
   else
     touchHandler.touchableElements[uiElement.id] = nil

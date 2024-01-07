@@ -111,8 +111,8 @@ local menuItems = {
 }
 
 local debugMenuItems = {
-  {createMainMenuButton("Beta Server", switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})))},
-  {createMainMenuButton("Localhost Server", switchToScene(Lobby({serverIp = "Localhost"})))}
+  {createMainMenuButton("Beta Server", function() switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})) end)},
+  {createMainMenuButton("Localhost Server", function() switchToScene(Lobby({serverIp = "Localhost"})) end)}
 }
 
 function MainMenu:addDebugMenuItems()

@@ -8,6 +8,9 @@ local touchHandler = {
 
 function touchHandler:getTouchedElement(x, y, elements)
   for id, element in pairs(elements) do
+    if self.touchableElements[id] and not element.inBounds then
+      local phi = 5
+    end
     if self.touchableElements[id] and element:inBounds(x, y) and element.isEnabled then
       return self:getTouchedElement(x, y, element.children) or element
     end
@@ -54,6 +57,9 @@ end
 function touchHandler:registerTree(uiElement)
   for i, child in ipairs(uiElement.children) do
     if child.canBeTouched then
+      if child.id == 216 then
+        local phi = 5
+      end
       self.touchableElements[child.id] = child
     end
     self:registerTree(child)

@@ -9,6 +9,8 @@ local MultiPlayerSelectionWrapper = class(function(wrapper, options)
   focusable(wrapper)
   wrapper.activeElement = nil
   wrapper.wrappedElements = {}
+
+  wrapper.TYPE = "MultiPlayerSelectionWrapper"
 end,
 StackPanel)
 
