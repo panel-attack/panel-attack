@@ -7,11 +7,9 @@ local touchHandler = {
 }
 
 function touchHandler:getTouchedElement(x, y, elements)
-  for id, element in pairs(elements) do
-    if self.touchableElements[id] and not element.inBounds then
-      local phi = 5
-    end
-    if self.touchableElements[id] and element:inBounds(x, y) and element.isEnabled then
+  -- don't use the index of the elements table cause we're recursing into children to tiebreak overlapping hitboxes
+  for _, element in pairs(elements) do
+    if self.touchableElements[element.id] and element:inBounds(x, y) and element.isEnabled then
       return self:getTouchedElement(x, y, element.children) or element
     end
   end
