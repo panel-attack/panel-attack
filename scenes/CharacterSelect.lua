@@ -278,7 +278,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
       levelSlider:yieldFocus()
     end
 
-    if inputs.isDown["Swap1"] or inputs.isDown["MenuEnter"] then
+    if inputs.isDown["Swap1"] or inputs.isDown["Start"] then
       if levelSlider.onSelectCallback then
         levelSlider.onSelectCallback()
       end

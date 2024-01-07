@@ -21,54 +21,75 @@ local ReplayGame = class(
 ReplayGame.name = "ReplayGame"
 sceneManager:addScene(ReplayGame)
 
-function ReplayGame:customRun()
-  -- If we just finished a frame advance, pause again
-  if self.frameAdvance then
-    self.frameAdvance = false
-    self.match.isPaused = true
-  end
-
+function ReplayGame:runGame()
   local playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
 
-  -- Advance one frame
-  if input:isPressedWithRepeat("Swap1", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) and not self.frameAdvance then
-    self.frameAdvance = true
-    self.match.isPaused = false
-    if self.match.P1 then
-      self.match.P1.max_runs_per_frame = 1
+  if not self.match.isPaused then
+    if playbackSpeed > 0 then
+      for i = 1, playbackSpeed do
+        self.match:run()
+      end
+    elseif playbackSpeed < 0 then
+      for i = 1, #self.match.stacks do
+        local stack = self.match.stacks[i]
+        if stack.rollbackCopies[stack.clock - i] then
+          stack:rollbackToFrame(stack.clock - i)
+          stack.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+        end
+      end
     end
-    if self.match.P2 then
-      self.match.P2.max_runs_per_frame = 1
+  else
+    if self.frameAdvance then
+      self.match:togglePause()
+      if playbackSpeed > 0 then
+        self.match:run()
+      elseif playbackSpeed < 0 then
+        for i = 1, #self.match.stacks do
+          local stack = self.match.stacks[i]
+          if stack.rollbackCopies[stack.clock - 1] then
+            stack:rollbackToFrame(stack.clock - 1)
+            stack.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
+          end
+        end
+      end
+      self.frameAdvance = false
+      self.match.isPaused = true
+    end
+  end
+
+  -- Advance one frame
+  if input:isPressedWithRepeat("Swap1", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    self.frameAdvance = true
+  elseif input.isDown["Swap1"] then
+    if self.match.isPaused then
+      self.frameAdvance = true
+    else
+      self.match:togglePause()
+      setMusicPaused(self.match.isPaused)
     end
   elseif input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex + 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
-    if self.match.P1 then
-      self.match.P1.max_runs_per_frame = math.max(playbackSpeed, 0)
-    end
-    if self.match.P2 then
-      self.match.P2.max_runs_per_frame = math.max(playbackSpeed, 0)
-    end
   elseif input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex - 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
-    if self.match.P1 then
-      self.match.P1.max_runs_per_frame = math.max(playbackSpeed, 0)
+  elseif input.isDown["Swap2"] then
+    if self.match.isPaused then
+      sceneManager:switchToScene(sceneManager:createScene("ReplayBrowser"))
     end
-    if self.match.P2 then
-      self.match.P2.max_runs_per_frame = math.max(playbackSpeed, 0)
-    end
+  elseif input.isDown["MenuPause"] then
+    self.match:togglePause()
+    setMusicPaused(self.match.isPaused)
   end
 
-  if playbackSpeed < 0 and not self.match.isPaused then
-    if self.match.P1 and self.match.P1.clock > 0 and self.match.P1.prev_states[match.P1.clock-1] then
-      self.match.P1:rollbackToFrame(match.P1.clock + playbackSpeed)
-      self.match.P1.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-    end
-    if self.match.P2 and self.match.P2.clock > 0 and self.match.P2.prev_states[match.P2.clock-1] then
-      self.match.P2:rollbackToFrame(match.P2.clock + playbackSpeed)
-      self.match.P2.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-    end
+  if self.match.isPaused and input.isDown["MenuEsc"] then
+    self.match:abort()
+    return
+  end
+
+  if self.match:hasEnded() then
+    self:setupGameOver()
+    return
   end
 end
 

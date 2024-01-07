@@ -12,7 +12,7 @@ end, Transition)
 function MessageTransition:updateScenes(dt)
   if self.progress > 0.2 then
     -- give an avenue for early skip
-    if input.isDown["MenuEnter"] or input.isDown["MenuEsc"] then
+    if input.isDown["MenuSelect"] or input.isDown["MenuEsc"] then
       self.progress = 1
     end
   end
