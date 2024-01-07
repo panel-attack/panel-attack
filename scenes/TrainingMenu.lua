@@ -135,6 +135,7 @@ function TrainingMenu:load(sceneParams)
     y = y,
     menuItems = menuItems,
   })
+  self.uiRoot:addChild(self.menu)
 end
 
 function TrainingMenu:update(dt)

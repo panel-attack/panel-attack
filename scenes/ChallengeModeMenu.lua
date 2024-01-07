@@ -6,9 +6,6 @@ local Menu = require("ui.Menu")
 local Label = require("ui.Label")
 local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
-local Slider = require("ui.Slider")
-local tableUtils = require("tableUtils")
-local GameModes = require("GameModes")
 
 --@module ChallengeModeMenu
 -- 
