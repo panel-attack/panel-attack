@@ -86,7 +86,7 @@ local function testHoverChainOverGarbageClear()
   assert(match.P1.chains[match.P1.currentChainStartFrame].size == 3, "We should've gotten a +4 x3 on this frame")
   assert(match.P1.combos[3080][1] ~= nil and match.P1.combos[3080][1].width == 3, "We should've gotten a +4 x3 on this frame")
   StackReplayTestingUtils:simulateMatchUntil(match, 3272)
-  assert(match.P2.game_over == true, "P2 should have died here")
+  assert(match.P2:game_ended() == true, "P2 should have died here")
 end
 
 logger.info("running testHoverChainOverGarbageClear")

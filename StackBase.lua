@@ -14,7 +14,8 @@ local StackBase = class(function(self, args)
   self.framesBehindArray = {}
   self.framesBehind = 0
   self.clock = 0
-  self.game_over_clock = 0
+  self.game_over_clock = -1 -- the exact clock frame the player lost, -1 while alive
+  self.health = 1
 
 
   -- rollback

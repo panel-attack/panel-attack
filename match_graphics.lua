@@ -161,7 +161,7 @@ function Match:render()
       for i = 1, #self.stacks do
         local stack = self.stacks[i]
         stack:render()
-        if self.stackInteraction ~= GameModes.StackInteractions.NONE then
+        if stack.telegraph then
           stack.telegraph:render()
         end
       end

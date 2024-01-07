@@ -65,25 +65,27 @@ function SimulatedStack:run()
 end
 
 function SimulatedStack:shouldRun(runsSoFar)
+  if self.lastRollbackFrame > self.clock then
+    return true
+  end
+
+  -- a local automated stack shouldn't be falling behind
+  if self.framesBehind > runsSoFar then
+    return true
+  end
+
   return runsSoFar < self.max_runs_per_frame
 end
 
 function SimulatedStack:game_ended()
-  if self.game_over then
-    return self.game_over
-  end
-
-  if self.health <= 0 then
-    self:setGameOver()
-  end
-
-  return self.game_over
-end
-
-function SimulatedStack:setGameOver()
-  if not self.game_over then
-    self.game_over = true
+  if self.health <= 0 and self.game_over_clock < 0 then
     self.game_over_clock = self.clock
+  end
+
+  if self.game_over_clock > 0 then
+    return self.clock >= self.game_over_clock
+  else
+    return false
   end
 end
 
@@ -136,7 +138,13 @@ function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
 end
 
 function SimulatedStack:saveForRollback()
-  local copy = {}
+  local copy
+
+  if self.rollbackCopyPool:len() > 0 then
+    copy = self.rollbackCopyPool:pop()
+  else
+    copy = {}
+  end
 
   if self.healthEngine then
     self.healthEngine:saveRollbackCopy()
@@ -148,21 +156,41 @@ function SimulatedStack:saveForRollback()
     copy.telegraph = self.telegraph:rollbackCopy()
   end
 
+  copy.health = self.health
+
   self.rollbackCopies[self.clock] = copy
+
+  local deleteFrame = self.clock - MAX_LAG - 1
+  if self.rollbackCopies[deleteFrame] then
+    self.rollbackCopyPool:push(self.rollbackCopies[deleteFrame])
+    self.rollbackCopies[deleteFrame] = nil
+  end
 end
 
 function SimulatedStack:rollbackToFrame(frame)
   local copy = self.rollbackCopies[frame]
 
+  for i = frame + 1, self.clock do
+    self.rollbackCopyPool:push(self.rollbackCopies[i])
+    self.rollbackCopies[i] = nil
+  end
+
   if copy then
     if self.telegraph then
       copy.telegraph:rollbackCopy(self.telegraph)
+      self.telegraph.sender = self
     end
   end
+  self.attackEngine.clock = frame
 
   if self.healthEngine then
     self.healthEngine:rollbackToFrame(frame)
+    self.health = self.healthEngine.framesToppedOutToLose
+  else
+    self.health = copy.health
   end
+  self.lastRollbackFrame = self.clock
+  self.clock = frame
 end
 
 function SimulatedStack:starting_state()

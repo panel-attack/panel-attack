@@ -88,12 +88,18 @@ function Health:saveRollbackCopy()
   copy.lastWasFourCombo = self.lastWasFourCombo
 
   self.rollbackCopies[self.clock] = copy
+
+  local deleteFrame = self.clock - MAX_LAG - 1
+  if self.rollbackCopies[deleteFrame] then
+    self.rollbackCopyPool:push(self.rollbackCopies[deleteFrame])
+    self.rollbackCopies[deleteFrame] = nil
+  end
 end
 
 function Health:rollbackToFrame(frame)
   local copy = self.rollbackCopies[frame]
 
-  for i = frame, self.clock do
+  for i = frame + 1, self.clock do
     self.rollbackCopyPool:push(self.rollbackCopies[i])
     self.rollbackCopies[i] = nil
   end

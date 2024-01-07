@@ -24,19 +24,18 @@ sceneManager:addScene(ReplayGame)
 function ReplayGame:runGame()
   local playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
 
+  if self.match:hasEnded() and playbackSpeed < 0 then
+    -- maybe we can rewind from death this way
+    self.match.ended = false
+  end
+
   if not self.match.isPaused then
     if playbackSpeed > 0 then
       for i = 1, playbackSpeed do
         self.match:run()
       end
     elseif playbackSpeed < 0 then
-      for i = 1, #self.match.stacks do
-        local stack = self.match.stacks[i]
-        if stack.rollbackCopies[stack.clock - i] then
-          stack:rollbackToFrame(stack.clock - i)
-          stack.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-        end
-      end
+      self.match:rewindToFrame(self.match.clock + playbackSpeed)
     end
   else
     if self.frameAdvance then
@@ -44,13 +43,7 @@ function ReplayGame:runGame()
       if playbackSpeed > 0 then
         self.match:run()
       elseif playbackSpeed < 0 then
-        for i = 1, #self.match.stacks do
-          local stack = self.match.stacks[i]
-          if stack.rollbackCopies[stack.clock - 1] then
-            stack:rollbackToFrame(stack.clock - 1)
-            stack.lastRollbackFrame = -1 -- We don't want to count this as a "rollback" because we don't want to catchup
-          end
-        end
+        self.match:rewindToFrame(self.match.clock - 1)
       end
       self.frameAdvance = false
       self.match.isPaused = true
@@ -86,12 +79,10 @@ function ReplayGame:runGame()
     self.match:abort()
     return
   end
-
-  if self.match:hasEnded() then
-    self:setupGameOver()
-    return
-  end
 end
+
+-- maybe we can rewind from death this way
+ReplayGame.runGameOver = ReplayGame.runGame
 
 function ReplayGame:customDraw()
   local textPos = themes[config.theme].gameover_text_Pos

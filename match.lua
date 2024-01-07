@@ -97,7 +97,7 @@ function Match:getWinners()
     return self.winners
   end
 
-  -- game over is handled on the stack level and results in stack.game_over = true
+  -- game over is handled on the stack level and results in stack:game_ended() = true
   -- win conditions are in ORDER, meaning if player A met win condition 1 and player B met win condition 2, player A wins
   -- while if both players meet win condition 1 and player B meets win condition 2, player B wins
 
@@ -118,7 +118,7 @@ function Match:getWinners()
 
         -- now we check for this player whether they meet the current winCondition
         if winCon == GameModes.WinConditions.LAST_ALIVE then
-          if not potentialWinner.stack.game_over then
+          if not potentialWinner.stack:game_ended() then
             table.insert(metCondition, potentialWinner)
           end
         elseif winCon == GameModes.WinConditions.SCORE then
@@ -248,19 +248,18 @@ function Match:run()
     --   player.cpu:run(stack)
     -- end
 
-    if stack and stack.is_local and stack.send_controls and not stack.game_over --[[and not self.players[i].cpu]] then
+    if stack and stack.is_local and stack.send_controls and not stack:game_ended() --[[and not self.players[i].cpu]] then
       stack:send_controls()
     end
   end
 
   local runsSoFar = 0
   while tableUtils.trueForAny(checkRun, function(b) return b end) do
-    for i, player in ipairs(self.players) do
-      local stack = player.stack
+    for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
         stack:run()
-        if self.attackEngines[player] then
-          self.attackEngines[player]:run()
+        if self.attackEngines[stack] then
+          self.attackEngines[stack]:run()
         end
         checkRun[i] = true
       else
@@ -276,6 +275,9 @@ function Match:run()
         self:updateFramesBehind(stack)
         if self:shouldSaveRollback(stack) then
           stack:saveForRollback()
+          if self.attackEngines[stack] then
+            self.attackEngines[stack]:saveForRollback()
+          end
         end
       end
     end
@@ -287,7 +289,7 @@ function Match:run()
 
   -- for i = 1, #self.players do
   --   local stack = self.players[i].stack
-  --   if stack and stack.is_local not stack.game_over then
+  --   if stack and stack.is_local not stack:game_ended() then
   --     assert(#stack.input_buffer == 0, "Local games should always simulate all inputs")
   --   end
   -- end
@@ -328,6 +330,37 @@ function Match:shouldSaveRollback(stack)
   end
 
   return false
+end
+
+function Match:rollbackToFrame(stack, frame)
+  if stack.rollbackCopies[frame] then
+    stack:rollbackToFrame(frame)
+    if self.isFromReplay then
+      stack.lastRollbackFrame = -1
+    end
+    if self.attackEngines[stack] then
+      self.attackEngines[stack].rollbackToFrame(frame)
+      if self.isFromReplay then
+        self.attackEngines[stack].lastRollbackFrame = -1
+      end
+    end
+  end
+end
+
+-- rewind is ONLY to be used for replay playback as it is relies on all stacks being at the same clock time
+function Match:rewindToFrame(frame)
+  for i = 1, #self.stacks do
+    local stack = self.stacks[i]
+    if stack.rollbackCopies[frame] then
+      stack:rollbackToFrame(frame)
+      stack.lastRollbackFrame = -1
+      if self.attackEngines[stack] then
+        self.attackEngines[stack]:rollbackToFrame(frame)
+        self.attackEngines[stack].lastRollbackFrame = -1
+      end
+    end
+  end
+  self.clock = frame
 end
 
 -- updates the match clock to the clock time of the player furthest into the game
@@ -550,10 +583,11 @@ function Match:start()
     end
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
-      local attackEngineHost = SimulatedStack(500, 200, -1)
+      -- not really elegant but before deciding where the attacks are supposed to come from with more than 1 real player which = 2 works
+      local attackEngineHost = SimulatedStack({which = 2, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
       local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings.attackSettings)
       attackEngine:setGarbageTarget(stack)
-      self.attackEngines[player] = attackEngineHost
+      self.attackEngines[stack] = attackEngineHost
     end
 
   end
@@ -736,7 +770,7 @@ function Match:hasEnded()
   local aliveCount = 0
   local deadCount = 0
   for i = 1, #self.players do
-    if self.players[i].stack.game_over then
+    if self.players[i].stack:game_ended() then
       deadCount = deadCount + 1
     else
       aliveCount = aliveCount + 1
@@ -817,7 +851,7 @@ function Match:checkAborted()
     elseif tableUtils.contains(self.winConditions, GameModes.WinConditions.LAST_ALIVE) then
       local alive = 0
       for i = 1, #self.players do
-        if not self.players[i].stack.game_over then
+        if not self.players[i].stack:game_ended() then
           alive = alive + 1
         end
         -- if there is more than 1 alive with a last alive win condition, this must have been aborted
@@ -829,8 +863,8 @@ function Match:checkAborted()
       end
     else
       -- if this is not last alive and no desync that means we expect EVERY stack to be game over
-      if tableUtils.trueForAny(self.players, function(p) return not p.stack.game_over end) then
-        -- someone didn't game_over so this got aborted (e.g. through a pause -> leave)
+      if tableUtils.trueForAny(self.players, function(p) return not p.stack:game_ended() end) then
+        -- someone didn't lose so this got aborted (e.g. through a pause -> leave)
         self.aborted = true
         self.winners = {}
       end

@@ -196,8 +196,6 @@ Stack =
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.combo_chain_play = nil
-    s.game_over = false -- only set if this player got a game over
-    s.game_over_clock = 0 -- only set if game_over is true, the exact clock frame the player lost
     s.sfx_land = false
     s.sfx_garbage_thud = 0
 
@@ -1539,11 +1537,6 @@ function Stack.simulate(self)
         SFX_Pop_Play = nil
         SFX_Garbage_Pop_Play = nil
       end
-      if self.game_over or (self.opponentStack and self.opponentStack.game_over) then
-        if self:canPlaySfx() then
-          SFX_GameOver_Play = 1
-        end
-      end
     end
 
     self.clock = self.clock + 1
@@ -1662,7 +1655,7 @@ function Stack:canPlaySfx()
 end
 
 -- Returns true if the stack is simulated past the end of the match.
-function Stack.game_ended(self)
+function Stack:game_ended()
   if self.puzzle then
     if self:puzzle_done() or self:puzzle_failed() then
       return true
@@ -1670,7 +1663,11 @@ function Stack.game_ended(self)
       return false
     end
   else
-    return self.game_over
+    if self.game_over_clock > 0 then
+      return self.clock >= self.game_over_clock
+    else
+      return false
+    end
   end
 end
 
@@ -1678,11 +1675,12 @@ end
 -- Also begins drawing game over effects
 function Stack.set_game_over(self)
 
-  if self.game_over_clock ~= 0 then
+  if self.game_over_clock > 0 then
     error("should not set gameover when it is already set")
   end
-  
-  self.game_over = true
+
+  themes[config.theme].sounds.game_over:play()
+
   self.game_over_clock = self.clock
 
   if self.canvas then

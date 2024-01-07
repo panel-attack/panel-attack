@@ -28,7 +28,6 @@ local GameBase = class(
 
     self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
     self.maxDisplayTime = -1 -- the maximum amount of seconds the game over screen will be displayed for, -1 means no max time
-    self.winnerTime = 1
 
     self.frameInfo = {
       frameCount = nil,
@@ -118,17 +117,9 @@ function GameBase:setupGameOver()
   gameOverStartTime = love.timer.getTime()
   self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
   self.maxDisplayTime = -1
-  self.winnerTime = 60
   initialMusicVolumes = {}
   
   self:customGameOverSetup()
-
-  if SFX_GameOver_Play == 1 then
-    themes[config.theme].sounds.game_over:play()
-    SFX_GameOver_Play = 0
-  else
-    self.winnerTime = 0
-  end
 
   -- The music may have already been partially faded due to dynamic music or something else,
   -- record what volume it was so we can fade down from that.
