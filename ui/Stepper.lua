@@ -11,7 +11,6 @@ local function setLabels(self, labels, values, selectedIndex)
   self.values = values
   self.labels = labels
   for _, label in ipairs(labels) do
-    label.x = self.leftButton.width + BUTTON_PADDING
     self:addChild(label)
     label:setVisibility(false)
   end
@@ -49,13 +48,16 @@ local Stepper = class(
 
     self.color = {.5, .5, 1, .7}
     self.borderColor = {.7, .7, 1, .7}
-    
+
     setLabels(self, options.labels, options.values, self.selectedIndex)
-    
+
     if #self.labels > 0 then
       for i = 1, #self.labels do
-        self.rightButton.x = math.max(self.labels[self.selectedIndex].width + 25 + 10, self.rightButton.x)
+        self.labels[i].hAlign = "center"
+        self.width = math.max(self.labels[i].width + 10 + navButtonWidth * 2, self.width)
+        self.height = math.max(self.labels[i].height + 4, self.height)
       end
+      self.rightButton.x = self.width - navButtonWidth
     end
 
     self.TYPE = "Stepper"
@@ -74,11 +76,13 @@ function Stepper:refreshLocalization()
 end
 
 function Stepper:drawSelf()
-  love.graphics.setColor(self.color)
-  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
-  love.graphics.setColor(self.borderColor)
-  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-  love.graphics.setColor(1, 1, 1, 1)
+  if config.debug_mode then
+    love.graphics.setColor(self.color)
+    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(self.borderColor)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(1, 1, 1, 1)
+  end
 end
 
 return Stepper
