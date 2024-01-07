@@ -55,9 +55,6 @@ end
 function touchHandler:registerTree(uiElement)
   for i, child in ipairs(uiElement.children) do
     if child.canBeTouched then
-      if child.id == 216 then
-        local phi = 5
-      end
       self.touchableElements[child.id] = child
     end
     self:registerTree(child)
