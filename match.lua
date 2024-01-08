@@ -6,6 +6,7 @@ local Replay = require("replay")
 local Signal = require("helpers.signal")
 local SimulatedStack = require("SimulatedStack")
 local ChallengeModePlayer = require("ChallengeModePlayer")
+local consts = require("consts")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -406,7 +407,7 @@ function Match:shouldChangeMusic()
   -- end
 
   -- music waits until countdown is over
-  if self.doCountdown and self.clock < 180 then
+  if self.doCountdown and self.clock < (consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH) then
     return false
   end
 
@@ -632,7 +633,7 @@ function Match:start()
 
     self.panicTickStartTime = (self.timeLimit - 15) * 60
     if self.doCountdown then
-      self.panicTickStartTime = self.panicTickStartTime + 180
+      self.panicTickStartTime = self.panicTickStartTime + consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH
     end
   end
 

@@ -5,6 +5,7 @@ local GameModes = require("GameModes")
 local sceneManager = require("scenes.sceneManager")
 local MessageTransition = require("scenes.Transitions.MessageTransition")
 local levelPresets = require("LevelPresets")
+local consts = require("consts")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =
@@ -176,7 +177,7 @@ function ChallengeMode:onMatchEnded(match)
   -- so always record the result, even if it may have been an abort
   local gameTime = match.clock
   if match.doCountdown then
-    gameTime = gameTime - 180
+    gameTime = gameTime - (consts.COUNTDOWN_START  + consts.COUNTDOWN_LENGTH)
   end
   self:recordStageResult(winners, gameTime)
   if self.online and match:hasLocalPlayer() then

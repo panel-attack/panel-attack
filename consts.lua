@@ -32,6 +32,7 @@ VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
 consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
+consts.COUNTDOWN_START = 8
 consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
 
 consts.SERVER_SAVE_DIRECTORY = "servers/"

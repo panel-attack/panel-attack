@@ -1569,7 +1569,7 @@ function Stack:runCountDownIfNeeded()
       elseif self.inputMethod == "controller" then
         self.cur_col = self.width - 1
       end
-    elseif self.clock == 8 then
+    elseif self.clock == consts.COUNTDOWN_START then
       self.countdown_timer = consts.COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
