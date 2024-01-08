@@ -30,7 +30,7 @@ function Game1pChallenge:customDraw()
   local drawX = consts.CANVAS_WIDTH / 2
   local drawY = 110
   local width = 200
-  local height = canvas_height - drawY
+  local height = consts.CANVAS_HEIGHT - drawY
 
   -- Background
   grectangle_color("fill", (drawX - width / 2) / GFX_SCALE, drawY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, 0, 0, 0, 0.5)

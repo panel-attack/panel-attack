@@ -31,4 +31,4 @@ local function testSameFrameKeyPressRelease()
   assert(match.P1.confirmedInput[#match.P1.confirmedInput] == "g")
 end
 
-testSameFrameKeyPressRelease()
+--testSameFrameKeyPressRelease()

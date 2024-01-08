@@ -220,7 +220,7 @@ function stages_reload_graphics()
     if GAME and GAME.battleRoom and GAME.battleRoom.match then
       -- for reasons, this is not drawn directly from the stage but from background image
       -- so override this while in a match
-      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, consts.CANVAS_WIDTH, canvas_height)
+      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
     end
   end
   -- lazy load the rest

@@ -568,7 +568,7 @@ end
 function Stack:updateScoreWithCombo(comboSize)
   if comboSize > 3 then
     if (score_mode == consts.SCOREMODE_TA) then
-      self.score = self.score + consts.SCORE_COMBO_TA[math.min(30, comboSize)]
+      self.score = self.score + SCORE_COMBO_TA[math.min(30, comboSize)]
     elseif (score_mode == consts.SCOREMODE_PDP64) then
       if (comboSize < 41) then
         self.score = self.score + SCORE_COMBO_PdP64[comboSize]
