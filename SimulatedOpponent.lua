@@ -66,5 +66,7 @@ function SimulatedOpponent:receiveGarbage(frameToReceive, garbageList)
 end
 
 function SimulatedOpponent:deinit()
-  self.health:deinit()
+  if self.health then
+    self.health:deinit()
+  end
 end
