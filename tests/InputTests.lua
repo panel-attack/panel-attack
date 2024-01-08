@@ -1,6 +1,7 @@
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local CustomRun = require("CustomRun")
 
+-- TODO: rewrite the test with sourcing the pressed keys from match.P1.player.inputConfiguration
 local function testSameFrameKeyPressRelease()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
   GAME.input:requestSingleInputConfigurationForPlayerCount(1)
@@ -31,4 +32,6 @@ local function testSameFrameKeyPressRelease()
   assert(match.P1.confirmedInput[#match.P1.confirmedInput] == "g")
 end
 
+-- this needs to run to perfectly emulate gameplay
+-- not much point in running it when it's known to not work though
 --testSameFrameKeyPressRelease()
