@@ -603,7 +603,7 @@ function Stack.render(self)
   end
 
   local function drawScore()
-    self:drawLabel(self.theme.images["IMG_score" .. self.id], self.theme.scoreLabel_Pos, self.theme.scoreLabel_Scale)
+    self:drawLabel(self.theme.images["IMG_score_" .. self.which .. "P"], self.theme.scoreLabel_Pos, self.theme.scoreLabel_Scale)
     self:drawNumber(self.score, self.score_quads, self.theme.score_Pos, self.theme.score_Scale)
   end
 
@@ -781,7 +781,7 @@ function Stack.render(self)
   -- Draw the "extra" game info
   if config.show_ingame_infos then
     if not self.puzzle then
-      --drawScore()
+      drawScore()
       --drawSpeed()
     end
     self:drawMultibar()

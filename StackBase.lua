@@ -152,7 +152,7 @@ function StackBase:drawNumber(number, quads, themePositionOffset, scale, cameFro
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas" .. self.id], quads, x, y, scale, "center")
+  GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas_" .. self.which .. "P"], quads, x, y, scale, "center")
 end
 
 function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)

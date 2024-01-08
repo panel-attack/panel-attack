@@ -581,7 +581,7 @@ end
 
 function Stack:updateScoreWithChain()
   local chain_bonus = self.chain_counter
-  if (score_mode == SCOREMODE_TA) then
+  if (score_mode == consts.SCOREMODE_TA) then
     if (self.chain_counter > 13) then
       chain_bonus = 0
     end

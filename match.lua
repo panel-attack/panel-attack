@@ -185,9 +185,9 @@ function Match:debugRollbackAndCaptureState(clockGoal)
     return
   end
 
-  self.savedStackP1 = P1.prev_states[P1.clock]
+  self.savedStackP1 = P1.rollbackCopies[P1.clock]
   if P2 then
-    self.savedStackP2 = P2.prev_states[P2.clock]
+    self.savedStackP2 = P2.rollbackCopies[P2.clock]
   end
 
   local rollbackResult = P1:rollbackToFrame(clockGoal)
@@ -803,7 +803,7 @@ function Match:hasEnded()
   end
 
   if self.timeLimit then
-    if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch > self.timeLimit * 60 end) then
+    if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch >= self.timeLimit * 60 end) then
       self.ended = true
       return true
     end
@@ -885,7 +885,7 @@ function Match:shouldRun(stack, runsSoFar)
   -- check the match specific conditions in match
   if not stack:game_ended() then
     if self.timeLimit then
-      if stack.game_stopwatch and stack.game_stopwatch > self.timeLimit * 60 then
+      if stack.game_stopwatch and stack.game_stopwatch >= self.timeLimit * 60 then
         -- the stack should only run 1 frame beyond the time limit (excluding countdown)
         return false
       end
