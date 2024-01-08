@@ -54,6 +54,9 @@ function StackReplayTestingUtils:fullySimulateMatch(match)
   local startTime = love.timer.getTime()
 
   while not match:hasEnded() do
+    if match.P1.game_stopwatch == 7199 then
+      local phi = 5
+    end
     match:run()
   end
   local endTime = love.timer.getTime()
