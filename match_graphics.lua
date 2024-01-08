@@ -53,8 +53,8 @@ function Match:drawTimer()
         frames = 0
       end
     end
-    -- frames = frames + 60 * 60 * 80 -- debug large timer rendering
-    local timeString = frames_to_time_string(frames, not self.timeLimit)
+
+    local timeString = frames_to_time_string(frames, self.ended)
 
     self:drawMatchLabel(stack.theme.images.IMG_time, stack.theme.timeLabel_Pos, stack.theme.timeLabel_Scale)
     self:drawMatchTime(timeString, self.time_quads, stack.theme.time_Pos, stack.theme.time_Scale)
