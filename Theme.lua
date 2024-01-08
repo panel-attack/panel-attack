@@ -563,22 +563,22 @@ function Theme:final_init()
 
   local titleImage = self:load_theme_img("background/title", false)
   if titleImage then
-    self.images.bg_title = UpdatingImage(titleImage, self.bg_title_is_tiled, self.bg_title_speed_x, self.bg_title_speed_y, canvas_width, canvas_height)
+    self.images.bg_title = UpdatingImage(titleImage, self.bg_title_is_tiled, self.bg_title_speed_x, self.bg_title_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
   end
 
-  self.images.bg_main = UpdatingImage(self:load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, canvas_width, canvas_height)
-  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_screen_speed_x, self.bg_select_screen_speed_y, canvas_width, canvas_height)
-  self.images.bg_readme = UpdatingImage(self:load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
+  self.images.bg_main = UpdatingImage(self:load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
+  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_screen_speed_x, self.bg_select_screen_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
+  self.images.bg_readme = UpdatingImage(self:load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
 
   local menuYPadding = 10
   self.centerMenusVertically = true
   if self.images.bg_title then
     menuYPadding = 100
     self.main_menu_screen_pos = {532, menuYPadding}
-    self.main_menu_y_max = canvas_height - menuYPadding
+    self.main_menu_y_max = consts.CANVAS_HEIGHT - menuYPadding
   else
     self.main_menu_screen_pos = {532, 249}
-    self.main_menu_y_max = canvas_height - menuYPadding
+    self.main_menu_y_max = consts.CANVAS_HEIGHT - menuYPadding
     self.centerMenusVertically = false
   end
   self.main_menu_max_height = (self.main_menu_y_max - self.main_menu_screen_pos[2])

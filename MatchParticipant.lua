@@ -1,5 +1,6 @@
 local class = require("class")
 local util = require("util")
+local consts = require("consts")
 
 -- a match participant represents the minimum spec for a what constitutes a "player" in a battleRoom / match
 local MatchParticipant = class(function(self)
@@ -7,8 +8,8 @@ local MatchParticipant = class(function(self)
   self.wins = 0
   self.modifiedWins = 0
   self.settings = {
-    characterId = random_character_special_value,
-    stageId = random_stage_special_value,
+    characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
+    stageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
     wantsReady = false
   }
   self.subscriptionList = util.getWeaklyKeyedTable()

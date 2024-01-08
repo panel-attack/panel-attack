@@ -3,6 +3,7 @@ local fileUtils = require("FileUtils")
 local GameModes = require("GameModes")
 local ReplayV1 = require("replayV1")
 local ReplayV2 = require("replayV2")
+local consts = require("consts")
 
 local REPLAY_VERSION = 2
 
@@ -15,7 +16,7 @@ class(
 
 function Replay.createNewReplay(match)
   local result = {}
-  result.engineVersion = VERSION
+  result.engineVersion = match.engineVersion
   result.replayVersion = REPLAY_VERSION
   result.seed = match.seed
   result.ranked = match_type == "Ranked"
@@ -60,11 +61,11 @@ function Replay.createNewReplay(match)
 end
 
 function Replay.replayCanBeViewed(replay)
-  if replay.engineVersion > VERSION then
+  if replay.engineVersion > consts.VERSION then
     -- replay is from a newer game version, we can't watch
     -- or maybe we can but there is no way to verify we can
     return false
-  elseif replay.engineVersion < VERSION_MIN_VIEW then
+  elseif replay.engineVersion < consts.VERSION_MIN_VIEW then
     -- there were breaking changes since the version the replay was recorded on
     -- definitely can not watch
     return false
@@ -126,11 +127,11 @@ end
 function Replay.finalReplayFilename(extraPath, extraFilename)
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
-  local path = "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+  local path = "replays" .. sep .. "v" .. consts.VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
   if extraPath then
     path = path .. sep .. extraPath
   end
-  local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+  local filename = "v" .. consts.VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
   if extraFilename then
     filename = filename .. "-" .. extraFilename
   end

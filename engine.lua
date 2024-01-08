@@ -24,6 +24,33 @@ local max = math.max
 
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
 
+local GARBAGE_TO_SHAKE_TIME = {
+  [0] = 0,
+  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
+  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
+  66, 66, 66, 76
+}
+
+for i=25,1000 do
+  GARBAGE_TO_SHAKE_TIME[i] = GARBAGE_TO_SHAKE_TIME[i-1]
+end
+
+-- endless and 1P time attack use a speed system in which
+-- speed increases based on the number of panels you clear.
+-- For example, to get from speed 1 to speed 2, you must
+-- clear 9 panels.
+local PANELS_TO_NEXT_SPEED =
+  {9, 12, 12, 12, 12, 12, 15, 15, 18, 18,
+  24, 24, 24, 24, 24, 24, 21, 18, 18, 18,
+  36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+  39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, math.huge}
+
 -- Represents the full panel stack for one player
 Stack =
   class(
@@ -67,9 +94,6 @@ Stack =
       s.do_first_row = true
     end
 
-    -- frame.png dimensions
-    s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
-
     s.difficulty = difficulty
     s.level = level
     s.levelData = levelData
@@ -78,7 +102,7 @@ Stack =
       -- mode 1: increase speed based on fixed intervals
       s.nextSpeedIncreaseClock = DT_SPEED_INCREASE
     else
-      s.panels_to_speedup = panels_to_next_speed[s.speed]
+      s.panels_to_speedup = PANELS_TO_NEXT_SPEED[s.speed]
     end
 
     s.health = s.levelData.maxHealth
@@ -166,7 +190,7 @@ Stack =
     s.n_active_panels = 0
     s.n_prev_active_panels = 0
 
-    s.rise_timer = speed_to_rise_time[s.speed]
+    s.rise_timer = consts.SPEED_TO_RISE_TIME[s.speed]
 
     -- Player input stuff:
     s.manual_raise = false -- set until raising is completed
@@ -695,7 +719,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
-              local shake_time = garbage_to_shake_time[width * height]
+              local shake_time = GARBAGE_TO_SHAKE_TIME[width * height]
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
@@ -1238,7 +1262,7 @@ function Stack.simulate(self)
     elseif self.panels_to_speedup <= 0 then
       -- mode 2: increase speed based on cleared panels
       self.speed = min(self.speed + 1, 99)
-      self.panels_to_speedup = self.panels_to_speedup + panels_to_next_speed[self.speed]
+      self.panels_to_speedup = self.panels_to_speedup + PANELS_TO_NEXT_SPEED[self.speed]
     end
 
     -- Phase 0 //////////////////////////////////////////////////////////////
@@ -1266,7 +1290,7 @@ function Stack.simulate(self)
                 self.top_cur_row = self.height
                 self:new_row()
               end
-              self.rise_timer = self.rise_timer + speed_to_rise_time[self.speed]
+              self.rise_timer = self.rise_timer + consts.SPEED_TO_RISE_TIME[self.speed]
             end
           end
         end
@@ -1858,7 +1882,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
   end
 
   self.garbageCreatedCount = self.garbageCreatedCount + 1
-  local shakeTime = garbage_to_shake_time[width * height]
+  local shakeTime = GARBAGE_TO_SHAKE_TIME[width * height]
 
   for row = originRow, originRow + height - 1 do
     if not self.panels[row] then

@@ -18,7 +18,7 @@ Match =
     self.attackEngines = {}
     self.P1 = nil
     self.P2 = nil
-    self.engineVersion = VERSION
+    self.engineVersion = consts.VERSION
 
     assert(doCountdown ~= nil)
     assert(stackInteraction)
@@ -374,7 +374,7 @@ function Match:updateClock()
 end
 
 function Match:getWinningPlayerCharacter()
-  local character = random_character_special_value
+  local character = consts.RANDOM_CHARACTER_SPECIAL_VALUE
   local maxWins = -1
   for i = 1, #self.players do
     if self.players[i].wins > maxWins then
@@ -663,7 +663,7 @@ function Match:setStage(stageId)
     -- we got one from the server
     self.stageId = StageLoader.resolveStageSelection(stageId)
   elseif #self.players == 1 then
-    if self.players[1].settings.stageId == random_stage_special_value then
+    if self.players[1].settings.stageId == consts.RANDOM_STAGE_SPECIAL_VALUE then
       self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
     else
       self.stageId = self.players[1].settings.stageId
@@ -803,7 +803,7 @@ function Match:hasEnded()
   end
 
   if self.timeLimit then
-    if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch > TIME_ATTACK_TIME * 60 end) then
+    if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch > self.timeLimit * 60 end) then
       self.ended = true
       return true
     end

@@ -1,9 +1,40 @@
 require("util")
 local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
+local consts = require("consts")
 
 local floor = math.floor
 local ceil = math.ceil
+
+-- frames to use for bounce animation
+local BOUNCE_TABLE = {1, 1, 1, 1,
+                2, 2, 2,
+                3, 3, 3,
+                4, 4, 4}
+
+-- frames to use for garbage bounce animation
+local GARBAGE_BOUNCE_TABLE = {2, 2, 2,
+                              3, 3, 3,
+                              4, 4, 4,
+                              1, 1}
+
+-- frames to use for in danger animation
+local DANGER_BOUNCE_TABLE = {1, 1, 1,
+                              2, 2, 2,
+                              3, 3, 3,
+                              2, 2, 2,
+                              1, 1, 1,
+                              4, 4, 4}
+
+-- The popping particle animation. First number is how far the particles go, second is which frame to show from the spritesheet
+local POPFX_BURST_ANIMATION = {{1, 1}, {4, 1}, {7, 1}, {8, 1}, {9, 1}, {9, 1},
+                               {10, 1}, {10, 2}, {10, 2}, {10, 3}, {10, 3}, {10, 4},
+                               {10, 4}, {10, 5}, {10, 5}, {10, 6}, {10, 6}, {10, 7},
+                               {10, 7}, {10, 8}, {10, 8}, {10, 8}}
+
+local POPFX_FADE_ANIMATION = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
+
+local GFX_SCALE = consts.GFX_SCALE
 
 local shake_arr = {}
 
@@ -37,9 +68,9 @@ function Stack.update_cards(self)
 
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
-    if card_animation[card.frame] then
+    if consts.CARD_ANIMATION[card.frame] then
       card.frame = card.frame + 1
-      if (card_animation[card.frame] == nil) then
+      if (consts.CARD_ANIMATION[card.frame] == nil) then
         if config.popfx == true then
           GraphicsUtil:releaseQuad(card.burstParticle)
         end
@@ -55,9 +86,9 @@ end
 function Stack.draw_cards(self)
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
-    if card_animation[card.frame] then
+    if consts.CARD_ANIMATION[card.frame] then
       local draw_x = (self.panelOriginX) + (card.x - 1) * 16
-      local draw_y = (self.panelOriginY) + (11 - card.y) * 16 + self.displacement - card_animation[card.frame]
+      local draw_y = (self.panelOriginY) + (11 - card.y) * 16 + self.displacement - consts.CARD_ANIMATION[card.frame]
       if config.popfx == true and card.frame then
         burstFrameDimension = card.burstAtlas:getWidth() / 9
         -- draw cardfx
@@ -104,14 +135,14 @@ function Stack.update_popfxs(self)
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
-      popfx_animation = popfx_burst_animation
+      popfx_animation = POPFX_BURST_ANIMATION
     end
     if characters[self.character].popfx_style == "fade" then
-      popfx_animation = popfx_fade_animation
+      popfx_animation = POPFX_FADE_ANIMATION
     end
-    if popfx_burst_animation[popfx.frame] then
+    if POPFX_BURST_ANIMATION[popfx.frame] then
       popfx.frame = popfx.frame + 1
-      if (popfx_burst_animation[popfx.frame] == nil) then
+      if (POPFX_BURST_ANIMATION[popfx.frame] == nil) then
         if characters[self.character].images["burst"] then
           GraphicsUtil:releaseQuad(popfx.burstParticle)
         end
@@ -145,8 +176,8 @@ function Stack.draw_popfxs(self)
     local fadeFrameDimension = popfx.fadeFrameDimension
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
-        burstFrame = popfx_burst_animation[popfx.frame]
-        if popfx_burst_animation[popfx.frame] then
+        burstFrame = POPFX_BURST_ANIMATION[popfx.frame]
+        if POPFX_BURST_ANIMATION[popfx.frame] then
           burstParticle:setViewport(burstFrame[2] * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
           positions = {
             -- four corner
@@ -235,7 +266,7 @@ function Stack.draw_popfxs(self)
     end
     if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["fade"] then
-        fadeFrame = popfx_fade_animation[popfx.frame]
+        fadeFrame = POPFX_FADE_ANIMATION[popfx.frame]
         if (fadeFrame ~= nil) then
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
           qdraw(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
@@ -477,7 +508,7 @@ function Stack.render(self)
           elseif panel.state == "popping" then
             draw_frame = 6
           elseif panel.state == "landing" then
-            draw_frame = bounce_table[panel.timer + 1]
+            draw_frame = BOUNCE_TABLE[panel.timer + 1]
           elseif panel.state == "swapping" then
             if panel.isSwappingFromLeft then
               draw_x = draw_x - panel.timer * 4
@@ -489,9 +520,9 @@ function Stack.render(self)
           elseif panel.state == "dimmed" then
             draw_frame = 7
           elseif panel.fell_from_garbage then
-            draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
+            draw_frame = GARBAGE_BOUNCE_TABLE[panel.fell_from_garbage] or 1
           elseif self.danger_col[col] then
-            draw_frame = danger_bounce_table[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #danger_bounce_table)]
+            draw_frame = DANGER_BOUNCE_TABLE[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #DANGER_BOUNCE_TABLE)]
           else
             draw_frame = 1
           end
@@ -605,7 +636,7 @@ function Stack.render(self)
     local height = 600
     local x = paddingToAnalytics + backgroundPadding
     if self.which == 2 then
-      x = canvas_width - paddingToAnalytics - width + backgroundPadding
+      x = consts.CANVAS_WIDTH - paddingToAnalytics - width + backgroundPadding
     end
     local y = self.frameOriginY * GFX_SCALE + backgroundPadding
   
@@ -624,14 +655,14 @@ function Stack.render(self)
     -- Panels cleared
     icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
     draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+    gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement
   
     -- Garbage sent
     icon_width, icon_height = characters[self.character].images.face:getDimensions()
     draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+    gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement
   
@@ -643,14 +674,14 @@ function Stack.render(self)
     end
     icon_width, icon_height = self.theme.images.IMG_gpm:getDimensions()
     draw(self.theme.images.IMG_gpm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)  
+    gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
   
     y = y + nextIconIncrement
   
     -- Moves
     icon_width, icon_height = self.theme.images.IMG_cursorCount:getDimensions()
     draw(self.theme.images.IMG_cursorCount, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+    gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement
   
@@ -659,7 +690,7 @@ function Stack.render(self)
       icon_width, icon_height = self.theme.images.IMG_swap:getDimensions()
       draw(self.theme.images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     end
-    gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+    gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement
   
@@ -674,7 +705,7 @@ function Stack.render(self)
       icon_width, icon_height = self.theme.images.IMG_apm:getDimensions()
       draw(self.theme.images.IMG_apm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     end
-    gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+    gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement
   
@@ -708,7 +739,7 @@ function Stack.render(self)
         if cardImage then
           icon_width, icon_height = cardImage:getDimensions()
           draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-          gprintf(chain_amount, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
+          gprintf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
           y = y + nextIconIncrement
         end
       end
@@ -739,7 +770,7 @@ function Stack.render(self)
         if cardImage then
           icon_width, icon_height = cardImage:getDimensions()
           draw(cardImage, xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-          gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, canvas_width, "left", nil, 1, fontIncrement)
+          gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
           yCombo = yCombo + nextIconIncrement
         end
       end

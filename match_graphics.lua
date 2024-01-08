@@ -1,5 +1,7 @@
 local GameModes = require("GameModes")
 local tableUtils = require("tableUtils")
+local consts = require("consts")
+local GFX_SCALE = consts.GFX_SCALE
 
 function Match:matchelementOriginX()
   local x = 375 + (464) / 2
@@ -78,7 +80,7 @@ end
 function Match:drawCommunityMessage()
   -- Draw the community message
   if not config.debug_mode then
-    gprintf(join_community_msg or "", 0, 668, canvas_width, "center")
+    gprintf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
   end
 end
 
@@ -109,8 +111,8 @@ function Match:render()
         -- let the spectator know the game is about to die
         local iconSize = 20
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
-        local x = (canvas_width / 2) - (iconSize / 2)
-        local y = (canvas_height / 2) - (iconSize / 2)
+        local x = (consts.CANVAS_WIDTH / 2) - (iconSize / 2)
+        local y = (consts.CANVAS_HEIGHT / 2) - (iconSize / 2)
         draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
       end
     end
@@ -198,9 +200,9 @@ end
 function Match:draw_pause()
   if not self.renderDuringPause then
     local image = themes[config.theme].images.pause
-    local scale = canvas_width / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
-    menu_drawf(image, canvas_width / 2, canvas_height / 2, "center", "center", 0, scale, scale)
+    local scale = consts.CANVAS_WIDTH / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
+    menu_drawf(image, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
   end
-  gprintf(loc("pause"), 0, 330, canvas_width, "center", nil, 1, large_font)
-  gprintf(loc("pl_pause_help"), 0, 360, canvas_width, "center", nil, 1)
+  gprintf(loc("pause"), 0, 330, consts.CANVAS_WIDTH, "center", nil, 1, 10)
+  gprintf(loc("pl_pause_help"), 0, 360, consts.CANVAS_WIDTH, "center", nil, 1)
 end

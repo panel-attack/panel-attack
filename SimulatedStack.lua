@@ -4,6 +4,7 @@ local graphicsUtil = require("graphics_util")
 local StackBase = require("StackBase")
 local class = require("class")
 local consts = require("consts")
+local GFX_SCALE = consts.GFX_SCALE
 require("queue")
 
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.

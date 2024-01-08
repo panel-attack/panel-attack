@@ -4,6 +4,7 @@ require("character")
 local logger = require("logger")
 local fileUtils = require("FileUtils")
 local tableUtils = require("tableUtils")
+local consts = require("consts")
 
 CharacterLoader = {}
 
@@ -73,25 +74,22 @@ function CharacterLoader.addCharactersFromDirectoryRecursively(path)
   local lfs = love.filesystem
   local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
-        -- call recursively: facade folder
-        CharacterLoader.addCharactersFromDirectoryRecursively(current_path)
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
+      -- call recursively: facade folder
+      CharacterLoader.addCharactersFromDirectoryRecursively(current_path)
 
-        -- init stage: 'real' folder
-        local character = Character(current_path, v)
-        local success = character:json_init()
+      -- init stage: 'real' folder
+      local character = Character(current_path, v)
+      local success = character:json_init()
 
-        if success then
-          if characters[character.id] ~= nil then
-            logger.trace(current_path .. " has been ignored since a character with this id has already been found")
-          else
-            -- logger.trace(current_path.." has been added to the character list!")
-            characters[character.id] = character
-            characters_ids[#characters_ids + 1] = character.id
-          end
+      if success then
+        if characters[character.id] ~= nil then
+          logger.trace(current_path .. " has been ignored since a character with this id has already been found")
+        else
+          -- logger.trace(current_path.." has been added to the character list!")
+          characters[character.id] = character
+          characters_ids[#characters_ids + 1] = character.id
         end
       end
     end
@@ -172,7 +170,7 @@ function CharacterLoader.initCharacters()
   end
 
   -- fix config character if it's missing
-  if not config.character or (config.character ~= random_character_special_value and not characters[config.character]) then
+  if not config.character or (config.character ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE and not characters[config.character]) then
     config.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
 
@@ -189,7 +187,7 @@ function CharacterLoader.initCharacters()
     end
   end
 
-  if config.character ~= random_character_special_value and not characters[config.character]:is_bundle() then
+  if config.character ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE and not characters[config.character]:is_bundle() then
     CharacterLoader.load(config.character)
     CharacterLoader.wait()
   end

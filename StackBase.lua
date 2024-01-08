@@ -1,5 +1,7 @@
 local class = require("class")
 local graphicsUtil = require("graphics_util")
+local consts = require("consts")
+local GFX_SCALE = consts.GFX_SCALE
 
 local StackBase = class(function(self, args)
   assert(args.which)
@@ -160,7 +162,7 @@ function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOf
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   
-  local limit = canvas_width - x
+  local limit = consts.CANVAS_WIDTH - x
   local alignment = "left"
   if self.theme:offsetsAreFixed() then
     if self.which == 1 then
@@ -188,7 +190,7 @@ function StackBase:moveForRenderIndex(renderIndex)
       self.mirror_x = -1
       self.multiplication = 1
     end
-    local centerX = (canvas_width / 2)
+    local centerX = (consts.CANVAS_WIDTH / 2)
     local stackWidth = self:stackCanvasWidth()
     local innerStackXMovement = 100
     local outerStackXMovement = stackWidth + innerStackXMovement
@@ -226,7 +228,7 @@ function StackBase:setCanvas()
     love.graphics.setBackgroundColor(1, 1, 1)
     local canvas_w, canvas_h = self.canvas:getDimensions()
     love.graphics.rectangle("fill", 0, 0, canvas_w, canvas_h)
-    love.graphics.setBackgroundColor(unpack(global_background_color))
+    love.graphics.setBackgroundColor(unpack(GAME.backgroundColor))
     love.graphics.setShader()
   end
 

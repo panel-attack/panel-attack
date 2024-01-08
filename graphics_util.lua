@@ -2,6 +2,8 @@ local consts = require("consts")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 
+local GFX_SCALE = consts.GFX_SCALE
+
 -- Utility methods for drawing
 GraphicsUtil = { 
   fontFile = nil,
@@ -465,7 +467,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   y = y or 0
   scale = scale or 1
   color = color or nil
-  limit = limit or canvas_width
+  limit = limit or consts.CANVAS_WIDTH
   font_delta_size = font_delta_size or 0
   halign = halign or "left"
   set_color(0, 0, 0, 1)

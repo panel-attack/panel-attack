@@ -4,6 +4,7 @@ local LevelPresets = require("LevelPresets")
 local input = require("inputManager")
 local util = require("util")
 local MatchParticipant = require("MatchParticipant")
+local consts = require("consts")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -250,7 +251,7 @@ function Player:updateWithMenuState(menuState)
     self:setCharacter(menuState.selectedCharacterId)
   elseif self.settings.characterId == "" then
     -- we don't have their character and we didn't roll them a random character yet
-    self:setCharacter(random_character_special_value)
+    self:setCharacter(consts.RANDOM_CHARACTER_SPECIAL_VALUE)
   end
 
   if stages[menuState.stageId] then
@@ -262,7 +263,7 @@ function Player:updateWithMenuState(menuState)
     self:setStage(menuState.selectedStageId)
   elseif self.settings.stageId == "" then
     -- we don't have their stage and we didn't roll them a random stage yet
-    self:setStage(random_stage_special_value)
+    self:setStage(consts.RANDOM_STAGE_SPECIAL_VALUE)
   end
 
   self:setWantsRanked(menuState.wantsRanked)

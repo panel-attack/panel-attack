@@ -1,6 +1,7 @@
 local Request = require("network.Request")
 local NetworkProtocol = require("network.NetworkProtocol")
 local msgTypes = NetworkProtocol.clientMessageTypes
+local consts = require("consts")
 
 local ClientMessages = {}
 
@@ -41,16 +42,16 @@ function ClientMessages.tryReserveUsernameRequest(config)
   }
 
   if config.character then
-    if config.character == random_character_special_value then
-      userNameMessage.character_is_random = random_character_special_value
+    if config.character == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
+      userNameMessage.character_is_random = consts.RANDOM_CHARACTER_SPECIAL_VALUE
     elseif characters[config.character] and characters[config.character]:is_bundle() then
       userNameMessage.character_is_random = config.character
     end
   end
 
   if config.stage then
-    if config.stage == random_stage_special_value then
-      userNameMessage.stage_is_random = random_stage_special_value
+    if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
+      userNameMessage.stage_is_random = consts.RANDOM_STAGE_SPECIAL_VALUE
     elseif stages[config.stage] and stages[config.stage]:is_bundle() then
       userNameMessage.stage_is_random = config.stage
     end

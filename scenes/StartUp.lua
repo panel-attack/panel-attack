@@ -1,6 +1,7 @@
 local class = require("class")
 local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
+local consts = require("consts")
 
 local StartUp = class(function(scene, sceneParams)
   scene.setupRoutine = coroutine.create(sceneParams.setupRoutine)
@@ -35,10 +36,10 @@ end
 function StartUp:drawLoadingString(loadingString)
   local textHeight = 40
   local x = 0
-  local y = canvas_height / 2 - textHeight / 2
+  local y = consts.CANVAS_HEIGHT / 2 - textHeight / 2
   love.graphics.setFont(get_font_delta(10))
   love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.printf(loadingString, x, y, canvas_width, "center", 0, 1)
+  love.graphics.printf(loadingString, x, y, consts.CANVAS_WIDTH, "center", 0, 1)
   love.graphics.setFont(GraphicsUtil.getGlobalFont())
 end
 

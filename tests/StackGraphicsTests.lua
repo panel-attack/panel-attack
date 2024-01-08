@@ -2,6 +2,7 @@ require("graphics")
 local consts = require("consts")
 require("engine")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
+local GFX_SCALE = consts.GFX_SCALE
 
 local function test(func)
   func()

@@ -1,7 +1,5 @@
 local logger = require("logger")
-local GraphicsUtil = require("graphics_util")
-
-local HEALTH_BAR_WIDTH = 50
+local consts = require("consts")
 
 Health =
   class(
@@ -29,7 +27,7 @@ function Health:run()
     self.currentRiseSpeed = math.min(self.currentRiseSpeed + 1, 99)
   end
 
-  local risenLines = 1.0 / (speed_to_rise_time[self.currentRiseSpeed] * 16)
+  local risenLines = 1.0 / (consts.SPEED_TO_RISE_TIME[self.currentRiseSpeed] * 16)
   self.currentLines = self.currentLines + risenLines
 
   -- Harder to survive over time, simulating "stamina"

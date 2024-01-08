@@ -1,5 +1,6 @@
 require("localization")
-local tableUtils = require("tableUtils")
+
+local TIME_ATTACK_TIME = 120
 
 local GameModes = {}
 

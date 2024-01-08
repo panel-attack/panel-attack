@@ -62,7 +62,7 @@ end
 
 function CharacterSelect:createSelectedCharacterIcon(player)
   local icon
-  if player.settings.characterId == random_character_special_value then
+  if player.settings.characterId == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
     icon = themes[config.theme].images.IMG_random_character
   else
     icon = characters[player.settings.characterId].images.icon
@@ -78,7 +78,7 @@ function CharacterSelect:createSelectedCharacterIcon(player)
 
    -- character image
    selectedCharacterIcon.updateImage = function(image, characterId)
-    if characterId == random_character_special_value then
+    if characterId == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
       image:setImage(themes[config.theme].images.IMG_random_character)
     else
       image:setImage(characters[characterId].images.icon)
@@ -152,7 +152,7 @@ function CharacterSelect:getCharacterButtons()
   local characterButtons = {}
 
   local randomCharacterButton = Button({hFill = true, vFill = true})
-  randomCharacterButton.characterId = random_character_special_value
+  randomCharacterButton.characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE
   randomCharacterButton.image = ImageContainer({image = themes[config.theme].images.IMG_random_character, hFill = true, vFill = true})
   randomCharacterButton:addChild(randomCharacterButton.image)
   randomCharacterButton.label = Label({text = "random", translate = true, vAlign = "bottom", hAlign = "center"})

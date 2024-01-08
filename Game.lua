@@ -20,6 +20,8 @@ local GameModes = require("GameModes")
 local TcpClient = require("network.TcpClient")
 local StartUp = require("scenes.StartUp")
 
+local GFX_SCALE = consts.GFX_SCALE
+
 
 require("rich_presence.RichPresence")
 
@@ -55,6 +57,7 @@ local Game = class(
     self.canvasY = 0
     self.canvasXScale = 1
     self.canvasYScale = 1
+    self.backgroundColor = { 0.0, 0.0, 0.0 }
 
     -- depends on canvasXScale
     self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
@@ -288,7 +291,7 @@ end
 function Game:draw()
   -- Setting the canvas means everything we draw is drawn to the canvas instead of the screen
   love.graphics.setCanvas(self.globalCanvas)
-  love.graphics.setBackgroundColor(unpack(global_background_color))
+  love.graphics.setBackgroundColor(unpack(self.backgroundColor))
   love.graphics.clear()
 
   -- With this, self.globalCanvas is clear and set as our active canvas everything is being drawn to
@@ -321,10 +324,10 @@ end
 
 function Game:drawScaleInfo()
   if self.showGameScaleUntil > self.timer or config.debug_mode then
-    local scaleString = "Scale: " .. self.canvasXScale .. " (" .. canvas_width * self.canvasXScale .. " x " .. canvas_height * self.canvasYScale .. ")"
+    local scaleString = "Scale: " .. self.canvasXScale .. " (" .. consts.CANVAS_WIDTH * self.canvasXScale .. " x " .. consts.CANVAS_HEIGHT * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
 
-    if canvas_width * self.canvasXScale > newPixelWidth then
+    if consts.CANVAS_WIDTH * self.canvasXScale > newPixelWidth then
       scaleString = scaleString .. " Clipped "
     end
     love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
@@ -360,7 +363,7 @@ function Game.errorData(errorString, traceBack)
       stack = traceBack,
       name = username,
       error = errorString,
-      engine_version = VERSION,
+      engine_version = consts.VERSION,
       release_version = buildVersion,
       operating_system = systemInfo,
       love_version = loveVersion,
@@ -449,11 +452,11 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
     for i = #availableScales, 1, -1 do
       local scale = availableScales[i]
       if config.gameScaleType ~= "auto" or 
-        (newWindowWidth >= canvas_width * scale and newWindowHeight >= canvas_height * scale) then
+        (newWindowWidth >= consts.CANVAS_WIDTH * scale and newWindowHeight >= consts.CANVAS_HEIGHT * scale) then
         self.canvasXScale = scale
         self.canvasYScale = scale
-        self.canvasX = math.floor((newWindowWidth - (scale * canvas_width)) / 2)
-        self.canvasY = math.floor((newWindowHeight - (scale * canvas_height)) / 2)
+        self.canvasX = math.floor((newWindowWidth - (scale * consts.CANVAS_WIDTH)) / 2)
+        self.canvasY = math.floor((newWindowHeight - (scale * consts.CANVAS_HEIGHT)) / 2)
         scaleIsUpdated = true
         break
       end
@@ -464,8 +467,8 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
     -- The only thing left to do is scale to fit the window
     local w, h
     self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
-    self.canvasXScale = w / canvas_width
-    self.canvasYScale = h / canvas_height
+    self.canvasXScale = w / consts.CANVAS_WIDTH
+    self.canvasYScale = h / consts.CANVAS_HEIGHT
   end
 
   self.previousWindowWidth = newWindowWidth
@@ -482,7 +485,7 @@ function Game:refreshCanvasAndImagesForNewScale()
   self:drawLoadingString(loc("ld_characters"))
   coroutine.yield()
 
-  self.globalCanvas = love.graphics.newCanvas(canvas_width, canvas_height, {dpiscale=self:newCanvasSnappedScale()})
+  self.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=self:newCanvasSnappedScale()})
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
   -- Reload theme to get the new resolution assets
@@ -509,10 +512,10 @@ function Game:drawLoadingString(loadingString)
   local textMaxWidth = 300
   local textHeight = 40
   local x = 0
-  local y = canvas_height/2 - textHeight/2
+  local y = consts.CANVAS_HEIGHT/2 - textHeight/2
   local backgroundPadding = 10
-  grectangle_color("fill", (canvas_width / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, canvas_width, "center", nil, nil, 10)
+  grectangle_color("fill", (consts.CANVAS_WIDTH / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  gprintf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
 end
 
 return Game

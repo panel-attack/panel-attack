@@ -3,6 +3,8 @@ local sceneManager = require("scenes.sceneManager")
 local Replay = require("replay")
 local class = require("class")
 local Signal = require("helpers.signal")
+local consts = require("consts")
+local GFX_SCALE = consts.GFX_SCALE
 
 -- @module endlessGame
 -- Scene for an endless mode instance of the game
@@ -25,7 +27,7 @@ function Game1pChallenge:onMatchEnded(match)
 end
 
 function Game1pChallenge:customDraw()
-  local drawX = canvas_width / 2
+  local drawX = consts.CANVAS_WIDTH / 2
   local drawY = 110
   local width = 200
   local height = canvas_height - drawY

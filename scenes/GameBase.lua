@@ -88,7 +88,7 @@ function GameBase:load(sceneParams)
   Signal.connectSignal(self.match, "onMatchEnded", self, self.genericOnMatchEnded)
 
   self.stage = stages[self.match.stageId]
-  self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, canvas_width, canvas_height)
+  self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, consts.CANVAS_WIDTH, canvas_height)
   pickUseMusicFrom()
 
   self:customLoad(sceneParams)
@@ -131,8 +131,8 @@ end
 function GameBase:runGameOver()
   local font = GraphicsUtil.getGlobalFont()
 
-  gprint(self.text, (canvas_width - font:getWidth(self.text)) / 2, 10)
-  gprint(loc("continue_button"), (canvas_width - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
+  gprint(self.text, (consts.CANVAS_WIDTH - font:getWidth(self.text)) / 2, 10)
+  gprint(loc("continue_button"), (consts.CANVAS_WIDTH - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
   local displayTime = love.timer.getTime() - gameOverStartTime
   if not self.keepMusic then

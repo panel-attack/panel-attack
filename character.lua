@@ -6,6 +6,7 @@ Sound
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
+local consts = require("consts")
 
 local default_character = nil -- holds default assets fallbacks
 
@@ -666,11 +667,11 @@ function Character.playAttackSfx(self, attack)
   stopPreviousSounds()
 
   -- play combos or chains
-  if attack.type == e_chain_or_combo.combo then
+  if attack.type == consts.ATTACK_TYPE.combo then
     self:playComboSfx(attack.size)
-  elseif attack.type == e_chain_or_combo.shock then
+  elseif attack.type == consts.ATTACK_TYPE.shock then
     self:playShockSfx(attack.size)
-  else --elseif chain_combo.type == e_chain_or_combo.chain then
+  else --elseif chain_combo.type == consts.ATTACK_TYPE.chain then
     self:playChainSfx(attack.size)
   end
 end

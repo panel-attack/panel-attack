@@ -1,7 +1,8 @@
 local GameModes = require("GameModes")
 --local Replay = require("replay")
 local levelPresets = require("LevelPresets")
-require("util")
+local consts = require("consts")
+local util = require("util")
 
 local ReplayV1 = {}
 
@@ -29,7 +30,7 @@ function ReplayV1.transform(legacyReplay)
   r.replayVersion = 1
   r.seed = v1r.seed
   r.ranked = v1r.match_type == "Ranked"
-  r.stageId = v1r.stage or random_stage_special_value
+  r.stageId = v1r.stage or consts.RANDOM_STAGE_SPECIAL_VALUE
   r.gameMode = {
     stackInteraction = gameMode.stackInteraction,
     winConditions = gameMode.winConditions,
@@ -38,7 +39,7 @@ function ReplayV1.transform(legacyReplay)
   }
 
   if mode == "time" then
-    r.gameMode.timeLimit = TIME_ATTACK_TIME
+    r.gameMode.timeLimit = GameModes.getPreset("ONE_PLAYER_TIME_ATTACK").timeLimit
   end
 
   r.players = {}

@@ -1,11 +1,11 @@
 -- this file documents presets for level data
 -- level data has the following format:
 -- {
-  -- the initial speed upon match start, defines how many frameConstantss it takes to rise one row via the speed_to_rise_time table
+  -- the initial speed upon match start, defines how many frameConstantss it takes to rise one row via the SPEED_TO_RISE_TIME table
 --   startingSpeed = 1,
   -- the mechanism through which speed increases throughout the game
   -- mode 1: in constant time intervals
-  -- mode 2: depending on how many panels were cleared according to the panels_to_next_speed table
+  -- mode 2: depending on how many panels were cleared according to the PANELS_TO_NEXT_SPEED table
 --   speedIncreaseMode = 1,
   -- how many blocks need to be cleared to queue the next shock panel for panel generation
 --   shockFrequency = 12,

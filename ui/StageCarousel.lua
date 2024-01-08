@@ -3,6 +3,7 @@ local class = require("class")
 local StackPanel = require("ui.StackPanel")
 local Label = require("ui.Label")
 local ImageContainer = require("ui.ImageContainer")
+local consts = require("consts")
 
 local StageCarousel = class(function(carousel, options)
 
@@ -27,7 +28,7 @@ function StageCarousel:loadCurrentStages()
     self:addPassenger(passenger)
   end
 
-  local randomStage = StageCarousel:createPassenger(random_stage_special_value, themes[config.theme].images.IMG_random_stage, "random")
+  local randomStage = StageCarousel:createPassenger(consts.RANDOM_STAGE_SPECIAL_VALUE, themes[config.theme].images.IMG_random_stage, "random")
   self:addPassenger(randomStage)
 
   self:setPassengerById(config.stage)

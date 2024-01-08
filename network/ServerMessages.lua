@@ -1,3 +1,5 @@
+local consts = require("consts")
+
 -- this file is an attempt to sanitize the somewhat crazy messages the server sends during match setup
 local ServerMessages = {}
 
@@ -35,11 +37,11 @@ function ServerMessages.sanitizeMenuState(menuState)
   local sanitized = { sanitized = true}
   sanitized.panelId = menuState.panels_dir
   sanitized.characterId = menuState.character
-  if menuState.character_is_random ~= random_character_special_value then
+  if menuState.character_is_random ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE then
     sanitized.selectedCharacterId = menuState.character_is_random
   end
   sanitized.stageId = menuState.stage
-  if menuState.stage_is_random ~= random_stage_special_value then
+  if menuState.stage_is_random ~= consts.RANDOM_STAGE_SPECIAL_VALUE then
     sanitized.selectedStageId = menuState.stage_is_random
   end
   sanitized.level = menuState.level
