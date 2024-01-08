@@ -18,6 +18,7 @@ function BattleRoom:registerNetworkCallbacks()
   local matchStartListener = self:createListener("match_start", self.processMatchStartMessage)
   local tauntListener = self:createListener("taunt", self.processTauntMessage)
   local characterSelectListener = self:createListener("character_select", self.processCharacterSelectMessage)
+  local spectatorListListener = self:createListener("spectators", self.processSpectatorListMessage)
 
   self.setupListeners = {}
 
@@ -28,6 +29,7 @@ function BattleRoom:registerNetworkCallbacks()
   self.setupListeners["leave_room"] = leaveRoomListener
   self.setupListeners["match_start"] = matchStartListener
   self.setupListeners["taunt"] = tauntListener
+  self.setupListeners["spectators"] = spectatorListListener
 
   self.runningMatchListeners = {}
 
@@ -36,12 +38,20 @@ function BattleRoom:registerNetworkCallbacks()
   self.runningMatchListeners["taunt"] = tauntListener
   self.runningMatchListeners["character_select"] = characterSelectListener
   self.runningMatchListeners["match_start"] = matchStartListener
+  self.runningMatchListeners["spectators"] = spectatorListListener
 end
 
 function BattleRoom:createListener(messageType, callback)
   local listener = MessageListener(messageType)
   listener:subscribe(self, callback)
   return listener
+end
+
+function BattleRoom:processSpectatorListMessage(message)
+  self.spectators = message.spectators
+  if self.match then
+    self.match:setSpectatorList(self.spectators)
+  end
 end
 
 function BattleRoom:processCharacterSelectMessage(message)

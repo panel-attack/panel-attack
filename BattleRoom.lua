@@ -174,6 +174,7 @@ function BattleRoom:createMatch()
     optionalArgs
   )
   Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+  self.match:setSpectatorList(self.spectators)
 
   return self.match
 end

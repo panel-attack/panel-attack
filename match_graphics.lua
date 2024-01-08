@@ -167,17 +167,10 @@ function Match:render()
         end
       end
 
-      -- local challengeMode = self.battleRoom and self.battleRoom.trainingModeSettings and self.battleRoom.trainingModeSettings.challengeMode
-      -- if challengeMode then
-      --   challengeMode:render()
-      -- end
-
-
       -- Draw VS HUD
       if self.stackInteraction == GameModes.StackInteractions.VERSUS then
         if not config.debug_mode then -- this is printed in the same space as the debug details
-          -- TODO: get spectator string from battleRoom
-          -- gprint(spectators_string, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
+          gprint(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
         end
 
         self:drawMatchType()

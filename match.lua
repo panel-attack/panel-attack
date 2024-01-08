@@ -12,6 +12,8 @@ local consts = require("consts")
 Match =
   class(
   function(self, players, doCountdown, stackInteraction, winConditions, gameOverConditions, supportsPause, optionalArgs)
+    self.spectators = {}
+    self.spectatorString = ""
     self.players = {}
     self.stacks = {}
     -- holds detached attackEngines, meaning attack engines that only deal; indexed via the player they're targeting
@@ -696,20 +698,19 @@ function Match:setSeed(seed)
   end
 end
 
--- list of spectators
--- parked here to get it out of network.network.lua
-function spectator_list_string(list)
+function Match:setSpectatorList(spectatorList)
+  self.spectators = spectatorList
   local str = ""
-  for k, v in ipairs(list) do
+  for k, v in ipairs(spectatorList) do
     str = str .. v
-    if k < #list then
+    if k < #spectatorList then
       str = str .. "\n"
     end
   end
   if str ~= "" then
     str = loc("pl_spectators") .. "\n" .. str
   end
-  return str
+  self.spectatorString = str
 end
 
 -- if there is no local player that means the client is either spectating (or watching a replay)
