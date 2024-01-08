@@ -116,20 +116,18 @@ end
 testStackStartingBoard3()
 
 local function testStackStartingBoard4()
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
   local p1 = battleRoom.players[1]
   p1:setLevel(8)
-  local p2 = battleRoom.players[2]
-  p2:setLevel(1)
 
-  local match = battleRoom:createMatch()
-  match:setSeed(4530333)
-  match:start()
+  local stack = p1:createStackFromSettings(battleRoom:createMatch(), 1)
   -- this seed tests for a certain bug that occured when a starting board row had no shock assignments left:
-  -- for this seed the starting board is 000000C00000430000Be405154A03dbC401352cE321E12e1
-  -- the third line is 430000 which is a number and therefore gets its shock panels reassigned again on the second run (thus advancing rng)
-  assert(p1.stack.panel_buffer == "c4A5245B3b411415Ce5Ce452d13E415c212Ea54C1254B12eaB4231353e1Da451B545c21DC25d211421Ebd35D1451C53bd21C433A51b153Ae13D151d135D53e4B54b1c12E1554e3B44B154eA5d1235434aBAe25245154eAA5a5144a3B53b315A41eB453235bD5Cd132423E41e513aB31e251BB151c5323e4Cb451C435a41C1d5A524542dEEd152432d3E3Bd214213Ac53E2414a312dE42e432C425Bd5E1213a454cE4b4514E1Eb513d35D543431bCa2E4522e1B435143bA13Ea32eD342132a2A4e1252C451dE1B3e3455B415c35bD252415dC1c5C5425A42e3d21C1d21B131dB131231Be2eD242435Ce134a432Ae23D531C21d5B1d3514B15b4145D5bcB124145cD24Bd25435252aBCd235453a5C2a25A533d252Aa3E4153131eAD54e433214bDE43a3115B5d3Ca3135")
-
+  stack.match:setSeed(4530333)
+  stack.panel_buffer = stack:makeStartingBoardPanels()
+  -- the second line is 430000 which is a number and therefore gets its shock panels reassigned again on the first run of makePanels (thus advancing rng)
+  assert(stack.panel_buffer == "C00000430000Be405154A03dbC401352cE321E12e1")
+  stack.panel_buffer = stack:makePanels()
+  assert(stack.panel_buffer == "C00000D30000Be405154A03dbC401352cE321E12e1425d3Ec4A5245B3b411415Ce5Ce452d13E415c212Ea54C1254B12eaB4231353e1Da451B545c21DC25d211421Ebd35D1451C53bd21C433A51b153Ae13D151d135D53e4B54b1c12E1554e3B44B154eA5d1235434aBAe25245154eAA5a5144a3B53b315A41eB453235bD5Cd132423E41e513aB31e251BB151c5323e4Cb451C435a41C1d5A524542dEEd152432d3E3Bd214213Ac53E2414a312dE42e432C425Bd5E1213a454cE4b4514E1Eb513d35D543431bCa2E4522e1B435143bA13Ea32eD342132a2A4e1252C451dE1B3e3455B415c35bD252415dC1c5C5425A42e3d21C1d21B131dB131231Be2eD242435Ce134a432Ae23D531C21d5B1d3514B15b4145D5bcB124145cD24Bd25435252aBCd235453a5C2a25A533d252Aa3E4153131eAD54e433214bDE43a3115B5d3Ca3135")
 end
 
 testStackStartingBoard4()

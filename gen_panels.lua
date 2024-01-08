@@ -5,8 +5,8 @@ local logger = require("logger")
 -- table of static functions used for generating panels
 local PanelGenerator = { rng = love.math.newRandomGenerator(), generatedCount = 0}
 
-PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", "I", [0] = "J"}
-PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", "i", [0] = "j" }
+PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", "I", [0] = "0"}
+PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", "i", [0] = "0" }
 PanelGenerator.PANEL_COLOR_TO_NUMBER = {
   ["A"] = 1, ["B"] = 2, ["C"] = 3, ["D"] = 4, ["E"] = 5, ["F"] = 6, ["G"] = 7, ["H"] = 8, ["I"] = 9, ["J"] = 0,
   ["a"] = 1, ["b"] = 2, ["c"] = 3, ["d"] = 4, ["e"] = 5, ["f"] = 6, ["g"] = 7, ["h"] = 8, ["i"] = 9, ["j"] = 0,
@@ -18,6 +18,7 @@ PanelGenerator.PANEL_COLOR_TO_NUMBER = {
 function PanelGenerator:setSeed(seed)
   if seed then
     self.generatedCount = 0
+    self.seed = seed
     self.rng:setSeed(seed)
   end
 end
@@ -97,19 +98,9 @@ function PanelGenerator.assignMetalLocations(ret, rowWidth)
         local chr_from_ret = string.sub(ret, (i - 1) * rowWidth + j, (i - 1) * rowWidth + j)
         local num_from_ret = tonumber(chr_from_ret)
         if j == first then
-          local char = (PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
-          if char:lower() ~= "j" then
-            new_row = new_row .. char
-          else
-            new_row = new_row .. "0"
-          end
+          new_row = new_row .. (PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
         elseif j == second then
-          local char = (PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
-          if char:lower() ~= "j" then
-            new_row = new_row .. char
-          else
-            new_row = new_row .. "0"
-          end
+          new_row = new_row .. (PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
         else
           new_row = new_row .. chr_from_ret
         end
