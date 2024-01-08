@@ -884,7 +884,7 @@ function Match:shouldRun(stack, runsSoFar)
   -- check the match specific conditions in match
   if not stack:game_ended() then
     if self.timeLimit then
-      if stack.game_stopwatch > self.timeLimit * 60 then
+      if stack.game_stopwatch and stack.game_stopwatch > self.timeLimit * 60 then
         -- the stack should only run 1 frame beyond the time limit (excluding countdown)
         return false
       end
