@@ -36,19 +36,18 @@ function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
 end
 
 function Match:drawTimer()
-  local stack = self.stacks[1]
-  if stack == nil or stack.game_stopwatch == nil or tonumber(stack.game_stopwatch) == nil then
-    -- Make sure we have a valid time to base off of
-    return
-  end
-
   -- Draw the timer for time attack
   if self.puzzle then
     -- puzzles don't have a timer...yet?
   else
-    local frames = stack.game_stopwatch
+    local frames = 0
+    local stack = self.stacks[1]
+    if stack ~= nil and stack.game_stopwatch ~= nil and tonumber(stack.game_stopwatch) ~= nil then
+      frames = stack.game_stopwatch
+    end
+
     if self.timeLimit then
-      frames = (self.timeLimit * 60) - stack.game_stopwatch
+      frames = (self.timeLimit * 60) - frames
       if frames < 0 then
         frames = 0
       end
@@ -56,8 +55,8 @@ function Match:drawTimer()
 
     local timeString = frames_to_time_string(frames, self.ended)
 
-    self:drawMatchLabel(stack.theme.images.IMG_time, stack.theme.timeLabel_Pos, stack.theme.timeLabel_Scale)
-    self:drawMatchTime(timeString, self.time_quads, stack.theme.time_Pos, stack.theme.time_Scale)
+    self:drawMatchLabel(themes[config.theme].images.IMG_time, themes[config.theme].timeLabel_Pos, themes[config.theme].timeLabel_Scale)
+    self:drawMatchTime(timeString, self.time_quads, themes[config.theme].time_Pos, themes[config.theme].time_Scale)
   end
 end
 
