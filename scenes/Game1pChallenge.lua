@@ -26,7 +26,7 @@ function Game1pChallenge:onMatchEnded(match)
   Replay.finalizeAndWriteReplay("Challenge Mode", "stage-" .. match.players[1].wins + 1, match.replay)
 end
 
-function Game1pChallenge:customDraw()
+function Game1pChallenge:drawHUD()
   local drawX = consts.CANVAS_WIDTH / 2
   local drawY = 110
   local width = 200
@@ -46,6 +46,14 @@ function Game1pChallenge:customDraw()
 
   drawY = 320
   self:drawTimeSplits(drawX, drawY)
+
+  if config.show_ingame_infos then
+    for i, stack in ipairs(self.match.stacks) do
+      if stack.player and stack.player.human then
+        stack:drawMultibar()
+      end
+    end
+  end
 end
 
 function Game1pChallenge:drawDifficultyName(drawX, drawY)

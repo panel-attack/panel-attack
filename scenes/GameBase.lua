@@ -53,10 +53,6 @@ function GameBase:abortGame() end
 -- called during runGame()
 function GameBase:customRun() end
 
--- Game mode specific behaviour for drawing on top of what match:render draws
--- called during runGame()
-function GameBase:customDraw() end
-
 -- Game mode specific state setup for a game over
 -- called during setupGameOver()
 function GameBase:customGameOverSetup() end
@@ -217,6 +213,16 @@ function GameBase:update(dt)
 end
 
 function GameBase:draw()
+  self:drawBackground()
+  self.match:render()
+  self:drawHUD()
+  if self.customDraw then
+    self:customDraw()
+  end
+  self:drawForegroundOverlay()
+end
+
+function GameBase:drawBackground()
   if self.backgroundImage then
     self.backgroundImage:draw()
   end
@@ -225,16 +231,36 @@ function GameBase:draw()
     local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
     menu_drawf(backgroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
   end
--- Render only if we are not catching up to a current spectate match
-  if tableUtils.trueForAll(self.match.players, function(p) return p.stack and not p.stack.play_to_end end) then
-    self.match:render()
-    self:customDraw()
-  end
+end
 
+function GameBase:drawForegroundOverlay()
   local foregroundOverlay = themes[config.theme].images.fg_overlay
   if foregroundOverlay then
     local scale = consts.CANVAS_WIDTH / math.max(foregroundOverlay:getWidth(), foregroundOverlay:getHeight()) -- keep image ratio
     menu_drawf(foregroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+  end
+end
+
+function GameBase:drawHUD()
+  for i, stack in ipairs(self.match.stacks) do
+    stack:drawMoveCount()
+    if config.show_ingame_infos then
+      if not self.puzzle then
+        stack:drawScore()
+        stack:drawSpeed()
+      end
+      stack:drawMultibar()
+    end
+
+    -- Draw VS HUD
+    if stack.player then
+      stack:drawPlayerName()
+      stack:drawWinCount()
+      stack:drawRating()
+    end
+
+    stack:drawLevel()
+    stack:drawAnalyticData()
   end
 end
 

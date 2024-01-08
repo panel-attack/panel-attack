@@ -381,181 +381,14 @@ function Stack:drawDebug()
   end
 end
 
--- Renders the player's stack on screen
-function Stack.render(self)
-  if self.canvas == nil then
-    return
-  end
-
-  self:setCanvas()
-  self:drawCharacter()
-
-  local characterObject = characters[self.character]
-
-  local metals
-  if self.opponentStack then
-    metals = panels[self.opponentStack.panels_dir].images.metals
-  else
-    metals = panels[self.panels_dir].images.metals
-  end
-  local metal_w, metal_h = metals.mid:getDimensions()
-  local metall_w, metall_h = metals.left:getDimensions()
-  local metalr_w, metalr_h = metals.right:getDimensions()
-
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
-
-  -- Draw all the panels
-  for row = 0, self.height do
-    for col = 1, self.width do
-      local panel = self.panels[row][col]
-      local draw_x = 4 + (col - 1) * 16
-      local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
-      if panel.color ~= 0 and panel.state ~= "popped" then
-        local draw_frame = 1
-        if panel.isGarbage then
-          local imgs = {flash = metals.flash}
-          if not panel.metal then
-            if not self.garbageTarget then
-              imgs = characterObject.images
-            else
-              imgs = characters[self.garbageTarget.character].images
-            end
-          end
-          if panel.x_offset == 0 and panel.y_offset == 0 then
-            -- draw the entire block!
-            if panel.metal then
-              draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-              draw(metals.right, draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
-              for i = 1, 2 * (panel.width - 1) do
-                draw(metals.mid, draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
-              end
-            else
-              local height, width = panel.height, panel.width
-              local top_y = draw_y - (height - 1) * 16
-              local use_1 = ((height - (height % 2)) / 2) % 2 == 0
-              local filler_w, filler_h = imgs.filler1:getDimensions()
-              for i = 0, height - 1 do
-                for j = 1, width - 1 do
-                  draw((use_1 or height < 3) and imgs.filler1 or imgs.filler2, draw_x + 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
-                  use_1 = not use_1
-                end
-              end
-              if height % 2 == 1 then
-                local face
-                if imgs.face2 and width % 2 == 1 then
-                  face = imgs.face2
-                else
-                  face = imgs.face
-                end
-                local face_w, face_h = face:getDimensions()
-                draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
-              else
-                local face_w, face_h = imgs.doubleface:getDimensions()
-                draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
-              end
-              local corner_w, corner_h = imgs.topleft:getDimensions()
-              local lr_w, lr_h = imgs.left:getDimensions()
-              local topbottom_w, topbottom_h = imgs.top:getDimensions()
-              draw(imgs.left, draw_x, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-              draw(imgs.right, draw_x + 16 * (width - 1) + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-              draw(imgs.top, draw_x, top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-              draw(imgs.bot, draw_x, draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-              draw(imgs.topleft, draw_x, top_y, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.topright, draw_x + 16 * width - 8, top_y, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.botleft, draw_x, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
-            end
-          end
-          if panel.state == "matched" then
-            local flash_time = panel.initial_time - panel.timer
-            if flash_time >= self.levelData.frameConstants.FLASH then
-              if panel.timer > panel.pop_time then
-                if panel.metal then
-                  draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                  draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
-                else
-                  local popped_w, popped_h = imgs.pop:getDimensions()
-                  draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
-                end
-              elseif panel.y_offset == -1 then
-                local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
-                draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
-              end
-            elseif flash_time % 2 == 1 then
-              if panel.metal then
-                draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
-              else
-                local popped_w, popped_h = imgs.pop:getDimensions()
-                draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
-              end
-            else
-              local flashed_w, flashed_h = imgs.flash:getDimensions()
-              draw(imgs.flash, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
-            end
-          end
-        else
-          if panel.state == "matched" then
-            local flash_time = self.levelData.frameConstants.FACE - panel.timer
-            if flash_time >= 0 then
-              draw_frame = 6
-            elseif flash_time % 2 == 1 then
-              draw_frame = 1
-            else
-              draw_frame = 5
-            end
-          elseif panel.state == "popping" then
-            draw_frame = 6
-          elseif panel.state == "landing" then
-            draw_frame = BOUNCE_TABLE[panel.timer + 1]
-          elseif panel.state == "swapping" then
-            if panel.isSwappingFromLeft then
-              draw_x = draw_x - panel.timer * 4
-            else
-              draw_x = draw_x + panel.timer * 4
-            end
-          elseif panel.state == "dead" then
-            draw_frame = 6
-          elseif panel.state == "dimmed" then
-            draw_frame = 7
-          elseif panel.fell_from_garbage then
-            draw_frame = GARBAGE_BOUNCE_TABLE[panel.fell_from_garbage] or 1
-          elseif self.danger_col[col] then
-            draw_frame = DANGER_BOUNCE_TABLE[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #DANGER_BOUNCE_TABLE)]
-          else
-            draw_frame = 1
-          end
-          local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
-          draw(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
-        end
-      end
-    end
-  end
-
-  self:drawFrame()
-  self:drawWall(shake, self.height)
-
-  -- Draw the cursor
-  if self:game_ended() == false then
-    self:render_cursor()
-  end
-
-  self:drawCountdown()
-  self:drawCanvas()
-
-  self:draw_popfxs()
-  self:draw_cards()
-
-  -- Draw debug graphics if set
-  if config.debug_mode then
-    local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
+function Stack:drawDebugPanels(shakeOffset)
+  local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
 
     for row = 0, math.min(self.height + 1, #self.panels) do
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.panelOriginX + (col - 1) * 16) * GFX_SCALE
-        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
+        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shakeOffset) * GFX_SCALE
 
         -- Require hovering over a stack to show details
         if mouseX >= self.panelOriginX * GFX_SCALE and mouseX <= (self.panelOriginX + self.width * 16) * GFX_SCALE then
@@ -587,215 +420,51 @@ function Stack.render(self)
         end
       end
     end
+end
+
+-- Renders the player's stack on screen
+function Stack.render(self)
+  if self.canvas == nil then
+    return
   end
 
+  self:setCanvas()
+  self:drawCharacter()
 
-  local function drawMoveCount()
-    -- draw outside of stack's frame canvas
-    if self.puzzle then
-      self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale, false, true)
-      local moveNumber = math.abs(self.puzzle.remaining_moves)
-      if self.puzzle.puzzleType == "moves" then
-        moveNumber = self.puzzle.remaining_moves
-      end
-      self:drawNumber(moveNumber, self.move_quads, self.theme.move_Pos, self.theme.move_Scale, true)
-    end
+  local garbageImages
+  local shockGarbageImages
+  if not self.garbageTarget then
+    garbageImages = characters[self.character].images
+  else
+    garbageImages = characters[self.garbageTarget.character].images
   end
 
-  local function drawScore()
-    self:drawLabel(self.theme.images["IMG_score_" .. self.which .. "P"], self.theme.scoreLabel_Pos, self.theme.scoreLabel_Scale)
-    self:drawNumber(self.score, self.score_quads, self.theme.score_Pos, self.theme.score_Scale)
+  if self.opponentStack then
+    shockGarbageImages = panels[self.opponentStack.panels_dir].images.metals
+  else
+    shockGarbageImages = panels[self.panels_dir].images.metals
   end
 
-  local function drawSpeed()
-    self:drawLabel(self.theme.images["IMG_speed" .. self.id], self.theme.speedLabel_Pos, self.theme.speedLabel_Scale)
-    self:drawNumber(self.speed, self.speed_quads, self.theme.speed_Pos, self.theme.speed_Scale)
+  local shake_idx = #shake_arr - self.shake_time
+  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+
+  self:drawPanels(garbageImages, shockGarbageImages, shake)
+
+  self:drawFrame()
+  self:drawWall(shake, self.height)
+
+  -- Draw the cursor
+  if self:game_ended() == false then
+    self:render_cursor()
   end
 
-  local function drawLevel()
-    if self.level then
-      self:drawLabel(self.theme.images["IMG_level" .. self.id], self.theme.levelLabel_Pos, self.theme.levelLabel_Scale)
-  
-      local x = self:elementOriginXWithOffset(self.theme.level_Pos, false) / GFX_SCALE
-      local y = self:elementOriginYWithOffset(self.theme.level_Pos, false) / GFX_SCALE
-      local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
-      self.level_quad:setViewport(tonumber(self.level - 1) * levelAtlas.charWidth, 0, levelAtlas.charWidth, levelAtlas.charHeight, levelAtlas.image:getDimensions())
-      qdraw(levelAtlas.image, self.level_quad, x, y, 0, (28 / levelAtlas.charWidth * self.theme.level_Scale) / GFX_SCALE, (26 / levelAtlas.charHeight * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
-    end
-  end
+  self:drawCountdown()
+  self:drawCanvas()
 
-  local function drawAnalyticData()
-    if not config.enable_analytics or not self.drawsAnalytics then
-      return
-    end
-  
-    local analytic = self.analytic
-    local backgroundPadding = 18
-    local paddingToAnalytics = 16
-    local width = 160
-    local height = 600
-    local x = paddingToAnalytics + backgroundPadding
-    if self.which == 2 then
-      x = consts.CANVAS_WIDTH - paddingToAnalytics - width + backgroundPadding
-    end
-    local y = self.frameOriginY * GFX_SCALE + backgroundPadding
-  
-    local iconToTextSpacing = 30
-    local nextIconIncrement = 30
-    local column2Distance = 70
-  
-    local fontIncrement = 8
-    local iconSize = 8
-    local icon_width
-    local icon_height
-  
-    -- Background
-    grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
-  
-    -- Panels cleared
-    icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
-    draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-  
-    y = y + nextIconIncrement
-  
-    -- Garbage sent
-    icon_width, icon_height = characters[self.character].images.face:getDimensions()
-    draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-  
-    y = y + nextIconIncrement
-  
-    -- GPM
-    if analytic.lastGPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
-      if self.clock > 0 and (analytic.data.sent_garbage_lines > 0) then
-        analytic.lastGPM = analytic:getRoundedGPM(self.clock)
-      end
-    end
-    icon_width, icon_height = self.theme.images.IMG_gpm:getDimensions()
-    draw(self.theme.images.IMG_gpm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
-  
-    y = y + nextIconIncrement
-  
-    -- Moves
-    icon_width, icon_height = self.theme.images.IMG_cursorCount:getDimensions()
-    draw(self.theme.images.IMG_cursorCount, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-  
-    y = y + nextIconIncrement
-  
-    -- Swaps
-    if self.theme.images.IMG_swap then
-      icon_width, icon_height = self.theme.images.IMG_swap:getDimensions()
-      draw(self.theme.images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    end
-    gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-  
-    y = y + nextIconIncrement
-  
-    -- APM
-    if analytic.lastAPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
-      if self.clock > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
-        local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.clock / 60 / 60)
-        analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
-      end
-    end
-    if self.theme.images.IMG_apm then
-      icon_width, icon_height = self.theme.images.IMG_apm:getDimensions()
-      draw(self.theme.images.IMG_apm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-    end
-    gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-  
-    y = y + nextIconIncrement
-  
-    local yCombo = y
-  
-    -- Clean up the chain data so we only show chains up to the highest chain the user has done
-    local chainData = {}
-    local chain_above_limit = analytic:compute_above_chain_card_limit()
-  
-    for i = 2, self.theme.chainCardLimit, 1 do
-      if not analytic.data.reached_chains[i] then
-        chainData[i] = 0
-      else
-        chainData[i] = analytic.data.reached_chains[i]
-      end
-    end
-    table.insert(chainData, chain_above_limit)
-    for i = #chainData, 0, -1 do
-      if chainData[i] and chainData[i] == 0 then
-        chainData[i] = nil
-      else
-        break
-      end
-    end
-  
-    -- Draw the chain images
-    for i = 2, self.theme.chainCardLimit + 1 do
-      local chain_amount = chainData[i]
-      if chain_amount and chain_amount > 0 then
-        local cardImage = self.theme:chainImage(i)
-        if cardImage then
-          icon_width, icon_height = cardImage:getDimensions()
-          draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-          gprintf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-          y = y + nextIconIncrement
-        end
-      end
-    end
-  
-    -- Clean up the combo data so we only show combos up to the highest combo the user has done
-    local comboData = shallowcpy(analytic.data.used_combos)
-  
-    for i = 4, 15, 1 do
-      if not comboData[i] then
-        comboData[i] = 0
-      end
-    end
-    local maxCombo = maxComboReached(analytic.data)
-    for i = maxCombo, 0, -1 do
-      if comboData[i] and comboData[i] == 0 then
-        comboData[i] = nil
-      else
-        break
-      end
-    end
-  
-    -- Draw the combo images
-    local xCombo = x + column2Distance
-    for i, combo_amount in pairs(comboData) do
-      if combo_amount and combo_amount > 0 then
-        local cardImage = self.theme:comboImage(i)
-        if cardImage then
-          icon_width, icon_height = cardImage:getDimensions()
-          draw(cardImage, xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-          gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
-          yCombo = yCombo + nextIconIncrement
-        end
-      end
-    end
-  end
+  self:draw_popfxs()
+  self:draw_cards()
 
-  drawMoveCount()
-  -- Draw the "extra" game info
-  if config.show_ingame_infos then
-    if not self.puzzle then
-      drawScore()
-      --drawSpeed()
-    end
-    self:drawMultibar()
-  end
-
-  -- Draw VS HUD
-  if self.player then
-    self:drawPlayerName()
-  --   self:drawWinCount()
-  --   self:drawRating()
-  end
-
-  --drawLevel()
-  drawAnalyticData()
+  self:drawDebugPanels(shake)
   self:drawDebug()
 end
 
@@ -822,7 +491,7 @@ function Stack:drawRating()
   if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) and roomRatings[self.player_number] and
       roomRatings[self.player_number].new and type(roomRatings[self.player_number].new) == "number"
       and roomRatings[self.player_number].new > 0 then
-      self:drawLabel(self.theme.images["IMG_rating" .. self.id], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
+      self:drawLabel(self.theme.images["IMG_rating_" .. self.which .. "P"], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
       self:drawNumber(roomRatings[self.player_number].new, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
   end
 end
@@ -939,5 +608,322 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   -- Prestop
   if self.theme.images.IMG_multibar_prestop_bar then
     qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, ((y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+  end
+end
+
+function Stack:drawScore()
+  self:drawLabel(self.theme.images["IMG_score_" .. self.which .. "P"], self.theme.scoreLabel_Pos, self.theme.scoreLabel_Scale)
+  self:drawNumber(self.score, self.score_quads, self.theme.score_Pos, self.theme.score_Scale)
+end
+
+function Stack:drawSpeed()
+  self:drawLabel(self.theme.images["IMG_speed_" .. self.which .. "P"], self.theme.speedLabel_Pos, self.theme.speedLabel_Scale)
+  self:drawNumber(self.speed, self.speed_quads, self.theme.speed_Pos, self.theme.speed_Scale)
+end
+
+function Stack:drawLevel()
+  if self.level then
+    self:drawLabel(self.theme.images["IMG_level_" .. self.which .. "P"], self.theme.levelLabel_Pos, self.theme.levelLabel_Scale)
+
+    local x = self:elementOriginXWithOffset(self.theme.level_Pos, false) / GFX_SCALE
+    local y = self:elementOriginYWithOffset(self.theme.level_Pos, false) / GFX_SCALE
+    local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
+    self.level_quad:setViewport(tonumber(self.level - 1) * levelAtlas.charWidth, 0, levelAtlas.charWidth, levelAtlas.charHeight, levelAtlas.image:getDimensions())
+    qdraw(levelAtlas.image, self.level_quad, x, y, 0, (28 / levelAtlas.charWidth * self.theme.level_Scale) / GFX_SCALE, (26 / levelAtlas.charHeight * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
+  end
+end
+
+function Stack:drawAnalyticData()
+  if not config.enable_analytics or not self.drawsAnalytics then
+    return
+  end
+
+  local analytic = self.analytic
+  local backgroundPadding = 18
+  local paddingToAnalytics = 16
+  local width = 160
+  local height = 600
+  local x = paddingToAnalytics + backgroundPadding
+  if self.which == 2 then
+    x = consts.CANVAS_WIDTH - paddingToAnalytics - width + backgroundPadding
+  end
+  local y = self.frameOriginY * GFX_SCALE + backgroundPadding
+
+  local iconToTextSpacing = 30
+  local nextIconIncrement = 30
+  local column2Distance = 70
+
+  local fontIncrement = 8
+  local iconSize = 8
+  local icon_width
+  local icon_height
+
+  -- Background
+  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+
+  -- Panels cleared
+  icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
+  draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- Garbage sent
+  icon_width, icon_height = characters[self.character].images.face:getDimensions()
+  draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- GPM
+  if analytic.lastGPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
+    if self.clock > 0 and (analytic.data.sent_garbage_lines > 0) then
+      analytic.lastGPM = analytic:getRoundedGPM(self.clock)
+    end
+  end
+  icon_width, icon_height = self.theme.images.IMG_gpm:getDimensions()
+  draw(self.theme.images.IMG_gpm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
+
+  y = y + nextIconIncrement
+
+  -- Moves
+  icon_width, icon_height = self.theme.images.IMG_cursorCount:getDimensions()
+  draw(self.theme.images.IMG_cursorCount, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- Swaps
+  if self.theme.images.IMG_swap then
+    icon_width, icon_height = self.theme.images.IMG_swap:getDimensions()
+    draw(self.theme.images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  end
+  gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  -- APM
+  if analytic.lastAPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
+    if self.clock > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
+      local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.clock / 60 / 60)
+      analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
+    end
+  end
+  if self.theme.images.IMG_apm then
+    icon_width, icon_height = self.theme.images.IMG_apm:getDimensions()
+    draw(self.theme.images.IMG_apm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+  end
+  gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+
+  y = y + nextIconIncrement
+
+  local yCombo = y
+
+  -- Clean up the chain data so we only show chains up to the highest chain the user has done
+  local chainData = {}
+  local chain_above_limit = analytic:compute_above_chain_card_limit()
+
+  for i = 2, self.theme.chainCardLimit, 1 do
+    if not analytic.data.reached_chains[i] then
+      chainData[i] = 0
+    else
+      chainData[i] = analytic.data.reached_chains[i]
+    end
+  end
+  table.insert(chainData, chain_above_limit)
+  for i = #chainData, 0, -1 do
+    if chainData[i] and chainData[i] == 0 then
+      chainData[i] = nil
+    else
+      break
+    end
+  end
+
+  -- Draw the chain images
+  for i = 2, self.theme.chainCardLimit + 1 do
+    local chain_amount = chainData[i]
+    if chain_amount and chain_amount > 0 then
+      local cardImage = self.theme:chainImage(i)
+      if cardImage then
+        icon_width, icon_height = cardImage:getDimensions()
+        draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        gprintf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        y = y + nextIconIncrement
+      end
+    end
+  end
+
+  -- Clean up the combo data so we only show combos up to the highest combo the user has done
+  local comboData = shallowcpy(analytic.data.used_combos)
+
+  for i = 4, 15, 1 do
+    if not comboData[i] then
+      comboData[i] = 0
+    end
+  end
+  local maxCombo = maxComboReached(analytic.data)
+  for i = maxCombo, 0, -1 do
+    if comboData[i] and comboData[i] == 0 then
+      comboData[i] = nil
+    else
+      break
+    end
+  end
+
+  -- Draw the combo images
+  local xCombo = x + column2Distance
+  for i, combo_amount in pairs(comboData) do
+    if combo_amount and combo_amount > 0 then
+      local cardImage = self.theme:comboImage(i)
+      if cardImage then
+        icon_width, icon_height = cardImage:getDimensions()
+        draw(cardImage, xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        yCombo = yCombo + nextIconIncrement
+      end
+    end
+  end
+end
+
+function Stack:drawMoveCount()
+  -- draw outside of stack's frame canvas
+  if self.puzzle then
+    self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale, false, true)
+    local moveNumber = math.abs(self.puzzle.remaining_moves)
+    if self.puzzle.puzzleType == "moves" then
+      moveNumber = self.puzzle.remaining_moves
+    end
+    self:drawNumber(moveNumber, self.move_quads, self.theme.move_Pos, self.theme.move_Scale, true)
+  end
+end
+
+function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
+  local metal_w, metal_h = shockGarbageImages.mid:getDimensions()
+  local metall_w, metall_h = shockGarbageImages.left:getDimensions()
+  local metalr_w, metalr_h = shockGarbageImages.right:getDimensions()
+
+  -- Draw all the panels
+  for row = 0, self.height do
+    for col = 1, self.width do
+      local panel = self.panels[row][col]
+      local draw_x = 4 + (col - 1) * 16
+      local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shakeOffset
+      if panel.color ~= 0 and panel.state ~= "popped" then
+        local draw_frame = 1
+        if panel.isGarbage then
+          local imgs = {flash = shockGarbageImages.flash}
+          if not panel.metal then
+            imgs = garbageImages
+          end
+          if panel.x_offset == 0 and panel.y_offset == 0 then
+            -- draw the entire block!
+            if panel.metal then
+              draw(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+              draw(shockGarbageImages.right, draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+              for i = 1, 2 * (panel.width - 1) do
+                draw(shockGarbageImages.mid, draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
+              end
+            else
+              local height, width = panel.height, panel.width
+              local top_y = draw_y - (height - 1) * 16
+              local use_1 = ((height - (height % 2)) / 2) % 2 == 0
+              local filler_w, filler_h = imgs.filler1:getDimensions()
+              for i = 0, height - 1 do
+                for j = 1, width - 1 do
+                  draw((use_1 or height < 3) and imgs.filler1 or imgs.filler2, draw_x + 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
+                  use_1 = not use_1
+                end
+              end
+              if height % 2 == 1 then
+                local face
+                if imgs.face2 and width % 2 == 1 then
+                  face = imgs.face2
+                else
+                  face = imgs.face
+                end
+                local face_w, face_h = face:getDimensions()
+                draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
+              else
+                local face_w, face_h = imgs.doubleface:getDimensions()
+                draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
+              end
+              local corner_w, corner_h = imgs.topleft:getDimensions()
+              local lr_w, lr_h = imgs.left:getDimensions()
+              local topbottom_w, topbottom_h = imgs.top:getDimensions()
+              draw(imgs.left, draw_x, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+              draw(imgs.right, draw_x + 16 * (width - 1) + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+              draw(imgs.top, draw_x, top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+              draw(imgs.bot, draw_x, draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+              draw(imgs.topleft, draw_x, top_y, 0, 8 / corner_w, 3 / corner_h)
+              draw(imgs.topright, draw_x + 16 * width - 8, top_y, 0, 8 / corner_w, 3 / corner_h)
+              draw(imgs.botleft, draw_x, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+              draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+            end
+          end
+          if panel.state == "matched" then
+            local flash_time = panel.initial_time - panel.timer
+            if flash_time >= self.levelData.frameConstants.FLASH then
+              if panel.timer > panel.pop_time then
+                if panel.metal then
+                  draw(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+                  draw(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+                else
+                  local popped_w, popped_h = imgs.pop:getDimensions()
+                  draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+                end
+              elseif panel.y_offset == -1 then
+                local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
+                draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
+              end
+            elseif flash_time % 2 == 1 then
+              if panel.metal then
+                draw(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+                draw(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+              else
+                local popped_w, popped_h = imgs.pop:getDimensions()
+                draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+              end
+            else
+              local flashed_w, flashed_h = imgs.flash:getDimensions()
+              draw(imgs.flash, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
+            end
+          end
+        else
+          if panel.state == "matched" then
+            local flash_time = self.levelData.frameConstants.FACE - panel.timer
+            if flash_time >= 0 then
+              draw_frame = 6
+            elseif flash_time % 2 == 1 then
+              draw_frame = 1
+            else
+              draw_frame = 5
+            end
+          elseif panel.state == "popping" then
+            draw_frame = 6
+          elseif panel.state == "landing" then
+            draw_frame = BOUNCE_TABLE[panel.timer + 1]
+          elseif panel.state == "swapping" then
+            if panel.isSwappingFromLeft then
+              draw_x = draw_x - panel.timer * 4
+            else
+              draw_x = draw_x + panel.timer * 4
+            end
+          elseif panel.state == "dead" then
+            draw_frame = 6
+          elseif panel.state == "dimmed" then
+            draw_frame = 7
+          elseif panel.fell_from_garbage then
+            draw_frame = GARBAGE_BOUNCE_TABLE[panel.fell_from_garbage] or 1
+          elseif self.danger_col[col] then
+            draw_frame = DANGER_BOUNCE_TABLE[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #DANGER_BOUNCE_TABLE)]
+          else
+            draw_frame = 1
+          end
+          local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
+          draw(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+        end
+      end
+    end
   end
 end
