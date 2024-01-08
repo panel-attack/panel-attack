@@ -256,7 +256,7 @@ end
 -- creates a match based on the room and player settings, starts it up and switches to the Game scene
 function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   -- TODO: lock down configuration to one per player to avoid macro like abuses via multiple configs
-
+  stop_the_music()
   local match = self:createMatch()
 
   match.replay = replayOfMatch
@@ -376,6 +376,7 @@ function BattleRoom:shutdown()
   if self.online and GAME.tcpClient:isConnected() then
     GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
   end
+  stop_the_music()
   self:shutdownNetwork()
   GAME:initializeLocalPlayer()
   GAME.battleRoom = nil
