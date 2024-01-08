@@ -347,7 +347,7 @@ function CharacterSelect:update()
 end
 
 function CharacterSelect:draw()
-  --self.backgroundImg:draw()
+  self.backgroundImg:draw()
   self.uiRoot:draw()
   self:customDraw()
 end
