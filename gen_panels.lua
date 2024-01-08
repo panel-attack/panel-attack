@@ -3,7 +3,7 @@ require("csprng")
 local logger = require("logger")
 
 -- table of static functions used for generating panels
-local PanelGenerator = { rng = love.math.newRandomGenerator()}
+local PanelGenerator = { rng = love.math.newRandomGenerator(), generatedCount = 0}
 
 PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", "I", [0] = "J"}
 PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", "i", [0] = "j" }
@@ -17,11 +17,13 @@ PanelGenerator.PANEL_COLOR_TO_NUMBER = {
 -- seed has to be a number
 function PanelGenerator:setSeed(seed)
   if seed then
+    self.generatedCount = 0
     self.rng:setSeed(seed)
   end
 end
 
 function PanelGenerator:random(min, max)
+  self.generatedCount = self.generatedCount + 1
   return self.rng:random(min, max)
 end
 
@@ -95,9 +97,19 @@ function PanelGenerator.assignMetalLocations(ret, rowWidth)
         local chr_from_ret = string.sub(ret, (i - 1) * rowWidth + j, (i - 1) * rowWidth + j)
         local num_from_ret = tonumber(chr_from_ret)
         if j == first then
-          new_row = new_row .. (PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
+          local char = (PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[num_from_ret] or chr_from_ret or "0")
+          if char:lower() ~= "j" then
+            new_row = new_row .. char
+          else
+            new_row = new_row .. "0"
+          end
         elseif j == second then
-          new_row = new_row .. (PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
+          local char = (PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER[num_from_ret] or chr_from_ret or "0")
+          if char:lower() ~= "j" then
+            new_row = new_row .. char
+          else
+            new_row = new_row .. "0"
+          end
         else
           new_row = new_row .. chr_from_ret
         end
