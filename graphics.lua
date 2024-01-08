@@ -848,7 +848,7 @@ function Stack:drawMultibar()
 end
 
 function Stack:drawRelativeMultibar(stop_time, shake_time)
-  self:drawLabel(self.theme.images.healthbarFrames, self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
+  self:drawLabel(self.theme.images.healthbarFrames.relative[self.which], self.theme.healthbar_frame_Pos, self.theme.healthbar_frame_Scale)
 
   -- Healthbar
   local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.levelData.maxHealth)
