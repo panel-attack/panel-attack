@@ -71,11 +71,13 @@ local function testStackStartingBoard1()
   stack.match:setSeed(7)
   stack.panel_buffer = stack:makePanels()
   assert(stack.panel_buffer == "0400000bC00201240a0D3305e32E114D535d21aD12")
+  -- simulate the first row being applied properly
+  stack.panel_buffer = stack.panel_buffer:sub(stack.width + 1)
   stack.panel_buffer = stack:makePanels()
-  assert(stack.panel_buffer == "0D00000bC00201240a0D3305e32E114D535d21aD123B21c3453b4EB115c135eA53aC1315344Eb142b44E5C4b11c1E5424234EeC14b232b15D4c1241B2c5E3341a34B545Ec1a3132E41bA313515dDe13D214e41A3B21b354d24D3E1425d1eE331332dE4A1e2322e33D3421b2EAe213233dE53e5113B1A3d4555b5E12d432C43e1C4b54D125Ca355453eA4e3432C24E5a2A24d2353B2c1d4332E25bD515c523B21bA551d35A2b3213E4b3B41b315A25d314D415bB55Ec453a311B12dE2155533Bd2B5b113525cE5B5a5235C4a31D122dC224a35e322AD35a551E422dB45d334221Bb5dA241b23E1414e4C1dC22435134cB15Ea255144Edb42E1351D4e43d513Cb533E433d51B423aD55d421A153aE2Cd132155B25eb353B1544b4B2A15c3E54b214aB143c54C214b213DB5e3455311eB4D3b14E2233b41Db213C15c252E14d114Eb3")
+  assert(stack.panel_buffer == "0bC00201240a0D3305e32E114D535d21aD123B21c3453b4EB115c135eA53aC1315344Eb142b44E5C4b11c1E5424234EeC14b232b15D4c1241B2c5E3341a34B545Ec1a3132E41bA313515dDe13D214e41A3B21b354d24D3E1425d1eE331332dE4A1e2322e33D3421b2EAe213233dE53e5113B1A3d4555b5E12d432C43e1C4b54D125Ca355453eA4e3432C24E5a2A24d2353B2c1d4332E25bD515c523B21bA551d35A2b3213E4b3B41b315A25d314D415bB55Ec453a311B12dE2155533Bd2B5b113525cE5B5a5235C4a31D122dC224a35e322AD35a551E422dB45d334221Bb5dA241b23E1414e4C1dC22435134cB15Ea255144Edb42E1351D4e43d513Cb533E433d51B423aD55d421A153aE2Cd132155B25eb353B1544b4B2A15c3E54b214aB143c54C214b213DB5e3455311eB4D3b14E2233b41Db213C15c252E14d114Eb3")
 end
 
---testStackStartingBoard1()
+testStackStartingBoard1()
 
 
 local function testStackStartingBoard2()
@@ -86,10 +88,17 @@ local function testStackStartingBoard2()
 
   local stack = player:createStackFromSettings(battleRoom:createMatch(), 1)
   stack.match:setSeed(8)
+  -- expected starting 7 rows (unprocessed):    312132464356316131624643241456614364463521
+  -- expected starting 7 rows (shock assigned): c12A324643EfCa6131624Fd32D145f614Cf446c52A
+  -- expected starting 7 rows (cut down):       0000004043E0C06130604Fd320145f614Cf446c52A
   stack.panel_buffer = stack:makePanels()
   assert(stack.panel_buffer == "0000004043E0C06130604Fd320145f614Cf446c52A")
+  -- simulate the first row being applied properly
+  stack.panel_buffer = stack.panel_buffer:sub(stack.width + 1)
+  -- expected 6+100 rows (unprocessed):   4043E0C06130604Fd320145f614Cf446c52A324212646461165316423125356436235151563515146246363634435425542652653264541613462461536146361534125451256532615421534263461542324165131216346354521463253241341536464343245656162515243642362356426535641621432436643165236513653431512342161514214623436254364316132623561216354153423465161531246465362514435131121314436136324214646451351514634246265635141264353132624641351526234131462565234621526434643562526131161316615464126212432356126434453265321432156343313632262521636134514321325253563461621345545161412612124143632526216463462156615613253454435623512362124536643452132534353253615642164531625652
+  -- expected 6+100 rows (shock assigned: 40D3E0C06130604Fd320145f614Cf446c52A3B4b1264f4F1Af531642c12E3E64c6B35a5156c5A5a46B463f36C4D35d2554B65bfE32645416aC4Fb461e36A463F15c412E45aB56e326154bA5Cd263d6154B3Bd165a3121F3Df354521dF325c24A3D15c6D6d3432D56e6A6b5152436Db3f2C5642f5C5F4162a432Dc6fD316523fE136E343aE1b3421f15A4B1462c4Cf2543643aFaC262356a21FcE415342Cd65aF153124F4f5362e1D4c51C1A2a3144C613f32d2A4fD6451351e1D63d2D6B6563e1d12F435cA32F2464a35Ae26b3413A4f2E652346BaE26d346D35f252F13a1f13A6615d6DA2f2124C235fA2f434453Bf532a43BAe634331Cf32B625b16Cf134514Cb1c2525C56c4F1621C4e5d51F1d1B6121B4a4363b5B62a646C462aE661e61CB534e4435f2CEa236212D5c6643D5b1c25C4353B5cFa5642164Ec1f2565B
   stack.panel_buffer = stack:makePanels()
-  assert(stack.panel_buffer == "00000040D3E0C06130604Fd320145f614Cf446c52A3B4b1264f4F1Af531642c12E3E64c6B35a5156c5A5a46B463f36C4D35d2554B65bfE32645416aC4Fb461e36A463F15c412E45aB56e326154bA5Cd263d6154B3Bd165a3121F3Df354521dF325c24A3D15c6D6d3432D56e6A6b5152436Db3f2C5642f5C5F4162a432Dc6fD316523fE136E343aE1b3421f15A4B1462c4Cf2543643aFaC262356a21FcE415342Cd65aF153124F4f5362e1D4c51C1A2a3144C613f32d2A4fD6451351e1D63d2D6B6563e1d12F435cA32F2464a35Ae26b3413A4f2E652346BaE26d346D35f252F13a1f13A6615d6DA2f2124C235fA2f434453Bf532a43BAe634331Cf32B625b16Cf134514Cb1c2525C56c4F1621C4e5d51F1d1B6121B4a4363b5B62a646C462aE661e61CB534e4435f2CEa236212D5c6643D5b1c25C4353B5cFa5642164Ec1f2565B")
+  assert(stack.panel_buffer == "40D3E0C06130604Fd320145f614Cf446c52A3B4b1264f4F1Af531642c12E3E64c6B35a5156c5A5a46B463f36C4D35d2554B65bfE32645416aC4Fb461e36A463F15c412E45aB56e326154bA5Cd263d6154B3Bd165a3121F3Df354521dF325c24A3D15c6D6d3432D56e6A6b5152436Db3f2C5642f5C5F4162a432Dc6fD316523fE136E343aE1b3421f15A4B1462c4Cf2543643aFaC262356a21FcE415342Cd65aF153124F4f5362e1D4c51C1A2a3144C613f32d2A4fD6451351e1D63d2D6B6563e1d12F435cA32F2464a35Ae26b3413A4f2E652346BaE26d346D35f252F13a1f13A6615d6DA2f2124C235fA2f434453Bf532a43BAe634331Cf32B625b16Cf134514Cb1c2525C56c4F1621C4e5d51F1d1B6121B4a4363b5B62a646C462aE661e61CB534e4435f2CEa236212D5c6643D5b1c25C4353B5cFa5642164Ec1f2565B")
   -- why is the already processed row 4043E0 changing here again even though it already has an upper case letter?
   local thisIsANumber = tonumber("4043E0")
   assert(thisIsANumber)
@@ -97,7 +106,7 @@ local function testStackStartingBoard2()
   -- for compatibility with seeds in replays, these rows being reprocessed for metal has to be considered correct behaviour
 end
 
---testStackStartingBoard2()
+testStackStartingBoard2()
 
 local function testStackStartingBoard3()
   local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
@@ -125,8 +134,45 @@ local function testStackStartingBoard4()
   stack.panel_buffer = stack:makePanels()
   -- the second line is 430000 which is a number and therefore gets its shock panels reassigned again on the first run of makePanels (thus advancing rng)
   assert(stack.panel_buffer == "C00000430000Be405154A03dbC401352cE321E12e1")
+  -- simulate the first row being applied properly
+  stack.panel_buffer = stack.panel_buffer:sub(stack.width + 1)
   stack.panel_buffer = stack:makePanels()
-  assert(stack.panel_buffer == "C00000430000Be405154A03dbC401352cE321E12e1425d3Ec4A5245B3b411415Ce5Ce452d13E415c212Ea54C1254B12eaB4231353e1Da451B545c21DC25d211421Ebd35D1451C53bd21C433A51b153Ae13D151d135D53e4B54b1c12E1554e3B44B154eA5d1235434aBAe25245154eAA5a5144a3B53b315A41eB453235bD5Cd132423E41e513aB31e251BB151c5323e4Cb451C435a41C1d5A524542dEEd152432d3E3Bd214213Ac53E2414a312dE42e432C425Bd5E1213a454cE4b4514E1Eb513d35D543431bCa2E4522e1B435143bA13Ea32eD342132a2A4e1252C451dE1B3e3455B415c35bD252415dC1c5C5425A42e3d21C1d21B131dB131231Be2eD242435Ce134a432Ae23D531C21d5B1d3514B15b4145D5bcB124145cD24Bd25435252aBCd235453a5C2a25A533d252Aa3E4153131eAD54e433214bDE43a3115B5d3Ca3135")
+  assert(stack.panel_buffer == "D30000Be405154A03dbC401352cE321E12e1425d3Ec4A5245B3b411415Ce5Ce452d13E415c212Ea54C1254B12eaB4231353e1Da451B545c21DC25d211421Ebd35D1451C53bd21C433A51b153Ae13D151d135D53e4B54b1c12E1554e3B44B154eA5d1235434aBAe25245154eAA5a5144a3B53b315A41eB453235bD5Cd132423E41e513aB31e251BB151c5323e4Cb451C435a41C1d5A524542dEEd152432d3E3Bd214213Ac53E2414a312dE42e432C425Bd5E1213a454cE4b4514E1Eb513d35D543431bCa2E4522e1B435143bA13Ea32eD342132a2A4e1252C451dE1B3e3455B415c35bD252415dC1c5C5425A42e3d21C1d21B131dB131231Be2eD242435Ce134a432Ae23D531C21d5B1d3514B15b4145D5bcB124145cD24Bd25435252aBCd235453a5C2a25A533d252Aa3E4153131eAD54e433214bDE43a3115B5d3Ca3135")
 end
 
---testStackStartingBoard4()
+testStackStartingBoard4()
+
+--[[
+  Why PanelGen cannot be touched or get called without losing backward compatibility for replays:
+  The big big issue is how shock panels are assigned.
+  The general outline is:
+  1. A seed is set on the pseudo random number generator (PRNG)
+  2. The panels are being generated while backreferencing the last row of the existing panel buffer
+     (everything still okay here)
+  3. The shock position assignment runs through the ENTIRE panel buffer, including parts that already ran through it on an earlier panel gen
+     In this run it processes every line that doesn't return `nil` when thrown into `tonumber()`.
+     This is a major issue when it comes to starting boards.
+     Starting boards are generated from a 7 line high board that then has panels eliminated from top to bottom (still using the same PRNG)
+     Elimination is represented by replacing the respective character with a 0.
+     This can also hit the assigned shock locations so that a row may end up as something that returns a number when thrown into `tonumber()`
+     e.g. as verified in testStackStartingBoard2
+     raw color generation yields
+     312132464356316131624643241456614364463521
+     shock assignments transform this into
+     c12A324643EfCa6131624Fd32D145f614Cf446c52A
+     then the starting board routine cuts it down by 12 panels into this
+     0000004043E0C06130604Fd320145f614Cf446c52A
+     the rows 000000 and 4043E0 both evaluate to numbers (E being interpreted as an exponent)
+     that means in the panel gen process that follows the starting board, we get extra calls to random to reprocess these 2 rows in shock assignment
+     What is important in regards to the historical implementation is the following:
+     The first row got processed and cut out always, that means the first row of the starting board never got reprocessed by the next one (so not advancing the PRNG)
+     The second one however will get processed and advance the PRNG.
+     The trick is really to process in the exact same way so that the PRNG was advanced the correct number of times from the seed to get the same results
+
+     Beyond the starting board having this shitty interaction:
+     all following panel gens should easily be consistent as these 0 "corrupted" lines are no longer in the panel buffer by that time 
+     (and I'm not aware of any lines with 2 letters being interpreted as a number)
+     so in theory it IS actually possible to move starting board generation outside of `Stack.new_row` and handle it in `starting_state`
+     just have to find a way to apply the first row and remove it from the panel buffer before calling the panel buffer again
+     this could for example be achieved by moving the panel gen code to the end of `new_row` so that the first row is out in any case
+]]--
