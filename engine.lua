@@ -68,6 +68,8 @@ Stack =
     local level = arguments.level
     local difficulty = arguments.difficulty
 
+    s.gameOverConditions = arguments.gameOverConditions or {GameModes.GameOverConditions.NEGATIVE_HEALTH}
+
     local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local player_number = arguments.player_number or which
   
@@ -1276,8 +1278,8 @@ function Stack.simulate(self)
       else
         if self.panels_in_top_row then
           self.health = self.health - 1
-          if self.health < 1 and self.shake_time < 1 then
-            self:set_game_over()
+          if self:checkGameOver() then
+            self.game_over_clock = self.clock
           end
         else
           if not self.puzzle then
@@ -1382,7 +1384,9 @@ function Stack.simulate(self)
     if self.manual_raise and not self.puzzle then
       if not self.rise_lock then
         if self.panels_in_top_row then
-          self:set_game_over()
+          if self:checkGameOver() then
+            self.game_over_clock = self.clock
+          end
         end
         self.has_risen = true
         self.displacement = self.displacement - 1
@@ -2260,5 +2264,27 @@ function Stack:makeStartingBoardPanels()
 
   PanelGenerator.privateCheckPanels(ret, self.width)
 
-return ret
+  return ret
+end
+
+function Stack:checkGameOver()
+  if self.game_over_clock <= 0 then
+    for _, gameOverCondition in ipairs(self.gameOverConditions) do
+      if gameOverCondition == GameModes.GameOverConditions.NEGATIVE_HEALTH then
+        if self.health <= 0 and self.shake_time <= 0 then
+          return true
+        elseif self.panels_in_top_row and self.manual_raise then
+          return true
+        end
+      elseif gameOverCondition == GameModes.GameOverConditions.NO_MOVES_LEFT then
+        if self.puzzle.remaining_moves <= 0 then
+          return true
+        end
+      elseif gameOverCondition == GameModes.GameOverConditions.CHAIN_DROPPED then
+        if not self:hasChainingPanels() then
+          return true
+        end
+      end
+    end
+  end
 end

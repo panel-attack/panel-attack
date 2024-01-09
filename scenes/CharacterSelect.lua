@@ -253,7 +253,7 @@ end
 function CharacterSelect:createLevelSlider(player, imageWidth)
   local levelSlider = LevelSlider({
     tickLength = imageWidth,
-    value = config.level or 5,
+    value = player.settings.level,
     onValueChange = function(s)
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end,
