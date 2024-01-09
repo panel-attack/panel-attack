@@ -859,7 +859,6 @@ end
 
 -- Setup the stack at a new starting state
 function Stack.starting_state(self, n)
-  self.panel_buffer = self:makeStartingBoardPanels()
   if self.do_first_row then
     self.do_first_row = nil
     for i = 1, (n or 8) do
@@ -2220,17 +2219,20 @@ end
 
 function Stack:makePanels()
   PanelGenerator:setSeed(self.match.seed + self.panelGenCount)
+  local ret
+  if self.panel_buffer == "" then
+    ret = self:makeStartingBoardPanels()
+  else
+    ret = PanelGenerator.privateGeneratePanels(100, self.width, self.levelData.colors, self.panel_buffer, not self.allowAdjacentColors)
+    ret = PanelGenerator.assignMetalLocations(ret, self.width)
+  end
 
-  local ret = PanelGenerator.privateGeneratePanels(100, self.width, self.levelData.colors, self.panel_buffer, not self.allowAdjacentColors)
-  ret = PanelGenerator.assignMetalLocations(ret, self.width)
   self.panelGenCount = self.panelGenCount + 1
 
   return ret
 end
 
 function Stack:makeStartingBoardPanels()
-  PanelGenerator:setSeed(self.match.seed)
-
   local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
 
   local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.levelData.colors, self.panel_buffer, not allowAdjacentColors)
@@ -2256,21 +2258,7 @@ function Stack:makeStartingBoardPanels()
   ret = table.concat(ret)
   ret = string.sub(ret, self.width + 1)
 
-  -- now comes slightly silly thanks to refactoring:
-  -- this starting board goes in full into the next panel generation and will get processed by PanelGenerator.assignMetalLocations again
-  -- in the past, the top row had already been consumed at this point in time
-  -- that function tries to have metal positions assigned for every single row 
-  -- in the starting board, due to the board having 0s, in the top row it may not be possible for assignMetalLocations to find a placement
-  -- in that case it would try that line the next time (and fail) and while doing that, advance the RNG
-  -- to prevent that, convert the first number to its letter equivalent
-  if not string.match(ret:sub(1, self.width), "%a") then
-    local char = ret:sub(1, 1)
-    ret = ret:gsub(ret:sub(1, 1), PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER[tonumber(char)], 1)
-  end
-
   PanelGenerator.privateCheckPanels(ret, self.width)
-
-  self.panelGenCount = self.panelGenCount + 1
 
 return ret
 end

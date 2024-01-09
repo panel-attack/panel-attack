@@ -3,10 +3,10 @@ require("csprng")
 local logger = require("logger")
 
 -- table of static functions used for generating panels
-local PanelGenerator = { rng = love.math.newRandomGenerator()}
+local PanelGenerator = { rng = love.math.newRandomGenerator(), generatedCount = 0}
 
-PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", "I", [0] = "J"}
-PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", "i", [0] = "j" }
+PanelGenerator.PANEL_COLOR_NUMBER_TO_UPPER = {"A", "B", "C", "D", "E", "F", "G", "H", "I", [0] = "0"}
+PanelGenerator.PANEL_COLOR_NUMBER_TO_LOWER = {"a", "b", "c", "d", "e", "f", "g", "h", "i", [0] = "0" }
 PanelGenerator.PANEL_COLOR_TO_NUMBER = {
   ["A"] = 1, ["B"] = 2, ["C"] = 3, ["D"] = 4, ["E"] = 5, ["F"] = 6, ["G"] = 7, ["H"] = 8, ["I"] = 9, ["J"] = 0,
   ["a"] = 1, ["b"] = 2, ["c"] = 3, ["d"] = 4, ["e"] = 5, ["f"] = 6, ["g"] = 7, ["h"] = 8, ["i"] = 9, ["j"] = 0,
@@ -17,11 +17,14 @@ PanelGenerator.PANEL_COLOR_TO_NUMBER = {
 -- seed has to be a number
 function PanelGenerator:setSeed(seed)
   if seed then
+    self.generatedCount = 0
+    self.seed = seed
     self.rng:setSeed(seed)
   end
 end
 
 function PanelGenerator:random(min, max)
+  self.generatedCount = self.generatedCount + 1
   return self.rng:random(min, max)
 end
 

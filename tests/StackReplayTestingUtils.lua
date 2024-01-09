@@ -11,30 +11,29 @@ function StackReplayTestingUtils:simulateReplayWithPath(path)
 end
 
 function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wantsCanvas, playerCount, theme)
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
   if playerCount == nil then
     playerCount = 1
+  elseif playerCount == 2 then
+    local player = Player.getLocalPlayer()
+    battleRoom:addPlayer(player)
   end
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
-  battleRoom.players[1].settings.speed = speed
-  battleRoom.players[1].settings.difficulty = difficulty
-  battleRoom.players[1].settings.level = level
-  if level then
-    battleRoom.players[1].settings.style = GameModes.Styles.MODERN
-  else
-    battleRoom.players[1].settings.style = GameModes.Styles.CLASSIC
+  for _, player in ipairs(battleRoom.players) do
+    if speed then
+      player:setSpeed(speed)
+    end
+    if difficulty then
+      player:setDifficulty(difficulty)
+    end
+    if level then
+      player:setLevel(level)
+    end
   end
 
-  if playerCount == 2 then
-    local player = Player.getLocalPlayer()
-    player.settings.speed = speed
-    player.settings.difficulty = difficulty
-    player.settings.level = level
-    if level then
-      player.settings.style = GameModes.Styles.MODERN
-    else
-      player.settings.style = GameModes.Styles.CLASSIC
-    end
-    battleRoom:addPlayer(player)
+  if level then
+    battleRoom:setStyle(GameModes.Styles.MODERN)
+  else
+    battleRoom:setStyle(GameModes.Styles.CLASSIC)
   end
 
   local match = battleRoom:createMatch()
