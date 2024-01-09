@@ -126,6 +126,8 @@ end
 
 function Player:setLevelData(levelData)
   self.settings.levelData = levelData
+  self:setColorCount(levelData.colors)
+  self:setSpeed(levelData.startingSpeed)
   self:onPropertyChanged("levelData")
 end
 
