@@ -22,8 +22,6 @@ require("engine.panel")
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 
-local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
-
 local GARBAGE_TO_SHAKE_TIME = {
   [0] = 0,
   18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
@@ -34,6 +32,8 @@ local GARBAGE_TO_SHAKE_TIME = {
 for i=25,1000 do
   GARBAGE_TO_SHAKE_TIME[i] = GARBAGE_TO_SHAKE_TIME[i-1]
 end
+
+local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
 
 -- endless and 1P time attack use a speed system in which
 -- speed increases based on the number of panels you clear.
@@ -76,6 +76,11 @@ Stack =
     local character = arguments.character or config.character
     local theme = arguments.theme or themes[config.theme]
     s.allowAdjacentColors = arguments.allowAdjacentColors
+
+    -- the behaviour table contains a bunch of flags to modify the stack behaviour for custom game modes in broader chunks of functionality
+    s.behaviours = {}
+    s.behaviours.passiveRaise = true
+    s.behaviours.allowManualRaise = true
 
     s.match = match
     s.character = character
@@ -1268,33 +1273,30 @@ function Stack.simulate(self)
 
     -- Phase 0 //////////////////////////////////////////////////////////////
     -- Stack automatic rising
-    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
-      if self.puzzle then
-        -- only reduce health after the first swap to give the player a chance to strategize
-        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
-          self.health = self.health - 1
-          -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
-        end
-      else
+    if self.behaviours.passiveRaise then
+      if not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
         if self.panels_in_top_row then
-          self.health = self.health - 1
-          if self:checkGameOver() then
-            self.game_over_clock = self.clock
+          if self.puzzle and self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
+            -- only reduce health after the first swap to give the player a chance to strategize
+          else
+            self.health = self.health - 1
           end
         else
-          if not self.puzzle then
-            self.rise_timer = self.rise_timer - 1
-            if self.rise_timer <= 0 then -- try to rise
-              self.displacement = self.displacement - 1
-              if self.displacement == 0 then
-                self.prevent_manual_raise = false
-                self.top_cur_row = self.height
-                self:new_row()
-              end
-              self.rise_timer = self.rise_timer + consts.SPEED_TO_RISE_TIME[self.speed]
+          self.rise_timer = self.rise_timer - 1
+          if self.rise_timer <= 0 then -- try to rise
+            self.displacement = self.displacement - 1
+            if self.displacement == 0 then
+              self.prevent_manual_raise = false
+              self.top_cur_row = self.height
+              self:new_row()
             end
+            self.rise_timer = self.rise_timer + consts.SPEED_TO_RISE_TIME[self.speed]
           end
         end
+      end
+
+      if self:checkGameOver() then
+        self.game_over_clock = self.clock
       end
     end
 
