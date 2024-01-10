@@ -232,7 +232,7 @@ function Telegraph.pop_all_ready_garbage(self, time_to_check, just_peeking)
   --remove any combo stoppers that expire this frame,
   for combo_garbage_width, combo_release_frame in pairs(subject.stoppers.combo) do
     if combo_release_frame <= time_to_check then
-      logger.debug("removing a combo stopper at " .. combo_release_frame)
+      logger.trace("removing a combo stopper at " .. combo_release_frame)
       subject.stoppers.combo[combo_garbage_width] = nil
     else 
       n_combo_stoppers = n_combo_stoppers + 1

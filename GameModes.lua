@@ -7,8 +7,13 @@ local GameModes = {}
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
 local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
-local WinConditions = { LAST_ALIVE = 1, SCORE = 2, TIME = 3, NO_MATCHABLE_PANELS = 4, NO_MATCHABLE_GARBAGE = 5 }
-local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, SCORE_REACHED = 3, NO_MOVES_LEFT = 4, CHAIN_DROPPED = 5 }
+
+-- these are competitive win conditions to determine a winner across multiple stacks
+local MatchWinConditions = { LAST_ALIVE = 1, SCORE = 2, TIME = 3 }
+-- these are game winning objectives on the stack level, the stack stops running without going game over
+local GameWinConditions = { NO_MATCHABLE_PANELS = 1, NO_MATCHABLE_GARBAGE = 2, SCORE_REACHED = 3}
+-- these are game losing objectives on the stack level, the stack goes game over
+local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, NO_MOVES_LEFT = 3, CHAIN_DROPPED = 4 }
 
 local OnePlayerVsSelf = {
   style = Styles.MODERN,
@@ -124,7 +129,7 @@ local OnePlayerChallenge = {
   -- already known match properties
   playerCount = 1,
   stackInteraction = StackInteractions.VERSUS,
-  winConditions = { WinConditions.LAST_ALIVE },
+  winConditions = { MatchWinConditions.LAST_ALIVE },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
 
@@ -143,7 +148,7 @@ local TwoPlayerVersus = {
   -- already known match properties
   playerCount = 2,
   stackInteraction = StackInteractions.VERSUS,
-  winConditions = { WinConditions.LAST_ALIVE},
+  winConditions = { MatchWinConditions.LAST_ALIVE},
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
 
@@ -156,7 +161,8 @@ local TwoPlayerVersus = {
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
 GameModes.StackInteractions = StackInteractions
-GameModes.WinConditions = WinConditions
+GameModes.WinConditions = MatchWinConditions
+GameModes.GameWinConditions = GameWinConditions
 GameModes.GameOverConditions = GameOverConditions
 
 local privateGameModes = {}

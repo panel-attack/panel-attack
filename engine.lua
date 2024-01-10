@@ -69,6 +69,7 @@ Stack =
     local difficulty = arguments.difficulty
 
     s.gameOverConditions = arguments.gameOverConditions or {GameModes.GameOverConditions.NEGATIVE_HEALTH}
+    s.gameWinConditions = arguments.gameWinConditions or {}
 
     local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local player_number = arguments.player_number or which
@@ -682,8 +683,12 @@ function Stack.set_puzzle_state(self, puzzle)
 
   if puzzle.puzzleType == "clear" then
     self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NEGATIVE_HEALTH
+    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE
   elseif puzzle.puzzleType == "chain" then
     self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.CHAIN_DROPPED
+    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameOverConditions.NO_MATCHABLE_PANELS
+  elseif puzzle.puzzleType == "moves" then
+    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameOverConditions.NO_MATCHABLE_PANELS
   end
 
   -- transform any cleared garbage into colorless garbage panels
@@ -818,29 +823,6 @@ function Stack.hasGarbage(self)
       if self.panels[row][column].isGarbage
         and self.panels[row][column].state ~= "matched" then
         return true
-      end
-    end
-  end
-
-  return false
-end
-
-function Stack.puzzle_failed(self)
-  if not self.do_countdown and not self:hasActivePanels() then
-    if self.puzzle.puzzleType == "moves" then
-        return self.puzzle.remaining_moves == 0
-    elseif self.puzzle.puzzleType == "chain" then
-      if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
-        -- We finished matching but never made a chain -> fail
-        return true
-      end
-      if #self.analytic.data.reached_chains > 0 and not self:hasChainingPanels() then
-        -- We achieved a chain, finished chaining, but haven't won yet -> fail
-        return true
-      end
-    elseif self.puzzle.puzzleType == "clear" then
-      if self:hasGarbage() then
-        return (self.puzzle.moves > 0 and self.puzzle.remaining_moves <= 0) or self.health <= 0
       end
     end
   end
@@ -1400,7 +1382,11 @@ function Stack.simulate(self)
     if self.behaviours.allowManualRaise then
       if self.manual_raise then
         if not self.rise_lock then
-          if not self.panels_in_top_row then
+          if self.panels_in_top_row then
+            if self:checkGameOver() then
+              self.game_over_clock = self.clock
+            end
+          else
             self.has_risen = true
             self.displacement = self.displacement - 1
             if self.displacement == 1 then
@@ -1420,10 +1406,6 @@ function Stack.simulate(self)
       -- if the stack is rise locked when you press the raise button,
       -- the raising is cancelled
       end
-    end
-
-    if self:checkGameOver() then
-      self.game_over_clock = self.clock
     end
 
     -- if at the end of the routine there are no chain panels, the chain ends.
@@ -1705,10 +1687,11 @@ function Stack:game_ended()
   if self.game_over_clock > 0 then
     return self.clock >= self.game_over_clock
   else
-    if self.puzzle and self:puzzle_done() then
-      return true
+    if #self.gameOverConditions > 0 then
+      return self:checkGameWin()
+    else
+      return false
     end
-    return false
   end
 end
 
@@ -2287,7 +2270,7 @@ function Stack:checkGameOver()
       if gameOverCondition == GameModes.GameOverConditions.NEGATIVE_HEALTH then
         if self.health <= 0 and self.shake_time <= 0 then
           return true
-        elseif self.panels_in_top_row and self.manual_raise then
+        elseif not self.rise_lock and self.behaviours.allowManualRaise and self.panels_in_top_row and self.manual_raise then
           return true
         end
       elseif gameOverCondition == GameModes.GameOverConditions.NO_MOVES_LEFT then
@@ -2308,4 +2291,29 @@ function Stack:checkGameOver()
   else
     return true
   end
+end
+
+function Stack:checkGameWin()
+  for _, gameWinCondition in ipairs(self.gameWinConditions) do
+    if gameWinCondition == GameModes.GameWinConditions.NO_MATCHABLE_PANELS then
+      local panels = self.panels
+      local matchablePanelFound = false
+      for row = 1, self.height do
+        for col = 1, self.width do
+          local color = panels[row][col].color
+          if color ~= 0 and color ~= 9 then
+             matchablePanelFound = true
+          end
+        end
+      end
+      if not matchablePanelFound then
+        return true
+      end
+    elseif gameWinCondition == GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE then
+      if not self:hasGarbage() then
+        return true
+      end
+    end
+  end
+  return false
 end
