@@ -1270,9 +1270,7 @@ function Stack.simulate(self)
       end
     end
 
-    -- TODO: allow clear puzzles to have more than 12 rows so that downstacking isn't feasible
-    -- then this "not self.puzzle" condition can get removed (it's only there to avoid clear puzzles bricking/resetting health)
-    if not self.panels_in_top_row and not self.puzzle and not self:has_falling_garbage() then
+    if not self.panels_in_top_row and not self:has_falling_garbage() then
       self.health = self.levelData.maxHealth
     end
 
