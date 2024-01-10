@@ -92,7 +92,8 @@ function BattleRoom.createFromServerMessage(message)
     GAME.localPlayer.playerNumber = message.players[1].playerNumber
     GAME.localPlayer.rating = message.players[1].ratingInfo
 
-    local player2 = Player(message.players[2].name, message.players[2].playerNumber, false)
+    local player2 = Player(message.players[2].name, -1, false)
+    player2.playerNumber = message.players[2].playerNumber
     player2:updateWithMenuState(message.players[2])
     battleRoom:addPlayer(player2)
   end
@@ -198,7 +199,9 @@ function BattleRoom:addPlayer(player)
     end
   end
 
-  player.playerNumber = #self.players + 1
+  if not player.playerNumber then
+    player.playerNumber = #self.players + 1
+  end
   self.players[#self.players + 1] = player
 end
 

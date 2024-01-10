@@ -90,18 +90,22 @@ function ServerMessages.sanitizeCreateRoom(message)
   ]]--
   local players = {}
   players[1] = ServerMessages.sanitizeMenuState(message.a_menu_state)
-  -- the recipient is "you"!
-  players[1].playerNumber = message.your_player_number
-  players[1].name = config.name
-
+  -- convention, a_menu_state belongs to player_number 1
+  players[1].playerNumber = 1
   players[2] = ServerMessages.sanitizeMenuState(message.b_menu_state)
-  players[2].name = message.opponent
-  players[2].playerNumber = message.op_player_number
-
+  -- convention, b_menu_state belongs to player_number 2
+  players[2].playerNumber = 2
   if message.rating_updates then
     players[1].ratingInfo = message.ratings[1]
     players[2].ratingInfo = message.ratings[2]
   end
+
+  if message.your_player_number == 2 then
+    -- players 1 is expected to be the local player
+    players[1], players[2] = players[2], players[1]
+  end
+
+  players[2].name = message.opponent
 
   return { create_room = true, sanitized = true, players = players}
 end
