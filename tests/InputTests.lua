@@ -26,6 +26,11 @@ local function testSameFrameKeyPressRelease()
   match.P1:send_controls()
   match.P1:run()
   assert(match.P1.confirmedInput[201] == "g")
+  CustomRun.processEvents()
+  input:update(1/60)
+  match.P1:send_controls()
+  match.P1:run()
+  assert(match.P1.confirmedInput[202] == "A")
   match.P1.player:unrestrictInputs()
 end
 
