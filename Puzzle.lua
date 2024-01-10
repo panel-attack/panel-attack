@@ -58,10 +58,10 @@ function Puzzle.randomizeColorsInPuzzleString(puzzleString)
   return puzzleString
 end
 
-function Puzzle.horizontallyFlipPuzzleString(puzzleString)
+function Puzzle:horizontallyFlipPuzzleString()
   local rowWidth = 6
   local height = 12
-  puzzleString = Puzzle.fillMissingPanelsInPuzzleString(puzzleString, rowWidth, height)
+  puzzleString = self:fillMissingPanelsInPuzzleString(rowWidth, height)
   local result = ""
   local unreverseMap = {}
   unreverseMap["{"] = "}"
