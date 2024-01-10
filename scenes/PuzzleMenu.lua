@@ -103,7 +103,7 @@ function PuzzleMenu:load(sceneParams)
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
-  
+
   local menuOptions = {
     {Label({text = "level", isVisible = false}), self.levelSlider},
     {Label({text = "randomColors", isVisible = false}), self.randomColorsButtons},

@@ -686,9 +686,9 @@ function Stack.set_puzzle_state(self, puzzle)
     self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE
   elseif puzzle.puzzleType == "chain" then
     self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.CHAIN_DROPPED
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameOverConditions.NO_MATCHABLE_PANELS
+    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
   elseif puzzle.puzzleType == "moves" then
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameOverConditions.NO_MATCHABLE_PANELS
+    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
   end
 
   -- transform any cleared garbage into colorless garbage panels
@@ -1687,7 +1687,7 @@ function Stack:game_ended()
   if self.game_over_clock > 0 then
     return self.clock >= self.game_over_clock
   else
-    if #self.gameOverConditions > 0 then
+    if #self.gameWinConditions > 0 then
       return self:checkGameWin()
     else
       return false
