@@ -105,9 +105,9 @@ function PuzzleMenu:load(sceneParams)
   )
   
   local menuOptions = {
-    {Label({label = Label({text = "level"}), isVisible = false}), self.levelSlider},
-    {Label({label = Label({text = "randomColors"}), isVisible = false}), self.randomColorsButtons},
-    {Label({label = Label({text = "randomHorizontalFlipped"}), isVisible = false}), self.randomlyFlipPuzzleButtons}
+    {Label({text = "level", isVisible = false}), self.levelSlider},
+    {Label({text = "randomColors", isVisible = false}), self.randomColorsButtons},
+    {Label({text = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons}
   }
 
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
