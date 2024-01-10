@@ -668,14 +668,14 @@ function Stack.taunt(self, taunt_type)
 end
 
 function Stack.set_puzzle_state(self, puzzle)
-  puzzle.stack = Puzzle.fillMissingPanelsInPuzzleString(puzzle.stack, self.width, self.height)
+  puzzle.stack = puzzle:fillMissingPanelsInPuzzleString(self.width, self.height)
 
   self.puzzle = puzzle
   self:setPanelsForPuzzleString(puzzle.stack)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
   self.behaviours.allowManualRaise = false
-  self.behaviours.passiveRaise = puzzle.puzzleType == "clear"
+  self.behaviours.passiveRaise = false
 
   if puzzle.moves > 0 then
     self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NO_MOVES_LEFT
@@ -684,6 +684,13 @@ function Stack.set_puzzle_state(self, puzzle)
   if puzzle.puzzleType == "clear" then
     self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NEGATIVE_HEALTH
     self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE
+    -- also fill up the garbage queue so that the stack stays topped out even when downstacking
+    local comboStorm = {}
+    for i = 1, self.height do
+                            --  width        height, metal, from chain
+      table.insert(comboStorm, {self.width - 1,   1, false, false})
+    end
+    self.garbage_q:push(comboStorm)
   elseif puzzle.puzzleType == "chain" then
     self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.CHAIN_DROPPED
     self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
@@ -693,6 +700,7 @@ function Stack.set_puzzle_state(self, puzzle)
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
+  self.panel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
 end
 
 function Stack.setPanelsForPuzzleString(self, puzzleString)
@@ -786,34 +794,6 @@ function Stack.toPuzzleInfo(self)
   puzzleInfo["Stack"] = Puzzle.toPuzzleString(self.panels)
 
   return puzzleInfo
-end
-
-function Stack.puzzle_done(self)
-  if not self.do_countdown then
-    -- For now don't require active panels to be 0, we will still animate in game over,
-    -- and we need to win immediately to avoid the failure below in the chain case.
-    --if P1.n_active_panels == 0 then
-    --if self.puzzle.puzzleType == "chain" or P1.n_prev_active_panels == 0 then
-    if self.puzzle.puzzleType == "clear" then
-      return not self:hasGarbage()
-    else
-      local panels = self.panels
-      for row = 1, self.height do
-        for col = 1, self.width do
-          local color = panels[row][col].color
-          if color ~= 0 and color ~= 9 then
-            return false
-          end
-        end
-      end
-    end
-
-    return true
-  --end
-  --end
-  end
-
-  return false
 end
 
 function Stack.hasGarbage(self)
@@ -1270,11 +1250,7 @@ function Stack.simulate(self)
     if self.behaviours.passiveRaise then
       if not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
         if self.panels_in_top_row then
-          if self.puzzle and self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
-            -- only reduce health after the first swap to give the player a chance to strategize
-          else
-            self.health = self.health - 1
-          end
+          self.health = self.health - 1
         else
           self.rise_timer = self.rise_timer - 1
           if self.rise_timer <= 0 then -- try to rise
@@ -1810,6 +1786,7 @@ function Stack.processPuzzleSwap(self)
   if self.puzzle then
     if self.puzzle.remaining_moves == self.puzzle.moves and self.puzzle.puzzleType == "clear" then
       -- start depleting stop / shake time
+      self.behaviours.passiveRaise = true
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
     end
@@ -2274,7 +2251,7 @@ function Stack:checkGameOver()
           return true
         end
       elseif gameOverCondition == GameModes.GameOverConditions.NO_MOVES_LEFT then
-        if self.puzzle.remaining_moves <= 0 then
+        if self.puzzle.remaining_moves <= 0 and not self:hasActivePanels() then
           return true
         end
       elseif gameOverCondition == GameModes.GameOverConditions.CHAIN_DROPPED then

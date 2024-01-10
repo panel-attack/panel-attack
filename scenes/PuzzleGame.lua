@@ -44,7 +44,7 @@ function PuzzleGame:customRun()
 end
 
 function PuzzleGame:customGameOverSetup()
-  if self.match.P1:puzzle_done() then -- writes successful puzzle replay and ends game
+  if self.match.P1.game_over_clock <= 0 then -- writes successful puzzle replay and ends game
     self.text = loc("pl_you_win")
     if self.puzzleIndex == #self.puzzleSet.puzzles then
       self.keepMusic = false
@@ -58,7 +58,7 @@ function PuzzleGame:customGameOverSetup()
       -- The character and stage and music and background should all state the same until you complete the whole puzzle set
       self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1, character = self.match.players[1].stack.character, loadStageAndMusic = false, match = match}
     end
-  elseif self.match.players[1].stack:puzzle_failed() then
+  elseif self.match.P1.game_over_clock > 0 then
     SFX_GameOver_Play = 1
     self.text = loc("pl_you_lose")
     self.keepMusic = true

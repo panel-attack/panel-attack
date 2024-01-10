@@ -22,10 +22,21 @@ function Puzzle.getLegalCharacters()
   return { "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "[", "]", "{", "}", "=" }
 end
 
-function Puzzle.fillMissingPanelsInPuzzleString(puzzleString, width, height)
+function Puzzle:fillMissingPanelsInPuzzleString(width, height)
+  local puzzleString = self.stack
   local boardSizeInPanels = width * height
-  while string.len(puzzleString) < boardSizeInPanels do
-    puzzleString = "0" .. puzzleString
+  if self.puzzleType == "clear" then
+    -- first fill up the currently started row
+    local fillUpLength = (puzzleString:len() % width)
+    if fillUpLength > 0 then
+      puzzleString = string.rep("0", width - fillUpLength) .. puzzleString
+    end
+    -- then fill up with single line garbage to ensure topout
+    while string.len(puzzleString) < boardSizeInPanels do
+      puzzleString = "[" .. string.rep("=", width - 2) .. "]" .. puzzleString
+    end
+  else
+    puzzleString = string.rep("0", boardSizeInPanels - string.len(puzzleString)) .. puzzleString
   end
 
   return puzzleString
