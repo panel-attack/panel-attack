@@ -70,7 +70,7 @@ function tableUtils.trueForAll(tab, condition)
 end 
  
 -- appends all entries of tab to the end of list 
-function tableUtils.appendToList(list, tab) 
+function tableUtils.appendToList(list, tab)
   for i = 1, #tab do
     list[#list+1] = tab[i]
   end
@@ -96,12 +96,12 @@ end
 -- appends an element to a table only if it does not contain the element yet 
 -- 
 -- use this when you want to pretend that your table is a hashset 
-function tableUtils.appendIfNotExists(tab, element) 
-  if not tableUtils.contains(tab, element) then 
-    table.insert(tab, #tab + 1, element) 
-  end 
-end 
- 
+function tableUtils.appendIfNotExists(tab, element)
+  if not tableUtils.contains(tab, element) then
+    table.insert(tab, element)
+  end
+end
+
 -- Randomly grabs a value from the table 
 function tableUtils.getRandomElement(tab) 
   if #tab > 0 then

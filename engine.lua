@@ -673,6 +673,18 @@ function Stack.set_puzzle_state(self, puzzle)
   self:setPanelsForPuzzleString(puzzle.stack)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
+  self.behaviours.allowManualRaise = false
+  self.behaviours.passiveRaise = puzzle.puzzleType == "clear"
+
+  if puzzle.moves > 0 then
+    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NO_MOVES_LEFT
+  end
+
+  if puzzle.puzzleType == "clear" then
+    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NEGATIVE_HEALTH
+  elseif puzzle.puzzleType == "chain" then
+    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.CHAIN_DROPPED
+  end
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
@@ -1300,6 +1312,8 @@ function Stack.simulate(self)
       end
     end
 
+    -- TODO: allow clear puzzles to have more than 12 rows so that downstacking isn't feasible
+    -- then this "not self.puzzle" condition can get removed (it's only there to avoid clear puzzles bricking/resetting health)
     if not self.panels_in_top_row and not self.puzzle and not self:has_falling_garbage() then
       self.health = self.levelData.maxHealth
     end
@@ -1383,30 +1397,33 @@ function Stack.simulate(self)
     end
 
     -- MANUAL STACK RAISING
-    if self.manual_raise and not self.puzzle then
-      if not self.rise_lock then
-        if self.panels_in_top_row then
-          if self:checkGameOver() then
-            self.game_over_clock = self.clock
+    if self.behaviours.allowManualRaise then
+      if self.manual_raise then
+        if not self.rise_lock then
+          if not self.panels_in_top_row then
+            self.has_risen = true
+            self.displacement = self.displacement - 1
+            if self.displacement == 1 then
+              self.manual_raise = false
+              self.rise_timer = 1
+              if not self.prevent_manual_raise then
+                self.score = self.score + 1
+              end
+              self.prevent_manual_raise = true
+            end
+            self.manual_raise_yet = true --ehhhh
+            self.stop_time = 0
           end
-        end
-        self.has_risen = true
-        self.displacement = self.displacement - 1
-        if self.displacement == 1 then
+        elseif not self.manual_raise_yet then
           self.manual_raise = false
-          self.rise_timer = 1
-          if not self.prevent_manual_raise then
-            self.score = self.score + 1
-          end
-          self.prevent_manual_raise = true
         end
-        self.manual_raise_yet = true --ehhhh
-        self.stop_time = 0
-      elseif not self.manual_raise_yet then
-        self.manual_raise = false
+      -- if the stack is rise locked when you press the raise button,
+      -- the raising is cancelled
       end
-    -- if the stack is rise locked when you press the raise button,
-    -- the raising is cancelled
+    end
+
+    if self:checkGameOver() then
+      self.game_over_clock = self.clock
     end
 
     -- if at the end of the routine there are no chain panels, the chain ends.
@@ -1436,14 +1453,14 @@ function Stack.simulate(self)
     if self.telegraph then
       self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
     end
-    
+
     if self.later_garbage[self.clock] then
       self.garbage_q:push(self.later_garbage[self.clock])
       self.later_garbage[self.clock] = nil
     end
 
     self:remove_extra_rows()
-    
+
     --double-check panels_in_top_row
 
     self.panels_in_top_row = false
@@ -1685,18 +1702,13 @@ end
 
 -- Returns true if the stack is simulated past the end of the match.
 function Stack:game_ended()
-  if self.puzzle then
-    if self:puzzle_done() or self:puzzle_failed() then
-      return true
-    else
-      return false
-    end
+  if self.game_over_clock > 0 then
+    return self.clock >= self.game_over_clock
   else
-    if self.game_over_clock > 0 then
-      return self.clock >= self.game_over_clock
-    else
-      return false
+    if self.puzzle and self:puzzle_done() then
+      return true
     end
+    return false
   end
 end
 
@@ -2283,10 +2295,17 @@ function Stack:checkGameOver()
           return true
         end
       elseif gameOverCondition == GameModes.GameOverConditions.CHAIN_DROPPED then
-        if not self:hasChainingPanels() then
+        if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
+          -- We finished matching but never made a chain -> fail
+          return true
+        end
+        if #self.analytic.data.reached_chains > 0 and not self:hasChainingPanels() then
+          -- We achieved a chain, finished chaining, but haven't won yet -> fail
           return true
         end
       end
     end
+  else
+    return true
   end
 end
