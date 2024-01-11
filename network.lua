@@ -16,28 +16,30 @@ function network_connected()
 end
 
 -- Grabs data from the socket
--- returns false if something went wrong
-function flush_socket()
+-- returns false if the socket closed
+function readSocket()
   if not TCP_sock then
     return
   end
-  local junk, err, data = TCP_sock:receive("*a")
-  -- lol, if it returned successfully then that's bad!
-  if not err then
-    -- Return false, so we know things went badly
+
+  local data, error, partialData = TCP_sock:receive("*a")
+  -- "timeout" is a common "error" that just means there is currently nothing to read but the connection is still active
+  if error then
+    data = partialData
+  end
+  if data and data:len() > 0 then
+    leftovers = leftovers .. data
+  end
+  if error == "closed" then
     return false
   end
-  leftovers = leftovers .. data
-  -- When done, return true, so we know things went okay
   return true
 end
 
 function resetNetwork()
-  logged_in = 0
   connection_up_time = 0
   GAME.connected_server_ip = ""
   GAME.connected_network_port = nil
-  current_server_supports_ranking = false
   match_type = ""
   if TCP_sock then
     TCP_sock:close()
@@ -199,8 +201,24 @@ function network_init(ip, network_port)
   TCP_sock:settimeout(0)
   got_H = false
   net_send(NetworkProtocol.clientMessageTypes.versionCheck.prefix .. VERSION)
+  return true
+end
+
+function sendLoginRequest()
   assert(config.name and config.save_replays_publicly)
+
+  --attempt login
+  local my_user_id = read_user_id_file(GAME.connected_server_ip)
+  if not my_user_id then
+    my_user_id = "need a new user id"
+  end
+  if CUSTOM_USER_ID then
+    my_user_id = CUSTOM_USER_ID
+  end
+
   local sent_json = {
+    login_request = true,
+    user_id = my_user_id,
     name = config.name,
     level = config.level,
     inputMethod = config.inputMethod or "controller",
@@ -214,7 +232,6 @@ function network_init(ip, network_port)
   }
   sent_json.character_display_name = sent_json.character_is_random and "" or characters[config.character].display_name
   json_send(sent_json)
-  return true
 end
 
 function send_error_report(errorData)
@@ -237,7 +254,7 @@ end
 -- Processes messages that came in from the server
 -- Returns false if the connection is broken.
 function do_messages()
-  if not flush_socket() then
+  if not readSocket() then
     -- Something went wrong while receiving data.
     -- Bail out and return.
     return false

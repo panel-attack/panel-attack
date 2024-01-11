@@ -34,6 +34,7 @@ Server =
     self.connections = {} -- mapping of connection number to connection
     self.nameToConnectionIndex = {} -- mapping of player names to their unique connectionNumberIndex
     self.socketToConnectionIndex = {} -- mapping of sockets to their unique connectionNumberIndex
+    assert(databaseParam ~= nil)
     self.database = databaseParam -- the database object
     self.loaded_placement_matches = {
       incomplete = {},
@@ -43,14 +44,14 @@ Server =
     self.lastFlushTime = self.lastProcessTime
     self.lobbyChanged = false
 
-    logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
+    logger.info("Starting up server with port: " .. (SERVER_PORT or 49569))
     self.socket = socket.bind("*", SERVER_PORT or 49569)
     self.socket:settimeout(0)
     if TCP_NODELAY_ENABLED then
       self.socket:setoption("tcp-nodelay", true)
     end
 
-    self.playerbase = Playerbase("playerbase")
+    self.playerbase = Playerbase("playerbase", "players.txt")
     read_players_file(self.playerbase)
     leaderboard = Leaderboard("leaderboard", self)
     read_leaderboard_file()
@@ -71,9 +72,6 @@ Server =
     logger.debug("playerbase: " .. json.encode(self.playerbase.players))
     logger.debug("leaderboard report: " .. json.encode(leaderboard:get_report()))
     read_csprng_seed_file()
-    if csprng_seed == 2000 then
-      logger.warn("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
-    end
     initialize_mt_generator(csprng_seed)
     seed_from_mt(extract_mt())
     --timezone testing
@@ -182,6 +180,7 @@ function Server:lobby_state()
 end
 
 function Server:propose_game(senderName, receiverName, message)
+  logger.debug("propose game: " .. senderName .. " " .. receiverName)
   local senderConnection, receiverConnection = self.nameToConnectionIndex[senderName], self.nameToConnectionIndex[receiverName]
   if senderConnection then
     senderConnection = self.connections[senderConnection]
@@ -219,6 +218,18 @@ function Server:clear_proposals(name)
   end
 end
 
+function Server:playerSettingFromTable(data)
+  local playerSettings = {
+    character = data.character,
+    character_display_name = data.character_display_name,
+    level = data.level,
+    panels_dir = data.panels_dir,
+    player_number = data.player_number,
+    inputMethod = data.inputMethod
+  }
+  return playerSettings
+end
+
 -- a and be are connection objects
 function Server:create_room(a, b)
   self:setLobbyChanged()
@@ -228,6 +239,8 @@ function Server:create_room(a, b)
   self.roomNumberIndex = self.roomNumberIndex + 1
   self.rooms[new_room.roomNumber] = new_room
   local a_msg, b_msg = {create_room = true}, {create_room = true}
+  a_msg.room_number = new_room.roomNumber
+  b_msg.room_number = new_room.roomNumber
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
@@ -265,12 +278,14 @@ function Server:start_match(a, b)
   end
 
   a.room.stage = math.random(1, 2) == 1 and a.stage or b.stage
+  local playerSettings = self:playerSettingFromTable(a)
+  local opponentSettings = self:playerSettingFromTable(b)
   local msg = {
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number, inputMethod = a.inputMethod},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number, inputMethod = b.inputMethod}
+    player_settings = playerSettings,
+    opponent_settings = opponentSettings
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
@@ -316,14 +331,42 @@ function Server:roomNumberToRoom(roomNr)
   end
 end
 
+function Server:createNewUser(name)
+  local user_id = nil
+  while not user_id or self.playerbase.players[user_id] do
+    user_id = self:generate_new_user_id()
+  end
+  self.playerbase:updatePlayer(user_id, name)
+  self.database:insertNewPlayer(user_id, name)
+  self.database:insertPlayerELOChange(user_id, 0, 0)
+  return user_id
+end
+
+function Server:changeUsername(privateUserID, username)
+  self.playerbase:updatePlayer(privateUserID, username)
+  if leaderboard.players[privateUserID] then
+    leaderboard.players[privateUserID].user_name = username
+  end
+  self.database:updatePlayerUsername(privateUserID, username)
+end
+
 function Server:generate_new_user_id()
   local new_user_id = cs_random()
-  logger.debug("new_user_id: " .. new_user_id)
   return tostring(new_user_id)
 end
 
---TODO: revisit this to determine whether it is good.
-function Server:deny_login(connection, reason, ban)
+-- Checks if a logging in player is banned based off their IP.
+function Server:isPlayerBanned(ip)
+  return self.database:isPlayerBanned(ip)
+end
+
+function Server:insertBan(ip, reason, completionTime)
+  return self.database:insertBan(ip, reason, completionTime)
+end
+
+function Server:denyLogin(connection, reason, ban)
+  assert(ban == nil or reason == nil)
+  local message = {login_denied = true, reason = reason }
   if ban then
     local banRemainingString = "Ban Remaining: "
     local secondsRemaining = (ban.completionTime - os.time())
@@ -349,24 +392,14 @@ function Server:deny_login(connection, reason, ban)
     if detailCount < 2 then
       banRemainingString = banRemainingString .. math.floor(secondsRemaining) .. " seconds "
     end
+    message.reason = ban.reason
+    message.ban_duration = banRemainingString
 
-    connection:send(
-      {
-        login_denied = true,
-        reason = ban.reason,
-        ban_duration = banRemainingString,
-      }
-    )
     self.database:playerBanSeen(ban.banID)
-  else
-    connection:send(
-      {
-        login_denied = true,
-        reason = reason,
-      }
-    )
+    logger.warn("Login denied because of ban: " .. ban.reason)
   end
-  logger.warn("login denied.  Reason:  " .. (reason or ban.reason))
+
+  connection:send(message)
 end
 
 function Server:closeRoom(room)
@@ -644,13 +677,7 @@ function Server:get_league(rating)
   return "LeagueNotFound"
 end
 
-local server = Server(database)
-
 function Server:update()
-  self.socket:settimeout(0)
-  if TCP_NODELAY_ENABLED then
-    self.socket:setoption("tcp-nodelay", true)
-  end
 
   self:acceptNewConnections()
 
@@ -687,6 +714,7 @@ function Server:acceptNewConnections()
   end
 end
 
+-- Process any data on all active connections
 function Server:readSockets()
   -- Make a list of all the sockets to listen to
   local socketsToCheck = {self.socket}
@@ -699,7 +727,8 @@ function Server:readSockets()
   assert(type(socketsWithData) == "table")
   for _, currentSocket in ipairs(socketsWithData) do
     if self.socketToConnectionIndex[currentSocket] then
-      self.connections[self.socketToConnectionIndex[currentSocket]]:read()
+      local connectionIndex = self.socketToConnectionIndex[currentSocket]
+      self.connections[connectionIndex]:read()
     end
   end
 end
@@ -739,4 +768,4 @@ function Server:broadCastLobbyIfChanged()
   end
 end
 
-return server
+return Server

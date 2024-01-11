@@ -281,8 +281,7 @@ end
 
 -- returns the navigable grid layout of the select screen before loading characters
 function select_screen.getTemplateMap(self)
-  logger.trace("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
-  if self:isNetPlay() and current_server_supports_ranking then
+  if self:isNetPlay() then
     return {
       {"__Panels", "__Panels", "__Mode", "__Mode", "__Stage", "__Stage", "__Level", "__Level", "__Ready"},
       {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
