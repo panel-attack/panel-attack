@@ -38,8 +38,8 @@ consts.SERVER_SAVE_DIRECTORY = "servers/"
 consts.LEGACY_SERVER_LOCATION = "18.188.43.50"
 consts.SERVER_LOCATION = "panelattack.com"
 
-consts.SUPER_SELECTION_DURATION = 30 -- frames (reminder: 60 frames per sec)
-consts.SUPER_SELECTION_ENABLE_RATIO = 0.3 -- ratio at which super enable is considered started (cancelling it won't validate a character)
+consts.SUPER_SELECTION_DURATION = 0.5 -- seconds
+consts.SUPER_SELECTION_START = 0.1 -- time held at which super enable is considered started
 
 consts.DEFAULT_THEME_DIRECTORY = "Panel Attack Modern"
 

@@ -157,6 +157,10 @@ function Character.is_bundle(self)
   return #self.sub_characters > 1
 end
 
+function Character:canSuperSelect()
+  return (self.panels and panels[self.panels]) or (self.stage and stages[self.stage])
+end
+
 
 -- GRAPHICS
 

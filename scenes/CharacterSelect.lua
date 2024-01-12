@@ -148,6 +148,20 @@ function CharacterSelect:createStageCarousel(player, width)
   return stageCarousel
 end
 
+local super_select_pixelcode = [[
+      uniform float percent;
+      vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
+      {
+          vec4 c = Texel(tex, texture_coords) * color;
+          if( texture_coords.x < percent )
+          {
+            return c;
+          }
+          float ret = (c.x+c.y+c.z)/3.0;
+          return vec4(ret, ret, ret, c.a);
+      }
+  ]]
+
 function CharacterSelect:getCharacterButtons()
   local characterButtons = {}
 
@@ -176,17 +190,64 @@ function CharacterSelect:getCharacterButtons()
   -- assign player generic callbacks
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
-    characterButton.onClick = function(self, inputSource)
-      if inputSource and inputSource.player then
-        player = inputSource.player
-      else
-        player = GAME.localPlayer
-      end
+    characterButton.onClick = function(self, holdTime)
+      local character = characters[self.characterId]
+      -- if inputSource and inputSource.player then
+      --   player = inputSource.player
+      -- else
+         player = GAME.localPlayer
+      -- end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
+        -- super select
+        if character.panels and panels[character.panels] then
+          player:setPanels(character.panels)
+        end
+        if character.stage and stages[character.stage] then
+          player:setStage(character.stage)
+        end
+      end
       player:setCharacter(self.characterId)
       player.cursor:updatePosition(9, 2)
     end
-    characterButton.onSelect = characterButton.onClick
+
+    if characters[characterButton.characterId] and characters[characterButton.characterId]:canSuperSelect() then
+      local superSelectShader = love.graphics.newShader(super_select_pixelcode)
+      -- add super select image as a child
+      characterButton.superSelectImage = ImageContainer({image = themes[config.theme].images.IMG_super, hFill = true, vFill = true, hAlign = "center", vAlign = "center"})
+      characterButton:addChild(characterButton.superSelectImage)
+      characterButton.superSelectImage:setVisibility(false)
+      characterButton.superSelectImage.drawSelf = function(self)
+        set_shader(superSelectShader)
+        love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
+        set_shader()
+      end
+
+      -- add shader update for touch
+      characterButton.onHold = function(self, timer)
+        if timer > consts.SUPER_SELECTION_START then
+          if self.superSelectImage.isVisible == false then
+            self.superSelectImage:setVisibility(true)
+          end
+          local progress = (timer - consts.SUPER_SELECTION_START) / consts.SUPER_SELECTION_DURATION
+          if progress <= 1 then
+            superSelectShader:send("percent", progress)
+          end
+        end
+      end
+
+      characterButton.onRelease = function(self, x, y, timeHeld)
+        self.superSelectImage:setVisibility(false)
+        superSelectShader:send("percent", 0)
+        if self:inBounds(x, y) then
+          self:onClick(timeHeld)
+        end
+      end
+
+      -- TODO: add shader update for key hold
+    else
+      characterButton.onSelect = characterButton.onClick
+    end
   end
 
   return characterButtons

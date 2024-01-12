@@ -33,10 +33,10 @@ function Button:onTouch(x, y)
   self.backgroundColor[4] = 1
 end
 
-function Button:onRelease(x, y)
+function Button:onRelease(x, y, timeHeld)
   self.backgroundColor[4] = 0.7
   if self:inBounds(x, y) then
-    self:onClick()
+    self:onClick(timeHeld)
   end
 end
 
