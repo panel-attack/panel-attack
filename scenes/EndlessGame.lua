@@ -2,15 +2,17 @@ local GameBase = require("scenes.GameBase")
 local sceneManager = require("scenes.sceneManager")
 local Replay = require("replay")
 local class = require("class")
+local GameModes = require("GameModes")
+local Signal = require("helpers.signal")
 
 --@module endlessGame
 -- Scene for an endless mode instance of the game
 local EndlessGame = class(
   function (self, sceneParams)
     self.nextScene = "EndlessMenu"
-    self.winnerSFX = GAME.match.P1:pick_win_sfx()
-    
+
     self:load(sceneParams)
+    Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
   end,
   GameBase
 )
@@ -18,18 +20,17 @@ local EndlessGame = class(
 EndlessGame.name = "EndlessGame"
 sceneManager:addScene(EndlessGame)
 
-function EndlessGame:processGameResults(gameResult) 
-  local extraPath, extraFilename
-  if GAME.match.P1.level == nil then
-    GAME.scores:saveEndlessScoreForLevel(GAME.match.P1.score, GAME.match.P1.difficulty)
-    extraPath = "Endless"
-    extraFilename = "Spd" .. GAME.match.P1.speed .. "-Dif" .. GAME.match.P1.difficulty .. "-endless"
-    Replay.finalizeAndWriteReplay(extraPath, extraFilename, GAME.match, replay)
+function EndlessGame:onMatchEnded(match)
+  local extraPath = "Endless"
+  local extraFilename = "-endless"
+  if match.players[1].settings.style == GameModes.Styles.CLASSIC then
+    GAME.scores:saveEndlessScoreForLevel(match.players[1].stack.score, match.players[1].stack.difficulty)
+    extraFilename = "Spd" .. match.players[1].settings.levelData.startingSpeed .. "-Dif" .. match.players[1].stack.difficulty .. extraFilename
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
+  elseif match.players[1].settings.style == GameModes.Styles.MODERN then
+    extraFilename = "Spd" .. match.players[1].settings.levelData.startingSpeed .. "-Lev" .. match.players[1].stack.level .. extraFilename
+    Replay.finalizeAndWriteReplay(extraPath, extraFilename, self.match.replay)
   end
-end
-
-function EndlessGame:abortGame()
-  sceneManager:switchToScene("EndlessMenu")
 end
 
 return EndlessGame

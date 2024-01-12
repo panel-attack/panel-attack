@@ -1,5 +1,8 @@
 require("save")
+local GameModes = require("GameModes")
+
 local GarbageQueueTestingUtils = {}
+local LevelPresets = require("LevelPresets")
 
 -- a reduced version of stackRun that skips on stuff like raise, health sfx, etc. as it's only meant to be on the receiving end of garbage
 local function stackRunOverride(self)
@@ -37,31 +40,23 @@ local function stackShouldRunOverride(stack, runsSoFar)
 end
 
 function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
-  local battleRoom = BattleRoom()
-  local match = Match("vs", battleRoom)
-  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, level=1, character=config.character, inputMethod="controller"}
-  P1.health = stackHealth or 100000
-  P1.run = stackRunOverride
-  P1.shouldRun = stackShouldRunOverride
-  match.P1 = P1
-
+  local battleRoom
   if attackFile then
-    local trainingModeSettings = readAttackFile(attackFile)
-    match.attackEngine = AttackEngine.createFromSettings(trainingModeSettings)
-    match.attackEngine:setTarget(P1)
-    battleRoom.trainingModeSettings = trainingModeSettings
+    battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
+    battleRoom.trainingModeSettings = readAttackFile(attackFile)
   else
-    P1.garbage_target = P1
+    battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
   end
+  battleRoom.players[1].settings.level = 1
+  battleRoom.players[1].settings.levelData.maxHealth = stackHealth or 100000
+  local match = battleRoom:createMatch()
+  match:start()
+  match.P1.run = stackRunOverride
+  match.P1.shouldRun = stackShouldRunOverride
 
-  P1:wait_for_random_character()
-  P1:starting_state()
   -- make some space for garbage to fall
-  GarbageQueueTestingUtils.reduceRowsTo(P1, 0)
+  GarbageQueueTestingUtils.reduceRowsTo(match.P1, 0)
 
-  -- cause telegraph is very global needy
-  GAME.battleRoom = battleRoom
-  GAME.match = match
   return match
 end
 

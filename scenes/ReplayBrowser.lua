@@ -5,6 +5,8 @@ local GraphicsUtil = require("graphics_util")
 local fileUtils = require("FileUtils")
 local Replay = require("replay")
 local class = require("class")
+local GameModes = require("GameModes")
+local ReplayGame = require("scenes.ReplayGame")
 
 --@module replayBrowser
 local ReplayBrowser = class(
@@ -17,13 +19,14 @@ local ReplayBrowser = class(
 ReplayBrowser.name = "ReplayBrowser"
 sceneManager:addScene(ReplayBrowser)
 
-local font = GraphicsUtil.getGlobalFont()
 local selection = nil
 local base_path = "replays"
 local current_path = "/"
 local path_contents = {}
 local filename = nil
 local state = "browser"
+-- technically this should start as nil but it drives the language server a bit crazy
+local selectedReplay = {}
 
 local menu_x = 400
 local menu_y = 280
@@ -93,7 +96,11 @@ local function selectMenuItem()
     if file_info then
       if file_info.type == "file" then
         filename = selection
-        return Replay.loadFromPath(selection)
+        local success, replay = Replay.loadFromPath(selection)
+        if success then
+          selectedReplay = replay
+        end
+        return success
       elseif file_info.type == "directory" then
         updateBrowsingPath(current_path .. path_contents[cursor_pos] .. "/")
       else
@@ -106,32 +113,18 @@ local function selectMenuItem()
 end
 
 function ReplayBrowser:load()
-  reset_filters()
-  
   if Replay.lastPath then
     current_path = string.sub(Replay.lastPath, (string.len(base_path) + 1)) .. "/"
   end
 
   state = "browser"
   updateBrowsingPath()
-
-  GAME.renderDuringPause = true
-end
-
-function ReplayBrowser:drawBackground()
-  themes[config.theme].images.bg_main:draw()
 end
 
 function ReplayBrowser:update()
-  local ret = nil
-
   if state == "browser" then
-    gprint(loc("rp_browser_header"), menu_x + 170, menu_y - 40)
-    gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
-    replayMenu()
-
     if input.isDown["MenuEsc"] then
-      sceneManager:switchToScene("MainMenu")
+      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
     if input.isDown["MenuSelect"] then
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
@@ -152,68 +145,76 @@ function ReplayBrowser:update()
       moveCursor(1)
     end
   elseif state == "info" then
+    if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      state = "browser"
+    end
+    if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
+      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      local match = Match.createFromReplay(selectedReplay, false)
+      match.renderDuringPause = true
+      match:start()
+      sceneManager:switchToScene(ReplayGame({match = match}))
+    end
+  end
+end
+
+function ReplayBrowser:draw()
+  themes[config.theme].images.bg_main:draw()
+
+  if state == "browser" then
+    gprint(loc("rp_browser_header"), menu_x + 170, menu_y - 40)
+    gprint(loc("rp_browser_current_dir", base_path .. current_path), menu_x, menu_y - 40 + menu_h)
+    replayMenu()
+  elseif state == "info" then
     local next_func = nil
-    if Replay.replayCanBeViewed(replay) == false then
+    if Replay.replayCanBeViewed(selectedReplay) == false then
       gprint(loc("rp_browser_wrong_version"), menu_x - 150, menu_y - 80 + menu_h)
     end
     
     gprint(loc("rp_browser_info_header"), menu_x + 170, menu_y - 40)
     gprint(filename, menu_x - 150, menu_y - 40 + menu_h)
-    if replay.vs then
-      -- This used to be calculated based on the length of "O", but that no longer always exists.
-      -- "I" will always exist for two player vs
-      local twoPlayerVs = replay.vs.I and string.len(replay.vs.I) > 0
-      local modeText
-      if twoPlayerVs then
-        modeText = loc("rp_browser_info_2p_vs")
-      else
-        modeText = loc("rp_browser_info_1p_vs")
-      end
-      gprint(modeText, menu_x + 220, menu_y + 20)
 
-      gprint(loc("rp_browser_info_1p"), menu_x, menu_y + 50)
-      gprint(loc("rp_browser_info_name", replay.vs.P1_name), menu_x, menu_y + 65)
-      gprint(loc("rp_browser_info_level", replay.vs.P1_level), menu_x, menu_y + 80)
-      gprint(loc("rp_browser_info_character", replay.vs.P1_char), menu_x, menu_y + 95)
-
-      if twoPlayerVs then
-        gprint(loc("rp_browser_info_2p"), menu_x + 300, menu_y + 50)
-        gprint(loc("rp_browser_info_name", replay.vs.P2_name), menu_x + 300, menu_y + 65)
-        gprint(loc("rp_browser_info_level", replay.vs.P2_level), menu_x + 300, menu_y + 80)
-        gprint(loc("rp_browser_info_character", replay.vs.P2_char), menu_x + 300, menu_y + 95)
-
-        if replay.vs.ranked then
-          gprint(loc("rp_browser_info_ranked"), menu_x + 200, menu_y + 120)
-        end
-      end
-    elseif replay.endless or replay.time then
-      if replay.time then
-        gprint(loc("rp_browser_info_time"), menu_x + 220, menu_y + 20)
-      else
-        gprint(loc("rp_browser_info_endless"), menu_x + 220, menu_y + 20)
-      end
-
-      local replay = replay.endless or replay.time
-      gprint(loc("rp_browser_info_speed", replay.speed), menu_x + 150, menu_y + 50)
-      gprint(loc("rp_browser_info_difficulty", replay.difficulty), menu_x + 150, menu_y + 65)
-    elseif replay.puzzle then
-      gprint(loc("rp_browser_info_puzzle"), menu_x + 220, menu_y + 20)
-
-      gprint(loc("rp_browser_no_info"), menu_x + 150, menu_y + 50)
+    local modeText
+    if #selectedReplay.players == 2 then
+      modeText = loc("rp_browser_info_2p_vs")
     else
-      gprint(loc("rp_browser_error_unknown_replay_type"), menu_x + 220, menu_y + 20)
+      if selectedReplay.gameMode.stackInteraction == GameModes.StackInteractions.SELF then
+        modeText = loc("rp_browser_info_1p_vs")
+      elseif selectedReplay.gameMode.puzzle then
+        modeText = loc("rp_browser_info_puzzle")
+      elseif selectedReplay.gameMode.timeLimit then
+        modeText = loc("rp_browser_info_time")
+      else
+        modeText = loc("rp_browser_info_endless")
+      end
     end
-    if Replay.replayCanBeViewed(replay) then
-      gprint(loc("rp_browser_watch"), menu_x + 75, menu_y + 150)
+    gprint(modeText, menu_x + 220, menu_y + 20)
+
+    local offsetX = 0
+    for i = 1, #selectedReplay.players do
+      gprint(loc("rp_browser_info_" .. i .. "p"), menu_x + offsetX, menu_y + 50)
+      gprint(loc("rp_browser_info_name", selectedReplay.players[i].name or ("Player " .. i)), menu_x + offsetX, menu_y + 65)
+      gprint(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId), menu_x + offsetX, menu_y + 80)
+      if selectedReplay.players[i].human then
+        if selectedReplay.players[i].settings.level then
+          gprint(loc("rp_browser_info_level", selectedReplay.players[i].settings.level), menu_x + offsetX, menu_y + 95)
+        else
+          gprint(loc("rp_browser_info_speed", selectedReplay.players[i].settings.levelData.startingSpeed), menu_x + offsetX, menu_y + 95)
+          gprint(loc("rp_browser_info_difficulty", selectedReplay.players[i].settings.difficulty), menu_x + offsetX, menu_y + 110)
+        end
+      else
+
+      end
+      offsetX = offsetX + 300
     end
 
-    if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      state = "browser"
+    if selectedReplay.ranked then
+      gprint(loc("rp_browser_info_ranked"), menu_x + 200, menu_y + 130)
     end
-    if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(replay) then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      sceneManager:switchToScene("ReplayGame", {})
+
+    if Replay.replayCanBeViewed(selectedReplay) then
+      gprint(loc("rp_browser_watch"), menu_x + 75, menu_y + 150)
     end
   end
 end

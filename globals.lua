@@ -1,10 +1,5 @@
-require("consts")
-require("queue")
-require("server_queue")
-
-server_queue = ServerQueue()
-
-score_mode = SCOREMODE_TA
+local consts = require("consts")
+score_mode = consts.SCOREMODE_TA
 
 GARBAGE_TELEGRAPH_TIME = 45 -- the amount of time the garbage stays in the telegraph after getting there from the attack animation
 GARBAGE_DELAY_LAND_TIME = 60 -- this is the amount of time after garbage leaves the telegraph before it can land on the opponent
@@ -41,6 +36,3 @@ SFX_GameOver_Play = 0
 global_op_state = nil
 
 current_use_music_from = "stage" -- either "stage" or "characters", no other values!
-
--- this should probably live on match in the future
-spectators_string = ""

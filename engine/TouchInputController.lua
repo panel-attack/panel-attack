@@ -1,6 +1,8 @@
 local logger = require("logger")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local util = require("util")
+local consts = require("consts")
+local GFX_SCALE = consts.GFX_SCALE
 
 local TOUCH_SWAP_COOLDOWN = 5  -- default number of cooldown frames between touch-input swaps, applied after the first 2 swaps after a touch is initiated, to prevent excessive or accidental stealths
 

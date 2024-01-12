@@ -3,7 +3,7 @@ local love = love
 
 local class = require("class")
 local UIElement = require("ui.UIElement")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local input = require("inputManager")
@@ -14,7 +14,7 @@ local NAVIGATION_BUTTON_WIDTH = 30
 --@module MainMenu
 local Menu = class(
   function(self, options)
-    self.selecteIndex = nil
+    self.selectedIndex = nil
     -- list of menu items
     -- set from options.menuItems, which consists of a list of UIElement tuples of the form:
     -- {{Label/Button, ButtonGroup/Stepper/Slider}, ...}
@@ -30,15 +30,18 @@ local Menu = class(
     self.firstActiveIndex = 1
     self.menuItemContainer = UIElement({})
     self:addChild(self.menuItemContainer)
+    self.itemWidth = options.itemWidth or 130
+    self.itemHeight = options.itemHeight or 30
     self:setMenuItems(options.menuItems)
     
-    self.upButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "/\\", translate = false, onClick = function() self:scrollUp() end})
-    self.downButton = Button({width = NAVIGATION_BUTTON_WIDTH, label = "\\/", translate = false, onClick = function() self:scrollDown() end})
-    self:setVisibility(self.isVisible)
+    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
+    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/"}), translate = false, onClick = function() self:scrollDown() end})
     
     self:updateNavButtonPos()
     self.menuItemContainer:addChild(self.upButton)
     self.menuItemContainer:addChild(self.downButton)
+
+    self.TYPE = "VerticalScrollingButtonMenu"
   end,
   UIElement
 )
@@ -68,8 +71,11 @@ function Menu:setMenuItems(menuItems)
     if i > 1 then 
        menuItem[1].y = menuItems[i - 1][1].y + menuItems[i - 1][1].height + Menu.BUTTON_VERTICAL_PADDING
     end
+    menuItem[1].width = math.max(self.itemWidth, menuItem[1].width)
+    menuItem[1].height = self.itemHeight
     if menuItem[2] then
       menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
+      menuItem[2].height = self.itemHeight
       menuItem[1]:addChild(menuItem[2])
     end
     self.menuItemContainer:addChild(menuItem[1])
@@ -99,8 +105,7 @@ function Menu:addMenuItem(index, menuItem)
   end
   table.insert(self.menuItems, index, menuItem[1])
   self.menuItemContainer:addChild(menuItem[1])
-  menuItem[1]:setVisibility(self.isVisible)
-  
+
   self:updateMenuItemPositions(index)
 end
 
@@ -215,31 +220,20 @@ function Menu:scrollDown()
   play_optional_sfx(themes[config.theme].sounds.menu_move)
 end
 
-function Menu:setVisibility(isVisible)
-  self.isVisible = isVisible
-  for _, uiElement in ipairs(self.children) do
-    uiElement:setVisibility(isVisible)
-  end
-  if isVisible then
-    self:resetMenuScroll()
-    self.upButton:setVisibility(self.maxItems < #self.menuItems)
-    self.downButton:setVisibility(self.maxItems < #self.menuItems)
-  end
-end
-
 function Menu:update()
   if not self.isEnabled then
     return
   end
-  
+
   if input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self:scrollUp()
   end
-  
+
   if input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     self:scrollDown()
   end
 
+  -- apparently this can crash here with the offset bug
   local itemController = self.menuItems[self.selectedIndex].children[1]
   if itemController then
     if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
@@ -279,19 +273,17 @@ function Menu:update()
   end
 end
 
-function Menu:draw()
-  if not self.isVisible then
-    return
-  end
-
+function Menu:drawSelf()
   local animationX = (math.cos(6 * love.timer.getTime()) * 5) - 9
-  local screenX, screenY = self.menuItems[self.selectedIndex]:getScreenPos()
-  local arrowx = screenX - 10 + animationX
-  local arrowy = screenY + self.menuItems[self.selectedIndex].height / 4
-  GAME.gfx_q:push({love.graphics.draw, {arrow, arrowx, arrowy, 0, 1, 1, 0, 0}})
-  
-  -- draw children
-  UIElement.draw(self)
+  local selectedItem = self.menuItems[self.selectedIndex]
+  local arrowx = selectedItem.x - 10 + animationX
+  local arrowy = selectedItem.y + self.menuItems[self.selectedIndex].height / 4
+  love.graphics.draw(arrow, self.x + arrowx, self.y + arrowy, 0, 1, 1, 0, 0)
+
+  if DEBUG_ENABLED then
+    love.graphics.setColor(1, 1, 1, 1)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  end
 end
 
 

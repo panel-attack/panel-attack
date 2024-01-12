@@ -2,40 +2,62 @@ local class = require("class")
 local UIElement = require("ui.UIElement")
 local GraphicsUtil = require("graphics_util")
 
-local TEXT_WIDTH_PADDING = 15
-local TEXT_HEIGHT_PADDING = 6
 --@module Label
 local Label = class(
   function(self, options)
-    -- stretch to fit text
-    local textWidth, textHeight = self.text:getDimensions()
-    self.width = math.max(textWidth + TEXT_WIDTH_PADDING, self.width)
-    self.height = math.max(textHeight + TEXT_HEIGHT_PADDING, self.height)
-    self.color = {.5, .5, 1, .7}
-    self.borderColor = {.7, .7, 1, .7}
+    self.hAlign = options.hAlign or "left"
+    self.vAlign = options.vAlign or "center"
+
+    self:setText(options.text, options.extraLabels, options.translate)
+
     self.TYPE = "Label"
   end,
   UIElement
 )
 
-function Label:draw()
-  if not self.isVisible then
-    return
+function Label:setText(text, replacementTable, translate)
+  -- whether we should translate the label or not
+  if translate ~= nil then
+    self.translate = translate
+  elseif self.translate == nil then
+    self.translate = true
   end
 
-  local screenX, screenY = self:getScreenPos()
-  
-  GAME.gfx_q:push({love.graphics.setColor, self.color})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, self.borderColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"line", screenX, screenY, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  
-  local textWidth, textHeight = self.text:getDimensions()
-  GraphicsUtil.drawClearText(self.text, screenX + self.width / 2, screenY + self.height / 2, textWidth / 2, textHeight / 2)
-  
-  -- draw children
-  UIElement.draw(self)
+  if replacementTable then
+    -- list of parameters for translating the label (e.g. numbers/names to replace placeholders with)
+    self.replacementTable = replacementTable
+  elseif not self.replacementTable then
+    self.replacementTable = {}
+  end
+
+  if text then
+    self.text = text
+  end
+
+  if self.translate then
+    -- always need a new text cause the font might have changed
+    self.drawable = love.graphics.newText(love.graphics.getFont(), loc(self.text, unpack(self.replacementTable)))
+  else
+    if self.drawable then
+      self.drawable:set(self.text)
+    else
+      self.drawable = love.graphics.newText(love.graphics.getFont(), self.text)
+    end
+  end
+
+  self.width, self.height = self.drawable:getDimensions()
+end
+
+function Label:refreshLocalization()
+  if self.translate then
+    -- always need a new text cause the font might have changed
+    self.drawable = love.graphics.newText(love.graphics.getFont(), loc(self.text, unpack(self.replacementTable)))
+    self.width, self.height = self.drawable:getDimensions()
+  end
+end
+
+function Label:drawSelf()
+  GraphicsUtil.drawClearText(self.drawable, self.x, self.y)
 end
 
 return Label

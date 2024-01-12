@@ -4,6 +4,7 @@ local util = require("util")
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local inputFieldManager = require("ui.inputFieldManager")
+local touchable = require("ui.Touchable")
 
 --@module InputField
 local InputField = class(
@@ -19,8 +20,8 @@ local InputField = class(
     -- text alignments settings
     -- must be one of the following values:
     -- left, right, center
-    self.halign = options.halign or 'left'
-    self.valign = options.valign or 'center'
+    self.hAlign = options.hAlign or 'left'
+    self.vAlign = options.vAlign or 'center'
     
     self.text = love.graphics.newText(love.graphics.getFont(), self.value)
     -- stretch to fit text
@@ -33,21 +34,37 @@ local InputField = class(
     self.textCursorPos = nil
 
     inputFieldManager.inputFields[self.id] = self.isVisible and self or nil
+    touchable(self)
     self.TYPE = "InputField"
   end,
   UIElement
 )
 
+function InputField:onTouch(x, y)
+  self:setFocus(x, y)
+end
+
+function InputField:onDrag(x, y)
+  if self:inBounds(x, y) then
+    self:setFocus(x, y)
+  end
+end
+
+function InputField:onRelease(x, y)
+  if self:inBounds(x, y) then
+    self:setFocus(x, y)
+  end
+end
+
 local textOffset = 4
 local textCursor = love.graphics.newText(love.graphics.getFont(), "|")
 
-function InputField:setVisibility(isVisible)
-  inputFieldManager.inputFields[self.id] = isVisible and self or nil
-  UIElement.setVisibility(self, isVisible)
-end
-
-function InputField:isSelected(x, y)
-  return x > self.x and x < self.x + self.width and y > self.y and y < self.y + self.height
+function InputField:onVisibilityChanged()
+  if self.isVisible then
+    inputFieldManager.inputFields[self.id] = self
+  else
+    inputFieldManager.inputFields[self.id] = nil
+  end
 end
 
 function InputField:getCursorPos()
@@ -85,7 +102,7 @@ end
 
 function InputField:onBackspace()
   if self.offset == 0 then
-    return 
+    return
   end
 
   -- get the byte offset to the last UTF-8 character in the string.
@@ -100,7 +117,7 @@ function InputField:onBackspace()
   else
     self.value = string.sub(self.value, 1, byteoffset) .. string.sub(self.value, byteoffset2 + 1, strByteLength)
   end
-  self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+  self.text:set(self.value)
   self.offset = self.offset - 1
 end
 
@@ -112,7 +129,7 @@ function InputField:textInput(t)
   if self.filterAlphanumeric and string.find(t, "[^%w]+") then
     return
   end
-  if utf8.len(self.value) < self.charLimit then
+  if utf8.len(self.value) + utf8.len(t) <= self.charLimit then
     local strByteLength = utf8.offset(self.value, -1) or 0
     local byteoffset = utf8.offset(self.value, self.offset) or 0
     if self.offset == 0 then
@@ -122,54 +139,33 @@ function InputField:textInput(t)
     else
       self.value = string.sub(self.value, 1, byteoffset) .. t .. string.sub(self.value, byteoffset + 1, strByteLength)
     end
-    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
-    self.offset = self.offset + 1
+    self.text:set(self.value)
+    self.offset = self.offset + utf8.len(t)
   end
 end
 
-function InputField:draw()
-  if not self.isVisible then
-    return
-  end
+local valueColor = {1, 1, 1, 1}
+local placeholderColor = {.5, .5, .5, 1}
+function InputField:drawSelf()
+  love.graphics.setColor(self.outlineColor)
+  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  love.graphics.setColor(self.backgroundColor)
+  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
 
-  GAME.gfx_q:push({love.graphics.setColor, self.outlineColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"line", self.x, self.y, self.width, self.height}})
-  GAME.gfx_q:push({love.graphics.setColor, self.backgroundColor})
-  GAME.gfx_q:push({love.graphics.rectangle, {"fill", self.x, self.y, self.width, self.height}})
-  
   local text = self.value ~= "" and self.text or self.placeholderText
-  local textColor = self.value ~= "" and {1, 1, 1, 1} or {.5, .5, .5, 1}
-  
-  GAME.gfx_q:push({love.graphics.setColor, textColor})
-  
-  local textWidth = self.text:getWidth()
-  local textHeight = text:getHeight()
-  local xAlignments = {
-    center = {self.width / 2, textWidth / 2},
-    left = {0, 0},
-    right = {self.width, textWidth},
-  }
-  local yAlignments = {
-    center = {self.height / 2, textHeight / 2},
-    top = {0, 0},
-    bottom = {self.height, textHeight},
-  }
-  local xPosAlign, xOffset = unpack(xAlignments[self.halign])
-  local yPosAlign, yOffset = unpack(yAlignments[self.valign])
-  
-  GAME.gfx_q:push({love.graphics.draw, {text, self.x + xPosAlign + textOffset, self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
-  
+  local textColor = self.value ~= "" and valueColor or placeholderColor
+
+  love.graphics.setColor(textColor)
+  love.graphics.draw(text, self.x + textOffset, self.y + 0, 0, 1, 1)
+
   if self.hasFocus then
     local cursorFlashPeriod = .5
     if (math.floor(love.timer.getTime() / cursorFlashPeriod)) % 2 == 0 then
-      GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-      GAME.gfx_q:push({love.graphics.draw, {textCursor, self:getCursorPos(), self.y + yPosAlign + 0, 0, 1, 1, xOffset, yOffset}})
+      love.graphics.setColor(1, 1, 1, 1)
+      love.graphics.draw(textCursor, self:getCursorPos(), self.y, 0, 1, 1)
     end
   end
-  GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  
-  -- draw children
-  UIElement.draw(self)
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 return InputField

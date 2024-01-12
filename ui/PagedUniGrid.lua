@@ -1,32 +1,28 @@
 local UiElement = require("ui.UIElement")
 local Grid = require("ui.Grid")
 local class = require("class")
+local TextButton = require("ui.TextButton")
+local Label = require("ui.Label")
 
 local function addNewPage(pagedUniGrid)
   local grid = Grid({
     unitSize = pagedUniGrid.unitSize,
-    unitPadding = pagedUniGrid.unitPadding,
+    unitMargin = pagedUniGrid.unitMargin,
     gridWidth = pagedUniGrid.gridWidth,
     gridHeight = pagedUniGrid.gridHeight
   })
   pagedUniGrid.pages[#pagedUniGrid.pages + 1] = grid
   pagedUniGrid.lastFilledUnit = {x = 0, y = 0}
-  pagedUniGrid:addChild(grid)
-  pagedUniGrid.TYPE = "PagedUniGrid"
+  pagedUniGrid:refreshPageTurnButtonVisibility()
 end
 
 local function goToPage(pagedUniGrid, pageNumber)
-  pagedUniGrid.currentPage = pageNumber
-  local elementsPerPage = pagedUniGrid.gridHeight * pagedUniGrid.gridWidth
-  for i = 1, #pagedUniGrid.elements do
-    if i <= pageNumber * elementsPerPage and i > (pageNumber - 1) * elementsPerPage then
-      -- is on current page
-      pagedUniGrid.elements[i]:setVisibility(true)
-    else
-      -- is not on current page
-      pagedUniGrid.elements[i]:setVisibility(false)
-    end
+  if pagedUniGrid.currentPage then
+    pagedUniGrid.pages[pagedUniGrid.currentPage]:detach()
   end
+  pagedUniGrid:addChild(pagedUniGrid.pages[pageNumber])
+  pagedUniGrid.currentPage = pageNumber
+  pagedUniGrid:refreshPageTurnButtonVisibility()
 end
 
 -- A paged uniform grid is a grid that only has grid elements of constant size
@@ -34,12 +30,37 @@ end
 -- Once full, it creates however many pages are necessary to store all elements added to it
 -- the main thing it shares with the regular grid is the cursor navigation
 local PagedUniGrid = class(function(self, options)
+  self.TYPE = "PagedUniGrid"
+
   self.unitSize = options.unitSize
-  self.unitPadding = options.unitPadding or 0
+  self.unitMargin = options.unitMargin or 0
   self.gridHeight = options.gridHeight
   self.gridWidth = options.gridWidth
+  self.width = self.unitSize * self.gridWidth
+  self.height = self.unitSize * self.gridHeight
   self.elements = {}
   self.pages = {}
+  self.pageTurnButtons = {}
+  self.pageTurnButtons.left = TextButton({
+    label = Label({text = "<", translate = false}),
+    hAlign = "left",
+    vAlign = "center",
+    x = -self.unitSize,
+    width = self.unitSize / 2,
+    height = self.unitSize / 2,
+    onClick = function() self:turnPage(-1) end,
+  })
+  self.pageTurnButtons.right = TextButton({
+    label = Label({text = ">", translate = false}),
+    hAlign = "right",
+    vAlign = "center",
+    x = self.unitSize,
+    width = self.unitSize / 2,
+    height = self.unitSize / 2,
+    onClick = function() self:turnPage(1) end,
+  })
+  self:addChild(self.pageTurnButtons.left)
+  self:addChild(self.pageTurnButtons.right)
   addNewPage(self)
   goToPage(self, 1)
 end, UiElement)
@@ -69,8 +90,23 @@ function PagedUniGrid:turnPage(sign)
   goToPage(self, newPageNumber)
 end
 
-function PagedUniGrid:draw()
-  self.pages[self.currentPage]:draw()
+function PagedUniGrid:refreshPageTurnButtonVisibility()
+  if self.currentPage then
+    self.pageTurnButtons.right:setVisibility(self.currentPage < #self.pages)
+    self.pageTurnButtons.left:setVisibility(self.currentPage > 1)
+  end
+end
+
+function PagedUniGrid:drawSelf()
+  if DEBUG_ENABLED then
+    love.graphics.setColor(1, 0, 0, 1)
+    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    love.graphics.setColor(1, 1, 1, 1)
+  end
+end
+
+function PagedUniGrid:getElementAt(row, column)
+  return self.pages[self.currentPage]:getElementAt(row, column)
 end
 
 return PagedUniGrid

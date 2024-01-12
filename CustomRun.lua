@@ -40,7 +40,7 @@ function CustomRun.sleep()
   local idleTime = targetTime - currentTime
   -- actively collecting garbage is very CPU intensive
   -- only do it while a match is on-going
-  if GAME and GAME.match and GAME.focused and not GAME.gameIsPaused then
+  if GAME and GAME.battleRoom and GAME.battleRoom.match and GAME.focused and not GAME.battleRoom.match.isPaused then
     -- Spend as much time as necessary collecting garbage, but at least 0.1ms
     -- manualGc itself has a ceiling at which it will stop
     manualGc(math.max(0.0001, idleTime * 0.99))
@@ -69,12 +69,7 @@ function CustomRun.sleep()
   CustomRun.runMetrics.sleepDuration = currentTime - originalTime
 end
 
--- This is our custom version of run that uses a custom sleep and records metrics.
-local dt = 0
-local mem = 0
-local prevMem = 0
-function CustomRun.innerRun()
-  -- Process events.
+function CustomRun.processEvents()
   if love.event then
     love.event.pump()
     for name, a, b, c, d, e, f in love.event.poll() do
@@ -86,7 +81,17 @@ function CustomRun.innerRun()
       love.handlers[name](a, b, c, d, e, f)
     end
   end
+end
 
+-- This is our custom version of run that uses a custom sleep and records metrics.
+local dt = 0
+local mem = 0
+local prevMem = 0
+function CustomRun.innerRun()
+  local shouldQuit = CustomRun.processEvents()
+  if shouldQuit then
+    return shouldQuit
+  end
   mem = collectgarbage("count")
 
   -- Update dt, as we'll be passing it to update

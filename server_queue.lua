@@ -1,3 +1,5 @@
+local NetworkProtocol = require("network.NetworkProtocol")
+local logger = require("logger")
 
 -- Tracks a queue data structure.
 -- Values are tracked via incrementing ID keys, when something is nilled it is tracked as an "empty"
@@ -40,6 +42,9 @@ end
 
 -- push a server message in queue
 function ServerQueue.push(self, msg)
+  if not msg[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not msg[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
+    logger.debug("message received:\n" .. table_to_string(msg))
+  end
   local last = self.last + 1
   self.last = last
   self.data[last] = msg

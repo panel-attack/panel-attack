@@ -50,7 +50,7 @@ local function analytic_clear(analytic)
   analytic.shockGarbageCount = 0
 end
 
-local amount_of_garbages_lines_per_combo = {0, 0, 0, 0.5, 1, 1, 1, 2, 2, 2, 2, 2, 3, 4, [20] = 6, [27] = 8}
+local amount_of_garbages_lines_per_combo = {0, 0, 0, 0.5, 1, 1, 1, 1.5, 2, 2, 2, 2, 3, 4, [20] = 6, [27] = 8}
 for i = 1, 72 do
   amount_of_garbages_lines_per_combo[i] = amount_of_garbages_lines_per_combo[i] or amount_of_garbages_lines_per_combo[i - 1]
 end

@@ -26,21 +26,6 @@ function inputFieldManager.update()
   end
 end
 
-function inputFieldManager.mousePressed(x, y)
-  local canvasX, canvasY = GAME:transform_coordinates(x, y)
-  if inputFieldManager.selectedInputField then
-    inputFieldManager.selectedInputField:unfocus()
-  end
-
-  for id, inputField in pairs(inputFieldManager.inputFields) do
-    if inputField.isEnabled and inputField:isSelected(canvasX, canvasY) then
-      inputField:setFocus(x, y)
-      inputFieldManager.selectedInputField = inputField
-      break
-    end
-  end
-end
-
 function inputFieldManager.textInput(t)
   if inputFieldManager.selectedInputField and inputFieldManager.selectedInputField.isEnabled then
     inputFieldManager.selectedInputField:textInput(t)

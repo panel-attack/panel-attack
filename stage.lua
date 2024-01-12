@@ -1,6 +1,7 @@
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
+local consts = require("consts")
 require("UpdatingImage")
 
 -- Stuff defined in this file:
@@ -197,7 +198,7 @@ function stages_init()
   end
 
   -- fix config stage if it's missing
-  if not config.stage or (config.stage ~= random_stage_special_value and not stages[config.stage]) then
+  if not config.stage or (config.stage ~= consts.RANDOM_STAGE_SPECIAL_VALUE and not stages[config.stage]) then
     config.stage = tableUtils.getRandomElement(stages_ids_for_current_theme) -- it's legal to pick a bundle here, no need to go further
   end
 
@@ -216,10 +217,10 @@ function stages_reload_graphics()
   -- reload the current stage graphics immediately
   if stages[current_stage] then
     stages[current_stage]:graphics_init(true, false)
-    if GAME and GAME.match then
+    if GAME and GAME.battleRoom and GAME.battleRoom.match then
       -- for reasons, this is not drawn directly from the stage but from background image
       -- so override this while in a match
-      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, canvas_width, canvas_height)
+      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
     end
   end
   -- lazy load the rest

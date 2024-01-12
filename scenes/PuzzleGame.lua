@@ -8,8 +8,7 @@ local class = require("class")
 local PuzzleGame = class(
   function (self, sceneParams)
     self.nextScene = nil -- set in customGameOverSetup
-    self.puzzleSet = sceneParams.puzzleSet
-    self.puzzleIndex = sceneParams.puzzleIndex
+    self.puzzleIndex = 1
     
     self:load(sceneParams)
   end,
@@ -20,39 +19,33 @@ PuzzleGame.name = "PuzzleGame"
 sceneManager:addScene(PuzzleGame)
 
 function PuzzleGame:customLoad(sceneParams)
-  GAME.match = Match("puzzle")
-  GAME.match:addPlayer(Stack{which=1, match=GAME.match, is_local=true, level=config.puzzle_level, character=sceneParams.character, inputMethod=config.inputMethod})
-  GAME.match.P1:wait_for_random_character()
-  GAME.match.P1.do_countdown = config.ready_countdown_1P or false
-
+  if sceneParams.puzzleIndex then
+    self.puzzleIndex = sceneParams.puzzleIndex
+  end
+  self.puzzleSet = self.match.players[1].settings.puzzleSet
   local puzzle = self.puzzleSet.puzzles[self.puzzleIndex]
   local isValid, validationError = puzzle:validate()
   if isValid then
-    GAME.match.P1:set_puzzle_state(puzzle)
+    self.match.players[1].stack:set_puzzle_state(puzzle)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                       .. validationError
-    sceneManager:switchToScene("PuzzleMenu")
+    sceneManager:switchToScene(sceneManager:createScene("PuzzleMenu"))
   end
 end
 
 function PuzzleGame:customRun()
   -- reset level
-  if (input.isDown["TauntUp"] or input.isDown["TauntDown"]) and not GAME.gameIsPaused then 
+  if (input.isDown["TauntUp"] or input.isDown["TauntDown"]) and not self.match.isPaused then 
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     -- The character and stage and music and background should all state the same until you complete the whole puzzle set
-    sceneManager:switchToScene("PuzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, loadStageAndMusic = false})
+    sceneManager:switchToScene(sceneManager:createScene("PuzzleGame", {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.match.players[1].stack.character, loadStageAndMusic = false}))
   end
 end
 
-function PuzzleGame:abortGame()
-  sceneManager:switchToScene("PuzzleMenu")
-end
-
 function PuzzleGame:customGameOverSetup()
-  if GAME.match.P1:puzzle_done() then -- writes successful puzzle replay and ends game
+  if self.match.P1.game_over_clock <= 0 then -- writes successful puzzle replay and ends game
     self.text = loc("pl_you_win")
-    self.winnerSFX = GAME.match.P1:pick_win_sfx()
     if self.puzzleIndex == #self.puzzleSet.puzzles then
       self.keepMusic = false
       self.nextScene = "PuzzleMenu"
@@ -60,17 +53,20 @@ function PuzzleGame:customGameOverSetup()
     else
       self.keepMusic = true
       self.nextScene = "PuzzleGame"
+      local match = GAME.battleRoom:createMatch()
+      match:start()
       -- The character and stage and music and background should all state the same until you complete the whole puzzle set
-      self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1, character = GAME.match.P1.character, loadStageAndMusic = false}
+      self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex + 1, character = self.match.players[1].stack.character, loadStageAndMusic = false, match = match}
     end
-  elseif GAME.match.P1:puzzle_failed() then
+  elseif self.match.P1.game_over_clock > 0 then
     SFX_GameOver_Play = 1
     self.text = loc("pl_you_lose")
     self.keepMusic = true
     self.nextScene = "PuzzleGame"
-    self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = GAME.match.P1.character, loadStageAndMusic = false}
+    local match = GAME.battleRoom:createMatch()
+    match:start()
+    self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.match.players[1].stack.character, loadStageAndMusic = false, match = match}
   end
-  
 end
 
 return PuzzleGame

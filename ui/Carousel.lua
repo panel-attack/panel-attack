@@ -1,9 +1,12 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
-local CarouselButton = require("ui.CarouselButton")
+local TextButton = require("ui.TextButton")
 local GraphicsUtil = require("graphics_util")
 local canBeFocused = require("ui.Focusable")
 local input = require("inputManager")
+local Label = require("ui.Label")
+local touchable = require("ui.Touchable")
+local tableUtils = require("tableUtils")
 
 local function calculateFontSize(height)
   return math.floor(height / 2) + 1
@@ -29,29 +32,38 @@ local Carousel = class(function(carousel, options)
   carousel.font = GraphicsUtil.getGlobalFontWithSize(calculateFontSize(carousel.height))
   carousel:createNavigationButtons()
 
+  carousel.initialTouchX = 0
+  carousel.initialTouchY = 0
+  carousel.swiping = false
+  touchable(carousel)
+
   carousel.TYPE = "Carousel"
 end, UiElement)
 
-function Carousel.createPassenger(id, image, text)
+function Carousel:createPassenger(id, uiElement)
   error("Each specific carousel needs to implement its own passenger")
+  -- passengers are expected to have an id property with a unique identifier
+  -- passengers are expected to have a uiElement property for being drawn
 end
 
 function Carousel.createNavigationButtons(self)
   self.leftButton =
-    CarouselButton({
-      direction = "left",
+    TextButton({
+      label = Label({text = "<", translate = false, hAlign = "center"}),
+      hAlign = "left",
+      vFill = true,
       onClick = function()
         self:moveToNextPassenger(-1)
-      end,
-      text = love.graphics.newText(self.font, "<")
+      end
     })
   self.rightButton =
-    CarouselButton({
-      direction = "right",
+    TextButton({
+      label = Label({text = ">", translate = false, hAlign = "center"}),
+      hAlign = "right",
+      vFill = true,
       onClick = function()
         self:moveToNextPassenger(1)
       end,
-      text = love.graphics.newText(self.font, ">")
     })
   self:addChild(self.leftButton)
   self:addChild(self.rightButton)
@@ -59,6 +71,8 @@ end
 
 function Carousel.addPassenger(self, passenger)
   self.passengers[#self.passengers + 1] = passenger
+  self:addChild(passenger.uiElement)
+  passenger.uiElement:setVisibility(false)
 end
 
 function Carousel.removeSelectedPassenger(self)
@@ -70,7 +84,9 @@ end
 
 function Carousel.moveToNextPassenger(self, directionSign)
   play_optional_sfx(themes[config.theme].sounds.menu_move)
+  self.passengers[self.selectedId].uiElement:setVisibility(false)
   self.selectedId = wrap(1, self.selectedId + directionSign, #self.passengers)
+  self.passengers[self.selectedId].uiElement:setVisibility(true)
   self:onPassengerUpdate()
 end
 
@@ -78,33 +94,24 @@ function Carousel.getSelectedPassenger(self)
   return self.passengers[self.selectedId]
 end
 
-function Carousel.setPassenger(self, passengerId)
-  for i = 1, #self.passengers do
-    if self.passengers[i].id == passengerId then
-      self.selectedId = i
-      self:onPassengerUpdate()
-    end
+function Carousel.setPassengerById(self, passengerId)
+  local passenger = tableUtils.first(self.passengers, function(passenger) return passenger.id == passengerId end)
+  if passenger then
+    self:setPassengerByIndex(tableUtils.indexOf(self.passengers, passenger))
   end
 end
 
-function Carousel:draw()
-  assert(#self.passengers > 0, "This carousel has no passengers!")
-  local x, y = self:getScreenPos()
-  grectangle("line", x, y, self.width, self.height)
-
-  local width = self:drawPassenger()
-  self.leftButton:updatePosition(width)
-  self.rightButton:updatePosition(width)
-
-  if self.hasFocus or config.inputMethod == "touch" or DEBUG_ENABLED then
-    self.leftButton:draw()
-    self.rightButton:draw()
-  end
+function Carousel.setPassengerByIndex(self, index)
+  self.passengers[self.selectedId].uiElement:setVisibility(false)
+  self.selectedId = index
+  self.passengers[index].uiElement:setVisibility(true)
+  self:onPassengerUpdate()
 end
 
--- drawPassenger should return the x,y,width,height the passenger takes up centered in the carousel
-function Carousel:drawPassenger()
-  error("each specific carousel needs to draw its own specific passenger")
+function Carousel:drawSelf()
+  if DEBUG_ENABLED then
+    grectangle("line", self.x, self.y, self.width, self.height)
+  end
 end
 
 function Carousel:onPassengerUpdate()
@@ -130,21 +137,48 @@ function Carousel:onBack()
 end
 
 -- the parent makes sure this is only called while focused
-function Carousel:receiveInputs()
-  if input:isPressedWithRepeat("Left", 0.25, 0.25) then
+function Carousel:receiveInputs(inputs)
+  if inputs:isPressedWithRepeat("Left", 0.25, 0.25) then
     self:moveToNextPassenger(-1)
-  elseif input:isPressedWithRepeat("Right", 0.25, 0.25) then
+  elseif inputs:isPressedWithRepeat("Right", 0.25, 0.25) then
     self:moveToNextPassenger(1)
-  elseif input.isDown["Swap1"] or input.isDown["Start"] then
+  elseif inputs.isDown["Swap1"] or inputs.isDown["Start"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
     self:onSelect()
-  elseif input.isDown["Swap2"] or input.isDown["Escape"] then
+  elseif inputs.isDown["Swap2"] or inputs.isDown["Escape"] then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
     self:onBack()
   end
+end
 
-  -- TODO: Interpret touch inputs such as swipes
-  -- probably needs some groundwork in inputManager though
+-- TODO: Interpret touch inputs such as swipes
+-- probably needs some groundwork in inputManager though
+function Carousel:onTouch(x, y)
+  self.swiping = true
+  self.initialTouchX = x
+  self.initialTouchY = y
+  self.initialTouchPassenger = self.selectedId
+end
+
+function Carousel:onDrag(x, y)
+  -- let's say 40 pixels are 1 stage
+  local indexOffset = math.floor((x - self.initialTouchX) / 40)
+  local direction = math.sign(indexOffset)
+  local passengerIndex = self.initialTouchPassenger
+  for i = self.initialTouchPassenger, self.initialTouchPassenger + (indexOffset - 1), direction do
+    passengerIndex = wrap(1, passengerIndex + direction, #self.passengers)
+  end
+  if passengerIndex ~= self.selectedId then
+    self:setPassengerByIndex(passengerIndex)
+  end
+end
+
+function Carousel:onRelease(x, y)
+  self:onDrag(x, y)
+  self.swiping = false
+  self.initialTouchX = 0
+  self.initialTouchY = 0
+  self.initialTouchPassenger = nil
 end
 
 return Carousel

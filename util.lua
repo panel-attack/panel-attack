@@ -89,9 +89,7 @@ end
 
 -- copy the table one key deep
 function shallowcpy(tab)
-  if tab == nil then
-    return nil
-  end
+  assert(tab ~= nil)
   local ret = {}
   for k, v in pairs(tab) do
     ret[k] = v
@@ -422,6 +420,32 @@ function string.toCharTable(self)
     local character = utf8.char(codePoint)
     t[#t+1] = character
   end
+  return t
+end
+
+local metaTableForWeakKeys = { __mode = "k"}
+local metaTableForWeakValues = { __mode = "v"}
+local metaTableForWeakKeysAndValues = { __mode = "kv" }
+-- a table having weak keys means 
+--  that references to a table in the key portion of that table are ignored for the purpose of garbage collection
+--  that these tables will get collected if the reference in the key portion of the table is the only remaining reference
+--  that the key value pair this key belongs to will automatically get removed from its table
+-- this is mostly useful to prevent memory leaks and keeping references to objects that are technically dead
+function util.getWeaklyKeyedTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakKeys)
+  return t
+end
+
+function util.getWeaklyValuedTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakValues)
+  return t
+end
+
+function util.getWeakTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakKeysAndValues)
   return t
 end
 

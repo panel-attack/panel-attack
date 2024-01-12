@@ -4,17 +4,17 @@ require("character")
 local logger = require("logger")
 local fileUtils = require("FileUtils")
 local tableUtils = require("tableUtils")
+local consts = require("consts")
 
 CharacterLoader = {}
 
-local loading_queue = Queue()
-
-local loading_character = nil
+CharacterLoader.loading_queue = Queue()
+CharacterLoader.loading_character = nil
 
 -- queues a character to be loaded
 function CharacterLoader.load(character_id)
   if characters[character_id] and not characters[character_id].fully_loaded then
-    loading_queue:push(character_id)
+    CharacterLoader.loading_queue:push(character_id)
   end
 end
 
@@ -22,9 +22,9 @@ local instant_load_enabled = false
 
 -- return true if there is still data to load
 function CharacterLoader.update()
-  if not loading_character and loading_queue:len() > 0 then
-    local character_name = loading_queue:pop()
-    loading_character = {
+  if not CharacterLoader.loading_character and CharacterLoader.loading_queue:len() > 0 then
+    local character_name = CharacterLoader.loading_queue:pop()
+    CharacterLoader.loading_character = {
       character_name,
       coroutine.create(
         function()
@@ -34,13 +34,13 @@ function CharacterLoader.update()
     }
   end
 
-  if loading_character then
-    if coroutine.status(loading_character[2]) == "suspended" then
-      coroutine.resume(loading_character[2])
+  if CharacterLoader.loading_character then
+    if coroutine.status(CharacterLoader.loading_character[2]) == "suspended" then
+      coroutine.resume(CharacterLoader.loading_character[2])
       return true
-    elseif coroutine.status(loading_character[2]) == "dead" then
-      loading_character = nil
-      return loading_queue:len() > 0
+    elseif coroutine.status(CharacterLoader.loading_character[2]) == "dead" then
+      CharacterLoader.loading_character = nil
+      return CharacterLoader.loading_queue:len() > 0
     -- TODO: unload characters if too much data have been loaded (be careful not to release currently-used characters)
     end
   end
@@ -74,25 +74,22 @@ function CharacterLoader.addCharactersFromDirectoryRecursively(path)
   local lfs = love.filesystem
   local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for i, v in ipairs(raw_dir_list) do
-    local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
-    if start_of_v ~= prefix_of_ignored_dirs then
-      local current_path = path .. "/" .. v
-      if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
-        -- call recursively: facade folder
-        CharacterLoader.addCharactersFromDirectoryRecursively(current_path)
+    local current_path = path .. "/" .. v
+    if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
+      -- call recursively: facade folder
+      CharacterLoader.addCharactersFromDirectoryRecursively(current_path)
 
-        -- init stage: 'real' folder
-        local character = Character(current_path, v)
-        local success = character:json_init()
+      -- init stage: 'real' folder
+      local character = Character(current_path, v)
+      local success = character:json_init()
 
-        if success then
-          if characters[character.id] ~= nil then
-            logger.trace(current_path .. " has been ignored since a character with this id has already been found")
-          else
-            -- logger.trace(current_path.." has been added to the character list!")
-            characters[character.id] = character
-            characters_ids[#characters_ids + 1] = character.id
-          end
+      if success then
+        if characters[character.id] ~= nil then
+          logger.trace(current_path .. " has been ignored since a character with this id has already been found")
+        else
+          -- logger.trace(current_path.." has been added to the character list!")
+          characters[character.id] = character
+          characters_ids[#characters_ids + 1] = character.id
         end
       end
     end
@@ -173,7 +170,7 @@ function CharacterLoader.initCharacters()
   end
 
   -- fix config character if it's missing
-  if not config.character or (config.character ~= random_character_special_value and not characters[config.character]) then
+  if not config.character or (config.character ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE and not characters[config.character]) then
     config.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
 
@@ -190,19 +187,18 @@ function CharacterLoader.initCharacters()
     end
   end
 
-  if config.character ~= random_character_special_value and not characters[config.character]:is_bundle() then
+  if config.character ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE and not characters[config.character]:is_bundle() then
     CharacterLoader.load(config.character)
     CharacterLoader.wait()
   end
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if characterId and characters[characterId] then
-    characterId = CharacterLoader.resolveBundle(characterId)
-  else
+  if not characterId or not characters[characterId] then
     -- resolve via random selection
     characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
+  characterId = CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end

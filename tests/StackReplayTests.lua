@@ -2,10 +2,11 @@ local consts = require("consts")
 local tableUtils = require("tableUtils")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
+local GameModes = require("GameModes")
+local logger = require("logger")
 
 local function test(func)
   func()
-  GAME:clearMatch()
 end
 
 -- Swap finishing the frame chaining is applied should not apply to swapped panel
@@ -15,14 +16,12 @@ local function testChainingPropagationThroughSwap1()
   StackReplayTestingUtils:simulateMatchUntil(match, 3162)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.P2.panels[4][5].chaining == nil)
   assert(not match.P2.panels[4][5].matchAnyway)
   assert(match.P2.panels[5][5].chaining == true)
   assert(match.P2.panels[5][5].matchAnyway == true)
 end
-
-test(testChainingPropagationThroughSwap1)
 
 local function testHoverInheritanceOverSwapOverGarbageHover()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "swapOverGarbageHoverInheritance.json")
@@ -30,7 +29,7 @@ local function testHoverInheritanceOverSwapOverGarbageHover()
   StackReplayTestingUtils:simulateMatchUntil(match, 9028)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.P2.panels[8][4].state == "hovering")
   -- hovering above garbage, timer should be GPHOVER (on level 8 -> 10 frames)
   assert(match.P2.panels[8][4].timer == 10)
@@ -41,14 +40,12 @@ local function testHoverInheritanceOverSwapOverGarbageHover()
   assert(match.P2.panels[10][4].timer == 13)
 end
 
-test(testHoverInheritanceOverSwapOverGarbageHover)
-
 local function testFirstHoverFrameMatch()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "firstHoverFrameMatchReplay.json")
   StackReplayTestingUtils:simulateMatchUntil(match, 4269)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.P1.panels[4][4].state == "hovering")
   assert(match.P1.panels[4][4].chaining == true)
   StackReplayTestingUtils:simulateMatchUntil(match, 4270)
@@ -58,14 +55,12 @@ local function testFirstHoverFrameMatch()
   assert(match.P1.combos[4269][1].width == 5)
 end
 
-test(testFirstHoverFrameMatch)
-
 local function testHoverChainOverGarbageClear()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "hoverChainOverGarbageClearReplay.json")
   StackReplayTestingUtils:simulateMatchUntil(match, 3073)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.P1.panels[5][4].state == "hovering")
   assert(match.P1.panels[5][4].chaining == true)
   assert(match.P1.panels[5][4].matchAnyway == false, "Panels starting to hover above fully cleared garbage don't match on their first hoverframe")
@@ -82,17 +77,15 @@ local function testHoverChainOverGarbageClear()
   assert(match.P1.chains[match.P1.currentChainStartFrame].size == 3, "We should've gotten a +4 x3 on this frame")
   assert(match.P1.combos[3080][1] ~= nil and match.P1.combos[3080][1].width == 3, "We should've gotten a +4 x3 on this frame")
   StackReplayTestingUtils:simulateMatchUntil(match, 3272)
-  assert(match.P2.game_over == true, "P2 should have died here")
+  assert(match.P2:game_ended() == true, "P2 should have died here")
 end
-
-test(testHoverChainOverGarbageClear)
 
 local function horizontalSwapIntoHoverTest()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "sideBySideSwapIntoHoverReplay.json")
   StackReplayTestingUtils:simulateMatchUntil(match, 4220)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.P2.panels[4][4].state == "hovering")
   assert(match.P2.panels[4][4].chaining)
   assert(match.P2.panels[5][4].state == "hovering")
@@ -112,57 +105,53 @@ local function horizontalSwapIntoHoverTest()
   assert(match.P2.chain_counter == 0, "chain counter should reset here as all other falling panels lost their chaining status by now")
 end
 
-test(horizontalSwapIntoHoverTest)
-
 local function basicEndlessTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-00-35-24-Spd1-Dif3-endless.txt")
   assert(match ~= nil)
-  assert(match.mode == "endless")
+  assert(match.stackInteraction == GameModes.StackInteractions.NONE)
+  assert(match.timeLimit == nil)
+  assert(tableUtils.length(match.winConditions) == 0)
   assert(match.seed == 7161965)
   assert(match.P1.game_over_clock == 402)
-  assert(match.P1.max_health == 1)
+  assert(match.P1.levelData.maxHealth == 1)
   assert(match.P1.score == 37)
   assert(match.P1.difficulty == 3)
 end
-
-test(basicEndlessTest)
-
 
 local function basicTimeAttackTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2022-09-12-04-02-30-Spd11-Dif1-timeattack.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "time")
+  assert(match.stackInteraction == GameModes.StackInteractions.NONE)
+  assert(match.timeLimit ~= nil)
+  assert(tableUtils.length(match.winConditions) == 0)
   assert(match.seed == 3490465)
-  assert(match.P1.game_stopwatch == 7201)
-  assert(match.P1.max_health == 1)
+  assert(match.P1.game_stopwatch == 7200)
+  assert(match.P1.levelData.maxHealth == 1)
   assert(match.P1.score == 10353)
   assert(match.P1.difficulty == 1)
   assert(tableUtils.length(match.P1.chains) == 8)
   assert(tableUtils.length(match.P1.combos) == 4)
 end
 
-test(basicTimeAttackTest)
-
-
 local function basicVsTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-28-02-39-32-JamBox-L10-vs-Galadic97-L10-Casual-P1wins.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 2992240)
   assert(match.P1.game_over_clock == 2039)
   assert(match.P1.level == 10)
   assert(tableUtils.length(match.P1.chains) == 4)
   assert(tableUtils.length(match.P1.combos) == 4)
-  assert(match.P2.game_over_clock == 0)
+  assert(match.P2.game_over_clock <= 0)
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 4)
   assert(tableUtils.length(match.P2.combos) == 4)
-  assert(match.P1:gameResult() == -1)
+  local winners = match:getWinners()
+  assert(#winners == 1)
+  assert(winners[1].playerNumber == 2)
 end
-
-test(basicVsTest)
 
 --the above replay did not succeed in throwing errors for some of the bugs I coded in during the checkMatches refactor
 --namely a color override issue where the transforming garbage panel had colors assigned more than once, leading to different panels
@@ -170,26 +159,26 @@ test(basicVsTest)
 local function basicVsTest2()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-02-26-02-44-49-Endaris-L10-vs-z26PingMeDiscord-L10-Casual-P1wins.json")
   assert(match ~= nil)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 9285831)
   assert(match.P1.game_over_clock == 3394)
   assert(match.P1.level == 10)
   assert(tableUtils.length(match.P1.chains) == 7)
   assert(tableUtils.length(match.P1.combos) == 8)
-  assert(match.P2.game_over_clock == 0)
+  assert(match.P2.game_over_clock <= 0)
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 5)
   assert(tableUtils.length(match.P2.combos) == 8)
-  assert(match.P1:gameResult() == -1)
+  local winners = match:getWinners()
+  assert(#winners == 1)
+  assert(winners[1].playerNumber == 2)
 end
-
-test(basicVsTest2)
 
 local function noInputsInVsIsDrawTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-30-22-27-36-Player 1-L10-vs-Player 2-L10-draw.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 1866552)
   assert(match.P1.game_over_clock == 908)
   assert(match.P1.level == 10)
@@ -199,10 +188,9 @@ local function noInputsInVsIsDrawTest()
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 0)
   assert(tableUtils.length(match.P2.combos) == 0)
-  assert(match.P1:gameResult() == 0)
+  local winners = match:getWinners()
+  assert(#winners == 2)
 end
-
-test(noInputsInVsIsDrawTest)
 
 -- Tests a bunch of different frame specific tricks and makes sure we still end at the expected time.
 -- In the future we should probably expand this to testing each specific trick and making sure the board changes correctly.
@@ -210,7 +198,9 @@ local function frameTricksTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-07-16-37-02-Spd10-Dif3-endless.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "endless")
+  assert(match.stackInteraction == GameModes.StackInteractions.NONE)
+  assert(match.timeLimit == nil)
+  assert(tableUtils.length(match.winConditions) == 0)
   assert(match.seed == 9399683)
   assert(match.P1.game_over_clock == 10032)
   assert(match.P1.difficulty == 3)
@@ -218,16 +208,14 @@ local function frameTricksTest()
   assert(tableUtils.length(match.P1.combos) == 7)
 end
 
-test(frameTricksTest)
-
 -- Tests a catch that also did a "sync" (two separate matches on the same frame)
 local function catchAndSyncTest()
   local match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v046-2023-01-31-08-57-51-Galadic97-L10-vs-iTSMEJASOn-L8-Casual-P1wins.txt")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 8739468)
-  assert(match.P1.game_over_clock == 0)
+  assert(match.P1.game_over_clock <= 0)
   assert(match.P1.level == 10)
   assert(tableUtils.length(match.P1.chains) == 4)
   assert(tableUtils.length(match.P1.combos) == 6)
@@ -235,10 +223,10 @@ local function catchAndSyncTest()
   assert(match.P2.level == 8)
   assert(tableUtils.length(match.P2.chains) == 2)
   assert(tableUtils.length(match.P2.combos) == 2)
-  assert(match.P1:gameResult() == 1)
+  local winners = match:getWinners()
+  assert(#winners == 1)
+  assert(winners[1].playerNumber == 1)
 end
-
-test(catchAndSyncTest)
 
 -- Moving the cursor before ready is done
 -- Prior to the touch builds, you couldn't move the cursor before it was in position
@@ -249,7 +237,7 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   StackReplayTestingUtils:simulateMatchUntil(match, 10)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.P1.cur_row == 11)
   assert(match.P1.cur_col == 5)
 
@@ -283,8 +271,6 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   assert(match.P1.cur_col == 3)
 end
 
-test(movingBeforeInPositionDisallowedPriorToTouch)
-
 -- Test that down stacking under garbage makes everything fall even if panels are sandwiched between.
 local function downStackDropsSandwichedGarbageAllTogether()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "downStackDropsSandwichedGarbageAllTogether.txt")
@@ -292,7 +278,7 @@ local function downStackDropsSandwichedGarbageAllTogether()
   StackReplayTestingUtils:simulateMatchUntil(match, 4668)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 1123596)
   assert(match.P1.level == 8)
   assert(match.P2.level == 8)
@@ -313,7 +299,6 @@ local function downStackDropsSandwichedGarbageAllTogether()
   assert(match.P2.panels[8][4].isGarbage == true)
 end
 
-test(downStackDropsSandwichedGarbageAllTogether)
 -- Test that a match that touches metal and a garbage block that also matches the metal still clears the whole metal
 local function matchMetalAndGarbageClearsAllMetalTest()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "matchMetalAndGarbageClearsAllMetal.txt")
@@ -321,7 +306,7 @@ local function matchMetalAndGarbageClearsAllMetalTest()
   StackReplayTestingUtils:simulateMatchUntil(match, 7274)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 6141756)
   assert(match.P1.level == 5)
   assert(match.P2.level == 5)
@@ -344,8 +329,6 @@ local function matchMetalAndGarbageClearsAllMetalTest()
   assert(match.P1.panels[8][6].state == "matched")
 end
 
-test(matchMetalAndGarbageClearsAllMetalTest)
-
 -- Test that a panel that is still falling when it starts hovering doesn't get the chain flag.
 -- I believe the reasoning behind this is it wasn't "established" enough to count as a chain.
 local function fallingWhileHoverBeginsDoesNotChain()
@@ -354,7 +337,7 @@ local function fallingWhileHoverBeginsDoesNotChain()
   StackReplayTestingUtils:simulateMatchUntil(match, 5571)
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE)
-  assert(match.mode == "vs")
+  assert(match.stackInteraction == GameModes.StackInteractions.VERSUS)
   assert(match.seed == 5439756)
   assert(match.P1.level == 10)
   assert(match.P2.level == 10)
@@ -375,4 +358,50 @@ local function fallingWhileHoverBeginsDoesNotChain()
   assert(match.P2.panels[7][3].chaining == true)
 end
 
+logger.info("running basicTimeAttackTest")
+test(basicTimeAttackTest)
+
+logger.info("running testChainingPropagationThroughSwap1")
+test(testChainingPropagationThroughSwap1)
+
+logger.info("running testHoverInheritanceOverSwapOverGarbageHover")
+test(testHoverInheritanceOverSwapOverGarbageHover)
+
+logger.info("running testFirstHoverFrameMatch")
+test(testFirstHoverFrameMatch)
+
+logger.info("running testHoverChainOverGarbageClear")
+test(testHoverChainOverGarbageClear)
+
+logger.info("running horizontalSwapIntoHoverTest")
+test(horizontalSwapIntoHoverTest)
+
+logger.info("running basicEndlessTest")
+test(basicEndlessTest)
+
+logger.info("running basicVsTest")
+test(basicVsTest)
+
+logger.info("running basicVsTest2")
+test(basicVsTest2)
+
+logger.info("running noInputsInVsIsDrawTest")
+test(noInputsInVsIsDrawTest)
+
+logger.info("running frameTricksTest")
+test(frameTricksTest)
+
+logger.info("running catchAndSyncTest")
+test(catchAndSyncTest)
+
+logger.info("running movingBeforeInPositionDisallowedPriorToTouch")
+test(movingBeforeInPositionDisallowedPriorToTouch)
+
+logger.info("running downStackDropsSandwichedGarbageAllTogether")
+test(downStackDropsSandwichedGarbageAllTogether)
+
+logger.info("running matchMetalAndGarbageClearsAllMetalTest")
+test(matchMetalAndGarbageClearsAllMetalTest)
+
+logger.info("running fallingWhileHoverBeginsDoesNotChain")
 test(fallingWhileHoverBeginsDoesNotChain)

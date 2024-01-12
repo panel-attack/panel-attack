@@ -2,7 +2,7 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Stepper = require("ui.Stepper")
 local Label = require("ui.Label")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
 local tableUtils = require("tableUtils")
@@ -26,8 +26,6 @@ local BUTTON_HEIGHT = 25
 local soundTestMenu
 
 local menuValidateSound
-
-local backgroundImg = nil -- set in load
 
 local function playMusic(source, id, musicType)
   local musicToUse
@@ -71,7 +69,7 @@ local function createSfxMenuInfo(characterId)
   local sfxValues = {}
   for _, sfx in ipairs(soundFiles) do
     sfxLabels[#sfxLabels + 1] = Label({
-        label = string.match(sfx, "(.*)[.]"),
+        text = string.match(sfx, "(.*)[.]"),
         translate = false,
         width = BUTTON_WIDTH,
         height = BUTTON_HEIGHT,
@@ -82,11 +80,11 @@ local function createSfxMenuInfo(characterId)
 end
 
 function SoundTest:load()
-    local characterLabels = {}
+  local characterLabels = {}
   local characterIds = {}
   for _, character in pairs(characters) do
     characterLabels[#characterLabels + 1] = Label({
-        label = character.display_name,
+        text = character.display_name,
         translate = false,
         width = BUTTON_WIDTH,
         height = BUTTON_HEIGHT})
@@ -119,7 +117,7 @@ function SoundTest:load()
   local stageIds = {}
   for _, stage in pairs(stages) do
     stageLabels[#stageLabels + 1] = Label({
-        label = stage.display_name,
+        text = stage.display_name,
         translate = false,
         width = BUTTON_WIDTH,
         height = BUTTON_HEIGHT})
@@ -142,8 +140,8 @@ function SoundTest:load()
   musicTypeButtonGroup = ButtonGroup(
     {
       buttons = {
-        Button({label = "Normal", translate = false}),
-        Button({label = "Danger", translate = false}),
+        TextButton({label = Label({text = "Normal"}), translate = false}),
+        TextButton({label = Label({text = "Danger"}), translate = false}),
       },
       values = {"normal_music", "danger_music"},
       selectedIndex = 1,
@@ -161,9 +159,9 @@ function SoundTest:load()
   playButtonGroup = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off"}),
-        Button({label = "character"}),
-        Button({label = "stage"}),
+        TextButton({label = Label({text = "op_off"})}),
+        TextButton({label = Label({text = "character"})}),
+        TextButton({label = Label({text = "stage"})}),
       },
       values = {"", "character", "stage"},
       selectedIndex = 1,
@@ -201,12 +199,16 @@ function SoundTest:load()
 
   local menuLabelWidth = 120
   local soundTestMenuOptions = {
-    {Label({width = menuLabelWidth, label = "character"}), characterStepper},
-    {Label({width = menuLabelWidth, label = "stage"}), stageStepper},
-    {Label({width = menuLabelWidth, label = "op_music_type"}), musicTypeButtonGroup},
-    {Label({width = menuLabelWidth, label = "Background", translate = false}), playButtonGroup},
-    {Button({width = menuLabelWidth, label = "op_music_sfx", onClick = playCharacterSFXFn}), sfxStepper},
-    {Button({width = menuLabelWidth, label = "back", onClick = function() sceneManager:switchToScene("OptionsMenu") end})},
+    {Label({width = menuLabelWidth, text = "character"}), characterStepper},
+    {Label({width = menuLabelWidth, text = "stage"}), stageStepper},
+    {Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup},
+    {Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup},
+    {TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper},
+    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function()
+      stop_all_audio()
+      themes[config.theme].sounds.menu_validate = menuValidateSound
+      sceneManager:switchToScene(sceneManager:createScene("OptionsMenu"))
+    end})},
   }
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -216,8 +218,10 @@ function SoundTest:load()
     menuItems = soundTestMenuOptions, 
     maxHeight = themes[config.theme].main_menu_max_height
   })
+
+  self.uiRoot:addChild(soundTestMenu)
   
-  backgroundImg = themes[config.theme].images.bg_main
+  self.backgroundImg = themes[config.theme].images.bg_main
 
   -- stop main music
   stop_all_audio()
@@ -229,21 +233,14 @@ function SoundTest:load()
   gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
 end
 
-function SoundTest:drawBackground()
-  backgroundImg:draw()
-end
-
 function SoundTest:update(dt)
-  soundTestMenu:update()
-  soundTestMenu:draw()
-  backgroundImg:update(dt)
+  soundTestMenu:update(dt)
+  self.backgroundImg:update(dt)
 end
 
---fallback to main theme if nothing is playing or if dynamic music is playing, dynamic music cannot cleanly be "carried out" of the sound test due to the master volume reapplication in the audio options menu
-function SoundTest:unload()
-  stop_all_audio()
-  themes[config.theme].sounds.menu_validate = menuValidateSound
-  soundTestMenu:setVisibility(false)
+function SoundTest:draw()
+  self.backgroundImg:draw()
+  soundTestMenu:draw()
 end
 
 return SoundTest

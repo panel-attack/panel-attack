@@ -2,356 +2,234 @@ local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Label = require("ui.Label")
 local ButtonGroup = require("ui.ButtonGroup")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
 local class = require("class")
-local consts = require("consts")
-local select_screen = require("select_screen.select_screen")
 local input = require("inputManager")
-local uiUtils = require("ui.uiUtils")
 local logger = require("logger")
+local LoginRoutine = require("network.LoginRoutine")
+local MessageListener = require("network.MessageListener")
+local ClientMessages = require("network.ClientProtocol")
+local UiElement = require("ui.UIElement")
+local Game2pVs = require("scenes.Game2pVs")
+local CharacterSelect2p = require("scenes.CharacterSelect2p")
+local CatchUpTransition = require("scenes.Transitions.CatchUpTransition")
 
---@module Lobby
+local STATES = {Login = 1, Lobby = 2}
+
+-- @module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
-local Lobby = class(
-  function (self, sceneParams)
-    self.backgroundImg = themes[config.theme].images.bg_main
-    
-    self.unpaired_players = {} -- list
-    self.willing_players = {} -- set
-    self.spectatable_rooms = {}
+local Lobby = class(function(self, sceneParams)
+  -- lobby data from the server
+  self.playerData = nil
+  self.unpairedPlayers = {} -- list
+  self.willingPlayers = {} -- set
+  self.spectatableRooms = {}
+  -- requests to play a match, not web requests
+  self.sentRequests = {}
 
-    -- reset player ids and match type
-    -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
-    self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
-    self.leaderboard_string = ""
-    self.my_rank = nil
+  -- leaderboard data
+  self.myRank = nil
+  self.leaderboardString = ""
+  self.leaderboardResponse = nil
 
-    self.login_status_message = "   " .. loc("lb_login")
-    self.noticeTextObject = nil
-    self.noticeLastText = nil
-    self.login_status_message_duration = 2
-    self.login_denied = false
-    self.showing_leaderboard = false
-    self.lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
-    self.lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
-    self.sent_requests = {}
+  -- ui
+  self.backgroundImg = themes[config.theme].images.bg_main
+  self.leaderboardLabel = nil
+  self.lobbyMenu = nil
+  self.lobbyMenuXoffsetMap = {
+    [true] = -200,
+    [false] = 0
+  }
+  -- will be used to make room in case the leaderboard should be shown.
+  -- currently unused, need to find a new place to draw this later
+  self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
 
-    self.lobby_menu = nil
-    self.items = {}
-    self.lastPlayerIndex = 0
-    self.updated = true -- need update when first entering
-    self.ret = nil
-    self.requestedSpectateRoom = nil
-    self.playerData = nil
-    
-    self.transitioning = false
-    self.switchSceneLabel = nil
-    
-    -- set if needed in DefautUpdate
-    self.serverNoticeLabel = nil
-    self.loginDeniedMsg = nil
-    
-    --set in load
-    self.state = nil
-    self.stateParams = {
-      startTime = nil,
-      maxDisplayTime = nil, 
-      minDisplayTime = nil,
-      sceneName = nil,
-      sceneParams = nil
-    }
-    self.lobbyMenu = nil
-    
-    self:load(sceneParams)
-  end,
-  Scene
-)
+  -- state fields to manage Lobby's update cycle    
+  self.state = STATES.Login
+
+  -- network features not yet implemented
+  self.spectateRequestResponse = nil
+  self.requestedSpectateRoom = nil
+
+  self:load(sceneParams)
+end, Scene)
 
 Lobby.name = "Lobby"
 sceneManager:addScene(Lobby)
 
-local states = {SWITCH_SCENE = 1, SET_NAME = 2, DEFAULT = 3, SHOW_SERVER_NOTICE = 4}
-local SERVER_NOTICE_DISPLAY_TIME = 3
-
-local serverIp = nil
-local serverPort = nil
-
-function Lobby:toggleLeaderboard()
-  self.updated = true
-  if not self.showing_leaderboard then
-    --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_hide_board"))
-    self.showing_leaderboard = true
-    json_send({leaderboard_request = true})
-  else
-    --lobby_menu:set_button_text(#lobby_menu.buttons - 1, loc("lb_show_board"))
-    self.showing_leaderboard = false
-    self.lobby_menu.x = self.lobby_menu_x[self.showing_leaderboard]
-  end
-end
+----------
+-- exit --
+----------
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+  GAME.tcpClient:resetNetwork()
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
-function Lobby:initLobbyMenu()
-  local showLeaderboardButtonGroup = ButtonGroup(
-    {
-      buttons = {
-        Button({width = 60, label = "op_off"}),
-        Button({width = 60, label = "op_on"}),
-      },
-      values = {false, true},
-      selectedIndex = 1,
-      onChange = function(value) 
-        Menu.playMoveSfx()
-        -- enable leaderboard
-      end
-    }
-  )
-  
-  local menuItems = {
-    {Label({label = "Leaderboard", translate = false}), showLeaderboardButtonGroup},
-    {Button({label = "lb_back", onClick = exitMenu})},
-  }
-
-  self.lobbyMenu = Menu({x = self.lobby_menu_x[showLeaderboardButtonGroup.value], y = self.lobby_menu_y, menuItems = menuItems})
-end
+-------------
+-- startup --
+-------------
 
 function Lobby:load(sceneParams)
-  print("lobby")
-  --main_net_vs_setup
-  if not config.name or config.name == "defaultname" then
-    self.state = states.SET_NAME
-    return
+  if not GAME.tcpClient:isConnected() and sceneParams.serverIp then
+    self.loginRoutine = LoginRoutine(GAME.tcpClient, sceneParams.serverIp, sceneParams.serverPort)
+  else
+    self.state = STATES.Lobby
   end
-  if GAME.match then
-    print("nil-ing P1 & P2")
-    GAME.match.P1 = nil
-    GAME.match.P2 = nil
-  end
-  server_queue = ServerQueue()
-  --gprint(loc("lb_set_connect"), unpack(themes[config.theme].main_menu_screen_pos))
+  self.messageListeners = {}
+  self.messageListeners["create_room"] = MessageListener("create_room")
+  self.messageListeners["create_room"]:subscribe(self, self.start2pVsOnlineMatch)
+  self.messageListeners["players"] = MessageListener("players")
+  self.messageListeners["players"]:subscribe(self, self.updateLobbyState)
+  self.messageListeners["game_request"] = MessageListener("game_request")
+  self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
 
-  print("lobby1")
-  if sceneParams.serverIp then
-    GAME.connected_server_ip = sceneParams.serverIp
-  end
-  if sceneParams.serverPort then
-    GAME.connected_server_ip = sceneParams.serverPort
-  end
-  if not network_init(GAME.connected_server_ip, GAME.connected_network_port) then
-    print("lobby1b")
-    self.state = states.SWITCH_SCENE
-    self.switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"))
-    self.stateParams = {
-      startTime = love.timer.getTime(),
-      maxDisplayTime = 5, 
-      minDisplayTime = 1,
-      sceneName = "MainMenu",
-      sceneParams = nil
-    }
-    print("lobby2b")
-    return
-  end
-print("lobby2")
-  local timeout_counter = 0
-  while not connection_is_ready() do
-    --gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
-    if not do_messages() then
-      self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = uiUtils.createCenteredLabel(loc("ss_disconnect") .. "\n\n" .. loc("ss_return"))
-      self.stateParams = {
-        startTime = love.timer.getTime(),
-        maxDisplayTime = 5, 
-        minDisplayTime = 1,
-        sceneName = "MainMenu",
-        sceneParams = nil
-      }
-      return
-    end
-  end
-  print("lobby3")
-  logged_in = false
-  
-  --main_net_vs_lobby
   if next(currently_playing_tracks) == nil then
     stop_the_music()
     if themes[config.theme].musics["main"] then
       find_and_add_music(themes[config.theme].musics, "main")
     end
   end
-  print("lobby4")
-  GAME.battleRoom = nil
-  reset_filters()
-  CharacterLoader.clear()
-  StageLoader.clear()
-  
-  -- reset player ids and match type
-  -- this is necessary because the player ids are only supplied on initial joining and then assumed to stay the same for consecutive games in the same room
-  select_screen.my_player_number = nil
-  select_screen.op_player_number = nil
-  match_type = ""
-  match_type_message = ""
-  --attempt login
-  read_user_id_file()
-  if not my_user_id then
-    my_user_id = "need a new user id"
-  end
 
-print("lobby5")
-  if connection_up_time <= self.login_status_message_duration then
-    json_send({login_request = true, user_id = my_user_id})
-  end
-  
   self:initLobbyMenu()
-  
-  self.state = states.DEFAULT
-  print("lobbyEnd")
 end
 
-function Lobby:drawBackground()
-  self.backgroundImg:draw()
-end
-
-function Lobby:processServerMessages()
-  if connection_up_time <= self.login_status_message_duration then
-    local messages = server_queue:pop_all_with("login_successful", "login_denied")
-    for _, msg in ipairs(messages) do
-      print(msg)
-      if msg.login_successful then
-        current_server_supports_ranking = true
-        logged_in = true
-        if msg.new_user_id then
-          my_user_id = msg.new_user_id
-          logger.trace("about to write user id file")
-          write_user_id_file()
-          self.login_status_message = loc("lb_user_new", config.name)
-        elseif msg.name_changed then
-          self.login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
-          self.login_status_message_duration = 5
-        else
-          self.login_status_message = loc("lb_welcome_back", config.name)
-        end
-        if msg.server_notice then
-          local serverNotice = msg.server_notice:gsub("\\n", "\n")
-          self.serverNoticeLabel = uiUtils.createCenteredLabel(serverNotice)
-          
-          self.stateParams.startTime = love.timer.getTime()
-
-          self.state = states.SHOW_SERVER_NOTICE
-        end
-      elseif msg.login_denied then
-        current_server_supports_ranking = true
-        self.login_denied = true
-        --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-        --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
-        login_status_message_duration = 10
-        self.state = states.SWITCH_SCENE
-        self.switchSceneLabel = uiUtils.createCenteredLabel(loc("lb_error_msg") .. "\n\n" .. json.encode(msg))
-        self.stateParams = {
-          startTime = love.timer.getTime(),
-          maxDisplayTime = 10, 
-          minDisplayTime = 1,
-          sceneName = "MainMenu",
-          sceneParams = nil
-        }
-        return
-      end
-      
+function Lobby:initLobbyMenu()
+  self.leaderboardLabel = Label({text = "", translate = false, hAlign = "center", vAlign = "center", x = 200, isVisible = false})
+  self.leaderboardToggleLabel = Label({text = "lb_show_board"})
+  self.leaderboardToggleButton = TextButton({
+    label = self.leaderboardToggleLabel,
+    onClick = function()
+      self:toggleLeaderboard()
     end
-    if connection_up_time == 2 and not current_server_supports_ranking then
-      self.login_status_message = loc("lb_login_timeout")
-      self.login_status_message_duration = 7
+  })
+  local menuItems = {{self.leaderboardToggleButton}, {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})}}
+
+  self.lobbyMenu = Menu({
+    x = self.lobbyMenuXoffsetMap[false],
+    y = 0,
+    menuItems = menuItems,
+    -- this alignment setup does not quite work yet because Menu isn't acting like a proper container
+    hAlign = "center",
+    vAlign = "center",
+  })
+  self.uiRoot:addChild(self.lobbyMenu)
+  self.uiRoot:addChild(self.leaderboardLabel)
+end
+
+-----------------
+-- leaderboard --
+-----------------
+
+function Lobby:toggleLeaderboard()
+  Menu.playMoveSfx()
+  if not self.leaderboardLabel.isVisible then
+    self.leaderboardToggleLabel:setText("lb_hide_board")
+    self.leaderboardResponse = GAME.tcpClient:sendRequest(ClientMessages.requestLeaderboard())
+    self.uiRoot:addChild(self.leaderboardLabel)
+  else
+    self.leaderboardToggleLabel:setText("lb_show_board")
+    self.leaderboardLabel:detach()
+  end
+  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.leaderboardLabel.isVisible]
+end
+
+local function build_viewable_leaderboard_string(report, firstVisibleIndex, lastVisibleIndex)
+  str = loc("lb_header_board") .. "\n"
+  firstVisibleIndex = math.max(firstVisibleIndex, 1)
+  lastVisibleIndex = math.min(lastVisibleIndex, #report)
+
+  for i = firstVisibleIndex, lastVisibleIndex do
+    ratingSpacing = "     " .. string.rep("  ", (3 - string.len(i)))
+    nameSpacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
+    if report[i].is_you then
+      str = str .. loc("lb_you") .. "-> "
+    else
+      str = str .. "      "
+    end
+    str = str .. i .. ratingSpacing .. report[i].rating .. nameSpacing .. report[i].user_name
+    if i < #report then
+      str = str .. "\n"
     end
   end
+  return str
+end
 
-  local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
-  for _, msg in ipairs(messages) do
-    self.updated = true
-    self.items = {}
-    if msg.choose_another_name and msg.choose_another_name.used_names then
-      self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = uiUtils.createCenteredLabel(loc("lb_used_name"))
-      self.stateParams = {
-        startTime = love.timer.getTime(),
-        maxDisplayTime = 10, 
-        minDisplayTime = 1,
-        sceneName = "MainMenu",
-        sceneParams = nil
-      }
-      return
-    elseif msg.choose_another_name and msg.choose_another_name.reason then
-      self.state = states.SWITCH_SCENE
-      self.switchSceneLabel = uiUtils.createCenteredLabel("Error: " .. msg.choose_another_name.reason)
-      self.stateParams = {
-        startTime = love.timer.getTime(),
-        maxDisplayTime = 5, 
-        minDisplayTime = 1,
-        sceneName = "MainMenu",
-        sceneParams = nil
-      }
-      return
-    end
-    if msg.create_room or msg.spectate_request_granted then
-      GAME.battleRoom = BattleRoom()
-      if msg.spectate_request_granted then
-        if not self.requestedSpectateRoom then
-          error("expected requested room")
-        end
-        GAME.battleRoom.spectating = true
-        GAME.battleRoom.playerNames[1] = self.requestedSpectateRoom.a
-        GAME.battleRoom.playerNames[2] = self.requestedSpectateRoom.b
-      else
-        GAME.battleRoom.playerNames[1] = config.name
-        GAME.battleRoom.playerNames[2] = msg.opponent
-        love.window.requestAttention()
-        play_optional_sfx(themes[config.theme].sounds.notification)
-      end
-      sceneManager:switchToScene("CharacterSelectOnline", {roomInitializationMessage = msg})
-      --return select_screen.main, {select_screen, "2p_net_vs", msg}
-    end
-    if msg.players then
-      self.playerData = msg.players
-    end
-    if msg.unpaired then
-      self.unpaired_players = msg.unpaired
-      -- players who leave the unpaired list no longer have standing invitations to us.\
-      -- we also no longer have a standing invitation to them, so we'll remove them from sent_requests
-      local new_willing = {}
-      local new_sent_requests = {}
-      for _, player in ipairs(self.unpaired_players) do
-        new_willing[player] = self.willing_players[player]
-        new_sent_requests[player] = self.sent_requests[player]
-      end
-      self.willing_players = new_willing
-      self.sent_requests = new_sent_requests
-      if msg.spectatable then
-        self.spectatable_rooms = msg.spectatable
+function Lobby:updateLeaderboard(leaderboardReportMessage)
+  if leaderboardReportMessage.leaderboard_report then
+    local leaderboardReport = leaderboardReportMessage.leaderboard_report
+    for rank = #leaderboardReport, 1, -1 do
+      local user = leaderboardReport[rank]
+      if user.user_name == config.name then
+        self.myRank = rank
       end
     end
+    local firstVisibleIndex = math.max((self.myRank or 1) - 8, 1)
+    local lastVisibleIndex = math.min(firstVisibleIndex + 20, #leaderboardReport)
+    self.leaderboardString = build_viewable_leaderboard_string(leaderboardReport, firstVisibleIndex, lastVisibleIndex)
+    self.leaderboardLabel:setText(self.leaderboardString)
+  end
+end
 
-    if msg.game_request then
-      self.willing_players[msg.game_request.sender] = true
-      love.window.requestAttention()
-      play_optional_sfx(themes[config.theme].sounds.notification)
+--------------------------------
+-- Processing server messages --
+--------------------------------
+
+function Lobby:processGameRequest(gameRequestMessage)
+  if gameRequestMessage.game_request then
+    self.willingPlayers[gameRequestMessage.game_request.sender] = true
+    love.window.requestAttention()
+    play_optional_sfx(themes[config.theme].sounds.notification)
+    -- this might be moot if the server sends a lobby update to everyone after receiving the challenge
+    self:onLobbyStateUpdate()
+  end
+end
+
+-- populates playerData, willingPlayers, sentRequests and unpairedPlayers from the server messages
+function Lobby:updateLobbyState(lobbyStateMessage)
+  if lobbyStateMessage.players then
+    self.playerData = lobbyStateMessage.players
+  end
+  if lobbyStateMessage.unpaired then
+    self.unpairedPlayers = lobbyStateMessage.unpaired
+    -- players who leave the unpaired list no longer have standing invitations to us.\
+    -- we also no longer have a standing invitation to them, so we'll remove them from sentRequests
+    local newWillingPlayers = {}
+    local newSentRequests = {}
+    for _, player in ipairs(self.unpairedPlayers) do
+      newWillingPlayers[player] = self.willingPlayers[player]
+      newSentRequests[player] = self.sentRequests[player]
     end
-    if msg.leaderboard_report then
-      --if self.lobby_menu then
-      --  self.lobby_menu:show_controls(true)
-      --end
-      leaderboard_report = msg.leaderboard_report
-      for rank = #leaderboard_report, 1, -1 do
-        local user = leaderboard_report[rank]
-        if user.user_name == config.name then
-          self.my_rank = rank
-        end
-      end
-      leaderboard_first_idx_to_show = math.max((self.my_rank or 1) - 8, 1)
-      leaderboard_last_idx_to_show = math.min(leaderboard_first_idx_to_show + 20, #leaderboard_report)
-      leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
+    self.willingPlayers = newWillingPlayers
+    self.sentRequests = newSentRequests
+    if lobbyStateMessage.spectatable then
+      self.spectatableRooms = lobbyStateMessage.spectatable
     end
+  end
+  self:onLobbyStateUpdate()
+end
+
+-- starts a 2p vs online match
+function Lobby:start2pVsOnlineMatch(createRoomMessage)
+  -- Not yet implemented
+  GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
+  love.window.requestAttention()
+  play_optional_sfx(themes[config.theme].sounds.notification)
+  sceneManager:switchToScene(CharacterSelect2p())
+end
+
+-- starts to spectate a 2p vs online match
+function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
+  -- Not yet implemented
+  GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
+  if GAME.battleRoom.match then
+    local vsScene = Game2pVs({match = GAME.battleRoom.match, nextScene = "CharacterSelect2p"})
+    local transition = CatchUpTransition(self, vsScene)
+    sceneManager:switchToScene(vsScene, transition)
+  else
+    sceneManager:switchToScene(CharacterSelect2p())
   end
 end
 
@@ -363,246 +241,138 @@ function Lobby:playerRatingString(playerName)
   return rating
 end
 
+-- challenges the opponent with that name
 function Lobby:requestGameFunction(opponentName)
   return function()
-    self.sent_requests[opponentName] = true
-    request_game(opponentName)
-    self.updated = true
+    self.sentRequests[opponentName] = true
+    GAME.tcpClient:sendRequest(ClientMessages.challengePlayer(opponentName))
+    self:onLobbyStateUpdate()
   end
 end
 
+-- requests to spectate the specified room
 function Lobby:requestSpectateFunction(room)
   return function()
     self.requestedSpectateRoom = room
-    request_spectate(room.roomNumber)
+    self.spectateRequestResponse = GAME.tcpClient:sendRequest(ClientMessages.requestSpectate(room.roomNumber))
   end
 end
 
-function Lobby:defaultUpdate(dt)
-  if not do_messages() then
-    self.state = states.DISCONNECTED
-    return
+-- rebuilds the UI based on the new lobby information
+function Lobby:onLobbyStateUpdate()
+  while #self.lobbyMenu.menuItems > 2 do
+    self.lobbyMenu:removeMenuItemAtIndex(1)
   end
-  drop_old_data_messages() -- We are in the lobby, we shouldn't have any game data messages
-    
-  self:processServerMessages()
-
-  -- If we got an update to the lobby, refresh the menu
-  if self.updated then
-    while #self.lobbyMenu.menuItems > 2 do
-      self.lobbyMenu:removeMenuItemAtIndex(1)
-    end
-    for _, v in ipairs(self.unpaired_players) do
-      if v ~= config.name then
-        local unmatchedPlayer = v .. self:playerRatingString(v) .. (self.sent_requests[v] and " " .. loc("lb_request") or "") .. (self.willing_players[v] and " " .. loc("lb_received") or "")
-        self.lobbyMenu:addMenuItem(1, {Button({label = unmatchedPlayer, translate = false, onClick = self:requestGameFunction(v)})})
+  for _, v in ipairs(self.unpairedPlayers) do
+    if v ~= config.name then
+      local unmatchedPlayer = v .. self:playerRatingString(v)
+      if self.sentRequests[v] then
+        unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_request")
       end
-    end
-    for _, room in ipairs(self.spectatable_rooms) do
-      if room.name then
-        local roomName = loc("lb_spectate") .. " " .. room.a .. self:playerRatingString(room.a) .. " vs " .. room.b .. self:playerRatingString(room.b) .. " (" .. room.state .. ")"
-        --local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
-        self.lobbyMenu:addMenuItem(1, {Button({label = roomName, translate = false, onClick = self:requestSpectateFunction(room)})})
+      if self.willingPlayers[v] then
+        unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
       end
+      self.lobbyMenu:addMenuItem(1, {
+        TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})
+      })
     end
-  --[[  
-    spectator_list = {}
-    spectators_string = ""
-    local oldLobbyMenu = nil
-    if lobby_menu then
-      oldLobbyMenu = lobby_menu
-      lobby_menu:remove_self()
-      lobby_menu = nil
+  end
+  for _, room in ipairs(self.spectatableRooms) do
+    if room.name then
+      local playerA = room.a .. self:playerRatingString(room.a)
+      local playerB = room.b .. self:playerRatingString(room.b)
+      local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
+      self.lobbyMenu:addMenuItem(1, {
+        TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})
+      })
     end
+  end
+end
 
-    local function commonSelectLobby()
-      updated = true
-      spectator_list = {}
-      spectators_string = ""
-      lobby_menu:remove_self()
-    end
+----------------------
+-- network handling --
+----------------------
 
-    local function goEscape()
-      lobby_menu:set_active_idx(#lobby_menu.buttons)
-    end
-
-    local function exitLobby()
-      commonSelectLobby()
-      ret = {main_select_mode}
-    end
-
-    local function requestGameFunction(opponentName)
-      return function()
-        sent_requests[opponentName] = true
-        request_game(opponentName)
-        updated = true
-      end
-    end
-
-    local function requestSpectateFunction(room)
-      return function()
-        requestedSpectateRoom = room
-        request_spectate(room.roomNumber)
-      end
-    end
-
-    local function playerRatingString(playerName)
-      local rating = ""
-      if playerData and playerData[playerName] and playerData[playerName].rating then
-        rating = " (" .. playerData[playerName].rating .. ")"
-      end
-      return rating
-    end
-    local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu_y)
-    lobby_menu = Click_menu(lobby_menu_x[showing_leaderboard], lobby_menu_y, nil, menuHeight, 1)
-    for _, v in ipairs(unpaired_players) do
-      if v ~= config.name then
-        local unmatchedPlayer = v .. playerRatingString(v) .. (sent_requests[v] and " " .. loc("lb_request") or "") .. (willing_players[v] and " " .. loc("lb_received") or "")
-        lobby_menu:add_button(unmatchedPlayer, requestGameFunction(v), goEscape)
-      end
-    end
-    for _, room in ipairs(spectatable_rooms) do
-      if room.name then
-        local roomName = loc("lb_spectate") .. " " .. room.a .. playerRatingString(room.a) .. " vs " .. room.b .. playerRatingString(room.b) .. " (" .. room.state .. ")"
-        --local roomName = loc("lb_spectate") .. " " .. room.name .. " (" .. room.state .. ")" --printing room names
-        lobby_menu:add_button(roomName, requestSpectateFunction(room), goEscape)
-      end
-    end
-    if showing_leaderboard then
-      lobby_menu:add_button(loc("lb_hide_board"), toggleLeaderboard, toggleLeaderboard)
+local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
+function Lobby:handleLogin()
+  local done, result = self.loginRoutine:progress()
+  if not done then
+    loginStateLabel:setText(result)
+  else
+    if result.loggedIn then
+      self.state = STATES.Lobby
     else
-      lobby_menu:add_button(loc("lb_show_board"), toggleLeaderboard, goEscape)
-    end
-    lobby_menu:add_button(loc("lb_back"), exitLobby, exitLobby)
-
-    -- Restore the lobby selection
-    -- (If the lobby only had 2 buttons it was before we got lobby info so don't restore the selection)
-    if oldLobbyMenu and #oldLobbyMenu.buttons > 2 then
-      if oldLobbyMenu.active_idx == #oldLobbyMenu.buttons then
-        lobby_menu:set_active_idx(#lobby_menu.buttons)
-      elseif oldLobbyMenu.active_idx == #oldLobbyMenu.buttons - 1 and #lobby_menu.buttons >= 2 then
-        lobby_menu:set_active_idx(#lobby_menu.buttons - 1) --the position of the "hide leaderboard" menu item
-      else
-        local desiredIndex = util.bound(1, oldLobbyMenu.active_idx, #lobby_menu.buttons)
-        local previousText = oldLobbyMenu.buttons[oldLobbyMenu.active_idx].stringText
-        for i = 1, #lobby_menu.buttons do
-          if #oldLobbyMenu.buttons >= i then
-            if lobby_menu.buttons[i].stringText == previousText then
-              desiredIndex = i
-              break
-            end
-          end
-        end
-        lobby_menu:set_active_idx(desiredIndex)
+      loginStateLabel:setText(result.message)
+      if not self.loginScreenTimer then
+        self.loginScreenTimer = GAME.timer + 5
       end
-
-      oldLobbyMenu = nil
-    end
-    --]]
-  end
-  
-  --[[
-  if lobby_menu then
-    local noticeText = notice[#lobby_menu.buttons > 2]
-    if connection_up_time <= login_status_message_duration then
-      noticeText = login_status_message
-    end
-
-    local noticeHeight = 0
-    local button_padding = 4
-    if noticeText ~= noticeLastText then
-      noticeTextObject = love.graphics.newText(GraphicsUtil.getGlobalFont(), noticeText)
-      noticeHeight = noticeTextObject:getHeight() + (button_padding * 2)
-      lobby_menu.yMin = lobby_menu_y + noticeHeight
-      local menuHeight = (themes[config.theme].main_menu_y_max - lobby_menu.yMin)
-      lobby_menu:setHeight(menuHeight)
-    end
-    if noticeTextObject then
-      local noticeX = lobby_menu_x[showing_leaderboard] + 2
-      local noticeY = lobby_menu.y - noticeHeight - 10
-      local noticeWidth = noticeTextObject:getWidth() + (button_padding * 2)
-      local grey = 0.0
-      local alpha = 0.6
-      grectangle_color("fill", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
-      --grectangle_color("line", noticeX / GFX_SCALE, noticeY / GFX_SCALE, noticeWidth / GFX_SCALE, noticeHeight / GFX_SCALE, grey, grey, grey, alpha)
-
-      menu_drawf(noticeTextObject, noticeX + button_padding, noticeY + button_padding)
-    end
-
-    if showing_leaderboard then
-      gprint(leaderboard_string, lobby_menu_x[showing_leaderboard] + 400, lobby_menu_y)
-    end
-    gprintf(join_community_msg, 0, 668, canvas_width,"center")
-    lobby_menu:draw()
-  end
-  updated = false
-  wait()
-  variable_step(
-    function()
-      if showing_leaderboard then
-        if menu_up() and leaderboard_report then
-          if showing_leaderboard then
-            if leaderboard_first_idx_to_show > 1 then
-              leaderboard_first_idx_to_show = leaderboard_first_idx_to_show - 1
-              leaderboard_last_idx_to_show = leaderboard_last_idx_to_show - 1
-              leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-            end
-          end
-        elseif menu_down() and leaderboard_report then
-          if showing_leaderboard then
-            if leaderboard_last_idx_to_show < #leaderboard_report then
-              leaderboard_first_idx_to_show = leaderboard_first_idx_to_show + 1
-              leaderboard_last_idx_to_show = leaderboard_last_idx_to_show + 1
-              leaderboard_string = build_viewable_leaderboard_string(leaderboard_report, leaderboard_first_idx_to_show, leaderboard_last_idx_to_show)
-            end
-          end
-        elseif menu_escape() or menu_enter() then
-          toggleLeaderboard()
-        end
-      elseif lobby_menu then
-        lobby_menu:update()
+      if GAME.timer > self.loginScreenTimer then
+        self.loginScreenTimer = nil
+        sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
       end
     end
-  )
-  if ret then
-    json_send({logout = true})
-    return unpack(ret)
   end
-  --]]
-  self.updated = false
 end
+
+function Lobby:processServerMessages()
+  for _, listener in pairs(self.messageListeners) do
+    listener:listen()
+  end
+
+  if self.leaderboardResponse then
+    local status, value = self.leaderboardResponse:tryGetValue()
+    if status == "timeout" then
+      self.leaderboardResponse = GAME.tcpClient:sendRequest(ClientMessages.requestLeaderboard())
+    elseif status == "received" then
+      self:updateLeaderboard(value)
+    end
+  end
+
+  if self.spectateRequestResponse then
+    local status, value = self.spectateRequestResponse:tryGetValue()
+    if status == "timeout" then
+      self.spectateRequestResponse = GAME.tcpClient:sendRequest(ClientMessages.requestSpectate(self.requestedSpectateRoom.roomNumber))
+    elseif status == "received" then
+      -- Not Yet Implemented
+      self:spectate2pVsOnlineMatch(value)
+    end
+  end
+end
+
+------------------------------
+-- scene core functionality --
+------------------------------
 
 function Lobby:update(dt)
   self.backgroundImg:update(dt)
 
-  if self.state == states.SWITCH_SCENE then
-    local stateDuration = love.timer.getTime() - self.stateParams.startTime
-    if not self.transitioning and
-       stateDuration >= self.stateParams.maxDisplayTime or 
-       (stateDuration <= self.stateParams.minDisplayTime and (input.isDown["MenuEsc"] or input.isDown["MenuPause"])) then
-      sceneManager:switchToScene(self.stateParams.sceneName, self.stateParams.sceneParams)
-      self.transitioning = true
-    end
-    self.switchSceneLabel:draw()
-  elseif self.state == states.SET_NAME then
-    if not self.transitioning then
-      sceneManager:switchToScene("SetNameMenu", {prevScene = "Lobby"})
-      self.transitioning = true
-    end
-  elseif self.state == states.DEFAULT then
-    self:defaultUpdate(dt)
+  if self.state == STATES.Login then
+    self:handleLogin()
+  else
+    -- We are in the lobby, we shouldn't have any game data messages
+    drop_old_data_messages()
+
+    self:processServerMessages()
     self.lobbyMenu:update()
-    self.lobbyMenu:draw()
-  elseif self.state == states.SHOW_SERVER_NOTICE then
-    if love.timer.getTime() - self.stateParams.startTime >= SERVER_NOTICE_DISPLAY_TIME or input.isDown["MenuEsc"] or input.isDown["MenuPause"] then
-      self.state = states.DEFAULT
+  end
+
+  if not GAME.tcpClient:processIncomingMessages() then
+    if not sceneManager.transition then
+      -- automatic reconnect if we're not about to switch scene
+      self.state = STATES.Login
+      self.loginRoutine = LoginRoutine(GAME.tcpClient, GAME.connected_server_ip, GAME.connected_server_port)
+      GAME.tcpClient:resetNetwork()
     end
-    self.serverNoticeLabel:draw()
   end
 end
 
-function Lobby:unload()
-  self.lobbyMenu:setVisibility(false)
+function Lobby:draw()
+  self.backgroundImg:draw()
+  if self.state == STATES.Lobby then
+    self.uiRoot:draw()
+  elseif self.state == STATES.Login then
+    loginStateLabel:draw()
+  end
 end
 
 return Lobby

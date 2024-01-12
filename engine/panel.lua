@@ -426,7 +426,7 @@ matchedState.enterHoverState = function(panel)
   clear(panel, false, false)
   panel.chaining = true
   panel.propagatesChaining = true
-  panel.timer = panel.frameTimes.GPHOVER
+  panel.timer = panel.frameTimes.GARBAGE_HOVER
   panel.fell_from_garbage = 12
   panel.state = "hovering"
   panel.stateChanged = true
@@ -571,24 +571,6 @@ end
 
 deadState.update = function(panel, panels)
   -- dead is dead
-end
-
--- returns false if this panel can be matched
--- true if it cannot be matched
-function Panel.canMatch(self)
-  -- panels without colors can't match
-  if self.color == 0 or self.color == 9 then
-    return false
-  else
-    if self.state == "normal"
-      or self.state == "landing"
-      or (self.matchAnyway and self.state == "hovering")  then
-      return true
-    else
-      -- swapping, matched, popping, popped, hover, falling, dimmed, dead
-      return false
-    end
-  end
 end
 
 -- returns false if this panel can be swapped
@@ -739,7 +721,7 @@ end
 function Panel:match(isChainLink, comboIndex, comboSize)
   self.state = "matched"
   -- +1 because match always occurs before the timer decrements on the frame
-  self:setTimer(self.frameTimes.MATCH + 1)
+  self:setTimer(self.frameTimes.FLASH + self.frameTimes.FACE + 1)
   if isChainLink then
     self.chaining = true
   end

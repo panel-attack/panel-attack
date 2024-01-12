@@ -4,10 +4,8 @@ local class = require("class")
 local ChallengeMode = require("ChallengeMode")
 local Menu = require("ui.Menu")
 local Label = require("ui.Label")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
-local Slider = require("ui.Slider")
-local tableUtils = require("tableUtils")
 
 --@module ChallengeModeMenu
 -- 
@@ -24,31 +22,39 @@ sceneManager:addScene(ChallengeModeMenu)
 
 local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+end
+
+function ChallengeModeMenu:goToCharacterSelect(difficulty)
+  GAME.battleRoom = ChallengeMode(difficulty)
+  
+  local scene = sceneManager:createScene("CharacterSelectChallenge")
+  sceneManager:switchToScene(scene)
 end
 
 function ChallengeModeMenu:load(sceneParams)
   local difficultyLabels = {}
   local challengeModes = {}
   for i = 1, ChallengeMode.numDifficulties do
-    table.insert(difficultyLabels, Label({
-        label = "challenge_difficulty_" .. i,
-        width = 70,
-        height = 25}))
-    table.insert(challengeModes, ChallengeMode(i))
+    table.insert(difficultyLabels, Label({text = "challenge_difficulty_" .. i}))
+    table.insert(challengeModes, i)
   end
 
   local difficultyStepper = Stepper({
       labels = difficultyLabels,
       values = challengeModes,
       selectedIndex = 1,
+      width = 70,
+      height = 25
     }
   )
 
   local menuItems = {
-    {Label({label = "difficulty"}), difficultyStepper},
-    {Button({label = "go_", onClick = function() sceneManager:switchToScene("CharacterSelectChallenge", {challengeMode = difficultyStepper.value}) end})},
-    {Button({label = "back", onClick = exitMenu})},
+    {Label({text = "difficulty"}), difficultyStepper},
+    {TextButton({label = Label({text = "go_"}), onClick = function()
+      self:goToCharacterSelect(difficultyStepper.value)
+    end})},
+    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
   }
 
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -58,20 +64,17 @@ function ChallengeModeMenu:load(sceneParams)
     y = y,
     menuItems = menuItems,
   })
-end
-
-function ChallengeModeMenu:drawBackground()
-  self.backgroundImg:draw()
+  self.uiRoot:addChild(self.menu)
 end
 
 function ChallengeModeMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update(dt)
-  self.menu:draw()
 end
 
-function ChallengeModeMenu:unload()
-  
+function ChallengeModeMenu:draw()
+  self.backgroundImg:draw()
+  self.uiRoot:draw()
 end
 
 return ChallengeModeMenu

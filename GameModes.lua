@@ -1,121 +1,182 @@
+require("localization")
+
+local TIME_ATTACK_TIME = 120
+
 local GameModes = {}
 
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
-local StackInteraction = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
+local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
+
+-- these are competitive win conditions to determine a winner across multiple stacks
+local MatchWinConditions = { LAST_ALIVE = 1, SCORE = 2, TIME = 3 }
+-- these are game winning objectives on the stack level, the stack stops running without going game over
+local GameWinConditions = { NO_MATCHABLE_PANELS = 1, NO_MATCHABLE_GARBAGE = 2, SCORE_REACHED = 3}
+-- these are game losing objectives on the stack level, the stack goes game over
+local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, NO_MOVES_LEFT = 3, CHAIN_DROPPED = 4 }
 
 local OnePlayerVsSelf = {
-  playerCount = 1,
-  selectCharacter = true,
-  selectLevel = true,
-  selectStage = true,
-  selectPanels = true,
-  selectRanked = false,
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  selectColorRandomization = false,
-  stackInteraction = StackInteraction.SELF,
-  scene = "VsSelfGame"
+  gameScene = "VsSelfGame",
+  setupScene = "CharacterSelectVsSelf",
+  richPresenceLabel = loc("mm_1_vs"),
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteractions.SELF,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerTimeAttack = {
-  playerCount = 1,
-  selectCharacter = true,
-  selectLevel = true,
-  selectStage = true,
-  selectPanels = true,
-  selectRanked = false,
   style = Styles.CHOOSE,
   selectFile = FileSelection.NONE,
-  selectColorRandomization = false,
-  stackInteraction = StackInteraction.NONE,
-  scene = "TimeAttackGame",
-  matchMode = "time"
+  gameScene = "TimeAttackGame",
+  setupScene = "TimeAttackMenu",
+  richPresenceLabel = loc("mm_1_time"),
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteractions.NONE,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH, GameOverConditions.TIME_OUT },
+  doCountdown = true,
+  timeLimit = TIME_ATTACK_TIME,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerEndless = {
-  playerCount = 1,
-  selectCharacter = true,
-  selectLevel = true,
-  selectStage = true,
-  selectPanels = true,
-  selectRanked = false,
   style = Styles.CHOOSE,
   selectFile = FileSelection.NONE,
-  selectColorRandomization = false,
-  stackInteraction = StackInteraction.NONE,
-  scene = "EndlessGame",
-  matchMode = "endless"
+  gameScene = "EndlessGame",
+  setupScene = "EndlessMenu",
+  richPresenceLabel = loc("mm_1_endless"),
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteractions.NONE,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerTraining = {
-  playerCount = 1,
-  selectCharacter = true,
-  selectLevel = true,
-  selectStage = true,
-  selectPanels = true,
-  selectRanked = false,
   style = Styles.MODERN,
   selectFile = FileSelection.TRAINING,
-  selectColorRandomization = false,
-  stackInteraction = StackInteraction.ATTACK_ENGINE,
-  scene = "GameBase"
+  gameScene = "Game1pTraining",
+  setupScene = "CharacterSelectVsSelf",
+  richPresenceLabel = loc("mm_1_training"),
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteractions.ATTACK_ENGINE,
+  winConditions = { },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = true,
+  needsHealth = false,
 }
 
 local OnePlayerPuzzle = {
-  playerCount = 1,
-  selectCharacter = true,
-  selectLevel = true,
-  selectStage = true,
-  selectPanels = true,
-  selectRanked = false,
+  -- flags for battleRoom to evaluate and in some cases offer UI for
   style = Styles.MODERN,
   selectFile = FileSelection.PUZZLE,
-  selectColorRandomization = true,
-  stackInteraction = StackInteraction.NONE,
-  scene = "PuzzleGame",
-  matchMode = "puzzle"
+  richPresenceLabel = loc("mm_1_puzzle"),
+  gameScene = "PuzzleGame",
+  setupScene = "PuzzleMenu",
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteractions.NONE,
+  -- these are extended based on the loaded puzzle
+  winConditions = { },
+  -- these are extended based on the loaded puzzle
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  doCountdown = false,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = true,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 local OnePlayerChallenge = {
-  playerCount = 1,
-  selectCharacter = true,
-  selectLevel = false,
-  selectStage = true,
-  selectPanels = true,
-  selectRanked = false,
   style = Styles.MODERN,
   selectFile = FileSelection.NONE,
-  selectColorRandomization = false,
-  stackInteraction = StackInteraction.HEALTH_ENGINE,
-  scene = "GameBase"
+  gameScene = "Game1pChallenge",
+  setupScene = "CharacterSelectChallenge",
+  richPresenceLabel = loc("mm_1_challenge_mode"),
+
+  -- already known match properties
+  playerCount = 1,
+  stackInteraction = StackInteractions.VERSUS,
+  winConditions = { MatchWinConditions.LAST_ALIVE },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = true,
+  needsHealth = true,
 }
 
 local TwoPlayerVersus = {
-  playerCount = 2,
-  selectCharacter = true,
-  selectLevel = true,
-  selectStage = true,
-  selectPanels = true,
-  -- this has to be rechecked with the online flag
-  selectRanked = true,
   style = Styles.MODERN,
-  selectFile = FileSelection.NONE,
-  selectColorRandomization = false,
-  stackInteraction = StackInteraction.VERSUS,
-  scene = "OnlineVsGame"
+  gameScene = "Game2pVs",
+  setupScene = "CharacterSelect2p",
+  richPresenceLabel = loc("mm_2_vs"),
+
+  -- already known match properties
+  playerCount = 2,
+  stackInteraction = StackInteractions.VERSUS,
+  winConditions = { MatchWinConditions.LAST_ALIVE},
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  doCountdown = true,
+
+  -- flags to know what other properties match needs
+  needsPuzzle = false,
+  needsAttackEngine = false,
+  needsHealth = false,
 }
 
 GameModes.Styles = Styles
 GameModes.FileSelection = FileSelection
-GameModes.StackInteraction = StackInteraction
+GameModes.StackInteractions = StackInteractions
+GameModes.WinConditions = MatchWinConditions
+GameModes.GameWinConditions = GameWinConditions
+GameModes.GameOverConditions = GameOverConditions
 
-GameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
-GameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack
-GameModes.ONE_PLAYER_ENDLESS = OnePlayerEndless
-GameModes.ONE_PLAYER_TRAINING = OnePlayerTraining
-GameModes.ONE_PLAYER_PUZZLE = OnePlayerPuzzle
-GameModes.ONE_PLAYER_CHALLENGE = OnePlayerChallenge
-GameModes.TWO_PLAYER_VS = TwoPlayerVersus
+local privateGameModes = {}
+privateGameModes.ONE_PLAYER_VS_SELF = OnePlayerVsSelf
+privateGameModes.ONE_PLAYER_TIME_ATTACK = OnePlayerTimeAttack
+privateGameModes.ONE_PLAYER_ENDLESS = OnePlayerEndless
+privateGameModes.ONE_PLAYER_TRAINING = OnePlayerTraining
+privateGameModes.ONE_PLAYER_PUZZLE = OnePlayerPuzzle
+privateGameModes.ONE_PLAYER_CHALLENGE = OnePlayerChallenge
+privateGameModes.TWO_PLAYER_VS = TwoPlayerVersus
+
+function GameModes.getPreset(mode)
+  assert(privateGameModes[mode], "Trying to access non existing mode " .. mode)
+  return deepcpy(privateGameModes[mode])
+end
 
 return GameModes

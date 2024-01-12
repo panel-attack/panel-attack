@@ -1,6 +1,6 @@
 local Scene = require("scenes.Scene")
 local logger = require("logger")
-local Button = require("ui.Button")
+local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
 local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
@@ -10,6 +10,7 @@ local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
 local class = require("class")
+local GameModes = require("GameModes")
 
 --@module puzzleMenu
 -- Scene for the puzzle selection menu
@@ -30,47 +31,46 @@ sceneManager:addScene(PuzzleMenu)
 
 local BUTTON_WIDTH = 60
 local BUTTON_HEIGHT = 25
-local font = GraphicsUtil.getGlobalFont()
-  
-function PuzzleMenu:startGame(puzzleSet)
-  current_stage = config.stage
-  if current_stage == random_stage_special_value then
-    current_stage = nil
-  end
-  
-  if config.puzzle_randomColors then
-    puzzleSet = deepcpy(puzzleSet)
 
-    for _, puzzle in pairs(puzzleSet.puzzles) do
-      puzzle.stack = Puzzle.randomizeColorsInPuzzleString(puzzle.stack)
-    end
-  end
-  
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("PuzzleGame", {puzzleSet = puzzleSet, puzzleIndex = 1})
-  
+function PuzzleMenu:startGame(puzzleSet)
   if config.puzzle_level ~= self.levelSlider.value or config.puzzle_randomColors ~= self.randomColorsButtons.value then
     config.puzzle_level = self.levelSlider.value
-    config.puzzle_randomColors = self.randomColorsButtons.value 
+    config.puzzle_randomColors = self.randomColorsButtons.value
     logger.debug("saving settings...")
     write_conf_file()
   end
-  
-  if config.puzzle_randomFlipped ~= self.randomlyFlipPuzzleButtons.value then
+
+  current_stage = StageLoader.resolveStageSelection(config.stage)
+
+  if config.puzzle_randomColors or config.puzzle_randomFlipped then
+    puzzleSet = deepcpy(puzzleSet)
+
     for _, puzzle in pairs(puzzleSet.puzzles) do
-      if math.random(2) == 1 then
-        puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+      if config.puzzle_randomColors then
+        puzzle.stack = Puzzle.randomizeColorsInPuzzleString(puzzle.stack)
+      end
+      if config.puzzle_randomFlipped then
+        if math.random(2) == 1 then
+          puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+        end
       end
     end
   end
-end
 
-local function exitMenu()
   play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  sceneManager:switchToScene("MainMenu")
+
+  GAME.localPlayer:setPuzzleSet(puzzleSet)
+  GAME.localPlayer:setWantsReady(true)
 end
 
-function PuzzleMenu:load()
+function PuzzleMenu:exit()
+  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  stop_the_music()
+  GAME.battleRoom:shutdown()
+  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+end
+
+function PuzzleMenu:load(sceneParams)
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
@@ -83,8 +83,8 @@ function PuzzleMenu:load()
   self.randomColorsButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        Button({label = "op_on", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_off"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_on"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomColors and 2 or 1,
@@ -95,25 +95,25 @@ function PuzzleMenu:load()
   self.randomlyFlipPuzzleButtons = ButtonGroup(
     {
       buttons = {
-        Button({label = "op_off", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        Button({label = "op_on", width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_off"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
+        TextButton({label = Label({text = "op_on"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomFlipped and 2 or 1,
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
-  
+
   local menuOptions = {
-    {Label({label = "level", isVisible = false}), self.levelSlider},
-    {Label({label = "randomColors", isVisible = false}), self.randomColorsButtons},
-    {Label({label = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons}
+    {Label({text = "level", isVisible = false}), self.levelSlider},
+    {Label({text = "randomColors", isVisible = false}), self.randomColorsButtons},
+    {Label({text = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons}
   }
 
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
-    menuOptions[#menuOptions + 1] = {Button({label = puzzleSetName, translate = false, onClick = function() self:startGame(puzzleSet) end})}
+    menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = puzzleSetName, translate = false}), onClick = function() self:startGame(puzzleSet) end})}
   end
-  menuOptions[#menuOptions + 1] = {Button({label = "back", onClick = exitMenu})}
+  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = self.exit})}
   
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   y = y + 20
@@ -123,27 +123,23 @@ function PuzzleMenu:load()
     menuItems = menuOptions,
     maxHeight = themes[config.theme].main_menu_max_height
   })
-  
+
+  self.uiRoot:addChild(self.menu)
+
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
-  reset_filters()
-end
-
-function PuzzleMenu:drawBackground()
-  themes[config.theme].images.bg_main:draw()
 end
 
 function PuzzleMenu:update()
   gprint(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
-      
+  
   self.menu:update()
-  self.menu:draw()
 end
 
-function PuzzleMenu:unload()
-  self.menu:setVisibility(false)
-  stop_the_music()
+function PuzzleMenu:draw()
+  themes[config.theme].images.bg_main:draw()
+  self.menu:draw()
 end
 
 return PuzzleMenu

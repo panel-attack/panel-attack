@@ -100,14 +100,14 @@ function joystickManager:joystickToDPad(joystick, xAxisIndex, yAxisIndex)
   -- convert the continuous direction value into 8 quantized values which map to the stickMap indexes
   local quantizedDir = math.floor(((dir + angleOffset) / quantizationAngle) % numDirSegments) + 1 
 
-  for _, button in ipairs(stickMap[quantizedDir]) do 
+  for _, button in ipairs(stickMap[quantizedDir]) do
     local key = joystickManager:getJoystickButtonName(joystick, button..axis)
-    if magSquared > self.joystickSensitivity * self.joystickSensitivity then 
+    if magSquared > self.joystickSensitivity * self.joystickSensitivity then
       dpadState[key] = true
     end
   end
   return dpadState
-end 
+end
 
 -- maps dpad dir to buttons
 function joystickManager:getDPadState(joystick, hatIndex)

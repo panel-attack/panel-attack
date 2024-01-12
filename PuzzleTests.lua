@@ -102,9 +102,9 @@ PuzzleTests.validationGarbageCoherence4()
 PuzzleTests.validationValid()
 
 function PuzzleTests.testFilledPuzzleString()
-  local puzzleString = "123"
-  local filledString = Puzzle.fillMissingPanelsInPuzzleString(puzzleString, 6, 12)
-  assert(filledString ~= puzzleString)
+  local puzzle = Puzzle("moves", false, 5, "123")
+  local filledString = puzzle:fillMissingPanelsInPuzzleString(6, 12)
+  assert(filledString ~= puzzle.stack)
   assert(filledString:len() == 72)
   assert(filledString == "000000000000000000000000000000000000000000000000000000000000000000000123")
 end
@@ -137,7 +137,8 @@ PuzzleTests.testRandomizeColorsSometimesSameColors()
 
 function PuzzleTests.testHorizontallyFlippedPuzzle()
   local puzzleString = "{====}929999[====]040000224999949999"
-  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  local puzzle = Puzzle("moves", false, 5, puzzleString)
+  local flippedString = puzzle:horizontallyFlipPuzzleString()
   assert(flippedString == "000000000000000000000000000000000000{====}999929[====]000040999422999949")
 end
 
@@ -145,7 +146,8 @@ PuzzleTests.testHorizontallyFlippedPuzzle()
 
 function PuzzleTests.testHorizontallyFlippedSmallPuzzle()
   local puzzleString = "123"
-  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  local puzzle = Puzzle("moves", false, 5, puzzleString)
+  local flippedString = puzzle:horizontallyFlipPuzzleString()
   assert(flippedString == "000000000000000000000000000000000000000000000000000000000000000000321000")
 end
 
@@ -153,7 +155,8 @@ PuzzleTests.testHorizontallyFlippedSmallPuzzle()
 
 function PuzzleTests.testHorizontallyFlippedBigGarbagePuzzle()
   local puzzleString = "[============================][====]632620[====]200042543641322141354544463636"
-  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  local puzzle = Puzzle("moves", false, 5, puzzleString)
+  local flippedString = puzzle:horizontallyFlipPuzzleString()
   assert(flippedString == "[============================][====]026236[====]240002146345141223445453636364")
 end
 
@@ -161,7 +164,8 @@ PuzzleTests.testHorizontallyFlippedBigGarbagePuzzle()
 
 function PuzzleTests.testHorizontallyFlippedSmallGarbagePuzzle()
   local puzzleString = "[============================]00[==]632620[==]00200042543641322141354544463636"
-  local flippedString = Puzzle.horizontallyFlipPuzzleString(puzzleString)
+  local puzzle = Puzzle("moves", false, 5, puzzleString)
+  local flippedString = puzzle:horizontallyFlipPuzzleString()
   assert(flippedString == "[============================][==]0002623600[==]240002146345141223445453636364")
 end
 

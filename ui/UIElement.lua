@@ -13,18 +13,18 @@ local UIElement = class(
     self.y = options.y or 0
     
     -- ui dimensions
-    self.width = options.width or 110
-    self.height = options.height or 25
-    
-    -- label to be displayed on ui element
-    -- Only used for Buttons & Labels
-    self.label = options.label
-    -- list of parameters for translating the label
-    if self.label then
-      self.extraLabels = options.extraLabels or {}
-    end
-    -- whether we should traslante the label or not
-    self.translate = options.translate or options.translate == nil and true
+    self.width = options.width or 0
+    self.height = options.height or 0
+
+    -- how to align the element inside the parent element
+    self.hAlign = options.hAlign or "left"
+    self.vAlign = options.vAlign or "top"
+
+    -- how the size is determined relative to the parent element
+    -- hFill true sets the width to the size of the parent
+    self.hFill = options.hFill or false
+    -- vFill true sets the height to the size of the parent
+    self.vFill = options.vFill or false
     
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
@@ -35,14 +35,7 @@ local UIElement = class(
     self.parent = options.parent
     -- list of children elements
     self.children = options.children or {}
-    
-    -- private members
-    if self.label then
-      self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
-    else
-      self.text = options.text
-    end
-    
+
     self.id = uniqueId
     uniqueId = uniqueId + 1
     
@@ -50,11 +43,32 @@ local UIElement = class(
   end
 )
 
-
-
 function UIElement:addChild(uiElement)
   self.children[#self.children + 1] = uiElement
   uiElement.parent = self
+  uiElement:resize()
+end
+
+function UIElement:resize()
+  if self.hFill and self.parent then
+    self.width = self.parent.width
+  end
+
+  if self.vFill and self.parent then
+    self.height = self.parent.height
+  end
+
+  self:onResize()
+
+  if self.hFill or self.vFill then
+    for _, child in ipairs(self.children) do
+      child:resize()
+    end
+  end
+end
+
+-- overridable function to define extra behaviour to the element itself on resize
+function UIElement:onResize()
 end
 
 function UIElement:detach()
@@ -62,6 +76,7 @@ function UIElement:detach()
     for i, child in ipairs(self.parent.children) do
       if child.id == self.id then
         table.remove(self.parent.children, i)
+        self:onDetach()
         self.parent = nil
         break
       end
@@ -70,45 +85,64 @@ function UIElement:detach()
   end
 end
 
-function UIElement:getScreenPos()
-  local x, y = 0, 0
-  if self.parent then
-    x, y = self.parent:getScreenPos()
-  end
-  
-  return x + self.x, y + self.y
+function UIElement:onDetach()
 end
 
--- updates the label with a new label
--- also translates the label if needed
--- if no label is passed in it will translate the existing label
-function UIElement:updateLabel(label)
-  if label then
-    self.label = label
+function UIElement:getScreenPos()
+  local x, y = 0, 0
+  local xOffset, yOffset = 0, 0
+  if self.parent then
+    x, y = self.parent:getScreenPos()
+    xOffset, yOffset = GraphicsUtil.getAlignmentOffset(self.parent, self)
   end
 
-  if self.label and (self.translate or label) then
-    self.text = love.graphics.newText(love.graphics.getFont(), self.translate and loc(self.label, unpack(self.extraLabels)) or self.label)
-  end
-  
+  return x + self.x + xOffset, y + self.y + yOffset
+end
+
+-- passes a retranslation request through the tree to reach all Labels
+function UIElement:refreshLocalization()
   for _, uiElement in ipairs(self.children) do
-    uiElement:updateLabel()
+    uiElement:refreshLocalization()
   end
 end
 
 function UIElement:draw()
+  if self.isVisible then
+    self:drawSelf()
+    love.graphics.push("transform")
+    love.graphics.translate(self.x, self.y)
+    self:drawChildren()
+    love.graphics.pop()
+  end
+end
+
+-- UiElements containing children draw the children-independent part in this function
+-- implementation is optional so layout elements don't have to
+function UIElement:drawSelf()
+end
+
+function UIElement:drawChildren()
   for _, uiElement in ipairs(self.children) do
     if uiElement.isVisible then
+      GraphicsUtil.applyAlignment(self, uiElement)
       uiElement:draw()
+      GraphicsUtil.resetAlignment()
     end
   end
 end
 
+-- setVisibility is to used on children that are temporarily "offscreen", e.g. as part of a scrolling UiElement
+-- if you want to stop drawing an element, e.g. due to changing a subscreen, 
+--  the more opportune method is to simply remove it from the ui tree via detach()
 function UIElement:setVisibility(isVisible)
   self.isVisible = isVisible
   for _, uiElement in ipairs(self.children) do
     uiElement:setVisibility(isVisible)
   end
+  self:onVisibilityChanged()
+end
+
+function UIElement:onVisibilityChanged()
 end
 
 function UIElement:setEnabled(isEnabled)

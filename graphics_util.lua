@@ -2,6 +2,8 @@ local consts = require("consts")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 
+local GFX_SCALE = consts.GFX_SCALE
+
 -- Utility methods for drawing
 GraphicsUtil = { 
   fontFile = nil,
@@ -465,7 +467,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   y = y or 0
   scale = scale or 1
   color = color or nil
-  limit = limit or canvas_width
+  limit = limit or consts.CANVAS_WIDTH
   font_delta_size = font_delta_size or 0
   halign = halign or "left"
   set_color(0, 0, 0, 1)
@@ -507,11 +509,6 @@ function set_color(r, g, b, a)
     end
 end
 
-function reset_filters()
-  GAME.background_overlay = nil
-  GAME.foreground_overlay = nil
-end
-
 -- temporary work around to drawing clearer text until we use better fonts
 -- draws multiple copies of the same text slightly offset from each other
 -- to simultate thickness
@@ -543,6 +540,41 @@ function GraphicsUtil.drawClearText(text, x, y, ox, oy)
     GAME.gfx_q:push({love.graphics.draw, {text, x + 0, y + 0, 0, 1, 1, ox, oy}})
     GAME.gfx_q:push({love.graphics.draw, {text, x + 1, y + 0, 0, 1, 1, ox, oy}})
   end
+end
+
+function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
+  local xOffset, yOffset
+  if childElement.hAlign == "center" then
+    xOffset = parentElement.width / 2 - childElement.width / 2
+  elseif childElement.hAlign == "right" then
+    xOffset = parentElement.width - childElement.width
+  else -- if hAlign == "left" then
+    -- default
+    xOffset = 0
+  end
+
+  if childElement.vAlign == "center" then
+    yOffset = parentElement.height / 2 - childElement.height / 2
+  elseif childElement.vAlign == "bottom" then
+    yOffset = parentElement.height - childElement.height
+  else --if uiElement.vAlign == "top" then
+    -- default
+    yOffset = 0
+  end
+
+  return xOffset, yOffset
+end
+
+-- sets the translation for a childElement inside of a parentElement so that
+-- x=0, y=0 aligns the childElement inside the parentElement according to the settings
+function GraphicsUtil.applyAlignment(parentElement, childElement)
+  love.graphics.push("transform")
+  love.graphics.translate(GraphicsUtil.getAlignmentOffset(parentElement, childElement))
+end
+
+-- resets the translation of the last alignment adjustment
+function GraphicsUtil.resetAlignment()
+  love.graphics.pop()
 end
 
 return GraphicsUtil

@@ -1,6 +1,8 @@
 local class = require("class")
 local logger = require("logger")
 
+local PREFIX_OF_IGNORED_DIRECTORIES = "__"
+
 --@module FileUtils
 -- Collection of functions for file operations
 local fileUtils = {}
@@ -12,9 +14,9 @@ function fileUtils.getFilteredDirectoryItems(path)
   for i = 1, #directoryList do
     local file = directoryList[i]
     
-    local startOfFile = string.sub(file, 0, string.len(prefix_of_ignored_dirs))
+    local startOfFile = string.sub(file, 0, string.len(PREFIX_OF_IGNORED_DIRECTORIES))
    -- macOS sometimes puts these files in folders without warning, they are never useful for PA, so filter them.
-    if startOfFile ~= prefix_of_ignored_dirs and file ~= ".DS_Store" then
+    if startOfFile ~= PREFIX_OF_IGNORED_DIRECTORIES and file ~= ".DS_Store" then
       results[#results+1] = file
     end
   end
@@ -90,6 +92,29 @@ function fileUtils.recursiveRemoveFiles(folder, targetName)
         fileUtils.recursiveRemoveFiles(file, targetName)
       elseif info.type == "file" and fileName == targetName then
         love.filesystem.remove(file)
+      end
+    end
+  end
+end
+
+function fileUtils.readJsonFile(file)
+  if not love.filesystem.getInfo(file, "file") then
+    logger.info("No file at specified path " .. file)
+    return nil
+  else
+    local fileContent, info = love.filesystem.read(file)
+    if type(info) == "string" then
+      -- info is the number of read bytes if successful, otherwise an error string
+      -- thus, if it is of type string, that indicates an error
+      logger.warn("Could not read file at path " .. file)
+      return nil
+    else
+      local value, _, errorMsg = json.decode(fileContent)
+      if errorMsg then
+        logger.error(errorMsg .. ":\n" .. fileContent)
+        return nil
+      else
+        return value
       end
     end
   end

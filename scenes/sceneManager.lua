@@ -1,70 +1,67 @@
-local transitionUtils = require("scenes.transitionUtils")
+local Easings = require("Easings")
+local BlackFadeTransition = require("scenes.Transitions.BlackFadeTransition")
+local touchHandler = require("ui.touchHandler")
 
 --@module sceneManager
 -- Contains all initialized scenes and handles scene transitions 
 local sceneManager = {
   activeScene = nil,
   nextSceneName = nil,
-  isTransitioning = false
+  transition = nil,
+  scenes = {}
 }
 
-local scenes = {}
-local transitionCo = nil
-local defaultTransition = "fade"
-local transitionType = "none"
-local transitions = {
-  none = {
-    preLoadTransition = function() end,
-    postLoadTransition = function() end
-  },
-  fade = {
-    preLoadTransition = function() transitionUtils.fade(0, 1, .2) end,
-    postLoadTransition = function() transitionUtils.fade(1, 0, .2) end
-  }
-}
-
-function sceneManager:switchToScene(sceneName, sceneParams, transition)
-  transitionType = transition or defaultTransition
-  transitionCo = coroutine.create(function() self:transitionFn(sceneParams) end)
-  self.nextSceneName = sceneName
-  self.isTransitioning = true
-end
-
-function sceneManager:transitionFn(sceneParams)
-  transitions[transitionType].preLoadTransition()
-  
-  if self.activeScene then
-    self.activeScene:unload()
-  end
-  
-  -- clear any remaining draws from previous scene
-  -- TODO: remove once scenes stop using gfx_q
-  GAME.gfx_q = Queue()
-  gfx_q = GAME.gfx_q
-  
-  if self.nextSceneName then
-    -- Looks up the class for {self.nextSceneName} and call it's constructor
-    self.activeScene = scenes[self.nextSceneName](sceneParams or {})
-    GAME.rich_presence:setPresence(nil, self.nextSceneName, true)
+function sceneManager:switchToScene(newScene, transition)
+  GAME.rich_presence:setPresence(nil, newScene.name, true)
+  if not transition or type(transition) ~= "table" then
+    self.transition = BlackFadeTransition(GAME.timer, 0.4, self.activeScene, newScene, Easings.linear)
   else
-    self.activeScene = nil
+    self.transition = transition
   end
-  
-  transitions[transitionType].postLoadTransition()
-  
-  self.isTransitioning = false
-end
-
-function sceneManager:transition()
-  local status, err = coroutine.resume(transitionCo)
-  if not status then
-    GAME.crashTrace = debug.traceback(transitionCo)
-    error(err)
-  end
+  touchHandler:unregisterTree(self.transition.oldScene.uiRoot)
+  touchHandler:registerTree(self.transition.newScene.uiRoot)
 end
 
 function sceneManager:addScene(scene)
-  scenes[scene.name] = scene
+  self.scenes[scene.name] = scene
+end
+
+function sceneManager:createScene(sceneName, sceneParams)
+  if not self.scenes[sceneName] then
+    self.scenes[sceneName] = require("scenes." .. sceneName)
+  end
+  return self.scenes[sceneName](sceneParams)
+end
+
+function sceneManager:draw()
+  if self.transition then
+    self.transition:draw()
+  else
+    if not self.activeScene then
+      error("There better be an active scene. We bricked.")
+    end
+    self.activeScene:draw()
+  end
+end
+
+function sceneManager:update(dt)
+  if self.transition then
+    self.transition:update(dt)
+
+    if self.transition.progress >= 1 then
+      -- doing this here again for good measure
+      -- more complex transitions might find out a transition can't go through and switch oldScene and newScene to go back instead
+      touchHandler:unregisterTree(self.transition.oldScene.uiRoot)
+      touchHandler:registerTree(self.transition.newScene.uiRoot)
+      self.activeScene = self.transition.newScene
+      self.transition = nil
+    end
+  else
+    if not self.activeScene then
+      error("There better be an active scene. We bricked.")
+    end
+    self.activeScene:update(dt)
+  end
 end
 
 return sceneManager

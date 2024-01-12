@@ -36,21 +36,14 @@ function TimeQueue:pop()
   return self.queue:pop()
 end
 
-function TimeQueue:update(dt, processFunction)
+function TimeQueue:update(dt)
   self.now = self.now + dt
-  local current = self:popIfReady()
-  while current ~= nil do
-    processFunction(current)
-    current = self:popIfReady()
-  end
 end
 
 function TimeQueue:length()
   return self.queue:len()
 end
 
-function TimeQueue:clearAndProcess(processFunction)
-  self:update(9999999999, processFunction)
-  self.now = 0
-  self.latestPush = 0
+function TimeQueue:clear()
+  self:update(self.latestPush - self.now + 1)
 end

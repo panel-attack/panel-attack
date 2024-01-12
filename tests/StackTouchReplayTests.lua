@@ -1,5 +1,6 @@
 local consts = require("consts")
 local tableUtils = require("tableUtils")
+local GameModes = require("GameModes")
 
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local testReplayFolder = "tests/replays/"
@@ -44,22 +45,19 @@ local testReplayFolder = "tests/replays/"
 -- Expected:
 -- Panel matches, becomes deselected
 
-local function teardown()
-  GAME:clearMatch()
-end
-
 local function simpleTouchTest()
   match, _ = StackReplayTestingUtils:simulateReplayWithPath(testReplayFolder .. "v047-2023-02-13-02-07-36-Spd3-Dif1-endless.json")
   assert(match ~= nil)
   assert(match.engineVersion == consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE)
-  assert(match.mode == "endless")
+  assert(match.stackInteraction == GameModes.StackInteractions.NONE)
+  assert(match.timeLimit == nil)
+  assert(tableUtils.length(match.winConditions) == 0)
   assert(match.seed == 2521746)
   assert(match.P1.game_over_clock == 4347)
   assert(match.P1.difficulty == 1)
   assert(tableUtils.length(match.P1.chains) == 1)
   assert(tableUtils.length(match.P1.combos) == 3)
   assert(match.P1.analytic.data.destroyed_panels == 31)
-  teardown()
 end
 
 simpleTouchTest()

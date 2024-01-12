@@ -13,8 +13,8 @@ config = {
   
     theme                         = consts.DEFAULT_THEME_DIRECTORY,
     panels                     	  = nil, -- setup later in panel init
-    character                     = random_character_special_value,
-    stage                         = random_stage_special_value,
+    character                     = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
+    stage                         = consts.RANDOM_STAGE_SPECIAL_VALUE,
   
     ranked                        = true,
     inputMethod                   = "controller",
@@ -48,7 +48,7 @@ config = {
     ready_countdown_1P            = true,
     -- Change danger music back later flag
     danger_music_changeback_delay = false,
-    input_repeat_delay            = default_input_repeat_delay,
+    input_repeat_delay            = consts.DEFAULT_INPUT_REPEAT_DELAY,
     -- analytics
     enable_analytics              = true,
     -- Save replays setting
@@ -66,8 +66,8 @@ config = {
     gameScaleFixedValue           = 2,
 
     -- Love configuration variables
-    windowWidth                   = canvas_width,
-    windowHeight                  = canvas_height,
+    windowWidth                   = consts.CANVAS_WIDTH,
+    windowHeight                  = consts.CANVAS_HEIGHT,
     borderless                    = false,
     fullscreen                    = false,
     display                       = 1,
