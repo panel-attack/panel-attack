@@ -98,6 +98,7 @@ function BattleRoom.createFromServerMessage(message)
     battleRoom:addPlayer(player2)
   end
 
+  battleRoom:assignInputConfigurations()
   battleRoom:registerNetworkCallbacks()
 
   return battleRoom
@@ -117,6 +118,8 @@ function BattleRoom.createLocalFromGameMode(gameMode)
       battleRoom.players[i]:setStyle(gameMode.style)
     end
   end
+
+  battleRoom:assignInputConfigurations()
 
   return battleRoom
 end
@@ -190,15 +193,6 @@ end
 
 -- adds an existing Player to the BattleRoom
 function BattleRoom:addPlayer(player)
-  if player.isLocal and player.restrictInputs then
-    for i = 1, #GAME.input.inputConfigurations do
-      if not GAME.input.inputConfigurations[i].usedByPlayer then
-        player:restrictInputs(GAME.input.inputConfigurations[i])
-        break
-      end
-    end
-  end
-
   if not player.playerNumber then
     player.playerNumber = #self.players + 1
   end
@@ -224,8 +218,13 @@ end
 function BattleRoom:refreshReadyStates()
   -- ready should probably be a battleRoom prop, not a player prop? at least for local player(s)?
   for playerNumber = 1, #self.players do
-    self.players[playerNumber].ready = tableUtils.trueForAll(self.players, function(pc)
-      return (pc.hasLoaded or pc.isLocal) and pc.settings.wantsReady
+    self.players[playerNumber].ready = tableUtils.trueForAll(self.players, function(p)
+      -- everyone finished loaded or isLocal (in which case BattleRoom.allAssetsLoaded covers that)
+      return (p.hasLoaded or p.isLocal)
+      -- everyone actually wants to start
+      and p.settings.wantsReady
+      -- every local player has an input configuration assigned
+      and (p.isLocal and p.human and p.inputConfiguration.usedByPlayer)
     end) and self.allAssetsLoaded
   end
 end
@@ -282,11 +281,6 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   self.state = BattleRoom.states.MatchInProgress
   local scene = sceneManager:createScene(self.mode.gameScene, {match = self.match, nextScene = self.mode.setupScene})
   sceneManager:switchToScene(scene)
-
-  -- to prevent the game from instantly restarting, unready all players
-  for i = 1, #self.players do
-    self.players[i]:setWantsReady(false)
-  end
 end
 
 -- sets the style of "level" presets the players select from
@@ -332,6 +326,57 @@ function BattleRoom:startLoadingNewAssets()
   end
 end
 
+-- updates a player's input configuration
+-- only has a result when it is either meant to unlock or any unclaimed inputConfiguration is in use on that frame
+function BattleRoom.updateInputConfigurationForPlayer(player, lock)
+  if lock then
+    for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
+      if not inputConfiguration.usedByPlayer and tableUtils.length(inputConfiguration.isDown) > 0 then
+        -- assign the first unclaimed input configuration that is used
+        player:restrictInputs(inputConfiguration)
+        break
+      end
+    end
+  else
+    player:unrestrictInputs()
+  end
+end
+
+function BattleRoom:assignInputConfigurations()
+  local localPlayers = {}
+  for i = 1, #self.players do
+    if self.players[i].isLocal and self.players[i].human then
+      localPlayers[#localPlayers + 1] = self.players[i]
+    end
+  end
+
+  if #localPlayers == 1 then
+    localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
+  elseif #localPlayers > 1 then
+    self.tryLockInputs = true
+  end
+end
+
+-- tries to assign input configurations for all local players based on currently used inputs
+function BattleRoom:tryAssignInputConfigurations()
+  if self.tryLockInputs then
+    for _, player in ipairs(self.players) do
+      if player.isLocal and player.human and not player.inputConfiguration.usedByPlayer then
+        -- in n player local, the first player can effectively ready up everyone before they can assign their input config
+        if player.settings.wantsReady then
+          -- so unready so they can finish configuring rather than having the game immediately start
+          player:setWantsReady(false)
+        end
+        BattleRoom.updateInputConfigurationForPlayer(player, true)
+      end
+    end
+    self.tryLockInputs = tableUtils.trueForAny(self.players,
+                          function(p)
+                            return p.isLocal and p.human and not p.inputConfiguration.usedByPlayer
+                          end)
+  end
+end
+
 function BattleRoom:update(dt)
   -- if there are still unloaded assets, we can load them 1 asset a frame in the background
   StageLoader.update()
@@ -353,6 +398,7 @@ function BattleRoom:update(dt)
 
   if self.state == BattleRoom.states.Setup then
     -- the setup phase of the room
+    self:tryAssignInputConfigurations()
     self:updateLoadingState()
     self:refreshReadyStates()
     if self:allReady() then
@@ -361,8 +407,6 @@ function BattleRoom:update(dt)
         self:startMatch()
       end
     end
-  else
-
   end
 end
 
@@ -391,6 +435,11 @@ end
 -- may get unregistered from the match in case of abortion
 function BattleRoom:onMatchEnded(match)
   self.matchesPlayed = self.matchesPlayed + 1
+
+  -- to prevent the game from instantly restarting, unready all players
+  for i = 1, #self.players do
+    self.players[i]:setWantsReady(false)
+  end
 
   if not match.aborted then
     local winners = match:getWinners()

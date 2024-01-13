@@ -37,8 +37,8 @@ local Player = class(function(self, name, publicId, isLocal)
   self.playerNumber = nil
   self.isLocal = isLocal or false
   -- a player has only one configuration at a time
-  -- this is either keys or a single input configuration
-  self.inputConfiguration = input.allKeys
+  -- this is either everything or a single input configuration
+  self.inputConfiguration = input
   self.subscriptionList = util.getWeaklyKeyedTable()
   self.human = true
 end,
@@ -198,7 +198,7 @@ end
 
 function Player:unrestrictInputs()
   self.inputConfiguration.usedByPlayer = nil
-  self.inputConfiguration = input.allKeys
+  self.inputConfiguration = input
 end
 
 function Player.getLocalPlayer()
