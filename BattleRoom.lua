@@ -327,7 +327,8 @@ function BattleRoom:startLoadingNewAssets()
 end
 
 -- updates a player's input configuration
--- only has a result when it is either meant to unlock or any unclaimed inputConfiguration is in use on that frame
+-- if lock is true it tries to claim the first unclaim inputConfiguration for which a key is down (may not claim any)
+-- if lock is false it unclaims the player's current inputConfiguration
 function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   if lock then
     for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
@@ -342,6 +343,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   end
 end
 
+-- sets up the process to get an input configuration assigned for every local player
 function BattleRoom:assignInputConfigurations()
   local localPlayers = {}
   for i = 1, #self.players do
@@ -367,7 +369,7 @@ function BattleRoom:assignInputConfigurations()
     self:shutdown()
   else
     if #localPlayers == 1 then
-      -- lock the inputConfiguration whenever the player readies up
+      -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
       -- the ready up press guarantees that at least 1 input config has a key down
       localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
     elseif #localPlayers > 1 then
@@ -378,7 +380,7 @@ function BattleRoom:assignInputConfigurations()
   end
 end
 
--- tries to assign input configurations for all local players based on currently used inputs
+-- tries to assign unclaimed input configurations for all local players based on currently used inputs
 function BattleRoom:tryAssignInputConfigurations()
   if self.tryLockInputs then
     for _, player in ipairs(self.players) do
