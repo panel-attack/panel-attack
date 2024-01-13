@@ -15,6 +15,7 @@ local Focusable = require("ui.Focusable")
 local ImageContainer = require("ui.ImageContainer")
 local Label = require("ui.Label")
 local BoolSelector = require("ui.BoolSelector")
+local tableUtils = require("tableUtils")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -194,8 +195,10 @@ function CharacterSelect:getCharacterButtons()
       local character = characters[self.characterId]
       if inputSource and inputSource.player then
         player = inputSource.player
-      else
+      elseif tableUtils.contains(GAME.battleRoom.players, GAME.localPlayer) then
          player = GAME.localPlayer
+      else
+        return
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
