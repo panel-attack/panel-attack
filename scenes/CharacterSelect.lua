@@ -212,65 +212,80 @@ function CharacterSelect:getCharacterButtons()
     end
 
     if characters[characterButton.characterId] and characters[characterButton.characterId]:canSuperSelect() then
-      local superSelectShader = love.graphics.newShader(super_select_pixelcode)
-      -- add super select image as a child
-      characterButton.superSelectImage = ImageContainer({image = themes[config.theme].images.IMG_super, hFill = true, vFill = true, hAlign = "center", vAlign = "center"})
-      characterButton:addChild(characterButton.superSelectImage)
-      characterButton.superSelectImage:setVisibility(false)
-      characterButton.superSelectImage.drawSelf = function(self)
-        set_shader(superSelectShader)
-        love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
-        set_shader()
-      end
-
-      local function updateSuperSelection(button, timer)
-        if timer > consts.SUPER_SELECTION_START then
-          if button.superSelectImage.isVisible == false then
-            button.superSelectImage:setVisibility(true)
-          end
-          local progress = (timer - consts.SUPER_SELECTION_START) / consts.SUPER_SELECTION_DURATION
-          if progress <= 1 then
-            superSelectShader:send("percent", progress)
-          end
-        end
-      end
-
-      local function resetSuperSelection(button)
-        button.superSelectImage:setVisibility(false)
-        superSelectShader:send("percent", 0)
-      end
-
-      -- add shader update for touch
-      characterButton.onHold = function(self, timer)
-        updateSuperSelection(self, timer)
-      end
-
-      characterButton.onRelease = function(self, x, y, timeHeld)
-        resetSuperSelection(self)
-        if self:inBounds(x, y) then
-          self:onClick(nil, timeHeld)
-        end
-      end
-
-      Focusable(characterButton)
-      characterButton.holdTime = 0
-      characterButton.receiveInputs = function(self, inputs, dt, inputSource)
-        if inputs.isPressed["Swap1"] then
-          self.holdTime = self.holdTime + dt
-          updateSuperSelection(self, self.holdTime)
-        else
-          resetSuperSelection(self)
-          self:yieldFocus()
-          self:onClick(inputSource, self.holdTime)
-          self.holdTime = 0
-        end
-      end
+      self.applySuperSelectInteraction(characterButton)
     else
       characterButton.onSelect = characterButton.onClick
     end
   end
 
   return characterButtons
+end
+
+local function updateSuperSelectShader(image, timer)
+  if timer > consts.SUPER_SELECTION_START then
+    if image.isVisible == false then
+      image:setVisibility(true)
+    end
+    local progress = (timer - consts.SUPER_SELECTION_START) / consts.SUPER_SELECTION_DURATION
+    if progress <= 1 then
+      image.shader:send("percent", progress)
+    end
+  else
+    if image.isVisible then
+      image:setVisibility(false)
+    end
+    image.shader:send("percent", 0)
+  end
+end
+
+function CharacterSelect.applySuperSelectInteraction(characterButton)
+  -- creating the super select image + shader
+  local superSelectImage = ImageContainer({image = themes[config.theme].images.IMG_super, hFill = true, vFill = true, hAlign = "center", vAlign = "center"})
+  superSelectImage.shader = love.graphics.newShader(super_select_pixelcode)
+  superSelectImage.drawSelf = function(self)
+    set_shader(self.shader)
+    love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
+    set_shader()
+  end
+
+  -- add it to the button
+  characterButton.superSelectImage = superSelectImage
+  characterButton:addChild(characterButton.superSelectImage)
+  superSelectImage:setVisibility(false)
+
+  -- set the generic update function
+  characterButton.updateSuperSelectShader = updateSuperSelectShader
+
+  -- touch interaction
+  -- by implementing onHold we can provide updates to the shader
+  characterButton.onHold = function(self, timer)
+    self.updateSuperSelectShader(self.superSelectImage, timer)
+  end
+
+  -- we need to override the standard onRelease to reset the shader
+  characterButton.onRelease = function(self, x, y, timeHeld)
+    self.updateSuperSelectShader(self.superSelectImage, 0)
+    if self:inBounds(x, y) then
+      self:onClick(nil, timeHeld)
+    end
+  end
+
+  -- keyboard / controller interaction
+  -- by applying focusable we can turn it into an "on release" interaction rather than on press by taking control of input interpretation
+  Focusable(characterButton)
+  characterButton.holdTime = 0
+  characterButton.receiveInputs = function(self, inputs, dt, inputSource)
+    if inputs.isPressed["Swap1"] then
+      -- measure the time the press is held for
+      self.holdTime = self.holdTime + dt
+    else
+      self:yieldFocus()
+      -- apply the actual click on release with the held time and reset it afterwards
+      self:onClick(inputSource, self.holdTime)
+      self.holdTime = 0
+    end
+    self.updateSuperSelectShader(self.superSelectImage, self.holdTime)
+  end
 end
 
 function CharacterSelect:createCharacterGrid(characterButtons, grid, width, height)
