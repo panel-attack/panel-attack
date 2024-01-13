@@ -73,7 +73,7 @@ end
 
 function select_screen_graphics:ratingDifferenceString(playerNumber) 
   local result = ""
-  if not self.select_screen:inPlacementMatches() then
+  if self.select_screen:isNetPlay() and not self.select_screen:inPlacementMatches() then
     if self.select_screen.currentRoomRatings[playerNumber].difference then
       if self.select_screen.currentRoomRatings[playerNumber].difference > 0 then
         result = "(+" .. self.select_screen.currentRoomRatings[playerNumber].difference .. ") "
@@ -98,12 +98,16 @@ function select_screen_graphics.get_player_state_str(self, player_number, includ
   local win_count = GAME.battleRoom.playerWinCounts[player_number]
   local totalGames = GAME.battleRoom:totalGames()
 
-  local state = loc("ss_rating") .. " " .. (self.select_screen.currentRoomRatings[player_number].league or "")
-  if not self.select_screen.currentRoomRatings[player_number].placement_match_progress then
-    state = state .. "\n" .. rating_difference .. self.select_screen.currentRoomRatings[player_number].new
-  elseif self.select_screen.currentRoomRatings[player_number].placement_match_progress and self.select_screen.currentRoomRatings[player_number].new and self.select_screen.currentRoomRatings[player_number].new == 0 then
-    state = state .. "\n" .. self.select_screen.currentRoomRatings[player_number].placement_match_progress
+  local state = "" 
+  if self.select_screen:isNetPlay() then
+     state = state .. loc("ss_rating") .. " " .. (self.select_screen.currentRoomRatings[player_number].league or "")
+     if not self.select_screen.currentRoomRatings[player_number].placement_match_progress then
+      state = state .. "\n" .. rating_difference .. self.select_screen.currentRoomRatings[player_number].new
+    elseif self.select_screen.currentRoomRatings[player_number].placement_match_progress and self.select_screen.currentRoomRatings[player_number].new and self.select_screen.currentRoomRatings[player_number].new == 0 then
+      state = state .. "\n" .. self.select_screen.currentRoomRatings[player_number].placement_match_progress
+    end
   end
+
   if self.select_screen:isMultiplayer() then
     state = state .. "\n" .. loc("ss_wins") .. " " .. win_count
     if (expected_win_ratio) or totalGames > 0 then
