@@ -350,24 +350,30 @@ function BattleRoom:assignInputConfigurations()
     end
   end
 
-  if #localPlayers == 1 then
-    localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
-  elseif #localPlayers > 1 then
-    self.tryLockInputs = true
-    local validInputConfigurationCount = 0
-    -- assert that there are enough valid input configurations actually configured
-    for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
-      if inputConfiguration["Swap1"] then
-        validInputConfigurationCount = validInputConfigurationCount + 1
-      end
+  -- assert that there are enough valid input configurations actually configured
+  local validInputConfigurationCount = 0
+  for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
+    if inputConfiguration["Swap1"] then
+      validInputConfigurationCount = validInputConfigurationCount + 1
     end
-    if validInputConfigurationCount < #localPlayers then
-      local messageText = "There are more local players than input configurations configured." ..
-      "\nPlease configure enough input configurations and try again"
-      local nextScene = sceneManager:createScene("MainMenu")
-      local transition = MessageTransition(GAME.timer, 5, sceneManager.activeScene, nextScene, messageText)
-      sceneManager:switchToScene(nextScene, transition)
-      self:shutdown()
+  end
+
+  if validInputConfigurationCount < #localPlayers then
+    local messageText = "There are more local players than input configurations configured." ..
+    "\nPlease configure enough input configurations and try again"
+    local nextScene = sceneManager:createScene("MainMenu")
+    local transition = MessageTransition(GAME.timer, 5, sceneManager.activeScene, nextScene, messageText)
+    sceneManager:switchToScene(nextScene, transition)
+    self:shutdown()
+  else
+    if #localPlayers == 1 then
+      -- lock the inputConfiguration whenever the player readies up
+      -- the ready up press guarantees that at least 1 input config has a key down
+      localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
+    elseif #localPlayers > 1 then
+      -- with multiple local players we need to lock immediately so they can configure
+      -- set a flag so this is continuously attempted in update
+      self.tryLockInputs = true
     end
   end
 end
