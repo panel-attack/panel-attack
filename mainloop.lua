@@ -15,7 +15,6 @@ local wait, resume = coroutine.yield, coroutine.resume
 local main_endless_select, main_timeattack_select, makeSelectPuzzleSetFunction, main_net_vs_setup, main_select_puzz, main_local_vs_setup, main_set_name, main_local_vs_yourself_setup, exit_game, training_setup
 
 connection_up_time = 0 -- connection_up_time counts "E" messages, not seconds
-logged_in = 0
 GAME.connected_server_ip = nil -- the ip address of the server you are connected to
 GAME.connected_network_port = nil -- the port of the server you are connected to
 my_user_id = nil -- your user id
@@ -901,7 +900,6 @@ function main_net_vs_lobby()
   reset_filters()
   CharacterLoader.clear()
   StageLoader.clear()
-  local items
   local unpaired_players = {} -- list
   local willing_players = {} -- set
   local spectatable_rooms = {}
@@ -914,14 +912,6 @@ function main_net_vs_lobby()
   local notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
   local leaderboard_string = ""
   local my_rank
-  --attempt login
-  local my_user_id = read_user_id_file(GAME.connected_server_ip)
-  if not my_user_id then
-    my_user_id = "need a new user id"
-  end
-  if CUSTOM_USER_ID then
-    my_user_id = CUSTOM_USER_ID
-  end
   local login_status_message = "   " .. loc("lb_login")
   local noticeTextObject = nil
   local noticeLastText = nil
@@ -930,78 +920,50 @@ function main_net_vs_lobby()
   local lobby_menu_x = {[true] = themes[config.theme].main_menu_screen_pos[1] - 200, [false] = themes[config.theme].main_menu_screen_pos[1]} --will be used to make room in case the leaderboard should be shown.
   local lobby_menu_y = themes[config.theme].main_menu_screen_pos[2] + 10
   local sent_requests = {}
-  if connection_up_time <= login_status_message_duration then
-    json_send({login_request = true, user_id = my_user_id})
-  end
   local lobby_menu = nil
   local updated = true -- need update when first entering
   local ret = nil
-  local requestedSpectateRoom = nil
   local playerData = nil
+
   GAME.rich_presence:setPresence(nil, "In Lobby", true)
   while true do
-    if connection_up_time <= login_status_message_duration then
-      local messages = server_queue:pop_all_with("login_successful", "login_denied")
-      for _, msg in ipairs(messages) do
-        if msg.login_successful then
-          current_server_supports_ranking = true
-          logged_in = true
-          if msg.new_user_id then
-            my_user_id = msg.new_user_id
-            logger.trace("about to write user id file")
-            write_user_id_file(my_user_id, GAME.connected_server_ip)
-            login_status_message = loc("lb_user_new", config.name)
-          elseif msg.name_changed then
-            login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
-            login_status_message_duration = 5
-          else
-            login_status_message = loc("lb_welcome_back", config.name)
-          end
-          if msg.server_notice then
-            msg.server_notice = msg.server_notice:gsub("\\n", "\n")
-            main_dumb_transition(nil, msg.server_notice, 180, -1)
-          end
-        elseif msg.login_denied then
-          current_server_supports_ranking = true
-          login_denied = true
-          --TODO: create a menu here to let the user choose "continue unranked" or "get a new user_id"
-          --login_status_message = "Login for ranked matches failed.\n"..msg.reason.."\n\nYou may continue unranked,\nor delete your invalid user_id file to have a new one assigned."
-          login_status_message_duration = 10
-
-          local loginDeniedMessage = loc("lb_error_msg") .. "\n\n"
-          if msg.reason then
-            loginDeniedMessage = loginDeniedMessage .. msg.reason .. "\n\n"
-          end
-          if msg.ban_duration then
-            loginDeniedMessage = loginDeniedMessage .. msg.ban_duration .. "\n\n"
-          end
-
-          return main_dumb_transition, {main_select_mode, loginDeniedMessage, 120, -1}
-        end
-      end
-      if connection_up_time == 2 and not current_server_supports_ranking then
-        login_status_message = loc("lb_login_timeout")
-        login_status_message_duration = 7
-      end
-    end
-    local messages = server_queue:pop_all_with("choose_another_name", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
+    local messages = server_queue:pop_all_with("login_successful", "login_denied", "create_room", "unpaired", "game_request", "leaderboard_report", "spectate_request_granted")
     for _, msg in ipairs(messages) do
-      updated = true
-      items = {}
-      if msg.choose_another_name and msg.choose_another_name.used_names then
-        return main_dumb_transition, {main_select_mode, loc("lb_used_name"), 60, 600}
-      elseif msg.choose_another_name and msg.choose_another_name.reason then
-        return main_dumb_transition, {main_select_mode, "Error: " .. msg.choose_another_name.reason, 60, 300}
+      updated = true -- any of these messages means we need an update
+      if msg.login_successful then
+        if msg.new_user_id then
+          my_user_id = msg.new_user_id
+          logger.trace("about to write user id file")
+          write_user_id_file(my_user_id, GAME.connected_server_ip)
+          login_status_message = loc("lb_user_new", config.name)
+        elseif msg.name_changed then
+          login_status_message = loc("lb_user_update", msg.old_name, msg.new_name)
+          login_status_message_duration = 5
+        else
+          login_status_message = loc("lb_welcome_back", config.name)
+        end
+        if msg.server_notice then
+          msg.server_notice = msg.server_notice:gsub("\\n", "\n")
+          -- NOTE this doesn't return main_dumb_transition, just calls it, afterwords we will continue this lobby
+          main_dumb_transition(nil, msg.server_notice, 180, -1)
+        end
+      elseif msg.login_denied then
+        local loginDeniedMessage = loc("lb_error_msg") .. "\n\n"
+        if msg.reason then
+          loginDeniedMessage = loginDeniedMessage .. msg.reason .. "\n\n"
+        end
+        if msg.ban_duration then
+          loginDeniedMessage = loginDeniedMessage .. msg.ban_duration .. "\n\n"
+        end
+
+        return main_dumb_transition, {main_select_mode, loginDeniedMessage, 120, -1}
       end
       if msg.create_room or msg.spectate_request_granted then
         GAME.battleRoom = BattleRoom()
         if msg.spectate_request_granted then
-          if not requestedSpectateRoom then
-            error("expected requested room")
-          end
           GAME.battleRoom.spectating = true
-          GAME.battleRoom.playerNames[1] = requestedSpectateRoom.a
-          GAME.battleRoom.playerNames[2] = requestedSpectateRoom.b
+          GAME.battleRoom.playerNames[1] = msg.a_name
+          GAME.battleRoom.playerNames[2] = msg.b_name
         else
           GAME.battleRoom.playerNames[1] = config.name
           GAME.battleRoom.playerNames[2] = msg.opponent
@@ -1098,7 +1060,6 @@ function main_net_vs_lobby()
 
       local function requestSpectateFunction(room)
         return function()
-          requestedSpectateRoom = room
           request_spectate(room.roomNumber)
         end
       end
@@ -1270,7 +1231,12 @@ function main_net_vs_setup(ip, network_port)
   if not network_init(ip, network_port) then
     return main_dumb_transition, {main_select_mode, loc("ss_could_not_connect") .. "\n\n" .. loc("ss_return"), 60, 300}
   end
-  local timeout_counter = 0
+  
+  GAME.connected_server_ip = ip
+  GAME.connected_network_port = network_port
+
+  sendLoginRequest()
+
   while not connection_is_ready() do
     gprint(loc("lb_connecting"), unpack(themes[config.theme].main_menu_screen_pos))
     wait()
@@ -1278,9 +1244,6 @@ function main_net_vs_setup(ip, network_port)
       return main_dumb_transition, {main_select_mode, loc("ss_disconnect") .. "\n\n" .. loc("ss_return"), 60, 300}
     end
   end
-  GAME.connected_server_ip = ip
-  GAME.connected_network_port = network_port
-  logged_in = false
   return main_net_vs_lobby
 end
 
