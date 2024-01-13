@@ -1,5 +1,6 @@
 local logger = require("logger")
 local Replay = require("replay")
+local tableUtils = require("tableUtils")
 local graphics = require("select_screen.select_screen_graphics")
 require("SimulatedOpponent")
 
@@ -40,22 +41,22 @@ function refreshBasedOnOwnMods(player)
   -- Resolve the current character if it is random
   local function resolveRandomCharacter()
       if characters[player.character] == nil and player.selectedCharacter == random_character_special_value then
-        player.character = table.getRandomElement(characters_ids_for_current_theme)
+        player.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
       end
 
       if characters[player.character]:is_bundle() then
-        player.character = table.getRandomElement(characters[player.character].sub_characters)
+        player.character = tableUtils.getRandomElement(characters[player.character].sub_characters)
       end
   end
 
   -- Resolve the current stage if it is random
   local function resolveRandomStage()
     if player.selectedStage == random_stage_special_value and stages[player.stage] == nil then
-      player.stage = table.getRandomElement(stages_ids_for_current_theme)
+      player.stage = tableUtils.getRandomElement(stages_ids_for_current_theme)
     end
 
     if stages[player.stage]:is_bundle() then
-      player.stage = table.getRandomElement(stages[player.stage].sub_stages)
+      player.stage = tableUtils.getRandomElement(stages[player.stage].sub_stages)
     end
   end
 
@@ -132,7 +133,7 @@ end
 -- to start before everything is for sure not going to change and everything is loaded.
 function select_screen.refreshReadyStates(self)
   for playerNumber = 1, #self.players do
-    self.players[playerNumber].ready = table.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
+    self.players[playerNumber].ready = tableUtils.trueForAll(self.players, function(pc) return pc.loaded and pc.wants_ready end)
   end
 end
 
@@ -203,7 +204,7 @@ function select_screen.on_select(self, player, super)
     player.selectedCharacter = player.cursor.positionId
     local character = characters[player.selectedCharacter]
     if character then
-      player.character = character.id
+      player.character = CharacterLoader.resolveCharacterSelection(character.id)
       CharacterLoader.load(player.character)
       characterSelectionSoundHasBeenPlayed = character:play_selection_sfx()
       if super then
@@ -270,7 +271,7 @@ function select_screen.change_stage(player, increment)
   -- random_stage_special_value is placed at the end of the list and is 'replaced' by a random pick and selectedStage=true
   local stages = shallowcpy(stages_ids_for_current_theme)
   stages[#stages + 1] = random_stage_special_value
-  local currentId = table.indexOf(stages, player.selectedStage)
+  local currentId = tableUtils.indexOf(stages, player.selectedStage)
   currentId = wrap(1, currentId + increment, #stages)
   player.selectedStage = stages[currentId]
   player.stage = StageLoader.resolveStageSelection(player.selectedStage)
@@ -280,8 +281,7 @@ end
 
 -- returns the navigable grid layout of the select screen before loading characters
 function select_screen.getTemplateMap(self)
-  logger.trace("current_server_supports_ranking: " .. tostring(current_server_supports_ranking))
-  if self:isNetPlay() and current_server_supports_ranking then
+  if self:isNetPlay() then
     return {
       {"__Panels", "__Panels", "__Mode", "__Mode", "__Stage", "__Stage", "__Level", "__Level", "__Ready"},
       {"__Random", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty", "__Empty"},
@@ -504,8 +504,8 @@ end
 function select_screen.initializeFromPlayerConfig(self, playerNumber)
   self.players[playerNumber].stage = config.stage
   self.players[playerNumber].selectedStage = config.stage
-  self.players[playerNumber].character = config.character
   self.players[playerNumber].selectedCharacter = config.character
+  self.players[playerNumber].character = config.character
   self.players[playerNumber].level = config.level
   self.players[playerNumber].inputMethod = config.inputMethod or "controller"
   self.players[playerNumber].panels_dir = config.panels
@@ -555,6 +555,7 @@ function select_screen.setUpOpponentPlayer(self)
       self.players[self.op_player_number].selectedCharacter = global_op_state.character
       self.players[self.op_player_number].character = global_op_state.character
       self.players[self.op_player_number].stage = global_op_state.stage
+      self.players[self.op_player_number].level = global_op_state.level
       self.players[self.op_player_number].panels_dir = global_op_state.panels_dir
     end
   end

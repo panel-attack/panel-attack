@@ -2,6 +2,7 @@ require("queue")
 require("globals")
 require("character")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 CharacterLoader = {}
 
@@ -172,7 +173,7 @@ function CharacterLoader.initCharacters()
 
   -- fix config character if it's missing
   if not config.character or (config.character ~= random_character_special_value and not characters[config.character]) then
-    config.character = table.getRandomElement(characters_ids_for_current_theme)
+    config.character = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
 
   -- actual init for all characters, starting with the default one
@@ -195,19 +196,18 @@ function CharacterLoader.initCharacters()
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
-  if characterId and characters[characterId] then
-    characterId = CharacterLoader.resolveBundle(characterId)
-  else
+  if not characterId or not characters[characterId] then
     -- resolve via random selection
-    characterId = table.getRandomElement(characters_ids_for_current_theme)
+    characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
+  characterId = CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end
 
 function CharacterLoader.resolveBundle(characterId)
   while characters[characterId]:is_bundle() do
-    characterId = table.getRandomElement(characters[characterId].sub_characters)
+    characterId = tableUtils.getRandomElement(characters[characterId].sub_characters)
   end
 
   return characterId

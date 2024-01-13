@@ -1,5 +1,5 @@
 require("util")
-require("table_util")
+local tableUtils = require("tableUtils")
 
 local consts = {}
 consts.FRAME_RATE = 1/60
@@ -126,7 +126,7 @@ difficulty_to_ncolors_1Ptime = {6,6,6,6}
 
 TIME_ATTACK_TIME = 120
 -- Yes, 2 is slower than 1 and 50..99 are the same.
-speed_to_rise_time = table.map(
+speed_to_rise_time = tableUtils.map(
    {942, 983, 838, 790, 755, 695, 649, 604, 570, 515,
     474, 444, 394, 370, 347, 325, 306, 289, 271, 256,
     240, 227, 213, 201, 189, 178, 169, 158, 148, 138,

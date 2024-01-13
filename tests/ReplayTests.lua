@@ -1,4 +1,4 @@
-require("table_util")
+local tableUtils = require("tableUtils")
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local Replay = require("replay")

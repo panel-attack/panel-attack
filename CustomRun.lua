@@ -69,12 +69,7 @@ function CustomRun.sleep()
   CustomRun.runMetrics.sleepDuration = currentTime - originalTime
 end
 
--- This is our custom version of run that uses a custom sleep and records metrics.
-local dt = 0
-local mem = 0
-local prevMem = 0
-function CustomRun.innerRun()
-  -- Process events.
+function CustomRun.processEvents()
   if love.event then
     love.event.pump()
     for name, a, b, c, d, e, f in love.event.poll() do
@@ -86,7 +81,17 @@ function CustomRun.innerRun()
       love.handlers[name](a, b, c, d, e, f)
     end
   end
+end
 
+-- This is our custom version of run that uses a custom sleep and records metrics.
+local dt = 0
+local mem = 0
+local prevMem = 0
+function CustomRun.innerRun()
+  local shouldQuit = CustomRun.processEvents()
+  if shouldQuit then
+    return shouldQuit
+  end
   mem = collectgarbage("count")
 
   -- Update dt, as we'll be passing it to update

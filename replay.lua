@@ -1,5 +1,6 @@
 local utf8 = require("utf8Additions")
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
 Replay =

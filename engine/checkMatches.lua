@@ -1,4 +1,5 @@
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 local function sortByPopOrder(panelList, isGarbage)
   table.sort(panelList, function(a, b)
@@ -35,7 +36,7 @@ local function getMetalCount(panels)
 end
 
 local function isNewChainLink(matchingPanels)
-  return table.trueForAny(matchingPanels, function(panel)
+  return tableUtils.trueForAny(matchingPanels, function(panel)
     return panel.chaining
   end)
 end
@@ -48,6 +49,24 @@ local function getOnScreenCount(stackHeight, panels)
     end
   end
   return count
+end
+
+-- returns true if this panel can be matched
+-- false if it cannot be matched
+local function canMatch(panel)
+  -- panels without colors can't match
+  if panel.color == 0 or panel.color == 9 then
+    return false
+  else
+    if panel.state == "normal"
+      or panel.state == "landing"
+      or (panel.matchAnyway and panel.state == "hovering")  then
+      return true
+    else
+      -- swapping, matched, popping, popped, hover, falling, dimmed, dead
+      return false
+    end
+  end
 end
 
 function Stack:checkMatches()
@@ -101,7 +120,7 @@ function Stack:getMatchingPanels()
   for row = 1, self.height do
     for col = 1, self.width do
       local panel = panels[row][col]
-      if panel.stateChanged and panel:canMatch() then
+      if panel.stateChanged and canMatch(panel) then
         candidatePanels[#candidatePanels + 1] = panel
       end
     end
@@ -118,7 +137,7 @@ function Stack:getMatchingPanels()
     -- below
     for row = candidatePanels[i].row - 1, 1, -1 do
       panel = panels[row][candidatePanels[i].column]
-      if panel.color == candidatePanels[i].color and panel:canMatch() then
+      if panel.color == candidatePanels[i].color  and canMatch(panel) then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
         break
@@ -127,7 +146,7 @@ function Stack:getMatchingPanels()
     -- above
     for row = candidatePanels[i].row + 1, self.height do
       panel = panels[row][candidatePanels[i].column]
-      if panel.color == candidatePanels[i].color and panel:canMatch() then
+      if panel.color == candidatePanels[i].color  and canMatch(panel) then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
         break
@@ -136,7 +155,7 @@ function Stack:getMatchingPanels()
     -- to the left
     for column = candidatePanels[i].column - 1, 1, -1 do
       panel = panels[candidatePanels[i].row][column]
-      if panel.color == candidatePanels[i].color and panel:canMatch() then
+      if panel.color == candidatePanels[i].color  and canMatch(panel) then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
         break
@@ -145,7 +164,7 @@ function Stack:getMatchingPanels()
     -- to the right
     for column = candidatePanels[i].column + 1, self.width do
       panel = panels[candidatePanels[i].row][column]
-      if panel.color == candidatePanels[i].color and panel:canMatch() then
+      if panel.color == candidatePanels[i].color and canMatch(panel) then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
         break
@@ -529,7 +548,7 @@ function Stack:clearChainingFlags()
     for column = 1, self.width do
       local panel = self.panels[row][column]
       -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
-      if not panel.matching and panel.chaining and not panel.matchAnyway and panel:canMatch() then
+      if not panel.matching and panel.chaining and not panel.matchAnyway and (canMatch(panel) or panel.color == 9) then
         if row > 1 then
           -- no swapping panel below so this panel loses its chain flag
           if self.panels[row - 1][column].state ~= "swapping" then

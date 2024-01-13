@@ -4,6 +4,7 @@ Graphics
 Sound
 ]]--
 local logger = require("logger")
+local tableUtils = require("tableUtils")
 
 local default_character = nil -- holds default assets fallbacks
 
@@ -32,7 +33,7 @@ Character =
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
     self.music_style = "normal"
-    self.files = table.map(love.filesystem.getDirectoryItems(self.path), function(file) return FileUtil.getFileNameWithoutExtension(file) end)
+    self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return FileUtil.getFileNameWithoutExtension(file) end)
   end
 )
 
@@ -279,7 +280,7 @@ end
 
 function Character.graphics_uninit(self)
   for imageName, _ in pairs(self.images) do
-    if not table.contains(basic_images, imageName) then
+    if not tableUtils.contains(basic_images, imageName) then
       self.images[imageName] = nil
     end
   end
@@ -454,7 +455,7 @@ function Character.loadSfx(self, name, yields)
   local sfx = {}
 
   local stringLen = string.len(name)
-  local files = table.filter(self.files, function(file) return string.find(file, name, nil, true) end)
+  local files = tableUtils.filter(self.files, function(file) return string.find(file, name, nil, true) end)
 
   local maxIndex = -1
   -- load sounds
@@ -495,7 +496,7 @@ function Character.loadSfx(self, name, yields)
   else
     -- #table may yield erroneous (too large) results for tables with gaps 
     -- Character:playRandomSfx() relies on #table being accurate so we redo the table here if it has gaps
-    sfx = table.toContinuouslyIndexedTable(sfx)
+    sfx = tableUtils.toContinuouslyIndexedTable(sfx)
   end
 
   assert(sfx ~= nil)
@@ -512,7 +513,7 @@ function Character.loadSubSfx(self, name, index, yields)
     index = ""
   end
   local stringLen = string.len(name..index)
-  local subfiles = table.filter(self.files,
+  local subfiles = tableUtils.filter(self.files,
                     function(file)
                       return file == name..index or
                             (string.find(file, name .. index) and
@@ -578,7 +579,7 @@ end
 local function playRandomSfx(sfxTable, fallback)
   if not GAME.muteSoundEffects then
     if sfxTable and #sfxTable > 0 then
-      local sfx = table.getRandomElement(sfxTable)
+      local sfx = tableUtils.getRandomElement(sfxTable)
       sfx:play()
     elseif fallback then
       playRandomSfx(fallback)
@@ -642,7 +643,7 @@ function Character.playAttackSfx(self, attack)
         stopIfPlaying(v[i])
       end
     end
-    if table.length(self.sounds.shock) > 0 then
+    if tableUtils.length(self.sounds.shock) > 0 then
       for _, v in pairs(self.sounds.shock) do
         for i = 1, #v do
           stopIfPlaying(v[i])

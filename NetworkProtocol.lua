@@ -3,6 +3,11 @@ local utf8 = require("utf8Additions")
 
 local NetworkProtocol = {}
 
+-- Version 001 was super legacy
+-- Version 002 we supported unicode JSON
+-- Version 003 we updated login requirements and started sending the network version
+NetworkProtocol.NETWORK_VERSION = "003"
+
 local messageEndMarker = "←J←"
 
 -- All the types sent by clients and servers

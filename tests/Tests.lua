@@ -1,23 +1,31 @@
 -- In Development, so you don't have to wait for all other tests to debug (move to correct location later)
 
 -- Small tests (unit tests)
-require("PuzzleTests")
 require("ServerQueueTests")
-require("StackTests")
-require("tests.StackGraphicsTests")
+require("tests.ConnectionTests")
 require("tests.JsonEncodingTests")
 require("tests.NetworkProtocolTests")
-require("tests.ThemeTests")
 require("tests.TouchDataEncodingTests")
 require("tests.utf8AdditionsTests")
 require("tests.QueueTests")
 require("tests.TimeQueueTests")
-require("table_util_tests")
+require("tableUtilsTest")
 require("utilTests")
+
+if not SERVER_MODE then
+  require("StackTests")
+  require("tests.StackGraphicsTests")
+  require("tests.InputTests")
+  require("PuzzleTests")
+  require("tests.ThemeTests")
+end
 --require("AttackFileGenerator") -- TODO: Not really a unit test... generates attack files
+
 -- Medium level tests (integration tests)
-require("tests.ReplayTests")
-require("tests.StackReplayTests")
-require("tests.StackRollbackReplayTests")
-require("tests.StackTouchReplayTests")
-require("tests.GarbageQueueTests")
+if not SERVER_MODE then
+  require("tests.ReplayTests")
+  require("tests.StackReplayTests")
+  require("tests.StackRollbackReplayTests")
+  require("tests.StackTouchReplayTests")
+  require("tests.GarbageQueueTests")
+end
