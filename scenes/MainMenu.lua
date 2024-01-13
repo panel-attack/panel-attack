@@ -82,8 +82,11 @@ local menuItems = {
     end, {""})
   }, {
     createMainMenuButton("mm_2_vs_local", function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
-      switchToScene(CharacterSelect2p())
+      local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
+      if not battleRoom.shutdown then
+        GAME.battleRoom = battleRoom
+        switchToScene(CharacterSelect2p())
+      end
     end)
   }, {
     createMainMenuButton("mm_replay_browser", function()

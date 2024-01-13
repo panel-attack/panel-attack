@@ -354,6 +354,21 @@ function BattleRoom:assignInputConfigurations()
     localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
   elseif #localPlayers > 1 then
     self.tryLockInputs = true
+    local validInputConfigurationCount = 0
+    -- assert that there are enough valid input configurations actually configured
+    for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
+      if inputConfiguration["Swap1"] then
+        validInputConfigurationCount = validInputConfigurationCount + 1
+      end
+    end
+    if validInputConfigurationCount < #localPlayers then
+      local messageText = "There are more local players than input configurations configured." ..
+      "\nPlease configure enough input configurations and try again"
+      local nextScene = sceneManager:createScene("MainMenu")
+      local transition = MessageTransition(GAME.timer, 5, sceneManager.activeScene, nextScene, messageText)
+      sceneManager:switchToScene(nextScene, transition)
+      self:shutdown()
+    end
   end
 end
 
@@ -426,6 +441,7 @@ function BattleRoom:shutdown()
   end
   stop_the_music()
   self:shutdownNetwork()
+  self.shutdown = true
   GAME:initializeLocalPlayer()
   GAME.battleRoom = nil
   self = nil

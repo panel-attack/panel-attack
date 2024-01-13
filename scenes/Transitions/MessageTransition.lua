@@ -5,7 +5,7 @@ local input = require("inputManager")
 
 local MessageTransition = class(function(transition, startTime, duration, oldScene, newScene, message)
   transition.message = message
-  transition.label = Label({text = message, hAlign = "center"})
+  transition.label = Label({text = message, hAlign = "center", vAlign = "center"})
   transition.uiRoot:addChild(transition.label)
 end, Transition)
 
@@ -19,15 +19,7 @@ function MessageTransition:updateScenes(dt)
 end
 
 function MessageTransition:draw()
-  local alpha = 1
-  if self.progress > 0.9 then
-    alpha = 1 - (self.progress - 0.9) * 10
-  elseif self.progress < 0.1 then
-    alpha = self.progress * 10
-  end
-  love.graphics.setColor(1, 1, 1, alpha)
-  self.label:draw()
-  love.graphics.setColor(1, 1, 1, 1)
+  self.uiRoot:draw()
 end
 
 return MessageTransition
