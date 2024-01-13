@@ -190,13 +190,13 @@ function CharacterSelect:getCharacterButtons()
   -- assign player generic callbacks
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
-    characterButton.onClick = function(self, holdTime)
+    characterButton.onClick = function(self, inputSource, holdTime)
       local character = characters[self.characterId]
-      -- if inputSource and inputSource.player then
-      --   player = inputSource.player
-      -- else
+      if inputSource and inputSource.player then
+        player = inputSource.player
+      else
          player = GAME.localPlayer
-      -- end
+      end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
       if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
         -- super select
@@ -223,11 +223,10 @@ function CharacterSelect:getCharacterButtons()
         set_shader()
       end
 
-      -- add shader update for touch
-      characterButton.onHold = function(self, timer)
+      local function updateSuperSelection(button, timer)
         if timer > consts.SUPER_SELECTION_START then
-          if self.superSelectImage.isVisible == false then
-            self.superSelectImage:setVisibility(true)
+          if button.superSelectImage.isVisible == false then
+            button.superSelectImage:setVisibility(true)
           end
           local progress = (timer - consts.SUPER_SELECTION_START) / consts.SUPER_SELECTION_DURATION
           if progress <= 1 then
@@ -236,15 +235,36 @@ function CharacterSelect:getCharacterButtons()
         end
       end
 
-      characterButton.onRelease = function(self, x, y, timeHeld)
-        self.superSelectImage:setVisibility(false)
+      local function resetSuperSelection(button)
+        button.superSelectImage:setVisibility(false)
         superSelectShader:send("percent", 0)
+      end
+
+      -- add shader update for touch
+      characterButton.onHold = function(self, timer)
+        updateSuperSelection(self, timer)
+      end
+
+      characterButton.onRelease = function(self, x, y, timeHeld)
+        resetSuperSelection(self)
         if self:inBounds(x, y) then
-          self:onClick(timeHeld)
+          self:onClick(nil, timeHeld)
         end
       end
 
-      -- TODO: add shader update for key hold
+      Focusable(characterButton)
+      characterButton.holdTime = 0
+      characterButton.receiveInputs = function(self, inputs, dt, inputSource)
+        if inputs.isPressed["Swap1"] then
+          self.holdTime = self.holdTime + dt
+          updateSuperSelection(self, self.holdTime)
+        else
+          resetSuperSelection(self)
+          self:yieldFocus()
+          self:onClick(inputSource, self.holdTime)
+          self.holdTime = 0
+        end
+      end
     else
       characterButton.onSelect = characterButton.onClick
     end
@@ -392,9 +412,9 @@ function CharacterSelect:createRankedSelection(player, width)
   return rankedSelector
 end
 
-function CharacterSelect:update()
+function CharacterSelect:update(dt)
   for i = 1, #self.ui.cursors do
-    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
+    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration, dt)
   end
   if GAME.battleRoom and GAME.battleRoom.spectating then
     if input.isDown["MenuEsc"] then
