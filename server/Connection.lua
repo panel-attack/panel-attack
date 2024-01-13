@@ -133,7 +133,7 @@ end
 
 -- Handle NetworkProtocol.clientMessageTypes.versionCheck
 function Connection:H(version)
-  if version ~= VERSION and not ANY_ENGINE_VERSION_ENABLED then
+  if version ~= NetworkProtocol.NETWORK_VERSION then
     self:send(NetworkProtocol.serverMessageTypes.versionWrong.prefix)
   else
     self:send(NetworkProtocol.serverMessageTypes.versionCorrect.prefix)
@@ -174,7 +174,7 @@ function Connection:J(message)
   elseif self.state == "not_logged_in" then 
     if message.login_request then
       local IP_logging_in, port = self.socket:getpeername()
-      self:login(message.user_id, message.name, IP_logging_in, port, message)
+      self:login(message.user_id, message.name, IP_logging_in, port, message.engine_version, message)
     end
   elseif message.logout then
     self:close()
@@ -209,13 +209,13 @@ function Connection:handleErrorReport(errorReport)
 end
 
 --returns whether the login was successful
-function Connection:login(user_id, name, IP_logging_in, port, playerSettings)
+function Connection:login(user_id, name, IP_logging_in, port, engineVersion, playerSettings)
   local logged_in = false
   local message = {}
 
   logger.debug("New login attempt:  " .. IP_logging_in .. ":" .. port)
 
-  local denyReason, playerBan = self:canLogin(user_id, name, IP_logging_in)
+  local denyReason, playerBan = self:canLogin(user_id, name, IP_logging_in, engineVersion)
 
   if denyReason ~= nil or playerBan ~= nil then
     self.server:denyLogin(self, denyReason, playerBan)
@@ -276,10 +276,12 @@ function Connection:login(user_id, name, IP_logging_in, port, playerSettings)
   return logged_in
 end
 
-function Connection:canLogin(userID, name, IP_logging_in)
+function Connection:canLogin(userID, name, IP_logging_in, engineVersion)
   local playerBan = self.server:isPlayerBanned(IP_logging_in)
   local denyReason = nil
   if playerBan then
+  elseif engineVersion ~= ENGINE_VERSION and not ANY_ENGINE_VERSION_ENABLED then
+    denyReason = "Please update your game, server expects engine version: " .. ENGINE_VERSION
   elseif not name or name == "" then
     denyReason = "Name cannot be blank"
   elseif string.lower(name) == "anonymous" then

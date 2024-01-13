@@ -200,7 +200,7 @@ function network_init(ip, network_port)
   TCP_sock:setoption("tcp-nodelay", true)
   TCP_sock:settimeout(0)
   got_H = false
-  net_send(NetworkProtocol.clientMessageTypes.versionCheck.prefix .. VERSION)
+  net_send(NetworkProtocol.clientMessageTypes.versionCheck.prefix .. NetworkProtocol.NETWORK_VERSION)
   return true
 end
 
@@ -219,6 +219,7 @@ function sendLoginRequest()
   local sent_json = {
     login_request = true,
     user_id = my_user_id,
+    engine_version = VERSION,
     name = config.name,
     level = config.level,
     inputMethod = config.inputMethod or "controller",
