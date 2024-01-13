@@ -185,6 +185,12 @@ function ChallengeMode:onMatchEnded(match)
     self:reportLocalGameResult(winners)
   end
 
+  for _, player in ipairs(self.players) do
+    if player.human then
+      player:setWantsReady(false)
+    end
+  end
+
   if match.aborted then
   -- match:deinit is the responsibility of the one switching out of the game scene
     match:deinit()
