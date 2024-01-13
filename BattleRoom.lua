@@ -217,15 +217,17 @@ end
 
 function BattleRoom:refreshReadyStates()
   -- ready should probably be a battleRoom prop, not a player prop? at least for local player(s)?
-  for playerNumber = 1, #self.players do
-    self.players[playerNumber].ready = tableUtils.trueForAll(self.players, function(p)
-      -- everyone finished loaded or isLocal (in which case BattleRoom.allAssetsLoaded covers that)
-      return (p.hasLoaded or p.isLocal)
+  for _, player in ipairs(self.players) do
+    player.ready = tableUtils.trueForAll(self.players, function(p)
+      -- everyone finished loading or isLocal (in which case BattleRoom.allAssetsLoaded covers that)
+      return (p.settings.hasLoaded or p.isLocal)
       -- everyone actually wants to start
       and p.settings.wantsReady
-      -- every local player has an input configuration assigned
-      and (p.isLocal and p.human and p.inputConfiguration.usedByPlayer)
-    end) and self.allAssetsLoaded
+    end)
+    -- all needed assets for players are loaded
+    and self.allAssetsLoaded
+    -- every local human player has an input configuration assigned
+    and ((player.isLocal and player.human and player.inputConfiguration.usedByPlayer ~= nil) or (player.isLocal and not player.human))
   end
 end
 

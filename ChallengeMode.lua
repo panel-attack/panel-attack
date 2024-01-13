@@ -20,6 +20,7 @@ local ChallengeMode =
     self:addPlayer(GAME.localPlayer)
     self.player = ChallengeModePlayer(#self.players + 1)
     self:addPlayer(self.player)
+    self:assignInputConfigurations()
     self:setStage(stageIndex or 1)
   end,
   BattleRoom
