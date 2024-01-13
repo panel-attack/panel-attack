@@ -36,7 +36,8 @@ end
 function Button:onRelease(x, y, timeHeld)
   self.backgroundColor[4] = 0.7
   if self:inBounds(x, y) then
-    self:onClick(timeHeld)
+    -- first argument non-self of onClick is the input source to accomodate inputs via controllers from different players
+    self:onClick(nil, timeHeld)
   end
 end
 
