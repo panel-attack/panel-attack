@@ -61,7 +61,7 @@ function Replay.createNewReplay(match)
 end
 
 function Replay.replayCanBeViewed(replay)
-  if replay.engineVersion > consts.VERSION then
+  if replay.engineVersion > consts.ENGINE_VERSION then
     -- replay is from a newer game version, we can't watch
     -- or maybe we can but there is no way to verify we can
     return false
@@ -127,11 +127,11 @@ end
 function Replay.finalReplayFilename(extraPath, extraFilename)
   local now = os.date("*t", to_UTC(os.time()))
   local sep = "/"
-  local path = "replays" .. sep .. "v" .. consts.VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+  local path = "replays" .. sep .. "v" .. consts.ENGINE_VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
   if extraPath then
     path = path .. sep .. extraPath
   end
-  local filename = "v" .. consts.VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
+  local filename = "v" .. consts.ENGINE_VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec)
   if extraFilename then
     filename = filename .. "-" .. extraFilename
   end

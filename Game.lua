@@ -208,10 +208,7 @@ function Game:runUnitTests()
   GAME.localPlayer.isLocal = false
 
   logger.info("Running Unit Tests...")
-  local status, err = xpcall(function() require("tests.Tests") end, debug.traceback)
-  if not status then
-    error(err)
-  end
+  require("tests.Tests")
 end
 
 function Game:runPerformanceTests()
@@ -363,7 +360,7 @@ function Game.errorData(errorString, traceBack)
       stack = traceBack,
       name = username,
       error = errorString,
-      engine_version = consts.VERSION,
+      engine_version = consts.ENGINE_VERSION,
       release_version = buildVersion,
       operating_system = systemInfo,
       love_version = loveVersion,

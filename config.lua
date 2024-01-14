@@ -6,7 +6,7 @@ require("Theme") -- needed for directory location
 -- Default configuration values
 config = {
     -- The last used engine version
-    version                       = VERSION,
+    version                       = consts.ENGINE_VERSION,
   
       -- Lang used for localization
     language_code                 = "EN",

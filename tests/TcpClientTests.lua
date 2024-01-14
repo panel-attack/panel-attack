@@ -25,7 +25,7 @@ local function testSendData()
   local success = tcpClient:connectToServer(testServerIp, testServerPort)
   assert(success)
   assert(tcpClient:isConnected())
-  local message = NetworkProtocol.clientMessageTypes.versionCheck.prefix .. consts.VERSION
+  local message = NetworkProtocol.clientMessageTypes.versionCheck.prefix .. NetworkProtocol.NETWORK_VERSION
   assert(tcpClient:send(message))
   tcpClient:sendRequest(ClientMessages.logout())
   assert(tcpClient:isConnected())
@@ -40,7 +40,7 @@ local function testReceiveData()
   local success = tcpClient:connectToServer(testServerIp, testServerPort)
   assert(success)
   assert(tcpClient:isConnected())
-  tcpClient:sendRequest(ClientMessages.tryReserveUsernameRequest({name = "aaaaaaaaaaaaaaaaaaaaaaaaaa"}))
+  tcpClient:sendRequest(ClientMessages.requestLogin("-"))
   -- there is a max character limit of 16 for names
   -- the server should send back {choose_another_name = {reason = "Name cannot be blank"}}
   local startTime = love.timer.getTime()

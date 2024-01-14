@@ -20,7 +20,7 @@ Match =
     self.attackEngines = {}
     self.P1 = nil
     self.P2 = nil
-    self.engineVersion = consts.VERSION
+    self.engineVersion = consts.ENGINE_VERSION
 
     assert(doCountdown ~= nil)
     assert(stackInteraction)
