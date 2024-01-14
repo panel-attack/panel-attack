@@ -11,7 +11,7 @@ local InputField = class(
   function(self, options)
     self.placeholderText = love.graphics.newText(love.graphics.getFont(), options.placeholder) or love.graphics.newText(love.graphics.getFont(), "Input Field")
     self.value = options.value or ""
-    self.charLimit = options.charLimit or 16
+    self.charLimit = options.charLimit or NAME_LENGTH_LIMIT
     self.filterAlphanumeric = options.filterAlphanumeric or (options.filterAlphanumeric == nil and true)
 
     self.backgroundColor = options.backgroundColor or {.3, .3, .3, .7}
