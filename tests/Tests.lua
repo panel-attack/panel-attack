@@ -7,7 +7,6 @@ end
 
 -- In Development, so you don't have to wait for all other tests to debug (move to correct location later)
 -- Small tests (unit tests)
---runTestFile("tests.InputTests")
 runTestFile("ServerQueueTests")
 runTestFile("tests.JsonEncodingTests")
 runTestFile("tests.NetworkProtocolTests")

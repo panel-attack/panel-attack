@@ -46,7 +46,7 @@ function TcpClient:readSocket()
   -- error lists the reason why the data receival was interrupted (should normally be "timeout")
   -- all partial data lands as data fragments in the partialdata variable
   if error == "timeout" then
-    -- "timeout" is a common "error" that just means there is currently nothing to read but the connection is still active
+    -- "timeout" is an expected scenario, the connection is still active
     -- in case of an error, data is always nil so there is no danger of overwriting
     data = partialData
   end
