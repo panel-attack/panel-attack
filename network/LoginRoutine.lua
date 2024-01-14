@@ -57,7 +57,6 @@ local function login(tcpClient, ip, port)
         elseif status == "received" then
           if value.login_successful then
             result.loggedIn = true
-            local message
             if value.new_user_id then
               write_user_id_file(value.new_user_id, GAME.connected_server_ip)
               result.message = loc("lb_user_new", config.name)
