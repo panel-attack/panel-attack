@@ -123,8 +123,8 @@ function Room:add_spectator(new_spectator_connection)
     opponent_settings = opponentSettings
   }
   if msg.replay_of_match_so_far ~= nil then
-    msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[1])
-    msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[2])
+    msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[1])
+    msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[2])
     if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
       msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
       msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
@@ -258,11 +258,11 @@ function Room:resolve_game_outcome()
       end
       filename = filename .. ".json"
       if self.replay.vs then
-        self.replay.vs.I = table.concat(self.inputs[1])
-        self.replay.vs.in_buf = table.concat(self.inputs[2])
+        self.replay.vs.in_buf = table.concat(self.inputs[1])
+        self.replay.vs.I = table.concat(self.inputs[2])
         if COMPRESS_REPLAYS_ENABLED then
-          self.replay.vs.I = compress_input_string(self.replay.vs.I)
           self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
+          self.replay.vs.I = compress_input_string(self.replay.vs.I)
           logger.debug("Compressed vs I/in_buf")
           logger.debug("saving compressed replay as " .. path .. sep .. filename)
         else
