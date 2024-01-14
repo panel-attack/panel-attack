@@ -10,27 +10,11 @@ local ClientMessages = {}
 -------------------------
 
 function ClientMessages.requestLogin(userId)
-  local loginMessage = {login_request = true, user_id = userId}
-
-  return {
-    messageType = msgTypes.jsonMessage,
-    messageText = loginMessage,
-    responseTypes = {"login_successful", "login_denied"}
-  }
-end
-
-function ClientMessages.logout()
-  local logoutMessage = {logout = true}
-
-  return {
-    messageType = msgTypes.jsonMessage,
-    messageText = logoutMessage,
-  }
-end
-
-function ClientMessages.tryReserveUsernameRequest(config)
-  local userNameMessage =
+  local loginRequestMessage =
   {
+    login_request = true,
+    user_id = userId,
+    engine_version = consts.ENGINE_VERSION,
     name = config.name,
     level = config.level,
     inputMethod = config.inputMethod or "controller",
@@ -43,27 +27,33 @@ function ClientMessages.tryReserveUsernameRequest(config)
 
   if config.character then
     if config.character == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
-      userNameMessage.character_is_random = consts.RANDOM_CHARACTER_SPECIAL_VALUE
+      loginRequestMessage.character_is_random = consts.RANDOM_CHARACTER_SPECIAL_VALUE
     elseif characters[config.character] and characters[config.character]:is_bundle() then
-      userNameMessage.character_is_random = config.character
+      loginRequestMessage.character_is_random = config.character
     end
   end
 
   if config.stage then
     if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
-      userNameMessage.stage_is_random = consts.RANDOM_STAGE_SPECIAL_VALUE
+      loginRequestMessage.stage_is_random = consts.RANDOM_STAGE_SPECIAL_VALUE
     elseif stages[config.stage] and stages[config.stage]:is_bundle() then
-      userNameMessage.stage_is_random = config.stage
+      loginRequestMessage.stage_is_random = config.stage
     end
   end
 
-  -- despite all these other props, the main point of this message is to validate the name and register the connection with it
-  -- this is a poorly defined client-server interaction
-  -- the server only responds if there is a problem but it does not respond if there is none, meaning we basically have to wait for timeout
   return {
     messageType = msgTypes.jsonMessage,
-    messageText = userNameMessage,
-    responseTypes = {"choose_another_name"}
+    messageText = loginRequestMessage,
+    responseTypes = {"login_successful", "login_denied"}
+  }
+end
+
+function ClientMessages.logout()
+  local logoutMessage = {logout = true}
+
+  return {
+    messageType = msgTypes.jsonMessage,
+    messageText = logoutMessage,
   }
 end
 

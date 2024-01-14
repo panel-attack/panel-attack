@@ -17,10 +17,10 @@ end)
 -- setup the network connection on the given IP and port
 function TcpClient:connectToServer(ip, port)
   self.ip = ip
-  self.port = port
+  self.port = port or 49569
   self.socket = socket.tcp()
   self.socket:settimeout(7)
-  local result, err = self.socket:connect(ip, port or 49569)
+  local result, err = self.socket:connect(self.ip, self.port)
   if not result then
     return err == "already connected"
   end
@@ -35,7 +35,7 @@ end
 
 -- Appends all data from the socket to TcpClient.data
 -- returns false if something went wrong
-function TcpClient:flushSocket()
+function TcpClient:readSocket()
   if not self.socket then
     return
   end
@@ -46,7 +46,7 @@ function TcpClient:flushSocket()
   -- error lists the reason why the data receival was interrupted (should normally be "timeout")
   -- all partial data lands as data fragments in the partialdata variable
   if error == "timeout" then
-    -- "timeout" is the expected scenario
+    -- "timeout" is an expected scenario, the connection is still active
     -- in case of an error, data is always nil so there is no danger of overwriting
     data = partialData
   end
@@ -210,7 +210,7 @@ end
 -- Processes messages that came in from the server
 -- Returns false if the connection is broken.
 function TcpClient:processIncomingMessages()
-  if not self:flushSocket() then
+  if not self:readSocket() then
     -- Something went wrong while receiving data.
     -- Bail out and return.
     return false

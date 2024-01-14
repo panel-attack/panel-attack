@@ -1,7 +1,6 @@
 local class = require("class")
 local ClientMessages = require("network.ClientProtocol")
 
--- TODO: recheck label assignments, the return when the name is taken is crap somehow
 -- returns true/false as the first return value to indicate success or failure of the login
 -- returns a string with a message to display for the user
 -- not meant to be called directly as it may block update for a good while, hence local, use the LoginRoutine instead!
@@ -36,68 +35,48 @@ local function login(tcpClient, ip, port)
         result.message = loc("nt_ver_err")
         return result
       else
-        response = tcpClient:sendRequest(ClientMessages.tryReserveUsernameRequest(config))
+        local userId = read_user_id_file(ip)
+        if not userId then
+          userId = "need a new user id"
+        end
+        if CUSTOM_USER_ID then
+          userId = CUSTOM_USER_ID
+        end
+
+        response = tcpClient:sendRequest(ClientMessages.requestLogin(userId))
         status, value = response:tryGetValue()
         while status == "waiting" do
-          coroutine.yield("Trying to reserve the chosen name on the server")
+          coroutine.yield("Logging in")
           status, value = response:tryGetValue()
         end
 
-        if status == "received" then
+        if status == "timeout" then
           result.loggedIn = false
-          if value.choose_another_name.used_names then
-            result.message = loc("lb_used_name")
-          elseif value.choose_another_name.reason then
-            result.message = "Error: " .. value.choose_another_name.reason
-          else
-            result.message = "Unknown reason"
-          end
+          result.message = loc("nt_conn_timeout")
           return result
-        elseif status == "timeout" then
-          -- not getting a response means the name went through
-          local userId = read_user_id_file(ip)
-          if not userId then
-            userId = "need a new user id"
-          end
-
-          response = tcpClient:sendRequest(ClientMessages.requestLogin(userId))
-          status, value = response:tryGetValue()
-          while status == "waiting" do
-            coroutine.yield("Logging in")
-            status, value = response:tryGetValue()
-          end
-
-          if status == "timeout" then
-            result.loggedIn = false
-            result.message = loc("nt_conn_timeout")
-            return result
-          elseif status == "received" then
-            if value.login_successful then
-              result.loggedIn = true
-              local message
-              if value.new_user_id then
-                write_user_id_file(value.new_user_id, GAME.connected_server_ip)
-                result.message = loc("lb_user_new", config.name)
-              elseif value.name_changed then
-                result.message = loc("lb_user_update", value.old_name, value.new_name)
-              else
-                result.message = loc("lb_welcome_back", config.name)
-              end
-              if value.server_notice then
-                result.message = result.message .. "\n" value.server_notice:gsub("\\n", "\n")
-              end
-
-              return result
-            else --if result.login_denied then
-              result.loggedIn = false
-              result.message = loc("lb_error_msg") .. "\n" .. value.reason
-              return result
+        elseif status == "received" then
+          if value.login_successful then
+            result.loggedIn = true
+            if value.new_user_id then
+              write_user_id_file(value.new_user_id, GAME.connected_server_ip)
+              result.message = loc("lb_user_new", config.name)
+            elseif value.name_changed then
+              result.message = loc("lb_user_update", value.old_name, value.new_name)
+            else
+              result.message = loc("lb_welcome_back", config.name)
             end
-          else
-            error("Unexpected status " .. status .. " trying to login with user id on the server " .. ip)
+            if value.server_notice then
+              result.message = result.message .. "\n" value.server_notice:gsub("\\n", "\n")
+            end
+
+            return result
+          else --if result.login_denied then
+            result.loggedIn = false
+            result.message = loc("lb_error_msg") .. "\n" .. value.reason
+            return result
           end
         else
-          error("Unexpected status " .. status .. " trying to reserve username " .. config.name .. " on the server " .. ip)
+          error("Unexpected status " .. status .. " trying to login with user id on the server " .. ip)
         end
       end
     else

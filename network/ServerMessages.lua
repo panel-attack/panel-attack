@@ -259,15 +259,13 @@ function ServerMessages.sanitizeSpectatorJoin(message)
   players[1] = ServerMessages.sanitizeMenuState(message.a_menu_state)
   -- "you" is player 1
   players[1].playerNumber = message.your_player_number
-  -- yes, the server really doesn't send us the names
-  players[1].name = "Player 1"
+  players[1].name = message.a_name
   players[1].playerNumber = playerSettings[1].playerNumber
   players[1].ratingInfo = message.ratings[1]
   players[1].level = playerSettings[1].level
 
   players[2] = ServerMessages.sanitizeMenuState(message.b_menu_state)
-  -- yes, the server really doesn't send us the names
-  players[2].name = "Player 2"
+  players[2].name = message.b_name
   players[2].playerNumber = playerSettings[2].playerNumber
   players[2].ratingInfo = message.ratings[2]
   players[2].level = playerSettings[2].level
