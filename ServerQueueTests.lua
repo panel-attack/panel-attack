@@ -1,4 +1,4 @@
-
+require("server_queue")
 
 local queue = ServerQueue()
 

@@ -3,7 +3,11 @@ local database = require("server.PADatabase")
 Player =
   class(
   function(self, privatePlayerID)
-    self.publicPlayerID = database:getPublicPlayerID(privatePlayerID)
+    assert(database ~= nil)
+    local playerData = database:getPlayerFromPrivateID(privatePlayerID)
+    if playerData then
+      self.publicPlayerID = playerData.publicPlayerID
+    end
   end
 )
 
