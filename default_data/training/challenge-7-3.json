@@ -1,127 +1,103 @@
 {
   "extraInfo": {
     "playerName": "JamBox",
-    "gpm": "17.0",
-    "matchLength": "1:07",
-    "dateGenerated": "2023-12-27-20-55-01"
+    "gpm": "18.2",
+    "matchLength": "0:57",
+    "dateGenerated": "2023-12-27-20-54-32"
   }, 
   "mergeComboMetalQueue": false,
   "delayBeforeStart": 0,
   "delayBeforeRepeat": 91,
   "attackPatterns": [
     {
-      "chainEndTime": 612,
+      "chainEndTime": 398,
       "chain": [
-        543
-      ]
-    },
-    {
-      "chainEndTime": 915,
-      "chain": [
-        779,
-        847
-      ]
-    },
-    {
-      "chainEndTime": 1332,
-      "chain": [
-        1263
-      ]
-    },
-    {
-      "chainEndTime": 1660,
-      "chain": [
-        1517,
-        1591
+        327
       ]
     },
     {
       "width": 3,
       "height": 1,
       "chain": false,
-      "startTime": 1517,
+      "startTime": 492,
       "metal": false
     },
     {
-      "chainEndTime": 2050,
+      "chainEndTime": 837,
       "chain": [
-        1914,
-        1983
+        569,
+        636,
+        703,
+        770
+      ]
+    },
+    {
+      "chainEndTime": 1062,
+      "chain": [
+        995
       ]
     },
     {
       "width": 3,
       "height": 1,
       "chain": false,
-      "startTime": 2121,
+      "startTime": 1280,
       "metal": false
     },
     {
-      "chainEndTime": 2295,
+      "chainEndTime": 1609,
       "chain": [
-        2206
+        1473,
+        1540
       ]
-    },
-    {
-      "width": 5,
-      "height": 1,
-      "chain": false,
-      "startTime": 2206,
-      "metal": false
     },
     {
       "width": 3,
       "height": 1,
       "chain": false,
-      "startTime": 2443,
+      "startTime": 1874,
       "metal": false
+    },
+    {
+      "chainEndTime": 2018,
+      "chain": [
+        1951
+      ]
     },
     {
       "width": 4,
       "height": 1,
       "chain": false,
-      "startTime": 2443,
+      "startTime": 2505,
       "metal": false
     },
     {
-      "chainEndTime": 2878,
+      "chainEndTime": 2791,
       "chain": [
-        2677,
-        2752,
-        2819
+        2590,
+        2657,
+        2724
       ]
     },
     {
-      "chainEndTime": 3087,
+      "chainEndTime": 3452,
       "chain": [
-        3010
+        3316,
+        3385
       ]
     },
     {
-      "width": 3,
-      "height": 1,
-      "chain": false,
-      "startTime": 3010,
-      "metal": false
-    },
-    {
-      "chainEndTime": 3512,
+      "chainEndTime": 3634,
       "chain": [
-        3443
+        3567
       ]
     },
     {
       "width": 5,
       "height": 1,
       "chain": false,
-      "startTime": 3857,
+      "startTime": 3651,
       "metal": false
-    },
-    {
-      "chainEndTime": 4125,
-      "chain": [
-        4066
-      ]
     }
   ]
 }
