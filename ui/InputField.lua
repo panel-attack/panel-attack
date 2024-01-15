@@ -11,7 +11,7 @@ local InputField = class(
   function(self, options)
     self.placeholderText = love.graphics.newText(love.graphics.getFont(), options.placeholder) or love.graphics.newText(love.graphics.getFont(), "Input Field")
     self.value = options.value or ""
-    self.charLimit = options.charLimit or 16
+    self.charLimit = options.charLimit or NAME_LENGTH_LIMIT
     self.filterAlphanumeric = options.filterAlphanumeric or (options.filterAlphanumeric == nil and true)
 
     self.backgroundColor = options.backgroundColor or {.3, .3, .3, .7}
@@ -41,18 +41,18 @@ local InputField = class(
 )
 
 function InputField:onTouch(x, y)
-  self:setFocus(x, y)
+  self:setFocus()
 end
 
 function InputField:onDrag(x, y)
   if self:inBounds(x, y) then
-    self:setFocus(x, y)
+    self:setFocus()
   end
 end
 
 function InputField:onRelease(x, y)
   if self:inBounds(x, y) then
-    self:setFocus(x, y)
+    self:setFocus()
   end
 end
 
@@ -83,21 +83,11 @@ function InputField:unfocus()
   self.hasFocus = false
 end
 
-function InputField:setFocus(x, y)
+function InputField:setFocus()
   inputFieldManager.selectedInputField = self
   love.keyboard.setTextInput(true)
   self.hasFocus = true
-  self.offset = 0
-  local prevX = self:getCursorPos()
-  local currX = self:getCursorPos()
-  while self.offset < utf8.len(self.value) and x > currX do
-    prevX = currX
-    self.offset = self.offset + 1
-    currX = self:getCursorPos()
-  end
-  if math.abs(x - prevX) < math.abs(x - currX) then
-    self.offset = self.offset - 1
-  end
+  self.offset = utf8.len(self.value)
 end
 
 function InputField:onBackspace()
@@ -154,15 +144,16 @@ function InputField:drawSelf()
 
   local text = self.value ~= "" and self.text or self.placeholderText
   local textColor = self.value ~= "" and valueColor or placeholderColor
+  local textHeight = text:getHeight()
 
   love.graphics.setColor(textColor)
-  love.graphics.draw(text, self.x + textOffset, self.y + 0, 0, 1, 1)
+  love.graphics.draw(text, self.x + textOffset, self.y + (self.height - textHeight) / 2, 0, 1, 1)
 
   if self.hasFocus then
     local cursorFlashPeriod = .5
     if (math.floor(love.timer.getTime() / cursorFlashPeriod)) % 2 == 0 then
       love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.draw(textCursor, self:getCursorPos(), self.y, 0, 1, 1)
+      love.graphics.draw(textCursor, self:getCursorPos(), self.y + (self.height - textHeight) / 2, 0, 1, 1)
     end
   end
   love.graphics.setColor(1, 1, 1, 1)
