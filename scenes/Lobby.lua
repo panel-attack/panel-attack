@@ -128,11 +128,10 @@ function Lobby:toggleLeaderboard()
   if not self.leaderboardLabel.isVisible then
     self.leaderboardToggleLabel:setText("lb_hide_board")
     self.leaderboardResponse = GAME.tcpClient:sendRequest(ClientMessages.requestLeaderboard())
-    self.uiRoot:addChild(self.leaderboardLabel)
   else
     self.leaderboardToggleLabel:setText("lb_show_board")
-    self.leaderboardLabel:detach()
   end
+  self.leaderboardLabel:setVisibility(not self.leaderboardLabel.isVisible)
   self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.leaderboardLabel.isVisible]
 end
 
