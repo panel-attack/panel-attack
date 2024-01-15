@@ -62,7 +62,7 @@ function ChallengeModePlayer.createFromReplayPlayer(replayPlayer, playerNumber)
   local player = ChallengeModePlayer(playerNumber)
   player.settings.attackEngineSettings = replayPlayer.settings.attackEngineSettings
   player.settings.healthSettings = replayPlayer.settings.healthSettings
-  player.settings.characterId = CharacterLoader.resolveCharacterSelection(replayPlayer.settings.characterId)
+  player.settings.characterId = CharacterLoader.fullyResolveCharacterSelection(replayPlayer.settings.characterId)
   player.isLocal = false
   return player
 end

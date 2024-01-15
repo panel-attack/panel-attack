@@ -73,12 +73,20 @@ function MatchParticipant:onPropertyChanged(property)
 end
 
 function MatchParticipant:setStage(stageId)
-  if stageId ~= self.settings.stageId then
-    stageId = StageLoader.resolveStageSelection(stageId)
-    self.settings.stageId = stageId
-    StageLoader.load(stageId)
+  if stageId ~= self.settings.selectedStageId then
+    self.settings.selectedStageId = StageLoader.resolveStageSelection(stageId)
+    self:onPropertyChanged("selectedStageId")
+  end
+  -- even if it's the same stage as before, refresh the pick, cause it could be bundle or random
+  self:refreshStage()
+end
 
+function MatchParticipant:refreshStage()
+  local currentId = self.settings.stageId
+  self.settings.stageId = CharacterLoader.resolveBundle(self.settings.selectedStageId)
+  if currentId ~= self.settings.stageId then
     self:onPropertyChanged("stageId")
+    CharacterLoader.load(self.settings.stageId)
   end
 end
 

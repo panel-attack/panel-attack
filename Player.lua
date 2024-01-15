@@ -230,7 +230,7 @@ function Player.createFromReplayPlayer(replayPlayer, playerNumber)
   player.playerNumber = playerNumber
   player.wins = replayPlayer.wins
   player.settings.panelId = replayPlayer.settings.panelId
-  player.settings.characterId = CharacterLoader.resolveCharacterSelection(replayPlayer.settings.characterId)
+  player.settings.characterId = CharacterLoader.fullyResolveCharacterSelection(replayPlayer.settings.characterId)
   player.settings.inputMethod = replayPlayer.settings.inputMethod
   -- style will be obsolete for replays with style-independent levelData
   player.settings.style = replayPlayer.settings.style
@@ -264,6 +264,11 @@ function Player:updateWithMenuState(menuState)
   if stages[menuState.stageId] then
     -- if we have their stage, use it
     self:setStage(menuState.stageId)
+    if stages[menuState.selectedStageId] then
+      -- picking their bundle for display is a bonus
+      self.settings.selectedStageId = menuState.selectedStageId
+      self:onPropertyChanged("selectedStageId")
+    end
   elseif menuState.selectedStageId and stages[menuState.selectedStageId] then
     -- if we don't have their stage rolled from their bundle, but the bundle itself, use that
     -- very unlikely tbh

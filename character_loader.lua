@@ -209,3 +209,8 @@ function CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end
+
+function CharacterLoader.fullyResolveCharacterSelection(characterId)
+  characterId = CharacterLoader.resolveCharacterSelection(characterId)
+  return CharacterLoader.resolveBundle(characterId)
+end
