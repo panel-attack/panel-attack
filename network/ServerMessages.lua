@@ -129,7 +129,9 @@ function ServerMessages.toServerMenuState(player)
     }
   --]]
   local menuState = {}
+  menuState.stage_is_random = player.settings.selectedStageId
   menuState.stage = player.settings.stageId
+  menuState.character_is_random = player.settings.selectedCharacterId
   menuState.character = player.settings.characterId
   menuState.panels_dir = player.settings.panelId
   menuState.wants_ready = player.settings.wantsReady

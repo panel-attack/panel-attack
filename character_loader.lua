@@ -198,7 +198,6 @@ function CharacterLoader.resolveCharacterSelection(characterId)
     -- resolve via random selection
     characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
-  characterId = CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end

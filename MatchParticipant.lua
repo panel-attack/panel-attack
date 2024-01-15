@@ -83,12 +83,20 @@ function MatchParticipant:setStage(stageId)
 end
 
 function MatchParticipant:setCharacter(characterId)
-  if characterId ~= self.settings.characterId then
-    characterId = CharacterLoader.resolveCharacterSelection(characterId)
-    self.settings.characterId = characterId
-    CharacterLoader.load(characterId)
+  if characterId ~= self.settings.selectedCharacterId then
+    self.settings.selectedCharacterId = CharacterLoader.resolveCharacterSelection(characterId)
+    self:onPropertyChanged("selectedCharacterId")
+  end
+  -- even if it's the same character as before, refresh the pick, cause it could be bundle or random
+  self:refreshCharacter()
+end
 
+function MatchParticipant:refreshCharacter()
+  local currentId = self.settings.characterId
+  self.settings.characterId = CharacterLoader.resolveBundle(self.settings.selectedCharacterId)
+  if currentId ~= self.settings.characterId then
     self:onPropertyChanged("characterId")
+    CharacterLoader.load(self.settings.characterId)
   end
 end
 

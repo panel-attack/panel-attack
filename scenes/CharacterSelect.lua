@@ -63,10 +63,10 @@ end
 
 function CharacterSelect:createSelectedCharacterIcon(player)
   local icon
-  if player.settings.characterId == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
+  if player.settings.selectedCharacterId == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
     icon = themes[config.theme].images.IMG_random_character
   else
-    icon = characters[player.settings.characterId].images.icon
+    icon = characters[player.settings.selectedCharacterId].images.icon
   end
 
   local selectedCharacterIcon = ImageContainer({
@@ -85,7 +85,7 @@ function CharacterSelect:createSelectedCharacterIcon(player)
       image:setImage(characters[characterId].images.icon)
     end
   end
-  player:subscribe(selectedCharacterIcon, "characterId", selectedCharacterIcon.updateImage)
+  player:subscribe(selectedCharacterIcon, "selectedCharacterId", selectedCharacterIcon.updateImage)
 
   return selectedCharacterIcon
 end

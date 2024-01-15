@@ -186,8 +186,13 @@ function ChallengeMode:onMatchEnded(match)
   end
 
   for _, player in ipairs(self.players) do
+    -- to prevent the game from instantly restarting, unready all human players
     if player.human then
       player:setWantsReady(false)
+    end
+    if player.isLocal then
+      -- if they're local, refresh the character in chase they use a bundle / random
+      player:refreshCharacter()
     end
   end
 

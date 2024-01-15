@@ -247,6 +247,11 @@ function Player:updateWithMenuState(menuState)
   if characters[menuState.characterId] then
     -- if we have their character, use it
     self:setCharacter(menuState.characterId)
+    if characters[menuState.selectedCharacterId] then
+      -- picking their bundle for display is a bonus
+      self.settings.selectedCharacterId = menuState.selectedCharacterId
+      self:onPropertyChanged("selectedCharacterId")
+    end
   elseif menuState.selectedCharacterId and characters[menuState.selectedCharacterId] then
     -- if we don't have their character rolled from their bundle, but the bundle itself, use that
     -- very unlikely tbh

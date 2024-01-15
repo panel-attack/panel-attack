@@ -462,9 +462,13 @@ end
 function BattleRoom:onMatchEnded(match)
   self.matchesPlayed = self.matchesPlayed + 1
 
-  -- to prevent the game from instantly restarting, unready all players
-  for i = 1, #self.players do
-    self.players[i]:setWantsReady(false)
+  for _, player in ipairs(self.players) do
+    -- to prevent the game from instantly restarting, unready all players
+    player:setWantsReady(false)
+    if player.isLocal then
+      -- if they're local, refresh the character in chase they use a bundle / random
+      player:refreshCharacter()
+    end
   end
 
   if not match.aborted then

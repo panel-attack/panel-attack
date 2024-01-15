@@ -540,9 +540,7 @@ end
 
 function Match:waitForAssets()
   for i = 1, #self.players do
-    local playerSettings = self.players[i].settings
-    playerSettings.characterId = CharacterLoader.resolveCharacterSelection(playerSettings.characterId)
-    CharacterLoader.load(playerSettings.characterId)
+    CharacterLoader.load(self.players[i].settings.characterId)
     CharacterLoader.wait()
   end
 
