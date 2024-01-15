@@ -42,7 +42,7 @@ local function canBeTouched(uiElement)
   end
   -- any touchable element is expected to implement at least one touch callback for the touch handler
   assert(uiElement.onTouch
-    --or uiElement.onHold
+    or uiElement.onHold
     or uiElement.onDrag
     or uiElement.onRelease
   )

@@ -104,6 +104,7 @@ function love.update(dt)
 
   inputManager:update(dt)
   inputFieldManager.update()
+  touchHandler:update(dt)
 
   local status, err = xpcall(function() GAME:update(dt) end, debug.traceback)
   if not status then

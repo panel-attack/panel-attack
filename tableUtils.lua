@@ -82,16 +82,17 @@ function tableUtils.insertListAt(list, position, tab)
     table.insert(list, position, tab[i])
   end
 end
- 
--- returns true if the table contains the given element, otherwise false 
-function tableUtils.contains(tab, element) 
-  return tableUtils.trueForAny( 
-    tab, 
-    function(tabElement) 
-      return deep_content_equal(tabElement, element) 
-    end 
-  ) 
-end 
+
+-- returns true if the table contains the given element or an identical copy of it, otherwise false 
+-- may result in a deathloop if there are recursive references
+function tableUtils.contains(tab, element)
+  return tableUtils.trueForAny(
+    tab,
+    function(tabElement)
+      return deep_content_equal(tabElement, element)
+    end
+  )
+end
  
 -- appends an element to a table only if it does not contain the element yet 
 -- 

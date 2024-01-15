@@ -15,6 +15,7 @@ local Focusable = require("ui.Focusable")
 local ImageContainer = require("ui.ImageContainer")
 local Label = require("ui.Label")
 local BoolSelector = require("ui.BoolSelector")
+local tableUtils = require("tableUtils")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -148,6 +149,20 @@ function CharacterSelect:createStageCarousel(player, width)
   return stageCarousel
 end
 
+local super_select_pixelcode = [[
+      uniform float percent;
+      vec4 effect( vec4 color, Image tex, vec2 texture_coords, vec2 screen_coords )
+      {
+          vec4 c = Texel(tex, texture_coords) * color;
+          if( texture_coords.x < percent )
+          {
+            return c;
+          }
+          float ret = (c.x+c.y+c.z)/3.0;
+          return vec4(ret, ret, ret, c.a);
+      }
+  ]]
+
 function CharacterSelect:getCharacterButtons()
   local characterButtons = {}
 
@@ -176,20 +191,105 @@ function CharacterSelect:getCharacterButtons()
   -- assign player generic callbacks
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
-    characterButton.onClick = function(self, inputSource)
+    characterButton.onClick = function(self, inputSource, holdTime)
+      local character = characters[self.characterId]
+      local player
       if inputSource and inputSource.player then
         player = inputSource.player
+      elseif tableUtils.trueForAny(GAME.battleRoom.players, function(p) return p == GAME.localPlayer end) then
+         player = GAME.localPlayer
       else
-        player = GAME.localPlayer
+        return
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
+        -- super select
+        if character.panels and panels[character.panels] then
+          player:setPanels(character.panels)
+        end
+        if character.stage and stages[character.stage] then
+          player:setStage(character.stage)
+        end
+      end
       player:setCharacter(self.characterId)
       player.cursor:updatePosition(9, 2)
     end
-    characterButton.onSelect = characterButton.onClick
+
+    if characters[characterButton.characterId] and characters[characterButton.characterId]:canSuperSelect() then
+      self.applySuperSelectInteraction(characterButton)
+    else
+      characterButton.onSelect = characterButton.onClick
+    end
   end
 
   return characterButtons
+end
+
+local function updateSuperSelectShader(image, timer)
+  if timer > consts.SUPER_SELECTION_START then
+    if image.isVisible == false then
+      image:setVisibility(true)
+    end
+    local progress = (timer - consts.SUPER_SELECTION_START) / consts.SUPER_SELECTION_DURATION
+    if progress <= 1 then
+      image.shader:send("percent", progress)
+    end
+  else
+    if image.isVisible then
+      image:setVisibility(false)
+    end
+    image.shader:send("percent", 0)
+  end
+end
+
+function CharacterSelect.applySuperSelectInteraction(characterButton)
+  -- creating the super select image + shader
+  local superSelectImage = ImageContainer({image = themes[config.theme].images.IMG_super, hFill = true, vFill = true, hAlign = "center", vAlign = "center"})
+  superSelectImage.shader = love.graphics.newShader(super_select_pixelcode)
+  superSelectImage.drawSelf = function(self)
+    set_shader(self.shader)
+    love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
+    set_shader()
+  end
+
+  -- add it to the button
+  characterButton.superSelectImage = superSelectImage
+  characterButton:addChild(characterButton.superSelectImage)
+  superSelectImage:setVisibility(false)
+
+  -- set the generic update function
+  characterButton.updateSuperSelectShader = updateSuperSelectShader
+
+  -- touch interaction
+  -- by implementing onHold we can provide updates to the shader
+  characterButton.onHold = function(self, timer)
+    self.updateSuperSelectShader(self.superSelectImage, timer)
+  end
+
+  -- we need to override the standard onRelease to reset the shader
+  characterButton.onRelease = function(self, x, y, timeHeld)
+    self.updateSuperSelectShader(self.superSelectImage, 0)
+    if self:inBounds(x, y) then
+      self:onClick(nil, timeHeld)
+    end
+  end
+
+  -- keyboard / controller interaction
+  -- by applying focusable we can turn it into an "on release" interaction rather than on press by taking control of input interpretation
+  Focusable(characterButton)
+  characterButton.holdTime = 0
+  characterButton.receiveInputs = function(self, inputs, dt, inputSource)
+    if inputs.isPressed["Swap1"] then
+      -- measure the time the press is held for
+      self.holdTime = self.holdTime + dt
+    else
+      self:yieldFocus()
+      -- apply the actual click on release with the held time and reset it afterwards
+      self:onClick(inputSource, self.holdTime)
+      self.holdTime = 0
+    end
+    self.updateSuperSelectShader(self.superSelectImage, self.holdTime)
+  end
 end
 
 function CharacterSelect:createCharacterGrid(characterButtons, grid, width, height)
@@ -331,9 +431,9 @@ function CharacterSelect:createRankedSelection(player, width)
   return rankedSelector
 end
 
-function CharacterSelect:update()
+function CharacterSelect:update(dt)
   for i = 1, #self.ui.cursors do
-    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration)
+    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration, dt)
   end
   if GAME.battleRoom and GAME.battleRoom.spectating then
     if input.isDown["MenuEsc"] then

@@ -131,9 +131,9 @@ function GridCursor:drawSelf()
   end
 end
 
-function GridCursor:receiveInputs(inputs)
+function GridCursor:receiveInputs(inputs, dt)
   if self.focused then
-    self.focused:receiveInputs(inputs)
+    self.focused:receiveInputs(inputs, dt, self)
   elseif inputs.isDown["Swap2"] then
     self:escapeCallback()
   elseif inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
