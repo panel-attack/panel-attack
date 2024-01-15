@@ -290,7 +290,7 @@ end
 
 function inputManager:isPressedWithRepeat(key, delay, repeatPeriod, inputs)
   if not inputs then
-    inputs = self.allKeys
+    inputs = self
   end
 
   return isPressedWithRepeat(inputs, key, delay, repeatPeriod)

@@ -20,6 +20,7 @@ local ChallengeMode =
     self:addPlayer(GAME.localPlayer)
     self.player = ChallengeModePlayer(#self.players + 1)
     self:addPlayer(self.player)
+    self:assignInputConfigurations()
     self:setStage(stageIndex or 1)
   end,
   BattleRoom
@@ -182,6 +183,12 @@ function ChallengeMode:onMatchEnded(match)
   self:recordStageResult(winners, gameTime)
   if self.online and match:hasLocalPlayer() then
     self:reportLocalGameResult(winners)
+  end
+
+  for _, player in ipairs(self.players) do
+    if player.human then
+      player:setWantsReady(false)
+    end
   end
 
   if match.aborted then
