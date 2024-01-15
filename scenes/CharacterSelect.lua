@@ -432,8 +432,10 @@ function CharacterSelect:createRankedSelection(player, width)
 end
 
 function CharacterSelect:update(dt)
-  for i = 1, #self.ui.cursors do
-    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration, dt)
+  for _, cursor in ipairs(self.ui.cursors) do
+    if cursor.player.isLocal and cursor.player.human then
+      cursor:receiveInputs(cursor.player.inputConfiguration, dt)
+    end
   end
   if GAME.battleRoom and GAME.battleRoom.spectating then
     if input.isDown["MenuEsc"] then

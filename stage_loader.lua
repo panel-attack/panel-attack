@@ -83,7 +83,7 @@ function StageLoader.resolveBundle(stageId)
   return stageId
 end
 
-function StageLoader.fullResolveStageSelection(stageId)
+function StageLoader.fullyResolveStageSelection(stageId)
   stageId = StageLoader.resolveStageSelection(stageId)
   return StageLoader.resolveBundle(stageId)
 end
