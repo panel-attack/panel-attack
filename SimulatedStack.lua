@@ -254,12 +254,23 @@ function SimulatedStack:drawMultibar()
   self:drawAbsoluteMultibar(0, 0)
 end
 
+-- in the long run we should have all quads organized in a Stack.quads table
+-- with access then being self.quads.speed to access the current self.speedQuads
+-- that way deinit could be implemented generically in StackBase
 function SimulatedStack:deinit()
   self.healthQuad:release()
   self.stackHeightQuad:release()
-  if self.healthEngine then
-    -- need to merge beta to get Health:deinit()
-    -- self.healthEngine:deinit()
+  for _, quad in ipairs(self.speedQuads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.wins_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.difficultyQuads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.stageQuads) do
+    GraphicsUtil:releaseQuad(quad)
   end
 end
 
