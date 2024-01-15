@@ -208,8 +208,6 @@ function ChallengeMode:setStage(index)
   local stageSettings = self.stages[self.stageIndex]
   self.player.settings.attackEngineSettings = stageSettings.attackSettings
   self.player.settings.healthSettings = stageSettings.healthSettings
-  -- for replay display
-  self.player.settings.stageIndex = self.stageIndex
   if stageSettings.characterId then
     self.player:setCharacter(stageSettings.characterId)
   else

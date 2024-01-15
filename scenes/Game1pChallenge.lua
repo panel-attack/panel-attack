@@ -24,7 +24,7 @@ sceneManager:addScene(Game1pChallenge)
 
 function Game1pChallenge:onMatchEnded(match)
   Replay.finalizeAndWriteReplay("Challenge Mode",
-                                "diff-" .. GAME.battleRoom.difficulty .. "-stage-" .. match.players[2].settings.stageIndex, match.replay)
+                                "diff-" .. GAME.battleRoom.difficulty .. "-stage-" .. GAME.battleRoom.stageIndex, match.replay)
 end
 
 function Game1pChallenge:drawHUD()

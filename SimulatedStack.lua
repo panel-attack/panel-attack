@@ -245,7 +245,9 @@ end
 
 function SimulatedStack:drawLevel()
   -- no level
-  -- drawing stageIndex would be a) redundant with human player win count and b) not offset nicely because level is an image, not a number
+  -- thought about drawing stage number here but it would be
+  -- a) redundant with human player win count
+  -- b) not offset nicely because level is an image, not a number
 end
 
 function SimulatedStack:drawMultibar()
