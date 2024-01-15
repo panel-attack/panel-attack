@@ -44,7 +44,9 @@ function Replay.createNewReplay(match)
         inputMethod = player.settings.inputMethod,
         allowAdjacentColors = player.stack.allowAdjacentColors,
         attackEngineSettings = player.settings.attackEngineSettings,
-        healthSettings = player.settings.healthSettings
+        healthSettings = player.settings.healthSettings,
+        -- challenge mode stage
+        stageIndex = player.settings.stageIndex
       },
       human = player.human
     }
