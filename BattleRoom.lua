@@ -468,6 +468,7 @@ function BattleRoom:onMatchEnded(match)
     if player.isLocal then
       -- if they're local, refresh the character in chase they use a bundle / random
       player:refreshCharacter()
+      player:refreshStage()
     end
   end
 

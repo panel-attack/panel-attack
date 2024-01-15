@@ -83,7 +83,7 @@ end
 
 function MatchParticipant:refreshStage()
   local currentId = self.settings.stageId
-  self.settings.stageId = CharacterLoader.resolveBundle(self.settings.selectedStageId)
+  self.settings.stageId = StageLoader.resolveBundle(self.settings.selectedStageId)
   if currentId ~= self.settings.stageId then
     self:onPropertyChanged("stageId")
     CharacterLoader.load(self.settings.stageId)

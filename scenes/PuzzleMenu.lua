@@ -40,8 +40,6 @@ function PuzzleMenu:startGame(puzzleSet)
     write_conf_file()
   end
 
-  current_stage = StageLoader.resolveStageSelection(config.stage)
-
   if config.puzzle_randomColors or config.puzzle_randomFlipped then
     puzzleSet = deepcpy(puzzleSet)
 

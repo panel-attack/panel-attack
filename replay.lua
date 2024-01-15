@@ -142,7 +142,7 @@ end
 
 function Replay.finalizeReplay(match, replay)
   replay = Replay.addAnalyticsDataToReplay(match, replay)
-  replay.stageId = current_stage
+  replay.stageId = match.stageId
   for i = 1, #match.players do
     if match.players[i].stack.confirmedInput then
       replay.players[i].settings.inputs = compress_input_string(table.concat(match.players[i].stack.confirmedInput))

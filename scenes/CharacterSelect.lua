@@ -136,15 +136,13 @@ function CharacterSelect:createStageCarousel(player, width)
   end
 
   stageCarousel.onBackCallback = function()
-    stageCarousel:setPassengerById(player.settings.stageId)
+    stageCarousel:setPassengerById(player.settings.selectedStageId)
   end
 
-  stageCarousel.onPassengerUpdateCallback = function ()
-    player:setStage(stageCarousel:getSelectedPassenger().id)
-  end
+  stageCarousel:setPassengerById(player.settings.selectedStageId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(stageCarousel, "stageId", stageCarousel.setPassengerById)
+  player:subscribe(stageCarousel, "selectedStageId", stageCarousel.setPassengerById)
 
   return stageCarousel
 end
@@ -343,6 +341,8 @@ function CharacterSelect:createPanelCarousel(player, height)
   panelCarousel.onPassengerUpdateCallback = function ()
     player:setPanels(panelCarousel:getSelectedPassenger().id)
   end
+
+  panelCarousel:setPassengerById(player.settings.panelId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)

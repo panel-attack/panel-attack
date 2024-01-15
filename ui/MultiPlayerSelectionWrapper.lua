@@ -25,8 +25,8 @@ function MultiPlayerSelectionWrapper:addElement(uiElement, player)
 end
 
 -- the parent makes sure this is only called while focused
-function MultiPlayerSelectionWrapper:receiveInputs(inputs, dt)
-  self.wrappedElements[inputs.usedByPlayer]:receiveInputs(inputs, dt)
+function MultiPlayerSelectionWrapper:receiveInputs(inputs, dt, player)
+  self.wrappedElements[player]:receiveInputs(inputs, dt)
 end
 
 function MultiPlayerSelectionWrapper:drawSelf()

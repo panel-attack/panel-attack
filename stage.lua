@@ -2,6 +2,7 @@ local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
 local consts = require("consts")
+local sceneManager = require("scenes.sceneManager")
 require("UpdatingImage")
 
 -- Stuff defined in this file:
@@ -214,19 +215,19 @@ end
 
 -- for reloading the graphics if the window was resized
 function stages_reload_graphics()
+  -- lazy load everything
+  for _, stage in pairs(stages) do
+    stage:graphics_init(false, false)
+  end
+
   -- reload the current stage graphics immediately
-  if stages[current_stage] then
-    stages[current_stage]:graphics_init(true, false)
-    if GAME and GAME.battleRoom and GAME.battleRoom.match then
+  local match = sceneManager.activeScene.match
+  if match and match.stageId then
+    if stages[match.stageId] then
+      stages[match.stageId]:graphics_init(true, false)
       -- for reasons, this is not drawn directly from the stage but from background image
       -- so override this while in a match
-      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
-    end
-  end
-  -- lazy load the rest
-  for _, stage in pairs(stages) do
-    if stage.id ~= current_stage then
-      stage:graphics_init(false, false)
+      GAME.backgroundImage = UpdatingImage(stages[match.stageId].images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
     end
   end
 end

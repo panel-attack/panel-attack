@@ -544,9 +544,10 @@ function Match:waitForAssets()
     CharacterLoader.wait()
   end
 
-  self.stageId = StageLoader.resolveStageSelection(self.stageId)
-  current_stage = self.stageId
-  StageLoader.load(self.stageId)
+  if not self.stageId then
+    self.stageId = StageLoader.fullyResolveStageSelection(self.stageId)
+    StageLoader.load(self.stageId)
+  end
   StageLoader.wait()
 end
 
@@ -646,7 +647,7 @@ end
 -- returns the character or stage or, in case none of them has music, nil
 function Match:getMusicSource()
   local character = self:getWinningPlayerCharacter()
-  local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
+  local stageHasMusic = self.stageId and stages[self.stageId].musics and stages[self.stageId].musics["normal_music"]
   local characterHasMusic = character and character.musics and character.musics["normal_music"]
   if not stageHasMusic and not characterHasMusic then
     -- no music loaded, early return
@@ -661,19 +662,17 @@ end
 function Match:setStage(stageId)
   if stageId then
     -- we got one from the server
-    self.stageId = StageLoader.resolveStageSelection(stageId)
+    self.stageId = StageLoader.fullyResolveStageSelection(stageId)
   elseif #self.players == 1 then
     if self.players[1].settings.stageId == consts.RANDOM_STAGE_SPECIAL_VALUE then
-      self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
+      self.stageId = StageLoader.fullyResolveStageSelection()
     else
       self.stageId = self.players[1].settings.stageId
     end
   else
-    self.stageId = StageLoader.resolveStageSelection(tableUtils.getRandomElement(stages_ids_for_current_theme))
+    self.stageId = StageLoader.fullyResolveStageSelection()
   end
   StageLoader.load(self.stageId)
-  -- TODO check if we can unglobalize that
-  current_stage = self.stageId
 end
 
 function Match:generateSeed()

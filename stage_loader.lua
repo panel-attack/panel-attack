@@ -71,7 +71,6 @@ function StageLoader.resolveStageSelection(stageId)
     -- resolve via random selection
     stageId = tableUtils.getRandomElement(stages_ids_for_current_theme)
   end
-  stageId = StageLoader.resolveBundle(stageId)
 
   return stageId
 end
@@ -82,4 +81,9 @@ function StageLoader.resolveBundle(stageId)
   end
 
   return stageId
+end
+
+function StageLoader.fullResolveStageSelection(stageId)
+  stageId = StageLoader.resolveStageSelection(stageId)
+  return StageLoader.resolveBundle(stageId)
 end
