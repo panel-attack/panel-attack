@@ -4,7 +4,6 @@ local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
 local input = require("inputManager")
-local tableUtils = require("tableUtils")
 local utf8 = require("utf8")
 local class = require("class")
 local TextButton = require("ui.TextButton")
@@ -54,7 +53,7 @@ function SetNameMenu:load()
 
   self.nameLengthLabel = Label({
     x = self.nameField.width / 2 + 30,
-    y = y + 50,
+    y = y + 50 + 5.5,
     vAlign = "top",
     hAlign = "center",
     translate = false,
@@ -64,7 +63,7 @@ function SetNameMenu:load()
 
   self.confirmationButton = TextButton({
     label = Label({text = "mm_set_name"}),
-    y = y + 80,
+    y = y + 100,
     vAlign = "top",
     hAlign = "center",
     onClick = function()
