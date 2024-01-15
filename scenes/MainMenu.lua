@@ -83,7 +83,7 @@ local menuItems = {
   }, {
     createMainMenuButton("mm_2_vs_local", function()
       local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
-      if not battleRoom.shutdown then
+      if not battleRoom.hasShutdown then
         GAME.battleRoom = battleRoom
         switchToScene(CharacterSelect2p())
       end

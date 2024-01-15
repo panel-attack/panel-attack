@@ -451,7 +451,7 @@ function BattleRoom:shutdown()
   end
   stop_the_music()
   self:shutdownNetwork()
-  self.shutdown = true
+  self.hasShutdown = true
   GAME:initializeLocalPlayer()
   GAME.battleRoom = nil
   self = nil
