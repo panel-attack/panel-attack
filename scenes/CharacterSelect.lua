@@ -193,6 +193,7 @@ function CharacterSelect:getCharacterButtons()
     local characterButton = characterButtons[i]
     characterButton.onClick = function(self, inputSource, holdTime)
       local character = characters[self.characterId]
+      local player
       if inputSource and inputSource.player then
         player = inputSource.player
       elseif tableUtils.trueForAny(GAME.battleRoom.players, function(p) return p == GAME.localPlayer end) then
