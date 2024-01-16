@@ -1266,7 +1266,7 @@ function Stack.simulate(self)
       end
 
       if self:checkGameOver() then
-        self.game_over_clock = self.clock
+        self:set_game_over()
       end
     end
 
@@ -1358,7 +1358,7 @@ function Stack.simulate(self)
         if not self.rise_lock then
           if self.panels_in_top_row then
             if self:checkGameOver() then
-              self.game_over_clock = self.clock
+              self:set_game_over()
             end
           else
             self.has_risen = true
@@ -1552,6 +1552,11 @@ function Stack.simulate(self)
     end
   end
 
+  self:update_popfxs()
+  self:update_cards()
+end
+
+function Stack:runGameOver()
   self:update_popfxs()
   self:update_cards()
 end
