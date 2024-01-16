@@ -167,10 +167,9 @@ function TcpClient:queueMessage(type, data)
   end
 end
 
--- Drops all "game data" messages prior to the next server "J" message.
-function drop_old_data_messages()
+function TcpClient:dropOldInputMessages()
   while true do
-    local message = GAME.tcpClient.receivedMessageQueue:top()
+    local message = self.receivedMessageQueue:top()
     if not message then
       break
     end
@@ -178,28 +177,8 @@ function drop_old_data_messages()
     if not message[NetworkProtocol.serverMessageTypes.opponentInput.prefix] and not message[NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix] then
       break -- Found a non user input message. Stop. Future data is for next game
     else
-      GAME.tcpClient.receivedMessageQueue:pop() -- old data, drop it
+      self.receivedMessageQueue:pop() -- old data, drop it
     end
-  end
-end
-
--- Process all game data messages in the queue
-function process_all_data_messages()
-  local messages = GAME.tcpClient.receivedMessageQueue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
-  for _, msg in ipairs(messages) do
-    for type, data in pairs(msg) do
-      logger.trace("Processing: " .. type .. " with data:" .. data)
-      process_data_message(type, data)
-    end
-  end
-end
-
--- Handler for the various "game data" message types
-function process_data_message(type, data)
-  if type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
-    GAME.battleRoom.match.P1:receiveConfirmedInput(data)
-  elseif type == NetworkProtocol.serverMessageTypes.opponentInput.prefix then
-    GAME.battleRoom.match.P2:receiveConfirmedInput(data)
   end
 end
 

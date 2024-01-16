@@ -5,6 +5,8 @@ local ClientMessages = require("network.ClientProtocol")
 local tableUtils = require("tableUtils")
 local sceneManager = require("scenes.sceneManager")
 local Signal = require("helpers.signal")
+local NetworkProtocol = require("network.NetworkProtocol")
+local logger = require("logger")
 
 -- the entire network part of BattleRoom
 -- this tries to hide away most of the "ugly" handling necessary for to the network communication
@@ -55,6 +57,12 @@ function BattleRoom:processSpectatorListMessage(message)
 end
 
 function BattleRoom:processCharacterSelectMessage(message)
+  -- receiving a character select message means that both players have reported their game results to the server
+  -- that means from here on it is expected to receive no further input messages from either player
+  -- if we went game over first, the opponent will notice later and keep sending inputs until we went game over on their end too
+  -- these extra messages will remain unprocessed in the queue and need to be cleared up so they don't get applied the next match
+  GAME.tcpClient:dropOldInputMessages()
+
   -- character_select and create_room are the same message
   -- except that character_select has an additional character_select = true flag
   message = ServerMessages.sanitizeCreateRoom(message)
@@ -202,7 +210,8 @@ function BattleRoom:runNetworkTasks()
       listener:listen()
     end
 
-    process_all_data_messages() -- Receive game play inputs from the network
+    -- Receive game play inputs from the network
+    self:processInputMessages()
   elseif self.state == BattleRoom.states.Setup then
     for messageType, listener in pairs(self.setupListeners) do
       listener:listen()
@@ -227,4 +236,18 @@ function BattleRoom:shutdownNetwork()
   end
   self.setupListeners = nil
   self.runningMatchListeners = nil
+end
+
+function BattleRoom:processInputMessages()
+  local messages = GAME.tcpClient.receivedMessageQueue:pop_all_with(NetworkProtocol.serverMessageTypes.opponentInput.prefix, NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix)
+  for _, msg in ipairs(messages) do
+    for type, data in pairs(msg) do
+      logger.trace("Processing: " .. type .. " with data:" .. data)
+      if type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
+        self.match.P1:receiveConfirmedInput(data)
+      elseif type == NetworkProtocol.serverMessageTypes.opponentInput.prefix then
+        self.match.P2:receiveConfirmedInput(data)
+      end
+    end
+  end
 end

@@ -349,7 +349,7 @@ function Lobby:update(dt)
     self:handleLogin()
   else
     -- We are in the lobby, we shouldn't have any game data messages
-    drop_old_data_messages()
+    GAME.tcpClient:dropOldInputMessages()
 
     self:processServerMessages()
     self.lobbyMenu:update()
