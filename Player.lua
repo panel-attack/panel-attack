@@ -231,6 +231,7 @@ function Player.createFromReplayPlayer(replayPlayer, playerNumber)
   player.wins = replayPlayer.wins
   player.settings.panelId = replayPlayer.settings.panelId
   player.settings.characterId = CharacterLoader.fullyResolveCharacterSelection(replayPlayer.settings.characterId)
+  player.settings.selectedCharacterId = player.settings.characterId
   player.settings.inputMethod = replayPlayer.settings.inputMethod
   -- style will be obsolete for replays with style-independent levelData
   player.settings.style = replayPlayer.settings.style
