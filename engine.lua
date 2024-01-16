@@ -1670,7 +1670,11 @@ end
 function Stack.setGameOver(self)
 
   if self.game_over_clock > 0 then
-    error("should not set gameover when it is already set")
+    -- it is possible that game over is set twice on the same frame
+    -- this happens if someone died to passive raise while holding manual raise
+    -- we shouldn't try to set game over again under any other circumstances however
+    assert(self.clock == self.game_over_clock, "game over was already set to a different clock time")
+    return
   end
 
   themes[config.theme].sounds.game_over:play()
