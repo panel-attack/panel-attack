@@ -468,20 +468,6 @@ function Stack.render(self)
   self:drawDebug()
 end
 
-function Stack:drawPlayerName()
-  local username = (self.match.players[self.which].name or "")
-  self:drawString(username, self.theme.name_Pos, true, self.theme.name_Font_Size)
-end
-
-function Stack:drawWinCount()
-  if self.match.P2 == nil then 
-    return -- need multiple players for showing wins to make sense
-  end
-
-  self:drawLabel(self.theme.images.IMG_wins, self.theme.winLabel_Pos, self.theme.winLabel_Scale, true)
-  self:drawNumber(self.player:getWinCountForDisplay(), self.wins_quads, self.theme.win_Pos, self.theme.win_Scale, true)
-end
-
 function Stack:drawRating()
   local match = self.match
   local roomRatings = match.room_ratings

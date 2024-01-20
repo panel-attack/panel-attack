@@ -3,6 +3,7 @@ local class = require("class")
 local SimulatedStack = require("SimulatedStack")
 
 local ChallengeModePlayer = class(function(self, playerNumber)
+  self.name = "Challenger"
   self.playerNumber = playerNumber
   self.isLocal = true
   self.settings.attackEngineSettings = nil
@@ -44,6 +45,7 @@ function ChallengeModePlayer:createStackFromSettings(match, which)
   simulatedStack:addAttackEngine(self.settings.attackEngineSettings, true)
   simulatedStack:addHealth(self.settings.healthSettings)
   self.stack = simulatedStack
+  simulatedStack.player = self
 
   return simulatedStack
 end
@@ -63,6 +65,7 @@ function ChallengeModePlayer.createFromReplayPlayer(replayPlayer, playerNumber)
   player.settings.attackEngineSettings = replayPlayer.settings.attackEngineSettings
   player.settings.healthSettings = replayPlayer.settings.healthSettings
   player.settings.characterId = CharacterLoader.resolveCharacterSelection(replayPlayer.settings.characterId)
+  player.settings.difficulty = replayPlayer.settings.difficulty
   player.isLocal = false
   return player
 end

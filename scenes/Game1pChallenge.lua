@@ -23,7 +23,8 @@ Game1pChallenge.name = "Game1pChallenge"
 sceneManager:addScene(Game1pChallenge)
 
 function Game1pChallenge:onMatchEnded(match)
-  Replay.finalizeAndWriteReplay("Challenge Mode", "stage-" .. match.players[1].wins + 1, match.replay)
+  Replay.finalizeAndWriteReplay("Challenge Mode",
+                                "diff-" .. GAME.battleRoom.difficulty .. "-stage-" .. GAME.battleRoom.stageIndex, match.replay)
 end
 
 function Game1pChallenge:drawHUD()
@@ -91,7 +92,7 @@ function Game1pChallenge:drawTimeSplits(xPosition, yPosition)
     local time = self.stages[i].expendedTime
     local currentStageTime = time
     local isCurrentStage = i == self.stageIndex
-    if isCurrentStage and self.match.P1:game_ended() == false then
+    if isCurrentStage and self.match:hasEnded() == false then
       currentStageTime = currentStageTime + (self.match.P1.game_stopwatch or 0)
     end
     totalTime = totalTime + currentStageTime
