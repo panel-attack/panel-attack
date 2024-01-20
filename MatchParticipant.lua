@@ -115,4 +115,17 @@ function MatchParticipant:setWantsReady(wantsReady)
   end
 end
 
+-- a callback that runs whenever a match ended
+function MatchParticipant:onMatchEnded()
+   -- to prevent the game from instantly restarting, unready all players
+   if self.human then
+    self:setWantsReady(false)
+   end
+   if self.isLocal then
+     -- if they're local, refresh the character in chase they use a bundle / random
+     self:refreshCharacter()
+     self:refreshStage()
+   end
+end
+
 return MatchParticipant
