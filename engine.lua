@@ -272,7 +272,6 @@ Stack =
     s.move_quads = {}
     s.score_quads = {}
     s.speed_quads = {}
-    s.wins_quads = {}
     s.rating_quads = {}
     s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.levelNumberAtlas[s.which].charWidth, s.theme.images.levelNumberAtlas[s.which].charHeight, s.theme.images.levelNumberAtlas[s.which].image:getDimensions())
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
@@ -1971,7 +1970,7 @@ function Stack:getAttackPatternData()
 
   local data = {}
   data.extraInfo = {}
-  data.extraInfo.playerName = "Player"
+  data.extraInfo.playerName = self.player.name
   data.extraInfo.gpm = self.analytic:getRoundedGPM(self.clock) or 0
   data.extraInfo.matchLength = " "
   if self.game_stopwatch and tonumber(self.game_stopwatch) then

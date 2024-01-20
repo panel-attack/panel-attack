@@ -13,12 +13,14 @@ local ChallengeMode =
   function(self, difficulty, stageIndex)
     self.mode = GameModes.getPreset("ONE_PLAYER_CHALLENGE")
     self.stages = self:createStages(difficulty)
+    self.difficulty = difficulty
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
     self.expendedTime = 0
 
     self:addPlayer(GAME.localPlayer)
     self.player = ChallengeModePlayer(#self.players + 1)
+    self.player.settings.difficulty = difficulty
     self:addPlayer(self.player)
     self:assignInputConfigurations()
     self:setStage(stageIndex or 1)
@@ -140,16 +142,8 @@ function ChallengeMode:recordStageResult(winners, gameLength)
     if winners[1] == self.player then
       self.continues = self.continues + 1
     else
-      self.stageIndex = self.stageIndex + 1
-      if self.stages[self.stageIndex] then
-        local stageSettings = self.stages[self.stageIndex]
-        self.player.settings.attackEngineSettings = stageSettings.attackSettings
-        self.player.settings.healthSettings = stageSettings.healthSettings
-        if stageSettings.characterId then
-          self.player:setCharacter(stageSettings.characterId)
-        else
-          self.player:setCharacterForStage(self.stageIndex)
-        end
+      if self.stages[self.stageIndex + 1] then
+        self:setStage(self.stageIndex + 1)
       else
         -- completed!
         local scene = sceneManager:createScene("MainMenu")
@@ -205,10 +199,15 @@ function ChallengeMode:setStage(index)
   self.stageIndex = index
   GAME.localPlayer:setLevel(self.stages[index].playerLevel)
 
-  self.player:setCharacterForStage(index)
+  local stageSettings = self.stages[self.stageIndex]
+  self.player.settings.attackEngineSettings = stageSettings.attackSettings
+  self.player.settings.healthSettings = stageSettings.healthSettings
+  if stageSettings.characterId then
+    self.player:setCharacter(stageSettings.characterId)
+  else
+    self.player:setCharacterForStage(self.stageIndex)
+  end
   self.player:setStage("")
-  self.player.settings.healthSettings = self.stages[index].healthSettings
-  self.player.settings.attackEngineSettings = self.stages[index].attackSettings
 end
 
 return ChallengeMode

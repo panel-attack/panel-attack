@@ -30,6 +30,7 @@ local StackBase = class(function(self, args)
   -- graphics
   self.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
+  self.wins_quads = {}
 end)
 
 -- Provides the X origin to draw an element of the stack
@@ -153,7 +154,7 @@ function StackBase:drawNumber(number, quads, themePositionOffset, scale, cameFro
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.draw_number(number, self.theme.images["IMG_number_atlas_" .. self.which .. "P"], quads, x, y, scale, "center")
+  GraphicsUtil.draw_number(number, themes[config.theme].images["IMG_number_atlas_" .. self.which .. "P"], quads, x, y, scale, "center")
 end
 
 function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
@@ -165,7 +166,7 @@ function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOf
   
   local limit = consts.CANVAS_WIDTH - x
   local alignment = "left"
-  if self.theme:offsetsAreFixed() then
+  if themes[config.theme]:offsetsAreFixed() then
     if self.which == 1 then
       limit = x
       x = 0
@@ -362,6 +363,16 @@ function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
       end
     end
   end
+end
+
+function StackBase:drawPlayerName()
+  local username = (self.player.name or "")
+  self:drawString(username, themes[config.theme].name_Pos, true, themes[config.theme].name_Font_Size)
+end
+
+function StackBase:drawWinCount()
+  self:drawLabel(themes[config.theme].images.IMG_wins, themes[config.theme].winLabel_Pos, themes[config.theme].winLabel_Scale, true)
+  self:drawNumber(self.player:getWinCountForDisplay(), self.wins_quads, themes[config.theme].win_Pos, themes[config.theme].win_Scale, true)
 end
 
 --------------------------------

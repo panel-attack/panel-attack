@@ -17,10 +17,6 @@ Health =
   end
 )
 
-function Health:deinit()
-
-end
-
 function Health:run()
   -- Increment rise speed if needed
   if self.clock > 0 and self.clock % (15 * 60) == 0 then

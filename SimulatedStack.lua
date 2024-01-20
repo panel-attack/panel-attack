@@ -8,19 +8,21 @@ local GFX_SCALE = consts.GFX_SCALE
 require("queue")
 
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
-SimulatedStack =
-  class(
-  function(self, arguments)
-    self.panels_dir = config.panels
-    self.max_runs_per_frame = 1
-    self.multiBarFrameCount = 240
+SimulatedStack = class(function(self, arguments)
+  self.panels_dir = config.panels
+  self.max_runs_per_frame = 1
+  self.multiBarFrameCount = 240
 
-    self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight(), themes[config.theme].images.IMG_multibar_shake_bar:getWidth(), themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
-    -- somehow bad things happen if this is called in the base class constructor instead
-    self:moveForRenderIndex(self.which)
-  end,
-  StackBase
-)
+  self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
+                                                      themes[config.theme].images.IMG_multibar_shake_bar:getHeight(),
+                                                      themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
+                                                      themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
+  self.speedQuads = {}
+  self.stageQuads = {}
+  self.difficultyQuads = {}
+  -- somehow bad things happen if this is called in the base class constructor instead
+  self:moveForRenderIndex(self.which)
+end, StackBase)
 
 -- adds an attack engine to the simulated opponent
 function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
@@ -36,12 +38,8 @@ function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
 end
 
 function SimulatedStack:addHealth(healthSettings)
-  self.healthEngine = Health(
-    healthSettings.framesToppedOutToLose,
-    healthSettings.lineClearGPM,
-    healthSettings.lineHeightToKill,
-    healthSettings.riseSpeed
-  )
+  self.healthEngine = Health(healthSettings.framesToppedOutToLose, healthSettings.lineClearGPM, healthSettings.lineHeightToKill,
+                             healthSettings.riseSpeed)
   self.health = healthSettings.framesToppedOutToLose
 end
 
@@ -100,7 +98,7 @@ function SimulatedStack:drawDebug()
     gprintf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+    gprintf("P" .. self.which .. " Ended?: " .. tostring(self:game_ended()), drawX, drawY)
   end
 end
 
@@ -126,7 +124,8 @@ function SimulatedStack:renderStackHeight()
   local yScale = (self.canvas:getHeight() - 4) / themes[config.theme].images.IMG_multibar_shake_bar:getHeight() * percentage
 
   love.graphics.setColor(1, 1, 1, 0.6)
-  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale, - yScale)
+  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale,
+                     -yScale)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
@@ -215,12 +214,63 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
   end
 end
 
+function SimulatedStack:getAttackPatternData()
+  if self.attackEngine then
+    return self.attackEngine.attackSettings
+  end
+end
+
+function SimulatedStack:drawScore()
+  -- no fake score for simulated stacks yet
+  -- could be fun for fake 1p time attack vs later on, lol
+end
+
+function SimulatedStack:drawSpeed()
+  if self.healthEngine then
+    self:drawLabel(themes[config.theme].images["IMG_speed_" .. self.which .. "P"], themes[config.theme].speedLabel_Pos,
+                   themes[config.theme].speedLabel_Scale)
+    self:drawNumber(self.healthEngine.currentRiseSpeed, self.speedQuads, themes[config.theme].speed_Pos, themes[config.theme].speed_Scale)
+  end
+end
+
+-- rating is substituted for challenge mode difficulty here
+function SimulatedStack:drawRating()
+  if self.player.settings.difficulty then
+    self:drawLabel(themes[config.theme].images["IMG_rating_" .. self.which .. "P"], themes[config.theme].ratingLabel_Pos,
+                   themes[config.theme].ratingLabel_Scale, true)
+    self:drawNumber(self.player.settings.difficulty, self.difficultyQuads, themes[config.theme].rating_Pos,
+                    themes[config.theme].rating_Scale)
+  end
+end
+
+function SimulatedStack:drawLevel()
+  -- no level
+  -- thought about drawing stage number here but it would be
+  -- a) redundant with human player win count
+  -- b) not offset nicely because level is an image, not a number
+end
+
+function SimulatedStack:drawMultibar()
+  self:drawAbsoluteMultibar(0, 0)
+end
+
+-- in the long run we should have all quads organized in a Stack.quads table
+-- with access then being self.quads.speed to access the current self.speedQuads
+-- that way deinit could be implemented generically in StackBase
 function SimulatedStack:deinit()
   self.healthQuad:release()
   self.stackHeightQuad:release()
-  if self.healthEngine then
-    -- need to merge beta to get Health:deinit()
-    --self.healthEngine:deinit()
+  for _, quad in ipairs(self.speedQuads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.wins_quads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.difficultyQuads) do
+    GraphicsUtil:releaseQuad(quad)
+  end
+  for _, quad in ipairs(self.stageQuads) do
+    GraphicsUtil:releaseQuad(quad)
   end
 end
 

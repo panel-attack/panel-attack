@@ -41,14 +41,16 @@ local function refreshDesignHelper()
 end
 
 local function handleCopy()
-  local stacks = {}
-  if GAME.battleRoom and GAME.battleRoom.match and GAME.battleRoom.match.P1 then
-    local match = GAME.battleRoom.match
+  if sceneManager.activeScene and sceneManager.activeScene.match and sceneManager.activeScene.match.P1 then
+    local stacks = {}
+    local match = sceneManager.activeScene.match
 
     for i = 1, #match.players do
       local player = match.players[i]
-      stacks["P" .. i] = player.stack:toPuzzleInfo()
-      stacks["P" .. i]["Player"] = player.name
+      if player.stack.toPuzzleInfo then
+        stacks["P" .. i] = player.stack:toPuzzleInfo()
+        stacks["P" .. i]["Player"] = player.name
+      end
     end
 
     if tableUtils.length(stacks) > 0 then
@@ -59,36 +61,40 @@ local function handleCopy()
 end
 
 local function handleDumpAttackPattern(playerNumber)
-  if GAME.battleRoom and GAME.battleRoom.match and GAME.battleRoom.match.players[playerNumber] then
-    local player = GAME.battleRoom.match.players[playerNumber]
+  if sceneManager.activeScene and sceneManager.activeScene.match then
+    local player = sceneManager.activeScene.match.players[playerNumber]
 
-    if player.stack then
+    if player and player.stack then
       local data, state = player.stack:getAttackPatternData()
-      data.extraInfo.playerName = player.name
       saveJSONToPath(data, state, "dumpAttackPattern.json")
       return true
     end
   end
-
 end
 
 local function modifyWinCounts(functionIndex)
   if GAME.battleRoom then
-    if functionIndex == 1 then -- Add to P1's win count
-      GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] + 1)
+    local players = GAME.battleRoom.players
+    if players[1] then
+      if functionIndex == 1 then -- Add to P1's win count
+        players[1].modifiedWins = math.max(0, players[1].modifiedWins + 1)
+      end
+      if functionIndex == 2 then -- Subtract from P1's win count
+        players[1].modifiedWins = math.max(0, players[1].modifiedWins - 1)
+      end
     end
-    if functionIndex == 2 then -- Subtract from P1's win count
-      GAME.battleRoom.modifiedWinCounts[1] = math.max(0, GAME.battleRoom.modifiedWinCounts[1] - 1)
-    end
-    if functionIndex == 3 then -- Add to P2's win count
-      GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] + 1)
-    end
-    if functionIndex == 4 then -- Subtract from P2's win count
-      GAME.battleRoom.modifiedWinCounts[2] = math.max(0, GAME.battleRoom.modifiedWinCounts[2] - 1)
+    if players[2] then
+      if functionIndex == 3 then -- Add to P2's win count
+        players[2].modifiedWins = math.max(0, players[2].modifiedWins + 1)
+      end
+      if functionIndex == 4 then -- Subtract from P2's win count
+        players[2].modifiedWins = math.max(0, players[2].modifiedWins - 1)
+      end
     end
     if functionIndex == 5 then -- Reset key
-      GAME.battleRoom.modifiedWinCounts[1] = 0
-      GAME.battleRoom.modifiedWinCounts[2] = 0
+      for i = 1, #players do
+        players[i].modifiedWins = 0
+      end
     end
   end
 end
