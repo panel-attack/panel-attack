@@ -9,7 +9,7 @@ local fileUtils = require("FileUtils")
 local consts = require("consts")
 
 local default_character = nil -- holds default assets fallbacks
-local randomCharacter = nil
+local randomCharacter = nil -- acts as the bundle character for all theme characters
 
 local chainStyle = {classic = 0, per_chain = 1}
 local comboStyle = {classic = 0, per_combo = 1}

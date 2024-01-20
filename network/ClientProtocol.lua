@@ -32,9 +32,7 @@ function ClientMessages.requestLogin(userId)
   end
 
   if config.stage then
-    if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
-      loginRequestMessage.stage_is_random = consts.RANDOM_STAGE_SPECIAL_VALUE
-    elseif stages[config.stage] and stages[config.stage]:is_bundle() then
+    if stages[config.stage] and stages[config.stage]:is_bundle() then
       loginRequestMessage.stage_is_random = config.stage
     end
   end

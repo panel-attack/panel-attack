@@ -664,11 +664,7 @@ function Match:setStage(stageId)
     -- we got one from the server
     self.stageId = StageLoader.fullyResolveStageSelection(stageId)
   elseif #self.players == 1 then
-    if self.players[1].settings.stageId == consts.RANDOM_STAGE_SPECIAL_VALUE then
-      self.stageId = StageLoader.fullyResolveStageSelection()
-    else
-      self.stageId = self.players[1].settings.stageId
-    end
+    self.stageId = StageLoader.resolveBundle(self.players[1].settings.selectedStageId)
   else
     self.stageId = StageLoader.fullyResolveStageSelection()
   end
