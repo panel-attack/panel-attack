@@ -176,6 +176,10 @@ function CharacterLoader.initCharacters()
 
   -- actual init for all characters, starting with the default one
   Character.loadDefaultCharacter()
+  -- add the random character as a character that acts as a bundle for all theme characters
+  local randomCharacter = Character.getRandomCharacter()
+  characters_ids[#characters_ids + 1] = randomCharacter.id
+  characters[randomCharacter.id] = Character.getRandomCharacter()
 
   for _, character in pairs(characters) do
     character:preload()

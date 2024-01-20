@@ -9,6 +9,7 @@ local fileUtils = require("FileUtils")
 local consts = require("consts")
 
 local default_character = nil -- holds default assets fallbacks
+local randomCharacter = nil
 
 local chainStyle = {classic = 0, per_chain = 1}
 local comboStyle = {classic = 0, per_combo = 1}
@@ -151,6 +152,24 @@ function Character.loadDefaultCharacter()
   default_character = Character("characters/__default", "__default")
   default_character:preload()
   default_character:load(true)
+end
+
+local function loadRandomCharacter()
+  local randomCharacter = Character("characters/__default", consts.RANDOM_CHARACTER_SPECIAL_VALUE)
+  randomCharacter.images["icon"] = themes[config.theme].images.IMG_random_character
+  randomCharacter.sounds["selection"] = {}
+  randomCharacter.display_name = "random"
+  randomCharacter.sub_characters = characters_ids_for_current_theme
+  randomCharacter.preload = function() end
+  return randomCharacter
+end
+
+function Character.getRandomCharacter()
+  if not randomCharacter then
+    randomCharacter = loadRandomCharacter()
+  end
+
+  return randomCharacter
 end
 
 function Character.is_bundle(self)

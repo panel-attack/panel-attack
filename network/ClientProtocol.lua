@@ -26,9 +26,7 @@ function ClientMessages.requestLogin(userId)
   }
 
   if config.character then
-    if config.character == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
-      loginRequestMessage.character_is_random = consts.RANDOM_CHARACTER_SPECIAL_VALUE
-    elseif characters[config.character] and characters[config.character]:is_bundle() then
+    if characters[config.character] and characters[config.character]:is_bundle() then
       loginRequestMessage.character_is_random = config.character
     end
   end
