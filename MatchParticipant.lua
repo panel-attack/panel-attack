@@ -122,7 +122,7 @@ function MatchParticipant:onMatchEnded()
     self:setWantsReady(false)
    end
    if self.isLocal then
-     -- if they're local, refresh the character in chase they use a bundle / random
+     -- if they're local, refresh the character in case they use a bundle / random
      self:refreshCharacter()
      self:refreshStage()
    end
