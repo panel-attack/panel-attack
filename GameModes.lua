@@ -6,18 +6,17 @@ local GameModes = {}
 
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
-local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3, HEALTH_ENGINE = 4}
+local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3 }
 
 -- these are competitive win conditions to determine a winner across multiple stacks
 local MatchWinConditions = { LAST_ALIVE = 1, SCORE = 2, TIME = 3 }
 -- these are game winning objectives on the stack level, the stack stops running without going game over
-local GameWinConditions = { NO_MATCHABLE_PANELS = 1, NO_MATCHABLE_GARBAGE = 2, SCORE_REACHED = 3}
+local GameWinConditions = { NO_MATCHABLE_PANELS = 1, NO_MATCHABLE_GARBAGE = 2}
 -- these are game losing objectives on the stack level, the stack goes game over
-local GameOverConditions = { NEGATIVE_HEALTH = 1, TIME_OUT = 2, NO_MOVES_LEFT = 3, CHAIN_DROPPED = 4 }
+local GameOverConditions = { NEGATIVE_HEALTH = 1,NO_MOVES_LEFT = 2, CHAIN_DROPPED = 3 }
 
 local OnePlayerVsSelf = {
   style = Styles.MODERN,
-  selectFile = FileSelection.NONE,
   gameScene = "VsSelfGame",
   setupScene = "CharacterSelectVsSelf",
   richPresenceLabel = loc("mm_1_vs"),
@@ -28,16 +27,10 @@ local OnePlayerVsSelf = {
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = false,
-  needsAttackEngine = false,
-  needsHealth = false,
 }
 
 local OnePlayerTimeAttack = {
   style = Styles.CHOOSE,
-  selectFile = FileSelection.NONE,
   gameScene = "TimeAttackGame",
   setupScene = "TimeAttackMenu",
   richPresenceLabel = loc("mm_1_time"),
@@ -49,16 +42,10 @@ local OnePlayerTimeAttack = {
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH, GameOverConditions.TIME_OUT },
   doCountdown = true,
   timeLimit = TIME_ATTACK_TIME,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = false,
-  needsAttackEngine = false,
-  needsHealth = false,
 }
 
 local OnePlayerEndless = {
   style = Styles.CHOOSE,
-  selectFile = FileSelection.NONE,
   gameScene = "EndlessGame",
   setupScene = "EndlessMenu",
   richPresenceLabel = loc("mm_1_endless"),
@@ -69,16 +56,10 @@ local OnePlayerEndless = {
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = false,
-  needsAttackEngine = false,
-  needsHealth = false,
 }
 
 local OnePlayerTraining = {
   style = Styles.MODERN,
-  selectFile = FileSelection.TRAINING,
   gameScene = "Game1pTraining",
   setupScene = "CharacterSelectVsSelf",
   richPresenceLabel = loc("mm_1_training"),
@@ -89,17 +70,11 @@ local OnePlayerTraining = {
   winConditions = { },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = false,
-  needsAttackEngine = true,
-  needsHealth = false,
 }
 
 local OnePlayerPuzzle = {
   -- flags for battleRoom to evaluate and in some cases offer UI for
   style = Styles.MODERN,
-  selectFile = FileSelection.PUZZLE,
   richPresenceLabel = loc("mm_1_puzzle"),
   gameScene = "PuzzleGame",
   setupScene = "PuzzleMenu",
@@ -112,16 +87,10 @@ local OnePlayerPuzzle = {
   -- these are extended based on the loaded puzzle
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = false,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = true,
-  needsAttackEngine = false,
-  needsHealth = false,
 }
 
 local OnePlayerChallenge = {
   style = Styles.MODERN,
-  selectFile = FileSelection.NONE,
   gameScene = "Game1pChallenge",
   setupScene = "CharacterSelectChallenge",
   richPresenceLabel = loc("mm_1_challenge_mode"),
@@ -132,11 +101,6 @@ local OnePlayerChallenge = {
   winConditions = { MatchWinConditions.LAST_ALIVE },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = false,
-  needsAttackEngine = true,
-  needsHealth = true,
 }
 
 local TwoPlayerVersus = {
@@ -151,11 +115,6 @@ local TwoPlayerVersus = {
   winConditions = { MatchWinConditions.LAST_ALIVE},
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
-
-  -- flags to know what other properties match needs
-  needsPuzzle = false,
-  needsAttackEngine = false,
-  needsHealth = false,
 }
 
 GameModes.Styles = Styles
