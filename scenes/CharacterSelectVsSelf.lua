@@ -21,6 +21,9 @@ sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)
   self:loadUserInterface()
+  local level = GAME.battleRoom.players[1].settings.level
+  self.lastScore = GAME.scores:lastVsScoreForLevel(level)
+  self.record = GAME.scores:recordVsScoreForLevel(level)
 end
 
 function CharacterSelectVsSelf:loadUserInterface()
