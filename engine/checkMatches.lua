@@ -399,13 +399,8 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   local combo_pieces = combo_garbage[comboSize]
   for i = 1, #combo_pieces do
     if self.garbageTarget and self.telegraph then
-      local rowOffset = 0
-      if isChain then
-        -- If we did a chain also, we need to enqueue the attack graphic one row lower cause thats where the combo card will be.
-        rowOffset = 1
-      end
       -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
-      self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, coordinate.column, coordinate.row + rowOffset,
+      self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, coordinate.column, coordinate.row,
                           self.clock)
     end
     self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
@@ -413,7 +408,12 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
 
   if isChain then
     if self.garbageTarget and self.telegraph then
-      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, coordinate.column, coordinate.row,
+      local rowOffset = 0
+      if #combo_pieces > 0 then
+        -- If we did a combo also, we need to enqueue the attack graphic one row higher cause thats where the chain card will be.
+        rowOffset = 1
+      end
+      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, coordinate.column, coordinate.row +  rowOffset,
                           self.clock)
     end
     self:recordChainHistory()
@@ -502,7 +502,7 @@ end
 
 function Stack:enqueueCards(attackGfxOrigin, isChainLink, comboSize)
   if comboSize > 3 and isChainLink then
-    -- we did a combo AND a chain; cards should not overlap so offset the attack origin to one row above for the chain
+    -- we did a combo AND a chain; cards should not overlap so offset the chain card to one row above the combo card
     self:enqueue_card(false, attackGfxOrigin.column, attackGfxOrigin.row, comboSize)
     self:enqueue_card(true, attackGfxOrigin.column, attackGfxOrigin.row + 1, self.chain_counter)
   elseif comboSize > 3 then

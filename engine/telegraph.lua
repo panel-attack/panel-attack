@@ -116,16 +116,16 @@ function Telegraph.rollbackCopy(source, other)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph:push(garbage, attackOriginCol, attackOriginRow, frameEarned)
+function Telegraph:push(garbage, attackDrawCol, attackDrawRow, frameEarned)
   assert(self.sender ~= nil, "telegraph needs sender set")
   assert(frameEarned == self.sender.clock, "expected sender clock to equal attack")
 
   -- the attack only starts interacting with the telegraph on the next frame, not the same it was earned
-  self:privatePush(garbage, attackOriginCol, attackOriginRow, frameEarned + 1)
+  self:privatePush(garbage, attackDrawCol, attackDrawRow, frameEarned + 1)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph.privatePush(self, garbage, attackOriginColumn, attackOriginRow, timeAttackInteracts)
+function Telegraph.privatePush(self, garbage, attackDrawColumn, attackDrawRow, timeAttackInteracts)
   local garbageToSend
   if garbage.isChain then
     garbageToSend = self:grow_chain(timeAttackInteracts)
@@ -139,7 +139,7 @@ function Telegraph.privatePush(self, garbage, attackOriginColumn, attackOriginRo
       self.attacks[timeAttackInteracts] = {}
     end
     self.attacks[timeAttackInteracts][#self.attacks[timeAttackInteracts]+1] =
-      {timeAttackInteracts=timeAttackInteracts, origin_col=attackOriginColumn, origin_row= attackOriginRow, stuff_to_send=garbageToSend}
+      {timeAttackInteracts=timeAttackInteracts, attackDrawColumn=attackDrawColumn, attackDrawRow=attackDrawRow, stuff_to_send=garbageToSend}
   end
 end
 
@@ -312,11 +312,10 @@ function Telegraph:telegraphRenderXPosition(index)
 end
 
 function Telegraph:attackAnimationStartFrame()
-  -- Traditionally this would be right after #card_animation
-  -- but PA doesn't keep attacks in the telegraph quite as long.
-  -- This is so they can go over the network sooner for rollback.
-  -- As a result we need to start the attack animation sooner so it has time
-  -- to get to and stay in the telegraph
+  -- In games PA is inspired by the attack animation only happens after the card_animation
+  -- In PA garbage is removed from telegraph early in order to afford the 1 second desync tolerance for online play
+  -- to compensate, both attacks and telegraph are shown earlier so they are shown long enough and early enough
+  -- their attacks being rendered immediately produces a decent compromise on visuals
   return 1
 end
 
@@ -366,8 +365,8 @@ function Telegraph:render()
             garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.originY - TELEGRAPH_PADDING)
             
             if not attack.origin_x or not attack.origin_y then
-              attack.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.panelOriginX
-              attack.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.panelOriginY + (telegraph_to_render.sender.displacement or 0) - (card_animation[frames_since_earned] or 0)
+              attack.origin_x = (attack.attackDrawColumn-1) * 16 + telegraph_to_render.sender.panelOriginX
+              attack.origin_y = (11-attack.attackDrawRow) * 16 + telegraph_to_render.sender.panelOriginY + (telegraph_to_render.sender.displacement or 0) - (card_animation[frames_since_earned] or 0)
               attack.direction = math.sign(garbage_block.destination_x - attack.origin_x) --should give -1 for left, or 1 for right
             end
 
