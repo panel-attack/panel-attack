@@ -431,7 +431,7 @@ function math.floatsEqualWithPrecision(a, b, decimalPrecision)
   assert(type(b) == "number", "floatsEqualWithPrecision expects a number argument for the second argument")
   assert(type(decimalPrecision) == "number", "floatsEqualWithPrecision expects a number argument for the third argument")
 
-  local threshold = 0.1 * decimalPrecision
+  local threshold = math.pow(0.1, decimalPrecision)
   local diff = math.abs(a - b) -- Absolute value of difference
   return diff < threshold
 end
