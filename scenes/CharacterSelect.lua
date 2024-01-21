@@ -16,6 +16,9 @@ local ImageContainer = require("ui.ImageContainer")
 local Label = require("ui.Label")
 local BoolSelector = require("ui.BoolSelector")
 local tableUtils = require("tableUtils")
+local UiElement = require("ui.UIElement")
+local GameModes = require("GameModes")
+local GFX_SCALE = consts.GFX_SCALE
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -61,13 +64,13 @@ function CharacterSelect:load()
   self:playThemeMusic()
 end
 
-function CharacterSelect:createSelectedCharacterIcon(player)
-  local icon = characters[player.settings.selectedCharacterId].images.icon
+function CharacterSelect:createPlayerIcon(player)
+  local playerIcon = UiElement({hFill = true, vFill = true})
 
   local selectedCharacterIcon = ImageContainer({
     hFill = true,
     vFill = true,
-    image = icon,
+    image = characters[player.settings.selectedCharacterId].images.icon,
     drawBorders = true,
     outlineColor = {1, 1, 1, 1}
   })
@@ -78,7 +81,48 @@ function CharacterSelect:createSelectedCharacterIcon(player)
   end
   player:subscribe(selectedCharacterIcon, "selectedCharacterId", selectedCharacterIcon.updateImage)
 
-  return selectedCharacterIcon
+  playerIcon:addChild(selectedCharacterIcon)
+
+  -- level icon
+  if player.settings.style == GameModes.Styles.MODERN and player.settings.level then
+    local levelIcon = ImageContainer({
+      image = themes[config.theme].images.IMG_levels[player.settings.level],
+      hAlign = "right",
+      vAlign = "bottom",
+      x = -2,
+      y = -2
+    })
+
+    levelIcon.updateImage = function(image, level)
+      image:setImage(themes[config.theme].images.IMG_levels[level])
+    end
+    player:subscribe(levelIcon, "level", levelIcon.updateImage)
+
+    playerIcon:addChild(levelIcon)
+  end
+
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "bottom",
+    x = 2,
+    y = -2,
+    scale = GFX_SCALE
+  })
+  playerIcon:addChild(playerNumberIcon)
+
+  -- player name
+  local playerName = Label({
+    text = player.name,
+    translate = false,
+    hAlign = "center",
+    vAlign = "top"
+  })
+  playerIcon:addChild(playerName)
+
+  return playerIcon
 end
 
 function CharacterSelect:createReadyButton()

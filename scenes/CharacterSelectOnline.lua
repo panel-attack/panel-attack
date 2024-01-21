@@ -62,7 +62,7 @@ function CharacterSelectOnline:loadUserInterface()
     end
     self.ui.cursors[i] = cursor
 
-    self.ui.characterIcons[i] = self:createSelectedCharacterIcon(player)
+    self.ui.characterIcons[i] = self:createPlayerIcon(player)
   end
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "p1 icon", self.ui.characterIcons[1])
