@@ -84,7 +84,7 @@ local OnePlayerPuzzle = {
   -- these are extended based on the loaded puzzle
   winConditions = { },
   -- these are extended based on the loaded puzzle
-  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
+  gameOverConditions = {  },
   doCountdown = false,
 }
 
