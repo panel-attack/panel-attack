@@ -382,6 +382,10 @@ function Stack:drawDebug()
 end
 
 function Stack:drawDebugPanels(shakeOffset)
+  if not config.debug_mode then
+    return
+  end
+
   local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
 
     for row = 0, math.min(self.height + 1, #self.panels) do
