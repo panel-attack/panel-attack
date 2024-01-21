@@ -288,7 +288,7 @@ An icon will be display next to the character's name in character select if a fi
 ### PopFX configuration
 
 #### popfx_style
-The style of popfx to use, options:
+The style of popfx to use, options:  
  "burst" (default) - Shows the burst image of the character coming out of panels and circling attack cards  
  "fade" - Shows the fade image of the character as the matched panels disappear  
  "fadeburst" - Shows both the burst and fade animations
