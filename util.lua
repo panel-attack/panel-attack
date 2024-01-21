@@ -54,28 +54,6 @@ function pairsSortedByKeys(tab)
   end
 end
 
-function pairsSortedByValues( tab )
-  -- build new table to sort
-  local sorted = {};
-  for key, value in pairs(tab) do
-    sorted[key] = value
-  end
-
-  -- sort by value
-  table.sort( sorted, function(a, b)
-    if type(a) == "string" and type(b) == "string" then
-      local result = a:lower() < b:lower()
-      if result ~= 0 then -- Allows case to be a tie breaker
-        return result
-      end
-    end
-    return a < b
-  end )
-
-  -- return iterator
-  return ipairs( sorted )
-end
-
 -- Returns true if a and b have equal content
 function content_equal(a, b)
   if type(a) ~= "table" or type(b) ~= "table" then
@@ -446,13 +424,16 @@ function string.toCharTable(self)
   return t
 end
 
-function assertAlmostEqual(a, b)
-  assert(type(a) == "number", "assertAlmostEqual expects a number argument for the first argument")
-  assert(type(b) == "number", "assertAlmostEqual expects a number argument for the second argument")
+-- Returns if two floats are equal within a certain number of decimal places
+-- @param decimalPrecision the number of decimal places to compare
+function math.floatsEqualWithPrecision(a, b, decimalPrecision)
+  assert(type(a) == "number", "floatsEqualWithPrecision expects a number argument for the first argument")
+  assert(type(b) == "number", "floatsEqualWithPrecision expects a number argument for the second argument")
+  assert(type(decimalPrecision) == "number", "floatsEqualWithPrecision expects a number argument for the third argument")
 
-  local threshold = 0.000001
+  local threshold = 0.1 * decimalPrecision
   local diff = math.abs(a - b) -- Absolute value of difference
-  assert(diff < threshold, "Expected " .. a .. " to be almost equal to " .. b)
+  return diff < threshold
 end
 
 function assertEqual(a, b) 
