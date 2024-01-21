@@ -5,7 +5,6 @@ local TIME_ATTACK_TIME = 120
 local GameModes = {}
 
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
-local FileSelection = { NONE = 0, TRAINING = 1, PUZZLE = 2}
 local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3 }
 
 -- these are competitive win conditions to determine a winner across multiple stacks
@@ -118,7 +117,6 @@ local TwoPlayerVersus = {
 }
 
 GameModes.Styles = Styles
-GameModes.FileSelection = FileSelection
 GameModes.StackInteractions = StackInteractions
 GameModes.WinConditions = MatchWinConditions
 GameModes.GameWinConditions = GameWinConditions
