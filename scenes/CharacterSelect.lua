@@ -158,11 +158,7 @@ function CharacterSelect:createLeaveButton()
     label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1},
-    onClick = function()
-      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      GAME.battleRoom:shutdown()
-      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
-    end
+    onClick = self.leave
   })
   leaveButton.onSelect = leaveButton.onClick
 
@@ -192,10 +188,9 @@ function CharacterSelect:createStageCarousel(player, width)
   local playerNumberIcon = ImageContainer({
     image = themes[config.theme].images.IMG_players[playerIndex],
     hAlign = "center",
-    vAlign = "center",
+    vAlign = "top",
     scale = 2,
   })
-  playerNumberIcon.x = - stageCarousel:getSelectedPassenger().image.width / 2 - playerNumberIcon.width
 
   stageCarousel.playerNumberIcon = playerNumberIcon
   stageCarousel:addChild(stageCarousel.playerNumberIcon)
@@ -420,6 +415,7 @@ function CharacterSelect:createPanelCarousel(player, height)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
+  player:subscribe(panelCarousel, "colorCount", panelCarousel.setColorCount)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -602,9 +598,12 @@ function CharacterSelect:draw()
 end
 
 function CharacterSelect:leave()
-  GAME.battleRoom:shutdown()
-  play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  if GAME.battleRoom then
+    -- in 2p local, with the current input shenanigans leave may be called twice
+    GAME.battleRoom:shutdown()
+    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  end
 end
 
 return CharacterSelect
