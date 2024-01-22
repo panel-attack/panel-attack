@@ -43,11 +43,13 @@ function CharacterSelectVsSelf:loadUserInterface()
 
   local panelCarousel = self:createPanelCarousel(player, 96)
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.panelSelection:setTitle("panels")
   self.ui.panelSelection:addElement(panelCarousel, player)
   self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
 
   local stageCarousel = self:createStageCarousel(player, self.ui.grid.unitSize * 3 - self.ui.grid.unitMargin * 2)
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
+  self.ui.stageSelection:setTitle("stage")
   self.ui.stageSelection:addElement(stageCarousel, player)
   self.ui.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.ui.stageSelection)
 
@@ -61,6 +63,7 @@ function CharacterSelectVsSelf:loadUserInterface()
     self.ui.recordBox:setRecord(self.record)
   end
   self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.levelSelection:setTitle("level")
   self.ui.levelSelection:addElement(levelSlider, player)
   self.ui.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.ui.levelSelection)
 

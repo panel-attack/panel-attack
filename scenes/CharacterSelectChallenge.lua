@@ -26,7 +26,9 @@ function CharacterSelectChallenge:loadUserInterface()
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.panelSelection:setTitle("panels")
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
+  self.ui.stageSelection:setTitle("stage")
   self.ui.readyButton = self:createReadyButton()
   local characterButtons = self:getCharacterButtons()
   local characterGridWidth, characterGridHeight = self.ui.grid.gridWidth, 3
