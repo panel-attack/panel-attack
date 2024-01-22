@@ -190,6 +190,7 @@ function CharacterSelect:createStageCarousel(player, width)
     hAlign = "center",
     vAlign = "top",
     scale = 2,
+    y = 2
   })
 
   stageCarousel.playerNumberIcon = playerNumberIcon
@@ -395,7 +396,7 @@ function CharacterSelect:createCursor(grid, player)
 end
 
 function CharacterSelect:createPanelCarousel(player, height)
-  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = true, height = height})
+  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "top", hFill = true, height = height})
   panelCarousel:loadPanels()
 
   -- panel carousel
@@ -421,11 +422,11 @@ function CharacterSelect:createPanelCarousel(player, height)
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
   local playerNumberIcon = ImageContainer({
     image = themes[config.theme].images.IMG_players[playerIndex],
-    hAlign = "center",
+    hAlign = "left",
     vAlign = "center",
     scale = 2,
+    x = 2
   })
-  playerNumberIcon.x = - panelCarousel:getSelectedPassenger().uiElement.width / 2 - playerNumberIcon.width
 
   panelCarousel.playerNumberIcon = playerNumberIcon
   panelCarousel:addChild(panelCarousel.playerNumberIcon)
@@ -433,7 +434,7 @@ function CharacterSelect:createPanelCarousel(player, height)
   return panelCarousel
 end
 
-function CharacterSelect:createLevelSlider(player, imageWidth)
+function CharacterSelect:createLevelSlider(player, imageWidth, height)
   local levelSlider = LevelSlider({
     tickLength = imageWidth,
     value = player.settings.level,
@@ -441,38 +442,39 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end,
     hAlign = "center",
-    vAlign = "center"
+    vAlign = "center",
   })
+
   Focusable(levelSlider)
   levelSlider.receiveInputs = function(self, inputs)
     if inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      levelSlider:setValue(levelSlider.value - 1)
+      self:setValue(self.value - 1)
     end
 
     if inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      levelSlider:setValue(levelSlider.value + 1)
+      self:setValue(self.value + 1)
     end
 
     if inputs.isDown["Swap2"] then
-      if levelSlider.onBackCallback then
-        levelSlider.onBackCallback()
+      if self.onBackCallback then
+        self:onBackCallback()
       end
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      levelSlider:yieldFocus()
+      self:yieldFocus()
     end
 
     if inputs.isDown["Swap1"] or inputs.isDown["Start"] then
-      if levelSlider.onSelectCallback then
-        levelSlider.onSelectCallback()
+      if self.onSelectCallback then
+        self:onSelectCallback()
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      levelSlider:yieldFocus()
+      self:yieldFocus()
     end
   end
 
   -- level slider
-  levelSlider.onSelectCallback = function ()
-    player:setLevel(levelSlider.value)
+  levelSlider.onSelectCallback = function(self)
+    player:setLevel(self.value)
   end
 
   levelSlider.onValueChange = function()
@@ -480,8 +482,19 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
     --player:setLevel(levelSlider.value)
   end
 
-  levelSlider.onBackCallback = function ()
-    levelSlider:setValue(player.settings.level)
+  levelSlider.onBackCallback = function(self)
+    self:setValue(player.settings.level)
+  end
+
+  local uiElement = UiElement({height = height, hFill = true})
+  Focusable(uiElement)
+  uiElement.levelSlider = levelSlider
+  uiElement.levelSlider.yieldFocus = function()
+    uiElement:yieldFocus()
+  end
+  uiElement:addChild(levelSlider)
+  uiElement.receiveInputs = function(self, inputs)
+    self.levelSlider:receiveInputs(inputs)
   end
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
@@ -493,14 +506,14 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
     image = themes[config.theme].images.IMG_players[playerIndex],
     hAlign = "left",
     vAlign = "center",
-    scale = 2
+    scale = 2,
+    x = 2
   })
-  playerNumberIcon.x = -4 - playerNumberIcon.width
 
-  levelSlider.playerNumberIcon = playerNumberIcon
-  levelSlider:addChild(levelSlider.playerNumberIcon)
+  uiElement.playerNumberIcon = playerNumberIcon
+  uiElement:addChild(uiElement.playerNumberIcon)
 
-  return levelSlider
+  return uiElement
 end
 
 function CharacterSelect:createRankedSelection(player, width)

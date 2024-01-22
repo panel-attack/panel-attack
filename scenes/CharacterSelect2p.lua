@@ -55,7 +55,7 @@ function CharacterSelect2p:loadUserInterface()
     self.ui.grid:createElementAt(5, 2, 2, 1, "stageSelection", self.ui.stageSelection)
     self.ui.grid:createElementAt(7, 2, 2, 1, "levelSelection", self.ui.levelSelection)
 
-    levelHeight = 14
+    levelHeight = 12
     panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2
     stageWidth = self.ui.grid.unitSize - self.ui.grid.unitMargin * 2
     rankedWidth = stageWidth
@@ -88,7 +88,7 @@ function CharacterSelect2p:loadUserInterface()
     local stageCarousel = self:createStageCarousel(player, stageWidth)
     self.ui.stageSelection:addElement(stageCarousel, player)
 
-    local levelSlider = self:createLevelSlider(player, levelHeight)
+    local levelSlider = self:createLevelSlider(player, levelHeight, panelHeight)
     self.ui.levelSelection:addElement(levelSlider, player)
 
     local cursor = self:createCursor(self.ui.grid, player)
