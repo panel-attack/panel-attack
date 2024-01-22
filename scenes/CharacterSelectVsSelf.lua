@@ -35,6 +35,9 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.characterIcons[1] = self:createPlayerIcon(player)
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.characterIcons[1])
 
+  local level = GAME.battleRoom.players[1].settings.level
+  self.lastScore = GAME.scores:lastVsScoreForLevel(level)
+  self.record = GAME.scores:recordVsScoreForLevel(level)
   self.ui.recordBox = self:createRecordsBox()
   self.ui.grid:createElementAt(2, 1, 2, 1, "recordBox", self.ui.recordBox)
 
@@ -79,46 +82,6 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.cursors[1].raise2Callback = function()
     self.ui.characterGrid:turnPage(1)
   end
-end
-
-function CharacterSelectVsSelf:createRecordsBox()
-  local level = GAME.battleRoom.players[1].settings.level
-  self.lastScore = GAME.scores:lastVsScoreForLevel(level)
-  self.record = GAME.scores:recordVsScoreForLevel(level)
-
-  local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "center"})
-
-  local lastLines = UiElement({hFill = true})
-  local lastLinesLabel = PixelFontLabel({ text = "last lines", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
-  local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
-  lastLines.height = lastLinesLabel.height + 4
-  lastLines.label = lastLinesLabel
-  lastLines.value = lastLinesValue
-  lastLines:addChild(lastLinesLabel)
-  lastLines:addChild(lastLinesValue)
-  stackPanel.lastLines = lastLines
-  stackPanel:addElement(lastLines)
-
-  local record = UiElement({hFill = true})
-  local recordLabel = PixelFontLabel({ text = "record", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
-  local recordValue = PixelFontLabel({ text = self.record, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
-  record.height = recordLabel.height + 4
-  record.label = recordLabel
-  record.value = recordValue
-  record:addChild(recordLabel)
-  record:addChild(recordValue)
-  stackPanel.record = record
-  stackPanel:addElement(record)
-
-  stackPanel.setLastLines = function(stackPanel, value)
-    stackPanel.lastLines.value:setText(value)
-  end
-
-  stackPanel.setRecord = function(stackPanel, value)
-    stackPanel.record.value:setText(value)
-  end
-
-  return stackPanel
 end
 
 local lastLinesLabelQuads = {}

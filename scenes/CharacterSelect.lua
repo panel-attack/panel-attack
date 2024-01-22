@@ -19,6 +19,8 @@ local tableUtils = require("tableUtils")
 local UiElement = require("ui.UIElement")
 local GameModes = require("GameModes")
 local GFX_SCALE = consts.GFX_SCALE
+local StackPanel = require("ui.StackPanel")
+local PixelFontLabel = require("ui.PixelFontLabel")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -470,6 +472,42 @@ function CharacterSelect:createRankedSelection(player, width)
   player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
 
   return rankedSelector
+end
+
+function CharacterSelect:createRecordsBox()
+  local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "center"})
+
+  local lastLines = UiElement({hFill = true})
+  local lastLinesLabel = PixelFontLabel({ text = "last lines", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
+  local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  lastLines.height = lastLinesLabel.height + 4
+  lastLines.label = lastLinesLabel
+  lastLines.value = lastLinesValue
+  lastLines:addChild(lastLinesLabel)
+  lastLines:addChild(lastLinesValue)
+  stackPanel.lastLines = lastLines
+  stackPanel:addElement(lastLines)
+
+  local record = UiElement({hFill = true})
+  local recordLabel = PixelFontLabel({ text = "record", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
+  local recordValue = PixelFontLabel({ text = self.record, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  record.height = recordLabel.height + 4
+  record.label = recordLabel
+  record.value = recordValue
+  record:addChild(recordLabel)
+  record:addChild(recordValue)
+  stackPanel.record = record
+  stackPanel:addElement(record)
+
+  stackPanel.setLastLines = function(stackPanel, value)
+    stackPanel.lastLines.value:setText(value)
+  end
+
+  stackPanel.setRecord = function(stackPanel, value)
+    stackPanel.record.value:setText(value)
+  end
+
+  return stackPanel
 end
 
 function CharacterSelect:update(dt)
