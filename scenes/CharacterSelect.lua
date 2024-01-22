@@ -181,6 +181,19 @@ function CharacterSelect:createStageCarousel(player, width)
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(stageCarousel, "selectedStageId", stageCarousel.setPassengerById)
 
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "center",
+    vAlign = "center",
+    scale = 2,
+  })
+  playerNumberIcon.x = - stageCarousel:getSelectedPassenger().image.width / 2 - playerNumberIcon.width
+
+  stageCarousel.playerNumberIcon = playerNumberIcon
+  stageCarousel:addChild(stageCarousel.playerNumberIcon)
+
   return stageCarousel
 end
 
@@ -390,6 +403,19 @@ function CharacterSelect:createPanelCarousel(player, height)
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
 
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "center",
+    vAlign = "center",
+    scale = 2,
+  })
+  playerNumberIcon.x = - panelCarousel:getSelectedPassenger().uiElement.width / 2 - playerNumberIcon.width
+
+  panelCarousel.playerNumberIcon = playerNumberIcon
+  panelCarousel:addChild(panelCarousel.playerNumberIcon)
+
   return panelCarousel
 end
 
@@ -447,11 +473,23 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(levelSlider, "level", levelSlider.setValue)
 
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "center",
+    scale = 2
+  })
+  playerNumberIcon.x = -4 - playerNumberIcon.width
+
+  levelSlider.playerNumberIcon = playerNumberIcon
+  levelSlider:addChild(levelSlider.playerNumberIcon)
+
   return levelSlider
 end
 
 function CharacterSelect:createRankedSelection(player, width)
-  
   local rankedSelector = BoolSelector({startValue = player.settings.wantsRanked, vFill = true, width = width, vAlign = "center", hAlign = "center"})
   rankedSelector.onValueChange = function(boolSelector, value)
     player:setWantsRanked(value)
@@ -470,6 +508,18 @@ function CharacterSelect:createRankedSelection(player, width)
   end
 
   player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
+
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "center",
+    x = 4,
+    scale = 2,
+  })
+  rankedSelector.playerNumberIcon = playerNumberIcon
+  rankedSelector:addChild(rankedSelector.playerNumberIcon)
 
   return rankedSelector
 end
