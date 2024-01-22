@@ -29,9 +29,6 @@ local Carousel = class(function(carousel, options)
     carousel.selectedId = 1
   end
 
-  carousel.font = GraphicsUtil.getGlobalFontWithSize(calculateFontSize(carousel.height))
-  carousel:createNavigationButtons()
-
   carousel.initialTouchX = 0
   carousel.initialTouchY = 0
   carousel.swiping = false
@@ -44,29 +41,6 @@ function Carousel:createPassenger(id, uiElement)
   error("Each specific carousel needs to implement its own passenger")
   -- passengers are expected to have an id property with a unique identifier
   -- passengers are expected to have a uiElement property for being drawn
-end
-
-function Carousel.createNavigationButtons(self)
-  self.leftButton =
-    TextButton({
-      label = Label({text = "<", translate = false, hAlign = "center"}),
-      hAlign = "left",
-      vFill = true,
-      onClick = function()
-        self:moveToNextPassenger(-1)
-      end
-    })
-  self.rightButton =
-    TextButton({
-      label = Label({text = ">", translate = false, hAlign = "center"}),
-      hAlign = "right",
-      vFill = true,
-      onClick = function()
-        self:moveToNextPassenger(1)
-      end,
-    })
-  self:addChild(self.leftButton)
-  self:addChild(self.rightButton)
 end
 
 function Carousel.addPassenger(self, passenger)
