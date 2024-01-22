@@ -356,6 +356,18 @@ function CharacterSelect:createCharacterGrid(characterButtons, grid, width, heig
   return characterGrid
 end
 
+function CharacterSelect:createPageIndicator(pagedUniGrid)
+  local pageCounterLabel = Label({text = loc("page"), hAlign = "center", vAlign = "top", translate = false})
+  pageCounterLabel.drawSelf = function(self)
+    local text = loc("page") .. " " .. pagedUniGrid.currentPage .. "/" .. #pagedUniGrid.pages
+    if self.text ~= text then
+      self:setText(text, nil, false)
+    end
+    GraphicsUtil.drawClearText(self.drawable, self.x, self.y)
+  end
+  return pageCounterLabel
+end
+
 function CharacterSelect:createCursor(grid, player)
   local cursor = GridCursor({
     grid = grid,
