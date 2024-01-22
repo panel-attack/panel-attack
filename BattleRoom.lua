@@ -128,16 +128,38 @@ function BattleRoom.setWinCounts(self, winCounts)
   for i = 1, #winCounts do
     self.players[i].wins = winCounts[i]
   end
+
+  self:updateWinrates()
+end
+
+function BattleRoom:updateWinrates()
+  for _, player in ipairs(self.players) do
+    if self.matchesPlayed > 0 then
+      player.winrate = 100 * round(player.wins / self.matchesPlayed, 2)
+    else
+      player.winrate = 0
+    end
+  end
 end
 
 function BattleRoom:setRatings(ratings)
   for i = 1, #self.players do
     self.players[i].rating = ratings[i]
   end
+
+  self:updateExpectedWinrates()
+end
+
+function BattleRoom:updateExpectedWinrates()
+  -- this isn't feasible to do for n-player matchups at this point
+  local p1 = self.players[1]
+  local p2 = self.players[2]
+  p1.expectedWinrate = (100 * round(1 / (1 + 10 ^ ((p2.rating.new - p1.rating.new) / RATING_SPREAD_MODIFIER)), 2))
+  p2.expectedWinrate = (100 * round(1 / (1 + 10 ^ ((p1.rating.new - p2.rating.new) / RATING_SPREAD_MODIFIER)), 2))
 end
 
 -- returns the total amount of games played, derived from the sum of wins across all players
--- (this means draws don't count as games)
+-- (this means draws don't count as games, reference BattleRoom.matchesPlayed if you want draws included)
 function BattleRoom:totalGames()
   local totalGames = 0
   for i = 1, #self.players do

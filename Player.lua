@@ -5,6 +5,7 @@ local input = require("inputManager")
 local util = require("util")
 local MatchParticipant = require("MatchParticipant")
 local consts = require("consts")
+local Signal = require("helpers.signal")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -185,6 +186,10 @@ function Player:setPuzzleSet(puzzleSet)
     self.settings.puzzleSet = puzzleSet
     self:onPropertyChanged("puzzleSet")
   end
+end
+
+function Player:setRating(rating)
+  self.rating = rating
 end
 
 function Player:restrictInputs(inputConfiguration)

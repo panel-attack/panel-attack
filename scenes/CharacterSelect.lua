@@ -591,6 +591,25 @@ function CharacterSelect:createRecordsBox()
   return stackPanel
 end
 
+function CharacterSelect:createPlayerInfo(player)
+  local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "top"})
+
+  stackPanel.leagueLabel = Label({text = loc("ss_rating") .. " " .. (player.rating.league or "none"), translate = false})
+  stackPanel.ratingLabel = Label({text = player.rating.new or player.rating.placement_match_progress, translate = false})
+  stackPanel.winsLabel = Label({text = loc("ss_wins") .. " " .. player:getWinCountForDisplay(), translate = false})
+  stackPanel.winrateLabel = Label({text = "ss_winrate"})
+  stackPanel.winrateValueLabel = Label({text = loc("ss_current_rating" .. tostring(player.winrate) .. "%"), translate = false})
+  stackPanel.winrateExpectedLabel = Label({text = loc("ss_expected_rating") .. " " .. player.expectedWinrate .. "%"})
+
+  stackPanel:addElement(stackPanel.leagueLabel)
+  stackPanel:addElement(stackPanel.ratingLabel)
+  stackPanel:addElement(stackPanel.winsLabel)
+  stackPanel:addElement(stackPanel.winrateLabel)
+  stackPanel:addElement(stackPanel.winrateValueLabel)
+
+  return stackPanel
+end
+
 function CharacterSelect:update(dt)
   for _, cursor in ipairs(self.ui.cursors) do
     if cursor.player.isLocal and cursor.player.human then
