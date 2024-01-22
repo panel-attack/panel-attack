@@ -25,9 +25,12 @@ function CharacterSelect2p:loadUserInterface()
   self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
-  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
+  self.ui.panelSelection:setTitle("panels")
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
-  self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.stageSelection:setTitle("stage")
+  self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
+  self.ui.levelSelection:setTitle("level")
 
   self.ui.readyButton = self:createReadyButton()
 
@@ -45,7 +48,7 @@ function CharacterSelect2p:loadUserInterface()
   self.ui.rankedSelection:addChild(falseLabel)
 
   local levelHeight
-  local panelHeight
+  local panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2 - 12 -- 12 as standard font size?
   local stageWidth
   local rankedWidth
 
@@ -56,7 +59,6 @@ function CharacterSelect2p:loadUserInterface()
     self.ui.grid:createElementAt(7, 2, 2, 1, "levelSelection", self.ui.levelSelection)
 
     levelHeight = 12
-    panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2
     stageWidth = self.ui.grid.unitSize - self.ui.grid.unitMargin * 2
     rankedWidth = stageWidth
   else
@@ -65,7 +67,6 @@ function CharacterSelect2p:loadUserInterface()
     self.ui.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.ui.levelSelection)
 
     levelHeight = 20
-    panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2
     stageWidth = self.ui.grid.unitSize * 1.5 - self.ui.grid.unitMargin * 2
     rankedWidth = stageWidth
   end
