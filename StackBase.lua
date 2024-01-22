@@ -415,4 +415,8 @@ function StackBase:run()
   error("did not implement run")
 end
 
+function StackBase:runGameOver()
+  error("did not implement runGameOver")
+end
+
 return StackBase

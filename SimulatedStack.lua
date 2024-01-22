@@ -44,26 +44,42 @@ function SimulatedStack:addHealth(healthSettings)
 end
 
 function SimulatedStack:run()
-  if not self:game_ended() then
-    if self.attackEngine then
-      self.attackEngine:run()
-    end
-    self.clock = self.clock + 1
+  if self.attackEngine then
+    self.attackEngine:run()
   end
 
   if self.do_countdown and self.countdown_timer > 0 then
     self.healthEngine.clock = self.clock
-    if self.clock > 8 then
+    if self.clock >= consts.COUNTDOWN_START then
       self.countdown_timer = self.countdown_timer - 1
     end
   else
     if self.healthEngine then
       self.health = self.healthEngine:run()
+      if self.health <= 0 then
+        self:setGameOver()
+      end
     end
   end
+
+  self.clock = self.clock + 1
+end
+
+function SimulatedStack:runGameOver()
+  -- currently nothing, could add kickstart a fancy animation in setGameOver later that is ran to conclusion here
+end
+
+function SimulatedStack:setGameOver()
+  self.game_over_clock = self.clock
+
+  themes[config.theme].sounds.game_over:play()
 end
 
 function SimulatedStack:shouldRun(runsSoFar)
+  if self:game_ended() then
+    return false
+  end
+
   if self.lastRollbackFrame > self.clock then
     return true
   end
@@ -133,6 +149,8 @@ function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
   if not self:game_ended() then
     if self.healthEngine then
       self.healthEngine:receiveGarbage(frameToReceive, garbageList)
+    else
+      error("Trying to send garbage to a simulated stack without a consumer for the garbage")
     end
   end
 end

@@ -237,6 +237,7 @@ end
 
 function Match:run()
   if self.isPaused or self:hasEnded() then
+    self:runGameOver()
     return
   end
 
@@ -308,6 +309,12 @@ function Match:run()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
+end
+
+function Match:runGameOver()
+  for _, stack in ipairs(self.stacks) do
+    stack:runGameOver()
+  end
 end
 
 function Match:updateFramesBehind(stack)

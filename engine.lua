@@ -926,13 +926,7 @@ end
 
 function Stack:shouldRun(runsSoFar)
   if self:game_ended() then
-    if self.game_over_clock > 0 then
-      -- run one more frame than game over to apply panel states
-      return self.clock <= self.game_over_clock
-    else
-      -- at the current point in time this means a puzzle ended in some way
-      return false
-    end
+    return false
   end
 
   if self:behindRollback() then
@@ -1206,351 +1200,353 @@ end
 
 -- One run of the engine routine.
 function Stack.simulate(self)
-  -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
-  if self:game_ended() == false then
-    self:prep_first_row()
-    local panels = self.panels
-    local swapped_this_frame = nil
-    self.garbageLandedThisFrame = {}
-    self:runCountDownIfNeeded()
+  self:prep_first_row()
+  local panels = self.panels
+  local swapped_this_frame = nil
+  self.garbageLandedThisFrame = {}
+  self:runCountDownIfNeeded()
 
-    if self.pre_stop_time ~= 0 then
-      self.pre_stop_time = self.pre_stop_time - 1
-    elseif self.stop_time ~= 0 then
-      self.stop_time = self.stop_time - 1
-    end
+  if self.pre_stop_time ~= 0 then
+    self.pre_stop_time = self.pre_stop_time - 1
+  elseif self.stop_time ~= 0 then
+    self.stop_time = self.stop_time - 1
+  end
 
-    self.panels_in_top_row = self:hasPanelsInTopRow()
-    self:updateDangerBounce()
-    self.danger_music = self:shouldPlayDangerMusic()
+  self.panels_in_top_row = self:hasPanelsInTopRow()
+  self:updateDangerBounce()
+  self.danger_music = self:shouldPlayDangerMusic()
 
-    if self.displacement == 0 and self.has_risen then
-      self.top_cur_row = self.height
-      self:new_row()
-    end
+  if self.displacement == 0 and self.has_risen then
+    self.top_cur_row = self.height
+    self:new_row()
+  end
 
-    self:updateRiseLock()
+  self:updateRiseLock()
 
-    -- Increase the speed if applicable
-    if self.levelData.speedIncreaseMode == 1 then
-      -- increase per interval
-      if self.clock == self.nextSpeedIncreaseClock then
-        self.speed = min(self.speed + 1, 99)
-        self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
-      end
-    elseif self.panels_to_speedup <= 0 then
-      -- mode 2: increase speed based on cleared panels
+  -- Increase the speed if applicable
+  if self.levelData.speedIncreaseMode == 1 then
+    -- increase per interval
+    if self.clock == self.nextSpeedIncreaseClock then
       self.speed = min(self.speed + 1, 99)
-      self.panels_to_speedup = self.panels_to_speedup + PANELS_TO_NEXT_SPEED[self.speed]
+      self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
     end
+  elseif self.panels_to_speedup <= 0 then
+    -- mode 2: increase speed based on cleared panels
+    self.speed = min(self.speed + 1, 99)
+    self.panels_to_speedup = self.panels_to_speedup + PANELS_TO_NEXT_SPEED[self.speed]
+  end
 
-    -- Phase 0 //////////////////////////////////////////////////////////////
-    -- Stack automatic rising
-    if self.behaviours.passiveRaise then
-      if not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
-        if self.panels_in_top_row then
-          self.health = self.health - 1
-        else
-          self.rise_timer = self.rise_timer - 1
-          if self.rise_timer <= 0 then -- try to rise
-            self.displacement = self.displacement - 1
-            if self.displacement == 0 then
-              self.prevent_manual_raise = false
-              self.top_cur_row = self.height
-              self:new_row()
-            end
-            self.rise_timer = self.rise_timer + consts.SPEED_TO_RISE_TIME[self.speed]
-          end
-        end
-      end
-
-      if self:checkGameOver() then
-        self.game_over_clock = self.clock
-      end
-    end
-
-    if not self.panels_in_top_row and not self:has_falling_garbage() then
-      self.health = self.levelData.maxHealth
-    end
-
-    if self.displacement % 16 ~= 0 then
-      self.top_cur_row = self.height - 1
-    end
-
-    -- Begin the swap we input last frame.
-    if self:swapQueued() then
-      self:swap(self.queuedSwapRow, self.queuedSwapColumn)
-      swapped_this_frame = true
-      self:setQueuedSwapPosition(0, 0)
-    end
-
-    -- Look for matches.
-    self:checkMatches()
-
-    self:updatePanels()
-
-    local prev_shake_time = self.shake_time
-    self.shake_time = self.shake_time - 1
-    self.shake_time = max(self.shake_time, self.shake_time_on_frame)
-    if self.shake_time == 0 then
-      self.peak_shake_time = 0
-    end
-
-    -- Phase 3. /////////////////////////////////////////////////////////////
-    -- Actions performed according to player input
-
-    -- CURSOR MOVEMENT
-    local playMoveSounds = true -- set this to false to disable move sounds for debugging
-    if self.inputMethod == "touch" then
-        --with touch, cursor movement happen at stack:control time
-    else
-      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and self.cursorLock == nil then
-        local prev_row = self.cur_row
-        local prev_col = self.cur_col
-        self:moveCursorInDirection(self.cur_dir)
-        if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-          if self:canPlaySfx() then
-            SFX_Cur_Move_Play = 1
-          end
-          if self.cur_timer ~= self.cur_wait_time then
-            self.analytic:register_move()
-          end
-        end
+  -- Phase 0 //////////////////////////////////////////////////////////////
+  -- Stack automatic rising
+  if self.behaviours.passiveRaise then
+    if not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
+      if self.panels_in_top_row then
+        self.health = self.health - 1
       else
-        self.cur_row = util.bound(1, self.cur_row, self.top_cur_row)
-      end
-    end
-
-    if self.cur_timer ~= self.cur_wait_time then
-      self.cur_timer = self.cur_timer + 1
-    end
-    -- TAUNTING
-    if self:canPlaySfx() then
-      if self.taunt_up ~= nil then
-        characters[self.character]:playTauntUpSfx(self.taunt_up)
-        self:taunt("taunt_up")
-        self.taunt_up = nil
-      elseif self.taunt_down ~= nil then
-        characters[self.character]:playTauntDownSfx(self.taunt_down)
-        self:taunt("taunt_down")
-        self.taunt_down = nil
-      end
-    end
-
-    -- Queue Swapping
-    -- Note: Swapping is queued in Stack.controls for touch mode
-    if self.inputMethod == "controller" then
-      if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-        local canSwap = self:canSwap(self.cur_row, self.cur_col)
-        if canSwap then
-          self:setQueuedSwapPosition(self.cur_col, self.cur_row)
-          self.analytic:register_swap()
-        end
-        self.swap_1 = false
-        self.swap_2 = false
-      end
-    end
-
-    -- MANUAL STACK RAISING
-    if self.behaviours.allowManualRaise then
-      if self.manual_raise then
-        if not self.rise_lock then
-          if self.panels_in_top_row then
-            if self:checkGameOver() then
-              self.game_over_clock = self.clock
-            end
-          else
-            self.has_risen = true
-            self.displacement = self.displacement - 1
-            if self.displacement == 1 then
-              self.manual_raise = false
-              self.rise_timer = 1
-              if not self.prevent_manual_raise then
-                self.score = self.score + 1
-              end
-              self.prevent_manual_raise = true
-            end
-            self.manual_raise_yet = true --ehhhh
-            self.stop_time = 0
+        self.rise_timer = self.rise_timer - 1
+        if self.rise_timer <= 0 then -- try to rise
+          self.displacement = self.displacement - 1
+          if self.displacement == 0 then
+            self.prevent_manual_raise = false
+            self.top_cur_row = self.height
+            self:new_row()
           end
-        elseif not self.manual_raise_yet then
-          self.manual_raise = false
-        end
-      -- if the stack is rise locked when you press the raise button,
-      -- the raising is cancelled
-      end
-    end
-
-    -- if at the end of the routine there are no chain panels, the chain ends.
-    if self.chain_counter ~= 0 and not self:hasChainingPanels() then
-      self.chains[self.currentChainStartFrame].finish = self.clock
-      self.chains[self.currentChainStartFrame].size = self.chain_counter
-      self.currentChainStartFrame = nil
-      if self:canPlaySfx() then
-        SFX_Fanfare_Play = self.chain_counter
-      end
-      self.analytic:register_chain(self.chain_counter)
-      self.chain_counter = 0
-
-      if self.telegraph then
-        logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
-        self.telegraph:chainingEnded(self.clock)
-      end
-    end
-
-    if (self.score > 99999) then
-      self.score = 99999
-    -- lol owned
-    end
-
-    self:updateActivePanels()
-
-    if self.telegraph then
-      self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
-    end
-
-    if self.later_garbage[self.clock] then
-      self.garbage_q:push(self.later_garbage[self.clock])
-      self.later_garbage[self.clock] = nil
-    end
-
-    self:remove_extra_rows()
-
-    --double-check panels_in_top_row
-
-    self.panels_in_top_row = false
-    -- If any dangerous panels are in the top row, garbage should not fall.
-    for col_idx = 1, self.width do
-      if panels[self.height][col_idx]:dangerous() then
-        self.panels_in_top_row = true
-      end
-    end
-
-    -- local garbage_fits_in_populated_top_row 
-    -- if self.garbage_q:len() > 0 then
-    --   --even if there are some panels in the top row,
-    --   --check if the next block in the garbage_q would fit anyway
-    --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-    --   garbage_fits_in_populated_top_row = true
-    --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-    --   local cols = self.garbage_cols[next_garbage_block_width]
-    --   local spawn_col = cols[cols.idx]
-    --   local spawn_row = #self.panels
-    --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-    --     if panelRow[idx]:dangerous() then 
-    --       garbage_fits_in_populated_top_row = nil
-    --     end
-    --   end
-    -- end
-    
-    -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
-    for row_idx = self.height + 1, #self.panels do
-      for col_idx = 1, self.width do
-        if panels[row_idx][col_idx].color ~= 0 then
-          self.panels_in_top_row = true
+          self.rise_timer = self.rise_timer + consts.SPEED_TO_RISE_TIME[self.speed]
         end
       end
     end
 
-    if self.garbage_q:len() > 0 then
-      if self:shouldDropGarbage() then
-        if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
-          self.garbage_q:pop()
-        end
-      end
-    end
-
-    -- Update Sound FX
-    if self:canPlaySfx() then
-      if SFX_Swap_Play == 1 then
-        themes[config.theme].sounds.swap:stop()
-        themes[config.theme].sounds.swap:play()
-        SFX_Swap_Play = 0
-      end
-      if SFX_Cur_Move_Play == 1 then
-        -- I have no idea why this makes a distinction for vs, like what?
-        if not (self.match.stackInteraction ~= GameModes.StackInteractions.NONE and themes[config.theme].sounds.swap:isPlaying()) and not self.do_countdown then
-          themes[config.theme].sounds.cur_move:stop()
-          themes[config.theme].sounds.cur_move:play()
-        end
-        SFX_Cur_Move_Play = 0
-      end
-      if self.sfx_land then
-        themes[config.theme].sounds.land:stop()
-        themes[config.theme].sounds.land:play()
-        self.sfx_land = false
-      end
-      if self.combo_chain_play then
-        -- stop ongoing landing sound
-        themes[config.theme].sounds.land:stop()
-        -- and cancel it because an attack is performed on the exact same frame (takes priority)
-        self.sfx_land = false
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        characters[self.character]:playAttackSfx(self.combo_chain_play)
-        self.combo_chain_play = nil
-      end
-      if SFX_garbage_match_play then
-        characters[self.character]:playGarbageMatchSfx()
-        SFX_garbage_match_play = nil
-      end
-      if SFX_Fanfare_Play == 0 then
-        --do nothing
-      elseif SFX_Fanfare_Play >= 6 then
-        themes[config.theme].sounds.fanfare3:play()
-      elseif SFX_Fanfare_Play >= 5 then
-        themes[config.theme].sounds.fanfare2:play()
-      elseif SFX_Fanfare_Play >= 4 then
-        themes[config.theme].sounds.fanfare1:play()
-      end
-      SFX_Fanfare_Play = 0
-      if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
-        local interrupted_thud = nil
-        for i = 1, 3 do
-          if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
-            themes[config.theme].sounds.garbage_thud[i]:stop()
-            interrupted_thud = i
-          end
-        end
-        if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-          themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
-        else
-          themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
-        end
-        if interrupted_thud == nil then
-          characters[self.character]:playGarbageLandSfx()
-        end
-        self.sfx_garbage_thud = 0
-      end
-      if SFX_Pop_Play or SFX_Garbage_Pop_Play then
-        local popLevel = min(max(self.chain_counter, 1), 4)
-        local popIndex = 1
-        if SFX_Garbage_Pop_Play then
-          popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
-        else
-          popIndex = min(self.poppedPanelIndex, 10)
-        end
-        --stop the previous pop sound
-        themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        --play the appropriate pop sound
-        themes[config.theme].sounds.pops[popLevel][popIndex]:play()
-        self.lastPopLevelPlayed = popLevel
-        self.lastPopIndexPlayed = popIndex
-        SFX_Pop_Play = nil
-        SFX_Garbage_Pop_Play = nil
-      end
-    end
-
-    self.clock = self.clock + 1
-
-    if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
-      self.opponentStack.tooFarBehindError = true
-    end
-
-    if self.game_stopwatch_running and (not self.match.gameOverClock or self.clock <= self.match.gameOverClock) then
-      self.game_stopwatch = (self.game_stopwatch or -1) + 1
+    if self:checkGameOver() then
+      self:setGameOver()
     end
   end
 
+  if not self.panels_in_top_row and not self:has_falling_garbage() then
+    self.health = self.levelData.maxHealth
+  end
+
+  if self.displacement % 16 ~= 0 then
+    self.top_cur_row = self.height - 1
+  end
+
+  -- Begin the swap we input last frame.
+  if self:swapQueued() then
+    self:swap(self.queuedSwapRow, self.queuedSwapColumn)
+    swapped_this_frame = true
+    self:setQueuedSwapPosition(0, 0)
+  end
+
+  -- Look for matches.
+  self:checkMatches()
+
+  self:updatePanels()
+
+  local prev_shake_time = self.shake_time
+  self.shake_time = self.shake_time - 1
+  self.shake_time = max(self.shake_time, self.shake_time_on_frame)
+  if self.shake_time == 0 then
+    self.peak_shake_time = 0
+  end
+
+  -- Phase 3. /////////////////////////////////////////////////////////////
+  -- Actions performed according to player input
+
+  -- CURSOR MOVEMENT
+  local playMoveSounds = true -- set this to false to disable move sounds for debugging
+  if self.inputMethod == "touch" then
+      --with touch, cursor movement happen at stack:control time
+  else
+    if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and self.cursorLock == nil then
+      local prev_row = self.cur_row
+      local prev_col = self.cur_col
+      self:moveCursorInDirection(self.cur_dir)
+      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+        if self:canPlaySfx() then
+          SFX_Cur_Move_Play = 1
+        end
+        if self.cur_timer ~= self.cur_wait_time then
+          self.analytic:register_move()
+        end
+      end
+    else
+      self.cur_row = util.bound(1, self.cur_row, self.top_cur_row)
+    end
+  end
+
+  if self.cur_timer ~= self.cur_wait_time then
+    self.cur_timer = self.cur_timer + 1
+  end
+  -- TAUNTING
+  if self:canPlaySfx() then
+    if self.taunt_up ~= nil then
+      characters[self.character]:playTauntUpSfx(self.taunt_up)
+      self:taunt("taunt_up")
+      self.taunt_up = nil
+    elseif self.taunt_down ~= nil then
+      characters[self.character]:playTauntDownSfx(self.taunt_down)
+      self:taunt("taunt_down")
+      self.taunt_down = nil
+    end
+  end
+
+  -- Queue Swapping
+  -- Note: Swapping is queued in Stack.controls for touch mode
+  if self.inputMethod == "controller" then
+    if (self.swap_1 or self.swap_2) and not swapped_this_frame then
+      local canSwap = self:canSwap(self.cur_row, self.cur_col)
+      if canSwap then
+        self:setQueuedSwapPosition(self.cur_col, self.cur_row)
+        self.analytic:register_swap()
+      end
+      self.swap_1 = false
+      self.swap_2 = false
+    end
+  end
+
+  -- MANUAL STACK RAISING
+  if self.behaviours.allowManualRaise then
+    if self.manual_raise then
+      if not self.rise_lock then
+        if self.panels_in_top_row then
+          if self:checkGameOver() then
+            self:setGameOver()
+          end
+        else
+          self.has_risen = true
+          self.displacement = self.displacement - 1
+          if self.displacement == 1 then
+            self.manual_raise = false
+            self.rise_timer = 1
+            if not self.prevent_manual_raise then
+              self.score = self.score + 1
+            end
+            self.prevent_manual_raise = true
+          end
+          self.manual_raise_yet = true --ehhhh
+          self.stop_time = 0
+        end
+      elseif not self.manual_raise_yet then
+        self.manual_raise = false
+      end
+    -- if the stack is rise locked when you press the raise button,
+    -- the raising is cancelled
+    end
+  end
+
+  -- if at the end of the routine there are no chain panels, the chain ends.
+  if self.chain_counter ~= 0 and not self:hasChainingPanels() then
+    self.chains[self.currentChainStartFrame].finish = self.clock
+    self.chains[self.currentChainStartFrame].size = self.chain_counter
+    self.currentChainStartFrame = nil
+    if self:canPlaySfx() then
+      SFX_Fanfare_Play = self.chain_counter
+    end
+    self.analytic:register_chain(self.chain_counter)
+    self.chain_counter = 0
+
+    if self.telegraph then
+      logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
+      self.telegraph:chainingEnded(self.clock)
+    end
+  end
+
+  if (self.score > 99999) then
+    self.score = 99999
+  -- lol owned
+  end
+
+  self:updateActivePanels()
+
+  if self.telegraph then
+    self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
+  end
+
+  if self.later_garbage[self.clock] then
+    self.garbage_q:push(self.later_garbage[self.clock])
+    self.later_garbage[self.clock] = nil
+  end
+
+  self:remove_extra_rows()
+
+  --double-check panels_in_top_row
+
+  self.panels_in_top_row = false
+  -- If any dangerous panels are in the top row, garbage should not fall.
+  for col_idx = 1, self.width do
+    if panels[self.height][col_idx]:dangerous() then
+      self.panels_in_top_row = true
+    end
+  end
+
+  -- local garbage_fits_in_populated_top_row 
+  -- if self.garbage_q:len() > 0 then
+  --   --even if there are some panels in the top row,
+  --   --check if the next block in the garbage_q would fit anyway
+  --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
+  --   garbage_fits_in_populated_top_row = true
+  --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
+  --   local cols = self.garbage_cols[next_garbage_block_width]
+  --   local spawn_col = cols[cols.idx]
+  --   local spawn_row = #self.panels
+  --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
+  --     if panelRow[idx]:dangerous() then 
+  --       garbage_fits_in_populated_top_row = nil
+  --     end
+  --   end
+  -- end
+  
+  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+  for row_idx = self.height + 1, #self.panels do
+    for col_idx = 1, self.width do
+      if panels[row_idx][col_idx].color ~= 0 then
+        self.panels_in_top_row = true
+      end
+    end
+  end
+
+  if self.garbage_q:len() > 0 then
+    if self:shouldDropGarbage() then
+      if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
+        self.garbage_q:pop()
+      end
+    end
+  end
+
+  -- Update Sound FX
+  if self:canPlaySfx() then
+    if SFX_Swap_Play == 1 then
+      themes[config.theme].sounds.swap:stop()
+      themes[config.theme].sounds.swap:play()
+      SFX_Swap_Play = 0
+    end
+    if SFX_Cur_Move_Play == 1 then
+      -- I have no idea why this makes a distinction for vs, like what?
+      if not (self.match.stackInteraction ~= GameModes.StackInteractions.NONE and themes[config.theme].sounds.swap:isPlaying()) and not self.do_countdown then
+        themes[config.theme].sounds.cur_move:stop()
+        themes[config.theme].sounds.cur_move:play()
+      end
+      SFX_Cur_Move_Play = 0
+    end
+    if self.sfx_land then
+      themes[config.theme].sounds.land:stop()
+      themes[config.theme].sounds.land:play()
+      self.sfx_land = false
+    end
+    if self.combo_chain_play then
+      -- stop ongoing landing sound
+      themes[config.theme].sounds.land:stop()
+      -- and cancel it because an attack is performed on the exact same frame (takes priority)
+      self.sfx_land = false
+      themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+      characters[self.character]:playAttackSfx(self.combo_chain_play)
+      self.combo_chain_play = nil
+    end
+    if SFX_garbage_match_play then
+      characters[self.character]:playGarbageMatchSfx()
+      SFX_garbage_match_play = nil
+    end
+    if SFX_Fanfare_Play == 0 then
+      --do nothing
+    elseif SFX_Fanfare_Play >= 6 then
+      themes[config.theme].sounds.fanfare3:play()
+    elseif SFX_Fanfare_Play >= 5 then
+      themes[config.theme].sounds.fanfare2:play()
+    elseif SFX_Fanfare_Play >= 4 then
+      themes[config.theme].sounds.fanfare1:play()
+    end
+    SFX_Fanfare_Play = 0
+    if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
+      local interrupted_thud = nil
+      for i = 1, 3 do
+        if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+          themes[config.theme].sounds.garbage_thud[i]:stop()
+          interrupted_thud = i
+        end
+      end
+      if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
+        themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+      else
+        themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
+      end
+      if interrupted_thud == nil then
+        characters[self.character]:playGarbageLandSfx()
+      end
+      self.sfx_garbage_thud = 0
+    end
+    if SFX_Pop_Play or SFX_Garbage_Pop_Play then
+      local popLevel = min(max(self.chain_counter, 1), 4)
+      local popIndex = 1
+      if SFX_Garbage_Pop_Play then
+        popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
+      else
+        popIndex = min(self.poppedPanelIndex, 10)
+      end
+      --stop the previous pop sound
+      themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+      --play the appropriate pop sound
+      themes[config.theme].sounds.pops[popLevel][popIndex]:play()
+      self.lastPopLevelPlayed = popLevel
+      self.lastPopIndexPlayed = popIndex
+      SFX_Pop_Play = nil
+      SFX_Garbage_Pop_Play = nil
+    end
+  end
+
+  self.clock = self.clock + 1
+
+  if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
+    self.opponentStack.tooFarBehindError = true
+  end
+
+  if self.game_stopwatch_running and (not self.match.gameOverClock or self.clock <= self.match.gameOverClock) then
+    self.game_stopwatch = (self.game_stopwatch or -1) + 1
+  end
+
+  self:update_popfxs()
+  self:update_cards()
+end
+
+function Stack:runGameOver()
   self:update_popfxs()
   self:update_cards()
 end
@@ -1670,10 +1666,14 @@ end
 
 -- Sets the current stack as "lost"
 -- Also begins drawing game over effects
-function Stack.set_game_over(self)
+function Stack.setGameOver(self)
 
   if self.game_over_clock > 0 then
-    error("should not set gameover when it is already set")
+    -- it is possible that game over is set twice on the same frame
+    -- this happens if someone died to passive raise while holding manual raise
+    -- we shouldn't try to set game over again under any other circumstances however
+    assert(self.clock == self.game_over_clock, "game over was already set to a different clock time")
+    return
   end
 
   themes[config.theme].sounds.game_over:play()
