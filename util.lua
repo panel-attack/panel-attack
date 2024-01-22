@@ -423,3 +423,19 @@ function string.toCharTable(self)
   end
   return t
 end
+
+-- Returns if two floats are equal within a certain number of decimal places
+-- @param decimalPrecision the number of decimal places to compare
+function math.floatsEqualWithPrecision(a, b, decimalPrecision)
+  assert(type(a) == "number", "floatsEqualWithPrecision expects a number argument for the first argument")
+  assert(type(b) == "number", "floatsEqualWithPrecision expects a number argument for the second argument")
+  assert(type(decimalPrecision) == "number", "floatsEqualWithPrecision expects a number argument for the third argument")
+
+  local threshold = math.pow(0.1, decimalPrecision)
+  local diff = math.abs(a - b) -- Absolute value of difference
+  return diff < threshold
+end
+
+function assertEqual(a, b) 
+  assert(a == b, "Expected " .. a .. " to be equal to " .. b)
+end

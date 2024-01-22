@@ -588,13 +588,10 @@ end
 function challenge_mode_setup()
   local difficultySettings = {}
   local customModeID = 1
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-
+  for i = 1, 8 do
+    difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  end
+  
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
 

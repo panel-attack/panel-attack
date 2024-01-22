@@ -1,0 +1,361 @@
+{
+  "extraInfo": {
+    "playerName": "Musichael",
+    "gpm": "21.7",
+    "matchLength": "2:29",
+    "dateGenerated": "2023-12-27-20-53-14"
+  }, 
+  "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 342,
+        "metal": false
+      },
+      {
+        "chainEndTime": 744,
+        "chain": [
+          432,
+          513,
+          594,
+          675
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 432,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 513,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 594,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 832,
+        "metal": false
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 911,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1139,
+        "chain": [
+          1001,
+          1072
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1001,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1112,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1228,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1337,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1668,
+        "chain": [
+          1494,
+          1602
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1602,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 1668,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2040,
+        "chain": [
+          1981
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 2012,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 2012,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 2267,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2524,
+        "chain": [
+          2390,
+          2457
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 2702,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2997,
+        "chain": [
+          2928
+        ]
+      },
+      {
+        "chainEndTime": 3232,
+        "chain": [
+          3081
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 3220,
+        "metal": false
+      },
+      {
+        "chainEndTime": 3377,
+        "chain": [
+          3308
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 3377,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 3552,
+        "metal": false
+      },
+      {
+        "chainEndTime": 3787,
+        "chain": [
+          3728
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 3813,
+        "metal": false
+      },
+      {
+        "chainEndTime": 3957,
+        "chain": [
+          3890
+        ]
+      },
+      {
+        "chainEndTime": 4422,
+        "chain": [
+          4353
+        ]
+      },
+      {
+        "chainEndTime": 4762,
+        "chain": [
+          4563,
+          4693
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 4563,
+        "metal": false
+      },
+      {
+        "chainEndTime": 5011,
+        "chain": [
+          4944
+        ]
+      },
+      {
+        "chainEndTime": 5425,
+        "chain": [
+          5358
+        ]
+      },
+      {
+        "chainEndTime": 6310,
+        "chain": [
+          5970,
+          6160
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 6451,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 6787,
+        "metal": false
+      },
+      {
+        "chainEndTime": 6920,
+        "chain": [
+          6861
+        ]
+      },
+      {
+        "width": 6,
+        "height": 1,
+        "chain": false,
+        "startTime": 6924,
+        "metal": false
+      },
+      {
+        "chainEndTime": 7264,
+        "chain": [
+          7205
+        ]
+      },
+      {
+        "chainEndTime": 7827,
+        "chain": [
+          7758
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 7855,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 7954,
+        "metal": false
+      },
+      {
+        "chainEndTime": 8382,
+        "chain": [
+          8161,
+          8232,
+          8313
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 8232,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 8383,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 8474,
+        "metal": false
+      },
+      {
+        "chainEndTime": 8684,
+        "chain": [
+          8548,
+          8617
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 8722,
+        "metal": false
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 9073,
+        "metal": false
+      }
+    ]
+  }

@@ -1,0 +1,58 @@
+{
+  "extraInfo": {
+    "playerName": "Musichael",
+    "gpm": "32.9",
+    "matchLength": "0:16",
+    "dateGenerated": "2023-12-27-20-53-47"
+  }, 
+  "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 337,
+        "metal": false
+      },
+      {
+        "chainEndTime": 711,
+        "chain": [
+          425,
+          513,
+          582,
+          652
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 425,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1091,
+        "chain": [
+          872,
+          915,
+          960
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 872,
+        "metal": false
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 960,
+        "metal": false
+      }
+    ]
+  }
