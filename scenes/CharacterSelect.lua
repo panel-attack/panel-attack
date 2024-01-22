@@ -22,9 +22,6 @@ local GFX_SCALE = consts.GFX_SCALE
 local StackPanel = require("ui.StackPanel")
 local PixelFontLabel = require("ui.PixelFontLabel")
 
--- this is half of the recommended character icon size
-local BUTTON_WIDTH = 84
-
 -- @module CharacterSelect
 -- The character select screen scene
 local CharacterSelect = class(function(self)
@@ -131,7 +128,13 @@ function CharacterSelect:createPlayerIcon(player)
 end
 
 function CharacterSelect:createReadyButton()
-  local readyButton = TextButton({width = BUTTON_WIDTH, height = BUTTON_WIDTH, label = Label({text = "ready"}), backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
+  local readyButton = TextButton({
+    hFill = true,
+    vFill = true,
+    label = Label({text = "ready"}),
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1}
+  })
 
   -- assign player generic callback
   readyButton.onClick = function(self, inputSource)
@@ -150,8 +153,8 @@ end
 
 function CharacterSelect:createLeaveButton()
   leaveButton = TextButton({
-    width = BUTTON_WIDTH,
-    height = BUTTON_WIDTH,
+    hFill = true,
+    vFill = true,
     label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1},
@@ -219,8 +222,8 @@ function CharacterSelect:getCharacterButtons()
 
   for i = 0, #characters_ids_for_current_theme do
     local characterButton = Button({
-      width = BUTTON_WIDTH,
-      height = BUTTON_WIDTH,
+      hFill = true,
+      vFill = true,
     })
 
     local character
