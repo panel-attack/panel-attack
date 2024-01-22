@@ -211,12 +211,18 @@ function CharacterSelect:getCharacterButtons()
     else
       character = characters[characters_ids_for_current_theme[i]]
     end
-    
+
     characterButton.characterId = character.id
     characterButton.image = ImageContainer({image = character.images.icon, hFill = true, vFill = true})
     characterButton:addChild(characterButton.image)
-    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "bottom", hAlign = "center"})
+    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "top", hAlign = "center"})
     characterButton:addChild(characterButton.label)
+
+    if character.flag and themes[config.theme].images.flags[character.flag] then
+      characterButton.flag = ImageContainer({image = themes[config.theme].images.flags[character.flag], vAlign = "bottom", hAlign = "right", x = -2, y = -2, scale = 0.5})
+      characterButton:addChild(characterButton.flag)
+    end
+
     characterButtons[#characterButtons + 1] = characterButton
   end
 
