@@ -29,7 +29,7 @@ end
 function CharacterSelectVsSelf:loadUserInterface()
   local player = GAME.battleRoom.players[1]
 
-  self.ui.grid = Grid({unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
+  self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.characterIcons[1] = self:createPlayerIcon(player)
@@ -85,23 +85,6 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.cursors[1].raise2Callback = function()
     self.ui.characterGrid:turnPage(1)
   end
-end
-
-local lastLinesLabelQuads = {}
-local lastLinesQuads = {}
-local recordLabelQuads = {}
-local recordQuads = {}
-
-function CharacterSelectVsSelf:customDraw()
-  -- local xPosition1 = 196
-  -- local xPosition2 = 320
-  -- local yPosition = 24
-  -- local lastScore = tostring(self.lastScore)
-  -- local record = tostring(self.record)
-  -- draw_pixel_font("last lines", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastLinesLabelQuads)
-  -- draw_pixel_font(lastScore,    themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastLinesQuads)
-  -- draw_pixel_font("record",     themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
-  -- draw_pixel_font(record,       themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
 end
 
 return CharacterSelectVsSelf

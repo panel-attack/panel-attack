@@ -24,7 +24,7 @@ function CharacterSelect2p:customLoad(sceneParams)
 end
 
 function CharacterSelect2p:loadUserInterface()
-  self.ui.grid = Grid({unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
+  self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
