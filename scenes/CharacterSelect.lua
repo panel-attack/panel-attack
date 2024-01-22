@@ -18,6 +18,7 @@ local BoolSelector = require("ui.BoolSelector")
 local tableUtils = require("tableUtils")
 local UiElement = require("ui.UIElement")
 local GameModes = require("GameModes")
+local Signal    = require("helpers.signal")
 local GFX_SCALE = consts.GFX_SCALE
 local StackPanel = require("ui.StackPanel")
 local PixelFontLabel = require("ui.PixelFontLabel")
@@ -359,14 +360,16 @@ function CharacterSelect:createCharacterGrid(characterButtons, grid, width, heig
 end
 
 function CharacterSelect:createPageIndicator(pagedUniGrid)
-  local pageCounterLabel = Label({text = loc("page"), hAlign = "center", vAlign = "top", translate = false})
-  pageCounterLabel.drawSelf = function(self)
-    local text = loc("page") .. " " .. pagedUniGrid.currentPage .. "/" .. #pagedUniGrid.pages
-    if self.text ~= text then
-      self:setText(text, nil, false)
-    end
-    GraphicsUtil.drawClearText(self.drawable, self.x, self.y)
+  local pageCounterLabel = Label({
+    text = loc("page") .. " " .. pagedUniGrid.currentPage .. "/" .. #pagedUniGrid.pages,
+    hAlign = "center",
+    vAlign = "top",
+    translate = false
+  })
+  pageCounterLabel.updatePage = function(self, grid, page)
+    self:setText(loc("page") .. " " .. page .. "/" .. #pagedUniGrid.pages)
   end
+  Signal.connectSignal(pagedUniGrid, "pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
   return pageCounterLabel
 end
 
@@ -486,6 +489,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
     self:setValue(player.settings.level)
   end
 
+  -- wrap in an extra element so we can offset properly as levelslider is fixed height + width
   local uiElement = UiElement({height = height, hFill = true})
   Focusable(uiElement)
   uiElement.levelSlider = levelSlider
