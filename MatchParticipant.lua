@@ -73,22 +73,38 @@ function MatchParticipant:onPropertyChanged(property)
 end
 
 function MatchParticipant:setStage(stageId)
-  if stageId ~= self.settings.stageId then
-    stageId = StageLoader.resolveStageSelection(stageId)
-    self.settings.stageId = stageId
-    StageLoader.load(stageId)
+  if stageId ~= self.settings.selectedStageId then
+    self.settings.selectedStageId = StageLoader.resolveStageSelection(stageId)
+    self:onPropertyChanged("selectedStageId")
+  end
+  -- even if it's the same stage as before, refresh the pick, cause it could be bundle or random
+  self:refreshStage()
+end
 
+function MatchParticipant:refreshStage()
+  local currentId = self.settings.stageId
+  self.settings.stageId = StageLoader.resolveBundle(self.settings.selectedStageId)
+  if currentId ~= self.settings.stageId then
     self:onPropertyChanged("stageId")
+    CharacterLoader.load(self.settings.stageId)
   end
 end
 
 function MatchParticipant:setCharacter(characterId)
-  if characterId ~= self.settings.characterId then
-    characterId = CharacterLoader.resolveCharacterSelection(characterId)
-    self.settings.characterId = characterId
-    CharacterLoader.load(characterId)
+  if characterId ~= self.settings.selectedCharacterId then
+    self.settings.selectedCharacterId = CharacterLoader.resolveCharacterSelection(characterId)
+    self:onPropertyChanged("selectedCharacterId")
+  end
+  -- even if it's the same character as before, refresh the pick, cause it could be bundle or random
+  self:refreshCharacter()
+end
 
+function MatchParticipant:refreshCharacter()
+  local currentId = self.settings.characterId
+  self.settings.characterId = CharacterLoader.resolveBundle(self.settings.selectedCharacterId)
+  if currentId ~= self.settings.characterId then
     self:onPropertyChanged("characterId")
+    CharacterLoader.load(self.settings.characterId)
   end
 end
 
@@ -97,6 +113,19 @@ function MatchParticipant:setWantsReady(wantsReady)
     self.settings.wantsReady = wantsReady
     self:onPropertyChanged("wantsReady")
   end
+end
+
+-- a callback that runs whenever a match ended
+function MatchParticipant:onMatchEnded()
+   -- to prevent the game from instantly restarting, unready all players
+   if self.human then
+    self:setWantsReady(false)
+   end
+   if self.isLocal then
+     -- if they're local, refresh the character in case they use a bundle / random
+     self:refreshCharacter()
+     self:refreshStage()
+   end
 end
 
 return MatchParticipant

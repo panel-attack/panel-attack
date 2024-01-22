@@ -2,6 +2,7 @@ local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
 local consts = require("consts")
+local sceneManager = require("scenes.sceneManager")
 require("UpdatingImage")
 
 -- Stuff defined in this file:
@@ -15,6 +16,7 @@ local other_musics = {"normal_music", "danger_music", "normal_music_start", "dan
 local defaulted_musics = {} -- those musics will be defaulted if missing
 
 local default_stage = nil -- holds default assets fallbacks
+local randomStage = nil -- acts as the bundle stage for all theme stages
 
 Stage =
   class(
@@ -206,6 +208,10 @@ function stages_init()
   default_stage = Stage("stages/__default", "__default")
   default_stage:preload()
   default_stage:load(true)
+  
+  local randomStage = Stage.getRandomStage()
+  stages_ids[#stages_ids+1] = randomStage.id
+  stages[randomStage.id] = randomStage
 
   for _, stage in pairs(stages) do
     stage:preload()
@@ -214,19 +220,19 @@ end
 
 -- for reloading the graphics if the window was resized
 function stages_reload_graphics()
+  -- lazy load everything
+  for _, stage in pairs(stages) do
+    stage:graphics_init(false, false)
+  end
+
   -- reload the current stage graphics immediately
-  if stages[current_stage] then
-    stages[current_stage]:graphics_init(true, false)
-    if GAME and GAME.battleRoom and GAME.battleRoom.match then
+  local match = sceneManager.activeScene.match
+  if match and match.stageId then
+    if stages[match.stageId] then
+      stages[match.stageId]:graphics_init(true, false)
       -- for reasons, this is not drawn directly from the stage but from background image
       -- so override this while in a match
-      GAME.backgroundImage = UpdatingImage(stages[current_stage].images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
-    end
-  end
-  -- lazy load the rest
-  for _, stage in pairs(stages) do
-    if stage.id ~= current_stage then
-      stage:graphics_init(false, false)
+      GAME.backgroundImage = UpdatingImage(stages[match.stageId].images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
     end
   end
 end
@@ -301,4 +307,21 @@ function Stage.sound_uninit(self)
   for _, music in ipairs(other_musics) do
     self.musics[music] = nil
   end
+end
+
+local function loadRandomStage()
+  local randomStage = Stage("stages/__default", consts.RANDOM_STAGE_SPECIAL_VALUE)
+  randomStage.images["thumbnail"] = themes[config.theme].images.IMG_random_stage
+  randomStage.display_name = "random"
+  randomStage.sub_stages = stages_ids_for_current_theme
+  randomStage.preload = function() end
+  return randomStage
+end
+
+function Stage.getRandomStage()
+  if not randomStage then
+    randomStage = loadRandomStage()
+  end
+
+  return randomStage
 end

@@ -16,20 +16,22 @@ function StageCarousel:createPassenger(id, image, text)
   passenger.uiElement = StackPanel({alignment = "top", hFill = true, hAlign = "center", vAlign = "center"})
   passenger.image = ImageContainer({image = image, vAlign = "top", hAlign = "center", drawBorders = true, width = 80, height = 45})
   passenger.uiElement:addElement(passenger.image)
-  passenger.label = Label({text = text, translate = false, hAlign = "center"})
+  passenger.label = Label({text = text, translate = id == consts.RANDOM_STAGE_SPECIAL_VALUE, hAlign = "center"})
   passenger.uiElement:addElement(passenger.label)
   return passenger
 end
 
 function StageCarousel:loadCurrentStages()
-  for i = 1, #stages_ids_for_current_theme do
-    local stage = stages[stages_ids_for_current_theme[i]]
+  for i = 0, #stages_ids_for_current_theme do
+    local stage
+    if i == 0 then
+      stage = Stage.getRandomStage()
+    else
+      stage = stages[stages_ids_for_current_theme[i]]
+    end
     local passenger = StageCarousel:createPassenger(stage.id, stage.images.thumbnail, stage.display_name)
     self:addPassenger(passenger)
   end
-
-  local randomStage = StageCarousel:createPassenger(consts.RANDOM_STAGE_SPECIAL_VALUE, themes[config.theme].images.IMG_random_stage, "random")
-  self:addPassenger(randomStage)
 
   self:setPassengerById(config.stage)
 end

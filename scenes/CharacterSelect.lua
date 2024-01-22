@@ -62,12 +62,7 @@ function CharacterSelect:load()
 end
 
 function CharacterSelect:createSelectedCharacterIcon(player)
-  local icon
-  if player.settings.characterId == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
-    icon = themes[config.theme].images.IMG_random_character
-  else
-    icon = characters[player.settings.characterId].images.icon
-  end
+  local icon = characters[player.settings.selectedCharacterId].images.icon
 
   local selectedCharacterIcon = ImageContainer({
     hFill = true,
@@ -79,13 +74,9 @@ function CharacterSelect:createSelectedCharacterIcon(player)
 
    -- character image
    selectedCharacterIcon.updateImage = function(image, characterId)
-    if characterId == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
-      image:setImage(themes[config.theme].images.IMG_random_character)
-    else
-      image:setImage(characters[characterId].images.icon)
-    end
+    image:setImage(characters[characterId].images.icon)
   end
-  player:subscribe(selectedCharacterIcon, "characterId", selectedCharacterIcon.updateImage)
+  player:subscribe(selectedCharacterIcon, "selectedCharacterId", selectedCharacterIcon.updateImage)
 
   return selectedCharacterIcon
 end
@@ -136,15 +127,13 @@ function CharacterSelect:createStageCarousel(player, width)
   end
 
   stageCarousel.onBackCallback = function()
-    stageCarousel:setPassengerById(player.settings.stageId)
+    stageCarousel:setPassengerById(player.settings.selectedStageId)
   end
 
-  stageCarousel.onPassengerUpdateCallback = function ()
-    player:setStage(stageCarousel:getSelectedPassenger().id)
-  end
+  stageCarousel:setPassengerById(player.settings.selectedStageId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(stageCarousel, "stageId", stageCarousel.setPassengerById)
+  player:subscribe(stageCarousel, "selectedStageId", stageCarousel.setPassengerById)
 
   return stageCarousel
 end
@@ -166,25 +155,24 @@ local super_select_pixelcode = [[
 function CharacterSelect:getCharacterButtons()
   local characterButtons = {}
 
-  local randomCharacterButton = Button({hFill = true, vFill = true})
-  randomCharacterButton.characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE
-  randomCharacterButton.image = ImageContainer({image = themes[config.theme].images.IMG_random_character, hFill = true, vFill = true})
-  randomCharacterButton:addChild(randomCharacterButton.image)
-  randomCharacterButton.label = Label({text = "random", translate = true, vAlign = "bottom", hAlign = "center"})
-  randomCharacterButton:addChild(randomCharacterButton.label)
-
-  characterButtons[#characterButtons + 1] = randomCharacterButton
-
-  for i = 1, #characters_ids_for_current_theme do
+  for i = 0, #characters_ids_for_current_theme do
     local characterButton = Button({
       width = 96,
       height = 96,
     })
-    characterButton.image = ImageContainer({image = characters[characters_ids_for_current_theme[i]].images.icon, hFill = true, vFill = true})
+
+    local character
+    if i == 0 then
+      character = Character.getRandomCharacter()
+    else
+      character = characters[characters_ids_for_current_theme[i]]
+    end
+    
+    characterButton.characterId = character.id
+    characterButton.image = ImageContainer({image = character.images.icon, hFill = true, vFill = true})
     characterButton:addChild(characterButton.image)
-    characterButton.label = Label({text = characters[characters_ids_for_current_theme[i]].display_name, translate = false, vAlign = "bottom", hAlign = "center"})
+    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "bottom", hAlign = "center"})
     characterButton:addChild(characterButton.label)
-    characterButton.characterId = characters_ids_for_current_theme[i]
     characterButtons[#characterButtons + 1] = characterButton
   end
 
@@ -344,6 +332,8 @@ function CharacterSelect:createPanelCarousel(player, height)
     player:setPanels(panelCarousel:getSelectedPassenger().id)
   end
 
+  panelCarousel:setPassengerById(player.settings.panelId)
+
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
 
@@ -432,8 +422,10 @@ function CharacterSelect:createRankedSelection(player, width)
 end
 
 function CharacterSelect:update(dt)
-  for i = 1, #self.ui.cursors do
-    self.ui.cursors[i]:receiveInputs(self.ui.cursors[i].player.inputConfiguration, dt)
+  for _, cursor in ipairs(self.ui.cursors) do
+    if cursor.player.isLocal and cursor.player.human then
+      cursor:receiveInputs(cursor.player.inputConfiguration, dt)
+    end
   end
   if GAME.battleRoom and GAME.battleRoom.spectating then
     if input.isDown["MenuEsc"] then

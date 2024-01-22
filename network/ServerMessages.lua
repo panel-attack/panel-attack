@@ -37,13 +37,9 @@ function ServerMessages.sanitizeMenuState(menuState)
   local sanitized = { sanitized = true}
   sanitized.panelId = menuState.panels_dir
   sanitized.characterId = menuState.character
-  if menuState.character_is_random ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE then
-    sanitized.selectedCharacterId = menuState.character_is_random
-  end
+  sanitized.selectedCharacterId = menuState.character_is_random
   sanitized.stageId = menuState.stage
-  if menuState.stage_is_random ~= consts.RANDOM_STAGE_SPECIAL_VALUE then
-    sanitized.selectedStageId = menuState.stage_is_random
-  end
+  sanitized.selectedStageId = menuState.stage_is_random
   sanitized.level = menuState.level
   sanitized.wantsRanked = menuState.ranked
 
@@ -129,7 +125,9 @@ function ServerMessages.toServerMenuState(player)
     }
   --]]
   local menuState = {}
+  menuState.stage_is_random = player.settings.selectedStageId
   menuState.stage = player.settings.stageId
+  menuState.character_is_random = player.settings.selectedCharacterId
   menuState.character = player.settings.characterId
   menuState.panels_dir = player.settings.panelId
   menuState.wants_ready = player.settings.wantsReady

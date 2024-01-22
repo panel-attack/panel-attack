@@ -9,8 +9,9 @@ local StackBase = class(function(self, args)
   assert(args.character)
   self.which = args.which
   self.is_local = args.is_local
-  self.character = CharacterLoader.resolveCharacterSelection(args.character)
+  self.character = CharacterLoader.fullyResolveCharacterSelection(args.character)
   CharacterLoader.load(self.character)
+  CharacterLoader.wait()
 
   -- basics
   self.framesBehindArray = {}

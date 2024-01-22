@@ -1040,7 +1040,7 @@ function Stack.enqueue_card(self, chain, x, y, n)
 end
 
 function Stack:wait_for_random_character()
-  self.character = CharacterLoader.resolveCharacterSelection(self.character)
+  self.character = CharacterLoader.fullyResolveCharacterSelection(self.character)
   CharacterLoader.load(self.character)
   CharacterLoader.wait()
 end

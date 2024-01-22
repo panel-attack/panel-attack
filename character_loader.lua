@@ -176,6 +176,10 @@ function CharacterLoader.initCharacters()
 
   -- actual init for all characters, starting with the default one
   Character.loadDefaultCharacter()
+  -- add the random character as a character that acts as a bundle for all theme characters
+  local randomCharacter = Character.getRandomCharacter()
+  characters_ids[#characters_ids + 1] = randomCharacter.id
+  characters[randomCharacter.id] = randomCharacter
 
   for _, character in pairs(characters) do
     character:preload()
@@ -198,7 +202,6 @@ function CharacterLoader.resolveCharacterSelection(characterId)
     -- resolve via random selection
     characterId = tableUtils.getRandomElement(characters_ids_for_current_theme)
   end
-  characterId = CharacterLoader.resolveBundle(characterId)
 
   return characterId
 end
@@ -209,4 +212,9 @@ function CharacterLoader.resolveBundle(characterId)
   end
 
   return characterId
+end
+
+function CharacterLoader.fullyResolveCharacterSelection(characterId)
+  characterId = CharacterLoader.resolveCharacterSelection(characterId)
+  return CharacterLoader.resolveBundle(characterId)
 end
