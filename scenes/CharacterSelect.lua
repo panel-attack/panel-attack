@@ -243,6 +243,7 @@ function CharacterSelect:getCharacterButtons()
           player:setStage(character.stage)
         end
       end
+      character:playSelectionSfx()
       player:setCharacter(self.characterId)
       player.cursor:updatePosition(9, 2)
     end
