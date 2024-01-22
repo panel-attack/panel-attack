@@ -38,7 +38,7 @@ local OnePlayerTimeAttack = {
   playerCount = 1,
   stackInteraction = StackInteractions.NONE,
   winConditions = { },
-  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH, GameOverConditions.TIME_OUT },
+  gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
   timeLimit = TIME_ATTACK_TIME,
 }

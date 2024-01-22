@@ -305,7 +305,6 @@ function BattleRoom.onStyleChanged(style, player)
 end
 
 function BattleRoom:addPuzzle(puzzle)
-  assert(self.mode.needsPuzzle, "Trying to set a puzzle for a non-puzzle mode")
   self.puzzles[#self.puzzles + 1] = puzzle
 end
 
