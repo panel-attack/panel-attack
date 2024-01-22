@@ -287,21 +287,21 @@ An icon will be display next to the character's name in character select if a fi
 
 ### PopFX configuration
 
-I vaguely remember there was something wrong with this documentation, so I'm leaving this out for now.
-
 #### popfx_style
+The style of popfx to use, options:  
+ "burst" (default) - Shows the burst image of the character coming out of panels and circling attack cards  
+ "fade" - Shows the fade image of the character as the matched panels disappear  
+ "fadeburst" - Shows both the burst and fade animations
 
-#### popfx_rotation
+#### popfx_burstRotate
+If this option set to true, the burst popfx up, down, left, and right particles rotate to point to the direction they are moving in.
+Default is false.
 
-#### burst_scale
+#### popfx_burstScale
+The scale of the burst popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
 
-#### fade_scale
-	PopFX options:
-	- (popfx_style): The style of popfx to use, options: "burst" (default), "fade", "fadeburst"
-	- (popfx_rotation): If this option set to true, the burst popfx up, down, left, and right particles rotate to point to the direction they are moving in. Default is false.
-	- (burst_scale): The scale of the burst popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
-	- (fade_scale): The scale of the fade popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
-
+#### popfx_fadeScale
+The scale of the fade popfx, default is 1, 2 means twice the size, 0.5 half the size, etc.
 
 -----------------------------------------------------------
 

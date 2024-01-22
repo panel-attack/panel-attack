@@ -78,7 +78,7 @@ function Character.json_init(self)
 
     --popfx_burstRotate
     if read_data.popfx_burstRotate and type(read_data.popfx_burstRotate) == "boolean" then
-      self.popfx_burstRrotate = read_data.popfx_burstRotate
+      self.popfx_burstRotate = read_data.popfx_burstRotate
     end
 
     --popfx_type

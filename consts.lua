@@ -96,7 +96,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 
--- frames to use for the card animation
+-- frames of the card animation and corresponding y offset
 card_animation = {false,
    -1, 0, 1, 2, 3, 4, 4, 5, 5, 6,
    6, 7, 7, 8, 8, 8, 9, 9, 9, 9,
