@@ -48,7 +48,7 @@ function CharacterSelect2p:loadUserInterface()
   self.ui.rankedSelection:addChild(falseLabel)
 
   local levelHeight
-  local panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2 - 12 -- 12 as standard font size?
+  local panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / #GAME.battleRoom.players - self.ui.panelSelection.height
   local stageWidth
   local rankedWidth
 

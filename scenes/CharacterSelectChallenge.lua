@@ -25,7 +25,7 @@ function CharacterSelectChallenge:loadUserInterface()
   self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
-  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
   self.ui.panelSelection:setTitle("panels")
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
   self.ui.stageSelection:setTitle("stage")
@@ -42,8 +42,8 @@ function CharacterSelectChallenge:loadUserInterface()
   self.ui.grid:createElementAt(1, 2, 3, 1, "panelSelection", self.ui.panelSelection)
   self.ui.grid:createElementAt(4, 2, 3, 1, "stageSelection", self.ui.stageSelection)
 
-  panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2
-  stageWidth = self.ui.grid.unitSize - self.ui.grid.unitMargin * 2
+  panelHeight = self.ui.grid.unitSize - self.ui.grid.unitMargin * 2- self.ui.panelSelection.height
+  stageWidth = self.ui.grid.unitSize * 1.5 - self.ui.grid.unitMargin * 2
   rankedWidth = stageWidth
 
   self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)

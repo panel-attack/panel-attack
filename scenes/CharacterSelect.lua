@@ -188,11 +188,18 @@ function CharacterSelect:createStageCarousel(player, width)
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
   local playerNumberIcon = ImageContainer({
     image = themes[config.theme].images.IMG_players[playerIndex],
-    hAlign = "center",
-    vAlign = "top",
     scale = 2,
-    y = 2
   })
+
+  if #GAME.battleRoom.players > 1 then
+    playerNumberIcon.hAlign = "center"
+    playerNumberIcon.vAlign = "top"
+    playerNumberIcon.y = 2
+  else
+    playerNumberIcon.hAlign = "left"
+    playerNumberIcon.vAlign = "center"
+    playerNumberIcon.x = (width - stageCarousel:getSelectedPassenger().image.width) / 2 - playerNumberIcon.width - 4
+  end
 
   stageCarousel.playerNumberIcon = playerNumberIcon
   stageCarousel:addChild(stageCarousel.playerNumberIcon)

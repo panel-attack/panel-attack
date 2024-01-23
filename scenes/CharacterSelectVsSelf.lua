@@ -41,9 +41,9 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.recordBox = self:createRecordsBox()
   self.ui.grid:createElementAt(2, 1, 2, 1, "recordBox", self.ui.recordBox)
 
-  local panelCarousel = self:createPanelCarousel(player, 96)
-  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
   self.ui.panelSelection:setTitle("panels")
+  local panelCarousel = self:createPanelCarousel(player, self.ui.grid.unitSize - self.ui.grid.unitMargin * 2 - self.ui.panelSelection.height)
   self.ui.panelSelection:addElement(panelCarousel, player)
   self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
 
@@ -53,7 +53,9 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.stageSelection:addElement(stageCarousel, player)
   self.ui.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.ui.stageSelection)
 
-  local levelSlider = self:createLevelSlider(player, 20)
+  self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
+  self.ui.levelSelection:setTitle("level")
+  local levelSlider = self:createLevelSlider(player, 20, self.ui.grid.unitSize - self.ui.grid.unitMargin * 2 - self.ui.levelSelection.height)
   local oldOnValueChange = levelSlider.onValueChange
   levelSlider.onValueChange = function(ls)
     oldOnValueChange(ls)
@@ -62,8 +64,6 @@ function CharacterSelectVsSelf:loadUserInterface()
     self.ui.recordBox:setLastLines(self.lastScore)
     self.ui.recordBox:setRecord(self.record)
   end
-  self.ui.levelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
-  self.ui.levelSelection:setTitle("level")
   self.ui.levelSelection:addElement(levelSlider, player)
   self.ui.grid:createElementAt(6, 2, 3, 1, "levelSelection", self.ui.levelSelection)
 
