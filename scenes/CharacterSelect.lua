@@ -617,8 +617,14 @@ function CharacterSelect:createPlayerInfo(player)
     text = player.rating or "",
     translate = false
   })
-  stackPanel.ratingLabel.update = function(self, rating)
-    self:setText(tostring(rating), nil, false)
+  stackPanel.ratingLabel.update = function(self, rating, ratingDiff)
+    if ratingDiff > 0 then
+      self:setText(tostring(rating) .. " (+" .. ratingDiff .. ")", nil, false)
+    elseif ratingDiff < 0 then
+      self:setText(tostring(rating) .. " (" .. ratingDiff .. ")", nil, false)
+    else
+      self:setText(tostring(rating), nil, false)
+    end
   end
 
   stackPanel.winsLabel = Label({

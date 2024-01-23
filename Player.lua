@@ -102,7 +102,11 @@ function Player:createStackFromSettings(match, which)
 end
 
 function Player:getRatingDiff()
-  return self.rating.new - self.rating.old
+  if self.rating and tonumber(self.rating) and #self.ratingHistory > 0 then
+    return self.rating - self.ratingHistory[#self.ratingHistory]
+  else
+    return 0
+  end
 end
 
 function Player:setPanels(panelId)
@@ -214,7 +218,7 @@ function Player:setRating(rating)
     self.ratingHistory[#self.ratingHistory + 1] = self.rating
   end
   self.rating = rating
-  self.ratingChanged(rating)
+  self.ratingChanged(rating, self:getRatingDiff())
 end
 
 function Player:setLeague(league)
