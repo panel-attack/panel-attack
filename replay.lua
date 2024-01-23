@@ -148,7 +148,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
   P1.max_runs_per_frame = 1
   P1.cur_wait_time = replayDetails.cur_wait_time or default_input_repeat_delay
 
-  refreshBasedOnOwnMods(P1)
+  refreshBasedOnOwnMods(P1, GAME.match.players)
 
   if P2 then
     P2:receiveConfirmedInput(uncompress_input_string(replayDetails.I))
@@ -157,7 +157,7 @@ function Replay.loadFromFile(replay, wantsCanvas)
     P2.do_countdown = replayDetails.do_countdown or false
     P2.max_runs_per_frame = 1
     P2.cur_wait_time = replayDetails.P2_cur_wait_time or default_input_repeat_delay
-    refreshBasedOnOwnMods(P2)
+    refreshBasedOnOwnMods(P2, GAME.match.players)
   end
   CharacterLoader.wait()
 
