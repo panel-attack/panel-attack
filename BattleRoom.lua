@@ -148,10 +148,8 @@ function BattleRoom:updateWinrates()
   for _, player in ipairs(self.players) do
     if gamesPlayed > 0 then
       local winrate = 100 * round(player.wins / gamesPlayed, 2)
-      logger.info("winrate of " .. winrate)
       player:setWinrate(winrate)
     else
-      logger.info("winrate of " .. 0)
       player:setWinrate(0)
     end
   end

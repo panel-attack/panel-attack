@@ -45,11 +45,6 @@ function MatchParticipant:incrementWinCount()
 end
 
 function MatchParticipant:setWinrate(winrate)
-  if winrate then
-    logger.info("setting winrate of " .. winrate)
-  else
-    logger.info("got nil passed as winrate")
-  end
   self.winrate = winrate
   self.winrateChanged(winrate)
 end
