@@ -429,17 +429,15 @@ end
 -- ox: Origin offset (x-axis).
 -- oy: Origin offset (y-axis).
 function GraphicsUtil.drawClearText(text, x, y, ox, oy)
-  if GAME.isDrawing then
-    love.graphics.setColor(0, 0, 0, 1)
-    love.graphics.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
-    love.graphics.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
-    love.graphics.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
-    love.graphics.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
-  
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
-    love.graphics.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
-  end
+  love.graphics.setColor(0, 0, 0, 1)
+  love.graphics.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
+  love.graphics.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
+  love.graphics.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
+  love.graphics.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
+
+  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
+  love.graphics.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
 end
 
 function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
