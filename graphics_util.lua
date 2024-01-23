@@ -12,6 +12,39 @@ GraphicsUtil = {
   quadPool = {}
 }
 
+-- A pixel font map to use with numbers
+local numberPixelFontMap = {}
+--0-9 = 0-9
+for i = 0, 9, 1 do
+  numberPixelFontMap[tostring(i)] = i
+end
+
+-- A pixel font map to use with times
+local timePixelFontMap = {}
+--0-9 = 0-9
+for i = 0, 9, 1 do
+  timePixelFontMap[tostring(i)] = i
+end
+timePixelFontMap[":"] = 10
+timePixelFontMap["'"] = 11
+
+-- A pixel font map to use with strings
+local standardPixelFontmap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
+--0-9 = 0-9
+for i = 0, 9, 1 do
+  standardPixelFontmap[tostring(i)] = i
+end
+
+--10-35 = A-Z
+for i = 10, 35, 1 do
+  local characterString = string.char(97+(i-10))
+  standardPixelFontmap[characterString] = i
+end
+
+GraphicsUtil.numberPixelFontMap = numberPixelFontMap
+GraphicsUtil.timePixelFontMap = timePixelFontMap
+GraphicsUtil.standardPixelFontMap = standardPixelFontmap
+
 function GraphicsUtil.privateLoadImage(path_and_name)
   local image = nil
   local status = pcall(
@@ -90,36 +123,6 @@ function GraphicsUtil.draw(img, x, y, rot, x_scale,y_scale)
   love.graphics.draw(img, x, y, rot, x_scale, y_scale)
 end
 
--- A pixel font map to use with numbers
-local numberPixelFontMap = {}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  numberPixelFontMap[tostring(i)] = i
-end
-
--- A pixel font map to use with times
-local timePixelFontMap = {}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  timePixelFontMap[tostring(i)] = i
-end
-timePixelFontMap[":"] = 10
-timePixelFontMap["'"] = 11
-
--- A pixel font map to use with strings
-local standardPixelFontmap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  standardPixelFontmap[tostring(i)] = i
-end
-
---10-35 = A-Z
-for i = 10, 35, 1 do
-  local characterString = string.char(97+(i-10))
-  standardPixelFontmap[characterString] = i
-end
-
-
 -- Draws the given string with the given pixel font image atlas
 -- string - the string to draw
 -- TODO support both upper and lower case
@@ -129,7 +132,7 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   align = align or "left"
-  font_map = font_map or standardPixelFontmap
+  font_map = font_map or GraphicsUtil.standardPixelFontmap
   assert(quads ~= nil)
 
   local atlasFrameCount = tableUtils.length(font_map)
@@ -190,7 +193,7 @@ end
 -- string - the string to draw
 -- atlas - the image to use as the pixel font
 function draw_pixel_font(string, atlas, x, y, x_scale, y_scale, align, characterSpacing, quads)
-  drawPixelFontWithMap(string, atlas, standardPixelFontmap, x, y, x_scale, y_scale, align, characterSpacing, quads)
+  drawPixelFontWithMap(string, atlas, GraphicsUtil.standardPixelFontmap, x, y, x_scale, y_scale, align, characterSpacing, quads)
 end
 
 local maxQuadPool = 100
