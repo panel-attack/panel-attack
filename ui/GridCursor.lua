@@ -125,8 +125,8 @@ function GridCursor:drawSelf()
   local element = self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
   local x, y = element:getScreenPos()
   if drawThisFrame then
-    menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
-    menu_drawq(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+    GraphicsUtil.drawQuad(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
+    GraphicsUtil.drawQuad(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
   end
 end
 

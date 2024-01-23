@@ -28,7 +28,7 @@ local StackBase = class(function(self, args)
   self.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
   -- graphics
-  self.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
+  self.canvas = love.graphics.newCanvas(312, 612, {dpiscale = GAME:newCanvasSnappedScale()})
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
   self.wins_quads = {}
 end)
@@ -145,7 +145,7 @@ function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, ro
   local x = self:elementOriginXWithOffset(themePositionOffset, false)
   local y = self:elementOriginYWithOffset(themePositionOffset, false)
   quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
-  qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
+  GraphicsUtil.drawQuad(image, quad, x, y - height - yOffset, rotate, scale, scale * barYScale, 0, 0, self.mirror_x)
 end
 
 function StackBase:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)

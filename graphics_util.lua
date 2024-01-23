@@ -218,21 +218,27 @@ function GraphicsUtil:releaseQuad(quad)
   end
 end
 
--- Draws an image at the given position, using the quad for the viewport
-function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirror)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  x_offset = x_offset or 0
-  y_offset = y_offset or 0
-  mirror = mirror or 0
+-- Draws an image at the given position, using the quad for the viewport, scaling all coordinate values and scales by GFX_SCALE
+function GraphicsUtil.drawQuadGfxScaled(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset, mirror)
+  xScale = xScale or 1
+  yScale = yScale or 1
 
-  local qX, qY, qW, qH = quad:getViewport()
-  if mirror == 1 then
-    x = x - (qW*x_scale)
+  if mirror and mirror == 1 then
+    local qX, qY, qW, qH = quad:getViewport()
+    x = x - (qW*xScale)
   end
 
-  love.graphics.draw(img, quad, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset)
+  love.graphics.draw(image, quad, x * GFX_SCALE, y * GFX_SCALE, rotation, xScale * GFX_SCALE, yScale * GFX_SCALE, xOffset, yOffset)
+end
+
+-- Draws an image at the given position, using the quad for the viewport
+function GraphicsUtil.drawQuad(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset, mirror)
+  if mirror and mirror == 1 then
+    local qX, qY, qW, qH = quad:getViewport()
+    x = x - (qW*xScale)
+  end
+
+  love.graphics.draw(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset)
 end
 
 function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
@@ -253,14 +259,6 @@ function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
   end
 
   love.graphics.draw(img, x, y, rot, x_scale, y_scale)
-end
-
-function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-
-  love.graphics.draw(img, quad, x, y, rot, x_scale, y_scale)
 end
 
 -- Draws a rectangle at the given coordinates

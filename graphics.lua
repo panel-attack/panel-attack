@@ -104,7 +104,7 @@ function Stack.draw_cards(self)
         for i = 1, 6, 1 do
           local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
           local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
-          qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
+          GraphicsUtil.drawQuadGfxScaled(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
         end
       end
       -- draw card
@@ -225,39 +225,39 @@ function Stack.draw_popfxs(self)
 
           -- four corner
           if big_position ~= 1 then
-            qdraw(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           if big_position ~= 2 then
-            qdraw(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           if big_position ~= 3 then
-            qdraw(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           if big_position ~= 4 then
-            qdraw(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           -- top and bottom
           if popfx.popsize == "big" or popfx.popsize == "giant" then
             if big_position ~= 5 then
-              qdraw(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
             if big_position ~= 6 then
-              qdraw(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
           end
           -- left and right
           if popfx.popsize == "giant" then
             if big_position ~= 7 then
-              qdraw(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
             if big_position ~= 8 then
-              qdraw(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
           end
         --big particle
         --[[
           if popsize ~= "small" then
-            qdraw(particle_atlas, popfx.bigParticle, 
+            GraphicsUtil.drawQuadGfxScaled(particle_atlas, popfx.bigParticle, 
             positions[big_position].x, positions[big_position].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2)
           end
         ]]
@@ -269,7 +269,7 @@ function Stack.draw_popfxs(self)
         fadeFrame = POPFX_FADE_ANIMATION[popfx.frame]
         if (fadeFrame ~= nil) then
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          qdraw(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          GraphicsUtil.drawQuadGfxScaled(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
@@ -511,9 +511,9 @@ function Stack.render_cursor(self)
   end
   if renderCursor then
     local xPosition = (self.cur_col - 1) * panelWidth
-    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    GraphicsUtil.drawQuadGfxScaled(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     if self.inputMethod == "touch" then
-      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+      GraphicsUtil.drawQuadGfxScaled(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     end
   end
 end
@@ -545,7 +545,7 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   self.healthQuad:setViewport(0, self.theme.images.IMG_healthbar:getHeight() - healthbar, self.theme.images.IMG_healthbar:getWidth(), healthbar)
   local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / GFX_SCALE
   local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / GFX_SCALE
-  qdraw(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
+  GraphicsUtil.drawQuadGfxScaled(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
 
   -- Prestop bar
   if self.pre_stop_time == 0 or self.maxPrestop == nil then
@@ -586,18 +586,18 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   self.multi_prestopQuad:setViewport(0, self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, self.theme.images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
 
   --Shake
-  x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
-  y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
+  x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false)
+  y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false)
   if self.theme.images.IMG_multibar_shake_bar then
-    qdraw(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, (y + ((self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, y + self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar, 0, self.theme.multibar_Scale, self.theme.multibar_Scale, 0, 0, self.multiplication)
   end
   --Stop
   if self.theme.images.IMG_multibar_stop_bar then
-    qdraw(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, ((y - (multi_shake_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, y - multi_shake_bar + self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, 0, self.theme.multibar_Scale, self.theme.multibar_Scale, 0, 0, self.multiplication)
   end
   -- Prestop
   if self.theme.images.IMG_multibar_prestop_bar then
-    qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, ((y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, y - multi_shake_bar + multi_stop_bar + self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, 0, self.theme.multibar_Scale, self.theme.multibar_Scale, 0, 0, self.multiplication)
   end
 end
 
@@ -615,11 +615,11 @@ function Stack:drawLevel()
   if self.level then
     self:drawLabel(self.theme.images["IMG_level_" .. self.which .. "P"], self.theme.levelLabel_Pos, self.theme.levelLabel_Scale)
 
-    local x = self:elementOriginXWithOffset(self.theme.level_Pos, false) / GFX_SCALE
-    local y = self:elementOriginYWithOffset(self.theme.level_Pos, false) / GFX_SCALE
+    local x = self:elementOriginXWithOffset(self.theme.level_Pos, false)
+    local y = self:elementOriginYWithOffset(self.theme.level_Pos, false)
     local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
     self.level_quad:setViewport(tonumber(self.level - 1) * levelAtlas.charWidth, 0, levelAtlas.charWidth, levelAtlas.charHeight, levelAtlas.image:getDimensions())
-    qdraw(levelAtlas.image, self.level_quad, x, y, 0, (28 / levelAtlas.charWidth * self.theme.level_Scale) / GFX_SCALE, (26 / levelAtlas.charHeight * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(levelAtlas.image, self.level_quad, x, y, 0, 28 / levelAtlas.charWidth * self.theme.level_Scale, 26 / levelAtlas.charHeight * self.theme.level_Scale, 0, 0, self.multiplication)
   end
 end
 
