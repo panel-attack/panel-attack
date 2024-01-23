@@ -100,7 +100,7 @@ function Match:render()
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
         local x = 5
         local y = 30
-        draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
       end
     else
       if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > MAX_LAG * 0.75 end) then
@@ -109,7 +109,7 @@ function Match:render()
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
         local x = (consts.CANVAS_WIDTH / 2) - (iconSize / 2)
         local y = (consts.CANVAS_HEIGHT / 2) - (iconSize / 2)
-        draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
       end
     end
   end

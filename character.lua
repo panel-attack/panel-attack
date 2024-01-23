@@ -417,7 +417,7 @@ function Character:drawPortrait(stackNumber, x, y, fade)
     portraitImageX = portraitImageX + portraitWidth
     portraitMirror = -1
   end
-  draw(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
+  drawGfxScaled(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
   if fade > 0 then
     GraphicsUtil.drawRectangle("fill", x * GFX_SCALE, y * GFX_SCALE, portraitWidth * GFX_SCALE, portraitHeight * GFX_SCALE, 0, 0, 0, fade)
   end

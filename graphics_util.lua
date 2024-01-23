@@ -80,15 +80,12 @@ function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
   end
 end
 
--- Draws an image at the given spot
-function draw(img, x, y, rot, x_scale, y_scale)
-  love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE)
-end
-
+-- Draws an image at the given spot while scaling all coordinate and scale values with GFX_SCALE
 function drawGfxScaled(img, x, y, rot, xScale, yScale)
   love.graphics.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
 end
 
+-- Draws an image, texture or canvas at the given spot
 function GraphicsUtil.draw(img, x, y, rot, x_scale,y_scale)
   love.graphics.draw(img, x, y, rot, x_scale, y_scale)
 end
