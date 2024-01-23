@@ -34,6 +34,7 @@ local Player = class(function(self, name, publicId, isLocal)
   }
   -- planned for the future, players don't have public ids yet
   self.publicId = publicId or -1
+  self.league = nil
   self.rating = nil
   self.ratingHistory = {}
   self.stack = nil
@@ -57,6 +58,7 @@ local Player = class(function(self, name, publicId, isLocal)
   Signal.addSignal(self, "attackEngineSettingsChanged")
   Signal.addSignal(self, "puzzleSetChanged")
   Signal.addSignal(self, "ratingChanged")
+  Signal.addSignal(self, "leagueChanged")
   Signal.addSignal(self, "wantsRankedChanged")
   Signal.addSignal(self, "hasLoadedChanged")
 
@@ -212,6 +214,13 @@ function Player:setRating(rating)
   end
   self.rating = rating
   self.ratingChanged(rating)
+end
+
+function Player:setLeague(league)
+  if self.league ~= league then
+    self.league = league
+    self.leagueChanged(league)
+  end
 end
 
 function Player:setAttackEngineSettings(attackEngineSettings)

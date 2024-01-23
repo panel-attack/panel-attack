@@ -24,7 +24,6 @@ panels = {} -- initialized in panels.lua
 panels_ids = {} -- initialized in panels.lua
 
 replay = {}
-match_type = "Casual"
 
 -- sfx play
 SFX_Fanfare_Play = 0

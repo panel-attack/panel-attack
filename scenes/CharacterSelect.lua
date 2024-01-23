@@ -60,6 +60,7 @@ function CharacterSelect:load()
   self.ui = {}
   self.ui.cursors = {}
   self.ui.characterIcons = {}
+  self.ui.playerInfos = {}
   self:customLoad()
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
@@ -602,12 +603,62 @@ end
 function CharacterSelect:createPlayerInfo(player)
   local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "top"})
 
-  stackPanel.leagueLabel = Label({text = loc("ss_rating") .. " " .. (player.rating.league or "none"), translate = false})
-  stackPanel.ratingLabel = Label({text = player.rating.new or player.rating.placement_match_progress, translate = false})
-  stackPanel.winsLabel = Label({text = loc("ss_wins") .. " " .. player:getWinCountForDisplay(), translate = false})
-  stackPanel.winrateLabel = Label({text = "ss_winrate"})
-  stackPanel.winrateValueLabel = Label({text = loc("ss_current_rating" .. tostring(player.winrate) .. "%"), translate = false})
-  stackPanel.winrateExpectedLabel = Label({text = loc("ss_expected_rating") .. " " .. player.expectedWinrate .. "%"})
+  stackPanel.leagueLabel = Label({
+    x = 4,
+    text = loc("ss_rating") .. " " .. ((player.rating and player.rating.league) or "none"),
+    translate = false
+  })
+  stackPanel.leagueLabel.update = function(self, league)
+    self:setText(loc("ss_rating") .. " " .. (league or "none"))
+  end
+
+  stackPanel.ratingLabel = Label({
+    text = player.rating or "",
+    translate = false
+  })
+  stackPanel.ratingLabel.update = function(self, rating)
+    self:setText(tostring(rating), nil, false)
+  end
+
+  stackPanel.winsLabel = Label({
+    x = 4,
+    text = loc("ss_wins") .. " " .. player:getWinCountForDisplay(),
+    translate = false
+  })
+  stackPanel.winsLabel.update = function(self, winCount)
+    self:setText(loc("ss_wins") .. " " .. winCount, nil, false)
+  end
+
+  stackPanel.winrateLabel = Label({
+    x = 4,
+    text = "ss_winrate"
+  })
+
+  stackPanel.winrateValueLabel = Label({
+    x = 4,
+    text = "  " .. loc("ss_current_rating") .. " " .. tostring(player.winrate) .. "%",
+    translate = false
+  })
+  stackPanel.winrateValueLabel.update = function(self, winrate)
+    self:setText(loc("  " .. loc("ss_current_rating") .. tostring(winrate) .. "%", nil, false))
+  end
+
+  stackPanel.winrateExpectedLabel = Label({
+    x = 4,
+    text = ""
+  })
+  if GAME.battleRoom.ranked then
+    stackPanel.winrateExpectedLabel:setText(loc("ss_expected_rating") .. " " .. player.expectedWinrate .. "%")
+  end
+  stackPanel.winrateExpectedLabel.update = function(self, expectedWinrate)
+    self:setText("  " .. loc("ss_expected_rating") .. tostring(expectedWinrate) .. "%", nil, false)
+  end
+
+  Signal.connectSignal(player, "leagueChanged", stackPanel.leagueLabel, stackPanel.leagueLabel.update)
+  Signal.connectSignal(player, "ratingChanged", stackPanel.ratingLabel, stackPanel.ratingLabel.update)
+  Signal.connectSignal(player, "winsChanged", stackPanel.winsLabel, stackPanel.winsLabel.update)
+  Signal.connectSignal(player, "winrateChanged", stackPanel.winrateValueLabel, stackPanel.winrateValueLabel.update)
+  Signal.connectSignal(player, "expectedWinrateChanged", stackPanel.winrateExpectedLabel, stackPanel.winrateExpectedLabel.update)
 
   stackPanel:addElement(stackPanel.leagueLabel)
   stackPanel:addElement(stackPanel.ratingLabel)

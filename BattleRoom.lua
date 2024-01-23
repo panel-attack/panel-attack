@@ -26,6 +26,8 @@ BattleRoom = class(function(self, mode)
     -- this is a bit naive but effective for now
     self.online = true
   end
+
+  Signal.add(self, "rankedStatusChanged")
 end)
 
 -- defining these here so they're available in network.BattleRoom too
@@ -134,9 +136,9 @@ end
 function BattleRoom:updateWinrates()
   for _, player in ipairs(self.players) do
     if self.matchesPlayed > 0 then
-      player.winrate = 100 * round(player.wins / self.matchesPlayed, 2)
+      player:setWinrate(100 * round(player.wins / self.matchesPlayed, 2))
     else
-      player.winrate = 0
+      player:setWinrate(0)
     end
   end
 end
@@ -153,8 +155,8 @@ function BattleRoom:updateExpectedWinrates()
   -- this isn't feasible to do for n-player matchups at this point
   local p1 = self.players[1]
   local p2 = self.players[2]
-  p1.expectedWinrate = (100 * round(1 / (1 + 10 ^ ((p2.rating.new - p1.rating.new) / RATING_SPREAD_MODIFIER)), 2))
-  p2.expectedWinrate = (100 * round(1 / (1 + 10 ^ ((p1.rating.new - p2.rating.new) / RATING_SPREAD_MODIFIER)), 2))
+  p1:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p2.rating.new - p1.rating.new) / RATING_SPREAD_MODIFIER)), 2)))
+  p2:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p1.rating.new - p2.rating.new) / RATING_SPREAD_MODIFIER)), 2)))
 end
 
 -- returns the total amount of games played, derived from the sum of wins across all players
@@ -184,7 +186,7 @@ end
 -- creates a match with the players in the BattleRoom
 function BattleRoom:createMatch()
   local supportsPause = not self.online or #self.players == 1
-  local optionalArgs = { timeLimit = self.mode.timeLimit }
+  local optionalArgs = { timeLimit = self.mode.timeLimit , ranked = self.ranked}
   if #self.puzzles > 0 then
     optionalArgs.puzzle = table.remove(self.puzzles, 1)
   end
@@ -274,12 +276,7 @@ function BattleRoom:updateRankedStatus(rankedStatus, comments)
   if self.online then
     self.ranked = rankedStatus
     self.rankedComments = comments
-    -- legacy crutches
-    if self.ranked then
-      match_type = "Ranked"
-    else
-      match_type = "Casual"
-    end
+    self.rankedStatusChanged(rankedStatus, comments)
   else
     error("Trying to apply ranked state to the room even though it is either not online or does not support ranked")
   end
@@ -302,7 +299,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
     GAME.rich_presence:setPresence("Playing " .. self.mode.richPresenceLabel .. " mode", nil, true)
   end
 
-  if match_type == "Ranked" and not match.room_ratings then
+  if self.ranked and not match.room_ratings then
     match.room_ratings = {}
   end
 

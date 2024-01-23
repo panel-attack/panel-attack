@@ -63,18 +63,14 @@ function Match:drawTimer()
 end
 
 function Match:drawMatchType()
-  if match_type ~= "" then
-    local matchImage = nil
-    if match_type == "Ranked" then
-      matchImage = themes[config.theme].images.IMG_ranked
-    end
-    if match_type == "Casual" then
-      matchImage = themes[config.theme].images.IMG_casual
-    end
-    if matchImage then
-      self:drawMatchLabel(matchImage, themes[config.theme].matchtypeLabel_Pos, themes[config.theme].matchtypeLabel_Scale)
-    end
+  local matchImage = nil
+  if self.ranked then
+    matchImage = themes[config.theme].images.IMG_ranked
+  else
+    matchImage = themes[config.theme].images.IMG_casual
   end
+
+  self:drawMatchLabel(matchImage, themes[config.theme].matchtypeLabel_Pos, themes[config.theme].matchtypeLabel_Scale)
 end
 
 function Match:drawCommunityMessage()

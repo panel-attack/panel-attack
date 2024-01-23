@@ -29,8 +29,10 @@ function Game2pVs:onMatchEnded(match)
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
     extraFilename = extraFilename .. rep_a_name .. "-L" .. match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. match.P2.level
-    if match_type and match_type ~= "" then
-      extraFilename = extraFilename .. "-" .. match_type
+    if match.ranked then
+      extraFilename = extraFilename .. "-" .. "Ranked"
+    else
+      extraFilename = extraFilename .. "-" .. "Casual"
     end
     if not match.replay.incomplete then
       if match.replay.winnerIndex then

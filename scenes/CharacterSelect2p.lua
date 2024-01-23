@@ -19,6 +19,12 @@ sceneManager:addScene(CharacterSelect2p)
 
 function CharacterSelect2p:customLoad(sceneParams)
   self:loadUserInterface()
+  self.uiRoot.rankedStatus = Label({})
+  if GAME.battleRoom.ranked then
+    
+  else
+
+  end
 end
 
 function CharacterSelect2p:loadUserInterface()
@@ -102,10 +108,13 @@ function CharacterSelect2p:loadUserInterface()
     self.ui.cursors[i] = cursor
 
     self.ui.characterIcons[i] = self:createPlayerIcon(player)
+    self.ui.playerInfos[i] = self:createPlayerInfo(player)
   end
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "p1 icon", self.ui.characterIcons[1])
-  self.ui.grid:createElementAt(8, 1, 1, 1, "p2 icon", self.ui.characterIcons[2])
+  self.ui.grid:createElementAt(2, 1, 1, 1, "player 1 info", self.ui.playerInfos[1])
+  self.ui.grid:createElementAt(7, 1, 1, 1, "p2 icon", self.ui.characterIcons[2])
+  self.ui.grid:createElementAt(8, 1, 1, 1, "player 2 info", self.ui.playerInfos[2])
 end
 
 

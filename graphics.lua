@@ -478,7 +478,7 @@ function Stack:drawRating()
   if config.debug_mode and roomRatings == nil then
     roomRatings = {{new = 1337}, {new = 2042}}
   end
-  if roomRatings ~= nil and (match_type == "Ranked" or config.debug_mode) and roomRatings[self.player_number] and
+  if roomRatings ~= nil and (self.match.ranked or config.debug_mode) and roomRatings[self.player_number] and
       roomRatings[self.player_number].new and type(roomRatings[self.player_number].new) == "number"
       and roomRatings[self.player_number].new > 0 then
       self:drawLabel(self.theme.images["IMG_rating_" .. self.which .. "P"], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)

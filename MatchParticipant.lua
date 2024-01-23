@@ -18,6 +18,8 @@ local MatchParticipant = class(function(self)
   self.human = false
 
   Signal.addSignal(self, "winsChanged")
+  Signal.addSignal(self, "winrateChanged")
+  Signal.addSignal(self, "expectedWinrateChanged")
   Signal.addSignal(self, "panelIdChanged")
   Signal.addSignal(self, "stageIdChanged")
   Signal.addSignal(self, "selectedStageIdChanged")
@@ -33,12 +35,22 @@ end
 
 function MatchParticipant:setWinCount(count)
   self.wins = count
-  self.winsChanged(count)
+  self.winsChanged(self:getWinCountForDisplay())
 end
 
 function MatchParticipant:incrementWinCount()
   self.wins = self.wins + 1
-  self.winsChanged(self.wins)
+  self.winsChanged(self:getWinCountForDisplay())
+end
+
+function MatchParticipant:setWinrate(winrate)
+  self.winrate = winrate
+  self.winrateChanged(winrate)
+end
+
+function MatchParticipant:setExpectedWinrate(expectedWinrate)
+  self.expectedWinrate = expectedWinrate
+  self.expectedWinrateChanged(expectedWinrate)
 end
 
 -- returns a table with some key properties on functions to be run as part of a match
