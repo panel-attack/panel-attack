@@ -155,20 +155,14 @@ function BattleRoom:updateWinrates()
   end
 end
 
-function BattleRoom:setRatings(ratings)
-  for i = 1, #self.players do
-    self.players[i]:setRating(ratings[i])
-  end
-
-  self:updateExpectedWinrates()
-end
-
 function BattleRoom:updateExpectedWinrates()
-  -- this isn't feasible to do for n-player matchups at this point
-  local p1 = self.players[1]
-  local p2 = self.players[2]
-  p1:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p2.rating.new - p1.rating.new) / RATING_SPREAD_MODIFIER)), 2)))
-  p2:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p1.rating.new - p2.rating.new) / RATING_SPREAD_MODIFIER)), 2)))
+  if tableUtils.trueForAll(self.players, function(p) return p.rating and tonumber(p.rating) end) then
+    -- this isn't feasible to do for n-player matchups at this point
+    local p1 = self.players[1]
+    local p2 = self.players[2]
+    p1:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p2.rating - p1.rating) / RATING_SPREAD_MODIFIER)), 2)))
+    p2:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p1.rating - p2.rating) / RATING_SPREAD_MODIFIER)), 2)))
+  end
 end
 
 -- returns the total amount of games played, derived from the sum of wins across all players

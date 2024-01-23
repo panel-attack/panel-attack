@@ -77,6 +77,8 @@ function BattleRoom:processCharacterSelectMessage(message)
       end
     end
   end
+
+  self:updateExpectedWinrates()
 end
 
 function BattleRoom:processLeaveRoomMessage(message)
