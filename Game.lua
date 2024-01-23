@@ -21,9 +21,6 @@ local GameModes = require("GameModes")
 local TcpClient = require("network.TcpClient")
 local StartUp = require("scenes.StartUp")
 
-local GFX_SCALE = consts.GFX_SCALE
-
-
 require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.

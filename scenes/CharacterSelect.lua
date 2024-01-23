@@ -19,7 +19,6 @@ local tableUtils = require("tableUtils")
 local UiElement = require("ui.UIElement")
 local GameModes = require("GameModes")
 local Signal    = require("helpers.signal")
-local GFX_SCALE = consts.GFX_SCALE
 local StackPanel = require("ui.StackPanel")
 local PixelFontLabel = require("ui.PixelFontLabel")
 
@@ -113,7 +112,7 @@ function CharacterSelect:createPlayerIcon(player)
     vAlign = "bottom",
     x = 2,
     y = -2,
-    scale = GFX_SCALE
+    scale = 3
   })
   playerIcon:addChild(playerNumberIcon)
 
