@@ -549,13 +549,11 @@ function Match.render(self)
         challengeMode:render()
       end
 
-      if self.battleRoom then
-        if P1 and P1.telegraph then
-          P1.telegraph:render()
-        end
-        if P2 and P2.telegraph then
-          P2.telegraph:render()
-        end
+      if P1 then
+        P1:drawTopLayers()
+      end
+      if P2 then
+        P2:drawTopLayers()
       end
 
       -- Draw VS HUD

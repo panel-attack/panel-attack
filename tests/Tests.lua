@@ -1,8 +1,8 @@
 -- In Development, so you don't have to wait for all other tests to debug (move to correct location later)
-
 -- Small tests (unit tests)
 require("ServerQueueTests")
 require("tests.ConnectionTests")
+require("tests.HealthTests")
 require("tests.JsonEncodingTests")
 require("tests.NetworkProtocolTests")
 require("tests.TouchDataEncodingTests")

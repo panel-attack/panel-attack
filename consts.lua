@@ -14,6 +14,8 @@ consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
 VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
+ENGINE_VERSION = VERSION -- temporary until sceneRefactor lands on beta
+
 consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
 
@@ -96,7 +98,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 
--- frames to use for the card animation
+-- frames of the card animation and corresponding y offset
 card_animation = {false,
    -1, 0, 1, 2, 3, 4, 4, 5, 5, 6,
    6, 7, 7, 8, 8, 8, 9, 9, 9, 9,
