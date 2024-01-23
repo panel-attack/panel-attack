@@ -267,7 +267,9 @@ function StackBase:drawFrame()
   local frameImage = themes[config.theme].images.frames[self.which]
 
   if frameImage then
-    graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
+    local scaleX = 312 / frameImage:getWidth()
+    local scaleY = 612 / frameImage:getHeight()
+    love.graphics.draw(frameImage, 0, 0, 0, scaleX, scaleY)
   end
 end
 
