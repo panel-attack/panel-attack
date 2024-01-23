@@ -99,7 +99,7 @@ function CharacterSelect:createPlayerIcon(player)
     levelIcon.updateImage = function(image, level)
       image:setImage(themes[config.theme].images.IMG_levels[level])
     end
-    Signal.connect(player, "levelChanged", levelIcon, levelIcon.updateImage)
+    Signal.connectSignal(player, "levelChanged", levelIcon, levelIcon.updateImage)
 
     playerIcon:addChild(levelIcon)
   end
@@ -182,7 +182,7 @@ function CharacterSelect:createStageCarousel(player, width)
   stageCarousel:setPassengerById(player.settings.selectedStageId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  Signal.connect(player, "selectedStageIdChanged", stageCarousel, stageCarousel.setPassengerById)
+  Signal.connectSignal(player, "selectedStageIdChanged", stageCarousel, stageCarousel.setPassengerById)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -382,7 +382,7 @@ function CharacterSelect:createCursor(grid, player)
     player = player
   })
 
-  Signal.connect(player, "wantsReadyChanged", cursor, cursor.setRapidBlinking)
+  Signal.connectSignal(player, "wantsReadyChanged", cursor, cursor.setRapidBlinking)
 
   cursor.escapeCallback = function()
     if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
@@ -418,8 +418,8 @@ function CharacterSelect:createPanelCarousel(player, height)
   panelCarousel:setPassengerById(player.settings.panelId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  Signal.connect(player, "selectedStageIdChanged", panelCarousel, panelCarousel.setPassengerById)
-  Signal.connect(player, "colorCountChanged", panelCarousel, panelCarousel.setColorCount)
+  Signal.connectSignal(player, "selectedStageIdChanged", panelCarousel, panelCarousel.setPassengerById)
+  Signal.connectSignal(player, "colorCountChanged", panelCarousel, panelCarousel.setColorCount)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -502,7 +502,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
   end
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  Signal.connect(player, "levelChanged", levelSlider, levelSlider.setValue)
+  Signal.connectSignal(player, "levelChanged", levelSlider, levelSlider.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -538,7 +538,7 @@ function CharacterSelect:createRankedSelection(player, width)
     end
   end
 
-  Signal.connect(player, "wantsRankedChanged", rankedSelector, rankedSelector.setValue)
+  Signal.connectSignal(player, "wantsRankedChanged", rankedSelector, rankedSelector.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)

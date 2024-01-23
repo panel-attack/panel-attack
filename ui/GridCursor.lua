@@ -149,7 +149,7 @@ function GridCursor:receiveInputs(inputs, dt)
     self:move(GridCursor.directions.down)
   elseif inputs.isDown["Swap1"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    self.self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x):onSelect(self)
+    self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x):onSelect(self)
   elseif inputs.isDown["Raise1"] then
     if self.raise1Callback then
       self:raise1Callback()

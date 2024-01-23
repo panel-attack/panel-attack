@@ -400,7 +400,7 @@ function BattleRoom:assignInputConfigurations()
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
       -- the ready up press guarantees that at least 1 input config has a key down
-      Signal.connect(localPlayers[1], "wantsReadyChanged", localPlayers[1], self.updateInputConfigurationForPlayer)
+      Signal.connectSignal(localPlayers[1], "wantsReadyChanged", localPlayers[1], self.updateInputConfigurationForPlayer)
     elseif #localPlayers > 1 then
       -- with multiple local players we need to lock immediately so they can configure
       -- set a flag so this is continuously attempted in update
