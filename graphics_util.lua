@@ -91,32 +91,32 @@ function GraphicsUtil.draw(img, x, y, rot, x_scale,y_scale)
 end
 
 -- A pixel font map to use with numbers
-local number_pixel_font_map = {}
+local numberPixelFontMap = {}
 --0-9 = 0-9
 for i = 0, 9, 1 do
-  number_pixel_font_map[tostring(i)] = i
+  numberPixelFontMap[tostring(i)] = i
 end
 
 -- A pixel font map to use with times
-local time_pixel_font_map = {}
+local timePixelFontMap = {}
 --0-9 = 0-9
 for i = 0, 9, 1 do
-  time_pixel_font_map[tostring(i)] = i
+  timePixelFontMap[tostring(i)] = i
 end
-time_pixel_font_map[":"] = 10
-time_pixel_font_map["'"] = 11
+timePixelFontMap[":"] = 10
+timePixelFontMap["'"] = 11
 
 -- A pixel font map to use with strings
-local standard_pixel_font_map = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
+local standardPixelFontmap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
 --0-9 = 0-9
 for i = 0, 9, 1 do
-  standard_pixel_font_map[tostring(i)] = i
+  standardPixelFontmap[tostring(i)] = i
 end
 
 --10-35 = A-Z
 for i = 10, 35, 1 do
   local characterString = string.char(97+(i-10))
-  standard_pixel_font_map[characterString] = i
+  standardPixelFontmap[characterString] = i
 end
 
 
@@ -129,7 +129,7 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
   x_scale = x_scale or 1
   y_scale = y_scale or 1
   align = align or "left"
-  font_map = font_map or standard_pixel_font_map
+  font_map = font_map or standardPixelFontmap
   assert(quads ~= nil)
 
   local atlasFrameCount = tableUtils.length(font_map)
@@ -178,19 +178,19 @@ end
 
 -- Draws a time centered horizontally using the theme's time pixel font which is 0-9, then : then '
 function GraphicsUtil.draw_time(time, quads, x, y, scale)
-  drawPixelFontWithMap(time, themes[config.theme].images.IMG_timeNumber_atlas, time_pixel_font_map, x, y, scale, scale, "center", 0, quads)
+  drawPixelFontWithMap(time, themes[config.theme].images.IMG_timeNumber_atlas, timePixelFontMap, x, y, scale, scale, "center", 0, quads)
 end
 
 -- Draws a number via the given font image that has 0-9
 function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
-  drawPixelFontWithMap(tostring(number), atlas, number_pixel_font_map, x, y, scale, scale, align, 0, quads)
+  drawPixelFontWithMap(tostring(number), atlas, numberPixelFontMap, x, y, scale, scale, align, 0, quads)
 end
 
 -- Draws the given string with a pixel font image atlas that has 0-9 than a-z
 -- string - the string to draw
 -- atlas - the image to use as the pixel font
 function draw_pixel_font(string, atlas, x, y, x_scale, y_scale, align, characterSpacing, quads)
-  drawPixelFontWithMap(string, atlas, standard_pixel_font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
+  drawPixelFontWithMap(string, atlas, standardPixelFontmap, x, y, x_scale, y_scale, align, characterSpacing, quads)
 end
 
 local maxQuadPool = 100

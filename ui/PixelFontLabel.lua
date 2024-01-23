@@ -3,16 +3,16 @@ local UiElement = require("ui.UIElement")
 local tableUtils = require("tableUtils")
 
 -- A pixel font map to use with strings
-local standard_pixel_font_map = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
+local standardPixelFontMap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
 --0-9 = 0-9
 for i = 0, 9, 1 do
-  standard_pixel_font_map[tostring(i)] = i
+  standardPixelFontMap[tostring(i)] = i
 end
 
 --10-35 = A-Z
 for i = 10, 35, 1 do
   local characterString = string.char(97+(i-10))
-  standard_pixel_font_map[characterString] = i
+  standardPixelFontMap[characterString] = i
 end
 
 local PixelFontLabel = class(function(self, options)
@@ -25,7 +25,7 @@ local PixelFontLabel = class(function(self, options)
   self.charSpacing = options.charSpacing or 2
   self.xScale = options.xScale or 1
   self.yScale = options.yScale or 1
-  self.fontMap = options.fontMap or standard_pixel_font_map
+  self.fontMap = options.fontMap or standardPixelFontMap
   self.atlas = options.atlas or themes[config.theme].images.IMG_pixelFont_blue_atlas
   self.atlasWidth = self.atlas:getWidth()
   self.atlasHeight = self.atlas:getHeight()
