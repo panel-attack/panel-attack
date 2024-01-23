@@ -82,7 +82,7 @@ function CharacterSelect:createPlayerIcon(player)
    selectedCharacterIcon.updateImage = function(image, characterId)
     image:setImage(characters[characterId].images.icon)
   end
-  player:subscribe(selectedCharacterIcon, "selectedCharacterId", selectedCharacterIcon.updateImage)
+  Signal.connectSignal(player, "selectedCharacterIdChanged", selectedCharacterIcon, selectedCharacterIcon.updateImage)
 
   playerIcon:addChild(selectedCharacterIcon)
 
@@ -99,7 +99,7 @@ function CharacterSelect:createPlayerIcon(player)
     levelIcon.updateImage = function(image, level)
       image:setImage(themes[config.theme].images.IMG_levels[level])
     end
-    player:subscribe(levelIcon, "level", levelIcon.updateImage)
+    Signal.connect(player, "levelChanged", levelIcon, levelIcon.updateImage)
 
     playerIcon:addChild(levelIcon)
   end
@@ -182,7 +182,7 @@ function CharacterSelect:createStageCarousel(player, width)
   stageCarousel:setPassengerById(player.settings.selectedStageId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(stageCarousel, "selectedStageId", stageCarousel.setPassengerById)
+  Signal.connect(player, "selectedStageIdChanged", stageCarousel, stageCarousel.setPassengerById)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -367,7 +367,7 @@ function CharacterSelect:createPageIndicator(pagedUniGrid)
     translate = false
   })
   pageCounterLabel.updatePage = function(self, grid, page)
-    self:setText(loc("page") .. " " .. page .. "/" .. #pagedUniGrid.pages)
+    self:setText(loc("page") .. " " .. page .. "/" .. #grid.pages)
   end
   Signal.connectSignal(pagedUniGrid, "pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
   return pageCounterLabel
@@ -382,7 +382,7 @@ function CharacterSelect:createCursor(grid, player)
     player = player
   })
 
-  player:subscribe(cursor, "wantsReady", cursor.setRapidBlinking)
+  Signal.connect(player, "wantsReadyChanged", cursor, cursor.setRapidBlinking)
 
   cursor.escapeCallback = function()
     if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
@@ -418,8 +418,8 @@ function CharacterSelect:createPanelCarousel(player, height)
   panelCarousel:setPassengerById(player.settings.panelId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
-  player:subscribe(panelCarousel, "colorCount", panelCarousel.setColorCount)
+  Signal.connect(player, "selectedStageIdChanged", panelCarousel, panelCarousel.setPassengerById)
+  Signal.connect(player, "colorCountChanged", panelCarousel, panelCarousel.setColorCount)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -502,7 +502,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
   end
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(levelSlider, "level", levelSlider.setValue)
+  Signal.connect(player, "levelChanged", levelSlider, levelSlider.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -538,7 +538,7 @@ function CharacterSelect:createRankedSelection(player, width)
     end
   end
 
-  player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
+  Signal.connect(player, "wantsRankedChanged", rankedSelector, rankedSelector.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)

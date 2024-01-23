@@ -1,6 +1,7 @@
 local class = require("class")
 local util = require("util")
 local consts = require("consts")
+local Signal = require("helpers.signal")
 
 -- a match participant represents the minimum spec for a what constitutes a "player" in a battleRoom / match
 local MatchParticipant = class(function(self)
@@ -14,8 +15,15 @@ local MatchParticipant = class(function(self)
     stageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
     wantsReady = false
   }
-  self.subscriptionList = util.getWeaklyKeyedTable()
   self.human = false
+
+  Signal.addSignal(self, "winsChanged")
+  Signal.addSignal(self, "panelIdChanged")
+  Signal.addSignal(self, "stageIdChanged")
+  Signal.addSignal(self, "selectedStageIdChanged")
+  Signal.addSignal(self, "characterIdChanged")
+  Signal.addSignal(self, "selectedCharacterIdChanged")
+  Signal.addSignal(self, "wantsReadyChanged")
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -25,10 +33,12 @@ end
 
 function MatchParticipant:setWinCount(count)
   self.wins = count
+  self.winsChanged(count)
 end
 
 function MatchParticipant:incrementWinCount()
   self.wins = self.wins + 1
+  self.winsChanged(self.wins)
 end
 
 -- returns a table with some key properties on functions to be run as part of a match
@@ -36,48 +46,10 @@ function MatchParticipant:createStackFromSettings(match, which)
   error("MatchParticipant needs to implement function createStackFromSettings")
 end
 
--- Other elements (ui, network) can subscribe to properties in MatchParticipant.settings by passing a callback
-function MatchParticipant:subscribe(subscriber, property, callback)
-  if self.settings[property] ~= nil then
-    if not self.subscriptionList[property] then
-      self.subscriptionList[property] = {}
-    end
-    self.subscriptionList[property][subscriber] = callback
-    return true
-  end
-
-  return false
-end
-
-function MatchParticipant:unsubscribe(subscriber, property)
-  if property then
-    self.subscriptionList[property][subscriber] = nil
-  else
-    -- if no property is given, unsubscribe everything for that subscriber
-    for property, _ in pairs(self.subscriptionList) do
-      self.subscriptionList[property][subscriber] = nil
-    end
-  end
-end
-
--- clears all subscriptions 
-function MatchParticipant:clearSubscriptions()
-  self.subscriptionList = util.getWeaklyKeyedTable()
-end
-
--- the callback is executed with the new property value as the argument whenever a property is modified via its setter
-function MatchParticipant:onPropertyChanged(property)
-  if self.subscriptionList[property] then
-    for subscriber, callback in pairs(self.subscriptionList[property]) do
-      callback(subscriber, self.settings[property])
-    end
-  end
-end
-
 function MatchParticipant:setStage(stageId)
   if stageId ~= self.settings.selectedStageId then
     self.settings.selectedStageId = StageLoader.resolveStageSelection(stageId)
-    self:onPropertyChanged("selectedStageId")
+    self.selectedStageIdChanged(self.settings.selectedStageId)
   end
   -- even if it's the same stage as before, refresh the pick, cause it could be bundle or random
   self:refreshStage()
@@ -87,7 +59,7 @@ function MatchParticipant:refreshStage()
   local currentId = self.settings.stageId
   self.settings.stageId = StageLoader.resolveBundle(self.settings.selectedStageId)
   if currentId ~= self.settings.stageId then
-    self:onPropertyChanged("stageId")
+    self.stageIdChanged(self.settings.stageId)
     CharacterLoader.load(self.settings.stageId)
   end
 end
@@ -95,7 +67,7 @@ end
 function MatchParticipant:setCharacter(characterId)
   if characterId ~= self.settings.selectedCharacterId then
     self.settings.selectedCharacterId = CharacterLoader.resolveCharacterSelection(characterId)
-    self:onPropertyChanged("selectedCharacterId")
+    self.selectedCharacterIdChanged(self.settings.selectedCharacterId)
   end
   -- even if it's the same character as before, refresh the pick, cause it could be bundle or random
   self:refreshCharacter()
@@ -105,7 +77,7 @@ function MatchParticipant:refreshCharacter()
   local currentId = self.settings.characterId
   self.settings.characterId = CharacterLoader.resolveBundle(self.settings.selectedCharacterId)
   if currentId ~= self.settings.characterId then
-    self:onPropertyChanged("characterId")
+    self.characterIdChanged(self.settings.characterId)
     CharacterLoader.load(self.settings.characterId)
   end
 end
@@ -113,7 +85,7 @@ end
 function MatchParticipant:setWantsReady(wantsReady)
   if wantsReady ~= self.settings.wantsReady then
     self.settings.wantsReady = wantsReady
-    self:onPropertyChanged("wantsReady")
+    self:wantsReadyChanged(wantsReady)
   end
 end
 

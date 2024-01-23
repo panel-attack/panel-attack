@@ -17,7 +17,6 @@ BattleRoom = class(function(self, mode)
   self.players = {}
   self.spectators = {}
   self.spectating = false
-  self.trainingModeSettings = nil
   self.allAssetsLoaded = false
   self.ranked = false
   self.puzzles = {}
@@ -144,7 +143,7 @@ end
 
 function BattleRoom:setRatings(ratings)
   for i = 1, #self.players do
-    self.players[i].rating = ratings[i]
+    self.players[i]:setRating(ratings[i])
   end
 
   self:updateExpectedWinrates()
@@ -401,7 +400,7 @@ function BattleRoom:assignInputConfigurations()
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
       -- the ready up press guarantees that at least 1 input config has a key down
-      localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
+      Signal.connect(localPlayers[1], "wantsReadyChanged", localPlayers[1], self.updateInputConfigurationForPlayer)
     elseif #localPlayers > 1 then
       -- with multiple local players we need to lock immediately so they can configure
       -- set a flag so this is continuously attempted in update
@@ -503,7 +502,7 @@ function BattleRoom:onMatchEnded(match)
   else
   -- match:deinit is the responsibility of the one switching out of the game scene
     match:deinit()
-    -- in the case of a network based abort, the network part of the battleRoom would unsubscribe from the onMatchEnded signal
+    -- in the case of a network based abort, the network part of the battleRoom would unregister from the onMatchEnded signal
     -- and initialise the transition to wherever else before calling abort on the match to finalize it
     -- that means whenever we land here, it was a match-side local abort that leaves the room intact
     local setupScene = sceneManager:createScene(self.mode.setupScene)
