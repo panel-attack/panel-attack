@@ -2,6 +2,7 @@ local class = require("class")
 local util = require("util")
 local consts = require("consts")
 local Signal = require("helpers.signal")
+local logger = require("logger")
 
 -- a match participant represents the minimum spec for a what constitutes a "player" in a battleRoom / match
 local MatchParticipant = class(function(self)
@@ -44,6 +45,11 @@ function MatchParticipant:incrementWinCount()
 end
 
 function MatchParticipant:setWinrate(winrate)
+  if winrate then
+    logger.info("setting winrate of " .. winrate)
+  else
+    logger.info("got nil passed as winrate")
+  end
   self.winrate = winrate
   self.winrateChanged(winrate)
 end

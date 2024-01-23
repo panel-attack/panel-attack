@@ -139,10 +139,19 @@ function BattleRoom.setWinCounts(self, winCounts)
 end
 
 function BattleRoom:updateWinrates()
+  local gamesPlayed
+  if tableUtils.trueForAny(self.players, function(p) return p.isLocal end) then
+    gamesPlayed = self.matchesPlayed
+  else
+    gamesPlayed = self:totalGames()
+  end
   for _, player in ipairs(self.players) do
-    if self.matchesPlayed > 0 then
-      player:setWinrate(100 * round(player.wins / self.matchesPlayed, 2))
+    if gamesPlayed > 0 then
+      local winrate = 100 * round(player.wins / gamesPlayed, 2)
+      logger.info("winrate of " .. winrate)
+      player:setWinrate(winrate)
     else
+      logger.info("winrate of " .. 0)
       player:setWinrate(0)
     end
   end

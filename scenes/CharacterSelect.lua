@@ -647,7 +647,7 @@ function CharacterSelect:createPlayerInfo(player)
     translate = false
   })
   stackPanel.winrateValueLabel.update = function(self, winrate)
-    self:setText(loc("  " .. loc("ss_current_rating") .. tostring(winrate) .. "%", nil, false))
+    self:setText("  " .. loc("ss_current_rating") .. tostring(winrate) .. "%", nil, false)
   end
 
   stackPanel.winrateExpectedLabel = Label({
