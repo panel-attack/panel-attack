@@ -40,15 +40,15 @@ function MultiPlayerSelectionWrapper:drawSelf()
 end
 
 function MultiPlayerSelectionWrapper:setTitle(string)
-  local title = Label({text = string})
+  self.title = Label({text = string})
   if self.alignment == "top" or self.alignment == "bottom" then
-    title.hAlign = "center"
-    title.vAlign = self.alignment
-    StackPanel.insertElementAtIndex(self, title, 1)
+    self.title.hAlign = "center"
+    self.title.vAlign = self.alignment
+    StackPanel.insertElementAtIndex(self, self.title, 1)
   else
-    title.hAlign = "center"
-    title.vAlign = "top"
-    self:addChild(title)
+    self.title.hAlign = "center"
+    self.title.vAlign = "top"
+    self:addChild(self.title)
   end
 end
 
