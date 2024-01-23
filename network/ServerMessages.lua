@@ -93,7 +93,13 @@ function ServerMessages.sanitizeCreateRoom(message)
   players[2].playerNumber = 2
   if message.rating_updates then
     players[1].ratingInfo = message.ratings[1]
+    if players[1].ratingInfo.new == 0 and players[1].ratingInfo.placement_match_progress then
+      players[1].ratingInfo.new = players[1].ratingInfo.placement_match_progress
+    end
     players[2].ratingInfo = message.ratings[2]
+    if players[2].ratingInfo.new == 0 and players[2].ratingInfo.placement_match_progress then
+      players[2].ratingInfo.new = players[2].ratingInfo.placement_match_progress
+    end
   end
 
   if message.your_player_number == 2 then
@@ -260,12 +266,18 @@ function ServerMessages.sanitizeSpectatorJoin(message)
   players[1].name = message.a_name
   players[1].playerNumber = playerSettings[1].playerNumber
   players[1].ratingInfo = message.ratings[1]
+  if players[1].ratingInfo.new == 0 and players[1].ratingInfo.placement_match_progress then
+    players[1].ratingInfo.new = players[1].ratingInfo.placement_match_progress
+  end  
   players[1].level = playerSettings[1].level
 
   players[2] = ServerMessages.sanitizeMenuState(message.b_menu_state)
   players[2].name = message.b_name
   players[2].playerNumber = playerSettings[2].playerNumber
   players[2].ratingInfo = message.ratings[2]
+  if players[2].ratingInfo.new == 0 and players[2].ratingInfo.placement_match_progress then
+    players[2].ratingInfo.new = players[2].ratingInfo.placement_match_progress
+  end
   players[2].level = playerSettings[2].level
 
   if message.replay_of_match_so_far then

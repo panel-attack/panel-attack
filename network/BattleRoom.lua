@@ -71,7 +71,8 @@ function BattleRoom:processCharacterSelectMessage(message)
       if message.players[i].playerNumber == self.players[j].playerNumber then
         self.players[j]:updateWithMenuState(message.players[i])
         if message.players[i].ratingInfo then
-          self.players[j].rating = message.players[i].ratingInfo
+          self.players[j]:setRating(message.players[i].ratingInfo.new)
+          self.players[j]:setLeague(message.players[i].ratingInfo.league)
         end
       end
     end

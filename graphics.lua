@@ -473,16 +473,16 @@ function Stack.render(self)
 end
 
 function Stack:drawRating()
-  local match = self.match
-  local roomRatings = match.room_ratings
-  if config.debug_mode and roomRatings == nil then
-    roomRatings = {{new = 1337}, {new = 2042}}
+  local rating
+  if self.player.rating and tonumber(self.player.rating) then
+    rating = self.player.rating
+  elseif config.debug_mode then
+    rating = 1544 + self.player.playerNumber
   end
-  if roomRatings ~= nil and (self.match.ranked or config.debug_mode) and roomRatings[self.player_number] and
-      roomRatings[self.player_number].new and type(roomRatings[self.player_number].new) == "number"
-      and roomRatings[self.player_number].new > 0 then
-      self:drawLabel(self.theme.images["IMG_rating_" .. self.which .. "P"], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
-      self:drawNumber(roomRatings[self.player_number].new, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
+
+  if rating then
+    self:drawLabel(self.theme.images["IMG_rating_" .. self.which .. "P"], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
+    self:drawNumber(rating, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
   end
 end
 

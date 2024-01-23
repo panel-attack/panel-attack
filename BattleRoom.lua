@@ -27,7 +27,7 @@ BattleRoom = class(function(self, mode)
     self.online = true
   end
 
-  Signal.add(self, "rankedStatusChanged")
+  Signal.addSignal(self, "rankedStatusChanged")
 end)
 
 -- defining these here so they're available in network.BattleRoom too
@@ -83,6 +83,8 @@ function BattleRoom.createFromServerMessage(message)
     end
     for i = 1, #battleRoom.players do
       battleRoom.players[i]:updateWithMenuState(message.players[i])
+      battleRoom.players[i]:setRating(message.players[i].ratingInfo.new)
+      battleRoom.players[i]:setLeague(message.players[i].ratingInfo.league)
     end
     battleRoom.spectating = true
   else
@@ -91,11 +93,14 @@ function BattleRoom.createFromServerMessage(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
     GAME.localPlayer.playerNumber = message.players[1].playerNumber
-    GAME.localPlayer.rating = message.players[1].ratingInfo
+    GAME.localPlayer:setRating(message.players[1].ratingInfo.new)
+    GAME.localPlayer:setLeague(message.players[1].ratingInfo.league)
 
     local player2 = Player(message.players[2].name, -1, false)
     player2.playerNumber = message.players[2].playerNumber
     player2:updateWithMenuState(message.players[2])
+    player2:setRating(message.players[2].ratingInfo.new)
+    player2:setLeague(message.players[2].ratingInfo.league)
     battleRoom:addPlayer(player2)
   end
 

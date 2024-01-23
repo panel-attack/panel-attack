@@ -4,6 +4,7 @@ local class = require("class")
 local Grid = require("ui.Grid")
 local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
 local Label = require("ui.Label")
+local StackPanel = require("ui.StackPanel")
 
 --@module CharacterSelect2p
 -- 
@@ -19,16 +20,12 @@ sceneManager:addScene(CharacterSelect2p)
 
 function CharacterSelect2p:customLoad(sceneParams)
   self:loadUserInterface()
-  self.uiRoot.rankedStatus = Label({})
-  if GAME.battleRoom.ranked then
-    
-  else
-
-  end
+  self.uiRoot.rankedStatus = self:createRankedStatusPanel()
+  self.uiRoot:addChild(self.uiRoot.rankedStatus)
 end
 
 function CharacterSelect2p:loadUserInterface()
-  self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
+  self.ui.grid = Grid({unitSize = 98, gridWidth = 9, gridHeight = 6, unitMargin = 7, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})

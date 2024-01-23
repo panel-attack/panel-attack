@@ -209,7 +209,8 @@ function Player:setPuzzleSet(puzzleSet)
 end
 
 function Player:setRating(rating)
-  if self.rating then
+  if self.rating and tonumber(self.rating) then
+    -- only save a rating if we actually have one, tonumber assures that rating does not track placement progress instead
     self.ratingHistory[#self.ratingHistory + 1] = self.rating
   end
   self.rating = rating
@@ -294,7 +295,7 @@ function Player:updateWithMenuState(menuState)
     if characters[menuState.selectedCharacterId] then
       -- picking their bundle for display is a bonus
       self.settings.selectedCharacterId = menuState.selectedCharacterId
-      self:onPropertyChanged("selectedCharacterId")
+      self.selectedCharacterIdChanged(self.settings.selectedCharacterId)
     end
   elseif menuState.selectedCharacterId and characters[menuState.selectedCharacterId] then
     -- if we don't have their character rolled from their bundle, but the bundle itself, use that
@@ -311,7 +312,7 @@ function Player:updateWithMenuState(menuState)
     if stages[menuState.selectedStageId] then
       -- picking their bundle for display is a bonus
       self.settings.selectedStageId = menuState.selectedStageId
-      self:onPropertyChanged("selectedStageId")
+      self.selectedStageIdChanged(self.settings.selectedStageId)
     end
   elseif menuState.selectedStageId and stages[menuState.selectedStageId] then
     -- if we don't have their stage rolled from their bundle, but the bundle itself, use that

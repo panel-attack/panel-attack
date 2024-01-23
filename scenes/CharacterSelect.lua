@@ -605,7 +605,7 @@ function CharacterSelect:createPlayerInfo(player)
 
   stackPanel.leagueLabel = Label({
     x = 4,
-    text = loc("ss_rating") .. " " .. ((player.rating and player.rating.league) or "none"),
+    text = loc("ss_rating") .. " " .. ((player.league) or "none"),
     translate = false
   })
   stackPanel.leagueLabel.update = function(self, league)
@@ -613,6 +613,7 @@ function CharacterSelect:createPlayerInfo(player)
   end
 
   stackPanel.ratingLabel = Label({
+    x = 4,
     text = player.rating or "",
     translate = false
   })
@@ -667,6 +668,47 @@ function CharacterSelect:createPlayerInfo(player)
   stackPanel:addElement(stackPanel.winrateValueLabel)
 
   return stackPanel
+end
+
+function CharacterSelect:createRankedStatusPanel()
+  local rankedStatus = StackPanel({
+    alignment = "top",
+    hAlign = "center",
+    vAlign = "top",
+    y = 40,
+    width = 300
+  })
+  rankedStatus.rankedLabel = Label({
+    text = "",
+    hAlign = "center",
+    vAlign = "top"
+  })
+  if GAME.battleRoom.ranked then
+    rankedStatus.rankedLabel:setText("ss_ranked")
+  else
+    rankedStatus.rankedLabel:setText("ss_casual")
+  end
+  rankedStatus.commentLabel = Label({
+    text = GAME.battleRoom.rankedComments or "",
+    hAlign = "center",
+    vAlign = "top",
+    translate = false
+  })
+  rankedStatus:addElement(rankedStatus.rankedLabel)
+  rankedStatus:addElement(rankedStatus.commentLabel)
+
+  rankedStatus.update = function(self, ranked, comments)
+    if ranked then
+      rankedStatus.rankedLabel:setText("ss_ranked")
+    else
+      rankedStatus.rankedLabel:setText("ss_casual")
+    end
+    rankedStatus.commentLabel:setText(comments, nil, false)
+  end
+
+  Signal.connectSignal(GAME.battleRoom, "rankedStatusChanged", rankedStatus, rankedStatus.update)
+
+  return rankedStatus
 end
 
 function CharacterSelect:update(dt)
