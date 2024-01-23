@@ -260,7 +260,7 @@ function StackBase:drawCharacter()
     end
   end
 
-  characters[self.character]:drawPortrait(self.which, 4, 4, self.portraitFade)
+  characters[self.character]:drawPortrait(self.which, self.panelOriginXOffset, self.panelOriginYOffset, self.portraitFade)
 end
 
 function StackBase:drawFrame()

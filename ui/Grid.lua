@@ -75,11 +75,11 @@ function Grid:drawSelf()
     local bottom = self.y + self.height
     for i = 1, self.gridHeight - 1 do
       local y = self.y + self.unitSize * i
-      drawStraightLine(self.x, y, right, y, 1, 1, 1, 0.5)
+      GraphicsUtil.drawStraightLine(self.x, y, right, y, 1, 1, 1, 0.5)
     end
     for i = 1, self.gridWidth - 1 do
       local x = self.x + self.unitSize * i
-      drawStraightLine(x, self.y, x, bottom, 1, 1, 1, 0.5)
+      GraphicsUtil.drawStraightLine(x, self.y, x, bottom, 1, 1, 1, 0.5)
     end
   end
 end

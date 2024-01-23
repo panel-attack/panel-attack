@@ -7,6 +7,7 @@ local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
 local consts = require("consts")
+local GFX_SCALE = consts.GFX_SCALE
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -418,7 +419,7 @@ function Character:drawPortrait(stackNumber, x, y, fade)
   end
   draw(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
   if fade > 0 then
-    grectangle_color("fill", x, y, portraitWidth, portraitHeight, 0, 0, 0, fade)
+    GraphicsUtil.drawRectangle("fill", x * GFX_SCALE, y * GFX_SCALE, portraitWidth * GFX_SCALE, portraitHeight * GFX_SCALE, 0, 0, 0, fade)
   end
 end
 

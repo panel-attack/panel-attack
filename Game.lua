@@ -497,7 +497,7 @@ function Game:drawLoadingString(loadingString)
   local x = 0
   local y = consts.CANVAS_HEIGHT/2 - textHeight/2
   local backgroundPadding = 10
-  grectangle_color("fill", (consts.CANVAS_WIDTH / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
+  GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 2 - (textMaxWidth / 2) , y - backgroundPadding, textMaxWidth, textHeight, 0, 0, 0, 0.5)
   gprintf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
 end
 

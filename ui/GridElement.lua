@@ -16,7 +16,7 @@ local GridElement = class(function(gridElement, options)
 end, UiElement)
 
 function GridElement:drawBorders()
-  grectangle("line", self.x, self.y, self.width, self.height)
+  GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
 end
 
 function GridElement:drawSelf()

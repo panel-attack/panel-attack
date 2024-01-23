@@ -118,9 +118,9 @@ function Stack.draw_cards(self)
       if cardImage then
         local icon_width, icon_height = cardImage:getDimensions()
         local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
-        set_color(1, 1, 1, fade)
+        GraphicsUtil.setColor(1, 1, 1, fade)
         draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
-        set_color(1, 1, 1, 1)
+        GraphicsUtil.setColor(1, 1, 1, 1)
       end
     end
   end
@@ -333,7 +333,7 @@ function Stack:drawDebug()
     local drawY = 10
     local padding = 14
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
+    GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 1000, 100, 0, 0, 0, 0.5)
     gprintf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
@@ -419,7 +419,7 @@ function Stack:drawDebugPanels(shakeOffset)
           local drawX = 30
           local drawY = 10
 
-          grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 100/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
+          GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 100, 100, 0, 0, 0, 0.5)
           gprintf(str, drawX, drawY)
         end
       end
@@ -649,7 +649,7 @@ function Stack:drawAnalyticData()
   local icon_height
 
   -- Background
-  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+  GraphicsUtil.drawRectangle("fill", x - backgroundPadding , y - backgroundPadding, width, height, 0, 0, 0, 0.5)
 
   -- Panels cleared
   icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()

@@ -272,20 +272,17 @@ function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
 end
 
 -- Draws a rectangle at the given coordinates
-function grectangle(mode, x, y, w, h)
-  love.graphics.rectangle(mode, x, y, w, h)
-end
-
--- Draws a colored rectangle at the given coordinates
-function grectangle_color(mode, x, y, w, h, r, g, b, a)
+function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a)
   a = a or 1
+  if r then
+    love.graphics.setColor(r, g, b, a)
+  end
 
-  love.graphics.setColor(r, g, b, a)
-  love.graphics.rectangle(mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE)
+  love.graphics.rectangle(mode, x, y, w, h)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
-function drawStraightLine(x1, y1, x2, y2, r, g, b, a)
+function GraphicsUtil.drawStraightLine(x1, y1, x2, y2, r, g, b, a)
   a = a or 1
 
   love.graphics.setColor(r, g, b, a)
@@ -299,16 +296,16 @@ function gprint(str, x, y, color, scale)
   y = y or 0
   scale = scale or 1
   color = color or nil
-  set_color(0, 0, 0, 1)
+  GraphicsUtil.setColor(0, 0, 0, 1)
   love.graphics.print(str, x+1, y+1, 0, scale)
 
   local r, g, b, a = 1,1,1,1
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
-  set_color(r,g,b,a)
+  GraphicsUtil.setColor(r,g,b,a)
   love.graphics.print(str, x, y, 0, scale)
-  set_color(1,1,1,1)
+  GraphicsUtil.setColor(1,1,1,1)
 end
 
 -- draws a readymade Text object at a specific coordinate
@@ -390,7 +387,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   limit = limit or consts.CANVAS_WIDTH
   font_delta_size = font_delta_size or 0
   halign = halign or "left"
-  set_color(0, 0, 0, 1)
+  GraphicsUtil.setColor(0, 0, 0, 1)
   if font_delta_size ~= 0 then
     GraphicsUtil.setFont(get_font_delta(font_delta_size))
   end
@@ -400,17 +397,17 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
-  set_color(r,g,b,a)
+  GraphicsUtil.setColor(r,g,b,a)
   love.graphics.printf(str, x, y, limit, halign, 0, scale)
 
   if font_delta_size ~= 0 then
     GraphicsUtil.setFont(GraphicsUtil.getGlobalFont())
   end
-  set_color(1,1,1,1)
+  GraphicsUtil.setColor(1,1,1,1)
 end
 
 local _r, _g, _b, _a
-function set_color(r, g, b, a)
+function GraphicsUtil.setColor(r, g, b, a)
   a = a or 1
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then

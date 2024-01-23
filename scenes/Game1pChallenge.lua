@@ -34,7 +34,7 @@ function Game1pChallenge:drawHUD()
   local height = consts.CANVAS_HEIGHT - drawY
 
   -- Background
-  grectangle_color("fill", (drawX - width / 2) / GFX_SCALE, drawY / GFX_SCALE, width / GFX_SCALE, height / GFX_SCALE, 0, 0, 0, 0.5)
+  GraphicsUtil.drawRectangle("fill", drawX - width / 2, drawY, width, height, 0, 0, 0, 0.5)
 
   drawY = 140
   self:drawDifficultyName(drawX, drawY)
@@ -98,21 +98,21 @@ function Game1pChallenge:drawTimeSplits(xPosition, yPosition)
     totalTime = totalTime + currentStageTime
 
     if isCurrentStage then
-      set_color(0.8, 0.8, 1, 1)
+      GraphicsUtil.setColor(0.8, 0.8, 1, 1)
     end
     GraphicsUtil.draw_time(frames_to_time_string(currentStageTime, true), self.stageTimeQuads[i], xPosition, yPosition + yOffset * row,
                            themes[config.theme].time_Scale)
     if isCurrentStage then
-      set_color(1, 1, 1, 1)
+      GraphicsUtil.setColor(1, 1, 1, 1)
     end
 
     row = row + 1
   end
 
-  set_color(1, 1, 0.8, 1)
+  GraphicsUtil.setColor(1, 1, 0.8, 1)
   GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), self.totalTimeQuads, xPosition, yPosition + yOffset * row,
                          themes[config.theme].time_Scale)
-  set_color(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 return Game1pChallenge

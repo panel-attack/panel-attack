@@ -110,7 +110,7 @@ function SimulatedStack:drawDebug()
     local drawY = 10
     local padding = 14
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
+    GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 1000, 100, 0, 0, 0, 0.5)
     gprintf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
