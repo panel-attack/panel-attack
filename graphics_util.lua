@@ -81,13 +81,16 @@ function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
 end
 
 -- Draws an image at the given spot
--- TODO rename
 function draw(img, x, y, rot, x_scale, y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-
   love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE)
+end
+
+function drawGfxScaled(img, x, y, rot, xScale, yScale)
+  love.graphics.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
+end
+
+function GraphicsUtil.draw(img, x, y, rot, x_scale,y_scale)
+  love.graphics.draw(img, x, y, rot, x_scale, y_scale)
 end
 
 -- A pixel font map to use with numbers
@@ -233,14 +236,6 @@ function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirro
   end
 
   love.graphics.draw(img, quad, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset)
-end
-
-function menu_draw(img, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-
-  love.graphics.draw(img, x, y, rot, x_scale, y_scale)
 end
 
 function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
