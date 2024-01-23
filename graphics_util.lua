@@ -354,7 +354,7 @@ function GraphicsUtil.getGlobalFontWithSize(fontSize)
   return f
 end
 
-function set_global_font(filepath, size)
+function GraphicsUtil.setGlobalFont(filepath, size)
   GraphicsUtil.fontCache = {}
   GraphicsUtil.fontFile = filepath
   GraphicsUtil.fontSize = size
@@ -373,11 +373,11 @@ function get_font_delta(with_delta_size)
   return GraphicsUtil.getGlobalFontWithSize(font_size)
 end
 
-function set_font(font)
+function GraphicsUtil.setFont(font)
   love.graphics.setFont(font)
 end
 
-function set_shader(shader)
+function GraphicsUtil.setShader(shader)
   love.graphics.setShader(shader)
 end
 
@@ -392,7 +392,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   halign = halign or "left"
   set_color(0, 0, 0, 1)
   if font_delta_size ~= 0 then
-    set_font(get_font_delta(font_delta_size))
+    GraphicsUtil.setFont(get_font_delta(font_delta_size))
   end
   love.graphics.printf(str, x+1, y+1, limit, halign, 0, scale)
 
@@ -404,7 +404,7 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   love.graphics.printf(str, x, y, limit, halign, 0, scale)
 
   if font_delta_size ~= 0 then
-    set_font(GraphicsUtil.getGlobalFont())
+    GraphicsUtil.setFont(GraphicsUtil.getGlobalFont())
   end
   set_color(1,1,1,1)
 end

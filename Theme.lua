@@ -398,7 +398,7 @@ function Theme.graphics_init(self)
   for key, value in pairs(fileUtils.getFilteredDirectoryItems(Theme.themeDirectoryPath .. self.name)) do
     if value:lower():match(".*%.ttf") then -- Any .ttf file
       self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
-      set_global_font(self.font.path, self.font.size)
+      GraphicsUtil.setGlobalFont(self.font.path, self.font.size)
       break
     end
   end

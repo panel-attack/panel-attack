@@ -312,9 +312,9 @@ function CharacterSelect.applySuperSelectInteraction(characterButton)
   local superSelectImage = ImageContainer({image = themes[config.theme].images.IMG_super, hFill = true, vFill = true, hAlign = "center", vAlign = "center"})
   superSelectImage.shader = love.graphics.newShader(super_select_pixelcode)
   superSelectImage.drawSelf = function(self)
-    set_shader(self.shader)
+    GraphicsUtil.setShader(self.shader)
     love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
-    set_shader()
+    GraphicsUtil.setShader()
   end
 
   -- add it to the button
