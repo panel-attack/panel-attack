@@ -277,7 +277,10 @@ function StackBase:drawWall(displacement, rowCount)
   local wallImage = themes[config.theme].images.walls[self.which]
 
   if wallImage then
-    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - displacement + rowCount * 16) * GFX_SCALE, 288)
+    local y = (4 - displacement + rowCount * 16) * GFX_SCALE
+    local width = 288
+    local scaleX = width / wallImage:getWidth()
+    love.graphics.draw(wallImage, 12, y, 0, scaleX, scaleX)
   end
 end
 
