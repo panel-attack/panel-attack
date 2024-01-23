@@ -298,26 +298,6 @@ function gprint(str, x, y, color, scale)
   GraphicsUtil.setColor(1,1,1,1)
 end
 
--- draws a readymade Text object at a specific coordinate
-function GraphicsUtil.printText(text, x, y, align)
-  align = align or "left"
-
-  local xOffset = x
-
-  if align ~= "left" then
-    local width = text:getWidth()
-    if align == "center" then
-      xOffset = x - width / 2
-    elseif align == "right" then
-      xOffset = x - width
-    else
-      error(align .. " is not a valid alignment")
-    end
-  end
-
-  love.graphics.draw(text, xOffset, y, 0, 1, 1, 0, 0)
-end
-
 local function privateMakeFont(fontPath, size)
   local f
   local hinting = "normal"
