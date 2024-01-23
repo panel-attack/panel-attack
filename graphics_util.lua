@@ -76,12 +76,7 @@ end
 -- Draws a image at the given screen spot and scales.
 function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
   if image ~= nil and x ~= nil and y ~= nil and scaleX ~= nil and scaleY ~= nil then
-    if GAME.isDrawing then
-      love.graphics.draw(image, x, y, 0, scaleX, scaleY)
-    else
-      gfx_q:push({love.graphics.draw, {image, x, y,
-      0, scaleX, scaleY}})
-    end
+    love.graphics.draw(image, x, y, 0, scaleX, scaleY)
   end
 end
 
@@ -91,12 +86,8 @@ function draw(img, x, y, rot, x_scale, y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
-  if GAME.isDrawing then
-    love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE)
-  else
-    gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
-  end
+
+  love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE)
 end
 
 -- A pixel font map to use with numbers
@@ -178,11 +169,8 @@ local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_sc
     end
 
     -- Render it at the proper digit location
-    if GAME.isDrawing then
-      love.graphics.draw(atlas, quads[i], characterX, y, 0, x_scale, y_scale)
-    else
-      gfx_q:push({love.graphics.draw, {atlas, quads[i], characterX, y, 0, x_scale, y_scale}})
-    end
+    love.graphics.draw(atlas, quads[i], characterX, y, 0, x_scale, y_scale)
+
     ::continue::
   end
 
@@ -243,26 +231,16 @@ function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirro
   if mirror == 1 then
     x = x - (qW*x_scale)
   end
-  if GAME.isDrawing then
-    love.graphics.draw(img, quad, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset)
-  else
-    gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
-      rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset}})
-  end
+
+  love.graphics.draw(img, quad, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset)
 end
 
 function menu_draw(img, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
-  if GAME.isDrawing then
-    love.graphics.draw(img, x, y,
-    rot, x_scale, y_scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, x, y,
-    rot, x_scale, y_scale}})
-  end
-  
+
+  love.graphics.draw(img, x, y, rot, x_scale, y_scale)
 end
 
 function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
@@ -281,61 +259,38 @@ function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
   elseif valign == "bottom" then
     y = y - math.floor(img:getHeight() * y_scale)
   end
-  if GAME.isDrawing then
-    love.graphics.draw(img, x, y, rot, x_scale, y_scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, x, y,
-      rot, x_scale, y_scale}})
-  end
+
+  love.graphics.draw(img, x, y, rot, x_scale, y_scale)
 end
 
 function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
-  if GAME.isDrawing then
-    love.graphics.draw(img, quad, x, y,
-    rot, x_scale, y_scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, quad, x, y,
-    rot, x_scale, y_scale}})
-  end
+
+  love.graphics.draw(img, quad, x, y, rot, x_scale, y_scale)
 end
 
 -- Draws a rectangle at the given coordinates
 function grectangle(mode, x, y, w, h)
-  if GAME.isDrawing then
-    love.graphics.rectangle(mode, x, y, w, h)
-  else
-    gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
-  end
+  love.graphics.rectangle(mode, x, y, w, h)
 end
 
 -- Draws a colored rectangle at the given coordinates
 function grectangle_color(mode, x, y, w, h, r, g, b, a)
   a = a or 1
-  if GAME.isDrawing then
-    love.graphics.setColor(r, g, b, a)
-    love.graphics.rectangle(mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE)
-    love.graphics.setColor(1, 1, 1, 1)
-  else
-    gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-    gfx_q:push({love.graphics.rectangle, {mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE}})
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  end
+
+  love.graphics.setColor(r, g, b, a)
+  love.graphics.rectangle(mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE)
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 function drawStraightLine(x1, y1, x2, y2, r, g, b, a)
   a = a or 1
-  if GAME.isDrawing then
-    love.graphics.setColor(r, g, b, a)
-    love.graphics.line(x1, y1, x2, y2)
-    love.graphics.setColor(1, 1, 1, 1)
-  else
-    gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-    gfx_q:push({love.graphics.line, {x1, y1, x2, y2}})
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-  end
+
+  love.graphics.setColor(r, g, b, a)
+  love.graphics.line(x1, y1, x2, y2)
+  love.graphics.setColor(1, 1, 1, 1)
 end
 
 -- Draws text at the given spot
@@ -345,21 +300,14 @@ function gprint(str, x, y, color, scale)
   scale = scale or 1
   color = color or nil
   set_color(0, 0, 0, 1)
-  if GAME.isDrawing then
-    love.graphics.print(str, x+1, y+1, 0, scale)
-  else
-    gfx_q:push({love.graphics.print, {str, x+1, y+1, 0, scale}})
-  end
+  love.graphics.print(str, x+1, y+1, 0, scale)
+
   local r, g, b, a = 1,1,1,1
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
   set_color(r,g,b,a)
-  if GAME.isDrawing then
-    love.graphics.print(str, x, y, 0, scale)
-  else
-    gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
-  end
+  love.graphics.print(str, x, y, 0, scale)
   set_color(1,1,1,1)
 end
 
@@ -379,11 +327,8 @@ function GraphicsUtil.printText(text, x, y, align)
       error(align .. " is not a valid alignment")
     end
   end
-  if GAME.isDrawing then
-    love.graphics.draw(text, xOffset, y, 0, 1, 1, 0, 0)
-  else
-    GAME.gfx_q:push({love.graphics.draw, {text, xOffset, y, 0, 1, 1, 0, 0}})
-  end
+
+  love.graphics.draw(text, xOffset, y, 0, 1, 1, 0, 0)
 end
 
 local function privateMakeFont(fontPath, size)
@@ -429,19 +374,11 @@ function get_font_delta(with_delta_size)
 end
 
 function set_font(font)
-  if GAME.isDrawing then
-    love.graphics.setFont(font)
-  else
-    gfx_q:push({love.graphics.setFont, {font}})
-  end
+  love.graphics.setFont(font)
 end
 
 function set_shader(shader)
-  if GAME.isDrawing then
-    love.graphics.setShader(shader)
-  else
-    gfx_q:push({love.graphics.setShader, {shader}})
-  end
+  love.graphics.setShader(shader)
 end
 
 -- Draws a font with a given font delta from the standard font
@@ -457,21 +394,15 @@ function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
   if font_delta_size ~= 0 then
     set_font(get_font_delta(font_delta_size))
   end
-  if GAME.isDrawing then
-    love.graphics.printf(str, x+1, y+1, limit, halign, 0, scale)
-  else
-    gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
-  end
+  love.graphics.printf(str, x+1, y+1, limit, halign, 0, scale)
+
   local r, g, b, a = 1,1,1,1
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
   set_color(r,g,b,a)
-  if GAME.isDrawing then
-    love.graphics.printf(str, x, y, limit, halign, 0, scale)
-  else
-    gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
-  end
+  love.graphics.printf(str, x, y, limit, halign, 0, scale)
+
   if font_delta_size ~= 0 then
     set_font(GraphicsUtil.getGlobalFont())
   end
@@ -484,11 +415,7 @@ function set_color(r, g, b, a)
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
-      if GAME.isDrawing then
-        love.graphics.setColor(r, g, b, a)
-      else
-        gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-      end
+      love.graphics.setColor(r, g, b, a)
     end
 end
 
@@ -512,16 +439,6 @@ function GraphicsUtil.drawClearText(text, x, y, ox, oy)
     love.graphics.setColor(1, 1, 1, 1)
     love.graphics.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
     love.graphics.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
-  else
-    GAME.gfx_q:push({love.graphics.setColor, {0, 0, 0, 1}})
-    GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y - 1, 0, 1, 1, ox, oy}})
-    GAME.gfx_q:push({love.graphics.draw, {text, x - 1, y + 1, 0, 1, 1, ox, oy}})
-    GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y - 1, 0, 1, 1, ox, oy}})
-    GAME.gfx_q:push({love.graphics.draw, {text, x + 2, y + 1, 0, 1, 1, ox, oy}})
-
-    GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-    GAME.gfx_q:push({love.graphics.draw, {text, x + 0, y + 0, 0, 1, 1, ox, oy}})
-    GAME.gfx_q:push({love.graphics.draw, {text, x + 1, y + 0, 0, 1, 1, ox, oy}})
   end
 end
 

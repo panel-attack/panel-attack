@@ -39,14 +39,10 @@ function UpdatingImage:draw()
     y_scale = self.height / self.image:getHeight()
     if GAME.isDrawing then
       love.graphics.draw(self.image, 0, 0, 0, x_scale, y_scale)
-    else
-      gfx_q:push({love.graphics.draw, {self.image, 0, 0, 0, x_scale, y_scale}})
     end
   else
     if GAME.isDrawing then
       love.graphics.draw(self.image, self.quad, 0, 0, 0, x_scale, y_scale)
-    else
-      gfx_q:push({love.graphics.draw, {self.image, self.quad, 0, 0, 0, x_scale, y_scale}})
     end
   end
 end

@@ -13,14 +13,6 @@ local Button = class(
     self.onClick = options.onClick or function()
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
     end
-    self.onMouseDown = options.onMouseDown or function() end
-    self.onMousePressed = options.onMousePressed or function()
-      local screenX, screenY = self:getScreenPos()
-      GAME.gfx_q:push({love.graphics.setColor, {self.backgroundColor[1], self.backgroundColor[2], self.backgroundColor[3], 1}})
-      GAME.gfx_q:push({love.graphics.rectangle, {"fill", screenX, screenY, self.width, self.height}})
-      GAME.gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
-    end
-    self.onMouseUp = options.onMouseUp or function() end
 
     touchable(self)
 

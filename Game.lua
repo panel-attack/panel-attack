@@ -44,7 +44,6 @@ local Game = class(
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
-    self.gfx_q = Queue()
     self.tcpClient = TcpClient()
     self.server_queue = ServerQueue()
     self.main_menu_screen_pos = {consts.CANVAS_WIDTH / 2 - 108 + 50, consts.CANVAS_HEIGHT / 2 - 111}
@@ -296,7 +295,6 @@ function Game:draw()
   self.isDrawing = true
   sceneManager:draw()
   self.isDrawing = false
-  self:processGraphicsQueue()
 
   self:drawFPS()
   self:drawScaleInfo()
@@ -330,19 +328,6 @@ function Game:drawScaleInfo()
     end
     love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
-end
-
-function Game:processGraphicsQueue()
-  -- the isDrawing flag is important so the graphics util funcs know to call the love.graphics funcs directly instead of pushing to gfx_q
-  self.isDrawing = true
-  -- ideally the only things remaining in the gfx_q are text prints and Match:render
-  for i = self.gfx_q.first, self.gfx_q.last do
-    local func = self.gfx_q[i][1]
-    local args = self.gfx_q[i][2]
-    func(unpack(args))
-  end
-  self.gfx_q:clear()
-  self.isDrawing = false
 end
 
 function Game:reset()
