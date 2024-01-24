@@ -154,7 +154,7 @@ function StackBase:drawNumber(number, themePositionOffset, scale, cameFromLegacy
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.draw_number(number, themes[config.theme].fontMaps.numbers[self.which], x, y, scale, "center")
+  GraphicsUtil.drawPixelFont(number, themes[config.theme].fontMaps.numbers[self.which], x, y, scale, "center", 0)
 end
 
 function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
@@ -293,14 +293,14 @@ function StackBase:drawCountdown()
     local countdown_x = 44
     local countdown_y = 68
     if self.clock <= 8 then
-      drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+      GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
     elseif self.clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+        GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end
       local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
-        drawGfxScaled(IMG_number_to_draw, countdown_x, countdown_y)
+        GraphicsUtil.drawGfxScaled(IMG_number_to_draw, countdown_x, countdown_y)
       end
     end
   end

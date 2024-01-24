@@ -96,7 +96,7 @@ function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
 end
 
 -- Draws an image at the given spot while scaling all coordinate and scale values with GFX_SCALE
-function drawGfxScaled(img, x, y, rot, xScale, yScale)
+function GraphicsUtil.drawGfxScaled(img, x, y, rot, xScale, yScale)
   xScale = xScale or 1
   yScale = yScale or 1
   love.graphics.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
@@ -112,7 +112,7 @@ end
 -- TODO support both upper and lower case
 -- atlas - the image to use as the pixel font
 -- font map - a dictionary of a character mapped to the column number in the pixel font image
-local function drawPixelFontWithMap(string, fontMap, x, y, xScale, yScale, align, characterSpacing)
+function GraphicsUtil.drawPixelFont(string, fontMap, x, y, xScale, yScale, align, characterSpacing)
   xScale = xScale or 1
   yScale = yScale or 1
   align = align or "left"
@@ -148,23 +148,10 @@ end
 
 -- Draws a time centered horizontally using the theme's time pixel font which is 0-9, then : then '
 function GraphicsUtil.draw_time(time, x, y, scale)
-  drawPixelFontWithMap(time, themes[config.theme].fontMaps.time, x, y, scale, scale, "center", 0)
-end
-
--- Draws a number via the given font image that has 0-9
-function GraphicsUtil.draw_number(number, fontMap, x, y, scale, align)
-  drawPixelFontWithMap(tostring(number), fontMap, x, y, scale, scale, align, 0)
-end
-
--- Draws the given string with a pixel font image atlas that has 0-9 than a-z
--- string - the string to draw
--- atlas - the image to use as the pixel font
-function draw_pixel_font(string, fontMap, x, y, x_scale, y_scale, align, characterSpacing)
-  drawPixelFontWithMap(string, fontMap, x, y, x_scale, y_scale, align, characterSpacing)
+  GraphicsUtil.drawPixelFont(time, themes[config.theme].fontMaps.time, x, y, scale, scale, "center", 0)
 end
 
 local maxQuadPool = 100
-
 -- Creates a new quad, recycling one if one exists in the pool to reduce memory.
 function GraphicsUtil:newRecycledQuad(x, y, width, height, sw, sh)
   local result = nil

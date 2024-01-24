@@ -378,7 +378,7 @@ function Telegraph:render()
               -- TODO make this more performant?
               garbage_block.x, garbage_block.y = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
 
-              drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             else
               --move toward destination
 
@@ -390,7 +390,7 @@ function Telegraph:render()
               garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
               garbage_block.y = loopY + percent * (garbage_block.destination_y - loopY)
 
-              drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
             end
           end
         end
@@ -404,7 +404,7 @@ function Telegraph:render()
       local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
       local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
   
-      drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.originY, 0, atk_scale, atk_scale)
+      GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.originY, 0, atk_scale, atk_scale)
     end
 
     --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
@@ -429,12 +429,12 @@ function Telegraph:render()
           local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
           local grb_scale_x = 24 / orig_grb_w
           local grb_scale_y = 16 / orig_grb_h
-          drawGfxScaled(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+          GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
         else
           local orig_mtl_w, orig_mtl_h = characters[senderCharacter].telegraph_garbage_images["metal"]:getDimensions()
           local mtl_scale_x = 24 / orig_mtl_w
           local mtl_scale_y = 16 / orig_mtl_h
-          drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y, 0, mtl_scale_x, mtl_scale_y)
+          GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y, 0, mtl_scale_x, mtl_scale_y)
         end
         drewChain = drewChain or current_block[4]
 
@@ -472,7 +472,7 @@ function Telegraph:render()
       local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
       local grb_scale_x = 24 / orig_grb_w
       local grb_scale_y = 16 / orig_grb_h
-      drawGfxScaled(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
+      GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
 
       -- Render a "G" for ghost
       if config.debug_mode then

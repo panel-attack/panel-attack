@@ -179,10 +179,10 @@ function SimpleGameSetupMenu:draw()
     local xPosition2 = xPosition1 + 150
     local yPosition = menu_y + 50
 
-    draw_pixel_font("last score", themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition, 0.5, 1.0, nil, nil)
-    draw_pixel_font(lastScore, themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil)
-    draw_pixel_font("record", themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition, 0.5, 1.0, nil, nil)
-    draw_pixel_font(record, themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont("last score", themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont(lastScore, themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont("record", themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont(record, themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil)
 
     self.classicMenu:draw()
   else

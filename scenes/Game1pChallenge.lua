@@ -65,8 +65,8 @@ end
 function Game1pChallenge:drawStageInfo(drawX, drawY)
   local limit = 400
   gprintf("Stage", drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
-  GraphicsUtil.draw_number(self.stageIndex, themes[config.theme].fontMaps.numbers[2], drawX, drawY + 26,
-                           themes[config.theme].win_Scale, "center")
+  GraphicsUtil.drawPixelFont(self.stageIndex, themes[config.theme].fontMaps.numbers[2], drawX, drawY + 26,
+                           themes[config.theme].win_Scale, "center", 0)
 end
 
 function Game1pChallenge:drawContinueInfo(drawX, drawY)
