@@ -1,6 +1,7 @@
 local class = require("class")
 local Transition = require("scenes.Transitions.Transition")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 local BlackFadeTransition = class(function(transition, startTime, duration,  oldScene, newScene, easing)
   transition.easing = easing

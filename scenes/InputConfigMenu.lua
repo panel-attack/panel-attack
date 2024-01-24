@@ -4,12 +4,10 @@ local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
-local ButtonGroup = require("ui.ButtonGroup")
 local consts = require("consts")
 local input = require("inputManager")
 local joystickManager = require("joystickManager")
 local util = require("util")
-local GraphicsUtil = require("graphics_util")
 local class = require("class")
 
 --@module inputConfigMenu

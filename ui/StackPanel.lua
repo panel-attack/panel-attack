@@ -1,6 +1,7 @@
 local UiElement = require("ui.UIElement")
 local class = require("class")
 local tableUtils = require("tableUtils")
+local GraphicsUtil = require("graphics_util")
 
 -- StackPanel is a layouting element that stacks up all its children in one direction based on an alignment setting
 -- Useful for auto-aligning multiple ui elements that only know one of their dimensions

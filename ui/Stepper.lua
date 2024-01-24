@@ -3,6 +3,7 @@ local util = require("util")
 local UIElement = require("ui.UIElement")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
+local GraphicsUtil = require("graphics_util")
 
 local BUTTON_PADDING = 5
 

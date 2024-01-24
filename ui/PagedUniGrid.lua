@@ -4,6 +4,7 @@ local class = require("class")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local Signal = require("helpers.signal")
+local GraphicsUtil = require("graphics_util")
 
 local function addNewPage(pagedUniGrid)
   local grid = Grid({
