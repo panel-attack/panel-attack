@@ -126,8 +126,8 @@ end
 function GameBase:runGameOver()
   local font = GraphicsUtil.getGlobalFont()
 
-  gprint(self.text, (consts.CANVAS_WIDTH - font:getWidth(self.text)) / 2, 10)
-  gprint(loc("continue_button"), (consts.CANVAS_WIDTH - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
+  GraphicsUtil.print(self.text, (consts.CANVAS_WIDTH - font:getWidth(self.text)) / 2, 10)
+  GraphicsUtil.print(loc("continue_button"), (consts.CANVAS_WIDTH - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
   local displayTime = love.timer.getTime() - gameOverStartTime
   if not self.keepMusic then

@@ -230,7 +230,7 @@ function SoundTest:load()
   menuValidateSound = themes[config.theme].sounds.menu_validate
   themes[config.theme].sounds.menu_validate = zero_sound
 
-  gprint(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
+  GraphicsUtil.print(loc("op_music_load"), unpack(themes[config.theme].main_menu_screen_pos))
 end
 
 function SoundTest:update(dt)

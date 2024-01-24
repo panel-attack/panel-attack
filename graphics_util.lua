@@ -238,7 +238,7 @@ function GraphicsUtil.drawStraightLine(x1, y1, x2, y2, r, g, b, a)
 end
 
 -- Draws text at the given spot
-function gprint(str, x, y, color, scale)
+function GraphicsUtil.print(str, x, y, color, scale)
   x = x or 0
   y = y or 0
   scale = scale or 1

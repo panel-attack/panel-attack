@@ -83,14 +83,14 @@ end
 
 function Match:render()
   if GAME.droppedFrames > 0 and config.show_fps then
-    gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
+    GraphicsUtil.print("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 
   if config.show_fps and #self.stacks > 1 then
     local drawY = 23
     for i = 1, #self.stacks do
       local stack = self.stacks[i]
-      gprint("P" .. stack.which .." Average Latency: " .. stack.framesBehind, 1, drawY)
+      GraphicsUtil.print("P" .. stack.which .." Average Latency: " .. stack.framesBehind, 1, drawY)
       drawY = drawY + 11
     end
 
@@ -167,7 +167,7 @@ function Match:render()
       -- Draw VS HUD
       if self.stackInteraction == GameModes.StackInteractions.VERSUS then
         if not config.debug_mode then -- this is printed in the same space as the debug details
-          gprint(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
+          GraphicsUtil.print(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
         end
 
         self:drawMatchType()

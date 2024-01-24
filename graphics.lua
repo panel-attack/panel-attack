@@ -282,14 +282,14 @@ function Stack:drawDebug()
     local y = self.frameOriginY + 160
 
     if self.danger then
-      gprint("danger", x, y + 135)
+      GraphicsUtil.print("danger", x, y + 135)
     end
     if self.danger_music then
-      gprint("danger music", x, y + 150)
+      GraphicsUtil.print("danger music", x, y + 150)
     end
 
-    gprint(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
-    gprint(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
+    GraphicsUtil.print(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
+    GraphicsUtil.print(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
 
     if self.input_state or self.taunt_up or self.taunt_down then
       local iraise, iswap, iup, idown, ileft, iright
@@ -326,7 +326,7 @@ function Stack:drawDebug()
       if self.inputMethod == "touch" then
         inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
       end
-      gprint(inputs_to_print, x, y + 195)
+      GraphicsUtil.print(inputs_to_print, x, y + 195)
     end
 
     local drawX = self.frameOriginX + self:stackCanvasWidth() / 2
@@ -397,15 +397,15 @@ function Stack:drawDebugPanels(shakeOffset)
         -- Require hovering over a stack to show details
         if mouseX >= self.panelOriginX * GFX_SCALE and mouseX <= (self.panelOriginX + self.width * 16) * GFX_SCALE then
           if not (panel.color == 0 and panel.state == "normal") then
-            gprint(panel.state, draw_x, draw_y)
+            GraphicsUtil.print(panel.state, draw_x, draw_y)
             if panel.matchAnyway then
-              gprint(tostring(panel.matchAnyway), draw_x, draw_y + 10)
+              GraphicsUtil.print(tostring(panel.matchAnyway), draw_x, draw_y + 10)
               if panel.debug_tag then
-                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+                GraphicsUtil.print(tostring(panel.debug_tag), draw_x, draw_y + 20)
               end
             end
             if panel.chaining then
-              gprint("chaining", draw_x, draw_y + 30)
+              GraphicsUtil.print("chaining", draw_x, draw_y + 30)
             end
           end
         end
