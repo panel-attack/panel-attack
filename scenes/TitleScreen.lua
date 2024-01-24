@@ -5,6 +5,7 @@ local input = require("inputManager")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 require("scenes.MainMenu")
 
 --@module titleScreen

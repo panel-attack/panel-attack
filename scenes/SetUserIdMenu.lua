@@ -6,6 +6,7 @@ local input = require("inputManager")
 local save = require("save")
 local utf8 = require("utf8")
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 
 -- @module setNameMenu
 -- Scene for setting the username

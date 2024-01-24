@@ -7,6 +7,7 @@ local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
 local tableUtils = require("tableUtils")
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 
 --@module soundTest
 -- Scene for the sound test

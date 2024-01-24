@@ -5,6 +5,7 @@ local consts = require("consts")
 local util = require("util")
 local Replay = require("replay")
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 
 --@module replayGame
 local ReplayGame = class(

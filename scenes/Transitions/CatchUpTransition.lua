@@ -1,5 +1,6 @@
 local class = require("class")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- a transition that displays an intermediary loading screen while the match of the newScene is catching up
 -- once the match caught up, the transition ends
