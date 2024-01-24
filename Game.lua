@@ -437,7 +437,6 @@ function Game.detailedErrorLogString(errorData)
         "      Character: " .. player.characterId  .. newLine ..
         "      Selected Stage: " .. player.selectedStageId .. newLine ..
         "      Stage: " .. player.stageId .. newLine ..
-        "      Human: " .. player.human .. newLine ..
         "      isLocal: " .. player.isLocal .. newLine ..
         "      wantsReady: " .. player.wantsReady
       end
