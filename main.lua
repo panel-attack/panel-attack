@@ -18,6 +18,7 @@ require("globals")
 require("character_loader") -- after globals!
 require("stage_loader") -- after globals!
 local CustomRun = require("CustomRun")
+local GraphicsUtil = require("graphics_util")
 
 require("queue")
 local save = require("save")
@@ -253,8 +254,8 @@ function love.errorhandler(msg)
   end
 
   love.graphics.reset()
-  love.graphics.setFont(get_font_delta(4))
-  love.graphics.setColor(1, 1, 1)
+  love.graphics.setFont(GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize + 4))
+  GraphicsUtil.setColor(1, 1, 1)
   love.graphics.origin()
 
   local scale = 1

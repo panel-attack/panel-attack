@@ -138,10 +138,10 @@ function SimulatedStack:renderStackHeight()
   local xScale = (self:stackCanvasWidth() - 8) / themes[config.theme].images.IMG_multibar_shake_bar:getWidth()
   local yScale = (self.canvas:getHeight() - 4) / themes[config.theme].images.IMG_multibar_shake_bar:getHeight() * percentage
 
-  love.graphics.setColor(1, 1, 1, 0.6)
-  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale,
+  GraphicsUtil.setColor(1, 1, 1, 0.6)
+  GraphicsUtil.drawQuad(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale,
                      -yScale)
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 function SimulatedStack:receiveGarbage(frameToReceive, garbageList)

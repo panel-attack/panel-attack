@@ -28,9 +28,9 @@ local fakeCenteredChild = {hAlign = "center", vAlign = "center", width = 30, hei
 
 function BoolSelector:drawSelf()
   if DEBUG_ENABLED then
-    love.graphics.setColor(0, 0, 1, 1)
+    GraphicsUtil.setColor(0, 0, 1, 1)
     love.graphics.rectangle("line", self.x + 1, self.y + 1, self.width - 2, self.height - 2)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(1, 1, 1, 1)
   end
 
   -- we want these to be centered but creating a Rectangle / Circle ui element is maybe a bit too much?

@@ -41,7 +41,7 @@ function PixelFontLabel:drawSelf()
       local characterX = self.x + ((i - 1) * self.charDistanceScaled)
 
       -- Render it at the proper digit location
-      love.graphics.draw(self.fontMap.atlas, self.fontMap[char], characterX, self.y, 0, self.xScale, self.yScale)
+      GraphicsUtil.drawQuad(self.fontMap.atlas, self.fontMap[char], characterX, self.y, 0, self.xScale, self.yScale)
     end
   end
 end

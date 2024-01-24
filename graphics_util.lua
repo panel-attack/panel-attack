@@ -88,23 +88,16 @@ function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
   return nil
 end
 
--- Draws a image at the given screen spot and scales.
-function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
-  if image ~= nil and x ~= nil and y ~= nil and scaleX ~= nil and scaleY ~= nil then
-    love.graphics.draw(image, x, y, 0, scaleX, scaleY)
-  end
-end
-
 -- Draws an image at the given spot while scaling all coordinate and scale values with GFX_SCALE
 function GraphicsUtil.drawGfxScaled(img, x, y, rot, xScale, yScale)
   xScale = xScale or 1
   yScale = yScale or 1
-  love.graphics.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
+  GraphicsUtil.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
 end
 
 -- Draws an image, texture or canvas at the given spot
-function GraphicsUtil.draw(img, x, y, rot, x_scale,y_scale)
-  love.graphics.draw(img, x, y, rot, x_scale, y_scale)
+function GraphicsUtil.draw(img, x, y, rot, xScale, yScale, offsetX, offsetY)
+  love.graphics.draw(img, x, y, rot, xScale, yScale, offsetX, offsetY)
 end
 
 -- Draws the given string with the given pixel font image atlas
@@ -139,7 +132,7 @@ function GraphicsUtil.drawPixelFont(string, fontMap, x, y, xScale, yScale, align
       end
 
       -- Render it at the proper digit location
-      love.graphics.draw(fontMap.atlas, fontMap[character], characterX, y, 0, xScale, yScale)
+      GraphicsUtil.drawQuad(fontMap.atlas, fontMap[character], characterX, y, 0, xScale, yScale)
 
     end
   end
@@ -185,7 +178,7 @@ function GraphicsUtil.drawQuadGfxScaled(image, quad, x, y, rotation, xScale, ySc
     x = x - (qW*xScale)
   end
 
-  love.graphics.draw(image, quad, x * GFX_SCALE, y * GFX_SCALE, rotation, xScale * GFX_SCALE, yScale * GFX_SCALE, xOffset, yOffset)
+  GraphicsUtil.drawQuad(image, quad, x * GFX_SCALE, y * GFX_SCALE, rotation, xScale * GFX_SCALE, yScale * GFX_SCALE, xOffset, yOffset)
 end
 
 -- Draws an image at the given position, using the quad for the viewport
@@ -215,26 +208,26 @@ function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
     y = y - math.floor(img:getHeight() * y_scale)
   end
 
-  love.graphics.draw(img, x, y, rot, x_scale, y_scale)
+  GraphicsUtil.draw(img, x, y, rot, x_scale, y_scale)
 end
 
 -- Draws a rectangle at the given coordinates
 function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a)
   a = a or 1
   if r then
-    love.graphics.setColor(r, g, b, a)
+    GraphicsUtil.setColor(r, g, b, a)
   end
 
   love.graphics.rectangle(mode, x, y, w, h)
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 function GraphicsUtil.drawStraightLine(x1, y1, x2, y2, r, g, b, a)
   a = a or 1
 
-  love.graphics.setColor(r, g, b, a)
+  GraphicsUtil.setColor(r, g, b, a)
   love.graphics.line(x1, y1, x2, y2)
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 local function privateMakeFont(fontPath, size)
@@ -271,12 +264,6 @@ end
 -- Returns the current global font
 function GraphicsUtil.getGlobalFont()
   return GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize)
-end
-
--- Creates a new font based on the current font and a delta
-function get_font_delta(with_delta_size)
-  local font_size = GraphicsUtil.fontSize + with_delta_size
-  return GraphicsUtil.getGlobalFontWithSize(font_size)
 end
 
 function GraphicsUtil.setFont(font)
@@ -316,7 +303,7 @@ function GraphicsUtil.printf(str, x, y, limit, halign, color, scale, font_delta_
   halign = halign or "left"
   GraphicsUtil.setColor(0, 0, 0, 1)
   if font_delta_size ~= 0 then
-    GraphicsUtil.setFont(get_font_delta(font_delta_size))
+    GraphicsUtil.setFont(GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize + font_delta_size))
   end
   love.graphics.printf(str, x+1, y+1, limit, halign, 0, scale)
 
@@ -339,7 +326,7 @@ function GraphicsUtil.setColor(r, g, b, a)
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
-      love.graphics.setColor(r, g, b, a)
+      GraphicsUtil.setColor(r, g, b, a)
     end
 end
 
@@ -353,15 +340,15 @@ end
 -- ox: Origin offset (x-axis).
 -- oy: Origin offset (y-axis).
 function GraphicsUtil.drawClearText(text, x, y, ox, oy)
-  love.graphics.setColor(0, 0, 0, 1)
-  love.graphics.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
-  love.graphics.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
-  love.graphics.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
-  love.graphics.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.setColor(0, 0, 0, 1)
+  GraphicsUtil.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
 
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
-  love.graphics.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
+  GraphicsUtil.setColor(1, 1, 1, 1)
+  GraphicsUtil.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
 end
 
 function GraphicsUtil.getAlignmentOffset(parentElement, childElement)

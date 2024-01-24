@@ -68,9 +68,9 @@ end
 
 function Grid:drawSelf()
   if DEBUG_ENABLED then
-    love.graphics.setColor(1, 1, 1, 0.5)
+    GraphicsUtil.setColor(1, 1, 1, 0.5)
     love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(1, 1, 1, 1)
     -- draw all units
     local right = self.x + self.width
     local bottom = self.y + self.height

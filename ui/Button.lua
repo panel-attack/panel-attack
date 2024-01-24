@@ -35,16 +35,16 @@ end
 
 function Button:drawBackground()
   if self.backgroundColor[4] > 0 then
-    love.graphics.setColor(self.backgroundColor)
+    GraphicsUtil.setColor(self.backgroundColor)
     love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end
 
 function Button:drawOutline()
-  love.graphics.setColor(self.outlineColor)
+  GraphicsUtil.setColor(self.outlineColor)
   love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 function Button:drawSelf()

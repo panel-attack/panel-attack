@@ -8,6 +8,7 @@ local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local input = require("inputManager")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 
@@ -278,11 +279,11 @@ function Menu:drawSelf()
   local selectedItem = self.menuItems[self.selectedIndex]
   local arrowx = selectedItem.x - 10 + animationX
   local arrowy = selectedItem.y + self.menuItems[self.selectedIndex].height / 4
-  love.graphics.draw(arrow, self.x + arrowx, self.y + arrowy, 0, 1, 1, 0, 0)
+  GraphicsUtil.draw(arrow, self.x + arrowx, self.y + arrowy, 0, 1, 1, 0, 0)
 
   if DEBUG_ENABLED then
-    love.graphics.setColor(1, 1, 1, 1)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.setColor(1, 1, 1, 1)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
   end
 end
 

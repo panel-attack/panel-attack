@@ -289,9 +289,7 @@ function Game:draw()
   love.graphics.clear()
 
   -- With this, self.globalCanvas is clear and set as our active canvas everything is being drawn to
-  self.isDrawing = true
   sceneManager:draw()
-  self.isDrawing = false
 
   self:drawFPS()
   self:drawScaleInfo()

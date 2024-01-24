@@ -313,7 +313,7 @@ function CharacterSelect.applySuperSelectInteraction(characterButton)
   superSelectImage.shader = love.graphics.newShader(super_select_pixelcode)
   superSelectImage.drawSelf = function(self)
     GraphicsUtil.setShader(self.shader)
-    love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
+    GraphicsUtil.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
     GraphicsUtil.setShader()
   end
 

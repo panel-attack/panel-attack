@@ -269,7 +269,7 @@ function StackBase:drawFrame()
   if frameImage then
     local scaleX = 312 / frameImage:getWidth()
     local scaleY = 612 / frameImage:getHeight()
-    love.graphics.draw(frameImage, 0, 0, 0, scaleX, scaleY)
+    GraphicsUtil.draw(frameImage, 0, 0, 0, scaleX, scaleY)
   end
 end
 
@@ -280,7 +280,7 @@ function StackBase:drawWall(displacement, rowCount)
     local y = (4 - displacement + rowCount * 16) * GFX_SCALE
     local width = 288
     local scaleX = width / wallImage:getWidth()
-    love.graphics.draw(wallImage, 12, y, 0, scaleX, scaleX)
+    GraphicsUtil.draw(wallImage, 12, y, 0, scaleX, scaleX)
   end
 end
 
