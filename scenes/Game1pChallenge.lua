@@ -67,7 +67,7 @@ function Game1pChallenge:drawStageInfo(drawX, drawY)
   local limit = 400
   GraphicsUtil.printf("Stage", drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
   GraphicsUtil.drawPixelFont(self.stageIndex, themes[config.theme].fontMaps.numbers[2], drawX, drawY + 26,
-                           themes[config.theme].win_Scale, "center", 0)
+                           themes[config.theme].win_Scale, themes[config.theme].win_Scale, "center", 0)
 end
 
 function Game1pChallenge:drawContinueInfo(drawX, drawY)

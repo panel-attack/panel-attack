@@ -154,7 +154,7 @@ function StackBase:drawNumber(number, themePositionOffset, scale, cameFromLegacy
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.drawPixelFont(number, themes[config.theme].fontMaps.numbers[self.which], x, y, scale, "center", 0)
+  GraphicsUtil.drawPixelFont(number, themes[config.theme].fontMaps.numbers[self.which], x, y, scale, scale, "center", 0)
 end
 
 function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)

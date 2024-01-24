@@ -105,7 +105,7 @@ end
 -- TODO support both upper and lower case
 -- atlas - the image to use as the pixel font
 -- font map - a dictionary of a character mapped to the column number in the pixel font image
-function GraphicsUtil.drawPixelFont(string, fontMap, x, y, xScale, yScale, align, characterSpacing)
+function GraphicsUtil.drawPixelFont(str, fontMap, x, y, xScale, yScale, align, characterSpacing)
   xScale = xScale or 1
   yScale = yScale or 1
   align = align or "left"
@@ -114,21 +114,23 @@ function GraphicsUtil.drawPixelFont(string, fontMap, x, y, xScale, yScale, align
   characterSpacing = characterSpacing or 2
   local characterDistanceScaled = (fontMap.charWidth + characterSpacing) * xScale
 
-  if string == nil or fontMap.charWidth == nil or fontMap.charHeight == nil then
+  if str == nil or fontMap.charWidth == nil or fontMap.charHeight == nil then
     logger.error("Error initalizing draw pixel font")
     return
   end
 
-  for i = 1, #string, 1 do
-    local character = string:sub(i,i)
+  str = tostring(str)
+
+  for i = 1, #str, 1 do
+    local character = str:sub(i,i)
     if character and character ~= " " then
 
       local characterIndex = i - 1
       local characterX = x + (characterIndex * characterDistanceScaled)
       if align == "center" then
-        characterX = x + ((characterIndex-(#string/2))*characterDistanceScaled)
+        characterX = x + ((characterIndex-(#str/2))*characterDistanceScaled)
       elseif align == "right" then
-        characterX = x + ((characterIndex-#string)*characterDistanceScaled)
+        characterX = x + ((characterIndex-#str)*characterDistanceScaled)
       end
 
       -- Render it at the proper digit location

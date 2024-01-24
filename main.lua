@@ -104,10 +104,7 @@ function love.update(dt)
   inputFieldManager.update()
   touchHandler:update(dt)
 
-  local status, err = xpcall(function() GAME:update(dt) end, debug.traceback)
-  if not status then
-    error(err)
-  end
+  GAME:update(dt)
 end
 
 -- Called whenever the game needs to draw.
