@@ -76,23 +76,23 @@ function BarGraph.draw(graph)
         local height = graph.height * (value / graph.maxValue)
         local fillColor = graph.fillColors[index] or defaultFillColor
         local strokeColor = graph.strokeColors[index] or defaultStrokeColor
-        GraphicsUtil.setColor(unpack(fillColor))
-        GraphicsUtil.drawRectangle("fill", xPosition, yPosition - height, graph.barWidth, height)
-        GraphicsUtil.setColor(unpack(strokeColor))
-        GraphicsUtil.drawRectangle("line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1)
+        love.graphics.setColor(unpack(fillColor))
+        love.graphics.drawRectangle("fill", xPosition, yPosition - height, graph.barWidth, height)
+        love.graphics.setColor(unpack(strokeColor))
+        love.graphics.drawRectangle("line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1)
         yPosition = yPosition - height
       end
     end
     xPosition = xPosition + graph.barWidth
   end
 
-  GraphicsUtil.setColor(1, 1, 1, 0.8)
-  GraphicsUtil.drawRectangle("line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1)
+  love.graphics.setColor(1, 1, 1, 0.8)
+  love.graphics.drawRectangle("line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1)
 
-  GraphicsUtil.setColor(0, 0, 0, 0.8)
-  GraphicsUtil.drawRectangle("fill", graph.x, graph.height + graph.y + 8, graph.width, 20)
+  love.graphics.setColor(0, 0, 0, 0.8)
+  love.graphics.drawRectangle("fill", graph.x, graph.height + graph.y + 8, graph.width, 20)
 
-  GraphicsUtil.setColor(1, 1, 1, 1)
+  love.graphics.setColor(1, 1, 1, 1)
   local padding = 4
   love.graphics.print(graph.label, graph.x + padding, graph.height + graph.y + 8 + padding)
 
