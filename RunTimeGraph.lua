@@ -31,7 +31,7 @@ local RunTimeGraph = class(function(self)
   self.graphs[#self.graphs]:setFillColor({1, 0.3, 0.3, 1}, 2) -- love.draw
   self.graphs[#self.graphs]:setFillColor({0.5, 0.5, 0.5, 1}, 3) -- self:draw + self:updateWithMetrics
   self.graphs[#self.graphs]:setFillColor({1, 1, 1, 1}, 4) -- love.present
-  self.graphs[#self.graphs]:setFillColor({0.2, 0.2, 1, 1}, 5) -- manualGc
+  self.graphs[#self.graphs]:setFillColor({1, 0, 0, 1}, 5) -- manualGc
   self.graphs[#self.graphs]:setFillColor({0, 1, 0, 1}, 6) -- love.timer.sleep
   y = y + height + padding
 

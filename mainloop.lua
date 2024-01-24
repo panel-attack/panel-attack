@@ -101,7 +101,9 @@ function variable_step(f)
 
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
-        GAME.droppedFrames = GAME.droppedFrames + 1
+        if GAME.match and GAME.match.P1.clock and GAME.match.P1.clock > 1 then
+          GAME.droppedFrames = GAME.droppedFrames + 1
+        end
       end
     end
   end

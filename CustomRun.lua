@@ -43,7 +43,7 @@ function CustomRun.sleep()
   if GAME and GAME.match and GAME.focused and not GAME.gameIsPaused then
     -- Spend as much time as necessary collecting garbage, but at least 0.1ms
     -- manualGc itself has a ceiling at which it will stop
-    manualGc(math.max(0.0001, idleTime * 0.99))
+    manualGc(math.max(0.001, idleTime * config.activeGarbageCollectionPercent))
     currentTime = love.timer.getTime()
     CustomRun.runMetrics.gcDuration = currentTime - originalTime
     originalTime = currentTime
