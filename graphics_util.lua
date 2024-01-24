@@ -237,24 +237,6 @@ function GraphicsUtil.drawStraightLine(x1, y1, x2, y2, r, g, b, a)
   love.graphics.setColor(1, 1, 1, 1)
 end
 
--- Draws text at the given spot
-function GraphicsUtil.print(str, x, y, color, scale)
-  x = x or 0
-  y = y or 0
-  scale = scale or 1
-  color = color or nil
-  GraphicsUtil.setColor(0, 0, 0, 1)
-  love.graphics.print(str, x+1, y+1, 0, scale)
-
-  local r, g, b, a = 1,1,1,1
-  if color ~= nil then
-    r,g,b,a = unpack(color)
-  end
-  GraphicsUtil.setColor(r,g,b,a)
-  love.graphics.print(str, x, y, 0, scale)
-  GraphicsUtil.setColor(1,1,1,1)
-end
-
 local function privateMakeFont(fontPath, size)
   local f
   local hinting = "normal"
@@ -303,6 +285,24 @@ end
 
 function GraphicsUtil.setShader(shader)
   love.graphics.setShader(shader)
+end
+
+-- Draws text at the given spot
+function GraphicsUtil.print(str, x, y, color, scale)
+  x = x or 0
+  y = y or 0
+  scale = scale or 1
+  color = color or nil
+  GraphicsUtil.setColor(0, 0, 0, 1)
+  love.graphics.print(str, x+1, y+1, 0, scale)
+
+  local r, g, b, a = 1,1,1,1
+  if color ~= nil then
+    r,g,b,a = unpack(color)
+  end
+  GraphicsUtil.setColor(r,g,b,a)
+  love.graphics.print(str, x, y, 0, scale)
+  GraphicsUtil.setColor(1,1,1,1)
 end
 
 -- Draws a font with a given font delta from the standard font
