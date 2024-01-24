@@ -21,6 +21,7 @@ local GameModes = require("GameModes")
 local Signal    = require("helpers.signal")
 local StackPanel = require("ui.StackPanel")
 local PixelFontLabel = require("ui.PixelFontLabel")
+local GraphicsUtil = require("graphics_util")
 
 -- @module CharacterSelect
 -- The character select screen scene

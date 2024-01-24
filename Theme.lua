@@ -6,6 +6,7 @@ require("class")
 local logger = require("logger")
 local fileUtils = require("FileUtils")
 local levelPresets = require("LevelPresets")
+local GraphicsUtil = require("graphics_util")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 

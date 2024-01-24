@@ -1,6 +1,6 @@
 local logger = require("logger")
 local Health = require("Health")
-local graphicsUtil = require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local StackBase = require("StackBase")
 local class = require("class")
 local consts = require("consts")

@@ -3,6 +3,7 @@ local class = require("class")
 local directsFocus = require("ui.FocusDirector")
 local input = require("inputManager")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- create a new cursor that can navigate on the specified grid
 -- grid: the target grid that is navigated on

@@ -4,6 +4,7 @@ local Replay = require("replay")
 local class = require("class")
 local Signal = require("helpers.signal")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- @module endlessGame
 -- Scene for an endless mode instance of the game

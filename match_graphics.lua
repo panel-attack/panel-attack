@@ -1,6 +1,7 @@
 local GameModes = require("GameModes")
 local tableUtils = require("tableUtils")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 local GFX_SCALE = consts.GFX_SCALE
 
 function Match:matchelementOriginX()

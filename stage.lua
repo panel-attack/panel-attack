@@ -3,6 +3,7 @@ local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
 local consts = require("consts")
 local sceneManager = require("scenes.sceneManager")
+local GraphicsUtil = require("graphics_util")
 require("UpdatingImage")
 
 -- Stuff defined in this file:

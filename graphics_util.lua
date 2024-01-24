@@ -3,7 +3,7 @@ local logger = require("logger")
 local GFX_SCALE = consts.GFX_SCALE
 
 -- Utility methods for drawing
-GraphicsUtil = {
+local GraphicsUtil = {
   fontFile = nil,
   fontSize = 12,
   fontCache = {},

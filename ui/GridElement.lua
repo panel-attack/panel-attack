@@ -1,5 +1,6 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
+local GraphicsUtil = require("graphics_util")
 
 local GridElement = class(function(gridElement, options)
   if options.content then

@@ -2,6 +2,7 @@ local class = require("class")
 local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 local StartUp = class(function(scene, sceneParams)
   scene.setupRoutine = coroutine.create(sceneParams.setupRoutine)

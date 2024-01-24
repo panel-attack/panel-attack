@@ -9,7 +9,6 @@ local save = require("save")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
-local Replay = require("replay")
 local Signal = require("helpers.signal")
 
 --@module GameBase
