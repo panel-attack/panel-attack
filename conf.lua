@@ -18,7 +18,7 @@ function love.conf(t)
     t.externalstorage = UseAndroidExternalStorage    -- True to save files (and read from the save directory) in external storage on Android (boolean) 
   else
     -- game was started without auto_updater or an outdated auto_updater that isn't external_storage ready
-    t.externalstorage = false
+    t.externalstorage = true
   end
   t.gammacorrect = false              -- Enable gamma-correct rendering, when supported by the system (boolean)
 
