@@ -30,7 +30,6 @@ local StackBase = class(function(self, args)
   -- graphics
   self.canvas = love.graphics.newCanvas(312, 612, {dpiscale = GAME:newCanvasSnappedScale()})
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-  self.wins_quads = {}
 end)
 
 -- Provides the X origin to draw an element of the stack

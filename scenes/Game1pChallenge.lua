@@ -14,7 +14,6 @@ local Game1pChallenge = class(function(self, sceneParams)
   Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
   self.stageTimeQuads = {}
   self.totalTimeQuads = {}
-  self.stageQuads = {}
   self.stageIndex = GAME.battleRoom.stageIndex
   self.stages = GAME.battleRoom.stages
 end, GameBase)

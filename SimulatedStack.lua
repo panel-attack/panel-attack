@@ -16,8 +16,6 @@ SimulatedStack = class(function(self, arguments)
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getHeight(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
-  self.speedQuads = {}
-  self.stageQuads = {}
   self.difficultyQuads = {}
   -- somehow bad things happen if this is called in the base class constructor instead
   self:moveForRenderIndex(self.which)
@@ -272,21 +270,11 @@ function SimulatedStack:drawMultibar()
 end
 
 -- in the long run we should have all quads organized in a Stack.quads table
--- with access then being self.quads.speed to access the current self.speedQuads
 -- that way deinit could be implemented generically in StackBase
 function SimulatedStack:deinit()
   self.healthQuad:release()
   self.stackHeightQuad:release()
-  for _, quad in ipairs(self.speedQuads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.wins_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
   for _, quad in ipairs(self.difficultyQuads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.stageQuads) do
     GraphicsUtil:releaseQuad(quad)
   end
 end

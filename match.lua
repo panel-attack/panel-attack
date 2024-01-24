@@ -60,8 +60,6 @@ Match =
     self.renderDuringPause = false
     self.clock = 0
 
-    self.time_quads = {}
-
     Signal.addSignal(self, "onMatchEnded")
   end
 )
@@ -77,9 +75,6 @@ function Match:deinit()
   end
   if self.P2 then
     self.P2:deinit()
-  end
-  for _, quad in ipairs(self.time_quads) do
-    GraphicsUtil:releaseQuad(quad)
   end
   stop_the_music()
 end
