@@ -19,8 +19,6 @@ Match =
     self.stacks = {}
     -- holds detached attackEngines, meaning attack engines that only deal; indexed via the player they're targeting
     self.attackEngines = {}
-    self.P1 = nil
-    self.P2 = nil
     self.engineVersion = consts.ENGINE_VERSION
 
     assert(doCountdown ~= nil)
@@ -70,12 +68,10 @@ require("match_graphics")
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
 function Match:deinit()
-  if self.P1 then
-    self.P1:deinit()
+  for i = 1, #self.stacks do
+    self.stacks[i]:deinit()
   end
-  if self.P2 then
-    self.P2:deinit()
-  end
+
   stop_the_music()
 end
 

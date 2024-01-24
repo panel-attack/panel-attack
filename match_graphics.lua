@@ -24,12 +24,13 @@ function Match:drawMatchLabel(drawable, themePositionOffset, scale)
   local x = self:matchelementOriginX() + themePositionOffset[1]
   local y = self:matchelementOriginY() + themePositionOffset[2]
 
-  local hAlign = "left"
-  local vAlign = "left"
   if themes[config.theme]:offsetsAreFixed() then
-    hAlign = "center"
+    -- align in center
+    x = x - math.floor(drawable:getWidth() * 0.5 * scale)
+  else 
+    -- align left, no adjustment
   end
-  menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
+  GraphicsUtil.draw(drawable, x, y, 0, scale, scale)
 end
 
 function Match:drawMatchTime(timeString, themePositionOffset, scale)
@@ -191,7 +192,13 @@ function Match:draw_pause()
   if not self.renderDuringPause then
     local image = themes[config.theme].images.pause
     local scale = consts.CANVAS_WIDTH / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
-    menu_drawf(image, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    -- adjust coordinates to be centered
+    local x = consts.CANVAS_WIDTH / 2
+    local y = consts.CANVAS_HEIGHT / 2
+    local xOffset = math.floor(image:getWidth() * 0.5)
+    local yOffset = math.floor(image:getHeight() * 0.5)
+
+    GraphicsUtil.draw(image, x, y, 0, scale, scale, xOffset, yOffset)
   end
   GraphicsUtil.printf(loc("pause"), 0, 330, consts.CANVAS_WIDTH, "center", nil, 1, 10)
   GraphicsUtil.printf(loc("pl_pause_help"), 0, 360, consts.CANVAS_WIDTH, "center", nil, 1)

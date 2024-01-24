@@ -193,26 +193,6 @@ function GraphicsUtil.drawQuad(image, quad, x, y, rotation, xScale, yScale, xOff
   love.graphics.draw(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset)
 end
 
-function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  halign = halign or "left"
-  if halign == "center" then
-    x = x - math.floor(img:getWidth() * 0.5 * x_scale)
-  elseif halign == "right" then
-    x = x - math.floor(img:getWidth() * x_scale)
-  end
-  valign = valign or "top"
-  if valign == "center" then
-    y = y - math.floor(img:getHeight() * 0.5 * y_scale)
-  elseif valign == "bottom" then
-    y = y - math.floor(img:getHeight() * y_scale)
-  end
-
-  GraphicsUtil.draw(img, x, y, rot, x_scale, y_scale)
-end
-
 -- Draws a rectangle at the given coordinates
 function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a)
   a = a or 1
