@@ -8,6 +8,7 @@ local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
 local consts = require("consts")
 local GFX_SCALE = consts.GFX_SCALE
+local GraphicsUtil = require("graphics_util")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters

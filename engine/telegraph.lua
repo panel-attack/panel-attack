@@ -1,5 +1,6 @@
 local logger = require("logger")
 local util = require("util")
+local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
 local GFX_SCALE = consts.GFX_SCALE
 

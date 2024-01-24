@@ -1,5 +1,5 @@
 require("util")
-local graphicsUtil = require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local consts = require("consts")
 
