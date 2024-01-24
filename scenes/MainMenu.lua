@@ -181,12 +181,12 @@ function MainMenu:draw()
 
   local loveString = GAME:loveVersionString()
   if loveString == "11.3.0" then
-    gprintf(loc("love_version_warning"), -5, infoYPosition, consts.CANVAS_WIDTH, "right")
+    GraphicsUtil.printf(loc("love_version_warning"), -5, infoYPosition, consts.CANVAS_WIDTH, "right")
     infoYPosition = infoYPosition - fontHeight
   end
 
   if GAME_UPDATER_GAME_VERSION then
-    gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, consts.CANVAS_WIDTH, "right")
+    GraphicsUtil.printf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, consts.CANVAS_WIDTH, "right")
     infoYPosition = infoYPosition - fontHeight
     if has_game_update then
       GraphicsUtil.draw(panels[config.panels].images.classic[1][1], 1262, 685)

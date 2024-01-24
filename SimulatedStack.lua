@@ -110,10 +110,10 @@ function SimulatedStack:drawDebug()
     local padding = 14
 
     GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 1000, 100, 0, 0, 0, 0.5)
-    gprintf("Clock " .. self.clock, drawX, drawY)
+    GraphicsUtil.printf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("P" .. self.which .. " Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+    GraphicsUtil.printf("P" .. self.which .. " Ended?: " .. tostring(self:game_ended()), drawX, drawY)
   end
 end
 

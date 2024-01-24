@@ -306,7 +306,7 @@ function GraphicsUtil.print(str, x, y, color, scale)
 end
 
 -- Draws a font with a given font delta from the standard font
-function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
+function GraphicsUtil.printf(str, x, y, limit, halign, color, scale, font_delta_size)
   x = x or 0
   y = y or 0
   scale = scale or 1

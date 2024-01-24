@@ -26,7 +26,7 @@ local function titleDrawPressStart(percent)
   local textHeight = 40
   local x = (consts.CANVAS_WIDTH / 2) - (textMaxWidth / 2)
   local y = consts.CANVAS_HEIGHT * 0.75
-  gprintf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
+  GraphicsUtil.printf(loc("continue_button"), x, y, textMaxWidth, "center", {1,1,1,percent}, nil, 16)
 end
 
 function TitleScreen:update(dt)

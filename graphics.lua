@@ -334,48 +334,48 @@ function Stack:drawDebug()
     local padding = 14
 
     GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 1000, 100, 0, 0, 0, 0.5)
-    gprintf("Clock " .. self.clock, drawX, drawY)
+    GraphicsUtil.printf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. #self.confirmedInput, drawX, drawY)
+    GraphicsUtil.printf("Confirmed " .. #self.confirmedInput, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("input_buffer " .. #self.input_buffer, drawX, drawY)
+    GraphicsUtil.printf("input_buffer " .. #self.input_buffer, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("rollbackCount " .. self.rollbackCount, drawX, drawY)
+    GraphicsUtil.printf("rollbackCount " .. self.rollbackCount, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("game_over_clock " .. (self.game_over_clock or 0), drawX, drawY)
+    GraphicsUtil.printf("game_over_clock " .. (self.game_over_clock or 0), drawX, drawY)
 
     drawY = drawY + padding
-      gprintf("has chain panels " .. tostring(self:hasChainingPanels()), drawX, drawY)
+      GraphicsUtil.printf("has chain panels " .. tostring(self:hasChainingPanels()), drawX, drawY)
 
     drawY = drawY + padding
-      gprintf("has active panels " .. tostring(self:hasActivePanels()), drawX, drawY)
+      GraphicsUtil.printf("has active panels " .. tostring(self:hasActivePanels()), drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("riselock " .. tostring(self.rise_lock), drawX, drawY)
+    GraphicsUtil.printf("riselock " .. tostring(self.rise_lock), drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P" .. stack.which .." Panels: " .. stack.panel_buffer, drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." Panels: " .. stack.panel_buffer, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+    GraphicsUtil.printf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
 
     -- if stack.telegraph then
     --   drawY = drawY + padding
-    --   gprintf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+    --   GraphicsUtil.printf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
 
     --   for combo_garbage_width=3,6 do
     --     drawY = drawY + padding
-    --     gprintf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+    --     GraphicsUtil.printf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
     --   end
     -- end
   end
@@ -420,7 +420,7 @@ function Stack:drawDebugPanels(shakeOffset)
           local drawY = 10
 
           GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 100, 100, 0, 0, 0, 0.5)
-          gprintf(str, drawX, drawY)
+          GraphicsUtil.printf(str, drawX, drawY)
         end
       end
     end
@@ -654,14 +654,14 @@ function Stack:drawAnalyticData()
   -- Panels cleared
   icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
   GraphicsUtil.draw(panels[self.panels_dir].images.classic[1][6], x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
   -- Garbage sent
   icon_width, icon_height = characters[self.character].images.face:getDimensions()
   GraphicsUtil.draw(characters[self.character].images.face, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -673,14 +673,14 @@ function Stack:drawAnalyticData()
   end
   icon_width, icon_height = self.theme.images.IMG_gpm:getDimensions()
   GraphicsUtil.draw(self.theme.images.IMG_gpm, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
+  GraphicsUtil.printf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
 
   y = y + nextIconIncrement
 
   -- Moves
   icon_width, icon_height = self.theme.images.IMG_cursorCount:getDimensions()
   GraphicsUtil.draw(self.theme.images.IMG_cursorCount, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -689,7 +689,7 @@ function Stack:drawAnalyticData()
     icon_width, icon_height = self.theme.images.IMG_swap:getDimensions()
     GraphicsUtil.draw(self.theme.images.IMG_swap, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
   end
-  gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -704,7 +704,7 @@ function Stack:drawAnalyticData()
     icon_width, icon_height = self.theme.images.IMG_apm:getDimensions()
     GraphicsUtil.draw(self.theme.images.IMG_apm, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
   end
-  gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -738,7 +738,7 @@ function Stack:drawAnalyticData()
       if cardImage then
         icon_width, icon_height = cardImage:getDimensions()
         GraphicsUtil.draw(cardImage, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-        gprintf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        GraphicsUtil.printf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
         y = y + nextIconIncrement
       end
     end
@@ -769,7 +769,7 @@ function Stack:drawAnalyticData()
       if cardImage then
         icon_width, icon_height = cardImage:getDimensions()
         GraphicsUtil.draw(cardImage, xCombo, yCombo, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-        gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        GraphicsUtil.printf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
         yCombo = yCombo + nextIconIncrement
       end
     end

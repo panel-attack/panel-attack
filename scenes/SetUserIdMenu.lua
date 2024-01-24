@@ -56,6 +56,6 @@ end
 function SetUserIdMenu:draw()
   self.backgroundImg:draw()
   local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
-  gprintf("Enter User ID (or paste from clipboard)", menuX, menuY)
+  GraphicsUtil.printf("Enter User ID (or paste from clipboard)", menuX, menuY)
   self.idInputField:draw()
 end

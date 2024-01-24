@@ -87,7 +87,7 @@ ReplayGame.runGameOver = ReplayGame.runGame
 function ReplayGame:customDraw()
   local textPos = themes[config.theme].gameover_text_Pos
   local playbackText = self.playbackSpeeds[self.playbackSpeedIndex] .. "x"
-  gprintf(playbackText, textPos[0], textPos[1], consts.CANVAS_WIDTH, "center", nil, 1, 10)
+  GraphicsUtil.printf(playbackText, textPos[0], textPos[1], consts.CANVAS_WIDTH, "center", nil, 1, 10)
 end
 
 function ReplayGame:customGameOverSetup()

@@ -77,7 +77,7 @@ end
 function Match:drawCommunityMessage()
   -- Draw the community message
   if not config.debug_mode then
-    gprintf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
+    GraphicsUtil.printf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
   end
 end
 
@@ -123,27 +123,27 @@ function Match:render()
     local drawY = -4
 
     -- drawY = drawY + padding
-    -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
+    -- GraphicsUtil.printf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
 
     -- drawY = drawY + padding
     -- local totalTime = love.timer.getTime() - self.createTime
-    -- gprintf("Total Time " .. totalTime * 1000, drawX, drawY)
+    -- GraphicsUtil.printf("Total Time " .. totalTime * 1000, drawX, drawY)
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
     local timePercent = round(self.timeSpentRunning / totalTime, 5)
-    gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+    GraphicsUtil.printf("Time Percent Running Match: " .. timePercent, drawX, drawY)
 
     drawY = drawY + padding
     local maxTime = round(self.maxTimeSpentRunning, 5)
-    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
+    GraphicsUtil.printf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("Seed " .. self.seed, drawX, drawY)
+    GraphicsUtil.printf("Seed " .. self.seed, drawX, drawY)
 
     if self.gameOverClock and self.gameOverClock > 0 then
       drawY = drawY + padding
-      gprintf("gameOverClock " .. self.gameOverClock, drawX, drawY)
+      GraphicsUtil.printf("gameOverClock " .. self.gameOverClock, drawX, drawY)
     end
   end
 
@@ -193,6 +193,6 @@ function Match:draw_pause()
     local scale = consts.CANVAS_WIDTH / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
     menu_drawf(image, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
   end
-  gprintf(loc("pause"), 0, 330, consts.CANVAS_WIDTH, "center", nil, 1, 10)
-  gprintf(loc("pl_pause_help"), 0, 360, consts.CANVAS_WIDTH, "center", nil, 1)
+  GraphicsUtil.printf(loc("pause"), 0, 330, consts.CANVAS_WIDTH, "center", nil, 1, 10)
+  GraphicsUtil.printf(loc("pl_pause_help"), 0, 360, consts.CANVAS_WIDTH, "center", nil, 1)
 end

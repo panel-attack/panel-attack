@@ -59,21 +59,21 @@ end
 
 function Game1pChallenge:drawDifficultyName(drawX, drawY)
   local limit = 400
-  gprintf(loc("difficulty"), drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
-  gprintf(GAME.battleRoom.difficultyName, drawX - limit / 2, drawY + 26, limit, "center", nil, nil, 10)
+  GraphicsUtil.printf(loc("difficulty"), drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
+  GraphicsUtil.printf(GAME.battleRoom.difficultyName, drawX - limit / 2, drawY + 26, limit, "center", nil, nil, 10)
 end
 
 function Game1pChallenge:drawStageInfo(drawX, drawY)
   local limit = 400
-  gprintf("Stage", drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
+  GraphicsUtil.printf("Stage", drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
   GraphicsUtil.drawPixelFont(self.stageIndex, themes[config.theme].fontMaps.numbers[2], drawX, drawY + 26,
                            themes[config.theme].win_Scale, "center", 0)
 end
 
 function Game1pChallenge:drawContinueInfo(drawX, drawY)
   local limit = 400
-  gprintf("Continues", drawX - limit / 2, drawY, limit, "center", nil, nil, 4)
-  gprintf(GAME.battleRoom.continues, drawX - limit / 2, drawY + 20, limit, "center", nil, nil, 4)
+  GraphicsUtil.printf("Continues", drawX - limit / 2, drawY, limit, "center", nil, nil, 4)
+  GraphicsUtil.printf(GAME.battleRoom.continues, drawX - limit / 2, drawY + 20, limit, "center", nil, nil, 4)
 end
 
 function Game1pChallenge:drawTimeSplits(xPosition, yPosition)

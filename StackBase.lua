@@ -179,7 +179,7 @@ function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOf
   end
   local fontDelta = fontSize - GraphicsUtil.fontSize
 
-  gprintf(string, x, y, limit, alignment, nil, nil, fontDelta)
+  GraphicsUtil.printf(string, x, y, limit, alignment, nil, nil, fontDelta)
 end
 
 -- Positions the stack draw position for the given player

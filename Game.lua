@@ -495,7 +495,7 @@ function Game:drawLoadingString(loadingString)
   local y = consts.CANVAS_HEIGHT/2 - textHeight/2
   local backgroundPadding = 10
   GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 2 - (textMaxWidth / 2) , y - backgroundPadding, textMaxWidth, textHeight, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
+  GraphicsUtil.printf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
 end
 
 return Game
