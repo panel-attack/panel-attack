@@ -32,6 +32,7 @@ AttackEngine =
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
     self:addAttackPatternsFromTable(attackSettings.attackPatterns)
+    self.attackSettings = attackSettings
 
     -- the clock to control the continuity of the sending process
     self.clock = 0

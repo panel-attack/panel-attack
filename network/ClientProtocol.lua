@@ -26,17 +26,13 @@ function ClientMessages.requestLogin(userId)
   }
 
   if config.character then
-    if config.character == consts.RANDOM_CHARACTER_SPECIAL_VALUE then
-      loginRequestMessage.character_is_random = consts.RANDOM_CHARACTER_SPECIAL_VALUE
-    elseif characters[config.character] and characters[config.character]:is_bundle() then
+    if characters[config.character] and characters[config.character]:is_bundle() then
       loginRequestMessage.character_is_random = config.character
     end
   end
 
   if config.stage then
-    if config.stage == consts.RANDOM_STAGE_SPECIAL_VALUE then
-      loginRequestMessage.stage_is_random = consts.RANDOM_STAGE_SPECIAL_VALUE
-    elseif stages[config.stage] and stages[config.stage]:is_bundle() then
+    if stages[config.stage] and stages[config.stage]:is_bundle() then
       loginRequestMessage.stage_is_random = config.stage
     end
   end

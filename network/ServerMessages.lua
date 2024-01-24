@@ -37,9 +37,9 @@ function ServerMessages.sanitizeMenuState(menuState)
   local sanitized = { sanitized = true}
   sanitized.panelId = menuState.panels_dir
   sanitized.characterId = menuState.character
-  sanitized.selectedCharacterId = menuState.character_is_random or menuState.character
+  sanitized.selectedCharacterId = menuState.character_is_random
   sanitized.stageId = menuState.stage
-  sanitized.selectedStageId = menuState.stage_is_random or menuState.stage
+  sanitized.selectedStageId = menuState.stage_is_random
   sanitized.level = menuState.level
   sanitized.wantsRanked = menuState.ranked
 

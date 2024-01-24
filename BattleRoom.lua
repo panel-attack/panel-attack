@@ -175,7 +175,13 @@ function BattleRoom:createMatch()
     supportsPause,
     optionalArgs
   )
+
   Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+
+  for _, player in ipairs(self.players) do
+    Signal.connectSignal(self.match, "onMatchEnded", player, player.onMatchEnded)
+  end
+
   self.match:setSpectatorList(self.spectators)
 
   return self.match
@@ -459,16 +465,6 @@ end
 -- may get unregistered from the match in case of abortion
 function BattleRoom:onMatchEnded(match)
   self.matchesPlayed = self.matchesPlayed + 1
-
-  for _, player in ipairs(self.players) do
-    -- to prevent the game from instantly restarting, unready all players
-    player:setWantsReady(false)
-    if player.isLocal then
-      -- if they're local, refresh the character in chase they use a bundle / random
-      player:refreshCharacter()
-      player:refreshStage()
-    end
-  end
 
   if not match.aborted then
     local winners = match:getWinners()

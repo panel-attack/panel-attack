@@ -243,7 +243,9 @@ end
 
 function GameBase:drawHUD()
   for i, stack in ipairs(self.match.stacks) do
-    stack:drawMoveCount()
+    if stack.puzzle then
+      stack:drawMoveCount()
+    end
     if config.show_ingame_infos then
       if not self.puzzle then
         stack:drawScore()
@@ -260,7 +262,9 @@ function GameBase:drawHUD()
     end
 
     stack:drawLevel()
-    stack:drawAnalyticData()
+    if stack.analytic then
+      stack:drawAnalyticData()
+    end
   end
 end
 
