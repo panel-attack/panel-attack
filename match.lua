@@ -7,6 +7,7 @@ local Signal = require("helpers.signal")
 local SimulatedStack = require("SimulatedStack")
 local ChallengeModePlayer = require("ChallengeModePlayer")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =

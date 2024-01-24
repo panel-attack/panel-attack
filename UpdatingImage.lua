@@ -1,5 +1,6 @@
 
 local logger = require("logger")
+local GraphicsUtil = require("graphics_util")
 
 -- A image that can update allowing it to do various things like tile and animate.
 UpdatingImage =
