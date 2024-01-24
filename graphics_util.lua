@@ -218,7 +218,7 @@ function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a)
     GraphicsUtil.setColor(r, g, b, a)
   end
 
-  GraphicsUtil.drawRectangle(mode, x, y, w, h)
+  love.graphics.rectangle(mode, x, y, w, h)
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
@@ -326,7 +326,7 @@ function GraphicsUtil.setColor(r, g, b, a)
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
-      GraphicsUtil.setColor(r, g, b, a)
+      love.graphics.setColor(r, g, b, a)
     end
 end
 
