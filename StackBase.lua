@@ -131,7 +131,7 @@ function StackBase:drawLabel(drawable, themePositionOffset, scale, cameFromLegac
   local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
 
-  menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
+  GraphicsUtil.draw(drawable, x, y, 0, scale, scale)
 end
 
 function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, rotate, scale)
