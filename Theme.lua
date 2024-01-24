@@ -7,6 +7,7 @@ local logger = require("logger")
 local fileUtils = require("FileUtils")
 local levelPresets = require("LevelPresets")
 local GraphicsUtil = require("graphics_util")
+local ImageContainer = require("ui.ImageContainer")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 
@@ -219,8 +220,27 @@ function Theme.graphics_init(self)
     self.images.flags[flag] = self:load_theme_img("flags/" .. flag)
   end
 
-  self.images.bg_overlay = self:load_theme_img("background/bg_overlay")
-  self.images.fg_overlay = self:load_theme_img("background/fg_overlay")
+  local bgOverlay = self:load_theme_img("background/bg_overlay")
+  local fgOverlay = self:load_theme_img("background/fg_overlay")
+  if bgOverlay then
+    self.images.bg_overlay = ImageContainer({
+      image = bgOverlay,
+      hAlign = "center",
+      vAlign = "center",
+      width = consts.CANVAS_WIDTH,
+      height = consts.CANVAS_HEIGHT
+    })
+  end
+
+  if fgOverlay then
+    self.images.fg_overlay = ImageContainer({
+      image = fgOverlay,
+      hAlign = "center",
+      vAlign = "center",
+      width = consts.CANVAS_WIDTH,
+      height = consts.CANVAS_HEIGHT
+    })
+  end
 
   self.images.pause = self:load_theme_img("pause")
 

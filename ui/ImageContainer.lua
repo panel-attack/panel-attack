@@ -23,7 +23,9 @@ function ImageContainer:setImage(image, width, height, scale)
   
     if width and height then
       -- scale is getting capped to what width and height actually give us
-      self.scale = math.min(self.width / scaledImageWidth, self.height / scaledImageHeight)
+      self.scale = math.min(width / scaledImageWidth, height / scaledImageHeight)
+      self.width = width * scale
+      self.height = height * scale
     else
       -- there are no size limits, set the size based on scale
       self.width = scaledImageWidth

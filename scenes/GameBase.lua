@@ -227,27 +227,14 @@ function GameBase:drawBackground()
   end
   local backgroundOverlay = themes[config.theme].images.bg_overlay
   if backgroundOverlay then
-    local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
-    -- adjust coordinates to be centered
-    local x = consts.CANVAS_WIDTH / 2
-    local y = consts.CANVAS_HEIGHT / 2
-    local xOffset = math.floor(backgroundOverlay:getWidth() * 0.5)
-    local yOffset = math.floor(backgroundOverlay:getHeight() * 0.5)
-
-    GraphicsUtil.draw(backgroundOverlay, x, y, 0, scale, scale, xOffset, yOffset)
+    backgroundOverlay:draw()
   end
 end
 
 function GameBase:drawForegroundOverlay()
   local foregroundOverlay = themes[config.theme].images.fg_overlay
   if foregroundOverlay then
-    local scale = consts.CANVAS_WIDTH / math.max(foregroundOverlay:getWidth(), foregroundOverlay:getHeight()) -- keep image ratio
-    local x = consts.CANVAS_WIDTH / 2
-    local y = consts.CANVAS_HEIGHT / 2
-    local xOffset = math.floor(foregroundOverlay:getWidth() * 0.5)
-    local yOffset = math.floor(foregroundOverlay:getHeight() * 0.5)
-
-    GraphicsUtil.draw(foregroundOverlay, x, y, 0, scale, scale, xOffset, yOffset)
+    foregroundOverlay:draw()
   end
 end
 
