@@ -115,7 +115,7 @@ end
 function StackPanel:drawSelf()
   if DEBUG_ENABLED then
     GraphicsUtil.setColor(1, 0, 0, 0.7)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
     GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end

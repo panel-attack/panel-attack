@@ -65,7 +65,7 @@ function Slider:drawSelf()
   local light_gray = .5
   local alpha = .7
   GraphicsUtil.setColor(light_gray, light_gray, light_gray, alpha)
-  love.graphics.rectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
+  GraphicsUtil.drawRectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
 
   GraphicsUtil.setColor(dark_gray, dark_gray, dark_gray, .9)
   love.graphics.circle("fill", self.x + (self.value - self.min + .5) * self.tickLength, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)

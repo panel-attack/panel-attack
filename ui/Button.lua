@@ -36,14 +36,14 @@ end
 function Button:drawBackground()
   if self.backgroundColor[4] > 0 then
     GraphicsUtil.setColor(self.backgroundColor)
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+    GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height)
     GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end
 
 function Button:drawOutline()
   GraphicsUtil.setColor(self.outlineColor)
-  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+  GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 

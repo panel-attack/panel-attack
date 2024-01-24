@@ -29,7 +29,7 @@ local fakeCenteredChild = {hAlign = "center", vAlign = "center", width = 30, hei
 function BoolSelector:drawSelf()
   if DEBUG_ENABLED then
     GraphicsUtil.setColor(0, 0, 1, 1)
-    love.graphics.rectangle("line", self.x + 1, self.y + 1, self.width - 2, self.height - 2)
+    GraphicsUtil.drawRectangle("line", self.x + 1, self.y + 1, self.width - 2, self.height - 2)
     GraphicsUtil.setColor(1, 1, 1, 1)
   end
 
@@ -38,7 +38,7 @@ function BoolSelector:drawSelf()
   GraphicsUtil.applyAlignment(self, fakeCenteredChild)
   love.graphics.translate(self.x, self.y)
 
-  love.graphics.rectangle("line", 0, 0, 30, 40, 10, 15)
+  GraphicsUtil.drawRectangle("line", 0, 0, 30, 40, 10, 15)
   if self.value then
     love.graphics.circle("fill", 15, 15, 10)
   else

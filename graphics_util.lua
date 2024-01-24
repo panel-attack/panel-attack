@@ -218,7 +218,7 @@ function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a)
     GraphicsUtil.setColor(r, g, b, a)
   end
 
-  love.graphics.rectangle(mode, x, y, w, h)
+  GraphicsUtil.drawRectangle(mode, x, y, w, h)
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 

@@ -78,9 +78,9 @@ end
 function Stepper:drawSelf()
   if config.debug_mode then
     GraphicsUtil.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+    GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height)
     GraphicsUtil.setColor(self.borderColor)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
     GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end

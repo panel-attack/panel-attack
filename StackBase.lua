@@ -229,7 +229,7 @@ function StackBase:setCanvas()
     love.graphics.setShader(mask_shader)
     love.graphics.setBackgroundColor(1, 1, 1)
     local canvas_w, canvas_h = self.canvas:getDimensions()
-    love.graphics.rectangle("fill", 0, 0, canvas_w, canvas_h)
+    GraphicsUtil.drawRectangle("fill", 0, 0, canvas_w, canvas_h)
     love.graphics.setBackgroundColor(unpack(GAME.backgroundColor))
     love.graphics.setShader()
   end
