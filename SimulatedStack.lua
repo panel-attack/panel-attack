@@ -246,7 +246,7 @@ function SimulatedStack:drawSpeed()
   if self.healthEngine then
     self:drawLabel(themes[config.theme].images["IMG_speed_" .. self.which .. "P"], themes[config.theme].speedLabel_Pos,
                    themes[config.theme].speedLabel_Scale)
-    self:drawNumber(self.healthEngine.currentRiseSpeed, self.speedQuads, themes[config.theme].speed_Pos, themes[config.theme].speed_Scale)
+    self:drawNumber(self.healthEngine.currentRiseSpeed, themes[config.theme].speed_Pos, themes[config.theme].speed_Scale)
   end
 end
 
@@ -255,7 +255,7 @@ function SimulatedStack:drawRating()
   if self.player.settings.difficulty then
     self:drawLabel(themes[config.theme].images["IMG_rating_" .. self.which .. "P"], themes[config.theme].ratingLabel_Pos,
                    themes[config.theme].ratingLabel_Scale, true)
-    self:drawNumber(self.player.settings.difficulty, self.difficultyQuads, themes[config.theme].rating_Pos,
+    self:drawNumber(self.player.settings.difficulty, themes[config.theme].rating_Pos,
                     themes[config.theme].rating_Scale)
   end
 end

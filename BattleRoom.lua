@@ -155,6 +155,7 @@ function BattleRoom:updateWinrates()
   end
 end
 
+local RATING_SPREAD_MODIFIER = 400
 function BattleRoom:updateExpectedWinrates()
   if tableUtils.trueForAll(self.players, function(p) return p.rating and tonumber(p.rating) end) then
     -- this isn't feasible to do for n-player matchups at this point

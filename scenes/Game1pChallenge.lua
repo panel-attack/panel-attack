@@ -65,7 +65,7 @@ end
 function Game1pChallenge:drawStageInfo(drawX, drawY)
   local limit = 400
   gprintf("Stage", drawX - limit / 2, drawY, limit, "center", nil, nil, 10)
-  GraphicsUtil.draw_number(self.stageIndex, themes[config.theme].images.IMG_number_atlas_2P, self.stageQuads, drawX, drawY + 26,
+  GraphicsUtil.draw_number(self.stageIndex, themes[config.theme].fontMaps.numbers[2], drawX, drawY + 26,
                            themes[config.theme].win_Scale, "center")
 end
 
@@ -99,7 +99,7 @@ function Game1pChallenge:drawTimeSplits(xPosition, yPosition)
     if isCurrentStage then
       GraphicsUtil.setColor(0.8, 0.8, 1, 1)
     end
-    GraphicsUtil.draw_time(frames_to_time_string(currentStageTime, true), self.stageTimeQuads[i], xPosition, yPosition + yOffset * row,
+    GraphicsUtil.draw_time(frames_to_time_string(currentStageTime, true), xPosition, yPosition + yOffset * row,
                            themes[config.theme].time_Scale)
     if isCurrentStage then
       GraphicsUtil.setColor(1, 1, 1, 1)
@@ -109,7 +109,7 @@ function Game1pChallenge:drawTimeSplits(xPosition, yPosition)
   end
 
   GraphicsUtil.setColor(1, 1, 0.8, 1)
-  GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), self.totalTimeQuads, xPosition, yPosition + yOffset * row,
+  GraphicsUtil.draw_time(frames_to_time_string(totalTime, true), xPosition, yPosition + yOffset * row,
                          themes[config.theme].time_Scale)
   GraphicsUtil.setColor(1, 1, 1, 1)
 end

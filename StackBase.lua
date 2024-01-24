@@ -148,13 +148,13 @@ function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, ro
   GraphicsUtil.drawQuad(image, quad, x, y - height - yOffset, rotate, scale, scale * barYScale, 0, 0, self.mirror_x)
 end
 
-function StackBase:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
+function StackBase:drawNumber(number, themePositionOffset, scale, cameFromLegacyScoreOffset)
   if cameFromLegacyScoreOffset == nil then
     cameFromLegacyScoreOffset = false
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.draw_number(number, themes[config.theme].images["IMG_number_atlas_" .. self.which .. "P"], quads, x, y, scale, "center")
+  GraphicsUtil.draw_number(number, themes[config.theme].fontMaps.numbers[self.which], x, y, scale, "center")
 end
 
 function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
@@ -377,7 +377,7 @@ end
 
 function StackBase:drawWinCount()
   self:drawLabel(themes[config.theme].images.IMG_wins, themes[config.theme].winLabel_Pos, themes[config.theme].winLabel_Scale, true)
-  self:drawNumber(self.player:getWinCountForDisplay(), self.wins_quads, themes[config.theme].win_Pos, themes[config.theme].win_Scale, true)
+  self:drawNumber(self.player:getWinCountForDisplay(), themes[config.theme].win_Pos, themes[config.theme].win_Scale, true)
 end
 
 --------------------------------

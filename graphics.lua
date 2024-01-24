@@ -482,7 +482,7 @@ function Stack:drawRating()
 
   if rating then
     self:drawLabel(self.theme.images["IMG_rating_" .. self.which .. "P"], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
-    self:drawNumber(rating, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
+    self:drawNumber(rating, self.theme.rating_Pos, self.theme.rating_Scale, true)
   end
 end
 
@@ -603,12 +603,12 @@ end
 
 function Stack:drawScore()
   self:drawLabel(self.theme.images["IMG_score_" .. self.which .. "P"], self.theme.scoreLabel_Pos, self.theme.scoreLabel_Scale)
-  self:drawNumber(self.score, self.score_quads, self.theme.score_Pos, self.theme.score_Scale)
+  self:drawNumber(self.score, self.theme.score_Pos, self.theme.score_Scale)
 end
 
 function Stack:drawSpeed()
   self:drawLabel(self.theme.images["IMG_speed_" .. self.which .. "P"], self.theme.speedLabel_Pos, self.theme.speedLabel_Scale)
-  self:drawNumber(self.speed, self.speed_quads, self.theme.speed_Pos, self.theme.speed_Scale)
+  self:drawNumber(self.speed, self.theme.speed_Pos, self.theme.speed_Scale)
 end
 
 function Stack:drawLevel()
@@ -784,7 +784,7 @@ function Stack:drawMoveCount()
     if self.puzzle.puzzleType == "moves" then
       moveNumber = self.puzzle.remaining_moves
     end
-    self:drawNumber(moveNumber, self.move_quads, self.theme.move_Pos, self.theme.move_Scale, true)
+    self:drawNumber(moveNumber, self.theme.move_Pos, self.theme.move_Scale, true)
   end
 end
 

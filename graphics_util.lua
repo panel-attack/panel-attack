@@ -1,49 +1,31 @@
 local consts = require("consts")
 local logger = require("logger")
-local tableUtils = require("tableUtils")
-
 local GFX_SCALE = consts.GFX_SCALE
 
 -- Utility methods for drawing
-GraphicsUtil = { 
+GraphicsUtil = {
   fontFile = nil,
-  fontSize = 12, 
+  fontSize = 12,
   fontCache = {},
   quadPool = {}
 }
 
--- A pixel font map to use with numbers
-local numberPixelFontMap = {}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  numberPixelFontMap[tostring(i)] = i
-end
+function GraphicsUtil.createPixelFontMap(characters, atlas)
+  local pixelFontMap = { atlas = atlas }
 
--- A pixel font map to use with times
-local timePixelFontMap = {}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  timePixelFontMap[tostring(i)] = i
-end
-timePixelFontMap[":"] = 10
-timePixelFontMap["'"] = 11
+  local atlasWidth, atlasHeight = atlas:getDimensions()
+  local charWidth = atlasWidth / characters:len()
 
--- A pixel font map to use with strings
-local standardPixelFontmap = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  standardPixelFontmap[tostring(i)] = i
-end
+  pixelFontMap.charWidth = charWidth
+  pixelFontMap.charHeight = atlasHeight
 
---10-35 = A-Z
-for i = 10, 35, 1 do
-  local characterString = string.char(97+(i-10))
-  standardPixelFontmap[characterString] = i
-end
+  for i = 1, characters:len() do
+    local char = characters:sub(i, i)
+    pixelFontMap[char] = love.graphics.newQuad((i - 1) * charWidth, 0, charWidth, atlasHeight, atlasWidth, atlasHeight)
+  end
 
-GraphicsUtil.numberPixelFontMap = numberPixelFontMap
-GraphicsUtil.timePixelFontMap = timePixelFontMap
-GraphicsUtil.standardPixelFontMap = standardPixelFontmap
+  return pixelFontMap
+end
 
 function GraphicsUtil.privateLoadImage(path_and_name)
   local image = nil
@@ -115,6 +97,8 @@ end
 
 -- Draws an image at the given spot while scaling all coordinate and scale values with GFX_SCALE
 function drawGfxScaled(img, x, y, rot, xScale, yScale)
+  xScale = xScale or 1
+  yScale = yScale or 1
   love.graphics.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
 end
 
@@ -128,72 +112,55 @@ end
 -- TODO support both upper and lower case
 -- atlas - the image to use as the pixel font
 -- font map - a dictionary of a character mapped to the column number in the pixel font image
-local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
+local function drawPixelFontWithMap(string, fontMap, x, y, xScale, yScale, align, characterSpacing)
+  xScale = xScale or 1
+  yScale = yScale or 1
   align = align or "left"
-  font_map = font_map or GraphicsUtil.standardPixelFontmap
-  assert(quads ~= nil)
+  fontMap = fontMap or themes[config.theme].fontMaps.pixelFontBlue
 
-  local atlasFrameCount = tableUtils.length(font_map)
-  local atlasWidth = atlas:getWidth()
-  local atlasHeight = atlas:getHeight()
-  local characterWidth = atlasWidth/atlasFrameCount
-  local characterHeight = atlasHeight
   characterSpacing = characterSpacing or 2
-  local characterDistanceScaled = (characterWidth + characterSpacing) * x_scale
+  local characterDistanceScaled = (fontMap.charWidth + characterSpacing) * xScale
 
-  if string == nil or atlas == nil or atlasFrameCount == nil or characterWidth == nil or characterHeight == nil then
+  if string == nil or fontMap.charWidth == nil or fontMap.charHeight == nil then
     logger.error("Error initalizing draw pixel font")
-    return 
-  end
-
-  while #quads < #string do
-    table.insert(quads, GraphicsUtil:newRecycledQuad(0, 0, characterWidth, characterHeight, atlasWidth, atlasHeight))
+    return
   end
 
   for i = 1, #string, 1 do
-    local c = string:sub(i,i)
-    if c == nil or c == " " then
-      goto continue
+    local character = string:sub(i,i)
+    if character and character ~= " " then
+
+      local characterIndex = i - 1
+      local characterX = x + (characterIndex * characterDistanceScaled)
+      if align == "center" then
+        characterX = x + ((characterIndex-(#string/2))*characterDistanceScaled)
+      elseif align == "right" then
+        characterX = x + ((characterIndex-#string)*characterDistanceScaled)
+      end
+
+      -- Render it at the proper digit location
+      love.graphics.draw(fontMap.atlas, fontMap[character], characterX, y, 0, xScale, yScale)
+
     end
-
-    local frameNumber = font_map[c]
-
-    -- Select the portion of the atlas that is the current character
-    quads[i]:setViewport(frameNumber*characterWidth, 0, characterWidth, characterHeight, atlasWidth, atlasHeight)
-
-    local characterIndex = i - 1
-    local characterX = x + (characterIndex * characterDistanceScaled)
-    if align == "center" then
-      characterX = x + ((characterIndex-(#string/2))*characterDistanceScaled)
-    elseif align == "right" then
-      characterX = x + ((characterIndex-#string)*characterDistanceScaled)
-    end
-
-    -- Render it at the proper digit location
-    love.graphics.draw(atlas, quads[i], characterX, y, 0, x_scale, y_scale)
-
-    ::continue::
   end
 
 end
 
 -- Draws a time centered horizontally using the theme's time pixel font which is 0-9, then : then '
-function GraphicsUtil.draw_time(time, quads, x, y, scale)
-  drawPixelFontWithMap(time, themes[config.theme].images.IMG_timeNumber_atlas, GraphicsUtil.timePixelFontMap, x, y, scale, scale, "center", 0, quads)
+function GraphicsUtil.draw_time(time, x, y, scale)
+  drawPixelFontWithMap(time, themes[config.theme].fontMaps.time, x, y, scale, scale, "center", 0)
 end
 
 -- Draws a number via the given font image that has 0-9
-function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
-  drawPixelFontWithMap(tostring(number), atlas, GraphicsUtil.numberPixelFontMap, x, y, scale, scale, align, 0, quads)
+function GraphicsUtil.draw_number(number, fontMap, x, y, scale, align)
+  drawPixelFontWithMap(tostring(number), fontMap, x, y, scale, scale, align, 0)
 end
 
 -- Draws the given string with a pixel font image atlas that has 0-9 than a-z
 -- string - the string to draw
 -- atlas - the image to use as the pixel font
-function draw_pixel_font(string, atlas, x, y, x_scale, y_scale, align, characterSpacing, quads)
-  drawPixelFontWithMap(string, atlas, GraphicsUtil.standardPixelFontmap, x, y, x_scale, y_scale, align, characterSpacing, quads)
+function draw_pixel_font(string, fontMap, x, y, x_scale, y_scale, align, characterSpacing)
+  drawPixelFontWithMap(string, fontMap, x, y, x_scale, y_scale, align, characterSpacing)
 end
 
 local maxQuadPool = 100

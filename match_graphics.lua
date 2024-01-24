@@ -31,10 +31,10 @@ function Match:drawMatchLabel(drawable, themePositionOffset, scale)
   menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
 end
 
-function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
+function Match:drawMatchTime(timeString, themePositionOffset, scale)
   local x = self:matchelementOriginX() + themePositionOffset[1]
   local y = self:matchelementOriginY() + themePositionOffset[2]
-  GraphicsUtil.draw_time(timeString, quads, x, y, scale)
+  GraphicsUtil.draw_time(timeString, x, y, scale)
 end
 
 function Match:drawTimer()
@@ -58,7 +58,7 @@ function Match:drawTimer()
     local timeString = frames_to_time_string(frames, self.ended)
 
     self:drawMatchLabel(themes[config.theme].images.IMG_time, themes[config.theme].timeLabel_Pos, themes[config.theme].timeLabel_Scale)
-    self:drawMatchTime(timeString, self.time_quads, themes[config.theme].time_Pos, themes[config.theme].time_Scale)
+    self:drawMatchTime(timeString, themes[config.theme].time_Pos, themes[config.theme].time_Scale)
   end
 end
 

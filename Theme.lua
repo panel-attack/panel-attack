@@ -245,16 +245,29 @@ function Theme.graphics_init(self)
 
   self.images.fade = self:load_theme_img("fade")
 
-  self.images.IMG_number_atlas_1P = self:load_theme_img("numbers_1P")
-  self.images.IMG_number_atlas_2P = self:load_theme_img("numbers_2P")
+  self.fontMaps = {}
+
+  local numberAtlasCharacters = "0123456789"
+  local numberAtlas1 = self:load_theme_img("numbers_1P")
+  local numberAtlas2 = self:load_theme_img("numbers_2P")
+  self.fontMaps.numbers = {}
+  self.fontMaps.numbers[1] = GraphicsUtil.createPixelFontMap(numberAtlasCharacters, numberAtlas1)
+  self.fontMaps.numbers[2] = GraphicsUtil.createPixelFontMap(numberAtlasCharacters, numberAtlas2)
 
   self.images.IMG_time = self:load_theme_img("time")
 
-  self.images.IMG_timeNumber_atlas = self:load_theme_img("time_numbers")
+  local timeAtlasCharacters = "0123456789:'"
+  local timeAtlas = self:load_theme_img("time_numbers")
+  self.fontMaps.time = GraphicsUtil.createPixelFontMap(timeAtlasCharacters, timeAtlas)
 
-  self.images.IMG_pixelFont_blue_atlas = self:load_theme_img("pixel_font_blue")
-  self.images.IMG_pixelFont_grey_atlas = self:load_theme_img("pixel_font_grey")
-  self.images.IMG_pixelFont_yellow_atlas = self:load_theme_img("pixel_font_yellow")
+  local pixelFontCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&?!%*."
+  local pixelFontBlueAtlas = self:load_theme_img("pixel_font_blue")
+  local pixelFontGreyAtlas = self:load_theme_img("pixel_font_grey")
+  local pixelFontYellowAtlas = self:load_theme_img("pixel_font_yellow")
+
+  self.fontMaps.pixelFontBlue = GraphicsUtil.createPixelFontMap(pixelFontCharacters, pixelFontBlueAtlas)
+  self.fontMaps.pixelFontGrey = GraphicsUtil.createPixelFontMap(pixelFontCharacters, pixelFontGreyAtlas)
+  self.fontMaps.pixelFontYellow = GraphicsUtil.createPixelFontMap(pixelFontCharacters, pixelFontYellowAtlas)
 
   self.images.IMG_moves = self:load_theme_img("moves")
 
