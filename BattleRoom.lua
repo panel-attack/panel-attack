@@ -107,10 +107,15 @@ end
 function BattleRoom.createLocalFromGameMode(gameMode)
   local battleRoom = BattleRoom(gameMode)
 
-  -- always use the game client's local player
-  battleRoom:addPlayer(GAME.localPlayer)
-  for i = 2, gameMode.playerCount do
-    battleRoom:addPlayer(Player.getLocalPlayer())
+  if gameMode.playerCount == 1 then
+    battleRoom:addPlayer(GAME.localPlayer)
+  else
+    -- always use the game client's local player
+    for i = 1, gameMode.playerCount do
+      local player = Player.getLocalPlayer()
+      player.name = loc("player_n", i)
+      battleRoom:addPlayer(player)
+    end
   end
 
   if gameMode.style ~= GameModes.Styles.CHOOSE then
