@@ -72,6 +72,7 @@ function Player:createStackFromSettings(match, which)
     args.allowAdjacentColors = self.settings.allowAdjacentColors
   end
   args.inputMethod = self.settings.inputMethod
+  args.gameOverConditions = match.gameOverConditions
 
   self.stack = Stack(args)
   -- so the stack can draw player information
