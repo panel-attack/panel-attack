@@ -108,9 +108,11 @@ function BattleRoom.createLocalFromGameMode(gameMode)
   local battleRoom = BattleRoom(gameMode)
 
   if gameMode.playerCount == 1 then
+    -- always use the game client's local player
     battleRoom:addPlayer(GAME.localPlayer)
   else
-    -- always use the game client's local player
+    -- with more than 1 local player we can't be sure which player is the "real" regular user
+    -- so make them both local players that don't update config settings
     for i = 1, gameMode.playerCount do
       local player = Player.getLocalPlayer()
       player.name = loc("player_n", i)
