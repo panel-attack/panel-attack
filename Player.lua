@@ -293,4 +293,28 @@ function Player:setAttackEngineSettings(attackEngineSettings)
 
 end
 
+function Player:getInfo()
+  local info = {}
+  info.name = self.name
+  info.level = self.settings.level
+  info.difficulty = self.settings.difficulty
+  info.speed = self.settings.speed
+  info.characterId = self.settings.characterId
+  info.selectedCharacterId = self.settings.selectedCharacterId
+  info.stageId = self.settings.stageId
+  info.selectedStageId = self.settings.selectedStageId
+  info.panelId = self.settings.panelId
+  info.wantsReady = tostring(self.settings.wantsReady)
+  info.wantsRanked = tostring(self.settings.wantsRanked)
+  info.inputMethod = self.settings.inputMethod
+  --info.publicId = self.settings.publicId
+  info.playerNumber = self.playerNumber
+  info.isLocal = tostring(self.isLocal)
+  info.human = tostring(self.human)
+  info.wins = self.wins
+  info.modifiedWins = self.modifiedWins
+
+  return info
+end
+
 return Player

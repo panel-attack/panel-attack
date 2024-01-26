@@ -23,10 +23,8 @@ BattleRoom = class(function(self, mode)
   self.puzzles = {}
   self.state = 1
   self.matchesPlayed = 0
-  if GAME.tcpClient:isConnected() then
-    -- this is a bit naive but effective for now
-    self.online = true
-  end
+  -- this is a bit naive but effective for now
+  self.online = GAME.tcpClient:isConnected()
 end)
 
 -- defining these here so they're available in network.BattleRoom too
@@ -502,6 +500,25 @@ function BattleRoom:onMatchEnded(match)
   -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference
   self.match = nil
   self.state = BattleRoom.states.Setup
+end
+
+-- called in the errorhandler and thus has a lot worried checking
+function BattleRoom:getInfo()
+  local info = {}
+  if self.players and type(self.players == "table") then
+    info.players = {}
+    for i, player in ipairs(self.players) do
+      if player.getInfo and type(player.getInfo) == "function" then
+        info.players[i] = player:getInfo()
+      end
+    end
+  end
+  info.online = tostring(self.online)
+  info.spectating = tostring(self.spectating)
+  info.allAssetsLoaded = tostring(self.allAssetsLoaded)
+  info.state = self.state
+
+  return info
 end
 
 return BattleRoom

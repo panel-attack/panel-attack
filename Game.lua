@@ -367,8 +367,11 @@ function Game.errorData(errorString, traceBack)
       theme = config.theme
     }
 
-  if GAME.battleRoom and GAME.battleRoom.match then
-    errorData.matchInfo = GAME.battleRoom.match:getInfo()
+  if GAME.battleRoom then
+    errorData.battleRoomInfo = GAME.battleRoom:getInfo()
+  end
+  if sceneManager and sceneManager.activeScene and sceneManager.activeScene.match then
+    errorData.matchInfo = sceneManager.activeScene.match:getInfo()
   end
 
   return errorData
@@ -388,26 +391,54 @@ function Game.detailedErrorLogString(errorData)
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
     "Love Version: " .. errorData.love_version .. newLine ..
-    "UTC Time: " .. formattedTime ..
-    "Scene: " .. sceneManager.activeScene.name
+    "UTC Time: " .. formattedTime .. newLine ..
+    "Scene: " .. sceneManager.activeScene.name .. newLine
 
-    if errorData.matchInfo then
+    if errorData.matchInfo and not errorData.matchInfo.ended then
       detailedErrorLogString = detailedErrorLogString .. newLine ..
       "Match Info: " .. newLine ..
       "  Stage: " .. errorData.matchInfo.stage .. newLine ..
-      "  Stack Interaction: " .. errorData.matchInfo.stackInteraction ..
-      "  Time Limit: " .. errorData.matchInfo.timeLimit ..
-      "  Do Countdown: " .. errorData.matchInfo.doCountdown ..
+      "  Stack Interaction: " .. errorData.matchInfo.stackInteraction
+      if errorData.matchInfo.timeLimit then
+        detailedErrorLogString = detailedErrorLogString .. newLine ..
+        "  Time Limit: " .. errorData.matchInfo.timeLimit
+      end
+      if errorData.matchInfo.doCountdown then
+        detailedErrorLogString = detailedErrorLogString .. newLine ..
+        "  Do Countdown: " .. tostring(errorData.matchInfo.doCountdown)
+      end
+      detailedErrorLogString = detailedErrorLogString .. newLine ..
       "  Stacks: "
       for i = 1, #errorData.matchInfo.stacks do
         local stack = errorData.matchInfo.stacks[i]
         detailedErrorLogString = detailedErrorLogString .. newLine ..
         "    P" .. i .. ": " .. newLine ..
         "      Player Number: " .. stack.playerNumber .. newLine ..
-        "      Character: " .. stack.character  .. newLine ..
-        "      Panels: " .. stack.panels  .. newLine ..
+        "      Character: " .. stack.character .. newLine ..
+        "      Panels: " .. stack.panels .. newLine ..
         "      Rollback Count: " .. stack.rollbackCount .. newLine ..
         "      Rollback Frames Saved: " .. stack.rollbackCopyCount
+      end
+    elseif errorData.battleRoomInfo then
+      detailedErrorLogString = detailedErrorLogString .. newLine ..
+      "BattleRoom Info: " .. newLine ..
+      "  Online: " .. errorData.battleRoomInfo.online .. newLine ..
+      "  Spectating: " .. errorData.battleRoomInfo.spectating .. newLine ..
+      "  All assets loaded: " .. errorData.battleRoomInfo.allAssetsLoaded .. newLine ..
+      "  State: " .. errorData.battleRoomInfo.state .. newLine ..
+      "  Players: "
+      for i = 1, #errorData.battleRoomInfo.players do
+        local player = errorData.battleRoomInfo.players[i]
+        detailedErrorLogString = detailedErrorLogString .. newLine ..
+        "    P" .. i .. ": " .. newLine ..
+        "      Player Number: " .. player.playerNumber .. newLine ..
+        "      Panels: " .. player.panelId  .. newLine ..
+        "      Selected Character: " .. player.selectedCharacterId .. newLine ..
+        "      Character: " .. player.characterId  .. newLine ..
+        "      Selected Stage: " .. player.selectedStageId .. newLine ..
+        "      Stage: " .. player.stageId .. newLine ..
+        "      isLocal: " .. player.isLocal .. newLine ..
+        "      wantsReady: " .. player.wantsReady
       end
     end
 

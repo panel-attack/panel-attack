@@ -531,9 +531,10 @@ end
 function Match:getInfo()
   local info = {}
   info.stackInteraction = self.stackInteraction
-  info.timeLimit = self.timeLimit
-  info.doCountdown = self.doCountdown
-  info.stage = self.stageId
+  info.timeLimit = self.timeLimit or "none"
+  info.doCountdown = tostring(self.doCountdown)
+  info.stage = self.stageId or "no stage"
+  info.ended = self.ended
   info.stacks = {}
   if self.P1 then
     info.stacks[1] = self.P1:getInfo()

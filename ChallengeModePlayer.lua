@@ -70,4 +70,21 @@ function ChallengeModePlayer.createFromReplayPlayer(replayPlayer, playerNumber)
   return player
 end
 
+function ChallengeModePlayer:getInfo()
+  local info = {}
+  info.characterId = self.settings.characterId
+  info.selectedCharacterId = self.settings.selectedCharacterId
+  info.stageId = self.settings.stageId
+  info.selectedStageId = self.settings.selectedStageId
+  info.panelId = self.settings.panelId
+  info.wantsReady = self.settings.wantsReady
+  info.playerNumber = self.playerNumber
+  info.isLocal = self.isLocal
+  info.human = self.human
+  info.wins = self.wins
+  info.modifiedWins = self.modifiedWins
+
+  return info
+end
+
 return ChallengeModePlayer
