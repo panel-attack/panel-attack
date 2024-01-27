@@ -177,6 +177,8 @@ function GameBase:runGame(dt)
     self.match:run()
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
 
+  self:customRun()
+  
   self:handlePause()
 
   if self.match.isPaused and input.isDown["MenuEsc"] then

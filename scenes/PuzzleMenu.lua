@@ -49,7 +49,7 @@ function PuzzleMenu:startGame(puzzleSet)
       end
       if config.puzzle_randomFlipped then
         if math.random(2) == 1 then
-          puzzle.stack = Puzzle.horizontallyFlipPuzzleString(puzzle.stack)
+          puzzle.stack = puzzle:horizontallyFlipPuzzleString()
         end
       end
     end

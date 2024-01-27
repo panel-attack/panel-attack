@@ -14,6 +14,7 @@ local MatchParticipant = class(function(self)
   self.settings = {
     characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
     stageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
+    panelId = config.panels,
     wantsReady = false
   }
   self.human = false

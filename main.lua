@@ -171,6 +171,10 @@ function love.quit()
 end
 
 function love.errorhandler(msg)
+  if lldebugger then
+    error(msg, 2)
+  end
+
   if not love.window or not love.graphics or not love.event then
     return
   end
