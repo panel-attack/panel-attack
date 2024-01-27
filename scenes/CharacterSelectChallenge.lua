@@ -22,15 +22,18 @@ function CharacterSelectChallenge:customLoad(sceneParams)
 end
 
 function CharacterSelectChallenge:loadUserInterface()
-  self.ui.grid = Grid({x = 153, y = 60, unitSize = 108, gridWidth = 9, gridHeight = 6, unitMargin = 6})
+  self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
-  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "center"})
+  self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
+  self.ui.panelSelection:setTitle("panels")
   self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
+  self.ui.stageSelection:setTitle("stage")
   self.ui.readyButton = self:createReadyButton()
   local characterButtons = self:getCharacterButtons()
   local characterGridWidth, characterGridHeight = self.ui.grid.gridWidth, 3
   self.ui.characterGrid = self:createCharacterGrid(characterButtons, self.ui.grid, characterGridWidth, characterGridHeight)
+  self.ui.pageIndicator = self:createPageIndicator(self.ui.characterGrid)
   self.ui.leaveButton = self:createLeaveButton()
 
   local panelHeight
@@ -39,12 +42,13 @@ function CharacterSelectChallenge:loadUserInterface()
   self.ui.grid:createElementAt(1, 2, 3, 1, "panelSelection", self.ui.panelSelection)
   self.ui.grid:createElementAt(4, 2, 3, 1, "stageSelection", self.ui.stageSelection)
 
-  panelHeight = (self.ui.grid.unitSize - self.ui.grid.unitMargin * 2) / 2
-  stageWidth = self.ui.grid.unitSize - self.ui.grid.unitMargin * 2
+  panelHeight = self.ui.grid.unitSize - self.ui.grid.unitMargin * 2- self.ui.panelSelection.height
+  stageWidth = self.ui.grid.unitSize * 1.5 - self.ui.grid.unitMargin * 2
   rankedWidth = stageWidth
 
   self.ui.grid:createElementAt(9, 2, 1, 1, "readyButton", self.ui.readyButton)
   self.ui.grid:createElementAt(1, 3, characterGridWidth, characterGridHeight, "characterSelection", self.ui.characterGrid, true)
+  self.ui.grid:createElementAt(5, 6, 1, 1, "pageIndicator", self.ui.pageIndicator)
   self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
 
   self.ui.characterIcons = {}
@@ -68,7 +72,7 @@ function CharacterSelectChallenge:loadUserInterface()
     local stageCarousel = self:createStageCarousel(player, stageWidth)
     self.ui.stageSelection:addElement(stageCarousel, player)
 
-    self.ui.characterIcons[i] = self:createSelectedCharacterIcon(player)
+    self.ui.characterIcons[i] = self:createPlayerIcon(player)
   end
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "p1 icon", self.ui.characterIcons[1])

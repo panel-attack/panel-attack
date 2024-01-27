@@ -16,6 +16,12 @@ local ImageContainer = require("ui.ImageContainer")
 local Label = require("ui.Label")
 local BoolSelector = require("ui.BoolSelector")
 local tableUtils = require("tableUtils")
+local UiElement = require("ui.UIElement")
+local GameModes = require("GameModes")
+local Signal    = require("helpers.signal")
+local GFX_SCALE = consts.GFX_SCALE
+local StackPanel = require("ui.StackPanel")
+local PixelFontLabel = require("ui.PixelFontLabel")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -61,13 +67,13 @@ function CharacterSelect:load()
   self:playThemeMusic()
 end
 
-function CharacterSelect:createSelectedCharacterIcon(player)
-  local icon = characters[player.settings.selectedCharacterId].images.icon
+function CharacterSelect:createPlayerIcon(player)
+  local playerIcon = UiElement({hFill = true, vFill = true})
 
   local selectedCharacterIcon = ImageContainer({
     hFill = true,
     vFill = true,
-    image = icon,
+    image = characters[player.settings.selectedCharacterId].images.icon,
     drawBorders = true,
     outlineColor = {1, 1, 1, 1}
   })
@@ -78,11 +84,58 @@ function CharacterSelect:createSelectedCharacterIcon(player)
   end
   player:subscribe(selectedCharacterIcon, "selectedCharacterId", selectedCharacterIcon.updateImage)
 
-  return selectedCharacterIcon
+  playerIcon:addChild(selectedCharacterIcon)
+
+  -- level icon
+  if player.settings.style == GameModes.Styles.MODERN and player.settings.level then
+    local levelIcon = ImageContainer({
+      image = themes[config.theme].images.IMG_levels[player.settings.level],
+      hAlign = "right",
+      vAlign = "bottom",
+      x = -2,
+      y = -2
+    })
+
+    levelIcon.updateImage = function(image, level)
+      image:setImage(themes[config.theme].images.IMG_levels[level])
+    end
+    player:subscribe(levelIcon, "level", levelIcon.updateImage)
+
+    playerIcon:addChild(levelIcon)
+  end
+
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "bottom",
+    x = 2,
+    y = -2,
+    scale = GFX_SCALE
+  })
+  playerIcon:addChild(playerNumberIcon)
+
+  -- player name
+  local playerName = Label({
+    text = player.name,
+    translate = false,
+    hAlign = "center",
+    vAlign = "top"
+  })
+  playerIcon:addChild(playerName)
+
+  return playerIcon
 end
 
 function CharacterSelect:createReadyButton()
-  local readyButton = TextButton({width = 96, height = 96, label = Label({text = "ready"}), backgroundColor = {1, 1, 1, 0}, outlineColor = {1, 1, 1, 1}})
+  local readyButton = TextButton({
+    hFill = true,
+    vFill = true,
+    label = Label({text = "ready"}),
+    backgroundColor = {1, 1, 1, 0},
+    outlineColor = {1, 1, 1, 1}
+  })
 
   -- assign player generic callback
   readyButton.onClick = function(self, inputSource)
@@ -101,16 +154,12 @@ end
 
 function CharacterSelect:createLeaveButton()
   leaveButton = TextButton({
-    width = 96,
-    height = 96,
+    hFill = true,
+    vFill = true,
     label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1},
-    onClick = function()
-      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      GAME.battleRoom:shutdown()
-      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
-    end
+    onClick = self.leave
   })
   leaveButton.onSelect = leaveButton.onClick
 
@@ -135,6 +184,26 @@ function CharacterSelect:createStageCarousel(player, width)
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(stageCarousel, "selectedStageId", stageCarousel.setPassengerById)
 
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    scale = 2,
+  })
+
+  if #GAME.battleRoom.players > 1 then
+    playerNumberIcon.hAlign = "center"
+    playerNumberIcon.vAlign = "top"
+    playerNumberIcon.y = 2
+  else
+    playerNumberIcon.hAlign = "left"
+    playerNumberIcon.vAlign = "center"
+    playerNumberIcon.x = (width - stageCarousel:getSelectedPassenger().image.width) / 2 - playerNumberIcon.width - 4
+  end
+
+  stageCarousel.playerNumberIcon = playerNumberIcon
+  stageCarousel:addChild(stageCarousel.playerNumberIcon)
+
   return stageCarousel
 end
 
@@ -157,8 +226,8 @@ function CharacterSelect:getCharacterButtons()
 
   for i = 0, #characters_ids_for_current_theme do
     local characterButton = Button({
-      width = 96,
-      height = 96,
+      hFill = true,
+      vFill = true,
     })
 
     local character
@@ -167,12 +236,18 @@ function CharacterSelect:getCharacterButtons()
     else
       character = characters[characters_ids_for_current_theme[i]]
     end
-    
+
     characterButton.characterId = character.id
     characterButton.image = ImageContainer({image = character.images.icon, hFill = true, vFill = true})
     characterButton:addChild(characterButton.image)
-    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "bottom", hAlign = "center"})
+    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "top", hAlign = "center"})
     characterButton:addChild(characterButton.label)
+
+    if character.flag and themes[config.theme].images.flags[character.flag] then
+      characterButton.flag = ImageContainer({image = themes[config.theme].images.flags[character.flag], vAlign = "bottom", hAlign = "right", x = -2, y = -2, scale = 0.5})
+      characterButton:addChild(characterButton.flag)
+    end
+
     characterButtons[#characterButtons + 1] = characterButton
   end
 
@@ -199,6 +274,7 @@ function CharacterSelect:getCharacterButtons()
           player:setStage(character.stage)
         end
       end
+      character:playSelectionSfx()
       player:setCharacter(self.characterId)
       player.cursor:updatePosition(9, 2)
     end
@@ -290,6 +366,20 @@ function CharacterSelect:createCharacterGrid(characterButtons, grid, width, heig
   return characterGrid
 end
 
+function CharacterSelect:createPageIndicator(pagedUniGrid)
+  local pageCounterLabel = Label({
+    text = loc("page") .. " " .. pagedUniGrid.currentPage .. "/" .. #pagedUniGrid.pages,
+    hAlign = "center",
+    vAlign = "top",
+    translate = false
+  })
+  pageCounterLabel.updatePage = function(self, grid, page)
+    self:setText(loc("page") .. " " .. page .. "/" .. #pagedUniGrid.pages)
+  end
+  Signal.connectSignal(pagedUniGrid, "pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
+  return pageCounterLabel
+end
+
 function CharacterSelect:createCursor(grid, player)
   local cursor = GridCursor({
     grid = grid,
@@ -316,7 +406,8 @@ function CharacterSelect:createCursor(grid, player)
 end
 
 function CharacterSelect:createPanelCarousel(player, height)
-  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "center", hFill = true, height = height})
+  local panelCarousel = PanelCarousel({hAlign = "center", vAlign = "top", hFill = true, height = height})
+  panelCarousel:setColorCount(player.settings.levelData.colors)
   panelCarousel:loadPanels()
 
   -- panel carousel
@@ -336,11 +427,25 @@ function CharacterSelect:createPanelCarousel(player, height)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
+  player:subscribe(panelCarousel, "colorCount", panelCarousel.setColorCount)
+
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "center",
+    scale = 2,
+    x = 2
+  })
+
+  panelCarousel.playerNumberIcon = playerNumberIcon
+  panelCarousel:addChild(panelCarousel.playerNumberIcon)
 
   return panelCarousel
 end
 
-function CharacterSelect:createLevelSlider(player, imageWidth)
+function CharacterSelect:createLevelSlider(player, imageWidth, height)
   local levelSlider = LevelSlider({
     tickLength = imageWidth,
     value = player.settings.level,
@@ -348,57 +453,83 @@ function CharacterSelect:createLevelSlider(player, imageWidth)
       play_optional_sfx(themes[config.theme].sounds.menu_move)
     end,
     hAlign = "center",
-    vAlign = "center"
+    vAlign = "center",
   })
+
   Focusable(levelSlider)
   levelSlider.receiveInputs = function(self, inputs)
     if inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      levelSlider:setValue(levelSlider.value - 1)
+      self:setValue(self.value - 1)
     end
 
     if inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      levelSlider:setValue(levelSlider.value + 1)
+      self:setValue(self.value + 1)
     end
 
     if inputs.isDown["Swap2"] then
-      if levelSlider.onBackCallback then
-        levelSlider.onBackCallback()
+      if self.onBackCallback then
+        self:onBackCallback()
       end
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-      levelSlider:yieldFocus()
+      self:yieldFocus()
     end
 
     if inputs.isDown["Swap1"] or inputs.isDown["Start"] then
-      if levelSlider.onSelectCallback then
-        levelSlider.onSelectCallback()
+      if self.onSelectCallback then
+        self:onSelectCallback()
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      levelSlider:yieldFocus()
+      self:yieldFocus()
     end
   end
 
   -- level slider
-  levelSlider.onSelectCallback = function ()
-    player:setLevel(levelSlider.value)
+  levelSlider.onSelectCallback = function(self)
+    player:setLevel(self.value)
   end
 
-  levelSlider.onValueChange = function()
-    -- using this makes the onBackCallback pointless
-    --player:setLevel(levelSlider.value)
+  levelSlider.setValueFromPos = function(self, x)
+    local screenX, screenY = self:getScreenPos()
+    self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)
+    player:setLevel(self.value)
   end
 
-  levelSlider.onBackCallback = function ()
-    levelSlider:setValue(player.settings.level)
+  levelSlider.onBackCallback = function(self)
+    self:setValue(player.settings.level)
+  end
+
+  -- wrap in an extra element so we can offset properly as levelslider is fixed height + width
+  local uiElement = UiElement({height = height, hFill = true})
+  Focusable(uiElement)
+  uiElement.levelSlider = levelSlider
+  uiElement.levelSlider.yieldFocus = function()
+    uiElement:yieldFocus()
+  end
+  uiElement:addChild(levelSlider)
+  uiElement.receiveInputs = function(self, inputs)
+    self.levelSlider:receiveInputs(inputs)
   end
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
   player:subscribe(levelSlider, "level", levelSlider.setValue)
 
-  return levelSlider
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "center",
+    scale = 2,
+    x = 2
+  })
+
+  uiElement.playerNumberIcon = playerNumberIcon
+  uiElement:addChild(uiElement.playerNumberIcon)
+
+  return uiElement
 end
 
 function CharacterSelect:createRankedSelection(player, width)
-  
   local rankedSelector = BoolSelector({startValue = player.settings.wantsRanked, vFill = true, width = width, vAlign = "center", hAlign = "center"})
   rankedSelector.onValueChange = function(boolSelector, value)
     player:setWantsRanked(value)
@@ -418,7 +549,55 @@ function CharacterSelect:createRankedSelection(player, width)
 
   player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
 
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "center",
+    x = 4,
+    scale = 2,
+  })
+  rankedSelector.playerNumberIcon = playerNumberIcon
+  rankedSelector:addChild(rankedSelector.playerNumberIcon)
+
   return rankedSelector
+end
+
+function CharacterSelect:createRecordsBox()
+  local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "center"})
+
+  local lastLines = UiElement({hFill = true})
+  local lastLinesLabel = PixelFontLabel({ text = "last lines", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
+  local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  lastLines.height = lastLinesLabel.height + 4
+  lastLines.label = lastLinesLabel
+  lastLines.value = lastLinesValue
+  lastLines:addChild(lastLinesLabel)
+  lastLines:addChild(lastLinesValue)
+  stackPanel.lastLines = lastLines
+  stackPanel:addElement(lastLines)
+
+  local record = UiElement({hFill = true})
+  local recordLabel = PixelFontLabel({ text = "record", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
+  local recordValue = PixelFontLabel({ text = self.record, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  record.height = recordLabel.height + 4
+  record.label = recordLabel
+  record.value = recordValue
+  record:addChild(recordLabel)
+  record:addChild(recordValue)
+  stackPanel.record = record
+  stackPanel:addElement(record)
+
+  stackPanel.setLastLines = function(stackPanel, value)
+    stackPanel.lastLines.value:setText(value)
+  end
+
+  stackPanel.setRecord = function(stackPanel, value)
+    stackPanel.record.value:setText(value)
+  end
+
+  return stackPanel
 end
 
 function CharacterSelect:update(dt)
@@ -445,9 +624,12 @@ function CharacterSelect:draw()
 end
 
 function CharacterSelect:leave()
-  GAME.battleRoom:shutdown()
-  play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  if GAME.battleRoom then
+    -- in 2p local, with the current input shenanigans leave may be called twice
+    GAME.battleRoom:shutdown()
+    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  end
 end
 
 return CharacterSelect

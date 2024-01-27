@@ -612,10 +612,12 @@ local function playRandomSfx(sfxTable, fallback)
   end
 end
 
-function Character.play_selection_sfx(self)
-  playRandomSfx(self.sounds.selection)
-  -- deliver feedback so that the game can play a menu sound instead if there was no selection SFX
-  return #self.sounds.selection ~= 0
+function Character.playSelectionSfx(self)
+  if self.sounds.selection and #self.sounds.selection > 0 then
+    playRandomSfx(self.sounds.selection)
+  else
+    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  end
 end
 
 function Character.playComboSfx(self, size)

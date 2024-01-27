@@ -20,7 +20,7 @@ function GridElement:drawBorders()
 end
 
 function GridElement:drawSelf()
-  if DEBUG_ENABLED then
+  if DEBUG_ENABLED or ((self.gridWidth ~= 1 or self.gridHeight ~= 1) and (self.x % self.parent.unitSize > 0 or self.y % self.parent.unitSize > 0)) then
     self:drawBorders()
   end
 end

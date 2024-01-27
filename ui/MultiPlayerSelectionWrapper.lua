@@ -1,5 +1,6 @@
 local UiElement = require("ui.UIElement")
 local StackPanel = require("ui.StackPanel")
+local Label = require("ui.Label")
 local class = require("class")
 local focusable = require("ui.Focusable")
 
@@ -24,6 +25,11 @@ function MultiPlayerSelectionWrapper:addElement(uiElement, player)
   self:resize()
 end
 
+function MultiPlayerSelectionWrapper:insertElementAtIndex(uiElement, index, player)
+  self:addElement(uiElement, player)
+  self:shiftTo(index)
+end
+
 -- the parent makes sure this is only called while focused
 function MultiPlayerSelectionWrapper:receiveInputs(inputs, dt, player)
   self.wrappedElements[player]:receiveInputs(inputs, dt)
@@ -31,6 +37,19 @@ end
 
 function MultiPlayerSelectionWrapper:drawSelf()
   -- probably apply a dim shader while not focused or something
+end
+
+function MultiPlayerSelectionWrapper:setTitle(string)
+  self.title = Label({text = string})
+  if self.alignment == "top" or self.alignment == "bottom" then
+    self.title.hAlign = "center"
+    self.title.vAlign = self.alignment
+    StackPanel.insertElementAtIndex(self, self.title, 1)
+  else
+    self.title.hAlign = "center"
+    self.title.vAlign = "top"
+    self:addChild(self.title)
+  end
 end
 
 return MultiPlayerSelectionWrapper

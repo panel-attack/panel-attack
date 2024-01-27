@@ -55,8 +55,11 @@ end
 
 function StackPanel:insertElementAtIndex(uiElement, index)
   -- add it at the end
-  self:addElement(uiElement)
+  StackPanel.addElement(self, uiElement)
+  StackPanel.shiftTo(self, uiElement, index)
+end
 
+function StackPanel:shiftTo(uiElement, index)
   -- swap the previous element with it while updating values until it reached the desired index
   for i = #self.children - 1, index, -1 do
     local otherElement = table.remove(self.children, i)

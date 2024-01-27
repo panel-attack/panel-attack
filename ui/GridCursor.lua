@@ -16,7 +16,6 @@ local GridCursor = class(function(self, options)
   self.translateSubGrids = options.translateSubGrids or false
   self.activeArea = options.activeArea or {x1 = 1, y1 = 1, x2 = self.target.gridWidth, y2 = self.target.gridHeight}
   self.selectedGridPos = options.startPosition or {x = 1, y = 1}
-  self.selectedGridElement = self.target.grid[self.selectedGridPos.y][self.selectedGridPos.x]
 
   self.player = options.player
   self.player.cursor = self
@@ -38,7 +37,6 @@ GridCursor.directions = {up = {x = 0, y = -1}, down = {x = 0, y = 1}, left = {x 
 function GridCursor:updatePosition(x, y)
   self.selectedGridPos.x = x
   self.selectedGridPos.y = y
-  self.selectedGridElement = self:getElementAt(y, x)
 end
 
 function GridCursor:getElementAt(y, x)
@@ -58,13 +56,14 @@ function GridCursor:getElementAt(y, x)
 end
 
 function GridCursor:move(direction)
+  local selectedGridElement = self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
   local nextGridElement
   local acceptPlaceholders = false
   if direction.x ~= 0 then
     local newX = wrap(self.activeArea.x1, self.selectedGridPos.x + direction.x, self.activeArea.x2)
     nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
     -- look for a different UiElement until we wrapped back to our position before the move
-    while (nextGridElement.content.TYPE == "GridPlaceholder" and not acceptPlaceholders) or (self.selectedGridElement == nextGridElement and newX ~= self.selectedGridPos.x) do
+    while (nextGridElement.content.TYPE == "GridPlaceholder" and not acceptPlaceholders) or (selectedGridElement == nextGridElement and newX ~= self.selectedGridPos.x) do
       newX = wrap(self.activeArea.x1, newX + direction.x, self.activeArea.x2)
       nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
       if self.selectedGridPos.x == newX then
@@ -75,7 +74,7 @@ function GridCursor:move(direction)
         nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
       end
     end
-    if nextGridElement == self.selectedGridElement then
+    if nextGridElement == selectedGridElement then
       -- this must be the only UiElement in this row, abort here
     else
       -- new UiElement was found!
@@ -85,7 +84,7 @@ function GridCursor:move(direction)
     local newY = wrap(self.activeArea.y1, self.selectedGridPos.y + direction.y, self.activeArea.y2)
     nextGridElement = self:getElementAt(newY,self.selectedGridPos.x)
     -- look for a different UiElement until we wrapped back to our position before the move
-    while (nextGridElement.content.TYPE == "GridPlaceholder" and not acceptPlaceholders) or (self.selectedGridElement == nextGridElement and newY ~= self.selectedGridPos.y) do
+    while (nextGridElement.content.TYPE == "GridPlaceholder" and not acceptPlaceholders) or (selectedGridElement == nextGridElement and newY ~= self.selectedGridPos.y) do
       newY = wrap(self.activeArea.y1, newY + direction.y, self.activeArea.y2)
       nextGridElement = self:getElementAt(newY,self.selectedGridPos.x)
       if self.selectedGridPos.y == newY then
@@ -97,7 +96,7 @@ function GridCursor:move(direction)
         break
       end
     end
-    if nextGridElement == self.selectedGridElement then
+    if nextGridElement == selectedGridElement then
       -- this must be the only UiElement in this row, abort here
     else
       -- new UiElement was found!
@@ -123,7 +122,7 @@ function GridCursor:drawSelf()
   end
 
   local image = self.image[cursorFrame]
-  local element = self.selectedGridElement or self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
+  local element = self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
   local x, y = element:getScreenPos()
   if drawThisFrame then
     menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
@@ -150,7 +149,7 @@ function GridCursor:receiveInputs(inputs, dt)
     self:move(GridCursor.directions.down)
   elseif inputs.isDown["Swap1"] then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    self.selectedGridElement:onSelect(self)
+    self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x):onSelect(self)
   elseif inputs.isDown["Raise1"] then
     if self.raise1Callback then
       self:raise1Callback()

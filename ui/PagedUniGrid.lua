@@ -3,6 +3,7 @@ local Grid = require("ui.Grid")
 local class = require("class")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
+local Signal = require("helpers.signal")
 
 local function addNewPage(pagedUniGrid)
   local grid = Grid({
@@ -63,6 +64,8 @@ local PagedUniGrid = class(function(self, options)
   self:addChild(self.pageTurnButtons.right)
   addNewPage(self)
   goToPage(self, 1)
+
+  Signal.addSignal(self, "pageTurned")
 end, UiElement)
 
 function PagedUniGrid:addElement(element)
@@ -88,6 +91,7 @@ end
 function PagedUniGrid:turnPage(sign)
   local newPageNumber = wrap(1, self.currentPage + math.sign(sign), #self.pages)
   goToPage(self, newPageNumber)
+  self:pageTurned(self.currentPage)
 end
 
 function PagedUniGrid:refreshPageTurnButtonVisibility()
