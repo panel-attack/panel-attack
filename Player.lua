@@ -93,6 +93,7 @@ function Player:createStackFromSettings(match, which)
     args.allowAdjacentColors = self.settings.allowAdjacentColors
   end
   args.inputMethod = self.settings.inputMethod
+  args.gameOverConditions = match.gameOverConditions
 
   self.stack = Stack(args)
   -- so the stack can draw player information
@@ -335,6 +336,30 @@ function Player:updateWithMenuState(menuState)
 
   self:setLevel(menuState.level)
   self:setInputMethod(menuState.inputMethod)
+end
+
+function Player:getInfo()
+  local info = {}
+  info.name = self.name
+  info.level = self.settings.level
+  info.difficulty = self.settings.difficulty
+  info.speed = self.settings.speed
+  info.characterId = self.settings.characterId
+  info.selectedCharacterId = self.settings.selectedCharacterId
+  info.stageId = self.settings.stageId
+  info.selectedStageId = self.settings.selectedStageId
+  info.panelId = self.settings.panelId
+  info.wantsReady = tostring(self.settings.wantsReady)
+  info.wantsRanked = tostring(self.settings.wantsRanked)
+  info.inputMethod = self.settings.inputMethod
+  --info.publicId = self.settings.publicId
+  info.playerNumber = self.playerNumber
+  info.isLocal = tostring(self.isLocal)
+  info.human = tostring(self.human)
+  info.wins = self.wins
+  info.modifiedWins = self.modifiedWins
+
+  return info
 end
 
 return Player
