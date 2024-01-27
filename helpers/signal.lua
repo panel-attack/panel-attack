@@ -1,4 +1,5 @@
 local util = require("util")
+local logger = require("logger")
 local Signal = {}
 
 function Signal.emitsSignals(t)
@@ -9,6 +10,15 @@ end
 -- adds a signal to the table that can be subscribed to via Signal.connectSignal
 -- if the table already has a function with the signal's name it is replaced and afterwards subscribed to the signal
 function Signal.addSignal(t, signalName)
+  if t[signalName] then
+    if t.emitsSignals and t.signalSubscriptions[signalName] then
+      logger.info("Trying to create a signal that already exists")
+      return
+    else
+      error("Trying to create signal " .. signalName .. ", but the field already exists on the table\n" .. table_to_string(t))
+    end
+  end
+
   if not t.emitsSignals or not t.signalSubscriptions then
     Signal.emitsSignals(t)
   end
@@ -19,6 +29,7 @@ function Signal.addSignal(t, signalName)
       callback(subscriber, ...)
     end
   end
+
 
   -- check for an existing func and save it
   local normalFunc
