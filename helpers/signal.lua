@@ -8,7 +8,6 @@ function Signal.emitsSignals(t)
 end
 
 -- adds a signal to the table that can be subscribed to via Signal.connectSignal
--- if the table already has a function with the signal's name it is replaced and afterwards subscribed to the signal
 function Signal.addSignal(t, signalName)
   if t[signalName] then
     if t.emitsSignals and t.signalSubscriptions[signalName] then
@@ -30,21 +29,7 @@ function Signal.addSignal(t, signalName)
     end
   end
 
-
-  -- check for an existing func and save it
-  local normalFunc
-  if t[signalName] then
-    assert(type(t[signalName]) == "function", "Trying to add a signal on a field that is not a function")
-    normalFunc = t[signalName]
-  end
-
-  -- override it with the emission func
   t[signalName] = emissionFunc
-
-  if normalFunc then
-    -- then subscribe it to get executed on emission anyway
-    Signal.connectSignal(t, signalName, t, normalFunc)
-  end
 end
 
 -- connects to a signal so the callback is executed with the data and arguments passed to the signal whenever the signal emits
