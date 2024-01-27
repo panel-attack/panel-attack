@@ -489,9 +489,10 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
     player:setLevel(self.value)
   end
 
-  levelSlider.onValueChange = function()
-    -- using this makes the onBackCallback pointless
-    --player:setLevel(levelSlider.value)
+  levelSlider.setValueFromPos = function(self, x)
+    local screenX, screenY = self:getScreenPos()
+    self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)
+    player:setLevel(self.value)
   end
 
   levelSlider.onBackCallback = function(self)
