@@ -7,6 +7,7 @@ local Signal = require("helpers.signal")
 local SimulatedStack = require("SimulatedStack")
 local ChallengeModePlayer = require("ChallengeModePlayer")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -18,8 +19,6 @@ Match =
     self.stacks = {}
     -- holds detached attackEngines, meaning attack engines that only deal; indexed via the player they're targeting
     self.attackEngines = {}
-    self.P1 = nil
-    self.P2 = nil
     self.engineVersion = consts.ENGINE_VERSION
 
     assert(doCountdown ~= nil)
@@ -59,8 +58,6 @@ Match =
     self.renderDuringPause = false
     self.clock = 0
 
-    self.time_quads = {}
-
     Signal.turnIntoEmitter(self)
     self:createSignal("matchEnded")
   end
@@ -72,15 +69,10 @@ require("match_graphics")
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
 function Match:deinit()
-  if self.P1 then
-    self.P1:deinit()
+  for i = 1, #self.stacks do
+    self.stacks[i]:deinit()
   end
-  if self.P2 then
-    self.P2:deinit()
-  end
-  for _, quad in ipairs(self.time_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
+
   stop_the_music()
 end
 

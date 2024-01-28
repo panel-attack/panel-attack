@@ -1,5 +1,5 @@
 local class = require("class")
-local graphicsUtil = require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
 local GFX_SCALE = consts.GFX_SCALE
 
@@ -28,9 +28,8 @@ local StackBase = class(function(self, args)
   self.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
   -- graphics
-  self.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale = GAME:newCanvasSnappedScale()})
+  self.canvas = love.graphics.newCanvas(312, 612, {dpiscale = GAME:newCanvasSnappedScale()})
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
-  self.wins_quads = {}
 end)
 
 -- Provides the X origin to draw an element of the stack
@@ -131,7 +130,7 @@ function StackBase:drawLabel(drawable, themePositionOffset, scale, cameFromLegac
   local x = self:labelOriginXWithOffset(themePositionOffset, scale, cameFromLegacyScoreOffset, drawable:getWidth(), percentWidthShift, legacyOffsetIsAlreadyScaled)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled)
 
-  menu_drawf(drawable, x, y, "left", "left", 0, scale, scale)
+  GraphicsUtil.draw(drawable, x, y, 0, scale, scale)
 end
 
 function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, rotate, scale)
@@ -145,16 +144,16 @@ function StackBase:drawBar(image, quad, themePositionOffset, height, yOffset, ro
   local x = self:elementOriginXWithOffset(themePositionOffset, false)
   local y = self:elementOriginYWithOffset(themePositionOffset, false)
   quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
-  qdraw(image, quad, x / GFX_SCALE, (y - height - yOffset) / GFX_SCALE, rotate, scale / GFX_SCALE, scale * barYScale / GFX_SCALE, 0, 0, self.mirror_x)
+  GraphicsUtil.drawQuad(image, quad, x, y - height - yOffset, rotate, scale, scale * barYScale, 0, 0, self.mirror_x)
 end
 
-function StackBase:drawNumber(number, quads, themePositionOffset, scale, cameFromLegacyScoreOffset)
+function StackBase:drawNumber(number, themePositionOffset, scale, cameFromLegacyScoreOffset)
   if cameFromLegacyScoreOffset == nil then
     cameFromLegacyScoreOffset = false
   end
   local x = self:elementOriginXWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
   local y = self:elementOriginYWithOffset(themePositionOffset, cameFromLegacyScoreOffset)
-  GraphicsUtil.draw_number(number, themes[config.theme].images["IMG_number_atlas_" .. self.which .. "P"], quads, x, y, scale, "center")
+  GraphicsUtil.drawPixelFont(number, themes[config.theme].fontMaps.numbers[self.which], x, y, scale, scale, "center", 0)
 end
 
 function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOffset, fontSize)
@@ -179,7 +178,7 @@ function StackBase:drawString(string, themePositionOffset, cameFromLegacyScoreOf
   end
   local fontDelta = fontSize - GraphicsUtil.fontSize
 
-  gprintf(string, x, y, limit, alignment, nil, nil, fontDelta)
+  GraphicsUtil.printf(string, x, y, limit, alignment, nil, nil, fontDelta)
 end
 
 -- Positions the stack draw position for the given player
@@ -229,7 +228,7 @@ function StackBase:setCanvas()
     love.graphics.setShader(mask_shader)
     love.graphics.setBackgroundColor(1, 1, 1)
     local canvas_w, canvas_h = self.canvas:getDimensions()
-    love.graphics.rectangle("fill", 0, 0, canvas_w, canvas_h)
+    GraphicsUtil.drawRectangle("fill", 0, 0, canvas_w, canvas_h)
     love.graphics.setBackgroundColor(unpack(GAME.backgroundColor))
     love.graphics.setShader()
   end
@@ -260,7 +259,7 @@ function StackBase:drawCharacter()
     end
   end
 
-  characters[self.character]:drawPortrait(self.which, 4, 4, self.portraitFade)
+  characters[self.character]:drawPortrait(self.which, self.panelOriginXOffset, self.panelOriginYOffset, self.portraitFade)
 end
 
 function StackBase:drawFrame()
@@ -269,7 +268,7 @@ function StackBase:drawFrame()
   if frameImage then
     local scaleX = 312 / frameImage:getWidth()
     local scaleY = 612 / frameImage:getHeight()
-    love.graphics.draw(frameImage, 0, 0, 0, scaleX, scaleY)
+    GraphicsUtil.draw(frameImage, 0, 0, 0, scaleX, scaleY)
   end
 end
 
@@ -280,7 +279,7 @@ function StackBase:drawWall(displacement, rowCount)
     local y = (4 - displacement + rowCount * 16) * GFX_SCALE
     local width = 288
     local scaleX = width / wallImage:getWidth()
-    love.graphics.draw(wallImage, 12, y, 0, scaleX, scaleX)
+    GraphicsUtil.draw(wallImage, 12, y, 0, scaleX, scaleX)
   end
 end
 
@@ -293,14 +292,14 @@ function StackBase:drawCountdown()
     local countdown_x = 44
     local countdown_y = 68
     if self.clock <= 8 then
-      draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+      GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
     elseif self.clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        draw(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+        GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end
       local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
-        draw(IMG_number_to_draw, countdown_x, countdown_y)
+        GraphicsUtil.drawGfxScaled(IMG_number_to_draw, countdown_x, countdown_y)
       end
     end
   end
@@ -377,7 +376,7 @@ end
 
 function StackBase:drawWinCount()
   self:drawLabel(themes[config.theme].images.IMG_wins, themes[config.theme].winLabel_Pos, themes[config.theme].winLabel_Scale, true)
-  self:drawNumber(self.player:getWinCountForDisplay(), self.wins_quads, themes[config.theme].win_Pos, themes[config.theme].win_Scale, true)
+  self:drawNumber(self.player:getWinCountForDisplay(), themes[config.theme].win_Pos, themes[config.theme].win_Scale, true)
 end
 
 --------------------------------

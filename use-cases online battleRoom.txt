@@ -1,0 +1,10 @@
+use-cases online battleRoom
+
+catching up on an on-going match
+-> catch up screen -> match
+there should be a catchup transition that takes a match on top of the scenes and displays catchup progress
+
+watching a match to end, new match starts
+-> switch to the new game scene with the new match
+
+there should generally be a message transition that adopts the role of the old dumb transition I guess

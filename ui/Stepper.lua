@@ -3,6 +3,7 @@ local util = require("util")
 local UIElement = require("ui.UIElement")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
+local GraphicsUtil = require("graphics_util")
 
 local BUTTON_PADDING = 5
 
@@ -77,11 +78,11 @@ end
 
 function Stepper:drawSelf()
   if config.debug_mode then
-    love.graphics.setColor(self.color)
-    love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(self.borderColor)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(self.color)
+    GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height)
+    GraphicsUtil.setColor(self.borderColor)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end
 

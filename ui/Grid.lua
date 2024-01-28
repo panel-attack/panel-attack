@@ -1,6 +1,7 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
 local GridElement = require("ui.GridElement")
+local GraphicsUtil = require("graphics_util")
 
 local Grid = class(function(self, options)
   self.unitSize = options.unitSize
@@ -67,19 +68,19 @@ end
 
 function Grid:drawSelf()
   if DEBUG_ENABLED then
-    love.graphics.setColor(1, 1, 1, 0.5)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(1, 1, 1, 0.5)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.setColor(1, 1, 1, 1)
     -- draw all units
     local right = self.x + self.width
     local bottom = self.y + self.height
     for i = 1, self.gridHeight - 1 do
       local y = self.y + self.unitSize * i
-      drawStraightLine(self.x, y, right, y, 1, 1, 1, 0.5)
+      GraphicsUtil.drawStraightLine(self.x, y, right, y, 1, 1, 1, 0.5)
     end
     for i = 1, self.gridWidth - 1 do
       local x = self.x + self.unitSize * i
-      drawStraightLine(x, self.y, x, bottom, 1, 1, 1, 0.5)
+      GraphicsUtil.drawStraightLine(x, self.y, x, bottom, 1, 1, 1, 0.5)
     end
   end
 end

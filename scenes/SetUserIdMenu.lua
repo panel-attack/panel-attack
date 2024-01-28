@@ -6,6 +6,7 @@ local input = require("inputManager")
 local save = require("save")
 local utf8 = require("utf8")
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 
 -- @module setNameMenu
 -- Scene for setting the username
@@ -56,6 +57,6 @@ end
 function SetUserIdMenu:draw()
   self.backgroundImg:draw()
   local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
-  gprintf("Enter User ID (or paste from clipboard)", menuX, menuY)
+  GraphicsUtil.printf("Enter User ID (or paste from clipboard)", menuX, menuY)
   self.idInputField:draw()
 end

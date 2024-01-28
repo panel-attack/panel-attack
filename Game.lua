@@ -21,9 +21,6 @@ local GameModes = require("GameModes")
 local TcpClient = require("network.TcpClient")
 local StartUp = require("scenes.StartUp")
 
-local GFX_SCALE = consts.GFX_SCALE
-
-
 require("rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
@@ -292,9 +289,7 @@ function Game:draw()
   love.graphics.clear()
 
   -- With this, self.globalCanvas is clear and set as our active canvas everything is being drawn to
-  self.isDrawing = true
   sceneManager:draw()
-  self.isDrawing = false
 
   self:drawFPS()
   self:drawScaleInfo()
@@ -528,8 +523,8 @@ function Game:drawLoadingString(loadingString)
   local x = 0
   local y = consts.CANVAS_HEIGHT/2 - textHeight/2
   local backgroundPadding = 10
-  grectangle_color("fill", (consts.CANVAS_WIDTH / 2 - (textMaxWidth/2)) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, textMaxWidth/GFX_SCALE, textHeight/GFX_SCALE, 0, 0, 0, 0.5)
-  gprintf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
+  GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 2 - (textMaxWidth / 2) , y - backgroundPadding, textMaxWidth, textHeight, 0, 0, 0, 0.5)
+  GraphicsUtil.printf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
 end
 
 return Game

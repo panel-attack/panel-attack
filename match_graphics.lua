@@ -1,6 +1,7 @@
 local GameModes = require("GameModes")
 local tableUtils = require("tableUtils")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 local GFX_SCALE = consts.GFX_SCALE
 
 function Match:matchelementOriginX()
@@ -23,18 +24,19 @@ function Match:drawMatchLabel(drawable, themePositionOffset, scale)
   local x = self:matchelementOriginX() + themePositionOffset[1]
   local y = self:matchelementOriginY() + themePositionOffset[2]
 
-  local hAlign = "left"
-  local vAlign = "left"
   if themes[config.theme]:offsetsAreFixed() then
-    hAlign = "center"
+    -- align in center
+    x = x - math.floor(drawable:getWidth() * 0.5 * scale)
+  else 
+    -- align left, no adjustment
   end
-  menu_drawf(drawable, x, y, hAlign, vAlign, 0, scale, scale)
+  GraphicsUtil.draw(drawable, x, y, 0, scale, scale)
 end
 
-function Match:drawMatchTime(timeString, quads, themePositionOffset, scale)
+function Match:drawMatchTime(timeString, themePositionOffset, scale)
   local x = self:matchelementOriginX() + themePositionOffset[1]
   local y = self:matchelementOriginY() + themePositionOffset[2]
-  GraphicsUtil.draw_time(timeString, quads, x, y, scale)
+  GraphicsUtil.draw_time(timeString, x, y, scale)
 end
 
 function Match:drawTimer()
@@ -58,7 +60,7 @@ function Match:drawTimer()
     local timeString = frames_to_time_string(frames, self.ended)
 
     self:drawMatchLabel(themes[config.theme].images.IMG_time, themes[config.theme].timeLabel_Pos, themes[config.theme].timeLabel_Scale)
-    self:drawMatchTime(timeString, self.time_quads, themes[config.theme].time_Pos, themes[config.theme].time_Scale)
+    self:drawMatchTime(timeString, themes[config.theme].time_Pos, themes[config.theme].time_Scale)
   end
 end
 
@@ -76,20 +78,20 @@ end
 function Match:drawCommunityMessage()
   -- Draw the community message
   if not config.debug_mode then
-    gprintf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
+    GraphicsUtil.printf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
   end
 end
 
 function Match:render()
   if GAME.droppedFrames > 0 and config.show_fps then
-    gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
+    GraphicsUtil.print("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 
   if config.show_fps and #self.stacks > 1 then
     local drawY = 23
     for i = 1, #self.stacks do
       local stack = self.stacks[i]
-      gprint("P" .. stack.which .." Average Latency: " .. stack.framesBehind, 1, drawY)
+      GraphicsUtil.print("P" .. stack.which .." Average Latency: " .. stack.framesBehind, 1, drawY)
       drawY = drawY + 11
     end
 
@@ -100,7 +102,7 @@ function Match:render()
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
         local x = 5
         local y = 30
-        draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
       end
     else
       if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > MAX_LAG * 0.75 end) then
@@ -109,7 +111,7 @@ function Match:render()
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
         local x = (consts.CANVAS_WIDTH / 2) - (iconSize / 2)
         local y = (consts.CANVAS_HEIGHT / 2) - (iconSize / 2)
-        draw(themes[config.theme].images.IMG_bug, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
       end
     end
   end
@@ -122,27 +124,27 @@ function Match:render()
     local drawY = -4
 
     -- drawY = drawY + padding
-    -- gprintf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
+    -- GraphicsUtil.printf("Time Spent Running " .. self.timeSpentRunning * 1000, drawX, drawY)
 
     -- drawY = drawY + padding
     -- local totalTime = love.timer.getTime() - self.createTime
-    -- gprintf("Total Time " .. totalTime * 1000, drawX, drawY)
+    -- GraphicsUtil.printf("Total Time " .. totalTime * 1000, drawX, drawY)
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
     local timePercent = round(self.timeSpentRunning / totalTime, 5)
-    gprintf("Time Percent Running Match: " .. timePercent, drawX, drawY)
+    GraphicsUtil.printf("Time Percent Running Match: " .. timePercent, drawX, drawY)
 
     drawY = drawY + padding
     local maxTime = round(self.maxTimeSpentRunning, 5)
-    gprintf("Max Stack Update: " .. maxTime, drawX, drawY)
+    GraphicsUtil.printf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("Seed " .. self.seed, drawX, drawY)
+    GraphicsUtil.printf("Seed " .. self.seed, drawX, drawY)
 
     if self.gameOverClock and self.gameOverClock > 0 then
       drawY = drawY + padding
-      gprintf("gameOverClock " .. self.gameOverClock, drawX, drawY)
+      GraphicsUtil.printf("gameOverClock " .. self.gameOverClock, drawX, drawY)
     end
   end
 
@@ -166,7 +168,7 @@ function Match:render()
       -- Draw VS HUD
       if self.stackInteraction == GameModes.StackInteractions.VERSUS then
         if not config.debug_mode then -- this is printed in the same space as the debug details
-          gprint(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
+          GraphicsUtil.print(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
         end
 
         self:drawMatchType()
@@ -190,8 +192,14 @@ function Match:draw_pause()
   if not self.renderDuringPause then
     local image = themes[config.theme].images.pause
     local scale = consts.CANVAS_WIDTH / math.max(image:getWidth(), image:getHeight()) -- keep image ratio
-    menu_drawf(image, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    -- adjust coordinates to be centered
+    local x = consts.CANVAS_WIDTH / 2
+    local y = consts.CANVAS_HEIGHT / 2
+    local xOffset = math.floor(image:getWidth() * 0.5)
+    local yOffset = math.floor(image:getHeight() * 0.5)
+
+    GraphicsUtil.draw(image, x, y, 0, scale, scale, xOffset, yOffset)
   end
-  gprintf(loc("pause"), 0, 330, consts.CANVAS_WIDTH, "center", nil, 1, 10)
-  gprintf(loc("pl_pause_help"), 0, 360, consts.CANVAS_WIDTH, "center", nil, 1)
+  GraphicsUtil.printf(loc("pause"), 0, 330, consts.CANVAS_WIDTH, "center", nil, 1, 10)
+  GraphicsUtil.printf(loc("pl_pause_help"), 0, 360, consts.CANVAS_WIDTH, "center", nil, 1)
 end

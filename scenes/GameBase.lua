@@ -9,7 +9,6 @@ local save = require("save")
 local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
-local Replay = require("replay")
 local Signal = require("helpers.signal")
 
 --@module GameBase
@@ -127,8 +126,8 @@ end
 function GameBase:runGameOver()
   local font = GraphicsUtil.getGlobalFont()
 
-  gprint(self.text, (consts.CANVAS_WIDTH - font:getWidth(self.text)) / 2, 10)
-  gprint(loc("continue_button"), (consts.CANVAS_WIDTH - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
+  GraphicsUtil.print(self.text, (consts.CANVAS_WIDTH - font:getWidth(self.text)) / 2, 10)
+  GraphicsUtil.print(loc("continue_button"), (consts.CANVAS_WIDTH - font:getWidth(loc("continue_button"))) / 2, 10 + 30)
   -- wait()
   local displayTime = love.timer.getTime() - gameOverStartTime
   if not self.keepMusic then
@@ -230,16 +229,14 @@ function GameBase:drawBackground()
   end
   local backgroundOverlay = themes[config.theme].images.bg_overlay
   if backgroundOverlay then
-    local scale = consts.CANVAS_WIDTH / math.max(backgroundOverlay:getWidth(), backgroundOverlay:getHeight()) -- keep image ratio
-    menu_drawf(backgroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    backgroundOverlay:draw()
   end
 end
 
 function GameBase:drawForegroundOverlay()
   local foregroundOverlay = themes[config.theme].images.fg_overlay
   if foregroundOverlay then
-    local scale = consts.CANVAS_WIDTH / math.max(foregroundOverlay:getWidth(), foregroundOverlay:getHeight()) -- keep image ratio
-    menu_drawf(foregroundOverlay, consts.CANVAS_WIDTH / 2, consts.CANVAS_HEIGHT / 2, "center", "center", 0, scale, scale)
+    foregroundOverlay:draw()
   end
 end
 

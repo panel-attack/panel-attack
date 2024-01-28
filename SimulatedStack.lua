@@ -1,10 +1,9 @@
 local logger = require("logger")
 local Health = require("Health")
-local graphicsUtil = require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local StackBase = require("StackBase")
 local class = require("class")
 local consts = require("consts")
-local GFX_SCALE = consts.GFX_SCALE
 require("queue")
 
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
@@ -17,8 +16,6 @@ SimulatedStack = class(function(self, arguments)
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getHeight(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getHeight())
-  self.speedQuads = {}
-  self.stageQuads = {}
   self.difficultyQuads = {}
   -- somehow bad things happen if this is called in the base class constructor instead
   self:moveForRenderIndex(self.which)
@@ -110,11 +107,11 @@ function SimulatedStack:drawDebug()
     local drawY = 10
     local padding = 14
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
-    gprintf("Clock " .. self.clock, drawX, drawY)
+    GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 1000, 100, 0, 0, 0, 0.5)
+    GraphicsUtil.printf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("P" .. self.which .. " Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+    GraphicsUtil.printf("P" .. self.which .. " Ended?: " .. tostring(self:game_ended()), drawX, drawY)
   end
 end
 
@@ -139,10 +136,10 @@ function SimulatedStack:renderStackHeight()
   local xScale = (self:stackCanvasWidth() - 8) / themes[config.theme].images.IMG_multibar_shake_bar:getWidth()
   local yScale = (self.canvas:getHeight() - 4) / themes[config.theme].images.IMG_multibar_shake_bar:getHeight() * percentage
 
-  love.graphics.setColor(1, 1, 1, 0.6)
-  love.graphics.draw(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale,
+  GraphicsUtil.setColor(1, 1, 1, 0.6)
+  GraphicsUtil.drawQuad(themes[config.theme].images.IMG_multibar_shake_bar, self.stackHeightQuad, 4, self.canvas:getHeight(), 0, xScale,
                      -yScale)
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
@@ -247,7 +244,7 @@ function SimulatedStack:drawSpeed()
   if self.healthEngine then
     self:drawLabel(themes[config.theme].images["IMG_speed_" .. self.which .. "P"], themes[config.theme].speedLabel_Pos,
                    themes[config.theme].speedLabel_Scale)
-    self:drawNumber(self.healthEngine.currentRiseSpeed, self.speedQuads, themes[config.theme].speed_Pos, themes[config.theme].speed_Scale)
+    self:drawNumber(self.healthEngine.currentRiseSpeed, themes[config.theme].speed_Pos, themes[config.theme].speed_Scale)
   end
 end
 
@@ -256,7 +253,7 @@ function SimulatedStack:drawRating()
   if self.player.settings.difficulty then
     self:drawLabel(themes[config.theme].images["IMG_rating_" .. self.which .. "P"], themes[config.theme].ratingLabel_Pos,
                    themes[config.theme].ratingLabel_Scale, true)
-    self:drawNumber(self.player.settings.difficulty, self.difficultyQuads, themes[config.theme].rating_Pos,
+    self:drawNumber(self.player.settings.difficulty, themes[config.theme].rating_Pos,
                     themes[config.theme].rating_Scale)
   end
 end
@@ -273,21 +270,11 @@ function SimulatedStack:drawMultibar()
 end
 
 -- in the long run we should have all quads organized in a Stack.quads table
--- with access then being self.quads.speed to access the current self.speedQuads
 -- that way deinit could be implemented generically in StackBase
 function SimulatedStack:deinit()
   self.healthQuad:release()
   self.stackHeightQuad:release()
-  for _, quad in ipairs(self.speedQuads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.wins_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
   for _, quad in ipairs(self.difficultyQuads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.stageQuads) do
     GraphicsUtil:releaseQuad(quad)
   end
 end

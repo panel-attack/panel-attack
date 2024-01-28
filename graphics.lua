@@ -1,5 +1,5 @@
 require("util")
-local graphicsUtil = require("graphics_util")
+local GraphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 local consts = require("consts")
 
@@ -104,7 +104,7 @@ function Stack.draw_cards(self)
         for i = 1, 6, 1 do
           local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
           local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
-          qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
+          GraphicsUtil.drawQuadGfxScaled(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
         end
       end
       -- draw card
@@ -118,9 +118,9 @@ function Stack.draw_cards(self)
       if cardImage then
         local icon_width, icon_height = cardImage:getDimensions()
         local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
-        set_color(1, 1, 1, fade)
-        draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
-        set_color(1, 1, 1, 1)
+        GraphicsUtil.setColor(1, 1, 1, fade)
+        GraphicsUtil.drawGfxScaled(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.setColor(1, 1, 1, 1)
       end
     end
   end
@@ -225,39 +225,39 @@ function Stack.draw_popfxs(self)
 
           -- four corner
           if big_position ~= 1 then
-            qdraw(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           if big_position ~= 2 then
-            qdraw(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           if big_position ~= 3 then
-            qdraw(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           if big_position ~= 4 then
-            qdraw(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
           -- top and bottom
           if popfx.popsize == "big" or popfx.popsize == "giant" then
             if big_position ~= 5 then
-              qdraw(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
             if big_position ~= 6 then
-              qdraw(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
           end
           -- left and right
           if popfx.popsize == "giant" then
             if big_position ~= 7 then
-              qdraw(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
             if big_position ~= 8 then
-              qdraw(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
             end
           end
         --big particle
         --[[
           if popsize ~= "small" then
-            qdraw(particle_atlas, popfx.bigParticle, 
+            GraphicsUtil.drawQuadGfxScaled(particle_atlas, popfx.bigParticle, 
             positions[big_position].x, positions[big_position].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2)
           end
         ]]
@@ -269,7 +269,7 @@ function Stack.draw_popfxs(self)
         fadeFrame = POPFX_FADE_ANIMATION[popfx.frame]
         if (fadeFrame ~= nil) then
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          qdraw(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          GraphicsUtil.drawQuadGfxScaled(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
@@ -282,14 +282,14 @@ function Stack:drawDebug()
     local y = self.frameOriginY + 160
 
     if self.danger then
-      gprint("danger", x, y + 135)
+      GraphicsUtil.print("danger", x, y + 135)
     end
     if self.danger_music then
-      gprint("danger music", x, y + 150)
+      GraphicsUtil.print("danger music", x, y + 150)
     end
 
-    gprint(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
-    gprint(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
+    GraphicsUtil.print(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
+    GraphicsUtil.print(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
 
     if self.input_state or self.taunt_up or self.taunt_down then
       local iraise, iswap, iup, idown, ileft, iright
@@ -326,56 +326,56 @@ function Stack:drawDebug()
       if self.inputMethod == "touch" then
         inputs_to_print = inputs_to_print .. self.touchInputController:debugString()
       end
-      gprint(inputs_to_print, x, y + 195)
+      GraphicsUtil.print(inputs_to_print, x, y + 195)
     end
 
     local drawX = self.frameOriginX + self:stackCanvasWidth() / 2
     local drawY = 10
     local padding = 14
 
-    grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 1000 / GFX_SCALE, 100 / GFX_SCALE, 0, 0, 0, 0.5)
-    gprintf("Clock " .. self.clock, drawX, drawY)
+    GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 1000, 100, 0, 0, 0, 0.5)
+    GraphicsUtil.printf("Clock " .. self.clock, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("Confirmed " .. #self.confirmedInput, drawX, drawY)
+    GraphicsUtil.printf("Confirmed " .. #self.confirmedInput, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("input_buffer " .. #self.input_buffer, drawX, drawY)
+    GraphicsUtil.printf("input_buffer " .. #self.input_buffer, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("rollbackCount " .. self.rollbackCount, drawX, drawY)
+    GraphicsUtil.printf("rollbackCount " .. self.rollbackCount, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("game_over_clock " .. (self.game_over_clock or 0), drawX, drawY)
+    GraphicsUtil.printf("game_over_clock " .. (self.game_over_clock or 0), drawX, drawY)
 
     drawY = drawY + padding
-      gprintf("has chain panels " .. tostring(self:hasChainingPanels()), drawX, drawY)
+      GraphicsUtil.printf("has chain panels " .. tostring(self:hasChainingPanels()), drawX, drawY)
 
     drawY = drawY + padding
-      gprintf("has active panels " .. tostring(self:hasActivePanels()), drawX, drawY)
+      GraphicsUtil.printf("has active panels " .. tostring(self:hasActivePanels()), drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("riselock " .. tostring(self.rise_lock), drawX, drawY)
+    GraphicsUtil.printf("riselock " .. tostring(self.rise_lock), drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P" .. stack.which .." Panels: " .. stack.panel_buffer, drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." Panels: " .. stack.panel_buffer, drawX, drawY)
 
     drawY = drawY + padding
-    gprintf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
+    GraphicsUtil.printf("P" .. self.which .." Ended?: " .. tostring(self:game_ended()), drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- gprintf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
 
     -- if stack.telegraph then
     --   drawY = drawY + padding
-    --   gprintf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
+    --   GraphicsUtil.printf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
 
     --   for combo_garbage_width=3,6 do
     --     drawY = drawY + padding
-    --     gprintf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
+    --     GraphicsUtil.printf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
     --   end
     -- end
   end
@@ -397,15 +397,15 @@ function Stack:drawDebugPanels(shakeOffset)
         -- Require hovering over a stack to show details
         if mouseX >= self.panelOriginX * GFX_SCALE and mouseX <= (self.panelOriginX + self.width * 16) * GFX_SCALE then
           if not (panel.color == 0 and panel.state == "normal") then
-            gprint(panel.state, draw_x, draw_y)
+            GraphicsUtil.print(panel.state, draw_x, draw_y)
             if panel.matchAnyway then
-              gprint(tostring(panel.matchAnyway), draw_x, draw_y + 10)
+              GraphicsUtil.print(tostring(panel.matchAnyway), draw_x, draw_y + 10)
               if panel.debug_tag then
-                gprint(tostring(panel.debug_tag), draw_x, draw_y + 20)
+                GraphicsUtil.print(tostring(panel.debug_tag), draw_x, draw_y + 20)
               end
             end
             if panel.chaining then
-              gprint("chaining", draw_x, draw_y + 30)
+              GraphicsUtil.print("chaining", draw_x, draw_y + 30)
             end
           end
         end
@@ -419,8 +419,8 @@ function Stack:drawDebugPanels(shakeOffset)
           local drawX = 30
           local drawY = 10
 
-          grectangle_color("fill", (drawX - 5) / GFX_SCALE, (drawY - 5) / GFX_SCALE, 100/GFX_SCALE, 100/GFX_SCALE, 0, 0, 0, 0.5)
-          gprintf(str, drawX, drawY)
+          GraphicsUtil.drawRectangle("fill", drawX - 5, drawY - 5, 100, 100, 0, 0, 0, 0.5)
+          GraphicsUtil.printf(str, drawX, drawY)
         end
       end
     end
@@ -482,7 +482,7 @@ function Stack:drawRating()
 
   if rating then
     self:drawLabel(self.theme.images["IMG_rating_" .. self.which .. "P"], self.theme.ratingLabel_Pos, self.theme.ratingLabel_Scale, true)
-    self:drawNumber(rating, self.rating_quads, self.theme.rating_Pos, self.theme.rating_Scale, true)
+    self:drawNumber(rating, self.theme.rating_Pos, self.theme.rating_Scale, true)
   end
 end
 
@@ -511,9 +511,9 @@ function Stack.render_cursor(self)
   end
   if renderCursor then
     local xPosition = (self.cur_col - 1) * panelWidth
-    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    GraphicsUtil.drawQuadGfxScaled(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     if self.inputMethod == "touch" then
-      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+      GraphicsUtil.drawQuadGfxScaled(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     end
   end
 end
@@ -545,7 +545,7 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   self.healthQuad:setViewport(0, self.theme.images.IMG_healthbar:getHeight() - healthbar, self.theme.images.IMG_healthbar:getWidth(), healthbar)
   local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / GFX_SCALE
   local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / GFX_SCALE
-  qdraw(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
+  GraphicsUtil.drawQuadGfxScaled(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
 
   -- Prestop bar
   if self.pre_stop_time == 0 or self.maxPrestop == nil then
@@ -586,40 +586,40 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   self.multi_prestopQuad:setViewport(0, self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, self.theme.images.IMG_multibar_prestop_bar:getWidth(), multi_prestop_bar)
 
   --Shake
-  x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
-  y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false) / GFX_SCALE
+  x = self:elementOriginXWithOffset(self.theme.multibar_Pos, false)
+  y = self:elementOriginYWithOffset(self.theme.multibar_Pos, false)
   if self.theme.images.IMG_multibar_shake_bar then
-    qdraw(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, (y + ((self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(self.theme.images.IMG_multibar_shake_bar, self.multi_shakeQuad, x, y + self.theme.images.IMG_multibar_shake_bar:getHeight() - multi_shake_bar, 0, self.theme.multibar_Scale, self.theme.multibar_Scale, 0, 0, self.multiplication)
   end
   --Stop
   if self.theme.images.IMG_multibar_stop_bar then
-    qdraw(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, ((y - (multi_shake_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(self.theme.images.IMG_multibar_stop_bar, self.multi_stopQuad, x, y - multi_shake_bar + self.theme.images.IMG_multibar_stop_bar:getHeight() - multi_stop_bar, 0, self.theme.multibar_Scale, self.theme.multibar_Scale, 0, 0, self.multiplication)
   end
   -- Prestop
   if self.theme.images.IMG_multibar_prestop_bar then
-    qdraw(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, ((y - (multi_shake_bar / GFX_SCALE + multi_stop_bar / GFX_SCALE)) + ((self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar) / GFX_SCALE)), 0, self.theme.multibar_Scale / GFX_SCALE, self.theme.multibar_Scale / GFX_SCALE, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(self.theme.images.IMG_multibar_prestop_bar, self.multi_prestopQuad, x, y - multi_shake_bar + multi_stop_bar + self.theme.images.IMG_multibar_prestop_bar:getHeight() - multi_prestop_bar, 0, self.theme.multibar_Scale, self.theme.multibar_Scale, 0, 0, self.multiplication)
   end
 end
 
 function Stack:drawScore()
   self:drawLabel(self.theme.images["IMG_score_" .. self.which .. "P"], self.theme.scoreLabel_Pos, self.theme.scoreLabel_Scale)
-  self:drawNumber(self.score, self.score_quads, self.theme.score_Pos, self.theme.score_Scale)
+  self:drawNumber(self.score, self.theme.score_Pos, self.theme.score_Scale)
 end
 
 function Stack:drawSpeed()
   self:drawLabel(self.theme.images["IMG_speed_" .. self.which .. "P"], self.theme.speedLabel_Pos, self.theme.speedLabel_Scale)
-  self:drawNumber(self.speed, self.speed_quads, self.theme.speed_Pos, self.theme.speed_Scale)
+  self:drawNumber(self.speed, self.theme.speed_Pos, self.theme.speed_Scale)
 end
 
 function Stack:drawLevel()
   if self.level then
     self:drawLabel(self.theme.images["IMG_level_" .. self.which .. "P"], self.theme.levelLabel_Pos, self.theme.levelLabel_Scale)
 
-    local x = self:elementOriginXWithOffset(self.theme.level_Pos, false) / GFX_SCALE
-    local y = self:elementOriginYWithOffset(self.theme.level_Pos, false) / GFX_SCALE
+    local x = self:elementOriginXWithOffset(self.theme.level_Pos, false)
+    local y = self:elementOriginYWithOffset(self.theme.level_Pos, false)
     local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
     self.level_quad:setViewport(tonumber(self.level - 1) * levelAtlas.charWidth, 0, levelAtlas.charWidth, levelAtlas.charHeight, levelAtlas.image:getDimensions())
-    qdraw(levelAtlas.image, self.level_quad, x, y, 0, (28 / levelAtlas.charWidth * self.theme.level_Scale) / GFX_SCALE, (26 / levelAtlas.charHeight * self.theme.level_Scale / GFX_SCALE), 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(levelAtlas.image, self.level_quad, x, y, 0, 28 / levelAtlas.charWidth * self.theme.level_Scale, 26 / levelAtlas.charHeight * self.theme.level_Scale, 0, 0, self.multiplication)
   end
 end
 
@@ -649,19 +649,19 @@ function Stack:drawAnalyticData()
   local icon_height
 
   -- Background
-  grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
+  GraphicsUtil.drawRectangle("fill", x - backgroundPadding , y - backgroundPadding, width, height, 0, 0, 0, 0.5)
 
   -- Panels cleared
   icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
-  draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-  gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.draw(panels[self.panels_dir].images.classic[1][6], x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+  GraphicsUtil.printf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
   -- Garbage sent
   icon_width, icon_height = characters[self.character].images.face:getDimensions()
-  draw(characters[self.character].images.face, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-  gprintf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.draw(characters[self.character].images.face, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+  GraphicsUtil.printf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -672,24 +672,24 @@ function Stack:drawAnalyticData()
     end
   end
   icon_width, icon_height = self.theme.images.IMG_gpm:getDimensions()
-  draw(self.theme.images.IMG_gpm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-  gprintf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
+  GraphicsUtil.draw(self.theme.images.IMG_gpm, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+  GraphicsUtil.printf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
 
   y = y + nextIconIncrement
 
   -- Moves
   icon_width, icon_height = self.theme.images.IMG_cursorCount:getDimensions()
-  draw(self.theme.images.IMG_cursorCount, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-  gprintf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.draw(self.theme.images.IMG_cursorCount, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+  GraphicsUtil.printf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
   -- Swaps
   if self.theme.images.IMG_swap then
     icon_width, icon_height = self.theme.images.IMG_swap:getDimensions()
-    draw(self.theme.images.IMG_swap, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    GraphicsUtil.draw(self.theme.images.IMG_swap, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
   end
-  gprintf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -702,9 +702,9 @@ function Stack:drawAnalyticData()
   end
   if self.theme.images.IMG_apm then
     icon_width, icon_height = self.theme.images.IMG_apm:getDimensions()
-    draw(self.theme.images.IMG_apm, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    GraphicsUtil.draw(self.theme.images.IMG_apm, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
   end
-  gprintf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
 
@@ -737,8 +737,8 @@ function Stack:drawAnalyticData()
       local cardImage = self.theme:chainImage(i)
       if cardImage then
         icon_width, icon_height = cardImage:getDimensions()
-        draw(cardImage, x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-        gprintf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        GraphicsUtil.draw(cardImage, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+        GraphicsUtil.printf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
         y = y + nextIconIncrement
       end
     end
@@ -768,8 +768,8 @@ function Stack:drawAnalyticData()
       local cardImage = self.theme:comboImage(i)
       if cardImage then
         icon_width, icon_height = cardImage:getDimensions()
-        draw(cardImage, xCombo / GFX_SCALE, yCombo / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
-        gprintf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        GraphicsUtil.draw(cardImage, xCombo, yCombo, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+        GraphicsUtil.printf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
         yCombo = yCombo + nextIconIncrement
       end
     end
@@ -784,7 +784,7 @@ function Stack:drawMoveCount()
     if self.puzzle.puzzleType == "moves" then
       moveNumber = self.puzzle.remaining_moves
     end
-    self:drawNumber(moveNumber, self.move_quads, self.theme.move_Pos, self.theme.move_Scale, true)
+    self:drawNumber(moveNumber, self.theme.move_Pos, self.theme.move_Scale, true)
   end
 end
 
@@ -809,10 +809,10 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
             if panel.metal then
-              draw(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-              draw(shockGarbageImages.right, draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+              GraphicsUtil.drawGfxScaled(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+              GraphicsUtil.drawGfxScaled(shockGarbageImages.right, draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
               for i = 1, 2 * (panel.width - 1) do
-                draw(shockGarbageImages.mid, draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
+                GraphicsUtil.drawGfxScaled(shockGarbageImages.mid, draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
               end
             else
               local height, width = panel.height, panel.width
@@ -821,7 +821,7 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
               local filler_w, filler_h = imgs.filler1:getDimensions()
               for i = 0, height - 1 do
                 for j = 1, width - 1 do
-                  draw((use_1 or height < 3) and imgs.filler1 or imgs.filler2, draw_x + 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
+                  GraphicsUtil.drawGfxScaled((use_1 or height < 3) and imgs.filler1 or imgs.filler2, draw_x + 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
                   use_1 = not use_1
                 end
               end
@@ -833,22 +833,22 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
                   face = imgs.face
                 end
                 local face_w, face_h = face:getDimensions()
-                draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
+                GraphicsUtil.drawGfxScaled(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
               else
                 local face_w, face_h = imgs.doubleface:getDimensions()
-                draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
+                GraphicsUtil.drawGfxScaled(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
               end
               local corner_w, corner_h = imgs.topleft:getDimensions()
               local lr_w, lr_h = imgs.left:getDimensions()
               local topbottom_w, topbottom_h = imgs.top:getDimensions()
-              draw(imgs.left, draw_x, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-              draw(imgs.right, draw_x + 16 * (width - 1) + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-              draw(imgs.top, draw_x, top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-              draw(imgs.bot, draw_x, draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-              draw(imgs.topleft, draw_x, top_y, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.topright, draw_x + 16 * width - 8, top_y, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.botleft, draw_x, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+              GraphicsUtil.drawGfxScaled(imgs.left, draw_x, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+              GraphicsUtil.drawGfxScaled(imgs.right, draw_x + 16 * (width - 1) + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+              GraphicsUtil.drawGfxScaled(imgs.top, draw_x, top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+              GraphicsUtil.drawGfxScaled(imgs.bot, draw_x, draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+              GraphicsUtil.drawGfxScaled(imgs.topleft, draw_x, top_y, 0, 8 / corner_w, 3 / corner_h)
+              GraphicsUtil.drawGfxScaled(imgs.topright, draw_x + 16 * width - 8, top_y, 0, 8 / corner_w, 3 / corner_h)
+              GraphicsUtil.drawGfxScaled(imgs.botleft, draw_x, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+              GraphicsUtil.drawGfxScaled(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
             end
           end
           if panel.state == "matched" then
@@ -856,27 +856,27 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
             if flash_time >= self.levelData.frameConstants.FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
-                  draw(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                  draw(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+                  GraphicsUtil.drawGfxScaled(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+                  GraphicsUtil.drawGfxScaled(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
                 else
                   local popped_w, popped_h = imgs.pop:getDimensions()
-                  draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+                  GraphicsUtil.drawGfxScaled(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
                 end
               elseif panel.y_offset == -1 then
                 local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
-                draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
+                GraphicsUtil.drawGfxScaled(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
               end
             elseif flash_time % 2 == 1 then
               if panel.metal then
-                draw(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                draw(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+                GraphicsUtil.drawGfxScaled(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+                GraphicsUtil.drawGfxScaled(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
               else
                 local popped_w, popped_h = imgs.pop:getDimensions()
-                draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+                GraphicsUtil.drawGfxScaled(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
               end
             else
               local flashed_w, flashed_h = imgs.flash:getDimensions()
-              draw(imgs.flash, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
+              GraphicsUtil.drawGfxScaled(imgs.flash, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
             end
           end
         else
@@ -911,7 +911,7 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
             draw_frame = 1
           end
           local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
-          draw(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+          GraphicsUtil.drawGfxScaled(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
         end
       end
     end

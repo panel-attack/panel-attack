@@ -1,5 +1,6 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
+local GraphicsUtil = require("graphics_util")
 
 local GridElement = class(function(gridElement, options)
   if options.content then
@@ -16,7 +17,7 @@ local GridElement = class(function(gridElement, options)
 end, UiElement)
 
 function GridElement:drawBorders()
-  grectangle("line", self.x, self.y, self.width, self.height)
+  GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
 end
 
 function GridElement:drawSelf()

@@ -84,7 +84,7 @@ end
 
 function Carousel:drawSelf()
   if DEBUG_ENABLED then
-    grectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
   end
 end
 

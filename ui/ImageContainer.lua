@@ -1,5 +1,6 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
+local GraphicsUtil = require("graphics_util")
 
 local ImageContainer = class(function(self, options)
   self.drawBorders = options.drawBorders or false
@@ -22,7 +23,9 @@ function ImageContainer:setImage(image, width, height, scale)
   
     if width and height then
       -- scale is getting capped to what width and height actually give us
-      self.scale = math.min(self.width / scaledImageWidth, self.height / scaledImageHeight)
+      self.scale = math.min(width / scaledImageWidth, height / scaledImageHeight)
+      self.width = width * scale
+      self.height = height * scale
     else
       -- there are no size limits, set the size based on scale
       self.width = scaledImageWidth
@@ -39,13 +42,13 @@ function ImageContainer:onResize()
 end
 
 function ImageContainer:drawSelf()
-  love.graphics.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
+  GraphicsUtil.draw(self.image, self.x, self.y, 0, self.scale, self.scale)
 
   if self.drawBorders then
     -- border is just drawn on top, not around
-    love.graphics.setColor(self.outlineColor)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(self.outlineColor)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end
 

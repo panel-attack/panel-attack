@@ -3,6 +3,7 @@ local class = require("class")
 local directsFocus = require("ui.FocusDirector")
 local input = require("inputManager")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- create a new cursor that can navigate on the specified grid
 -- grid: the target grid that is navigated on
@@ -125,8 +126,8 @@ function GridCursor:drawSelf()
   local element = self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
   local x, y = element:getScreenPos()
   if drawThisFrame then
-    menu_drawq(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
-    menu_drawq(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+    GraphicsUtil.drawQuad(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
+    GraphicsUtil.drawQuad(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
   end
 end
 

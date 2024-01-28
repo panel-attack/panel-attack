@@ -2,6 +2,7 @@ require("graphics_util")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
+local GraphicsUtil = require("graphics_util")
 
 -- The class representing the panel image data
 -- Not to be confused with "Panel" which is one individual panel in the game stack model

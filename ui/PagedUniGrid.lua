@@ -4,6 +4,7 @@ local class = require("class")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local Signal = require("helpers.signal")
+local GraphicsUtil = require("graphics_util")
 
 local function addNewPage(pagedUniGrid)
   local grid = Grid({
@@ -104,9 +105,9 @@ end
 
 function PagedUniGrid:drawSelf()
   if DEBUG_ENABLED then
-    love.graphics.setColor(1, 0, 0, 1)
-    love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-    love.graphics.setColor(1, 1, 1, 1)
+    GraphicsUtil.setColor(1, 0, 0, 1)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
+    GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end
 

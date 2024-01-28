@@ -5,6 +5,7 @@ local class = require("class")
 local UIElement = require("ui.UIElement")
 local inputFieldManager = require("ui.inputFieldManager")
 local touchable = require("ui.Touchable")
+local GraphicsUtil = require("graphics_util")
 
 --@module InputField
 local InputField = class(
@@ -137,26 +138,26 @@ end
 local valueColor = {1, 1, 1, 1}
 local placeholderColor = {.5, .5, .5, 1}
 function InputField:drawSelf()
-  love.graphics.setColor(self.outlineColor)
-  love.graphics.rectangle("line", self.x, self.y, self.width, self.height)
-  love.graphics.setColor(self.backgroundColor)
-  love.graphics.rectangle("fill", self.x, self.y, self.width, self.height)
+  GraphicsUtil.setColor(self.outlineColor)
+  GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
+  GraphicsUtil.setColor(self.backgroundColor)
+  GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height)
 
   local text = self.value ~= "" and self.text or self.placeholderText
   local textColor = self.value ~= "" and valueColor or placeholderColor
   local textHeight = text:getHeight()
 
-  love.graphics.setColor(textColor)
-  love.graphics.draw(text, self.x + textOffset, self.y + (self.height - textHeight) / 2, 0, 1, 1)
+  GraphicsUtil.setColor(textColor)
+  GraphicsUtil.draw(text, self.x + textOffset, self.y + (self.height - textHeight) / 2, 0, 1, 1)
 
   if self.hasFocus then
     local cursorFlashPeriod = .5
     if (math.floor(love.timer.getTime() / cursorFlashPeriod)) % 2 == 0 then
-      love.graphics.setColor(1, 1, 1, 1)
-      love.graphics.draw(textCursor, self:getCursorPos(), self.y + (self.height - textHeight) / 2, 0, 1, 1)
+      GraphicsUtil.setColor(1, 1, 1, 1)
+      GraphicsUtil.draw(textCursor, self:getCursorPos(), self.y + (self.height - textHeight) / 2, 0, 1, 1)
     end
   end
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 return InputField

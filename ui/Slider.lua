@@ -2,6 +2,7 @@ local class = require("class")
 local UIElement = require("ui.UIElement")
 local util = require("util")
 local touchable = require("ui.Touchable")
+local GraphicsUtil = require("graphics_util")
 
 local handleRadius = 7.5
 
@@ -63,21 +64,21 @@ function Slider:drawSelf()
   local dark_gray = .3
   local light_gray = .5
   local alpha = .7
-  love.graphics.setColor(light_gray, light_gray, light_gray, alpha)
-  love.graphics.rectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
+  GraphicsUtil.setColor(light_gray, light_gray, light_gray, alpha)
+  GraphicsUtil.drawRectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
 
-  love.graphics.setColor(dark_gray, dark_gray, dark_gray, .9)
+  GraphicsUtil.setColor(dark_gray, dark_gray, dark_gray, .9)
   love.graphics.circle("fill", self.x + (self.value - self.min + .5) * self.tickLength, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)
-  love.graphics.setColor(1, 1, 1, 1)
+  GraphicsUtil.setColor(1, 1, 1, 1)
   
   local textWidth, textHeight = self.minText:getDimensions()
-  love.graphics.draw(self.minText, self.x - textWidth * .3, self.y + textOffset, 0, 1, 1, 0, 0)
+  GraphicsUtil.draw(self.minText, self.x - textWidth * .3, self.y + textOffset, 0, 1, 1, 0, 0)
   
   textWidth, textHeight = self.maxText:getDimensions()
-  love.graphics.draw(self.maxText, self.x + (self.max - self.min + 1) * self.tickLength - textWidth, self.y + textOffset, 0, 1, 1, 0, 0)
+  GraphicsUtil.draw(self.maxText, self.x + (self.max - self.min + 1) * self.tickLength - textWidth, self.y + textOffset, 0, 1, 1, 0, 0)
   
   textWidth, textHeight = self.valueText:getDimensions()
-  love.graphics.draw(self.valueText, self.x + ((self.max - self.min + 1) / 2.0) * self.tickLength - textWidth / 2, self.y + textOffset, 0, 1, 1, 0, 0)
+  GraphicsUtil.draw(self.valueText, self.x + ((self.max - self.min + 1) / 2.0) * self.tickLength - textWidth / 2, self.y + textOffset, 0, 1, 1, 0, 0)
 end
 
 return Slider

@@ -179,14 +179,10 @@ function SimpleGameSetupMenu:draw()
     local xPosition2 = xPosition1 + 150
     local yPosition = menu_y + 50
 
-    local lastScoreLabelQuads = {}
-    local lastScoreQuads = {}
-    local recordLabelQuads = {}
-    local recordQuads = {}
-    draw_pixel_font("last score", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition, 0.5, 1.0, nil, nil, lastScoreLabelQuads)
-    draw_pixel_font(lastScore, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil, lastScoreQuads)
-    draw_pixel_font("record", themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition, 0.5, 1.0, nil, nil, recordLabelQuads)
-    draw_pixel_font(record, themes[config.theme].images.IMG_pixelFont_blue_atlas, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil, recordQuads)
+    GraphicsUtil.drawPixelFont("last score", themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont(lastScore, themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont("record", themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition, 0.5, 1.0, nil, nil)
+    GraphicsUtil.drawPixelFont(record, themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil)
 
     self.classicMenu:draw()
   else

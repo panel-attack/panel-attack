@@ -130,7 +130,7 @@ function PuzzleMenu:load(sceneParams)
 end
 
 function PuzzleMenu:update()
-  gprint(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
+  GraphicsUtil.print(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
   
   self.menu:update()
 end

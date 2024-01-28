@@ -1,4 +1,5 @@
 local class = require("class")
+local GraphicsUtil = require("graphics_util")
 
 local uniqueId = 0
 

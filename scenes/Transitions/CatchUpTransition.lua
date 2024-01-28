@@ -1,5 +1,6 @@
 local class = require("class")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- a transition that displays an intermediary loading screen while the match of the newScene is catching up
 -- once the match caught up, the transition ends
@@ -30,10 +31,10 @@ function CatchUpTransition:update(dt)
 end
 
 function CatchUpTransition:draw()
-  love.graphics.setColor(1, 1, 1, 1)
-  love.graphics.rectangle("line", consts.CANVAS_WIDTH / 4 - 5, consts.CANVAS_HEIGHT / 2 - 25, consts.CANVAS_WIDTH / 2 + 10, 50)
-  love.graphics.rectangle("fill", consts.CANVAS_WIDTH / 4, consts.CANVAS_HEIGHT / 2 - 20, consts.CANVAS_WIDTH / 2 * self.progress, 40)
-  gprintf("Catching up: " .. self.match.P1.clock .. " out of " .. #self.match.P1.confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
+  GraphicsUtil.setColor(1, 1, 1, 1)
+  GraphicsUtil.drawRectangle("line", consts.CANVAS_WIDTH / 4 - 5, consts.CANVAS_HEIGHT / 2 - 25, consts.CANVAS_WIDTH / 2 + 10, 50)
+  GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 4, consts.CANVAS_HEIGHT / 2 - 20, consts.CANVAS_WIDTH / 2 * self.progress, 40)
+  GraphicsUtil.printf("Catching up: " .. self.match.P1.clock .. " out of " .. #self.match.P1.confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
 end
 
 return CatchUpTransition
