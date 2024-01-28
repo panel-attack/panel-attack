@@ -58,7 +58,8 @@ Match =
     self.renderDuringPause = false
     self.clock = 0
 
-    Signal.addSignal(self, "onMatchEnded")
+    Signal.turnIntoEmitter(self)
+    self:createSignal("matchEnded")
   end
 )
 
@@ -830,7 +831,7 @@ function Match:handleMatchEnd()
   end
 
   -- execute callbacks
-  self:onMatchEnded()
+  self:emitSignal("matchEnded", self)
 end
 
 function Match:checkAborted()

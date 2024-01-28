@@ -19,15 +19,16 @@ local MatchParticipant = class(function(self)
   }
   self.human = false
 
-  Signal.addSignal(self, "winsChanged")
-  Signal.addSignal(self, "winrateChanged")
-  Signal.addSignal(self, "expectedWinrateChanged")
-  Signal.addSignal(self, "panelIdChanged")
-  Signal.addSignal(self, "stageIdChanged")
-  Signal.addSignal(self, "selectedStageIdChanged")
-  Signal.addSignal(self, "characterIdChanged")
-  Signal.addSignal(self, "selectedCharacterIdChanged")
-  Signal.addSignal(self, "wantsReadyChanged")
+  Signal.turnIntoEmitter(self)
+  self:createSignal("winsChanged")
+  self:createSignal("winrateChanged")
+  self:createSignal("expectedWinrateChanged")
+  self:createSignal("panelIdChanged")
+  self:createSignal("stageIdChanged")
+  self:createSignal("selectedStageIdChanged")
+  self:createSignal("characterIdChanged")
+  self:createSignal("selectedCharacterIdChanged")
+  self:createSignal("wantsReadyChanged")
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -37,22 +38,22 @@ end
 
 function MatchParticipant:setWinCount(count)
   self.wins = count
-  self.winsChanged(self:getWinCountForDisplay())
+  self:emitSignal("winsChanged", self:getWinCountForDisplay())
 end
 
 function MatchParticipant:incrementWinCount()
   self.wins = self.wins + 1
-  self.winsChanged(self:getWinCountForDisplay())
+  self:emitSignal("winsChanged", self:getWinCountForDisplay())
 end
 
 function MatchParticipant:setWinrate(winrate)
   self.winrate = winrate
-  self.winrateChanged(winrate)
+  self:emitSignal("winrateChanged", winrate)
 end
 
 function MatchParticipant:setExpectedWinrate(expectedWinrate)
   self.expectedWinrate = expectedWinrate
-  self.expectedWinrateChanged(expectedWinrate)
+  self:emitSignal("expectedWinrateChanged", expectedWinrate)
 end
 
 -- returns a table with some key properties on functions to be run as part of a match
@@ -63,7 +64,7 @@ end
 function MatchParticipant:setStage(stageId)
   if stageId ~= self.settings.selectedStageId then
     self.settings.selectedStageId = StageLoader.resolveStageSelection(stageId)
-    self.selectedStageIdChanged(self.settings.selectedStageId)
+    self:emitSignal("selectedStageIdChanged", self.settings.selectedStageId)
   end
   -- even if it's the same stage as before, refresh the pick, cause it could be bundle or random
   self:refreshStage()
@@ -73,7 +74,7 @@ function MatchParticipant:refreshStage()
   local currentId = self.settings.stageId
   self.settings.stageId = StageLoader.resolveBundle(self.settings.selectedStageId)
   if currentId ~= self.settings.stageId then
-    self.stageIdChanged(self.settings.stageId)
+    self:emitSignal("stageIdChanged", self.settings.stageId)
     CharacterLoader.load(self.settings.stageId)
   end
 end
@@ -81,7 +82,7 @@ end
 function MatchParticipant:setCharacter(characterId)
   if characterId ~= self.settings.selectedCharacterId then
     self.settings.selectedCharacterId = CharacterLoader.resolveCharacterSelection(characterId)
-    self.selectedCharacterIdChanged(self.settings.selectedCharacterId)
+    self:emitSignal("selectedCharacterIdChanged", self.settings.selectedCharacterId)
   end
   -- even if it's the same character as before, refresh the pick, cause it could be bundle or random
   self:refreshCharacter()
@@ -91,7 +92,7 @@ function MatchParticipant:refreshCharacter()
   local currentId = self.settings.characterId
   self.settings.characterId = CharacterLoader.resolveBundle(self.settings.selectedCharacterId)
   if currentId ~= self.settings.characterId then
-    self.characterIdChanged(self.settings.characterId)
+    self:emitSignal("characterIdChanged", self.settings.characterId)
     CharacterLoader.load(self.settings.characterId)
   end
 end
@@ -99,7 +100,7 @@ end
 function MatchParticipant:setWantsReady(wantsReady)
   if wantsReady ~= self.settings.wantsReady then
     self.settings.wantsReady = wantsReady
-    self:wantsReadyChanged(wantsReady)
+    self:emitSignal("wantsReadyChanged", wantsReady)
   end
 end
 

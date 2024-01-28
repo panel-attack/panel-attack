@@ -83,7 +83,7 @@ function CharacterSelect:createPlayerIcon(player)
    selectedCharacterIcon.updateImage = function(image, characterId)
     image:setImage(characters[characterId].images.icon)
   end
-  Signal.connectSignal(player, "selectedCharacterIdChanged", selectedCharacterIcon, selectedCharacterIcon.updateImage)
+  player:connectSignal("selectedCharacterIdChanged", selectedCharacterIcon, selectedCharacterIcon.updateImage)
 
   playerIcon:addChild(selectedCharacterIcon)
 
@@ -100,7 +100,7 @@ function CharacterSelect:createPlayerIcon(player)
     levelIcon.updateImage = function(image, level)
       image:setImage(themes[config.theme].images.IMG_levels[level])
     end
-    Signal.connectSignal(player, "levelChanged", levelIcon, levelIcon.updateImage)
+    player:connectSignal("levelChanged", levelIcon, levelIcon.updateImage)
 
     playerIcon:addChild(levelIcon)
   end
@@ -183,7 +183,7 @@ function CharacterSelect:createStageCarousel(player, width)
   stageCarousel:setPassengerById(player.settings.selectedStageId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  Signal.connectSignal(player, "selectedStageIdChanged", stageCarousel, stageCarousel.setPassengerById)
+  player:connectSignal("selectedStageIdChanged", stageCarousel, stageCarousel.setPassengerById)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -377,7 +377,7 @@ function CharacterSelect:createPageIndicator(pagedUniGrid)
   pageCounterLabel.updatePage = function(self, grid, page)
     self:setText(loc("page") .. " " .. page .. "/" .. #grid.pages)
   end
-  Signal.connectSignal(pagedUniGrid, "pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
+  pagedUniGrid:connectSignal("pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
   return pageCounterLabel
 end
 
@@ -390,7 +390,7 @@ function CharacterSelect:createCursor(grid, player)
     player = player
   })
 
-  Signal.connectSignal(player, "wantsReadyChanged", cursor, cursor.setRapidBlinking)
+  player:connectSignal("wantsReadyChanged", cursor, cursor.setRapidBlinking)
 
   cursor.escapeCallback = function()
     if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
@@ -427,8 +427,8 @@ function CharacterSelect:createPanelCarousel(player, height)
   panelCarousel:setPassengerById(player.settings.panelId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  Signal.connectSignal(player, "selectedStageIdChanged", panelCarousel, panelCarousel.setPassengerById)
-  Signal.connectSignal(player, "colorCountChanged", panelCarousel, panelCarousel.setColorCount)
+  player:connectSignal("selectedStageIdChanged", panelCarousel, panelCarousel.setPassengerById)
+  player:connectSignal("colorCountChanged", panelCarousel, panelCarousel.setColorCount)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -512,7 +512,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
   end
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  Signal.connectSignal(player, "levelChanged", levelSlider, levelSlider.setValue)
+  player:connectSignal("levelChanged", levelSlider, levelSlider.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -548,7 +548,7 @@ function CharacterSelect:createRankedSelection(player, width)
     end
   end
 
-  Signal.connectSignal(player, "wantsRankedChanged", rankedSelector, rankedSelector.setValue)
+  player:connectSignal("wantsRankedChanged", rankedSelector, rankedSelector.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -662,11 +662,11 @@ function CharacterSelect:createPlayerInfo(player)
     self:setText("  " .. loc("ss_expected_rating") .. tostring(expectedWinrate) .. "%", nil, false)
   end
 
-  Signal.connectSignal(player, "leagueChanged", stackPanel.leagueLabel, stackPanel.leagueLabel.update)
-  Signal.connectSignal(player, "ratingChanged", stackPanel.ratingLabel, stackPanel.ratingLabel.update)
-  Signal.connectSignal(player, "winsChanged", stackPanel.winsLabel, stackPanel.winsLabel.update)
-  Signal.connectSignal(player, "winrateChanged", stackPanel.winrateValueLabel, stackPanel.winrateValueLabel.update)
-  Signal.connectSignal(player, "expectedWinrateChanged", stackPanel.winrateExpectedLabel, stackPanel.winrateExpectedLabel.update)
+  player:connectSignal("leagueChanged", stackPanel.leagueLabel, stackPanel.leagueLabel.update)
+  player:connectSignal("ratingChanged", stackPanel.ratingLabel, stackPanel.ratingLabel.update)
+  player:connectSignal("winsChanged", stackPanel.winsLabel, stackPanel.winsLabel.update)
+  player:connectSignal("winrateChanged", stackPanel.winrateValueLabel, stackPanel.winrateValueLabel.update)
+  player:connectSignal("expectedWinrateChanged", stackPanel.winrateExpectedLabel, stackPanel.winrateExpectedLabel.update)
 
   stackPanel:addElement(stackPanel.leagueLabel)
   stackPanel:addElement(stackPanel.ratingLabel)
@@ -713,7 +713,7 @@ function CharacterSelect:createRankedStatusPanel()
     rankedStatus.commentLabel:setText(comments, nil, false)
   end
 
-  Signal.connectSignal(GAME.battleRoom, "rankedStatusChanged", rankedStatus, rankedStatus.update)
+  GAME.battleRoom:connectSignal("rankedStatusChanged", rankedStatus, rankedStatus.update)
 
   return rankedStatus
 end

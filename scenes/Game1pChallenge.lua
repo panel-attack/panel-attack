@@ -11,7 +11,7 @@ local GraphicsUtil = require("graphics_util")
 local Game1pChallenge = class(function(self, sceneParams)
   self.nextScene = "CharacterSelectChallenge"
   self:load(sceneParams)
-  Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+  self.match:connectSignal("matchEnded", self, self.onMatchEnded)
   self.stageTimeQuads = {}
   self.totalTimeQuads = {}
   self.stageIndex = GAME.battleRoom.stageIndex
