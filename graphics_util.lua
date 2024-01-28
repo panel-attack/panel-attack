@@ -122,7 +122,7 @@ function GraphicsUtil.drawPixelFont(str, fontMap, x, y, xScale, yScale, align, c
   str = tostring(str)
 
   for i = 1, #str, 1 do
-    local character = str:sub(i,i)
+    local character = str:sub(i,i):upper()
     if character and character ~= " " then
 
       local characterIndex = i - 1
