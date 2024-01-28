@@ -65,7 +65,8 @@ local PagedUniGrid = class(function(self, options)
   addNewPage(self)
   goToPage(self, 1)
 
-  Signal.addSignal(self, "pageTurned")
+  Signal.turnIntoEmitter(self)
+  self:createSignal("pageTurned")
 end, UiElement)
 
 function PagedUniGrid:addElement(element)
@@ -91,7 +92,7 @@ end
 function PagedUniGrid:turnPage(sign)
   local newPageNumber = wrap(1, self.currentPage + math.sign(sign), #self.pages)
   goToPage(self, newPageNumber)
-  self:pageTurned(self.currentPage)
+  self:emitSignal("pageTurned", self, self.currentPage)
 end
 
 function PagedUniGrid:refreshPageTurnButtonVisibility()

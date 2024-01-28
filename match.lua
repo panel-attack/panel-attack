@@ -61,7 +61,8 @@ Match =
 
     self.time_quads = {}
 
-    Signal.addSignal(self, "onMatchEnded")
+    Signal.turnIntoEmitter(self)
+    self:createSignal("matchEnded")
   end
 )
 
@@ -838,7 +839,7 @@ function Match:handleMatchEnd()
   end
 
   -- execute callbacks
-  self:onMatchEnded()
+  self:emitSignal("matchEnded", self)
 end
 
 function Match:checkAborted()
