@@ -25,9 +25,6 @@ local Game = require("Game")
 local ClientMessages = require("network.ClientProtocol")
 -- move to load once global dependencies have been resolved
 GAME = Game()
--- temp hack to keep modules dependent on the global gfx_q working, please use GAME:gfx_q instead
-gfx_q = GAME.gfx_q
-
 
 require("engine/GarbageQueue")
 require("engine/telegraph")
