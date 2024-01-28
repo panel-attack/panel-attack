@@ -48,7 +48,7 @@ function TrainingMenu:goToCharacterSelect(value, width, height)
   if value == nil then
     value = createBasicTrainingMode("", width, height)
   end
-  GAME.localPlayer.settings.attackEngineSettings = value
+  GAME.localPlayer:setAttackEngineSettings(value)
   sceneManager:switchToScene(CharacterSelectVsSelf())
 end
 

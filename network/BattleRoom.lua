@@ -71,17 +71,20 @@ function BattleRoom:processCharacterSelectMessage(message)
       if message.players[i].playerNumber == self.players[j].playerNumber then
         self.players[j]:updateWithMenuState(message.players[i])
         if message.players[i].ratingInfo then
-          self.players[j].rating = message.players[i].ratingInfo
+          self.players[j]:setRating(message.players[i].ratingInfo.new)
+          self.players[j]:setLeague(message.players[i].ratingInfo.league)
         end
       end
     end
   end
+
+  self:updateExpectedWinrates()
 end
 
 function BattleRoom:processLeaveRoomMessage(message)
   if self.match then
     -- we're ending the game from battleRoom side via an abort so we don't want to enter the standard onMatchEnd callback
-    Signal.disconnectSignal(self.match, "onMatchEnded", self)
+    self.match:disconnectSignal("matchEnded", self)
     -- instead we actively abort the match ourselves
     self.match:abort()
     self.match:deinit()
@@ -169,17 +172,18 @@ function BattleRoom:registerPlayerUpdates(messageType)
         GAME.tcpClient:sendRequest(ClientMessages.sendMenuState(ServerMessages.toServerMenuState(player)))
       end
       -- seems a bit silly to subscribe a player to itself but it works and the player doesn't have to become part of the closure
-      player:subscribe(player, "characterId", update)
-      player:subscribe(player, "stageId", update)
-      player:subscribe(player, "panelId", update)
-      player:subscribe(player, "wantsRanked", update)
-      player:subscribe(player, "wantsReady", update)
-      player:subscribe(player, "hasLoaded", update)
-      player:subscribe(player, "difficulty", update)
-      player:subscribe(player, "speed", update)
-      player:subscribe(player, "level", update)
-      player:subscribe(player, "colorCount", update)
-      player:subscribe(player, "inputMethod", update)
+      player:connectSignal("selectedCharacterIdChanged", player, update)
+      player:connectSignal("characterIdChanged", player, update)
+      player:connectSignal("selectedStageIdChanged", player, update)
+      player:connectSignal("stageIdChanged", player, update)
+      player:connectSignal("panelIdChanged", player, update)
+      player:connectSignal("wantsRankedChanged", player, update)
+      player:connectSignal("wantsReadyChanged", player, update)
+      player:connectSignal("difficultyChanged", player, update)
+      player:connectSignal("startingSpeedChanged", player, update)
+      player:connectSignal("levelChanged", player, update)
+      player:connectSignal("colorCountChanged", player, update)
+      player:connectSignal("inputMethodChanged", player, update)
     else
       local update = function(player, menuStateMsg)
         local menuState = ServerMessages.sanitizeMenuState(menuStateMsg.menu_state)

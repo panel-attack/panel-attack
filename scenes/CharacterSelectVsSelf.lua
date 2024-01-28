@@ -29,7 +29,7 @@ end
 function CharacterSelectVsSelf:loadUserInterface()
   local player = GAME.battleRoom.players[1]
 
-  self.ui.grid = Grid({unitSize = 96, gridWidth = 9, gridHeight = 6, unitMargin = 6, hAlign = "center", vAlign = "center"})
+  self.ui.grid = Grid({unitSize = 98, gridWidth = 9, gridHeight = 6, unitMargin = 7, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.characterIcons[1] = self:createPlayerIcon(player)

@@ -39,9 +39,7 @@ Match =
     if optionalArgs then
       -- debatable if these couldn't be player settings instead
       self.puzzle = optionalArgs.puzzle
-      -- refers to the health portion of a challenge mode stage
-      -- maybe this isn't right here and battleRoom should just pass Health in as a Player substitute
-      self.health = optionalArgs.health
+      self.ranked = optionalArgs.ranked
     end
 
     -- match needs its own table so it can sort players with impunity
@@ -63,7 +61,8 @@ Match =
 
     self.time_quads = {}
 
-    Signal.addSignal(self, "onMatchEnded")
+    Signal.turnIntoEmitter(self)
+    self:createSignal("matchEnded")
   end
 )
 
@@ -840,7 +839,7 @@ function Match:handleMatchEnd()
   end
 
   -- execute callbacks
-  self:onMatchEnded()
+  self:emitSignal("matchEnded", self)
 end
 
 function Match:checkAborted()

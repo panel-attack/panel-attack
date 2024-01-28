@@ -1,6 +1,7 @@
 require("TimeQueue")
 require("queue")
 require("server_queue")
+local Signal = require("helpers.signal")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
@@ -142,15 +143,15 @@ end
 -- it basically represents the player that is operating the client (and thus binds to its configuration)
 function Game:initializeLocalPlayer()
   self.localPlayer = Player.getLocalPlayer()
-  self.localPlayer:subscribe(config, "selectedCharacterId", function(config, newId) config.character = newId end)
-  self.localPlayer:subscribe(config, "selectedStageId", function(config, newId) config.stage = newId end)
-  self.localPlayer:subscribe(config, "panelId", function(config, newId) config.panels = newId end)
-  self.localPlayer:subscribe(config, "inputMethod", function(config, inputMethod) config.inputMethod = inputMethod end)
-  self.localPlayer:subscribe(config, "speed", function(config, speed) config.endless_speed = speed end)
-  self.localPlayer:subscribe(config, "difficulty", function(config, difficulty) config.endless_difficulty = difficulty end)
-  self.localPlayer:subscribe(config, "level", function(config, level) config.level = level end)
-  self.localPlayer:subscribe(config, "wantsRanked", function(config, wantsRanked) config.ranked = wantsRanked end)
-  self.localPlayer:subscribe(config, "style", function(config, style)
+  self.localPlayer:connectSignal("selectedCharacterIdChanged", config, function(config, newId) config.character = newId end)
+  self.localPlayer:connectSignal("selectedStageIdChanged", config, function(config, newId) config.stage = newId end)
+  self.localPlayer:connectSignal("panelIdChanged", config, function(config, newId) config.panels = newId end)
+  self.localPlayer:connectSignal("inputMethodChanged", config, function(config, inputMethod) config.inputMethod = inputMethod end)
+  self.localPlayer:connectSignal("startingSpeedChanged", config, function(config, speed) config.endless_speed = speed end)
+  self.localPlayer:connectSignal("difficultyChanged", config, function(config, difficulty) config.endless_difficulty = difficulty end)
+  self.localPlayer:connectSignal("levelChanged", config, function(config, level) config.level = level end)
+  self.localPlayer:connectSignal("wantsRankedChanged", config, function(config, wantsRanked) config.ranked = wantsRanked end)
+  self.localPlayer:connectSignal("styleChanged", config, function(config, style)
     if style == GameModes.Styles.CLASSIC then
       config.endless_level = nil
     else

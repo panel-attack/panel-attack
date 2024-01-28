@@ -19,7 +19,7 @@ function Replay.createNewReplay(match)
   result.engineVersion = match.engineVersion
   result.replayVersion = REPLAY_VERSION
   result.seed = match.seed
-  result.ranked = match_type == "Ranked"
+  result.ranked = match.ranked
   result.stageId = match.stageId
   result.gameMode = {
     stackInteraction = match.stackInteraction,

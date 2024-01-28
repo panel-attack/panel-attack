@@ -17,7 +17,6 @@ BattleRoom = class(function(self, mode)
   self.players = {}
   self.spectators = {}
   self.spectating = false
-  self.trainingModeSettings = nil
   self.allAssetsLoaded = false
   self.ranked = false
   self.puzzles = {}
@@ -25,6 +24,9 @@ BattleRoom = class(function(self, mode)
   self.matchesPlayed = 0
   -- this is a bit naive but effective for now
   self.online = GAME.tcpClient:isConnected()
+
+  Signal.turnIntoEmitter(self)
+  self:createSignal("rankedStatusChanged")
 end)
 
 -- defining these here so they're available in network.BattleRoom too
@@ -80,6 +82,8 @@ function BattleRoom.createFromServerMessage(message)
     end
     for i = 1, #battleRoom.players do
       battleRoom.players[i]:updateWithMenuState(message.players[i])
+      battleRoom.players[i]:setRating(message.players[i].ratingInfo.new)
+      battleRoom.players[i]:setLeague(message.players[i].ratingInfo.league)
     end
     battleRoom.spectating = true
   else
@@ -88,11 +92,14 @@ function BattleRoom.createFromServerMessage(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
     GAME.localPlayer.playerNumber = message.players[1].playerNumber
-    GAME.localPlayer.rating = message.players[1].ratingInfo
+    GAME.localPlayer:setRating(message.players[1].ratingInfo.new)
+    GAME.localPlayer:setLeague(message.players[1].ratingInfo.league)
 
     local player2 = Player(message.players[2].name, -1, false)
     player2.playerNumber = message.players[2].playerNumber
     player2:updateWithMenuState(message.players[2])
+    player2:setRating(message.players[2].ratingInfo.new)
+    player2:setLeague(message.players[2].ratingInfo.league)
     battleRoom:addPlayer(player2)
   end
 
@@ -133,16 +140,40 @@ function BattleRoom.setWinCounts(self, winCounts)
   for i = 1, #winCounts do
     self.players[i].wins = winCounts[i]
   end
+
+  self:updateWinrates()
 end
 
-function BattleRoom:setRatings(ratings)
-  for i = 1, #self.players do
-    self.players[i].rating = ratings[i]
+function BattleRoom:updateWinrates()
+  local gamesPlayed
+  if tableUtils.trueForAny(self.players, function(p) return p.isLocal end) then
+    gamesPlayed = self.matchesPlayed
+  else
+    gamesPlayed = self:totalGames()
+  end
+  for _, player in ipairs(self.players) do
+    if gamesPlayed > 0 then
+      local winrate = 100 * round(player.wins / gamesPlayed, 2)
+      player:setWinrate(winrate)
+    else
+      player:setWinrate(0)
+    end
+  end
+end
+
+local RATING_SPREAD_MODIFIER = 400
+function BattleRoom:updateExpectedWinrates()
+  if tableUtils.trueForAll(self.players, function(p) return p.rating and tonumber(p.rating) end) then
+    -- this isn't feasible to do for n-player matchups at this point
+    local p1 = self.players[1]
+    local p2 = self.players[2]
+    p1:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p2.rating - p1.rating) / RATING_SPREAD_MODIFIER)), 2)))
+    p2:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p1.rating - p2.rating) / RATING_SPREAD_MODIFIER)), 2)))
   end
 end
 
 -- returns the total amount of games played, derived from the sum of wins across all players
--- (this means draws don't count as games)
+-- (this means draws don't count as games, reference BattleRoom.matchesPlayed if you want draws included)
 function BattleRoom:totalGames()
   local totalGames = 0
   for i = 1, #self.players do
@@ -168,7 +199,7 @@ end
 -- creates a match with the players in the BattleRoom
 function BattleRoom:createMatch()
   local supportsPause = not self.online or #self.players == 1
-  local optionalArgs = { timeLimit = self.mode.timeLimit }
+  local optionalArgs = { timeLimit = self.mode.timeLimit , ranked = self.ranked}
   if #self.puzzles > 0 then
     optionalArgs.puzzle = table.remove(self.puzzles, 1)
   end
@@ -183,10 +214,10 @@ function BattleRoom:createMatch()
     optionalArgs
   )
 
-  Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+  self.match:connectSignal("matchEnded", self, self.onMatchEnded)
 
   for _, player in ipairs(self.players) do
-    Signal.connectSignal(self.match, "onMatchEnded", player, player.onMatchEnded)
+    self.match:connectSignal("matchEnded", player, player.onMatchEnded)
   end
 
   self.match:setSpectatorList(self.spectators)
@@ -258,12 +289,7 @@ function BattleRoom:updateRankedStatus(rankedStatus, comments)
   if self.online then
     self.ranked = rankedStatus
     self.rankedComments = comments
-    -- legacy crutches
-    if self.ranked then
-      match_type = "Ranked"
-    else
-      match_type = "Casual"
-    end
+    self:emitSignal("rankedStatusChanged", rankedStatus, comments)
   else
     error("Trying to apply ranked state to the room even though it is either not online or does not support ranked")
   end
@@ -286,7 +312,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
     GAME.rich_presence:setPresence("Playing " .. self.mode.richPresenceLabel .. " mode", nil, true)
   end
 
-  if match_type == "Ranked" and not match.room_ratings then
+  if self.ranked and not match.room_ratings then
     match.room_ratings = {}
   end
 
@@ -347,6 +373,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
       if not inputConfiguration.usedByPlayer and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:restrictInputs(inputConfiguration)
+        player:disconnectSignal("wantsReadyChanged", player)
         break
       end
     end
@@ -383,7 +410,7 @@ function BattleRoom:assignInputConfigurations()
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
       -- the ready up press guarantees that at least 1 input config has a key down
-      localPlayers[1]:subscribe(localPlayers[1], "wantsReady", self.updateInputConfigurationForPlayer)
+      localPlayers[1]:connectSignal("wantsReadyChanged", localPlayers[1], self.updateInputConfigurationForPlayer)
     elseif #localPlayers > 1 then
       -- with multiple local players we need to lock immediately so they can configure
       -- set a flag so this is continuously attempted in update
@@ -485,7 +512,7 @@ function BattleRoom:onMatchEnded(match)
   else
   -- match:deinit is the responsibility of the one switching out of the game scene
     match:deinit()
-    -- in the case of a network based abort, the network part of the battleRoom would unsubscribe from the onMatchEnded signal
+    -- in the case of a network based abort, the network part of the battleRoom would unregister from the onMatchEnded signal
     -- and initialise the transition to wherever else before calling abort on the match to finalize it
     -- that means whenever we land here, it was a match-side local abort that leaves the room intact
     local setupScene = sceneManager:createScene(self.mode.setupScene)

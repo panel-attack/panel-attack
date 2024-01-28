@@ -60,6 +60,7 @@ function CharacterSelect:load()
   self.ui = {}
   self.ui.cursors = {}
   self.ui.characterIcons = {}
+  self.ui.playerInfos = {}
   self:customLoad()
   -- assign input configs
   -- ideally the local player can use all configs in menus until game start
@@ -82,7 +83,7 @@ function CharacterSelect:createPlayerIcon(player)
    selectedCharacterIcon.updateImage = function(image, characterId)
     image:setImage(characters[characterId].images.icon)
   end
-  player:subscribe(selectedCharacterIcon, "selectedCharacterId", selectedCharacterIcon.updateImage)
+  player:connectSignal("selectedCharacterIdChanged", selectedCharacterIcon, selectedCharacterIcon.updateImage)
 
   playerIcon:addChild(selectedCharacterIcon)
 
@@ -99,7 +100,7 @@ function CharacterSelect:createPlayerIcon(player)
     levelIcon.updateImage = function(image, level)
       image:setImage(themes[config.theme].images.IMG_levels[level])
     end
-    player:subscribe(levelIcon, "level", levelIcon.updateImage)
+    player:connectSignal("levelChanged", levelIcon, levelIcon.updateImage)
 
     playerIcon:addChild(levelIcon)
   end
@@ -182,7 +183,7 @@ function CharacterSelect:createStageCarousel(player, width)
   stageCarousel:setPassengerById(player.settings.selectedStageId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(stageCarousel, "selectedStageId", stageCarousel.setPassengerById)
+  player:connectSignal("selectedStageIdChanged", stageCarousel, stageCarousel.setPassengerById)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -374,9 +375,9 @@ function CharacterSelect:createPageIndicator(pagedUniGrid)
     translate = false
   })
   pageCounterLabel.updatePage = function(self, grid, page)
-    self:setText(loc("page") .. " " .. page .. "/" .. #pagedUniGrid.pages)
+    self:setText(loc("page") .. " " .. page .. "/" .. #grid.pages)
   end
-  Signal.connectSignal(pagedUniGrid, "pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
+  pagedUniGrid:connectSignal("pageTurned", pageCounterLabel, pageCounterLabel.updatePage)
   return pageCounterLabel
 end
 
@@ -389,7 +390,7 @@ function CharacterSelect:createCursor(grid, player)
     player = player
   })
 
-  player:subscribe(cursor, "wantsReady", cursor.setRapidBlinking)
+  player:connectSignal("wantsReadyChanged", cursor, cursor.setRapidBlinking)
 
   cursor.escapeCallback = function()
     if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
@@ -426,8 +427,8 @@ function CharacterSelect:createPanelCarousel(player, height)
   panelCarousel:setPassengerById(player.settings.panelId)
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(panelCarousel, "panelId", panelCarousel.setPassengerById)
-  player:subscribe(panelCarousel, "colorCount", panelCarousel.setColorCount)
+  player:connectSignal("selectedStageIdChanged", panelCarousel, panelCarousel.setPassengerById)
+  player:connectSignal("colorCountChanged", panelCarousel, panelCarousel.setColorCount)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -511,7 +512,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
   end
 
   -- to update the UI if code gets changed from the backend (e.g. network messages)
-  player:subscribe(levelSlider, "level", levelSlider.setValue)
+  player:connectSignal("levelChanged", levelSlider, levelSlider.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -547,7 +548,7 @@ function CharacterSelect:createRankedSelection(player, width)
     end
   end
 
-  player:subscribe(rankedSelector, "wantsRanked", rankedSelector.setValue)
+  player:connectSignal("wantsRankedChanged", rankedSelector, rankedSelector.setValue)
 
   -- player number icon
   local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
@@ -598,6 +599,123 @@ function CharacterSelect:createRecordsBox()
   end
 
   return stackPanel
+end
+
+function CharacterSelect:createPlayerInfo(player)
+  local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "top"})
+
+  stackPanel.leagueLabel = Label({
+    x = 4,
+    text = loc("ss_rating") .. " " .. ((player.league) or "none"),
+    translate = false
+  })
+  stackPanel.leagueLabel.update = function(self, league)
+    self:setText(loc("ss_rating") .. " " .. (league or "none"))
+  end
+
+  stackPanel.ratingLabel = Label({
+    x = 4,
+    text = player.rating or "",
+    translate = false
+  })
+  stackPanel.ratingLabel.update = function(self, rating, ratingDiff)
+    if ratingDiff > 0 then
+      self:setText(tostring(rating) .. " (+" .. ratingDiff .. ")", nil, false)
+    elseif ratingDiff < 0 then
+      self:setText(tostring(rating) .. " (" .. ratingDiff .. ")", nil, false)
+    else
+      self:setText(tostring(rating), nil, false)
+    end
+  end
+
+  stackPanel.winsLabel = Label({
+    x = 4,
+    text = loc("ss_wins") .. " " .. player:getWinCountForDisplay(),
+    translate = false
+  })
+  stackPanel.winsLabel.update = function(self, winCount)
+    self:setText(loc("ss_wins") .. " " .. winCount, nil, false)
+  end
+
+  stackPanel.winrateLabel = Label({
+    x = 4,
+    text = "ss_winrate"
+  })
+
+  stackPanel.winrateValueLabel = Label({
+    x = 4,
+    text = "  " .. loc("ss_current_rating") .. " " .. tostring(player.winrate) .. "%",
+    translate = false
+  })
+  stackPanel.winrateValueLabel.update = function(self, winrate)
+    self:setText("  " .. loc("ss_current_rating") .. tostring(winrate) .. "%", nil, false)
+  end
+
+  stackPanel.winrateExpectedLabel = Label({
+    x = 4,
+    text = ""
+  })
+  if GAME.battleRoom.ranked then
+    stackPanel.winrateExpectedLabel:setText(loc("ss_expected_rating") .. " " .. player.expectedWinrate .. "%")
+  end
+  stackPanel.winrateExpectedLabel.update = function(self, expectedWinrate)
+    self:setText("  " .. loc("ss_expected_rating") .. tostring(expectedWinrate) .. "%", nil, false)
+  end
+
+  player:connectSignal("leagueChanged", stackPanel.leagueLabel, stackPanel.leagueLabel.update)
+  player:connectSignal("ratingChanged", stackPanel.ratingLabel, stackPanel.ratingLabel.update)
+  player:connectSignal("winsChanged", stackPanel.winsLabel, stackPanel.winsLabel.update)
+  player:connectSignal("winrateChanged", stackPanel.winrateValueLabel, stackPanel.winrateValueLabel.update)
+  player:connectSignal("expectedWinrateChanged", stackPanel.winrateExpectedLabel, stackPanel.winrateExpectedLabel.update)
+
+  stackPanel:addElement(stackPanel.leagueLabel)
+  stackPanel:addElement(stackPanel.ratingLabel)
+  stackPanel:addElement(stackPanel.winsLabel)
+  stackPanel:addElement(stackPanel.winrateLabel)
+  stackPanel:addElement(stackPanel.winrateValueLabel)
+
+  return stackPanel
+end
+
+function CharacterSelect:createRankedStatusPanel()
+  local rankedStatus = StackPanel({
+    alignment = "top",
+    hAlign = "center",
+    vAlign = "top",
+    y = 40,
+    width = 300
+  })
+  rankedStatus.rankedLabel = Label({
+    text = "",
+    hAlign = "center",
+    vAlign = "top"
+  })
+  if GAME.battleRoom.ranked then
+    rankedStatus.rankedLabel:setText("ss_ranked")
+  else
+    rankedStatus.rankedLabel:setText("ss_casual")
+  end
+  rankedStatus.commentLabel = Label({
+    text = GAME.battleRoom.rankedComments or "",
+    hAlign = "center",
+    vAlign = "top",
+    translate = false
+  })
+  rankedStatus:addElement(rankedStatus.rankedLabel)
+  rankedStatus:addElement(rankedStatus.commentLabel)
+
+  rankedStatus.update = function(self, ranked, comments)
+    if ranked then
+      rankedStatus.rankedLabel:setText("ss_ranked")
+    else
+      rankedStatus.rankedLabel:setText("ss_casual")
+    end
+    rankedStatus.commentLabel:setText(comments, nil, false)
+  end
+
+  GAME.battleRoom:connectSignal("rankedStatusChanged", rankedStatus, rankedStatus.update)
+
+  return rankedStatus
 end
 
 function CharacterSelect:update(dt)

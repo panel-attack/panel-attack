@@ -158,9 +158,6 @@ function MainMenu:load(sceneParams)
   StageLoader.clear()
   GAME.tcpClient:resetNetwork()
   GAME.battleRoom = nil
-  --GAME.input:clearInputConfigurationsForPlayers()
-  --GAME.input:requestPlayerInputConfigurationAssignments(1)
-  match_type_message = ""
 end
 
 function MainMenu:update(dt)

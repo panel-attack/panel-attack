@@ -57,7 +57,7 @@ end
 -- challenge mode players are always ready
 function ChallengeModePlayer:setWantsReady(wantsReady)
   self.settings.wantsReady = true
-  self:onPropertyChanged("wantsReady")
+  self:wantsReadyChanged(true)
 end
 
 function ChallengeModePlayer.createFromReplayPlayer(replayPlayer, playerNumber)

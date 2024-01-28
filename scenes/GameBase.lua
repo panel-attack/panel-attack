@@ -81,7 +81,7 @@ end
 
 function GameBase:load(sceneParams)
   self.match = sceneParams.match
-  Signal.connectSignal(self.match, "onMatchEnded", self, self.genericOnMatchEnded)
+  self.match:connectSignal("matchEnded", self, self.genericOnMatchEnded)
 
   self.stage = stages[self.match.stageId]
   self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)

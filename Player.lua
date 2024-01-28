@@ -5,11 +5,12 @@ local input = require("inputManager")
 local util = require("util")
 local MatchParticipant = require("MatchParticipant")
 local consts = require("consts")
+local Signal = require("helpers.signal")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
 -- It holds data pertaining to their client status (like character, stage, panels, level etc)
--- Player implements a lot of setters that feed into an observer-like pattern, notifying possible subscribers about property changes
+-- Player implements a lot of setters that emit signals on changes, allowing other components to be notified about the changes by connecting a function to it
 -- Due to this, unless for a good reason, all properties on Player should be set using the setters
 local Player = class(function(self, name, publicId, isLocal)
   self.name = name
@@ -28,19 +29,38 @@ local Player = class(function(self, name, publicId, isLocal)
     wantsReady = false,
     wantsRanked = true,
     inputMethod = "controller",
-    attackEngineSettings = nil
+    attackEngineSettings = nil,
+    puzzleSet = nil,
   }
   -- planned for the future, players don't have public ids yet
   self.publicId = publicId or -1
+  self.league = nil
   self.rating = nil
+  self.ratingHistory = {}
   self.stack = nil
   self.playerNumber = nil
   self.isLocal = isLocal or false
   -- a player has only one configuration at a time
   -- this is either everything or a single input configuration
   self.inputConfiguration = input
-  self.subscriptionList = util.getWeaklyKeyedTable()
   self.human = true
+
+  -- the player emits signals when its properties change that other components may be interested in
+  -- they can register a callback with each signal via Signal.connectSignal
+  -- there are a few more signals in MatchParticipant (which is why we don't have to explicitly declare us as emitting Signals again)
+  self:createSignal("styleChanged")
+  self:createSignal("difficultyChanged")
+  self:createSignal("startingSpeedChanged")
+  self:createSignal("colorCountChanged")
+  self:createSignal("levelChanged")
+  self:createSignal("levelDataChanged")
+  self:createSignal("inputMethodChanged")
+  self:createSignal("attackEngineSettingsChanged")
+  self:createSignal("puzzleSetChanged")
+  self:createSignal("ratingChanged")
+  self:createSignal("leagueChanged")
+  self:createSignal("wantsRankedChanged")
+  self:createSignal("hasLoadedChanged")
 end,
 MatchParticipant)
 
@@ -82,7 +102,11 @@ function Player:createStackFromSettings(match, which)
 end
 
 function Player:getRatingDiff()
-  return self.rating.new - self.rating.old
+  if self.rating and tonumber(self.rating) and #self.ratingHistory > 0 then
+    return self.rating - self.ratingHistory[#self.ratingHistory]
+  else
+    return 0
+  end
 end
 
 function Player:setPanels(panelId)
@@ -95,14 +119,14 @@ function Player:setPanels(panelId)
     end
     -- panels are always loaded so no loading is necessary
 
-    self:onPropertyChanged("panelId")
+    self:emitSignal("panelIdChanged", self.settings.panelId)
   end
 end
 
 function Player:setWantsRanked(wantsRanked)
   if wantsRanked ~= self.settings.wantsRanked then
     self.settings.wantsRanked = wantsRanked
-    self:onPropertyChanged("wantsRanked")
+    self:emitSignal("wantsRankedChanged", wantsRanked)
   end
 end
 
@@ -112,7 +136,7 @@ function Player:setLoaded(hasLoaded)
   if not self.isLocal then
     if hasLoaded ~= self.settings.hasLoaded then
       self.settings.hasLoaded = hasLoaded
-      self:onPropertyChanged("hasLoaded")
+      self:emitSignal("hasLoadedChanged", hasLoaded)
     end
   end
 end
@@ -121,7 +145,7 @@ function Player:setDifficulty(difficulty)
   if difficulty ~= self.settings.difficulty then
     self.settings.difficulty = difficulty
     self:setLevelData(LevelPresets.getClassic(difficulty))
-    self:onPropertyChanged("difficulty")
+    self:emitSignal("difficultyChanged", difficulty)
   end
 end
 
@@ -129,14 +153,14 @@ function Player:setLevelData(levelData)
   self.settings.levelData = levelData
   self:setColorCount(levelData.colors)
   self:setSpeed(levelData.startingSpeed)
-  self:onPropertyChanged("levelData")
+  self:emitSignal("levelDataChanged", levelData)
 end
 
 function Player:setSpeed(speed)
   if speed ~= self.settings.speed or speed ~= self.settings.levelData.startingSpeed then
     self.settings.levelData.startingSpeed = speed
     self.settings.speed = speed
-    self:onPropertyChanged("speed")
+    self:emitSignal("startingSpeedChanged", speed)
   end
 end
 
@@ -144,7 +168,7 @@ function Player:setColorCount(colorCount)
   if colorCount ~= self.settings.colorCount or colorCount ~= self.settings.levelData.colors  then
     self.settings.levelData.colors = colorCount
     self.settings.colorCount = colorCount
-    self:onPropertyChanged("colorCount")
+    self:emitSignal("colorCountChanged", colorCount)
   end
 end
 
@@ -152,14 +176,14 @@ function Player:setLevel(level)
   if level ~= self.settings.level then
     self.settings.level = level
     self:setLevelData(LevelPresets.getModern(level))
-    self:onPropertyChanged("level")
+    self:emitSignal("levelChanged", level)
   end
 end
 
 function Player:setInputMethod(inputMethod)
   if inputMethod ~= self.settings.inputMethod then
     self.settings.inputMethod = inputMethod
-    self:onPropertyChanged("inputMethod")
+    self:emitSignal("inputMethodChanged", inputMethod)
   end
 end
 
@@ -177,14 +201,37 @@ function Player:setStyle(style)
     end
     -- reset color count while we don't have an established caching mechanism for it
     self:setColorCount(self.settings.levelData.colors)
-    self:onPropertyChanged("style")
+    self:emitSignal("styleChanged", style)
   end
 end
 
 function Player:setPuzzleSet(puzzleSet)
   if puzzleSet ~= self.settings.puzzleSet then
     self.settings.puzzleSet = puzzleSet
-    self:onPropertyChanged("puzzleSet")
+    self:emitSignal("puzzleSetChanged", puzzleSet)
+  end
+end
+
+function Player:setRating(rating)
+  if self.rating and tonumber(self.rating) then
+    -- only save a rating if we actually have one, tonumber assures that rating does not track placement progress instead
+    self.ratingHistory[#self.ratingHistory + 1] = self.rating
+  end
+  self.rating = rating
+  self:emitSignal("ratingChanged", rating, self:getRatingDiff())
+end
+
+function Player:setLeague(league)
+  if self.league ~= league then
+    self.league = league
+    self:emitSignal("leagueChanged", league)
+  end
+end
+
+function Player:setAttackEngineSettings(attackEngineSettings)
+  if attackEngineSettings ~= self.settings.attackEngineSettings then
+    self.settings.attackEngineSettings = attackEngineSettings
+    self:emitSignal("attackEngineSettingsChanged", attackEngineSettings)
   end
 end
 
@@ -252,7 +299,7 @@ function Player:updateWithMenuState(menuState)
     if characters[menuState.selectedCharacterId] then
       -- picking their bundle for display is a bonus
       self.settings.selectedCharacterId = menuState.selectedCharacterId
-      self:onPropertyChanged("selectedCharacterId")
+      self:emitSignal("selectedCharacterIdChanged", self.settings.selectedCharacterId)
     end
   elseif menuState.selectedCharacterId and characters[menuState.selectedCharacterId] then
     -- if we don't have their character rolled from their bundle, but the bundle itself, use that
@@ -269,7 +316,7 @@ function Player:updateWithMenuState(menuState)
     if stages[menuState.selectedStageId] then
       -- picking their bundle for display is a bonus
       self.settings.selectedStageId = menuState.selectedStageId
-      self:onPropertyChanged("selectedStageId")
+      self:emitSignal("selectedStageIdChanged", self.settings.selectedStageId)
     end
   elseif menuState.selectedStageId and stages[menuState.selectedStageId] then
     -- if we don't have their stage rolled from their bundle, but the bundle itself, use that
@@ -288,10 +335,6 @@ function Player:updateWithMenuState(menuState)
 
   self:setLevel(menuState.level)
   self:setInputMethod(menuState.inputMethod)
-end
-
-function Player:setAttackEngineSettings(attackEngineSettings)
-
 end
 
 function Player:getInfo()
