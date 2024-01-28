@@ -24,7 +24,9 @@ BattleRoom = class(function(self, mode)
   self.matchesPlayed = 0
   -- this is a bit naive but effective for now
   self.online = GAME.tcpClient:isConnected()
-  Signal.addSignal(self, "rankedStatusChanged")
+
+  Signal.turnIntoEmitter(self)
+  self:createSignal("rankedStatusChanged")
 end)
 
 -- defining these here so they're available in network.BattleRoom too
@@ -212,10 +214,10 @@ function BattleRoom:createMatch()
     optionalArgs
   )
 
-  Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+  self.match:connectSignal("matchEnded", self, self.onMatchEnded)
 
   for _, player in ipairs(self.players) do
-    Signal.connectSignal(self.match, "onMatchEnded", player, player.onMatchEnded)
+    self.match:connectSignal("matchEnded", player, player.onMatchEnded)
   end
 
   self.match:setSpectatorList(self.spectators)
@@ -287,7 +289,7 @@ function BattleRoom:updateRankedStatus(rankedStatus, comments)
   if self.online then
     self.ranked = rankedStatus
     self.rankedComments = comments
-    self.rankedStatusChanged(rankedStatus, comments)
+    self:emitSignal("rankedStatusChanged", rankedStatus, comments)
   else
     error("Trying to apply ranked state to the room even though it is either not online or does not support ranked")
   end
@@ -371,6 +373,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
       if not inputConfiguration.usedByPlayer and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:restrictInputs(inputConfiguration)
+        player:disconnectSignal("wantsReadyChanged", player)
         break
       end
     end
@@ -407,7 +410,7 @@ function BattleRoom:assignInputConfigurations()
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
       -- the ready up press guarantees that at least 1 input config has a key down
-      Signal.connectSignal(localPlayers[1], "wantsReadyChanged", localPlayers[1], self.updateInputConfigurationForPlayer)
+      localPlayers[1]:connectSignal("wantsReadyChanged", localPlayers[1], self.updateInputConfigurationForPlayer)
     elseif #localPlayers > 1 then
       -- with multiple local players we need to lock immediately so they can configure
       -- set a flag so this is continuously attempted in update

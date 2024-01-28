@@ -47,21 +47,20 @@ local Player = class(function(self, name, publicId, isLocal)
 
   -- the player emits signals when its properties change that other components may be interested in
   -- they can register a callback with each signal via Signal.connectSignal
-  -- there are a few more signals in MatchParticipant
-  Signal.addSignal(self, "styleChanged")
-  Signal.addSignal(self, "levelChanged")
-  Signal.addSignal(self, "difficultyChanged")
-  Signal.addSignal(self, "startingSpeedChanged")
-  Signal.addSignal(self, "colorCountChanged")
-  Signal.addSignal(self, "levelDataChanged")
-  Signal.addSignal(self, "inputMethodChanged")
-  Signal.addSignal(self, "attackEngineSettingsChanged")
-  Signal.addSignal(self, "puzzleSetChanged")
-  Signal.addSignal(self, "ratingChanged")
-  Signal.addSignal(self, "leagueChanged")
-  Signal.addSignal(self, "wantsRankedChanged")
-  Signal.addSignal(self, "hasLoadedChanged")
-
+  -- there are a few more signals in MatchParticipant (which is why we don't have to explicitly declare us as emitting Signals again)
+  self:createSignal("styleChanged")
+  self:createSignal("difficultyChanged")
+  self:createSignal("startingSpeedChanged")
+  self:createSignal("colorCountChanged")
+  self:createSignal("levelChanged")
+  self:createSignal("levelDataChanged")
+  self:createSignal("inputMethodChanged")
+  self:createSignal("attackEngineSettingsChanged")
+  self:createSignal("puzzleSetChanged")
+  self:createSignal("ratingChanged")
+  self:createSignal("leagueChanged")
+  self:createSignal("wantsRankedChanged")
+  self:createSignal("hasLoadedChanged")
 end,
 MatchParticipant)
 
@@ -120,14 +119,14 @@ function Player:setPanels(panelId)
     end
     -- panels are always loaded so no loading is necessary
 
-    self.panelIdChanged(self.settings.panelId)
+    self:emitSignal("panelIdChanged", self.settings.panelId)
   end
 end
 
 function Player:setWantsRanked(wantsRanked)
   if wantsRanked ~= self.settings.wantsRanked then
     self.settings.wantsRanked = wantsRanked
-    self.wantsRankedChanged(wantsRanked)
+    self:emitSignal("wantsRankedChanged", wantsRanked)
   end
 end
 
@@ -137,7 +136,7 @@ function Player:setLoaded(hasLoaded)
   if not self.isLocal then
     if hasLoaded ~= self.settings.hasLoaded then
       self.settings.hasLoaded = hasLoaded
-      self.hasLoadedChanged()
+      self:emitSignal("hasLoadedChanged", hasLoaded)
     end
   end
 end
@@ -146,7 +145,7 @@ function Player:setDifficulty(difficulty)
   if difficulty ~= self.settings.difficulty then
     self.settings.difficulty = difficulty
     self:setLevelData(LevelPresets.getClassic(difficulty))
-    self.difficultyChanged(difficulty)
+    self:emitSignal("difficultyChanged", difficulty)
   end
 end
 
@@ -154,14 +153,14 @@ function Player:setLevelData(levelData)
   self.settings.levelData = levelData
   self:setColorCount(levelData.colors)
   self:setSpeed(levelData.startingSpeed)
-  self.levelDataChanged(levelData)
+  self:emitSignal("levelDataChanged", levelData)
 end
 
 function Player:setSpeed(speed)
   if speed ~= self.settings.speed or speed ~= self.settings.levelData.startingSpeed then
     self.settings.levelData.startingSpeed = speed
     self.settings.speed = speed
-    self.startingSpeedChanged(speed)
+    self:emitSignal("startingSpeedChanged", speed)
   end
 end
 
@@ -169,7 +168,7 @@ function Player:setColorCount(colorCount)
   if colorCount ~= self.settings.colorCount or colorCount ~= self.settings.levelData.colors  then
     self.settings.levelData.colors = colorCount
     self.settings.colorCount = colorCount
-    self.colorCountChanged(colorCount)
+    self:emitSignal("colorCountChanged", colorCount)
   end
 end
 
@@ -177,14 +176,14 @@ function Player:setLevel(level)
   if level ~= self.settings.level then
     self.settings.level = level
     self:setLevelData(LevelPresets.getModern(level))
-    self.levelChanged(level)
+    self:emitSignal("levelChanged", level)
   end
 end
 
 function Player:setInputMethod(inputMethod)
   if inputMethod ~= self.settings.inputMethod then
     self.settings.inputMethod = inputMethod
-    self.inputMethodChanged(inputMethod)
+    self:emitSignal("inputMethodChanged", inputMethod)
   end
 end
 
@@ -202,14 +201,14 @@ function Player:setStyle(style)
     end
     -- reset color count while we don't have an established caching mechanism for it
     self:setColorCount(self.settings.levelData.colors)
-    self.styleChanged(style)
+    self:emitSignal("styleChanged", style)
   end
 end
 
 function Player:setPuzzleSet(puzzleSet)
   if puzzleSet ~= self.settings.puzzleSet then
     self.settings.puzzleSet = puzzleSet
-    self.puzzleSetChanged(puzzleSet)
+    self:emitSignal("puzzleSetChanged", puzzleSet)
   end
 end
 
@@ -219,20 +218,20 @@ function Player:setRating(rating)
     self.ratingHistory[#self.ratingHistory + 1] = self.rating
   end
   self.rating = rating
-  self.ratingChanged(rating, self:getRatingDiff())
+  self:emitSignal("ratingChanged", rating, self:getRatingDiff())
 end
 
 function Player:setLeague(league)
   if self.league ~= league then
     self.league = league
-    self.leagueChanged(league)
+    self:emitSignal("leagueChanged", league)
   end
 end
 
 function Player:setAttackEngineSettings(attackEngineSettings)
   if attackEngineSettings ~= self.settings.attackEngineSettings then
     self.settings.attackEngineSettings = attackEngineSettings
-    self.attackEngineSettingsChanged(attackEngineSettings)
+    self:emitSignal("attackEngineSettingsChanged", attackEngineSettings)
   end
 end
 
@@ -300,7 +299,7 @@ function Player:updateWithMenuState(menuState)
     if characters[menuState.selectedCharacterId] then
       -- picking their bundle for display is a bonus
       self.settings.selectedCharacterId = menuState.selectedCharacterId
-      self.selectedCharacterIdChanged(self.settings.selectedCharacterId)
+      self:emitSignal("selectedCharacterIdChanged", self.settings.selectedCharacterId)
     end
   elseif menuState.selectedCharacterId and characters[menuState.selectedCharacterId] then
     -- if we don't have their character rolled from their bundle, but the bundle itself, use that
@@ -317,7 +316,7 @@ function Player:updateWithMenuState(menuState)
     if stages[menuState.selectedStageId] then
       -- picking their bundle for display is a bonus
       self.settings.selectedStageId = menuState.selectedStageId
-      self.selectedStageIdChanged(self.settings.selectedStageId)
+      self:emitSignal("selectedStageIdChanged", self.settings.selectedStageId)
     end
   elseif menuState.selectedStageId and stages[menuState.selectedStageId] then
     -- if we don't have their stage rolled from their bundle, but the bundle itself, use that

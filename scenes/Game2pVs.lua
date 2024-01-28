@@ -11,7 +11,7 @@ local Game2pVs = class(
     self.nextScene = sceneParams.nextScene
 
     self:load(sceneParams)
-    Signal.connectSignal(self.match, "onMatchEnded", self, self.onMatchEnded)
+    self.match:connectSignal("matchEnded", self, self.onMatchEnded)
   end,
   GameBase
 )
