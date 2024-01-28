@@ -194,13 +194,13 @@ function GraphicsUtil.drawQuad(image, quad, x, y, rotation, xScale, yScale, xOff
 end
 
 -- Draws a rectangle at the given coordinates
-function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a)
+function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a, rx, ry)
   a = a or 1
   if r then
     GraphicsUtil.setColor(r, g, b, a)
   end
 
-  love.graphics.rectangle(mode, x, y, w, h)
+  love.graphics.rectangle(mode, x, y, w, h, rx, ry)
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 

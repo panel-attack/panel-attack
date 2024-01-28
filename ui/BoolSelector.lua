@@ -38,7 +38,7 @@ function BoolSelector:drawSelf()
   GraphicsUtil.applyAlignment(self, fakeCenteredChild)
   love.graphics.translate(self.x, self.y)
 
-  GraphicsUtil.drawRectangle("line", 0, 0, 30, 40, 10, 15)
+  GraphicsUtil.drawRectangle("line", 0, 0, 30, 40, nil, nil, nil, nil, 10, 15)
   if self.value then
     love.graphics.circle("fill", 15, 15, 10)
   else
