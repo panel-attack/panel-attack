@@ -46,77 +46,61 @@ local function createMainMenuButton(text, onClick, extraLabels, translate)
   return TextButton({label = Label({text = text, extraLabels = extraLabels, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick, width = BUTTON_WIDTH})
 end
 
-local menuItems = {
-  {
-    createMainMenuButton("mm_1_endless", function()
+local menuItems = {createMainMenuButton("mm_1_endless", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
       switchToScene(EndlessMenu())
-    end)
-  }, {
+    end), 
     createMainMenuButton("mm_1_puzzle", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
       switchToScene(PuzzleMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_1_time", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"))
       switchToScene(TimeAttackMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_1_vs", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
       switchToScene(CharacterSelectVsSelf())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_1_training", function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
       switchToScene(TrainingMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_1_challenge_mode", function()
       switchToScene(ChallengeModeMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_2_vs_online", function()
       switchToScene(Lobby({serverIp = "panelattack.com"}))
-    end, {""})
-  }, {
+    end, {""}),
     createMainMenuButton("mm_2_vs_local", function()
       local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
       if not battleRoom.hasShutdown then
         GAME.battleRoom = battleRoom
         switchToScene(CharacterSelect2p())
       end
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_replay_browser", function()
       switchToScene(ReplayBrowser())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_configure", function()
       switchToScene(InputConfigMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_set_name", function()
       switchToScene(SetNameMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_options", function()
       switchToScene(OptionsMenu())
-    end)
-  }, {
+    end),
     createMainMenuButton("mm_fullscreen", function()
       Menu.playValidationSfx()
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
-    end, {"\n(Alt+Enter)"})
-  },
-  {createMainMenuButton("mm_quit", love.event.quit)}
+    end, {"\n(Alt+Enter)"}),
+    createMainMenuButton("mm_quit", love.event.quit)
 }
 
-local debugMenuItems = {
-  {createMainMenuButton("Beta Server", function() switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})) end)},
-  {createMainMenuButton("Localhost Server", function() switchToScene(Lobby({serverIp = "Localhost"})) end)}
-}
+local debugMenuItems = {createMainMenuButton("Beta Server", function() switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})) end),
+                        createMainMenuButton("Localhost Server", function() switchToScene(Lobby({serverIp = "Localhost"})) end)
+                      }
 
 function MainMenu:addDebugMenuItems()
   if config.debugShowServers then
@@ -125,11 +109,9 @@ function MainMenu:addDebugMenuItems()
     end
   end
   if config.debugShowDesignHelper then
-    self.menu:addMenuItem(#self.menu.menuItems, {
-      createMainMenuButton("Design Helper", function()
+    self.menu:addMenuItem(#self.menu.menuItems, createMainMenuButton("Design Helper", function()
         switchToScene(DesignHelper())
-      end)
-    })
+      end))
   end
 end
 
@@ -140,13 +122,7 @@ function MainMenu:removeDebugMenuItems()
 end
 
 function MainMenu:load(sceneParams)
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  self.menu = Menu({
-    x = (consts.CANVAS_WIDTH / 2) - BUTTON_WIDTH / 2,
-    y = y,
-    menuItems = menuItems,
-    height = themes[config.theme].main_menu_max_height
-  })
+  self.menu = Menu.createCenteredMenu(menuItems)
   self.uiRoot:addChild(self.menu)
 
   self:addDebugMenuItems()
@@ -175,7 +151,7 @@ end
 
 function MainMenu:draw()
   self.backgroundImg:draw()
-  self.menu:draw()
+  self.uiRoot:draw()
   local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight / 2
 

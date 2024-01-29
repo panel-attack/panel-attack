@@ -3,6 +3,7 @@ local love = love
 
 local class = require("class")
 local UIElement = require("ui.UIElement")
+local StackPanel = require("ui.StackPanel")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local input = require("inputManager")
@@ -11,7 +12,9 @@ local GraphicsUtil = require("graphics_util")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 
---@module MainMenu
+-- Menu is a collection of buttons that stack vertically and supports scrolling and keyboard navigation.
+-- It requires the passed in menu items to have valid widths and adds padding between each. The height also must be passed in
+-- and the width is the maximum of all buttons.
 local Menu = class(
   function(self, options)
     self.selectedIndex = nil
@@ -25,16 +28,14 @@ local Menu = class(
     self.yOffset = 0
     self.firstActiveIndex = nil
     self.lastActiveIndex = nil
-    self.menuItemContainer = UIElement({})
-    self:addChild(self.menuItemContainer)
     self.itemHeight = options.itemHeight or 30
     self:setMenuItems(options.menuItems)
     
     self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
     self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/"}), translate = false, onClick = function() self:scrollDown() end})
     
-    self.menuItemContainer:addChild(self.upButton)
-    self.menuItemContainer:addChild(self.downButton)
+    self:addChild(self.upButton)
+    self:addChild(self.downButton)
 
     self:layout()
 
@@ -45,6 +46,37 @@ local Menu = class(
 
 Menu.BUTTON_HORIZONTAL_PADDING = 0
 Menu.BUTTON_VERTICAL_PADDING = 8
+
+function Menu.createCenteredMenu(items) 
+  local menu = Menu({
+    x = 0,
+    y = 0,
+    hAlign = "center",
+    vAlign = "center",
+    menuItems = items,
+    height = themes[config.theme].main_menu_max_height
+  })
+
+  return menu
+end
+
+-- Takes a label and an optional extra element and makes and combines them into a menu item
+-- which is suitable for inserting into a menu
+function Menu.createMenuItem(label, item)
+  assert(label ~= nil)
+
+  local padding = 16
+  local currentX = label.width + padding
+  if item ~= nil then
+    item.vAlign = "center"
+    item.x = currentX
+    label:addChild(item)
+    currentX = currentX + item.width + padding
+  end
+  label.width = currentX - padding
+
+  return label
+end
 
 -- Sets the menu items for this menu
 -- menuItems: a list of UIElement tuples of the form:
@@ -62,17 +94,9 @@ function Menu:setMenuItems(menuItems)
   self.menuItems = {}
   
   for i, menuItem in ipairs(menuItems) do
-    if i > 1 then 
-       menuItem[1].y = menuItems[i - 1][1].y + menuItems[i - 1][1].height + Menu.BUTTON_VERTICAL_PADDING
-    end
-    menuItem[1].height = math.max(self.itemHeight, menuItem[1].height)
-    if menuItem[2] then
-      menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
-      menuItem[2].height = math.max(self.itemHeight, menuItem[2].height)
-      menuItem[1]:addChild(menuItem[2])
-    end
-    self.menuItemContainer:addChild(menuItem[1])
-    self.menuItems[#self.menuItems + 1] = menuItem[1]
+    menuItem.height = math.max(self.itemHeight, menuItem.height)
+    self:addChild(menuItem)
+    self.menuItems[#self.menuItems + 1] = menuItem
   end
 end
 
@@ -110,7 +134,7 @@ function Menu:layout()
     currentY = currentY + menuItem.height + Menu.BUTTON_VERTICAL_PADDING
     if menuFull == false then
       self.lastActiveIndex = i
-      totalMenuHeight = realY
+      totalMenuHeight = realY + menuItem.height
     end
     self.width = math.max(self.width, menuItem.width)
   end
@@ -131,7 +155,7 @@ function Menu:addMenuItem(index, menuItem)
     menuItem[1]:addChild(menuItem[2])
   end
   table.insert(self.menuItems, index, menuItem[1])
-  self.menuItemContainer:addChild(menuItem[1])
+  self:addChild(menuItem[1])
 
   self:layout()
 end
@@ -275,7 +299,7 @@ end
 
 function Menu:drawSelf()
   local selectedItem = self.menuItems[self.selectedIndex]
-  local animationOpacity = (math.cos(6 * love.timer.getTime()) + 1) / 8 + 0.4
+  local animationOpacity = (math.cos(6 * love.timer.getTime()) + 1) / 8 + 0.2
   GraphicsUtil.drawRectangle("fill", self.x + selectedItem.x, self.y + selectedItem.y, selectedItem.width, selectedItem.height, 1, 1, 1, animationOpacity)
 end
 

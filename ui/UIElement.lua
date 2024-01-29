@@ -140,9 +140,6 @@ end
 --  the more opportune method is to simply remove it from the ui tree via detach()
 function UIElement:setVisibility(isVisible)
   self.isVisible = isVisible
-  for _, uiElement in ipairs(self.children) do
-    uiElement:setVisibility(isVisible)
-  end
   self:onVisibilityChanged()
 end
 

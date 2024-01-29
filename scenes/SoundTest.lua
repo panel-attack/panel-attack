@@ -200,25 +200,19 @@ function SoundTest:load()
 
   local menuLabelWidth = 120
   local soundTestMenuOptions = {
-    {Label({width = menuLabelWidth, text = "character"}), characterStepper},
-    {Label({width = menuLabelWidth, text = "stage"}), stageStepper},
-    {Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup},
-    {Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup},
-    {TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper},
-    {TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function()
+    Menu.createMenuItem(Label({width = menuLabelWidth, text = "character"}), characterStepper),
+    Menu.createMenuItem(Label({width = menuLabelWidth, text = "stage"}), stageStepper),
+    Menu.createMenuItem(Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup),
+    Menu.createMenuItem(Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup),
+    Menu.createMenuItem(TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper),
+    Menu.createMenuItem(TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function()
       stop_all_audio()
       themes[config.theme].sounds.menu_validate = menuValidateSound
       sceneManager:switchToScene(sceneManager:createScene("OptionsMenu"))
-    end})},
+    end})),
   }
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  soundTestMenu = Menu({
-    x = x - 20,
-    y = y + 10,
-    menuItems = soundTestMenuOptions, 
-    height = themes[config.theme].main_menu_max_height
-  })
+  soundTestMenu = Menu.createCenteredMenu(soundTestMenuOptions)
 
   self.uiRoot:addChild(soundTestMenu)
   
@@ -241,7 +235,7 @@ end
 
 function SoundTest:draw()
   self.backgroundImg:draw()
-  soundTestMenu:draw()
+  self.uiRoot:draw()
 end
 
 return SoundTest

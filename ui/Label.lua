@@ -6,7 +6,7 @@ local GraphicsUtil = require("graphics_util")
 local Label = class(
   function(self, options)
     self.hAlign = options.hAlign or "left"
-    self.vAlign = options.vAlign or "center"
+    self.vAlign = options.vAlign or "top"
 
     self:setText(options.text, options.extraLabels, options.translate)
 

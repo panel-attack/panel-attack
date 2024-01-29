@@ -166,28 +166,6 @@ function OptionsMenu:loadInfoScreen(text)
   return infoScreen
 end
 
-function OptionsMenu:repositionMenus()
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 20
-  y = y + 10
-  self.menus["baseMenu"].x = x
-  self.menus["baseMenu"].y = y
-  self.menus["generalMenu"].x = x
-  self.menus["generalMenu"].y = y
-  self.menus["graphicsMenu"].x = x
-  self.menus["graphicsMenu"].y = y
-  self.menus["soundTestMenu"].x = x
-  self.menus["soundTestMenu"].y = y
-  self.menus["audioMenu"].x = x
-  self.menus["audioMenu"].y = y
-  self.menus["debugMenu"].x = x
-  self.menus["debugMenu"].y = y
-  self.menus["aboutMenu"].x = x
-  self.menus["aboutMenu"].y = y
-  self.menus["modifyUserIdMenu"].x = x
-  self.menus["modifyUserIdMenu"].y = y
-end
-
 function OptionsMenu:loadBaseMenu()
   local languageLabels = {}
   for k, v in ipairs(languageName) do
@@ -209,58 +187,53 @@ function OptionsMenu:loadBaseMenu()
   })
 
   local baseMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_language"}), languageStepper}, {
-      TextButton({
+      Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_language"}), languageStepper),
+      Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_general"}),
         onClick = function()
           self:switchToScreen("generalMenu")
         end
-      })
-    }, {
-      TextButton({
+      })), 
+      Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_graphics"}),
         onClick = function()
           self:switchToScreen("graphicsMenu")
         end
-      })
-    }, {
-      TextButton({
+      })),
+      Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_audio"}),
         onClick = function()
           self:switchToScreen("audioMenu")
         end
-      })
-    }, {
-      TextButton({
+      })),
+      Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_debug"}),
         onClick = function()
           self:switchToScreen("debugMenu")
         end
-      })
-    }, {
-      TextButton({
+      })),
+      Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_about"}),
         onClick = function()
           self:switchToScreen("aboutMenu")
         end
-      })
-    }, {
-      TextButton({
+      })),
+      Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "Modify User ID", translate = false}),
         onClick = function()
           self:switchToScreen("modifyUserIdMenu")
         end
-      })
-    }, {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = self.exit})}
-  }
+      })),
+      Menu.createMenuItem(TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = self.exit}))
+    }
 
-  local menu = Menu({menuItems = baseMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(baseMenuOptions)
   return menu
 end
 
@@ -280,25 +253,24 @@ function OptionsMenu:loadGeneralMenu()
   })
 
   local generalMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
-    {Label({width = MENU_WIDTH, text = "op_fps"}), createToggleButtonGroup("show_fps")},
-    {Label({width = MENU_WIDTH, text = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")}, {
-      Label({width = MENU_WIDTH, text = "op_analytics"}), createToggleButtonGroup("enable_analytics", function()
-        analytics.init()
-      end)
-    }, {Label({width = MENU_WIDTH, text = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
-    {Label({width = MENU_WIDTH, text = "op_replay_public"}), publicReplayButtonGroup}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
-          self:switchToScreen("baseMenu")
-        end
-      })
-    }
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_fps"}), createToggleButtonGroup("show_fps")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_analytics"}), createToggleButtonGroup("enable_analytics", function()
+      analytics.init()
+    end)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_replay_public"}), publicReplayButtonGroup),
+    Menu.createMenuItem(TextButton({
+      width = MENU_WIDTH,
+      label = Label({text = "back"}),
+      onClick = function()
+        self:switchToScreen("baseMenu")
+      end
+    }))
   }
 
-  local menu = Menu({menuItems = generalMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(generalMenuOptions)
   return menu
 end
 
@@ -328,7 +300,6 @@ function OptionsMenu:loadGraphicsMenu()
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
       end
-      self:repositionMenus()
     end
   })
 
@@ -410,23 +381,23 @@ function OptionsMenu:loadGraphicsMenu()
   })
 
   local graphicsMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_theme"}), themeStepper}, {Label({width = MENU_WIDTH, text = "op_scale"}), scaleButtonGroup},
-    {Label({width = MENU_WIDTH, text = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
-    {Label({width = MENU_WIDTH, text = "op_popfx"}), createToggleButtonGroup("popfx")},
-    {Label({width = MENU_WIDTH, text = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
-    {Label({width = MENU_WIDTH, text = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")}, {
-      TextButton({
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_theme"}), themeStepper),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_scale"}), scaleButtonGroup),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_popfx"}), createToggleButtonGroup("popfx")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "back"}),
         onClick = function()
           GAME.showGameScaleUntil = GAME.timer
           self:switchToScreen("baseMenu")
         end
-      })
-    }
+      }))
   }
 
-  local menu = Menu({menuItems = graphicsMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(graphicsMenuOptions)
   if config.gameScaleType == "fixed" then
     menu:addMenuItem(3, fixedScaleGroup)
   end
@@ -435,19 +406,21 @@ end
 
 function OptionsMenu:loadSoundTestMenu()
   local soundTestMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "character"})}, {Label({width = MENU_WIDTH, text = "op_music_type"})},
-    {Label({width = MENU_WIDTH, text = "op_music_play"})}, {Label({width = MENU_WIDTH, text = "op_music_sfx"})}, {
-      TextButton({
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "character"})),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_music_type"})),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_music_play"})),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_music_sfx"})),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "back"}),
         onClick = function()
           self:switchToScreen("audioMenu")
         end
       })
-    }
+    )
   }
 
-  return Menu({menuItems = soundTestMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu.createCenteredMenu(soundTestMenuOptions)
 end
 
 function OptionsMenu:loadSoundMenu()
@@ -466,134 +439,120 @@ function OptionsMenu:loadSoundMenu()
   })
 
   local audioMenuOptions = {
-    {
-      Label({width = MENU_WIDTH, text = "op_vol"}), createConfigSlider("master_volume", 0, 100, function()
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_vol"}), createConfigSlider("master_volume", 0, 100, function()
         apply_config_volume()
-      end)
-    }, {
-      Label({width = MENU_WIDTH, text = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function()
+      end)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function()
         apply_config_volume()
-      end)
-    }, {
-      Label({width = MENU_WIDTH, text = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function()
+      end)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function()
         apply_config_volume()
-      end)
-    }, {Label({width = MENU_WIDTH, text = "op_use_music_from"}), musicFrequencyStepper},
-    {Label({width = MENU_WIDTH, text = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "mm_music_test"}),
-        onClick = function()
-          sceneManager:switchToScene(SoundTest())
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
-          self:switchToScreen("baseMenu")
-        end
-      })
-    }
+      end)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_use_music_from"}), musicFrequencyStepper),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")),
+    Menu.createMenuItem(TextButton({
+      width = MENU_WIDTH,
+      label = Label({text = "mm_music_test"}),
+      onClick = function()
+        sceneManager:switchToScene(SoundTest())
+      end
+    })),
+    Menu.createMenuItem(TextButton({
+      width = MENU_WIDTH,
+      label = Label({text = "back"}),
+      onClick = function()
+        self:switchToScreen("baseMenu")
+      end
+    }))
   }
 
-  local menu = Menu({menuItems = audioMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(audioMenuOptions)
   return menu
 end
 
 function OptionsMenu:loadDebugMenu()
   local debugMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_debug"}), createToggleButtonGroup("debug_mode")},
-    {Label({width = MENU_WIDTH, text = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", 0, 200)},
-    {Label({width = MENU_WIDTH, text = "Show Debug Servers", translate = false}), createToggleButtonGroup("debugShowServers")},
-    {Label({width = MENU_WIDTH, text = "Show Design Helper", translate = false}), createToggleButtonGroup("debugShowDesignHelper")}, {
-      TextButton({
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "op_debug"}), createToggleButtonGroup("debug_mode")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", 0, 200)),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "Show Debug Servers", translate = false}), createToggleButtonGroup("debugShowServers")),
+    Menu.createMenuItem(Label({width = MENU_WIDTH, text = "Show Design Helper", translate = false}), createToggleButtonGroup("debugShowDesignHelper")),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "back"}),
         onClick = function()
           self:switchToScreen("baseMenu")
         end
       })
-    }
+    )
   }
 
-  return Menu({menuItems = debugMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu.createCenteredMenu(debugMenuOptions)
 end
 
 function OptionsMenu:loadAboutMenu()
   local aboutMenuOptions = {
-    {
-      TextButton({
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_about_themes"}),
         onClick = function()
           self:switchToScreen("aboutThemes")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_about_characters"}),
         onClick = function()
           self:switchToScreen("aboutCharacters")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_about_stages"}),
         onClick = function()
           self:switchToScreen("aboutStages")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "op_about_panels"}),
         onClick = function()
           self:switchToScreen("aboutPanels")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "About Attack Files"}),
         translate = false,
         onClick = function()
           self:switchToScreen("aboutAttackFiles")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "Installing Mods"}),
         translate = false,
         onClick = function()
           self:switchToScreen("installingMods")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "System Info"}),
         translate = false,
         onClick = function()
           self:switchToScreen("systemInfo")
         end
-      })
-    }, {
-      TextButton({
+      })),
+    Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = "back"}),
         onClick = function()
           self:switchToScreen("baseMenu")
         end
-      })
-    }
+      }))
   }
 
-  local menu = Menu({menuItems = aboutMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(aboutMenuOptions)
   return menu
 end
 
@@ -601,32 +560,29 @@ function OptionsMenu:loadModifyUserIdMenu()
   local modifyUserIdOptions = {}
   local userIDDirectories = fileUtils.getFilteredDirectoryItems("servers")
   for i = 1, #userIDDirectories do
-    modifyUserIdOptions[#modifyUserIdOptions + 1] = {
-      TextButton({
+    modifyUserIdOptions[#modifyUserIdOptions + 1] = Menu.createMenuItem(TextButton({
         width = MENU_WIDTH,
         label = Label({text = userIDDirectories[i], translate = false}),
         onClick = function()
           sceneManager:switchToScene(SetUserIdMenu({serverIp = userIDDirectories[i]}))
-        end
+      end
       })
-    }
+    )
   end
-  modifyUserIdOptions[#modifyUserIdOptions + 1] = {
-    TextButton({
+  modifyUserIdOptions[#modifyUserIdOptions + 1] = Menu.createMenuItem(TextButton({
       width = MENU_WIDTH,
       label = Label({text = "back"}),
       onClick = function()
         self:switchToScreen("baseMenu")
       end
     })
-  }
+  )
 
-  return Menu({menuItems = modifyUserIdOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu.createCenteredMenu(modifyUserIdOptions)
 end
 
 function OptionsMenu:load()
   self.menus = self:loadScreens()
-  self:repositionMenus()
 
   self.backgroundImage = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then

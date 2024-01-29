@@ -159,49 +159,37 @@ end
 
 function InputConfigMenu:load(sceneParams)
   local menuOptions = {}
-  menuOptions[1] = {
-      Label({text = "configuration"}),
+  menuOptions[1] = Menu.createMenuItem(Label({text = "configuration"}),
       Slider({
-          min = 1,
-          max = input.maxConfigurations,
-          value = 1,
-          tickLength = 10,
-          onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end})
-    }
+        min = 1,
+        max = input.maxConfigurations,
+        value = 1,
+        tickLength = 10,
+        onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end}))
   for i, key in ipairs(consts.KEY_NAMES) do
     local keyName = self:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
+    local button = TextButton({
+      label = Label({
+        text = key,
+        translate = false
+      }),
+      onClick = function() 
+        if not self.settingKey then
+          self:setKeyStart(key)
+        end
+      end})
     local label = Label({text = keyName, translate = false, width = KEY_NAME_LABEL_WIDTH})
-    menuOptions[#menuOptions + 1] = {
-      TextButton({
-          label = Label({
-            text = key,
-            translate = false
-          }),
-          onClick = function() 
-            if not self.settingKey then
-              self:setKeyStart(key)
-            end
-          end}),
-      label}
+    menuOptions[#menuOptions + 1] = Menu.createMenuItem(button, label)
   end
-  menuOptions[#menuOptions + 1] = {
-    TextButton({label = Label({text = "op_all_keys"}),
-    onClick = function() self:setAllKeysStart() end})}
-  menuOptions[#menuOptions + 1] = {
-    TextButton({label = Label({text = "Clear All Inputs", translate = false}),
-    onClick = function() clearAllInputs(menuOptions) end})}
-  menuOptions[#menuOptions + 1] = {
-    TextButton({label = Label({text = "Reset Keys To Default", translate = false}),
-    onClick = function() self:resetToDefault(menuOptions) end})} 
-  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = exitMenu})}
+  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "op_all_keys"}),
+    onClick = function() self:setAllKeysStart() end}))
+  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "Clear All Inputs", translate = false}),
+    onClick = function() clearAllInputs(menuOptions) end}))
+  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "Reset Keys To Default", translate = false}),
+    onClick = function() self:resetToDefault(menuOptions) end}))
+  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu}))
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  self.menu = Menu({
-    x = x,
-    y = y,
-    menuItems = menuOptions,
-    height = themes[config.theme].main_menu_max_height,
-  })
+  self.menu = Menu.createCenteredMenu(menuOptions)
 
   self.uiRoot:addChild(self.menu)
 
@@ -233,7 +221,7 @@ end
 
 function InputConfigMenu:draw()
   themes[config.theme].images.bg_main:draw()
-  self.menu:draw()
+  self.uiRoot:draw()
 end
 
 return InputConfigMenu
