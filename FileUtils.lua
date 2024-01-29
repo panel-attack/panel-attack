@@ -1,4 +1,3 @@
-local class = require("class")
 local logger = require("logger")
 
 local PREFIX_OF_IGNORED_DIRECTORIES = "__"

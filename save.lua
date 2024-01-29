@@ -13,7 +13,7 @@ local save = {}
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keysV3.txt")
+      local file = love.filesystem.newFile("keysV2.txt")
       file:open("w")
       file:write(json.encode(inputManager.inputConfigurations))
       file:close()
@@ -23,30 +23,10 @@ end
 
 -- reads the "keys.txt" file
 function save.read_key_file()
-  local file = love.filesystem.newFile("keysV3.txt")
-  local ok, err = file:open("r")
-  local migrateInputs = false
-  
-  if not ok then
-    file = love.filesystem.newFile("keysV2.txt")
-    ok, err = file:open("r")
-    migrateInputs = true
-  end
-  
-  if not ok then
-    return inputManager.inputConfigurations
-  end
-  
-  local jsonInputConfig = file:read(file:getSize())
-  file:close()
-  
-  local inputConfigs = json.decode(jsonInputConfig)
-  
-  if migrateInputs then
-    -- migrate old input configs
-    inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
-  end
-  
+  local inputConfigs = fileUtils.readJsonFile("keysV2.txt")
+
+  inputConfigs = inputManager:mapInputConfigs(inputConfigs)
+
   return inputConfigs
 end
 

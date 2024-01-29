@@ -333,7 +333,7 @@ local function convertKey(key)
   return key
 end
 
-function inputManager:migrateInputConfigs(inputConfigs)
+function inputManager:mapInputConfigs(inputConfigs)
   local oldToNewKeyMap = {
     up = "Up",
     down = "Down",
