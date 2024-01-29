@@ -145,7 +145,7 @@ function MainMenu:load(sceneParams)
     x = (consts.CANVAS_WIDTH / 2) - BUTTON_WIDTH / 2,
     y = y,
     menuItems = menuItems,
-    maxHeight = themes[config.theme].main_menu_max_height
+    height = themes[config.theme].main_menu_max_height
   })
   self.uiRoot:addChild(self.menu)
 
