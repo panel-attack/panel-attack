@@ -826,7 +826,7 @@ function Match:handleMatchEnd()
     end
     if #winners == 1 then
       -- ideally this would be public player id
-      self.replay.winnerIndex = tableUtils.indexOf(self.players, function(p) return p.name == winners[1].name end)
+      self.replay.winnerIndex = tableUtils.indexOf(self.players, winners[1])
     end
   end
 
