@@ -382,12 +382,6 @@ function GraphicsUtil.getAnchorOffset(uiElement)
   return xOffset, yOffset
 end
 
-function GraphicsUtil.applyAlignment(parentElement, childElement)
-  love.graphics.push("transform")
-  love.graphics.translate(GraphicsUtil.getAlignmentOffset(parentElement, childElement))
-end
-
-
 function GraphicsUtil.applyOffset(childElement, parentElement)
   local x1, y1 = GraphicsUtil.getAlignmentOffset(parentElement, childElement)
   local x2, y2 = GraphicsUtil.getAnchorOffset(childElement)
