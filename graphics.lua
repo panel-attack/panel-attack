@@ -89,22 +89,22 @@ function Stack.draw_cards(self)
     if consts.CARD_ANIMATION[card.frame] then
       local draw_x = (self.panelOriginX) + (card.x - 1) * 16
       local draw_y = (self.panelOriginY) + (11 - card.y) * 16 + self.displacement - consts.CARD_ANIMATION[card.frame]
-      if config.popfx == true and card.frame then
-        burstFrameDimension = card.burstAtlas:getWidth() / 9
-        -- draw cardfx
-        if card.frame <= 21 then
-          radius = (200 - (card.frame * 7)) * (config.cardfx_scale / 100)
+      -- Draw burst around card
+      if card.burstAtlas and card.frame then
+        local burstFrameDimension = card.burstAtlas:getWidth() / 9
+
+        local radius = -37.6 * math.log(card.frame) + 132.81
+        local maxRadius = 8
+        if radius < maxRadius then
+          radius = maxRadius
         end
-        if card.frame > 21 then
-          radius = (100 - (card.frame * 3)) * (config.cardfx_scale / 100)
-        end
-        if radius < 10 then
-          radius = 10
-        end
+
         for i = 1, 6, 1 do
           local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
           local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
+          GraphicsUtil.setColor(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
           GraphicsUtil.drawQuadGfxScaled(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
+          GraphicsUtil.setColor(1, 1, 1, 1)
         end
       end
       -- draw card
@@ -117,13 +117,24 @@ function Stack.draw_cards(self)
       end
       if cardImage then
         local icon_width, icon_height = cardImage:getDimensions()
-        local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
-        GraphicsUtil.setColor(1, 1, 1, fade)
+        GraphicsUtil.setColor(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
         GraphicsUtil.drawGfxScaled(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
         GraphicsUtil.setColor(1, 1, 1, 1)
       end
     end
   end
+end
+
+function Stack:opacityForFrame(frame, startFadeFrame, maxFadeFrame)
+  local opacity = 1
+  if frame >= startFadeFrame then
+    local currentFrame = frame - startFadeFrame
+    local maxFrame = maxFadeFrame - startFadeFrame
+    local minOpacity = 0.5
+    local maxOpacitySubtract = 1 - minOpacity
+    opacity = 1 - math.min(maxOpacitySubtract * (currentFrame / maxFrame), maxOpacitySubtract)
+  end
+  return opacity
 end
 
 -- Update all the pop animations
@@ -174,6 +185,9 @@ function Stack.draw_popfxs(self)
     local fadeParticle_atlas = popfx.fadeAtlas
     local fadeParticle = popfx.fadeParticle
     local fadeFrameDimension = popfx.fadeFrameDimension
+
+    set_color(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
+    
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
         burstFrame = POPFX_BURST_ANIMATION[popfx.frame]
@@ -193,7 +207,7 @@ function Stack.draw_popfxs(self)
             {x = draw_x + 10 + (burstFrame[1] * 2), y = draw_y}
           }
 
-          if characters[self.character].popfx_burstrotate == true then
+          if characters[self.character].popfx_burstRotate == true then
             topRot = {math.rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
             bottomRot = {math.rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
             leftRot = {math.rad(-45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
@@ -205,65 +219,27 @@ function Stack.draw_popfxs(self)
             rightRot = {0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
           end
 
-          randomMax = 0
-
-          if popsize == "normal" then
-            randomMax = 4
-          end
-          if popsize == "big" then
-            randomMax = 6
-          end
-          if popsize == "giant" then
-            randomMax = 8
-          end
-          if popsize ~= "small" and popfx.bigTimer == 0 then
-            big_position = math.random(randomMax)
-            big_position = 0
-            popfx.bigTimer = 2
-          end
-          popfx.bigTimer = popfx.bigTimer - 1
-
           -- four corner
-          if big_position ~= 1 then
-            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          if big_position ~= 2 then
-            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          if big_position ~= 3 then
-            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          if big_position ~= 4 then
-            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
+          GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+          GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+          GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+          GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+
           -- top and bottom
           if popfx.popsize == "big" or popfx.popsize == "giant" then
-            if big_position ~= 5 then
-              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
-            if big_position ~= 6 then
-              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
+
           -- left and right
           if popfx.popsize == "giant" then
-            if big_position ~= 7 then
-              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
-            if big_position ~= 8 then
-              GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
+            GraphicsUtil.drawQuadGfxScaled(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
           end
-        --big particle
-        --[[
-          if popsize ~= "small" then
-            GraphicsUtil.drawQuadGfxScaled(particle_atlas, popfx.bigParticle, 
-            positions[big_position].x, positions[big_position].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2)
-          end
-        ]]
         end
       end
     end
+    
     if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["fade"] then
         fadeFrame = POPFX_FADE_ANIMATION[popfx.frame]
@@ -273,6 +249,8 @@ function Stack.draw_popfxs(self)
         end
       end
     end
+
+    GraphicsUtil.setColor(1, 1, 1, 1)
   end
 end
 
@@ -779,13 +757,22 @@ end
 function Stack:drawMoveCount()
   -- draw outside of stack's frame canvas
   if self.puzzle then
-    self:drawLabel(self.theme.images.IMG_moves, self.theme.moveLabel_Pos, self.theme.moveLabel_Scale, false, true)
+    self:drawLabel(themes[config.theme].images.IMG_moves, themes[config.theme].moveLabel_Pos, themes[config.theme].moveLabel_Scale, false, true)
     local moveNumber = math.abs(self.puzzle.remaining_moves)
     if self.puzzle.puzzleType == "moves" then
       moveNumber = self.puzzle.remaining_moves
     end
-    self:drawNumber(moveNumber, self.theme.move_Pos, self.theme.move_Scale, true)
+    self:drawNumber(moveNumber, themes[config.theme].move_Pos, themes[config.theme].move_Scale, true)
   end
+end
+
+function Stack:drawTopLayers()
+  if self.telegraph then
+    self.telegraph:render()
+  end
+
+  self:draw_popfxs()
+  self:draw_cards()
 end
 
 function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)

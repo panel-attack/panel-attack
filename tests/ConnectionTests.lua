@@ -18,7 +18,7 @@ testServer.playerbase:addPlayer(2, "Ben")
 
 function testLoginInvalidName()  
   local connection = Connection(nil, 1, testServer)
-  
+
   -- blank name
   local denyReason, _ = connection:canLogin(2, nil, "1.1.1.1", consts.ENGINE_VERSION)
   assert(denyReason ~= nil)
@@ -30,8 +30,8 @@ function testLoginInvalidName()
   -- Anonymous
   denyReason, _ = connection:canLogin(2, "Anonymous", "1.1.1.1", consts.ENGINE_VERSION)
   assert(denyReason ~= nil)
-    
-  -- defaultnam
+
+  -- defaultname
   denyReason, _ = connection:canLogin(2, "defaultnam", "1.1.1.1", consts.ENGINE_VERSION)
   assert(denyReason ~= nil)
 
@@ -48,7 +48,7 @@ testLoginInvalidName()
 
 function testLoginInvalidUserID()  
   local connection = Connection(nil, 1, testServer)
-  
+
   -- no user ID
   local denyReason, _ = connection:canLogin(nil, "Bob", "1.1.1.1", consts.ENGINE_VERSION)
   assert(denyReason ~= nil)
@@ -70,16 +70,16 @@ testLoginInvalidUserID()
 
 function testLoginDeniedForInvalidVersion()  
   local connection = Connection(nil, 1, testServer)
-  
+
   local denyReason, playerBan = connection:canLogin(2, "BEN", "1.1.1.1", "XXX")
   assert(denyReason ~= nil)
 end
 
 testLoginDeniedForInvalidVersion()
 
-function testLoginAllowed()  
+function testLoginAllowed()
   local connection = Connection(nil, 1, testServer)
-  
+
   -- can login if have account and username case changed
   local denyReason, playerBan = connection:canLogin(2, "BEN", "1.1.1.1", consts.ENGINE_VERSION)
   assert(denyReason == nil and playerBan == nil)
@@ -95,7 +95,7 @@ function testLoginAllowed()
   -- can login with new account if name not taken
   denyReason, playerBan = connection:canLogin("need a new user id", "Joseph", "1.1.1.1", consts.ENGINE_VERSION)
   assert(denyReason == nil and playerBan == nil)
-  
+
 end
 
 testLoginAllowed()

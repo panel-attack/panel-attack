@@ -30,6 +30,8 @@ consts.ENGINE_VERSIONS.LEVELDATA = "048"
 consts.ENGINE_VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 consts.VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
+ENGINE_VERSION = VERSION -- temporary until sceneRefactor lands on beta
+
 consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 consts.COUNTDOWN_START = 8
 consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps

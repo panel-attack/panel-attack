@@ -73,7 +73,7 @@ end
 function CharacterLoader.addCharactersFromDirectoryRecursively(path)
   local lfs = love.filesystem
   local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
-  for i, v in ipairs(raw_dir_list) do
+  for _, v in ipairs(raw_dir_list) do
     local current_path = path .. "/" .. v
     if lfs.getInfo(current_path) and lfs.getInfo(current_path).type == "directory" then
       -- call recursively: facade folder
