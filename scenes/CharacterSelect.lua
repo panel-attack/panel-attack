@@ -417,7 +417,7 @@ function CharacterSelect:createPanelCarousel(player, height)
   end
 
   panelCarousel.onBackCallback = function()
-    self.ui.panelCarousel:setPassengerById(player.settings.panelId)
+    panelCarousel:setPassengerById(player.settings.panelId)
   end
 
   panelCarousel.onPassengerUpdateCallback = function ()
