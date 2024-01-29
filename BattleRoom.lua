@@ -269,7 +269,7 @@ function BattleRoom:refreshReadyStates()
     -- all needed assets for players are loaded
     and self.allAssetsLoaded
     -- every local human player has an input configuration assigned
-    and ((player.isLocal and player.human and player.inputConfiguration.usedByPlayer ~= nil) or (player.isLocal and not player.human))
+    and ((player.isLocal and player.human and player.inputConfiguration) or (player.isLocal and not player.human))
   end
 end
 
@@ -370,7 +370,7 @@ end
 function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   if lock then
     for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
-      if not inputConfiguration.usedByPlayer and tableUtils.length(inputConfiguration.isDown) > 0 then
+      if not inputConfiguration.claimed and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:restrictInputs(inputConfiguration)
         player:disconnectSignal("wantsReadyChanged", player)
@@ -423,7 +423,7 @@ end
 function BattleRoom:tryAssignInputConfigurations()
   if self.tryLockInputs then
     for _, player in ipairs(self.players) do
-      if player.isLocal and player.human and not player.inputConfiguration.usedByPlayer then
+      if player.isLocal and player.human and not player.inputConfiguration then
         -- in n player local, the first player can effectively ready up everyone before they can assign their input config
         if player.settings.wantsReady then
           -- so unready so they can finish configuring rather than having the game immediately start
@@ -434,7 +434,7 @@ function BattleRoom:tryAssignInputConfigurations()
     end
     self.tryLockInputs = tableUtils.trueForAny(self.players,
                           function(p)
-                            return p.isLocal and p.human and not p.inputConfiguration.usedByPlayer
+                            return p.isLocal and p.human and not p.inputConfiguration
                           end)
   end
 end

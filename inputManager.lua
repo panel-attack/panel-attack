@@ -12,7 +12,8 @@ local consts = require("consts")
 --     isUp/isDown is set to one of the KEY_CHANGE enum values, see that definition for details
 -- Key groups: 
 --   allKeys: every key read in by LOVE (includes keyboard, controller, and joystick) 
---   base (top level): all keys mapped by the input.configuration aliased to the consts.KEY_NAMES 
+--   inputConfigurations: raw key inputs mapped to internal aliases for that configuration
+--   base (top level): the union of all inputConfigurations not already claimed by a player
 --   mouse: all mouse buttons and the position of the mouse
 local inputManager = {
   isDown = {},
@@ -226,11 +227,15 @@ function inputManager:updateKeyMaps()
       self.inputConfigurations[i].isUp[keyAlias] = self.allKeys.isUp[key]
       self.inputConfigurations[i].isPressed[keyAlias] = self.allKeys.isPressed[key]
 
-      self:aliasKey(key, keyAlias)
+      if not self.inputConfigurations[i].claimed then
+        -- the top level inputs only contain unclaimed inputs
+        self:aliasKey(key, keyAlias)
+      end
 
       -- copy over configured keys into the menu reserved key aliases if they are not menu reserved keys themselves
       if keyNameToMenuKeys[keyAlias] and not menuReservedKeys[key] then
         local menuKeyAlias = keyNameToMenuKeys[keyAlias]
+        -- but they may contain the generic Menu input representation as these are meant to be used only in non-exclusive ways
         self:aliasKey(key, menuKeyAlias)
       end
     end
@@ -365,7 +370,8 @@ for i = 1, inputManager.maxConfigurations do
     isPressed = {},
     isUp = {},
     isPressedWithRepeat = isPressedWithRepeat,
-    usedByPlayer = nil
+    claimed = false,
+    player = nil
   }
 end
 
@@ -377,6 +383,34 @@ function inputManager:importConfigurations(configurations)
       self.inputConfigurations[i][key] = value
     end
   end
+end
+
+function inputManager:claimConfiguration(player, inputConfiguration)
+  if inputConfiguration.claimed and inputConfiguration.player ~= player then
+    error("Trying to assign input configuration to player " .. player.playerNumber ..
+      " that is already in use by player " .. inputConfiguration.player.playerNumber)
+  end
+
+  inputConfiguration.claimed = true
+  inputConfiguration.player = player
+
+  self:updateKeyMaps()
+
+  return inputConfiguration
+end
+
+function inputManager:releaseConfiguration(player, inputConfiguration)
+  if not inputConfiguration.claimed then
+    error("Trying to release an unclaimed inputConfiguration")
+  elseif inputConfiguration.player ~= player then
+    error("Trying to release input configuration of player " .. inputConfiguration.player.playerNumber ..
+    " through player " .. player.playerNumber)
+  end
+
+  inputConfiguration.claimed = false
+  inputConfiguration.player = nil
+
+  self:updateKeyMaps()
 end
 
 return inputManager
