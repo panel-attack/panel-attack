@@ -459,7 +459,7 @@ function Stack.render(self)
 
   -- Draw the cursor
   if self:game_ended() == false then
-    self:render_cursor()
+    self:render_cursor(shake)
   end
 
   self:drawCountdown()
@@ -487,7 +487,7 @@ function Stack:drawRating()
 end
 
 -- Draw the stacks cursor
-function Stack.render_cursor(self)
+function Stack:render_cursor(shake)
   if self.inputMethod == "touch" then
     if self.cur_row == 0 and self.cur_col == 0 then
       --no panel is touched, let's not draw the cursor
@@ -496,8 +496,6 @@ function Stack.render_cursor(self)
   end
 
   local cursorImage = self.theme.images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   local desiredCursorWidth = 40
   local panelWidth = 16
   local scale_x = desiredCursorWidth / cursorImage:getWidth()

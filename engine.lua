@@ -1637,11 +1637,7 @@ function Stack:game_ended()
   if self.game_over_clock > 0 then
     return self.clock >= self.game_over_clock
   else
-    if #self.gameWinConditions > 0 then
-      return self:checkGameWin()
-    else
-      return false
-    end
+    return self:checkGameWin()
   end
 end
 
@@ -2270,5 +2266,11 @@ function Stack:checkGameWin()
       end
     end
   end
+
+  -- match is over and we didn't die so clearly we won
+  if self.match.ended and self.game_over_clock <= 0 then
+    return true
+  end
+
   return false
 end
