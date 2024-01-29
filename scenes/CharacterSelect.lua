@@ -569,8 +569,20 @@ function CharacterSelect:createRecordsBox()
   local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "center"})
 
   local lastLines = UiElement({hFill = true})
-  local lastLinesLabel = PixelFontLabel({ text = "last lines", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
-  local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  local lastLinesLabel = PixelFontLabel({
+    text = "last lines",
+    xScale = 0.5,
+    yScale = 1,
+    hAlign = "left",
+    x = 20
+  })
+  local lastLinesValue = PixelFontLabel({
+    text = self.lastScore,
+    xScale = 0.5,
+    yScale = 1,
+    hAlign = "right",
+    hAnchor = "right",
+    x = -20})
   lastLines.height = lastLinesLabel.height + 4
   lastLines.label = lastLinesLabel
   lastLines.value = lastLinesValue
@@ -580,8 +592,21 @@ function CharacterSelect:createRecordsBox()
   stackPanel:addElement(lastLines)
 
   local record = UiElement({hFill = true})
-  local recordLabel = PixelFontLabel({ text = "record", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
-  local recordValue = PixelFontLabel({ text = self.record, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  local recordLabel = PixelFontLabel({
+    text = "record",
+    xScale = 0.5,
+    yScale = 1,
+    hAlign = "left",
+    x = 20
+  })
+  local recordValue = PixelFontLabel({
+    text = self.record,
+    xScale = 0.5,
+    yScale = 1,
+    hAlign = "right",
+    hAnchor = "right",
+    x = -20
+  })
   record.height = recordLabel.height + 4
   record.label = recordLabel
   record.value = recordValue

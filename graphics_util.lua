@@ -333,6 +333,8 @@ function GraphicsUtil.drawClearText(text, x, y, ox, oy)
   GraphicsUtil.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
 end
 
+-- returns an offset for a childElement inside of a parentElement so that
+-- x=0, y=0 aligns the childElement inside the parentElement according to its alignment settings
 function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
   local xOffset, yOffset
   if childElement.hAlign == "center" then
@@ -356,15 +358,45 @@ function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
   return xOffset, yOffset
 end
 
--- sets the translation for a childElement inside of a parentElement so that
--- x=0, y=0 aligns the childElement inside the parentElement according to the settings
+-- returns a draw offset for an element based on its anchor settings
+function GraphicsUtil.getAnchorOffset(uiElement)
+  local xOffset, yOffset = 0, 0
+  if uiElement.hAnchor and uiElement.vAnchor then
+    if uiElement.hAnchor == "right" then
+      xOffset = - uiElement.width
+    elseif uiElement.hAnchor == "center" then
+      xOffset = - uiElement.width / 2
+      -- elseif uiElement.hAnchor == "left" then
+      -- x = 0
+    end
+
+    if uiElement.vAnchor == "bottom" then
+      yOffset = - uiElement.height
+    elseif uiElement.vAnchor == "center" then
+      yOffset = - uiElement.height / 2
+      --elseif uiElement.vAnchor == "top" then
+      -- y = 0
+    end
+  end
+
+  return xOffset, yOffset
+end
+
 function GraphicsUtil.applyAlignment(parentElement, childElement)
   love.graphics.push("transform")
   love.graphics.translate(GraphicsUtil.getAlignmentOffset(parentElement, childElement))
 end
 
+
+function GraphicsUtil.applyOffset(childElement, parentElement)
+  local x1, y1 = GraphicsUtil.getAlignmentOffset(parentElement, childElement)
+  local x2, y2 = GraphicsUtil.getAnchorOffset(childElement)
+  love.graphics.push("transform")
+  love.graphics.translate(x1 + x2, y1 + y2)
+end
+
 -- resets the translation of the last alignment adjustment
-function GraphicsUtil.resetAlignment()
+function GraphicsUtil.resetOffset()
   love.graphics.pop()
 end
 

@@ -35,7 +35,7 @@ function BoolSelector:drawSelf()
 
   -- we want these to be centered but creating a Rectangle / Circle ui element is maybe a bit too much?
   -- so just apply the translation via a fake element with all necessary props
-  GraphicsUtil.applyAlignment(self, fakeCenteredChild)
+  GraphicsUtil.applyOffset(fakeCenteredChild, self)
   love.graphics.translate(self.x, self.y)
 
   GraphicsUtil.drawRectangle("line", 0, 0, 30, 40, nil, nil, nil, nil, 10, 15)

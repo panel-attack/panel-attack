@@ -26,6 +26,9 @@ local UIElement = class(
     self.hFill = options.hFill or false
     -- vFill true sets the height to the size of the parent
     self.vFill = options.vFill or false
+
+    self.hAnchor = options.hAnchor or "left"
+    self.vAnchor = options.vAnchor or "top"
     
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
@@ -125,9 +128,9 @@ end
 function UIElement:drawChildren()
   for _, uiElement in ipairs(self.children) do
     if uiElement.isVisible then
-      GraphicsUtil.applyAlignment(self, uiElement)
+      GraphicsUtil.applyOffset(uiElement, self)
       uiElement:draw()
-      GraphicsUtil.resetAlignment()
+      GraphicsUtil.resetOffset()
     end
   end
 end

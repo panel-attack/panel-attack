@@ -227,6 +227,8 @@ function Theme.graphics_init(self)
       image = bgOverlay,
       hAlign = "center",
       vAlign = "center",
+      hAnchor = "center",
+      vAnchor = "center",
       width = consts.CANVAS_WIDTH,
       height = consts.CANVAS_HEIGHT
     })
@@ -237,6 +239,8 @@ function Theme.graphics_init(self)
       image = fgOverlay,
       hAlign = "center",
       vAlign = "center",
+      hAnchor = "center",
+      vAnchor = "center",
       width = consts.CANVAS_WIDTH,
       height = consts.CANVAS_HEIGHT
     })
