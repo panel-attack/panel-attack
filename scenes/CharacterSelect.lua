@@ -126,6 +126,35 @@ function CharacterSelect:createPlayerIcon(player)
   })
   playerIcon:addChild(playerName)
 
+  -- load icon
+  local loadIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_loading,
+    hAlign = "center",
+    vAlign = "center",
+    hFill = true,
+    vFill = true
+  })
+  loadIcon.update = function(self, loaded)
+    self:setVisibility(not loaded)
+  end
+  player:connectSignal("hasLoadedChanged", loadIcon, loadIcon.update)
+  playerIcon:addChild(loadIcon)
+
+  -- ready icon
+  local readyIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_ready,
+    hAlign = "center",
+    vAlign = "center",
+    hFill = true,
+    vFill = true,
+    isVisible = false
+  })
+  readyIcon.update = function(self, ready)
+    self:setVisibility(ready)
+  end
+  player:connectSignal("readyChanged", readyIcon, readyIcon.update)
+  playerIcon:addChild(readyIcon)
+
   return playerIcon
 end
 

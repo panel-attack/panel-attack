@@ -17,6 +17,7 @@ local MatchParticipant = class(function(self)
     panelId = config.panels,
     wantsReady = false
   }
+  self.ready = false
   self.human = false
 
   Signal.turnIntoEmitter(self)
@@ -29,6 +30,7 @@ local MatchParticipant = class(function(self)
   self:createSignal("characterIdChanged")
   self:createSignal("selectedCharacterIdChanged")
   self:createSignal("wantsReadyChanged")
+  self:createSignal("readyChanged")
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -101,6 +103,13 @@ function MatchParticipant:setWantsReady(wantsReady)
   if wantsReady ~= self.settings.wantsReady then
     self.settings.wantsReady = wantsReady
     self:emitSignal("wantsReadyChanged", wantsReady)
+  end
+end
+
+function MatchParticipant:setReady(ready)
+  if ready ~= self.ready then
+    self.ready = ready
+    self:emitSignal("readyChanged", ready)
   end
 end
 
