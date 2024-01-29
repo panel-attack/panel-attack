@@ -186,7 +186,7 @@ function Stack.draw_popfxs(self)
     local fadeParticle = popfx.fadeParticle
     local fadeFrameDimension = popfx.fadeFrameDimension
 
-    set_color(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
+    GraphicsUtil.setColor(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
     
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
@@ -239,7 +239,7 @@ function Stack.draw_popfxs(self)
         end
       end
     end
-    
+
     if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["fade"] then
         fadeFrame = POPFX_FADE_ANIMATION[popfx.frame]
