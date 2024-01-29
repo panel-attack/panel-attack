@@ -10,12 +10,12 @@ local logger = require("logger")
 local save = {}
 
 -- writes to the "keys.txt" file
-function write_key_file()
+function write_key_file(keymaps)
   pcall(
     function()
       local file = love.filesystem.newFile("keysV2.txt")
       file:open("w")
-      file:write(json.encode(inputManager.inputConfigurations))
+      file:write(json.encode(keymaps))
       file:close()
     end
   )

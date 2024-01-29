@@ -76,7 +76,7 @@ function InputConfigMenu:updateKey(key, pressedKey, index)
   GAME.input.inputConfigurations[configIndex][key] = pressedKey
   local keyDisplayName = self:getKeyDisplayName(pressedKey)
   self.menu.menuItems[index + 1].children[2]:setText(keyDisplayName)
-  write_key_file()
+  write_key_file(GAME.input:getKeyMapTable())
 end
 
 function InputConfigMenu:setKey(key, index)
@@ -132,7 +132,7 @@ local function clearAllInputs(menuOptions)
     local keyName = loc("op_none")
     menuOptions[i + 1][2]:setText(keyName)
   end
-  write_key_file()
+  write_key_file(GAME.input:getKeyMapTable())
 end
 
 function InputConfigMenu:resetToDefault(menuOptions) 
@@ -149,7 +149,7 @@ function InputConfigMenu:resetToDefault(menuOptions)
     end
   end
   self:updateInputConfigMenuLabels(1)
-  write_key_file() 
+  write_key_file(GAME.input:getKeyMapTable())
 end
 
 local function exitMenu()

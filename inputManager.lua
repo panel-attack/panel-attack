@@ -379,4 +379,26 @@ function inputManager:importConfigurations(configurations)
   end
 end
 
+function inputManager:getKeyMapTable()
+  local keyMaps = {}
+  for i, inputConfig in ipairs(self.inputConfigurations) do
+    local keyMap = {}
+    keyMap["up"] = inputConfig["Up"]
+    keyMap["down"] = inputConfig["Down"]
+    keyMap["left"] = inputConfig["Left"]
+    keyMap["right"] = inputConfig["Right"]
+    keyMap["swap1"] = inputConfig["Swap1"]
+    keyMap["swap2"] = inputConfig["Swap2"]
+    keyMap["taunt_up"] = inputConfig["TauntUp"]
+    keyMap["taunt_down"] = inputConfig["TauntDown"]
+    keyMap["raise1"] = inputConfig["Raise1"]
+    keyMap["raise2"] = inputConfig["Raise2"]
+    keyMap["pause"] = inputConfig["Start"]
+
+    keyMaps[i] = keyMap
+  end
+
+  return keyMaps
+end
+
 return inputManager
