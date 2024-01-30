@@ -291,12 +291,14 @@ function Stack:drawDebug()
     GraphicsUtil.print(loc("pl_cleared", (self.panels_cleared or 0)), x, y + 165)
     GraphicsUtil.print(loc("pl_metal", (self.metal_panels_queued or 0)), x, y + 180)
 
-    if self.input_state or self.taunt_up or self.taunt_down then
+    local input = self.confirmedInput[self.clock]
+
+    if input or self.taunt_up or self.taunt_down then
       local iraise, iswap, iup, idown, ileft, iright
       if self.inputMethod == "touch" then
-        iraise, _, _ = TouchDataEncoding.latinStringToTouchData(self.input_state, self.width)
-      else 
-        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[self.input_state])
+        iraise, _, _ = TouchDataEncoding.latinStringToTouchData(input, self.width)
+      else
+        iraise, iswap, iup, idown, ileft, iright = unpack(base64decode[input])
       end
       local inputs_to_print = "inputs:"
       if iraise then
