@@ -200,6 +200,7 @@ function InputConfigMenu:load(sceneParams)
     x = x,
     y = y,
     menuItems = menuOptions,
+    height = themes[config.theme].main_menu_max_height,
   })
 
   self.uiRoot:addChild(self.menu)

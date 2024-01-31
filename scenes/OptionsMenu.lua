@@ -260,7 +260,7 @@ function OptionsMenu:loadBaseMenu()
     }, {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = self.exit})}
   }
 
-  local menu = Menu({menuItems = baseMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu({menuItems = baseMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   return menu
 end
 
@@ -298,7 +298,7 @@ function OptionsMenu:loadGeneralMenu()
     }
   }
 
-  local menu = Menu({menuItems = generalMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu({menuItems = generalMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   return menu
 end
 
@@ -426,7 +426,7 @@ function OptionsMenu:loadGraphicsMenu()
     }
   }
 
-  local menu = Menu({menuItems = graphicsMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu({menuItems = graphicsMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   if config.gameScaleType == "fixed" then
     menu:addMenuItem(3, fixedScaleGroup)
   end
@@ -447,7 +447,7 @@ function OptionsMenu:loadSoundTestMenu()
     }
   }
 
-  return Menu({menuItems = soundTestMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu({menuItems = soundTestMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
 end
 
 function OptionsMenu:loadSoundMenu()
@@ -498,7 +498,7 @@ function OptionsMenu:loadSoundMenu()
     }
   }
 
-  local menu = Menu({menuItems = audioMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu({menuItems = audioMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   return menu
 end
 
@@ -518,7 +518,7 @@ function OptionsMenu:loadDebugMenu()
     }
   }
 
-  return Menu({menuItems = debugMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu({menuItems = debugMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
 end
 
 function OptionsMenu:loadAboutMenu()
@@ -593,7 +593,7 @@ function OptionsMenu:loadAboutMenu()
     }
   }
 
-  local menu = Menu({menuItems = aboutMenuOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu({menuItems = aboutMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
   return menu
 end
 
@@ -621,7 +621,7 @@ function OptionsMenu:loadModifyUserIdMenu()
     })
   }
 
-  return Menu({menuItems = modifyUserIdOptions, maxHeight = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu({menuItems = modifyUserIdOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
 end
 
 function OptionsMenu:load()

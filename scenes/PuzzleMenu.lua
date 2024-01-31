@@ -119,7 +119,7 @@ function PuzzleMenu:load(sceneParams)
     x = x,
     y = y,
     menuItems = menuOptions,
-    maxHeight = themes[config.theme].main_menu_max_height
+    height = themes[config.theme].main_menu_max_height
   })
 
   self.uiRoot:addChild(self.menu)

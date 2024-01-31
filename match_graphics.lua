@@ -160,9 +160,7 @@ function Match:render()
       for i = 1, #self.stacks do
         local stack = self.stacks[i]
         stack:render()
-        if stack.telegraph then
-          stack.telegraph:render()
-        end
+        stack:drawTopLayers()
       end
 
       -- Draw VS HUD

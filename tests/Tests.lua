@@ -22,7 +22,7 @@ if SERVER_MODE then
 else
   runTestFile("StackTests")
   --runTestFile("tests.StackGraphicsTests")
-  --runTestFile("tests.InputTests")
+  runTestFile("tests.InputTests")
   runTestFile("PuzzleTests")
   runTestFile("tests.PanelGenTests")
   runTestFile("tests.ThemeTests")

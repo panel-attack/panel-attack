@@ -134,13 +134,13 @@ function SimpleGameSetupMenu:load(sceneParams)
     x = x,
     y = y,
     menuItems = classicMenuOptions, 
-    maxHeight = themes[config.theme].main_menu_max_height
+    height = themes[config.theme].main_menu_max_height
   })
   self.modernMenu = Menu({
     x = x,
     y = y,
     menuItems = modernMenuOptions,
-    maxHeight = themes[config.theme].main_menu_max_height
+    height = themes[config.theme].main_menu_max_height
   })
   if self.typeButtons.value == "Classic" then
     self.uiRoot:addChild(self.classicMenu)

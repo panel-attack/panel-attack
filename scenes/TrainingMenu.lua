@@ -134,6 +134,7 @@ function TrainingMenu:load(sceneParams)
     x = x,
     y = y,
     menuItems = menuItems,
+    height = themes[config.theme].main_menu_max_height,
   })
   self.uiRoot:addChild(self.menu)
 end
