@@ -1,5 +1,4 @@
 require("class")
-local consts = require("consts")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local NetworkProtocol = require("network.NetworkProtocol")
@@ -280,8 +279,8 @@ function Connection:canLogin(userID, name, IP_logging_in, engineVersion)
   local playerBan = self.server:isPlayerBanned(IP_logging_in)
   local denyReason = nil
   if playerBan then
-  elseif engineVersion ~= consts.ENGINE_VERSION and not ANY_ENGINE_VERSION_ENABLED then
-    denyReason = "Please update your game, server expects engine version: " .. consts.ENGINE_VERSION
+  elseif engineVersion ~= ENGINE_VERSION and not ANY_ENGINE_VERSION_ENABLED then
+    denyReason = "Please update your game, server expects engine version: " .. ENGINE_VERSION
   elseif not name or name == "" then
     denyReason = "Name cannot be blank"
   elseif string.lower(name) == "anonymous" then

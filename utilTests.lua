@@ -126,3 +126,14 @@ local function testFramesToTimeStringHours()
 end
 
 testFramesToTimeStringHours()
+
+
+local function testfloatsEqualWithPrecision()
+  assert(math.floatsEqualWithPrecision(1, 1, 20))
+  assert(math.floatsEqualWithPrecision(1, 2, 20) == false)
+  assert(math.floatsEqualWithPrecision(1.333, 1.334, 2))
+  assert(math.floatsEqualWithPrecision(1.333, 1.334, 3) == false)
+end
+
+testfloatsEqualWithPrecision()
+
