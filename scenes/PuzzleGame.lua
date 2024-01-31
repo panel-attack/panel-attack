@@ -59,7 +59,7 @@ function PuzzleGame:customGameOverSetup()
     else
       self.keepMusic = true
       self.nextScene = "PuzzleGame"
-      self.match.P1:setPuzzleIndex(self.puzzleIndex + 1)
+      self.match.players[1]:setPuzzleIndex(self.puzzleIndex + 1)
       local match = GAME.battleRoom:createMatch()
       match:start()
       -- The character and stage and music and background should all state the same until you complete the whole puzzle set
@@ -70,8 +70,7 @@ function PuzzleGame:customGameOverSetup()
     self.text = loc("pl_you_lose")
     self.keepMusic = true
     self.nextScene = "PuzzleGame"
-    local match = GAME.battleRoom:createMatch()
-    match:start()
+    local match = GAME.battleRoom:startMatch()
     self.nextSceneParams = {puzzleSet = self.puzzleSet, puzzleIndex = self.puzzleIndex, character = self.match.players[1].stack.character, loadStageAndMusic = false, match = match}
   end
 end
