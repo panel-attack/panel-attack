@@ -110,6 +110,9 @@ end
 function UIElement:draw()
   if self.isVisible then
     self:drawSelf()
+    -- if DEBUG_ENABLED then
+    --   GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height, 1, 1, 1, 0.5)
+    -- end
     love.graphics.push("transform")
     love.graphics.translate(self.x, self.y)
     self:drawChildren()

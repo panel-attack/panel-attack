@@ -217,7 +217,7 @@ function SoundTest:load()
     x = x - 20,
     y = y + 10,
     menuItems = soundTestMenuOptions, 
-    maxHeight = themes[config.theme].main_menu_max_height
+    height = themes[config.theme].main_menu_max_height
   })
 
   self.uiRoot:addChild(soundTestMenu)
