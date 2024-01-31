@@ -152,8 +152,8 @@ function love.quit()
   if PROFILING_ENABLED then
     GAME.profiler.report("profiler.log")
   end
-  if GAME.tcpClient:isConnected() then
-    GAME.tpcClient:sendRequest(ClientMessages.logout())
+  if GAME.tcpClient and GAME.tcpClient:isConnected() then
+    GAME.tcpClient:sendRequest(ClientMessages.logout())
   end
   love.audio.stop()
   if love.window.getFullscreen() then
