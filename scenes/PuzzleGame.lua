@@ -44,6 +44,12 @@ function PuzzleGame:customRun()
 end
 
 function PuzzleGame:customGameOverSetup()
+  -- currently puzzle game bypasses the match start mechanism of BattleRoom
+  -- as the player releases their inputs on puzzle end, we need to force BattleRoom to reassign it asap
+  -- otherwise the match will crash due to the player not having an input configuration assigned
+  -- long term, match start should get removed from here and instead player properties should be set
+  GAME.battleRoom.tryLockInputs = true
+
   if self.match.P1.game_over_clock <= 0 then -- writes successful puzzle replay and ends game
     self.text = loc("pl_you_win")
     if self.puzzleIndex == #self.puzzleSet.puzzles then
@@ -53,6 +59,7 @@ function PuzzleGame:customGameOverSetup()
     else
       self.keepMusic = true
       self.nextScene = "PuzzleGame"
+      self.match.P1:setPuzzleIndex(self.puzzleIndex + 1)
       local match = GAME.battleRoom:createMatch()
       match:start()
       -- The character and stage and music and background should all state the same until you complete the whole puzzle set

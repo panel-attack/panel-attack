@@ -31,6 +31,7 @@ local Player = class(function(self, name, publicId, isLocal)
     inputMethod = "controller",
     attackEngineSettings = nil,
     puzzleSet = nil,
+    puzzleIndex = nil
   }
   -- planned for the future, players don't have public ids yet
   self.publicId = publicId or -1
@@ -208,6 +209,12 @@ function Player:setPuzzleSet(puzzleSet)
   if puzzleSet ~= self.settings.puzzleSet then
     self.settings.puzzleSet = puzzleSet
     self:emitSignal("puzzleSetChanged", puzzleSet)
+  end
+end
+
+function Player:setPuzzleIndex(puzzleIndex)
+  if puzzleIndex ~= self.settings.puzzleIndex then
+    self.settings.puzzleIndex = puzzleIndex
   end
 end
 
