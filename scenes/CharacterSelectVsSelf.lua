@@ -29,7 +29,16 @@ end
 function CharacterSelectVsSelf:loadUserInterface()
   local player = GAME.battleRoom.players[1]
 
-  self.ui.grid = Grid({unitSize = 98, gridWidth = 9, gridHeight = 6, unitMargin = 7, hAlign = "center", vAlign = "center"})
+  self.ui.grid = Grid({
+    unitSize = 98,
+    gridWidth = 9,
+    gridHeight = 6,
+    unitMargin = 7,
+    hAlign = "center",
+    vAlign = "center",
+    hAnchor = "center",
+    vAnchor = "center"
+  })
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.characterIcons[1] = self:createPlayerIcon(player)
@@ -48,7 +57,7 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
 
   local stageCarousel = self:createStageCarousel(player, self.ui.grid.unitSize * 3 - self.ui.grid.unitMargin * 2)
-  self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
+  self.ui.stageSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", hAnchor = "center", vAlign = "center", vAnchor = "center"})
   self.ui.stageSelection:setTitle("stage")
   self.ui.stageSelection:addElement(stageCarousel, player)
   self.ui.grid:createElementAt(3, 2, 3, 1, "stageSelection", self.ui.stageSelection)

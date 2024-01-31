@@ -8,6 +8,9 @@ local Label = class(
     self.hAlign = options.hAlign or "left"
     self.vAlign = options.vAlign or "center"
 
+    self.hAnchor = options.hAnchor or "center"
+    self.vAnchor = options.vAnchor or "center"
+
     self:setText(options.text, options.extraLabels, options.translate)
 
     self.TYPE = "Label"

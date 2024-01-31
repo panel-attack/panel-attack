@@ -44,10 +44,12 @@ function MultiPlayerSelectionWrapper:setTitle(string)
   if self.alignment == "top" or self.alignment == "bottom" then
     self.title.hAlign = "center"
     self.title.vAlign = self.alignment
+    self.title.vAnchor = self.alignment
     StackPanel.insertElementAtIndex(self, self.title, 1)
   else
     self.title.hAlign = "center"
     self.title.vAlign = "top"
+    self.title.vAnchor = "top"
     self:addChild(self.title)
   end
 end

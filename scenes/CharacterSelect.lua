@@ -574,7 +574,8 @@ function CharacterSelect:createRecordsBox()
     xScale = 0.5,
     yScale = 1,
     hAlign = "left",
-    x = 20
+    hAnchor = "left",
+    x = 20,
   })
   local lastLinesValue = PixelFontLabel({
     text = self.lastScore,
@@ -582,7 +583,8 @@ function CharacterSelect:createRecordsBox()
     yScale = 1,
     hAlign = "right",
     hAnchor = "right",
-    x = -20})
+    x = -20,
+  })
   lastLines.height = lastLinesLabel.height + 4
   lastLines.label = lastLinesLabel
   lastLines.value = lastLinesValue
@@ -597,6 +599,7 @@ function CharacterSelect:createRecordsBox()
     xScale = 0.5,
     yScale = 1,
     hAlign = "left",
+    hAnchor = "left",
     x = 20
   })
   local recordValue = PixelFontLabel({

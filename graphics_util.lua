@@ -338,18 +338,18 @@ end
 function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
   local xOffset, yOffset
   if childElement.hAlign == "center" then
-    xOffset = parentElement.width / 2 - childElement.width / 2
+    xOffset = parentElement.width / 2
   elseif childElement.hAlign == "right" then
-    xOffset = parentElement.width - childElement.width
+    xOffset = parentElement.width
   else -- if hAlign == "left" then
     -- default
     xOffset = 0
   end
 
   if childElement.vAlign == "center" then
-    yOffset = parentElement.height / 2 - childElement.height / 2
+    yOffset = parentElement.height / 2
   elseif childElement.vAlign == "bottom" then
-    yOffset = parentElement.height - childElement.height
+    yOffset = parentElement.height
   else --if uiElement.vAlign == "top" then
     -- default
     yOffset = 0

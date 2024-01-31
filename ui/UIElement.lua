@@ -27,8 +27,8 @@ local UIElement = class(
     -- vFill true sets the height to the size of the parent
     self.vFill = options.vFill or false
 
-    self.hAnchor = options.hAnchor or "left"
-    self.vAnchor = options.vAnchor or "top"
+    self.hAnchor = options.hAnchor or options.hAlign or "left"
+    self.vAnchor = options.vAnchor or options.vAlign or "top"
     
     -- whether the ui element is visible
     self.isVisible = options.isVisible or options.isVisible == nil and true
