@@ -373,7 +373,6 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
       if not inputConfiguration.claimed and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:restrictInputs(inputConfiguration)
-        player:disconnectSignal("wantsReadyChanged", player)
         break
       end
     end
@@ -424,11 +423,6 @@ function BattleRoom:tryAssignInputConfigurations()
   if self.tryLockInputs then
     for _, player in ipairs(self.players) do
       if player.isLocal and player.human and not player.inputConfiguration then
-        -- in n player local, the first player can effectively ready up everyone before they can assign their input config
-        if player.settings.wantsReady then
-          -- so unready so they can finish configuring rather than having the game immediately start
-          player:setWantsReady(false)
-        end
         BattleRoom.updateInputConfigurationForPlayer(player, true)
       end
     end
