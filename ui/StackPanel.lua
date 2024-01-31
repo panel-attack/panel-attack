@@ -5,7 +5,7 @@ local GraphicsUtil = require("graphics_util")
 
 -- StackPanel is a layouting element that stacks up all its children in one direction based on an alignment setting
 -- Useful for auto-aligning multiple ui elements that only know one of their dimensions
-local StackPanel = class(function(stackPanel, options, items)
+local StackPanel = class(function(stackPanel, options)
   -- all children are aligned automatically towards that option inside the StackPanel
   -- possible values: "left", "right", "top", "bottom"
   stackPanel.alignment = options.alignment
@@ -16,13 +16,6 @@ local StackPanel = class(function(stackPanel, options, items)
   -- a stack panel does not have a size limit it's alignment dimension grows with its content
 
   stackPanel.TYPE = "StackPanel"
-
-  if items and #items > 0 then
-    for i, item in ipairs(items) do
-      stackPanel:addElement(item)
-      stackPanel.height = math.max(stackPanel.height, item.height)
-    end
-  end
 end,
 UiElement)
 
