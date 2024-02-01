@@ -317,6 +317,8 @@ function Theme.graphics_init(self)
       quads[j] = GraphicsUtil:newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
     end
     self.images.levelNumberAtlas[i].quads = quads
+    self.images.levelNumberAtlas[i].charWidth = charWidth
+    self.images.levelNumberAtlas[i].charHeight = charHeight
   end
 
   self.images.IMG_casual = self:load_theme_img("casual")
