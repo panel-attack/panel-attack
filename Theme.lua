@@ -403,6 +403,7 @@ function Theme.graphics_init(self)
   self.images.cursor = {}
   -- Cursor animation is 2 frames
   for i = 1, 2 do
+    self.images.cursor[i] = {}
     -- Cursor images used to be named weird and make modders think they were for different players
     -- Load either format from the custom theme, and fallback to the built in cursor otherwise.
     local cursorImage = self:load_theme_img("cursor" .. i, false)
