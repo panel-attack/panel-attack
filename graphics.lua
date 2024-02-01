@@ -495,7 +495,7 @@ function Stack.render_cursor(self)
     end
   end
 
-  local cursorImage = self.theme.images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
+  local cursorImage = self.theme.images.cursor[(floor(self.clock / 16) % 2) + 1]
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
   local desiredCursorWidth = 40

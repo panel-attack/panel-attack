@@ -392,7 +392,6 @@ function Theme.graphics_init(self)
   local MAX_SUPPORTED_PLAYERS = 2
   self.images.IMG_char_sel_cursors = {}
   self.images.IMG_players = {}
-  self.images.IMG_cursor = {}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
     self.images.IMG_players[player_num] = self:load_theme_img("p" .. player_num)
     self.images.IMG_char_sel_cursors[player_num] = {}
@@ -401,6 +400,7 @@ function Theme.graphics_init(self)
     end
   end
 
+  self.images.cursor = {}
   -- Cursor animation is 2 frames
   for i = 1, 2 do
     -- Cursor images used to be named weird and make modders think they were for different players
@@ -415,7 +415,22 @@ function Theme.graphics_init(self)
       end
     end
     assert(cursorImage ~= nil)
-    self.images.IMG_cursor[i] = cursorImage
+    self.images.cursor[i].image = cursorImage
+    local width, height = cursorImage:getDimensions()
+    self.images.cursor[i].quad = GraphicsUtil.newRecycledQuad(0, 0, width, height, width, height)
+    self.images.cursor[i].touchQuads = { }
+    -- For touch we will show just one panels worth of cursor. 
+    -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
+    -- The cursor image has a margin that extends past the panel and two panels in the middle
+    -- We want to render the margin and just the outer half of the panel
+    local cursorWidth = 40
+    local panelWidth = 16
+    local margin = (cursorWidth - panelWidth * 2) / 2
+    local halfCursorWidth = margin + panelWidth / 2
+    local percentDesired = halfCursorWidth / 40
+    local quadWidth = math.floor(width * percentDesired)
+    self.images.cursor[i].touchQuads[1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, height, width, height)
+    self.images.cursor[i].touchQuads[2] = GraphicsUtil:newRecycledQuad(width-quadWidth, 0, quadWidth, height, width, height)
   end
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
