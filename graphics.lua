@@ -618,8 +618,7 @@ function Stack:drawLevel()
     local x = self:elementOriginXWithOffset(self.theme.level_Pos, false)
     local y = self:elementOriginYWithOffset(self.theme.level_Pos, false)
     local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
-    self.level_quad:setViewport(tonumber(self.level - 1) * levelAtlas.charWidth, 0, levelAtlas.charWidth, levelAtlas.charHeight, levelAtlas.image:getDimensions())
-    GraphicsUtil.drawQuad(levelAtlas.image, self.level_quad, x, y, 0, 28 / levelAtlas.charWidth * self.theme.level_Scale, 26 / levelAtlas.charHeight * self.theme.level_Scale, 0, 0, self.multiplication)
+    GraphicsUtil.drawQuad(levelAtlas.image, levelAtlas.quads[self.level], x, y, 0, 28 / levelAtlas.charWidth * self.theme.level_Scale, 26 / levelAtlas.charHeight * self.theme.level_Scale, 0, 0, self.multiplication)
   end
 end
 
