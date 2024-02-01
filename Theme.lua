@@ -303,23 +303,7 @@ function Theme.graphics_init(self)
 
   self.images.IMG_wins = self:load_theme_img("wins")
 
-  self.images.levelNumberAtlas = {}
-  self.images.levelNumberAtlas[1] = {}
-  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
-  self.images.levelNumberAtlas[2] = {}
-  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
-  local levels = 11
-  for i = 1, #self.images.levelNumberAtlas do
-    local charWidth = self.images.levelNumberAtlas[i].image:getWidth() / levels
-    local charHeight = self.images.levelNumberAtlas[i].image:getHeight()
-    local quads = {}
-    for j = 1, levels do
-      quads[j] = GraphicsUtil:newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
-    end
-    self.images.levelNumberAtlas[i].quads = quads
-    self.images.levelNumberAtlas[i].charWidth = charWidth
-    self.images.levelNumberAtlas[i].charHeight = charHeight
-  end
+  self:loadLevelNumberAtlasses()
 
   self.images.IMG_casual = self:load_theme_img("casual")
   self.images.IMG_ranked = self:load_theme_img("ranked")
@@ -402,6 +386,54 @@ function Theme.graphics_init(self)
     end
   end
 
+  self:loadGameCursor()
+
+  self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
+  for player_num = 1, MAX_SUPPORTED_PLAYERS do
+    self.images.IMG_char_sel_cursor_halves.left[player_num] = {}
+    for position_num = 1, 2 do
+      local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width / 2, cur_height / 2 -- TODO: is these unused vars an error ??? -Endu
+      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = GraphicsUtil:newRecycledQuad(0, 0, half_width, cur_height, cur_width, cur_height)
+    end
+    self.images.IMG_char_sel_cursor_halves.right[player_num] = {}
+    for position_num = 1, 2 do
+      local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
+      local half_width, half_height = cur_width / 2, cur_height / 2
+      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = GraphicsUtil:newRecycledQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
+    end
+  end
+
+  for key, value in pairs(fileUtils.getFilteredDirectoryItems(Theme.themeDirectoryPath .. self.name)) do
+    if value:lower():match(".*%.ttf") then -- Any .ttf file
+      self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
+      GraphicsUtil.setGlobalFont(self.font.path, self.font.size)
+      break
+    end
+  end
+end
+
+function Theme:loadLevelNumberAtlasses()
+  self.images.levelNumberAtlas = {}
+  self.images.levelNumberAtlas[1] = {}
+  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
+  self.images.levelNumberAtlas[2] = {}
+  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
+  local levels = 11
+  for i = 1, #self.images.levelNumberAtlas do
+    local charWidth = self.images.levelNumberAtlas[i].image:getWidth() / levels
+    local charHeight = self.images.levelNumberAtlas[i].image:getHeight()
+    local quads = {}
+    for j = 1, levels do
+      quads[j] = GraphicsUtil:newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
+    end
+    self.images.levelNumberAtlas[i].quads = quads
+    self.images.levelNumberAtlas[i].charWidth = charWidth
+    self.images.levelNumberAtlas[i].charHeight = charHeight
+  end
+end
+
+function Theme:loadGameCursor()
   self.images.cursor = {}
   -- Cursor animation is 2 frames
   for i = 1, 2 do
@@ -433,30 +465,6 @@ function Theme.graphics_init(self)
     local quadWidth = math.floor(imageWidth * percentDesired)
     self.images.cursor[i].touchQuads[1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
     self.images.cursor[i].touchQuads[2] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
-  end
-
-  self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
-  for player_num = 1, MAX_SUPPORTED_PLAYERS do
-    self.images.IMG_char_sel_cursor_halves.left[player_num] = {}
-    for position_num = 1, 2 do
-      local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
-      local half_width, half_height = cur_width / 2, cur_height / 2 -- TODO: is these unused vars an error ??? -Endu
-      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = GraphicsUtil:newRecycledQuad(0, 0, half_width, cur_height, cur_width, cur_height)
-    end
-    self.images.IMG_char_sel_cursor_halves.right[player_num] = {}
-    for position_num = 1, 2 do
-      local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
-      local half_width, half_height = cur_width / 2, cur_height / 2
-      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = GraphicsUtil:newRecycledQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
-    end
-  end
-
-  for key, value in pairs(fileUtils.getFilteredDirectoryItems(Theme.themeDirectoryPath .. self.name)) do
-    if value:lower():match(".*%.ttf") then -- Any .ttf file
-      self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
-      GraphicsUtil.setGlobalFont(self.font.path, self.font.size)
-      break
-    end
   end
 end
 
