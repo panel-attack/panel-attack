@@ -273,8 +273,6 @@ Stack =
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
     s.multiBarFrameCount = s:calculateMultibarFrameCount()
-
-    s:createCursors()
   end,
   StackBase
 )
@@ -311,29 +309,6 @@ function Stack:calculateMultibarFrameCount()
   return math.max(240, minFrameCount)
 end
 
-function Stack:createCursors()
-  local cursorImage = themes[config.theme].images.IMG_cursor[1]
-  local imageWidth = cursorImage:getWidth()
-  local imageHeight = cursorImage:getHeight()
-  self.cursorQuads = {}
-  if self.inputMethod == "touch" then
-    -- For touch we will show just one panels worth of cursor. 
-    -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
-    -- The cursor image has a margin that extends past the panel and two panels in the middle
-    -- We want to render the margin and just the outer half of the panel
-    local cursorWidth = 40
-    local panelWidth = 16
-    local margin = (cursorWidth - panelWidth * 2) / 2
-    local halfCursorWidth = margin + panelWidth / 2
-    local percentDesired = halfCursorWidth / 40
-    local quadWidth = math.floor(imageWidth * percentDesired)
-    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
-    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
-  else
-    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, imageWidth, imageHeight, imageWidth, imageHeight)
-  end
-end
-
 -- Should be called prior to clearing the stack.
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
@@ -342,9 +317,6 @@ function Stack:deinit()
   GraphicsUtil:releaseQuad(self.multi_prestopQuad)
   GraphicsUtil:releaseQuad(self.multi_stopQuad)
   GraphicsUtil:releaseQuad(self.multi_shakeQuad)
-  for _, quad in ipairs(self.cursorQuads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
 end
 
 function Stack.divergenceString(stackToTest)
