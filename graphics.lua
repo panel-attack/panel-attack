@@ -475,26 +475,25 @@ function Stack:render_cursor(shake)
     end
   end
 
-  local renderCursor = true
   if self.countdown_timer then
     if self.clock % 2 ~= 0 then
-      renderCursor = false
+      -- for some reason we want the cursor to blink during countdown
+      return
     end
   end
-  if renderCursor then
-    local cursor = self.theme.images.cursor[(floor(self.clock / 16) % 2) + 1]
-    local desiredCursorWidth = 40
-    local panelWidth = 16
-    local scale_x = desiredCursorWidth / cursor.image:getWidth()
-    local scale_y = 24 / cursor.image:getHeight()
-    local xPosition = (self.cur_col - 1) * panelWidth
 
-    if self.inputMethod == "touch" then
-      GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
-      GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
-    else
-      GraphicsUtil.drawGfxScaled(cursor.image, xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
-    end
+  local cursor = self.theme.images.cursor[(floor(self.clock / 16) % 2) + 1]
+  local desiredCursorWidth = 40
+  local panelWidth = 16
+  local scale_x = desiredCursorWidth / cursor.image:getWidth()
+  local scale_y = 24 / cursor.image:getHeight()
+  local xPosition = (self.cur_col - 1) * panelWidth
+
+  if self.inputMethod == "touch" then
+    GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+  else
+    GraphicsUtil.drawGfxScaled(cursor.image, xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
   end
 end
 
