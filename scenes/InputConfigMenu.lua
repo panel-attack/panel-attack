@@ -1,4 +1,5 @@
 local Scene = require("scenes.Scene")
+local tableUtils = require("tableUtils")
 local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
 local Label = require("ui.Label")
@@ -26,9 +27,11 @@ local InputConfigMenu = class(
 InputConfigMenu.name = "InputConfigMenu"
 sceneManager:addScene(InputConfigMenu)
 
-local KEY_NAME_LABEL_WIDTH = 200
+-- Sometimes controllers register buttons as "pressed" even though they aren't. If they have been pressed longer than this they don't count.
+local MAX_PRESS_DURATION = 0.5
+local KEY_NAME_LABEL_WIDTH = 180
+local PADDING = 8
 local pendingInputText = "__"
-local configIndex = 1
 
 local function shortenControllerName(name)
   local nameToShortName = {
@@ -41,7 +44,6 @@ end
 -- NOT_SETTING: when we are not polling for a new key
 -- SETTING_KEY_TRANSITION: skip a frame so we don't use the button activation key as the configured key
 -- SETTING_KEY: currently polling for a single key
--- SETTING_ALL_KEY_TRANSITION: skip a frame so we don't use the button activation key as the configured key
 -- SETTING_ALL_KEYS: currently polling for all keys
 -- This is only used within this file, external users should simply treat isDown/isUp as a boolean
 local KEY_SETTING_STATE = { NOT_SETTING = nil, SETTING_KEY_TRANSITION = 1, SETTING_KEY = 2, SETTING_ALL_KEYS_TRANSITION = 3, SETTING_ALL_KEYS = 4 }
@@ -63,19 +65,18 @@ function InputConfigMenu:getKeyDisplayName(key)
 end
 
 function InputConfigMenu:updateInputConfigMenuLabels(index)
-  configIndex = index
-  Menu.playMoveSfx()
+  self.configIndex = index
   for i, key in ipairs(consts.KEY_NAMES) do
-    local keyDisplayName = self:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
-    self.menu.menuItems[i + 1].children[2]:setText(keyDisplayName)
+    local keyDisplayName = self:getKeyDisplayName(GAME.input.inputConfigurations[self.configIndex][key])
+    self:currentKeyLabelForIndex(i + 1):setText(keyDisplayName)
   end
 end
 
 function InputConfigMenu:updateKey(key, pressedKey, index)
   Menu.playValidationSfx()
-  GAME.input.inputConfigurations[configIndex][key] = pressedKey
+  GAME.input.inputConfigurations[self.configIndex][key] = pressedKey
   local keyDisplayName = self:getKeyDisplayName(pressedKey)
-  self.menu.menuItems[index + 1].children[2]:setText(keyDisplayName)
+  self:currentKeyLabelForIndex(index + 1):setText(keyDisplayName)
   write_key_file()
 end
 
@@ -93,13 +94,17 @@ function InputConfigMenu:setAllKeys()
     self:updateKey(consts.KEY_NAMES[self.index], pressedKey, self.index)
     if self.index < #consts.KEY_NAMES then
       self.index = self.index + 1
-      self.menu.menuItems[self.index + 1].children[2]:setText(pendingInputText)
+      self:currentKeyLabelForIndex(self.index + 1):setText(pendingInputText)
       self.menu.selectedIndex = self.index + 1
       self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
     else
       self:setSettingKeyState(KEY_SETTING_STATE.NOT_SETTING)
     end
   end
+end
+
+function InputConfigMenu:currentKeyLabelForIndex(index)
+  return self.menu.menuItems[index].children[2].children[1]
 end
 
 function InputConfigMenu:setKeyStart(key)
@@ -112,7 +117,7 @@ function InputConfigMenu:setKeyStart(key)
       break
     end
   end
-  self.menu.menuItems[self.index + 1].children[2]:setText(pendingInputText)
+  self:currentKeyLabelForIndex(self.index + 1):setText(pendingInputText)
   self.menu.selectedIndex = self.index + 1
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_KEY_TRANSITION)
 end
@@ -120,17 +125,17 @@ end
 function InputConfigMenu:setAllKeysStart()
   Menu.playValidationSfx()
   self.index = 1
-  self.menu.menuItems[self.index + 1].children[2]:setText(pendingInputText)
+  self:currentKeyLabelForIndex(self.index + 1):setText(pendingInputText)
   self.menu:setSelectedIndex(self.index + 1)
   self:setSettingKeyState(KEY_SETTING_STATE.SETTING_ALL_KEYS_TRANSITION)
 end
 
-local function clearAllInputs(menuOptions)
+function InputConfigMenu:clearAllInputs()
   Menu.playValidationSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
-    GAME.input.inputConfigurations[configIndex][key] = nil
+    GAME.input.inputConfigurations[self.configIndex][key] = nil
     local keyName = loc("op_none")
-    menuOptions[i + 1][2]:setText(keyName)
+    self:currentKeyLabelForIndex(i + 1):setText(keyName)
   end
   write_key_file()
 end
@@ -140,14 +145,16 @@ function InputConfigMenu:resetToDefault(menuOptions)
   local i = 1 
   for keyName, key in pairs(input.defaultKeys) do 
     GAME.input.inputConfigurations[1][keyName] = key
-    menuOptions[i + 1][2]:setText(GAME.input.inputConfigurations[1][keyName])
+    self:currentKeyLabelForIndex(i + 1):setText(GAME.input.inputConfigurations[1][keyName])
     i = i + 1 
   end
-  for i = 2, input.maxConfigurations do
+  for j = 2, input.maxConfigurations do
     for _, key in ipairs(consts.KEY_NAMES) do
-      GAME.input.inputConfigurations[i][key] = nil
+      GAME.input.inputConfigurations[j][key] = nil
     end
   end
+  Menu.playMoveSfx()
+  self.slider:setValue(1)
   self:updateInputConfigMenuLabels(1)
   write_key_file() 
 end
@@ -158,33 +165,49 @@ local function exitMenu()
 end
 
 function InputConfigMenu:load(sceneParams)
+  self.configIndex = 1
   local menuOptions = {}
-  menuOptions[1] = Menu.createMenuItem(Label({text = "configuration"}),
-      Slider({
-        min = 1,
-        max = input.maxConfigurations,
-        value = 1,
-        tickLength = 10,
-        onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end}))
+  self.slider = Slider({
+    min = 1,
+    max = input.maxConfigurations,
+    value = 1,
+    tickLength = 10,
+    onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end})
+  menuOptions[1] = Menu.createMenuItem(Label({text = "configuration"}), self.slider)
   for i, key in ipairs(consts.KEY_NAMES) do
-    local keyName = self:getKeyDisplayName(GAME.input.inputConfigurations[configIndex][key])
-    local button = TextButton({
+    local clickFunction = function() 
+      if not self.settingKey then
+        self:setKeyStart(key)
+      end
+    end
+    local keyName = self:getKeyDisplayName(GAME.input.inputConfigurations[self.configIndex][key])
+    local keyNameButton = TextButton({
+      width = KEY_NAME_LABEL_WIDTH,
+      height = Menu.DEFAULT_BUTTON_HEIGHT,
       label = Label({
         text = key,
         translate = false
       }),
-      onClick = function() 
-        if not self.settingKey then
-          self:setKeyStart(key)
-        end
-      end})
-    local label = Label({text = keyName, translate = false, width = KEY_NAME_LABEL_WIDTH})
-    menuOptions[#menuOptions + 1] = Menu.createMenuItem(button, label)
+      onClick = clickFunction
+    })
+    local changeKeyButton = TextButton({
+      x = keyNameButton.width + PADDING,
+      vAlign = "center",
+      width = KEY_NAME_LABEL_WIDTH,
+      height = Menu.DEFAULT_BUTTON_HEIGHT,
+      label = Label({
+        text = keyName,
+        translate = false
+      }),
+      onClick = clickFunction
+    })
+    keyNameButton:addChild(changeKeyButton)
+    menuOptions[#menuOptions + 1] = Menu.createMenuItem(keyNameButton)
   end
   menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "op_all_keys"}),
     onClick = function() self:setAllKeysStart() end}))
   menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "Clear All Inputs", translate = false}),
-    onClick = function() clearAllInputs(menuOptions) end}))
+    onClick = function() self:clearAllInputs() end}))
   menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "Reset Keys To Default", translate = false}),
     onClick = function() self:resetToDefault(menuOptions) end}))
   menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu}))
@@ -202,7 +225,9 @@ function InputConfigMenu:update(dt)
   self.backgroundImg:update(dt)
   self.menu:update()
 
-  local noKeysHeld = next(input.allKeys.isDown) == nil and next(input.allKeys.isPressed) == nil
+  local noKeysHeld = (tableUtils.first(input.allKeys.isPressed, function (value)
+    return value < MAX_PRESS_DURATION
+  end)) == nil
 
   if self.settingKeyState == KEY_SETTING_STATE.SETTING_KEY_TRANSITION then
     if noKeysHeld then

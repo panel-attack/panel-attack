@@ -11,6 +11,7 @@ local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
 
 local NAVIGATION_BUTTON_WIDTH = 30
+local DEFAULT_BUTTON_HEIGHT = 30
 
 -- Menu is a collection of buttons that stack vertically and supports scrolling and keyboard navigation.
 -- It requires the passed in menu items to have valid widths and adds padding between each. The height also must be passed in
@@ -28,7 +29,7 @@ local Menu = class(
     self.yOffset = 0
     self.firstActiveIndex = nil
     self.lastActiveIndex = nil
-    self.itemHeight = options.itemHeight or 30
+    self.itemHeight = options.itemHeight or DEFAULT_BUTTON_HEIGHT
     self:setMenuItems(options.menuItems)
     
     self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
@@ -44,6 +45,8 @@ local Menu = class(
   UIElement
 )
 
+Menu.NAVIGATION_BUTTON_WIDTH = NAVIGATION_BUTTON_WIDTH
+Menu.DEFAULT_BUTTON_HEIGHT = DEFAULT_BUTTON_HEIGHT
 Menu.BUTTON_HORIZONTAL_PADDING = 0
 Menu.BUTTON_VERTICAL_PADDING = 8
 
