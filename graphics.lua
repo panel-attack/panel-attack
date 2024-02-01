@@ -493,7 +493,7 @@ function Stack:render_cursor(shake)
       GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[1], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
       GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     else
-      GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.quad, xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+      GraphicsUtil.drawGfxScaled(cursor.image, xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
     end
   end
 end

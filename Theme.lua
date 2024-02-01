@@ -419,21 +419,20 @@ function Theme.graphics_init(self)
     end
     assert(cursorImage ~= nil)
     self.images.cursor[i].image = cursorImage
-    local width, height = cursorImage:getDimensions()
-    self.images.cursor[i].quad = GraphicsUtil:newRecycledQuad(0, 0, width, height, width, height)
     self.images.cursor[i].touchQuads = { }
     -- For touch we will show just one panels worth of cursor. 
     -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
     -- The cursor image has a margin that extends past the panel and two panels in the middle
     -- We want to render the margin and just the outer half of the panel
+    local imageWidth, imageHeight = cursorImage:getDimensions()
     local cursorWidth = 40
     local panelWidth = 16
     local margin = (cursorWidth - panelWidth * 2) / 2
     local halfCursorWidth = margin + panelWidth / 2
     local percentDesired = halfCursorWidth / 40
-    local quadWidth = math.floor(width * percentDesired)
-    self.images.cursor[i].touchQuads[1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, height, width, height)
-    self.images.cursor[i].touchQuads[2] = GraphicsUtil:newRecycledQuad(width-quadWidth, 0, quadWidth, height, width, height)
+    local quadWidth = math.floor(imageWidth * percentDesired)
+    self.images.cursor[i].touchQuads[1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+    self.images.cursor[i].touchQuads[2] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
   end
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
