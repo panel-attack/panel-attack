@@ -314,7 +314,7 @@ function Theme.graphics_init(self)
     local charHeight = self.images.levelNumberAtlas[i].image:getHeight()
     local quads = {}
     for j = 1, levels do
-      quads[j] = GraphicsUtil.newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
+      quads[j] = GraphicsUtil:newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
     end
     self.images.levelNumberAtlas[i].quads = quads
   end
@@ -417,7 +417,7 @@ function Theme.graphics_init(self)
     assert(cursorImage ~= nil)
     self.images.cursor[i].image = cursorImage
     local width, height = cursorImage:getDimensions()
-    self.images.cursor[i].quad = GraphicsUtil.newRecycledQuad(0, 0, width, height, width, height)
+    self.images.cursor[i].quad = GraphicsUtil:newRecycledQuad(0, 0, width, height, width, height)
     self.images.cursor[i].touchQuads = { }
     -- For touch we will show just one panels worth of cursor. 
     -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
