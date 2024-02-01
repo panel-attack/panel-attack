@@ -460,6 +460,45 @@ function Theme.graphics_init(self)
   end
 end
 
+-- releases all quads loaded on the same back into the quad pool
+-- currently not in use but could routinely be done for theme switching in the future
+function Theme:deinitializeGraphics()
+  -- deinit cursor quads for recycling
+  for i = 1, #self.images.cursor do
+    for j = 1, #self.images.cursor[i].touchQuads do
+      GraphicsUtil:releaseQuad(self.images.cursor[i].touchQuads[j])
+    end
+  end
+
+  -- deinit level atlas for recycling
+  for i = 1, #self.images.levelNumberAtlas do
+    for j = 1, #self.images.levelNumberAtlas[i].quads do
+      GraphicsUtil:releaseQuad(self.images.levelNumberAtlas[i].quads[j])
+    end
+  end
+
+  -- deinit pixel font quads for recycling
+  for index, fontMap in pairs(self.fontMaps) do
+    if index == "numbers" then
+      -- numbers have 1 more level of nesting so make a union of that and set it to fontMap
+      local f = {}
+      for i = 1, #fontMap do
+        for _, value in pairs(fontMap[i]) do
+          f[#f + 1] = value
+        end
+      end
+      fontMap = f
+    end
+
+    for symbol, value in pairs(fontMap) do
+      if tostring(symbol):len() == 1 and type(value) == "userdata" and value:typeOf("Quad") then
+        -- userdata means this is a love object which in turn means we can safely use typeOf to confirm it's a quad
+        GraphicsUtil:releaseQuad(value)
+      end
+    end
+  end
+end
+
 -- applies the config volume to the theme
 function Theme.apply_config_volume(self)
   set_volume(self.sounds, config.SFX_volume / 100)
