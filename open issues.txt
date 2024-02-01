@@ -1,7 +1,0 @@
-work on puzzle mode
--> integrate behaviour flags for stack rise
--> review how stack game end should work for completed puzzles
-
-look into the 4 match crash online
-
-listen to spectator added in battleRoom

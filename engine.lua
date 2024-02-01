@@ -1005,9 +1005,11 @@ function Stack.enqueue_card(self, chain, x, y, n)
   local card_burstAtlas = nil
   local card_burstParticle = nil
   if config.popfx == true then
-    card_burstAtlas = characters[self.character].images["burst"]
-    local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
-    card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+    if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
+      card_burstAtlas = characters[self.character].images["burst"]
+      local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
+      card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+    end
   end
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
@@ -1052,7 +1054,6 @@ function Stack.enqueue_popfx(self, x, y, popsize)
       fadeFrameDimension = fadeFrameDimension,
       fadeParticle = fadeParticle,
       bigParticle = bigParticle,
-      bigTimer = 0,
       popsize = popsize,
       x = x,
       y = y
@@ -1635,11 +1636,7 @@ function Stack:game_ended()
   if self.game_over_clock > 0 then
     return self.clock >= self.game_over_clock
   else
-    if #self.gameWinConditions > 0 then
-      return self:checkGameWin()
-    else
-      return false
-    end
+    return self:checkGameWin()
   end
 end
 
@@ -2268,5 +2265,11 @@ function Stack:checkGameWin()
       end
     end
   end
+
+  -- match is over and we didn't die so clearly we won
+  if self.match.ended and self.game_over_clock <= 0 then
+    return true
+  end
+
   return false
 end

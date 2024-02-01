@@ -22,8 +22,13 @@ Game1pChallenge.name = "Game1pChallenge"
 sceneManager:addScene(Game1pChallenge)
 
 function Game1pChallenge:onMatchEnded(match)
-  Replay.finalizeAndWriteReplay("Challenge Mode",
-                                "diff-" .. GAME.battleRoom.difficulty .. "-stage-" .. GAME.battleRoom.stageIndex, match.replay)
+  local extraFilename = "diff-" .. GAME.battleRoom.difficulty .. "-stage-" .. GAME.battleRoom.stageIndex
+  if match.replay.winnerIndex then
+    extraFilename = extraFilename .. "-P" .. match.replay.winnerIndex .. "wins"
+  else
+    extraFilename = extraFilename .. "-draw"
+  end
+  Replay.finalizeAndWriteReplay("Challenge Mode", extraFilename, match.replay)
 end
 
 function Game1pChallenge:drawHUD()

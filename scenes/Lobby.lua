@@ -114,6 +114,7 @@ function Lobby:initLobbyMenu()
     -- this alignment setup does not quite work yet because Menu isn't acting like a proper container
     hAlign = "center",
     vAlign = "center",
+    height = themes[config.theme].main_menu_max_height,
   })
   self.uiRoot:addChild(self.lobbyMenu)
   self.uiRoot:addChild(self.leaderboardLabel)

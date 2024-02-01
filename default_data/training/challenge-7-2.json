@@ -1,0 +1,127 @@
+{
+  "extraInfo": {
+    "playerName": "JamBox",
+    "gpm": "17.0",
+    "matchLength": "1:07",
+    "dateGenerated": "2023-12-27-20-55-01"
+  }, 
+  "mergeComboMetalQueue": false,
+  "delayBeforeStart": 0,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
+    {
+      "chainEndTime": 612,
+      "chain": [
+        543
+      ]
+    },
+    {
+      "chainEndTime": 915,
+      "chain": [
+        779,
+        847
+      ]
+    },
+    {
+      "chainEndTime": 1332,
+      "chain": [
+        1263
+      ]
+    },
+    {
+      "chainEndTime": 1660,
+      "chain": [
+        1517,
+        1591
+      ]
+    },
+    {
+      "width": 3,
+      "height": 1,
+      "chain": false,
+      "startTime": 1517,
+      "metal": false
+    },
+    {
+      "chainEndTime": 2050,
+      "chain": [
+        1914,
+        1983
+      ]
+    },
+    {
+      "width": 3,
+      "height": 1,
+      "chain": false,
+      "startTime": 2121,
+      "metal": false
+    },
+    {
+      "chainEndTime": 2295,
+      "chain": [
+        2206
+      ]
+    },
+    {
+      "width": 5,
+      "height": 1,
+      "chain": false,
+      "startTime": 2206,
+      "metal": false
+    },
+    {
+      "width": 3,
+      "height": 1,
+      "chain": false,
+      "startTime": 2443,
+      "metal": false
+    },
+    {
+      "width": 4,
+      "height": 1,
+      "chain": false,
+      "startTime": 2443,
+      "metal": false
+    },
+    {
+      "chainEndTime": 2878,
+      "chain": [
+        2677,
+        2752,
+        2819
+      ]
+    },
+    {
+      "chainEndTime": 3087,
+      "chain": [
+        3010
+      ]
+    },
+    {
+      "width": 3,
+      "height": 1,
+      "chain": false,
+      "startTime": 3010,
+      "metal": false
+    },
+    {
+      "chainEndTime": 3512,
+      "chain": [
+        3443
+      ]
+    },
+    {
+      "width": 5,
+      "height": 1,
+      "chain": false,
+      "startTime": 3857,
+      "metal": false
+    },
+    {
+      "chainEndTime": 4125,
+      "chain": [
+        4066
+      ]
+    }
+  ]
+}
