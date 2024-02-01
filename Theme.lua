@@ -306,13 +306,18 @@ function Theme.graphics_init(self)
   self.images.levelNumberAtlas = {}
   self.images.levelNumberAtlas[1] = {}
   self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
-  self.images.levelNumberAtlas[1].charWidth = self.images.levelNumberAtlas[1].image:getWidth() / 11
-  self.images.levelNumberAtlas[1].charHeight = self.images.levelNumberAtlas[1].image:getHeight()
-
   self.images.levelNumberAtlas[2] = {}
   self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
-  self.images.levelNumberAtlas[2].charWidth = self.images.levelNumberAtlas[2].image:getWidth() / 11
-  self.images.levelNumberAtlas[2].charHeight = self.images.levelNumberAtlas[2].image:getHeight()
+  local levels = 11
+  for i = 1, #self.images.levelNumberAtlas do
+    local charWidth = self.images.levelNumberAtlas[i].image:getWidth() / levels
+    local charHeight = self.images.levelNumberAtlas[i].image:getHeight()
+    local quads = {}
+    for j = 1, levels do
+      quads[j] = GraphicsUtil.newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
+    end
+    self.images.levelNumberAtlas[i].quads = quads
+  end
 
   self.images.IMG_casual = self:load_theme_img("casual")
   self.images.IMG_ranked = self:load_theme_img("ranked")
