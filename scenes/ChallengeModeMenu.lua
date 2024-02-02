@@ -50,21 +50,14 @@ function ChallengeModeMenu:load(sceneParams)
   )
 
   local menuItems = {
-    {Label({text = "difficulty"}), difficultyStepper},
-    {TextButton({label = Label({text = "go_"}), onClick = function()
+    Menu.createMenuItem(Label({text = "difficulty"}), difficultyStepper),
+    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function()
       self:goToCharacterSelect(difficultyStepper.value)
-    end})},
-    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
+    end})),
+    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu})),
   }
 
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  y = y + 100
-  self.menu = Menu({
-    x = x,
-    y = y,
-    menuItems = menuItems,
-    height = themes[config.theme].main_menu_max_height,
-  })
+  self.menu = Menu.createCenteredMenu(menuItems)
   self.uiRoot:addChild(self.menu)
 end
 

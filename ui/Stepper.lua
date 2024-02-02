@@ -5,8 +5,6 @@ local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local GraphicsUtil = require("graphics_util")
 
-local BUTTON_PADDING = 5
-
 local function setLabels(self, labels, values, selectedIndex)
   self.selectedIndex = selectedIndex
   self.values = values

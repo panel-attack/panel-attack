@@ -2,6 +2,7 @@ local class = require("class")
 local Scene = require("scenes.Scene")
 local TextButton = require("ui.TextButton")
 local Slider = require("ui.Slider")
+local StackPanel = require("ui.StackPanel")
 local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
 local sceneManager = require("scenes.sceneManager")
@@ -67,8 +68,7 @@ function SimpleGameSetupMenu:load(sceneParams)
   self.speedSlider = Slider({
     min = 1, 
     max = 99, 
-    value = GAME.config.endless_speed or 1, 
-    isVisible = false
+    value = GAME.config.endless_speed or 1
   })
 
   self.difficultyButtons = ButtonGroup(
@@ -78,14 +78,14 @@ function SimpleGameSetupMenu:load(sceneParams)
           TextButton({label = Label({text = "normal"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
           TextButton({label = Label({text = "hard"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
           -- TODO: localize "EX Mode"
-          TextButton({label = Label({text = "EX Mode"}), translate = false}),
+          TextButton({label = Label({text = "EX Mode"}), width = BUTTON_WIDTH, height = BUTTON_HEIGHT, translate = false}),
         },
         values = {1, 2, 3, 4},
         selectedIndex = GAME.config.endless_difficulty or 1,
         onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
       }
   )
-  
+
   local tickLength = 16
   self.levelSlider = LevelSlider({
       tickLength = tickLength,
@@ -114,34 +114,22 @@ function SimpleGameSetupMenu:load(sceneParams)
   )
   
   local modernMenuOptions = {
-    {Label({text = "endless_type"}), self.typeButtons},
-    {Label({text = "level"}), self.levelSlider},
-    {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
-    {TextButton({label = Label({text = "back"}), onClick = self.exit})},
+    Menu.createMenuItem(Label({text = "endless_type"}), self.typeButtons),
+    Menu.createMenuItem(Label({text = "level"}), self.levelSlider),
+    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})),
+    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = self.exit})),
   }
   
   local classicMenuOptions = {
     modernMenuOptions[1],
-    {Label({text = "speed", isVisible = false}), self.speedSlider},
-    {Label({text = "difficulty", isVisible = false}), self.difficultyButtons},
-    {TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})},
-    {TextButton({label = Label({text = "back"}), onClick = self.exit})},
+    Menu.createMenuItem(Label({text = "speed"}), self.speedSlider),
+    Menu.createMenuItem(Label({text = "difficulty"}), self.difficultyButtons),
+    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})),
+    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = self.exit})),
   }
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  y = y + 100
-  self.classicMenu = Menu({
-    x = x,
-    y = y,
-    menuItems = classicMenuOptions, 
-    height = themes[config.theme].main_menu_max_height
-  })
-  self.modernMenu = Menu({
-    x = x,
-    y = y,
-    menuItems = modernMenuOptions,
-    height = themes[config.theme].main_menu_max_height
-  })
+  self.classicMenu = Menu.createCenteredMenu(classicMenuOptions)
+  self.modernMenu = Menu.createCenteredMenu(modernMenuOptions)
   if self.typeButtons.value == "Classic" then
     self.uiRoot:addChild(self.classicMenu)
   else
@@ -150,11 +138,6 @@ function SimpleGameSetupMenu:load(sceneParams)
   
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
-  end
-
-  for i, button in ipairs(self.difficultyButtons.buttons) do
-    button.width = BUTTON_WIDTH
-    button.height = BUTTON_HEIGHT
   end
 end
 
@@ -183,11 +166,8 @@ function SimpleGameSetupMenu:draw()
     GraphicsUtil.drawPixelFont(lastScore, themes[config.theme].fontMaps.pixelFontBlue, xPosition1, yPosition + 24, 0.5, 1.0, nil, nil)
     GraphicsUtil.drawPixelFont("record", themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition, 0.5, 1.0, nil, nil)
     GraphicsUtil.drawPixelFont(record, themes[config.theme].fontMaps.pixelFontBlue, xPosition2, yPosition + 24, 0.5, 1.0, nil, nil)
-
-    self.classicMenu:draw()
-  else
-    self.modernMenu:draw()
   end
+  self.uiRoot:draw()
 end
 
 return SimpleGameSetupMenu

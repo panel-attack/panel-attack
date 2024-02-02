@@ -39,13 +39,20 @@ local function setButtons(self, buttons, values, selectedIndex)
   self.values = values
   self.buttons = buttons
   
+  local overallWidth = 0
+  local overallHeight = 0
   for i, button in ipairs(buttons) do
+    overallWidth = overallWidth + button.width
     if i > 1 then 
        button.x = self.buttons[i - 1].x + self.buttons[i - 1].width + BUTTON_PADDING
+       overallWidth = overallWidth + BUTTON_PADDING
     end
     button.onClick = genButtonGroupFn(self, i, button.onClick)
     self:addChild(button)
+    overallHeight = math.max(overallHeight, button.height)
   end
+  self.width = overallWidth
+  self.height = overallHeight
   self.buttons[self.selectedIndex].backgroundColor = {.5, .5, 1, .7}
   self.value = self.values[self.selectedIndex]
 end
