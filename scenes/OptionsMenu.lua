@@ -16,7 +16,6 @@ local tableUtils = require("tableUtils")
 local SoundTest = require("scenes.SoundTest")
 local SetUserIdMenu = require("scenes.SetUserIdMenu")
 local UiElement = require("ui.UIElement")
-local touchHandler = require("ui.touchHandler")
 
 -- @module optionsMenu
 -- Scene for the options menu
@@ -79,10 +78,8 @@ end
 function OptionsMenu:switchToScreen(screenName)
   Menu.playValidationSfx()
   self.menus[self.activeMenuName]:detach()
-  touchHandler:unregisterTree(self.menus[self.activeMenuName])
   self.uiRoot:addChild(self.menus[screenName])
   self.activeMenuName = screenName
-  touchHandler:registerTree(self.menus[self.activeMenuName])
 end
 
 local function createToggleButtonGroup(configField, onChangeFn)
