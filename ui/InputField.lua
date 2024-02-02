@@ -4,7 +4,6 @@ local util = require("util")
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local inputFieldManager = require("ui.inputFieldManager")
-local touchable = require("ui.Touchable")
 local GraphicsUtil = require("graphics_util")
 
 --@module InputField
@@ -35,7 +34,6 @@ local InputField = class(
     self.textCursorPos = nil
 
     inputFieldManager.inputFields[self.id] = self.isVisible and self or nil
-    touchable(self)
     self.TYPE = "InputField"
   end,
   UIElement

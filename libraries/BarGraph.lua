@@ -77,9 +77,9 @@ function BarGraph.draw(graph)
         local fillColor = graph.fillColors[index] or defaultFillColor
         local strokeColor = graph.strokeColors[index] or defaultStrokeColor
         love.graphics.setColor(unpack(fillColor))
-        love.graphics.drawRectangle("fill", xPosition, yPosition - height, graph.barWidth, height)
+        love.graphics.rectangle("fill", xPosition, yPosition - height, graph.barWidth, height)
         love.graphics.setColor(unpack(strokeColor))
-        love.graphics.drawRectangle("line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1)
+        love.graphics.rectangle("line", xPosition + 0.5, yPosition - height + 0.5, graph.barWidth - 1, height - 1)
         yPosition = yPosition - height
       end
     end
@@ -87,10 +87,10 @@ function BarGraph.draw(graph)
   end
 
   love.graphics.setColor(1, 1, 1, 0.8)
-  love.graphics.drawRectangle("line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1)
+  love.graphics.rectangle("line", graph.x + 0.5, graph.y + 0.5, graph.width - 1, graph.height - 1)
 
   love.graphics.setColor(0, 0, 0, 0.8)
-  love.graphics.drawRectangle("fill", graph.x, graph.height + graph.y + 8, graph.width, 20)
+  love.graphics.rectangle("fill", graph.x, graph.height + graph.y + 8, graph.width, 20)
 
   love.graphics.setColor(1, 1, 1, 1)
   local padding = 4
