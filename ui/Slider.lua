@@ -1,7 +1,6 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local util = require("util")
-local touchable = require("ui.Touchable")
 local GraphicsUtil = require("graphics_util")
 
 local handleRadius = 7.5
@@ -22,8 +21,6 @@ local Slider = class(
 
     self.width = self.tickLength * (self.max - self.min + 1)
     self.height = handleRadius * 2
-
-    touchable(self)
 
     self.TYPE = "Slider"
   end,
