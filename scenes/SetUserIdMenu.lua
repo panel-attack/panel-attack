@@ -20,7 +20,7 @@ sceneManager:addScene(SetUserIdMenu)
 
 function SetUserIdMenu:load(sceneParams)
   local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
-  backgroundImg = themes[config.theme].images.bg_main
+  self.backgroundImg = themes[config.theme].images.bg_main
   self.serverIp = sceneParams.serverIp
 
   self.idInputField = InputField({
@@ -28,8 +28,7 @@ function SetUserIdMenu:load(sceneParams)
     y = menuY + 50,
     width = 200,
     height = 25,
-    value =  read_user_id_file(self.serverIp),
-    isVisible = false
+    value =  read_user_id_file(self.serverIp)
   })
 
   self.idInputField:setFocus(0, 0)
@@ -58,5 +57,7 @@ function SetUserIdMenu:draw()
   self.backgroundImg:draw()
   local menuX, menuY = unpack(themes[config.theme].main_menu_screen_pos)
   GraphicsUtil.printf("Enter User ID (or paste from clipboard)", menuX, menuY)
-  self.idInputField:draw()
+  self.uiRoot:draw()
 end
+
+return SetUserIdMenu

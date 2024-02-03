@@ -4,6 +4,7 @@ local Label = require("ui.Label")
 local ButtonGroup = require("ui.ButtonGroup")
 local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local class = require("class")
 local input = require("inputManager")
 local logger = require("logger")
@@ -98,17 +99,13 @@ end
 
 function Lobby:initLobbyMenu()
   self.leaderboardLabel = Label({text = "", translate = false, hAlign = "center", vAlign = "center", x = 200, isVisible = false})
-  self.leaderboardToggleLabel = Label({text = "lb_show_board"})
-  self.leaderboardToggleButton = TextButton({
-    label = self.leaderboardToggleLabel,
-    onClick = function()
-      self:toggleLeaderboard()
-    end
-  })
   local menuItems = {
-    Menu.createMenuItem(self.leaderboardToggleButton),
-    Menu.createMenuItem(TextButton({label = Label({text = "lb_back"}), onClick = exitMenu}))
+    MenuItem.createButtonMenuItem("lb_show_board", nil, nil, function()
+      self:toggleLeaderboard()
+    end),
+    MenuItem.createButtonMenuItem("lb_back", nil, nil, exitMenu)
   }
+  self.leaderboardToggleLabel = menuItems[1].onClickElement.children[1]
 
   self.lobbyMenu = Menu.createCenteredMenu(menuItems)
   self.lobbyMenu.x = self.lobbyMenuXoffsetMap[false]
@@ -269,9 +266,7 @@ function Lobby:onLobbyStateUpdate()
       if self.willingPlayers[v] then
         unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
       end
-      self.lobbyMenu:addMenuItem(1, {
-        TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})
-      })
+      self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(unmatchedPlayer, nil, false, self:requestGameFunction(v)))
     end
   end
   for _, room in ipairs(self.spectatableRooms) do
@@ -279,9 +274,7 @@ function Lobby:onLobbyStateUpdate()
       local playerA = room.a .. self:playerRatingString(room.a)
       local playerB = room.b .. self:playerRatingString(room.b)
       local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
-      self.lobbyMenu:addMenuItem(1, {
-        TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})
-      })
+      self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(roomName, nil, false, self:requestSpectateFunction(room)))
     end
   end
 end

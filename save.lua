@@ -62,7 +62,7 @@ function save.read_txt_file(path_and_filename)
     end
   )
   if not s then
-    s = "Failed to read file" .. path_and_filename
+    s = "Failed to read file " .. path_and_filename
   else
     s = s:gsub("\r\n?", "\n")
   end

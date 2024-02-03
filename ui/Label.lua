@@ -8,7 +8,7 @@ local Label = class(
     self.hAlign = options.hAlign or "left"
     self.vAlign = options.vAlign or "top"
 
-    self:setText(options.text, options.extraLabels, options.translate)
+    self:setText(options.text, options.replacements, options.translate)
 
     self.TYPE = "Label"
   end,

@@ -7,6 +7,7 @@ local Label = require("ui.Label")
 local LevelSlider = require("ui.LevelSlider")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local ButtonGroup = require("ui.ButtonGroup")
 local save = require("save")
 local GraphicsUtil = require("graphics_util")
@@ -114,18 +115,18 @@ function SimpleGameSetupMenu:load(sceneParams)
   )
   
   local modernMenuOptions = {
-    Menu.createMenuItem(Label({text = "endless_type"}), self.typeButtons),
-    Menu.createMenuItem(Label({text = "level"}), self.levelSlider),
-    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})),
-    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = self.exit})),
+    MenuItem.createToggleButtonGroupMenuItem("endless_type", nil, nil, self.typeButtons),
+    MenuItem.createSliderMenuItem("level", nil, nil, self.levelSlider),
+    MenuItem.createButtonMenuItem("go_", nil, nil, function() self:startGame() end),
+    MenuItem.createButtonMenuItem("back", nil, nil, self.exit)
   }
   
   local classicMenuOptions = {
     modernMenuOptions[1],
-    Menu.createMenuItem(Label({text = "speed"}), self.speedSlider),
-    Menu.createMenuItem(Label({text = "difficulty"}), self.difficultyButtons),
-    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function() self:startGame() end})),
-    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = self.exit})),
+    MenuItem.createSliderMenuItem("speed", nil, nil, self.speedSlider),
+    MenuItem.createToggleButtonGroupMenuItem("difficulty", nil, nil, self.difficultyButtons),
+    MenuItem.createButtonMenuItem("go_", nil, nil, function() self:startGame() end),
+    MenuItem.createButtonMenuItem("back", nil, nil, self.exit)
   }
   
   self.classicMenu = Menu.createCenteredMenu(classicMenuOptions)

@@ -5,6 +5,7 @@ local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local consts = require("consts")
 local input = require("inputManager")
 local joystickManager = require("joystickManager")
@@ -104,7 +105,7 @@ function InputConfigMenu:setAllKeys()
 end
 
 function InputConfigMenu:currentKeyLabelForIndex(index)
-  return self.menu.menuItems[index].children[2].children[1]
+  return self.menu.menuItems[index].onClickElement.children[1]
 end
 
 function InputConfigMenu:setKeyStart(key)
@@ -173,7 +174,7 @@ function InputConfigMenu:load(sceneParams)
     value = 1,
     tickLength = 10,
     onValueChange = function(slider) self:updateInputConfigMenuLabels(slider.value) end})
-  menuOptions[1] = Menu.createMenuItem(Label({text = "configuration"}), self.slider)
+  menuOptions[1] = MenuItem.createSliderMenuItem("configuration", nil, nil, self.slider)
   for i, key in ipairs(consts.KEY_NAMES) do
     local clickFunction = function() 
       if not self.settingKey then
@@ -181,36 +182,12 @@ function InputConfigMenu:load(sceneParams)
       end
     end
     local keyName = self:getKeyDisplayName(GAME.input.inputConfigurations[self.configIndex][key])
-    local keyNameButton = TextButton({
-      width = KEY_NAME_LABEL_WIDTH,
-      height = Menu.DEFAULT_BUTTON_HEIGHT,
-      label = Label({
-        text = key,
-        translate = false
-      }),
-      onClick = clickFunction
-    })
-    local changeKeyButton = TextButton({
-      x = keyNameButton.width + PADDING,
-      vAlign = "center",
-      width = KEY_NAME_LABEL_WIDTH,
-      height = Menu.DEFAULT_BUTTON_HEIGHT,
-      label = Label({
-        text = keyName,
-        translate = false
-      }),
-      onClick = clickFunction
-    })
-    keyNameButton:addChild(changeKeyButton)
-    menuOptions[#menuOptions + 1] = Menu.createMenuItem(keyNameButton)
+    menuOptions[#menuOptions + 1] = MenuItem.createLabeledButtonMenuItem(key, nil, false, keyName, nil, false, clickFunction)
   end
-  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "op_all_keys"}),
-    onClick = function() self:setAllKeysStart() end}))
-  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "Clear All Inputs", translate = false}),
-    onClick = function() self:clearAllInputs() end}))
-  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "Reset Keys To Default", translate = false}),
-    onClick = function() self:resetToDefault(menuOptions) end}))
-  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu}))
+  menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("op_all_keys", nil, nil, function() self:setAllKeysStart() end)
+  menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("Clear All Inputs", nil, false, function() self:clearAllInputs() end)
+  menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("Reset Keys To Default", nil, false, function() self:resetToDefault(menuOptions) end)
+  menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil, exitMenu)
   
   self.menu = Menu.createCenteredMenu(menuOptions)
 

@@ -3,6 +3,7 @@ local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local consts = require("consts")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local sceneManager = require("scenes.sceneManager")
 local GraphicsUtil = require("graphics_util")
 local class = require("class")
@@ -38,94 +39,92 @@ local function switchToScene(sceneName, transition)
   sceneManager:switchToScene(sceneName, transition)
 end
 
-local BUTTON_WIDTH = 140
-local function createMainMenuButton(text, onClick, extraLabels, translate)
-  if translate == nil then
-    translate = true
-  end
-  return TextButton({label = Label({text = text, extraLabels = extraLabels, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick, width = BUTTON_WIDTH})
-end
+function MainMenu:createMainMenu()
 
-local menuItems = {createMainMenuButton("mm_1_endless", function()
+  local menuItems = {MenuItem.createButtonMenuItem("mm_1_endless", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
       switchToScene(EndlessMenu())
     end), 
-    createMainMenuButton("mm_1_puzzle", function()
+    MenuItem.createButtonMenuItem("mm_1_puzzle", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
       switchToScene(PuzzleMenu())
     end),
-    createMainMenuButton("mm_1_time", function()
+    MenuItem.createButtonMenuItem("mm_1_time", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"))
       switchToScene(TimeAttackMenu())
     end),
-    createMainMenuButton("mm_1_vs", function()
+    MenuItem.createButtonMenuItem("mm_1_vs", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
       switchToScene(CharacterSelectVsSelf())
     end),
-    createMainMenuButton("mm_1_training", function()
+    MenuItem.createButtonMenuItem("mm_1_training", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
       switchToScene(TrainingMenu())
     end),
-    createMainMenuButton("mm_1_challenge_mode", function()
+    MenuItem.createButtonMenuItem("mm_1_challenge_mode", nil, nil, function()
       switchToScene(ChallengeModeMenu())
     end),
-    createMainMenuButton("mm_2_vs_online", function()
+    MenuItem.createButtonMenuItem("mm_2_vs_online", {""}, nil, function()
       switchToScene(Lobby({serverIp = "panelattack.com"}))
-    end, {""}),
-    createMainMenuButton("mm_2_vs_local", function()
+    end),
+    MenuItem.createButtonMenuItem("mm_2_vs_local", nil, nil, function()
       local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
       if not battleRoom.hasShutdown then
         GAME.battleRoom = battleRoom
         switchToScene(CharacterSelect2p())
       end
     end),
-    createMainMenuButton("mm_replay_browser", function()
+    MenuItem.createButtonMenuItem("mm_replay_browser", nil, nil, function()
       switchToScene(ReplayBrowser())
     end),
-    createMainMenuButton("mm_configure", function()
+    MenuItem.createButtonMenuItem("mm_configure", nil, nil, function()
       switchToScene(InputConfigMenu())
     end),
-    createMainMenuButton("mm_set_name", function()
+    MenuItem.createButtonMenuItem("mm_set_name", nil, nil, function()
       switchToScene(SetNameMenu())
     end),
-    createMainMenuButton("mm_options", function()
+    MenuItem.createButtonMenuItem("mm_options", nil, nil, function()
       switchToScene(OptionsMenu())
     end),
-    createMainMenuButton("mm_fullscreen", function()
+    MenuItem.createButtonMenuItem("mm_fullscreen", {"\n(Alt+Enter)"}, nil, function()
       Menu.playValidationSfx()
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
-    end, {"\n(Alt+Enter)"}),
-    createMainMenuButton("mm_quit", love.event.quit)
-}
+    end),
+    MenuItem.createButtonMenuItem("mm_quit", nil, nil, love.event.quit)
+  }
 
-local debugMenuItems = {createMainMenuButton("Beta Server", function() switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})) end),
-                        createMainMenuButton("Localhost Server", function() switchToScene(Lobby({serverIp = "Localhost"})) end)
-                      }
+  local menu = Menu.createCenteredMenu(menuItems)
 
-function MainMenu:addDebugMenuItems()
-  if config.debugShowServers then
-    for i, menuItem in ipairs(debugMenuItems) do
-      self.menu:addMenuItem(i + 7, menuItem)
+  local debugMenuItems = {MenuItem.createButtonMenuItem("Beta Server", nil, nil, function() switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})) end),
+                          MenuItem.createButtonMenuItem("Localhost Server", nil, nil, function() switchToScene(Lobby({serverIp = "Localhost"})) end)
+                        }
+
+  local function addDebugMenuItems()
+    if config.debugShowServers then
+      for i, menuItem in ipairs(debugMenuItems) do
+        menu:addMenuItem(i + 7, menuItem)
+      end
+    end
+    if config.debugShowDesignHelper then
+      menu:addMenuItem(#menu.menuItems, MenuItem.createButtonMenuItem("Design Helper", nil, nil, function()
+          switchToScene(DesignHelper())
+        end))
     end
   end
-  if config.debugShowDesignHelper then
-    self.menu:addMenuItem(#self.menu.menuItems, createMainMenuButton("Design Helper", function()
-        switchToScene(DesignHelper())
-      end))
-  end
-end
 
-function MainMenu:removeDebugMenuItems()
-  for i, menuItem in ipairs(debugMenuItems) do
-    self.menu:removeMenuItem(menuItem[1].id)
+  local function removeDebugMenuItems()
+    for i, menuItem in ipairs(debugMenuItems) do
+      menu:removeMenuItem(menuItem[1].id)
+    end
   end
+
+  addDebugMenuItems()
+  return menu
 end
 
 function MainMenu:load(sceneParams)
-  self.menu = Menu.createCenteredMenu(menuItems)
+  self.menu = self:createMainMenu()
   self.uiRoot:addChild(self.menu)
-
-  self:addDebugMenuItems()
 
   if themes[config.theme].musics["main"] then
     find_and_add_music(themes[config.theme].musics, "main")
