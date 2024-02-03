@@ -18,6 +18,7 @@ local function runSystemCommands()
     stages_reload_graphics()
   -- reload themes
   elseif input.allKeys.isDown["t"] then
+    themes[config.theme]:deinitializeGraphics()
     themes[config.theme]:json_init()
     themes[config.theme]:graphics_init()
     themes[config.theme]:final_init()
