@@ -132,7 +132,8 @@ function CharacterSelect:createPlayerIcon(player)
     hAlign = "center",
     vAlign = "center",
     hFill = true,
-    vFill = true
+    vFill = true,
+    isVisible = not player.hasLoaded
   })
   loadIcon.update = function(self, loaded)
     self:setVisibility(not loaded)
@@ -147,7 +148,7 @@ function CharacterSelect:createPlayerIcon(player)
     vAlign = "center",
     hFill = true,
     vFill = true,
-    isVisible = false
+    isVisible = player.ready
   })
   readyIcon.update = function(self, ready)
     self:setVisibility(ready)
