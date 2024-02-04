@@ -267,14 +267,16 @@ end
 
 function BattleRoom:refreshReadyStates()
   local minimumCondition = tableUtils.trueForAll(self.players, function(p)
-    -- everyone finished loading and everyone actually wants to start
-    return p.hasLoaded and p.settings.wantsReady
+    -- everyone remote finished loading and actually wants to start
+    return p.isLocal or (p.hasLoaded and p.settings.wantsReady)
   end)
 
   for _, player in ipairs(self.players) do
     if player.isLocal then
       -- every local human player has an input configuration assigned
-      local ready = minimumCondition and (not player.human or player.inputConfiguration.usedByPlayer)
+      local ready = minimumCondition
+        and player.hasLoaded and player.settings.wantsReady
+        and (not player.human or player.inputConfiguration.usedByPlayer)
       player:setReady(ready)
     else
       -- non local players send us their ready via network

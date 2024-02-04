@@ -1,5 +1,4 @@
 local class = require("class")
-local util = require("util")
 local consts = require("consts")
 local Signal = require("helpers.signal")
 local logger = require("logger")
