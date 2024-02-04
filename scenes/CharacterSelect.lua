@@ -135,10 +135,6 @@ function CharacterSelect:createPlayerIcon(player)
     vFill = true,
     isVisible = not player.hasLoaded
   })
-  loadIcon.update = function(self, loaded)
-    self:setVisibility(not loaded)
-  end
-  player:connectSignal("hasLoadedChanged", loadIcon, loadIcon.update)
   playerIcon:addChild(loadIcon)
 
   -- ready icon
@@ -150,11 +146,17 @@ function CharacterSelect:createPlayerIcon(player)
     vFill = true,
     isVisible = player.settings.wantsReady and player.hasLoaded
   })
+  playerIcon:addChild(readyIcon)
+
+  loadIcon.update = function(self, loaded)
+    self:setVisibility(not loaded)
+    readyIcon:setVisibility(loaded and player.settings.wantsReady)
+  end
+  player:connectSignal("hasLoadedChanged", loadIcon, loadIcon.update)
   readyIcon.update = function(self, wantsReady)
-    self:setVisibility(wantsReady and not loadIcon.isVisible)
+    self:setVisibility(wantsReady and player.hasLoaded)
   end
   player:connectSignal("wantsReadyChanged", readyIcon, readyIcon.update)
-  playerIcon:addChild(readyIcon)
 
   return playerIcon
 end
