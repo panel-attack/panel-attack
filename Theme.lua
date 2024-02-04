@@ -303,16 +303,7 @@ function Theme.graphics_init(self)
 
   self.images.IMG_wins = self:load_theme_img("wins")
 
-  self.images.levelNumberAtlas = {}
-  self.images.levelNumberAtlas[1] = {}
-  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
-  self.images.levelNumberAtlas[1].charWidth = self.images.levelNumberAtlas[1].image:getWidth() / 11
-  self.images.levelNumberAtlas[1].charHeight = self.images.levelNumberAtlas[1].image:getHeight()
-
-  self.images.levelNumberAtlas[2] = {}
-  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
-  self.images.levelNumberAtlas[2].charWidth = self.images.levelNumberAtlas[2].image:getWidth() / 11
-  self.images.levelNumberAtlas[2].charHeight = self.images.levelNumberAtlas[2].image:getHeight()
+  self:loadLevelNumberAtlasses()
 
   self.images.IMG_casual = self:load_theme_img("casual")
   self.images.IMG_ranked = self:load_theme_img("ranked")
@@ -387,7 +378,6 @@ function Theme.graphics_init(self)
   local MAX_SUPPORTED_PLAYERS = 2
   self.images.IMG_char_sel_cursors = {}
   self.images.IMG_players = {}
-  self.images.IMG_cursor = {}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
     self.images.IMG_players[player_num] = self:load_theme_img("p" .. player_num)
     self.images.IMG_char_sel_cursors[player_num] = {}
@@ -396,22 +386,7 @@ function Theme.graphics_init(self)
     end
   end
 
-  -- Cursor animation is 2 frames
-  for i = 1, 2 do
-    -- Cursor images used to be named weird and make modders think they were for different players
-    -- Load either format from the custom theme, and fallback to the built in cursor otherwise.
-    local cursorImage = self:load_theme_img("cursor" .. i, false)
-    local legacyCursorImage = self:load_theme_img("p" .. i .. "_cursor", false)
-    if not cursorImage then
-      if legacyCursorImage then
-        cursorImage = legacyCursorImage
-      else
-        cursorImage = self:load_theme_img("cursor" .. i, true)
-      end
-    end
-    assert(cursorImage ~= nil)
-    self.images.IMG_cursor[i] = cursorImage
-  end
+  self:loadGameCursor()
 
   self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
   for player_num = 1, MAX_SUPPORTED_PLAYERS do
@@ -434,6 +409,100 @@ function Theme.graphics_init(self)
       self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
       GraphicsUtil.setGlobalFont(self.font.path, self.font.size)
       break
+    end
+  end
+end
+
+function Theme:loadLevelNumberAtlasses()
+  self.images.levelNumberAtlas = {}
+  self.images.levelNumberAtlas[1] = {}
+  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
+  self.images.levelNumberAtlas[2] = {}
+  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
+  local levels = 11
+  for i = 1, #self.images.levelNumberAtlas do
+    local charWidth = self.images.levelNumberAtlas[i].image:getWidth() / levels
+    local charHeight = self.images.levelNumberAtlas[i].image:getHeight()
+    local quads = {}
+    for j = 1, levels do
+      quads[j] = GraphicsUtil:newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
+    end
+    self.images.levelNumberAtlas[i].quads = quads
+    self.images.levelNumberAtlas[i].charWidth = charWidth
+    self.images.levelNumberAtlas[i].charHeight = charHeight
+  end
+end
+
+function Theme:loadGameCursor()
+  self.images.cursor = {}
+  -- Cursor animation is 2 frames
+  for i = 1, 2 do
+    self.images.cursor[i] = {}
+    -- Cursor images used to be named weird and make modders think they were for different players
+    -- Load either format from the custom theme, and fallback to the built in cursor otherwise.
+    local cursorImage = self:load_theme_img("cursor" .. i, false)
+    local legacyCursorImage = self:load_theme_img("p" .. i .. "_cursor", false)
+    if not cursorImage then
+      if legacyCursorImage then
+        cursorImage = legacyCursorImage
+      else
+        cursorImage = self:load_theme_img("cursor" .. i, true)
+      end
+    end
+    assert(cursorImage ~= nil)
+    self.images.cursor[i].image = cursorImage
+    self.images.cursor[i].touchQuads = { }
+    -- For touch we will show just one panels worth of cursor. 
+    -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
+    -- The cursor image has a margin that extends past the panel and two panels in the middle
+    -- We want to render the margin and just the outer half of the panel
+    local imageWidth, imageHeight = cursorImage:getDimensions()
+    local cursorWidth = 40
+    local panelWidth = 16
+    local margin = (cursorWidth - panelWidth * 2) / 2
+    local halfCursorWidth = margin + panelWidth / 2
+    local percentDesired = halfCursorWidth / 40
+    local quadWidth = math.floor(imageWidth * percentDesired)
+    self.images.cursor[i].touchQuads[1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+    self.images.cursor[i].touchQuads[2] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+  end
+end
+
+-- releases all quads loaded on the same back into the quad pool
+-- currently not in use but could routinely be done for theme switching in the future
+function Theme:deinitializeGraphics()
+  -- deinit cursor quads for recycling
+  for i = 1, #self.images.cursor do
+    for j = 1, #self.images.cursor[i].touchQuads do
+      GraphicsUtil:releaseQuad(self.images.cursor[i].touchQuads[j])
+    end
+  end
+
+  -- deinit level atlas for recycling
+  for i = 1, #self.images.levelNumberAtlas do
+    for j = 1, #self.images.levelNumberAtlas[i].quads do
+      GraphicsUtil:releaseQuad(self.images.levelNumberAtlas[i].quads[j])
+    end
+  end
+
+  -- deinit pixel font quads for recycling
+  for index, fontMap in pairs(self.fontMaps) do
+    if index == "numbers" then
+      -- numbers have 1 more level of nesting so make a union of that and set it to fontMap
+      local f = {}
+      for i = 1, #fontMap do
+        for _, value in pairs(fontMap[i]) do
+          f[#f + 1] = value
+        end
+      end
+      fontMap = f
+    end
+
+    for symbol, value in pairs(fontMap) do
+      if tostring(symbol):len() == 1 and type(value) == "userdata" and value:typeOf("Quad") then
+        -- userdata means this is a love object which in turn means we can safely use typeOf to confirm it's a quad
+        GraphicsUtil:releaseQuad(value)
+      end
     end
   end
 end

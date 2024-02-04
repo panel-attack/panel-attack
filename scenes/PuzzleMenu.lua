@@ -6,6 +6,7 @@ local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
+local StackPanel = require("ui.StackPanel")
 local input = require("inputManager")
 local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
@@ -101,26 +102,19 @@ function PuzzleMenu:load(sceneParams)
       onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
     }
   )
-
+  
   local menuOptions = {
-    {Label({text = "level", isVisible = false}), self.levelSlider},
-    {Label({text = "randomColors", isVisible = false}), self.randomColorsButtons},
-    {Label({text = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons}
+    Menu.createMenuItem(Label({text = "level", isVisible = false}), self.levelSlider),
+    Menu.createMenuItem(Label({text = "randomColors", isVisible = false}), self.randomColorsButtons),
+    Menu.createMenuItem(Label({text = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons),
   }
 
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
-    menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = puzzleSetName, translate = false}), onClick = function() self:startGame(puzzleSet) end})}
+    menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = puzzleSetName, translate = false}), onClick = function() self:startGame(puzzleSet) end}))
   end
-  menuOptions[#menuOptions + 1] = {TextButton({label = Label({text = "back"}), onClick = self.exit})}
+  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = self.exit}))
   
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  y = y + 20
-  self.menu = Menu({
-    x = x,
-    y = y,
-    menuItems = menuOptions,
-    height = themes[config.theme].main_menu_max_height
-  })
+  self.menu = Menu.createCenteredMenu(menuOptions)
 
   self.uiRoot:addChild(self.menu)
 
@@ -137,7 +131,7 @@ end
 
 function PuzzleMenu:draw()
   themes[config.theme].images.bg_main:draw()
-  self.menu:draw()
+  self.uiRoot:draw()
 end
 
 return PuzzleMenu

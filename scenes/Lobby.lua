@@ -105,17 +105,14 @@ function Lobby:initLobbyMenu()
       self:toggleLeaderboard()
     end
   })
-  local menuItems = {{self.leaderboardToggleButton}, {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})}}
+  local menuItems = {
+    Menu.createMenuItem(self.leaderboardToggleButton),
+    Menu.createMenuItem(TextButton({label = Label({text = "lb_back"}), onClick = exitMenu}))
+  }
 
-  self.lobbyMenu = Menu({
-    x = self.lobbyMenuXoffsetMap[false],
-    y = 0,
-    menuItems = menuItems,
-    -- this alignment setup does not quite work yet because Menu isn't acting like a proper container
-    hAlign = "center",
-    vAlign = "center",
-    height = themes[config.theme].main_menu_max_height,
-  })
+  self.lobbyMenu = Menu.createCenteredMenu(menuItems)
+  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[false]
+
   self.uiRoot:addChild(self.lobbyMenu)
   self.uiRoot:addChild(self.leaderboardLabel)
 end

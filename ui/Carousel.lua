@@ -1,11 +1,7 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
-local TextButton = require("ui.TextButton")
 local GraphicsUtil = require("graphics_util")
 local canBeFocused = require("ui.Focusable")
-local input = require("inputManager")
-local Label = require("ui.Label")
-local touchable = require("ui.Touchable")
 local tableUtils = require("tableUtils")
 
 local function calculateFontSize(height)
@@ -32,7 +28,6 @@ local Carousel = class(function(carousel, options)
   carousel.initialTouchX = 0
   carousel.initialTouchY = 0
   carousel.swiping = false
-  touchable(carousel)
 
   carousel.TYPE = "Carousel"
 end, UiElement)

@@ -121,21 +121,14 @@ function TrainingMenu:load(sceneParams)
   })
 
   local menuItems = {
-    {Label({text = "Garbage Pattern", translate = false,}), garbagePatternStepper},
-    {widthLabel, widthSlider},
-    {heightLabel, heightSlider},
-    {TextButton({label = Label({text = "go_"}), onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})},
-    {TextButton({label = Label({text = "back"}), onClick = exitMenu})},
+    Menu.createMenuItem(Label({text = "Garbage Pattern", translate = false,}), garbagePatternStepper),
+    Menu.createMenuItem(widthLabel, widthSlider),
+    Menu.createMenuItem(heightLabel, heightSlider),
+    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})),
+    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu})),
   }
 
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  y = y + 100
-  self.menu = Menu({
-    x = x,
-    y = y,
-    menuItems = menuItems,
-    height = themes[config.theme].main_menu_max_height,
-  })
+  self.menu = Menu.createCenteredMenu(menuItems)
   self.uiRoot:addChild(self.menu)
 end
 
@@ -146,7 +139,7 @@ end
 
 function TrainingMenu:draw()
   self.backgroundImg:draw()
-  self.menu:draw()
+  self.uiRoot:draw()
 end
 
 return TrainingMenu

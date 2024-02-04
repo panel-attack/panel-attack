@@ -1,6 +1,5 @@
 local Easings = require("Easings")
 local BlackFadeTransition = require("scenes.Transitions.BlackFadeTransition")
-local touchHandler = require("ui.touchHandler")
 
 --@module sceneManager
 -- Contains all initialized scenes and handles scene transitions 
@@ -18,8 +17,6 @@ function sceneManager:switchToScene(newScene, transition)
   else
     self.transition = transition
   end
-  touchHandler:unregisterTree(self.transition.oldScene.uiRoot)
-  touchHandler:registerTree(self.transition.newScene.uiRoot)
 end
 
 function sceneManager:addScene(scene)
@@ -51,8 +48,6 @@ function sceneManager:update(dt)
     if self.transition.progress >= 1 then
       -- doing this here again for good measure
       -- more complex transitions might find out a transition can't go through and switch oldScene and newScene to go back instead
-      touchHandler:unregisterTree(self.transition.oldScene.uiRoot)
-      touchHandler:registerTree(self.transition.newScene.uiRoot)
       self.activeScene = self.transition.newScene
       self.transition = nil
     end

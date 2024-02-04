@@ -1,7 +1,6 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local GraphicsUtil = require("graphics_util")
-local touchable = require("ui.Touchable")
 
 --@module Button
 local Button = class(
@@ -13,8 +12,6 @@ local Button = class(
     self.onClick = options.onClick or function()
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
     end
-
-    touchable(self)
 
     self.TYPE = "Button"
   end,

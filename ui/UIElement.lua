@@ -140,9 +140,6 @@ end
 --  the more opportune method is to simply remove it from the ui tree via detach()
 function UIElement:setVisibility(isVisible)
   self.isVisible = isVisible
-  for _, uiElement in ipairs(self.children) do
-    uiElement:setVisibility(isVisible)
-  end
   self:onVisibilityChanged()
 end
 
@@ -153,6 +150,34 @@ function UIElement:setEnabled(isEnabled)
   self.isEnabled = isEnabled
   for _, uiElement in ipairs(self.children) do
     uiElement:setEnabled(isEnabled)
+  end
+end
+
+function UIElement:inBounds(x, y)
+  local screenX, screenY = self:getScreenPos()
+  return x > screenX and x < screenX + self.width and y > screenY and y < screenY + self.height
+end
+
+function UIElement:isTouchable()
+  return self.onTouch
+  or self.onHold
+  or self.onDrag
+  or self.onRelease
+end
+
+function UIElement:getTouchedElement(x, y)
+  if self.isVisible and self.isEnabled and self:inBounds(x, y) then
+    local touchedElement
+    for i = 1, #self.children do
+      touchedElement = self.children[i]:getTouchedElement(x, y)
+      if touchedElement then
+        return touchedElement
+      end
+    end
+
+    if self:isTouchable() then
+      return self
+    end
   end
 end
 
