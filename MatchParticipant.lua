@@ -79,8 +79,10 @@ function MatchParticipant:refreshStage()
   if currentId ~= self.settings.stageId then
     self:emitSignal("stageIdChanged", self.settings.stageId)
     if not stages[self.settings.stageId].fully_loaded then
-      self:setLoaded(false)
       CharacterLoader.load(self.settings.stageId)
+      if self.isLocal then
+        self:setLoaded(false)
+      end
     end
   end
 end
@@ -100,8 +102,10 @@ function MatchParticipant:refreshCharacter()
   if currentId ~= self.settings.characterId then
     self:emitSignal("characterIdChanged", self.settings.characterId)
     if not characters[self.settings.characterId].fully_loaded then
-      self:setLoaded(false)
       CharacterLoader.load(self.settings.characterId)
+      if self.isLocal then
+        self:setLoaded(false)
+      end
     end
   end
 end
