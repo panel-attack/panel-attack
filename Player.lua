@@ -60,7 +60,6 @@ local Player = class(function(self, name, publicId, isLocal)
   self:createSignal("ratingChanged")
   self:createSignal("leagueChanged")
   self:createSignal("wantsRankedChanged")
-  self:createSignal("hasLoadedChanged")
 end,
 MatchParticipant)
 
@@ -127,13 +126,6 @@ function Player:setWantsRanked(wantsRanked)
   if wantsRanked ~= self.settings.wantsRanked then
     self.settings.wantsRanked = wantsRanked
     self:emitSignal("wantsRankedChanged", wantsRanked)
-  end
-end
-
-function Player:setLoaded(hasLoaded)
-  if hasLoaded ~= self.settings.hasLoaded then
-    self.settings.hasLoaded = hasLoaded
-    self:emitSignal("hasLoadedChanged", hasLoaded)
   end
 end
 

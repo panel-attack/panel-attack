@@ -15,8 +15,9 @@ local MatchParticipant = class(function(self)
     characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
     stageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
     panelId = config.panels,
-    wantsReady = false
+    wantsReady = false,
   }
+  self.hasLoaded = false
   self.ready = false
   self.human = false
 
@@ -31,6 +32,7 @@ local MatchParticipant = class(function(self)
   self:createSignal("selectedCharacterIdChanged")
   self:createSignal("wantsReadyChanged")
   self:createSignal("readyChanged")
+  self:createSignal("hasLoadedChanged")
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -110,6 +112,13 @@ function MatchParticipant:setReady(ready)
   if ready ~= self.ready then
     self.ready = ready
     self:emitSignal("readyChanged", ready)
+  end
+end
+
+function MatchParticipant:setLoaded(hasLoaded)
+  if hasLoaded ~= self.hasLoaded then
+    self.hasLoaded = hasLoaded
+    self:emitSignal("hasLoadedChanged", hasLoaded)
   end
 end
 

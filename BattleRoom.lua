@@ -268,7 +268,7 @@ end
 function BattleRoom:refreshReadyStates()
   local minimumCondition = tableUtils.trueForAll(self.players, function(p)
     -- everyone finished loading and everyone actually wants to start
-    return p.settings.hasLoaded and p.settings.wantsReady
+    return p.hasLoaded and p.settings.wantsReady
   end)
 
   for _, player in ipairs(self.players) do
