@@ -417,7 +417,9 @@ function CharacterSelect:createCursor(grid, player)
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
     translateSubGrids = true,
     startPosition = {x = 9, y = 2},
-    player = player
+    player = player,
+    -- this needs to be index, not playerNumber, as playerNumber is a server prop
+    frameImages = themes[config.theme].images.IMG_char_sel_cursors[tableUtils.indexOf(GAME.battleRoom.players, player)],
   })
 
   player:connectSignal("wantsReadyChanged", cursor, cursor.setRapidBlinking)

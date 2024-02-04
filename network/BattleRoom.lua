@@ -184,6 +184,7 @@ function BattleRoom:registerPlayerUpdates(messageType)
       player:connectSignal("levelChanged", player, update)
       player:connectSignal("colorCountChanged", player, update)
       player:connectSignal("inputMethodChanged", player, update)
+      player:connectSignal("hasLoadedChanged", player, update)
     else
       local update = function(player, menuStateMsg)
         local menuState = ServerMessages.sanitizeMenuState(menuStateMsg.menu_state)
