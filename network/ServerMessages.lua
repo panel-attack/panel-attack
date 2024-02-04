@@ -139,7 +139,7 @@ function ServerMessages.toServerMenuState(player)
   menuState.wants_ready = player.settings.wantsReady
   menuState.ranked = player.settings.wantsRanked
   menuState.level = player.settings.level
-  menuState.loaded = GAME.battleRoom.allAssetsLoaded
+  menuState.loaded = player.hasLoaded
   menuState.ready = player.ready
   menuState.cursor = "__Ready" -- play pretend
 
