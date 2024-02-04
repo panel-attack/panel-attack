@@ -148,12 +148,12 @@ function CharacterSelect:createPlayerIcon(player)
     vAlign = "center",
     hFill = true,
     vFill = true,
-    isVisible = player.ready
+    isVisible = player.settings.wantsReady and player.hasLoaded
   })
-  readyIcon.update = function(self, ready)
-    self:setVisibility(ready)
+  readyIcon.update = function(self, wantsReady)
+    self:setVisibility(wantsReady and not loadIcon.isVisible)
   end
-  player:connectSignal("readyChanged", readyIcon, readyIcon.update)
+  player:connectSignal("wantsReadyChanged", readyIcon, readyIcon.update)
   playerIcon:addChild(readyIcon)
 
   return playerIcon
