@@ -140,7 +140,7 @@ function ServerMessages.toServerMenuState(player)
   menuState.ranked = player.settings.wantsRanked
   menuState.level = player.settings.level
   menuState.loaded = player.hasLoaded
-  menuState.ready = player.ready
+  menuState.ready = menuState.loaded and menuState.wants_ready
   menuState.cursor = "__Ready" -- play pretend
 
   return menuState
