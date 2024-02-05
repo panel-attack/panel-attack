@@ -445,11 +445,16 @@ function Stack.render(self)
   self:drawCountdown()
   self:drawCanvas()
 
+  if self.telegraph then
+    self.telegraph:render()
+  end
+
   self:draw_popfxs()
   self:draw_cards()
 
   self:drawDebugPanels(shake)
   self:drawDebug()
+
 end
 
 function Stack:drawRating()
@@ -764,15 +769,6 @@ function Stack:drawMoveCount()
     end
     self:drawNumber(moveNumber, themes[config.theme].move_Pos, themes[config.theme].move_Scale, true)
   end
-end
-
-function Stack:drawTopLayers()
-  if self.telegraph then
-    self.telegraph:render()
-  end
-
-  self:draw_popfxs()
-  self:draw_cards()
 end
 
 function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
