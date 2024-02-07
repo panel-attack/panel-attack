@@ -2,53 +2,60 @@ require("input")
 require("util")
 local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
+local logger = require("logger")
 
 local floor = math.floor
 local ceil = math.ceil
 
 
-function calculateShakeData(maxShakeFrames, maxAmplitude)
+function calculateShakeData(maxShakeFrames, maxAmplitude, shakeReduction)
+
+  if shakeReduction then
+    maxAmplitude = maxAmplitude / shakeReduction
+  end
+
   local shakeData = {}
   shakeData.maxFrames = maxShakeFrames
   shakeData.offsets = {}
 
-  local shakeCycleFrames = shakeCycleArrayForFrames(maxShakeFrames)
+  local cycleLengthArray = cycleLengthArrayForTotalFrames(maxShakeFrames)
 
-  local insertIndex = 0
-  for currentCycle = 1, #shakeCycleFrames do
-    local cycleLength = shakeCycleFrames[currentCycle]
-    local x = math.pi / 2
-    local step = math.pi * 2 / cycleLength
+  local frameIndex = 0
+  for currentCycle = 1, #cycleLengthArray do
+
+    local maxCycleHeight = maxAmplitude * math.pow((#cycleLengthArray - currentCycle + 1) / #cycleLengthArray, 5.5)
+    if maxCycleHeight < 4 then
+      maxCycleHeight = 4
+    end
+    local cycleLength = cycleLengthArray[currentCycle]
+    local x = 0
+    local step = math.pi / cycleLength
     for j = 1, cycleLength do
-      local cosX = math.cos(x)
-      shakeData.offsets[insertIndex] = cosX
+      local sinX = math.sin(x)
+      if sinX > 0.9 then
+        sinX = 1
+      end
+      shakeData.offsets[frameIndex] = ceil(sinX * maxCycleHeight)
+      print(shakeData.offsets[frameIndex])
       x = x + step
-      insertIndex = insertIndex + 1
+      frameIndex = frameIndex + 1
     end
   end
-  shakeData.offsets[insertIndex] = 0
+  shakeData.offsets[frameIndex] = 0
 
-  if config.shakeReduction > 1 then
-    maxAmplitude = maxAmplitude / config.shakeReduction
-  end
-  
-  local shake_step = maxAmplitude / (#shakeData.offsets - 1)
-  local shake_mult = maxAmplitude
-  for i = 0, #shakeData.offsets do
-    shakeData.offsets[i] = ceil(math.round(shakeData.offsets[i], 4) * shake_mult)
-    -- print(shakeData.offsets[i])
-    shake_mult = shake_mult - shake_step
-  end
+  logger.info("DONE")
   return shakeData
 end
 
-function shakeCycleArrayForFrames(frames)
+function cycleLengthArrayForTotalFrames(frames)
   local shakeCycleFrames = {}
+  local maxPeriod = math.ceil(math.pow(frames, 0.28) * 3.66)
   local remainingFrames = frames
   while remainingFrames > 0 do
-    if remainingFrames >= 12 then
-      shakeCycleFrames[#shakeCycleFrames+1] = 12
-      remainingFrames = remainingFrames - 12
+    if remainingFrames >= maxPeriod then
+      shakeCycleFrames[#shakeCycleFrames+1] = maxPeriod
+      remainingFrames = remainingFrames - maxPeriod
+      maxPeriod = math.max(3, maxPeriod - 2)
     else 
       shakeCycleFrames[#shakeCycleFrames+1] = remainingFrames
       remainingFrames = 0
@@ -58,11 +65,11 @@ function shakeCycleArrayForFrames(frames)
 end
 
 local shakeOffsetData = {}
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(76, 17)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(66, 15)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(42, 9)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(24, 5)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(18, 4)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(76, 50, config.shakeReduction)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(66, 40, config.shakeReduction)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(42, 30, config.shakeReduction)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(24, 20, config.shakeReduction)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(18, 10, config.shakeReduction)
 
 function Stack:currentShakeOffset()
   return self:shakeOffsetForShakeFrames(self.shake_time, self.peak_shake_time)
