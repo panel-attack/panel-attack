@@ -28,14 +28,17 @@ function calculateShakeData(maxShakeFrames, maxAmplitude, shakeReduction)
       maxCycleHeight = 4
     end
     local cycleLength = cycleLengthArray[currentCycle]
-    local x = 0
-    local step = math.pi / cycleLength
+    local x = -math.pi
+    local step = math.pi * 2 / cycleLength
     for j = 1, cycleLength do
-      local sinX = math.sin(x)
-      if sinX > 0.9 then
-        sinX = 1
+      local cosX = (1 + math.cos(x)) / 2
+      if cosX > 0.9 then
+        cosX = 1
       end
-      shakeData.offsets[frameIndex] = ceil(sinX * maxCycleHeight)
+      if cosX < 0.1 then
+        cosX = 0
+      end
+      shakeData.offsets[frameIndex] = ceil(cosX * maxCycleHeight)
       print(shakeData.offsets[frameIndex])
       x = x + step
       frameIndex = frameIndex + 1
