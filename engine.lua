@@ -2593,7 +2593,7 @@ function Stack:getInfo()
 end
 
 
-local garbageSizeToShakeFrames = {
+local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
   [0] = 0,
   18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
   42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
@@ -2605,13 +2605,9 @@ function Stack:shakeFramesForGarbageSize(size)
   if size == 0 then
     return 0
   end
-  if size >= 24 then
-    return self:maxShakeTimePossible()
+  if size > 24 then
+    size = 24
   end
-  local result = garbageSizeToShakeFrames[size]
+  local result = GARBAGE_SIZE_TO_SHAKE_FRAMES[size]
   return result
-end
-
-function Stack:maxShakeTimePossible()
-  return 76
 end
