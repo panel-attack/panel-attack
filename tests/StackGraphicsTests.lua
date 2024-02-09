@@ -166,14 +166,39 @@ local function testShakeOffset()
   match.seed = 1
   local stack = match.P2
 
-  assert(stack:shakeOffsetForShakeFrames(76, 76) == 0)
-  assert(stack:shakeOffsetForShakeFrames(73, 76) == -16)
-  assert(stack:shakeOffsetForShakeFrames(1, 76) == 1)
-  assert(stack:shakeOffsetForShakeFrames(0, 76) == 0)
+  assert(stack:shakeOffsetForShakeFrames(76, 76, 0, 1) == 0)
+  assert(stack:shakeOffsetForShakeFrames(73, 76, 0, 1) == -25)
+  assert(stack:shakeOffsetForShakeFrames(1, 76, 0, 1) == 2)
+  assert(stack:shakeOffsetForShakeFrames(0, 76, 0, 1) == 0)
 
-  assert(stack:shakeOffsetForShakeFrames(18, 18) == 0)
-  assert(stack:shakeOffsetForShakeFrames(15, 18) == -3)
-  assert(stack:shakeOffsetForShakeFrames(0, 18) == 0)
+  assert(stack:shakeOffsetForShakeFrames(18, 18, 0, 1) == 0)
+  assert(stack:shakeOffsetForShakeFrames(17, 18, 0, 1) == -5)
+  assert(stack:shakeOffsetForShakeFrames(16, 18, 0, 1) == -5)
+  assert(stack:shakeOffsetForShakeFrames(15, 18, 0, 1) == 0)
+  assert(stack:shakeOffsetForShakeFrames(14, 18, 0, 1) == 5)
+  assert(stack:shakeOffsetForShakeFrames(13, 18, 0, 1) == 5)
+  assert(stack:shakeOffsetForShakeFrames(0, 18, 0, 1) == 0)
 end
 
 test(testShakeOffset)
+
+local function testShakeOffsetReduction()
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
+  match.seed = 1
+  local stack = match.P2
+
+  assert(stack:shakeOffsetForShakeFrames(76, 76, 0, 2) == 0)
+  assert(stack:shakeOffsetForShakeFrames(73, 76, 0, 2) == -13)
+  assert(stack:shakeOffsetForShakeFrames(1, 76, 0, 2) == 1)
+  assert(stack:shakeOffsetForShakeFrames(0, 76, 0, 2) == 0)
+
+  assert(stack:shakeOffsetForShakeFrames(18, 18, 0, 2) == 0)
+  assert(stack:shakeOffsetForShakeFrames(17, 18, 0, 2) == -3)
+  assert(stack:shakeOffsetForShakeFrames(16, 18, 0, 2) == -3)
+  assert(stack:shakeOffsetForShakeFrames(15, 18, 0, 2) == 0)
+  assert(stack:shakeOffsetForShakeFrames(14, 18, 0, 2) == 3)
+  assert(stack:shakeOffsetForShakeFrames(13, 18, 0, 2) == 3)
+  assert(stack:shakeOffsetForShakeFrames(0, 18, 0, 2) == 0)
+end
+
+test(testShakeOffsetReduction)

@@ -7,12 +7,56 @@ local logger = require("logger")
 local floor = math.floor
 local ceil = math.ceil
 
+-- Splits the total shake frames into an array of smaller lengths 1 per sine wave
+local function cycleLengthArrayForTotalFrames(frames)
+  local shakeCycleFrames = {}
+  local maxPeriod = math.ceil(frames * 0.2)
+  maxPeriod = math.max(6, maxPeriod) -- we don't want the first shake to ever be too small
 
-function calculateShakeData(maxShakeFrames, maxAmplitude, shakeReduction)
-
-  if shakeReduction then
-    maxAmplitude = maxAmplitude / shakeReduction
+  -- We want the lengths to be even so they are symmetrical and hit 0 halfway through
+  if maxPeriod % 2 == 1 then
+    maxPeriod = maxPeriod + 1
   end
+
+  local remainingFrames = frames
+  while remainingFrames > 0 do
+    if remainingFrames >= maxPeriod then
+      shakeCycleFrames[#shakeCycleFrames+1] = maxPeriod
+      remainingFrames = remainingFrames - maxPeriod
+
+      -- Reduce the length each time so the shake "speeds up" as it gets smaller
+      maxPeriod = math.max(4, math.ceil(maxPeriod * 0.8))
+      if maxPeriod % 2 == 1 then
+        maxPeriod = maxPeriod + 1
+      end
+    else
+      -- Excess frames should go to the beginning not the end, we never want the end to have a bump in frames
+      shakeCycleFrames[1] = shakeCycleFrames[1] + remainingFrames
+      remainingFrames = 0
+    end
+  end
+  return shakeCycleFrames
+end
+
+local function shakeWaveResultForRadians(radians, maxCycleHeight)
+  -- We use -1 here so we go "down" with the first shake to simulate the garbage pushing the stack down on impact
+  local result = -1 * math.sin(radians)
+  result = math.round(result, 4) -- fix rounding errors with floats to keep the rounding down below stable
+
+  -- Pin the top and bottom to have less movement?
+  if result > 0.9 then
+    result = 1
+  end
+  if result < -0.9 then
+    result = -1
+  end
+
+  result = result * maxCycleHeight
+  result = math.integerAwayFromZero(result)
+  return result
+end
+
+local function calculateShakeData(maxShakeFrames, maxAmplitude)
 
   local shakeData = {}
   shakeData.maxFrames = maxShakeFrames
@@ -22,63 +66,54 @@ function calculateShakeData(maxShakeFrames, maxAmplitude, shakeReduction)
 
   local frameIndex = 0
   for currentCycle = 1, #cycleLengthArray do
-
-    local maxCycleHeight = maxAmplitude * math.pow((#cycleLengthArray - currentCycle + 1) / #cycleLengthArray, 5.5)
-    if maxCycleHeight < 4 then
-      maxCycleHeight = 4
+    -- Use pow to reduce the amplitude faster as we go farther
+    local maxCycleHeight = maxAmplitude * math.pow((#cycleLengthArray - currentCycle + 1) / #cycleLengthArray, 5.5) / 2
+    local shakeHeightMinimum = 2
+    if maxCycleHeight < shakeHeightMinimum then
+      maxCycleHeight = shakeHeightMinimum -- we always want some movement
     end
     local cycleLength = cycleLengthArray[currentCycle]
-    local x = -math.pi
+    local x = 0
     local step = math.pi * 2 / cycleLength
     for j = 1, cycleLength do
-      local cosX = (1 + math.cos(x)) / 2
-      if cosX > 0.9 then
-        cosX = 1
-      end
-      if cosX < 0.1 then
-        cosX = 0
-      end
-      shakeData.offsets[frameIndex] = ceil(cosX * maxCycleHeight)
-      print(shakeData.offsets[frameIndex])
+      local result = shakeWaveResultForRadians(x, maxCycleHeight)
+      shakeData.offsets[frameIndex] = result
       x = x + step
       frameIndex = frameIndex + 1
     end
   end
   shakeData.offsets[frameIndex] = 0
 
-  logger.info("DONE")
   return shakeData
 end
 
-function cycleLengthArrayForTotalFrames(frames)
-  local shakeCycleFrames = {}
-  local maxPeriod = math.ceil(math.pow(frames, 0.28) * 3.66)
-  local remainingFrames = frames
-  while remainingFrames > 0 do
-    if remainingFrames >= maxPeriod then
-      shakeCycleFrames[#shakeCycleFrames+1] = maxPeriod
-      remainingFrames = remainingFrames - maxPeriod
-      maxPeriod = math.max(3, maxPeriod - 2)
-    else 
-      shakeCycleFrames[#shakeCycleFrames+1] = remainingFrames
-      remainingFrames = 0
-    end
-  end
-  return shakeCycleFrames
-end
-
 local shakeOffsetData = {}
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(76, 50, config.shakeReduction)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(66, 40, config.shakeReduction)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(42, 30, config.shakeReduction)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(24, 20, config.shakeReduction)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(18, 10, config.shakeReduction)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(76, 50)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(66, 40)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(42, 30)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(24, 20)
+shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(18, 10)
 
 function Stack:currentShakeOffset()
-  return self:shakeOffsetForShakeFrames(self.shake_time, self.peak_shake_time)
+  return self:shakeOffsetForShakeFrames(self.shake_time, self.peak_shake_time, self.prev_shake_time)
 end
 
-function Stack:shakeOffsetForShakeFrames(frames, maxShakeFrames)
+function Stack:shakeOffsetForShakeFrames(frames, maxShakeFrames, previousShakeTime, shakeReduction)
+  if shakeReduction == nil then
+    shakeReduction = config.shakeReduction
+  end
+
+  local result = self:privateShakeOffsetForShakeFrames(frames, maxShakeFrames, shakeReduction)
+  -- If we increased shake time we don't want to hard jump to the new value as its jarring.
+  -- Interpolate on the first frame to smooth it out a little bit.
+  if self.prev_shake_time > 0 and self.prev_shake_time < self.shake_time then
+    local previousOffset = self:privateShakeOffsetForShakeFrames(previousShakeTime, maxShakeFrames, shakeReduction)
+    result = math.integerAwayFromZero((result + previousOffset) / 2, 0)
+  end
+  return result
+end
+
+function Stack:privateShakeOffsetForShakeFrames(frames, maxShakeFrames, shakeReduction)
   assert(frames <= maxShakeFrames)
   if frames <= 0 then
     return 0
@@ -95,7 +130,11 @@ function Stack:shakeOffsetForShakeFrames(frames, maxShakeFrames)
 
   local offsetData = shakeOffsetData[indexToUse].offsets
   local lookupIndex = #offsetData - frames
-  return offsetData[lookupIndex] or 0
+  local result = offsetData[lookupIndex] or 0
+  if result ~= 0 then
+    result = math.integerAwayFromZero(result / shakeReduction)
+  end
+  return result
 end
 
 -- Provides the X origin to draw an element of the stack

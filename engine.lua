@@ -237,6 +237,7 @@ Stack =
     s.which = which
     s.player_number = player_number --player number according to the multiplayer server, for game outcome reporting
 
+    s.prev_shake_time = 0
     s.shake_time = 0
     s.shake_time_on_frame = 0
     s.peak_shake_time = 0
@@ -566,6 +567,7 @@ function Stack.rollbackCopy(source, other)
   other.cur_dir = source.cur_dir
   other.cur_row = source.cur_row
   other.cur_col = source.cur_col
+  other.prev_shake_time = source.prev_shake_time
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
@@ -1442,7 +1444,7 @@ function Stack.simulate(self)
 
     self:updatePanels()
 
-    local prev_shake_time = self.shake_time
+    self.prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
     self.shake_time = max(self.shake_time, self.shake_time_on_frame)
     if self.shake_time == 0 then
@@ -1779,7 +1781,7 @@ function Stack.simulate(self)
       if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i = 1, 3 do
-          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > self.prev_shake_time then
             self.theme.sounds.garbage_thud[i]:stop()
             interrupted_thud = i
           end
