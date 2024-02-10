@@ -22,6 +22,7 @@ local PuzzleMenu = class(
     self.levelSlider = nil
     self.randomColorButtons = nil
     self.menu = nil
+    self.puzzleLabel = nil
 
     self:load(sceneParams)
   end,
@@ -117,17 +118,19 @@ function PuzzleMenu:load(sceneParams)
   
   self.menu = Menu.createCenteredMenu(menuOptions)
 
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  self.puzzleLabel = Label({text = "pz_puzzles", x = x - 10, y = y - 40})
+  
   self.uiRoot:addChild(self.menu)
+  self.uiRoot:addChild(self.puzzleLabel)
 
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
 end
 
-function PuzzleMenu:update()
-  GraphicsUtil.print(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
-  
-  self.menu:update()
+function PuzzleMenu:update(dt)
+  self.menu:update(dt)
 end
 
 function PuzzleMenu:draw()
