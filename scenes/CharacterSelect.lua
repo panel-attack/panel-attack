@@ -288,7 +288,7 @@ function CharacterSelect:getCharacterButtons()
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
     characterButton.onClick = function(selfElement, inputSource, holdTime)
-      local character = characters[self.characterId]
+      local character = characters[selfElement.characterId]
       local player
       if inputSource and inputSource.player then
         player = inputSource.player
@@ -310,7 +310,7 @@ function CharacterSelect:getCharacterButtons()
         end
         character:playSelectionSfx()
       end
-      player:setCharacter(self.characterId)
+      player:setCharacter(selfElement.characterId)
       player.cursor:updatePosition(9, 2)
     end
 
