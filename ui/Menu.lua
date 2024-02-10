@@ -231,28 +231,21 @@ function Menu:update(dt)
     return
   end
 
-  if input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:shouldRespondToMenuUp() then
     self:scrollUp()
   end
 
-  if input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:shouldRespondToMenuDown() then
     self:scrollDown()
   end
 
   local selectedElement = self.menuItems[self.selectedIndex]
 
   if selectedElement then
+    -- Right now back on a button is only allowed on the last item. Later we should make it more explicit.
     if not input.isDown["MenuEsc"] or self.selectedIndex == #self.menuItems then
       selectedElement:receiveInputs(input, dt)
     end
-  end
-
-  if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-    selectedElement:onLeft()
-  end
-
-  if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-    selectedElement:onRight()
   end
   
   if input.isDown["MenuEsc"] then

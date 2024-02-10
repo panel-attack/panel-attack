@@ -205,7 +205,8 @@ function SoundTest:load()
     MenuItem.createStepperMenuItem("stage", nil, nil, stageStepper),
     MenuItem.createToggleButtonGroupMenuItem("op_music_type", nil, nil, musicTypeButtonGroup),
     MenuItem.createToggleButtonGroupMenuItem("Background", nil, false, playButtonGroup),
-    MenuItem.createButtonStepperMenuItem("op_music_play", nil, nil, playCharacterSFXFn, sfxStepper),
+    MenuItem.createStepperMenuItem("op_music_sfx", nil, nil, sfxStepper),
+    MenuItem.createButtonMenuItem("op_music_play", nil, nil, playCharacterSFXFn),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
       stop_all_audio()
       themes[config.theme].sounds.menu_validate = menuValidateSound

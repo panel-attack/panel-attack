@@ -67,6 +67,14 @@ local Stepper = class(
 Stepper.setLabels = setLabels
 Stepper.setState = setState
 
+function Stepper:receiveInputs(input)
+  if input:shouldRespondToMenuLeft() then
+    self:setState(self.selectedIndex - 1)
+  elseif input:shouldRespondToMenuRight() then
+    self:setState(self.selectedIndex + 1)
+  end
+end
+
 function Stepper:refreshLocalization()
   for i, label in ipairs(self.labels) do
     label:refreshLocalization()

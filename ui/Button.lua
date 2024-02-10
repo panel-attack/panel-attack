@@ -30,7 +30,6 @@ function Button:onRelease(x, y, timeHeld)
   end
 end
 
--- inputs as a passthrough in case we ever implement player specific menus
 function Button:receiveInputs(input)
   if input.isDown["MenuSelect"] then
     self:onClick()

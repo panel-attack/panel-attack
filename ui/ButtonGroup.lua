@@ -59,7 +59,9 @@ end
 
 local function setActiveButton(self, selectedIndex)
   local newIndex = util.bound(1, selectedIndex, #self.buttons)
-  self.buttons[newIndex]:onClick(nil, 0)
+  if self.selectedIndex ~= newIndex then
+    self.buttons[newIndex]:onClick(nil, 0)
+  end
 end
 
 local ButtonGroup = class(
@@ -74,6 +76,14 @@ local ButtonGroup = class(
   end,
   UIElement
 )
+
+function ButtonGroup:receiveInputs(input)
+  if input:shouldRespondToMenuLeft() then
+    self:setActiveButton(self.selectedIndex - 1)
+  elseif input:shouldRespondToMenuRight() then
+    self:setActiveButton(self.selectedIndex + 1)
+  end
+end
 
 ButtonGroup.setButtons = setButtons
 ButtonGroup.setActiveButton = setActiveButton

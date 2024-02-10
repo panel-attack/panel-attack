@@ -105,7 +105,7 @@ function Lobby:initLobbyMenu()
     end),
     MenuItem.createButtonMenuItem("lb_back", nil, nil, exitMenu)
   }
-  self.leaderboardToggleLabel = menuItems[1].onClickElement.children[1]
+  self.leaderboardToggleLabel = menuItems[1].textButton.children[1]
 
   self.lobbyMenu = Menu.createCenteredMenu(menuItems)
   self.lobbyMenu.x = self.lobbyMenuXoffsetMap[false]

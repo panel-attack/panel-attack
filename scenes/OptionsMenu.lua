@@ -145,13 +145,13 @@ function OptionsMenu:loadInfoScreen(text)
       self.backgroundImage = themes[config.theme].images.bg_main
       self:switchToScreen("aboutMenu")
     end
-    if inputManager:isPressedWithRepeat("MenuUp", .25, 30 / 1000.0) then
+    if inputManager:shouldRespondToMenuUp(.25, 30 / 1000.0) then
       Menu.playMoveSfx()
       if label.height > consts.CANVAS_HEIGHT - 15 then
         label.y = math.max(0, label.y + SCROLL_STEP)
       end
     end
-    if inputManager:isPressedWithRepeat("MenuDown", .25, 30 / 1000.0) then
+    if inputManager:shouldRespondToMenuDown(.25, 30 / 1000.0) then
       Menu.playMoveSfx()
       if label.height > consts.CANVAS_HEIGHT - 15 then
         label.y = math.min(label.y - SCROLL_STEP, label.height - (consts.CANVAS_HEIGHT - 15))

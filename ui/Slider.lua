@@ -43,6 +43,14 @@ function Slider:onRelease(x, y)
   self:setValueFromPos(x)
 end
 
+function Slider:receiveInputs(input)
+  if input:shouldRespondToMenuLeft() then
+    self:setValue(self.value - 1)
+  elseif input:shouldRespondToMenuRight() then
+    self:setValue(self.value + 1)
+  end
+end
+
 function Slider:setValueFromPos(x)
   local screenX, screenY = self:getScreenPos()
   self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)

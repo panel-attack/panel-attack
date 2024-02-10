@@ -40,6 +40,7 @@ function MenuItem.createMenuItem(label, item)
   return menuItem
 end
 
+-- Creates a menu item with just a button
 function MenuItem.createButtonMenuItem(text, replacements, translate, onClick)
   assert(text ~= nil)
   local BUTTON_WIDTH = 140
@@ -49,12 +50,12 @@ function MenuItem.createButtonMenuItem(text, replacements, translate, onClick)
   local textButton = TextButton({label = Label({text = text, replacements = replacements, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick, width = BUTTON_WIDTH})
 
   local menuItem = MenuItem.createMenuItem(textButton)
-  menuItem.onClickElement = textButton
+  menuItem.textButton = textButton
 
   return menuItem
 end
 
-
+-- Creates a menu item with a label followed by a button
 function MenuItem.createLabeledButtonMenuItem(labelText, labelTextReplacements, labelTextTranslate, buttonText, buttonTextReplacements, buttonTextTranslate, buttonOnClick)
   assert(labelText ~= nil)
   assert(buttonText ~= nil)
@@ -71,7 +72,7 @@ function MenuItem.createLabeledButtonMenuItem(labelText, labelTextReplacements, 
   local textButton = TextButton({label = Label({text = buttonText, replacements = buttonTextReplacements, translate = buttonTextTranslate, hAlign = "center", vAlign = "center"}), onClick = buttonOnClick, width = BUTTON_WIDTH})
 
   local menuItem = MenuItem.createMenuItem(label, textButton)
-  menuItem.onClickElement = textButton
+  menuItem.textButton = textButton
 
   return menuItem
 end
@@ -84,8 +85,6 @@ function MenuItem.createStepperMenuItem(text, replacements, translate, stepper)
   end
   local label = Label({text = text, replacements = replacements, translate = translate, vAlign = "center"})
   local menuItem = MenuItem.createMenuItem(label, stepper)
-  menuItem.onLeftElement = stepper
-  menuItem.onRightElement = stepper
   
   return menuItem
 end
@@ -98,8 +97,6 @@ function MenuItem.createToggleButtonGroupMenuItem(text, replacements, translate,
   end
   local label = Label({text = text, replacements = replacements, translate = translate, vAlign = "center"})
   local menuItem = MenuItem.createMenuItem(label, toggleButtonGroup)
-  menuItem.onLeftElement = toggleButtonGroup
-  menuItem.onRightElement = toggleButtonGroup
   
   return menuItem
 end
@@ -112,24 +109,6 @@ function MenuItem.createSliderMenuItem(text, replacements, translate, slider)
   end
   local label = Label({text = text, replacements = replacements, translate = translate, vAlign = "center"})
   local menuItem = MenuItem.createMenuItem(label, slider)
-  menuItem.onLeftElement = slider
-  menuItem.onRightElement = slider
-  
-  return menuItem
-end
-
-function MenuItem.createButtonStepperMenuItem(text, replacements, translate, onClick, stepper)
-  assert(text ~= nil)
-  assert(onClick ~= nil)
-  assert(stepper ~= nil)
-  if translate == nil then
-    translate = true
-  end
-  local textButton = TextButton({label = Label({text = text, replacements = replacements, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick})
-  local menuItem = MenuItem.createMenuItem(textButton, stepper)
-  menuItem.onClickElement = textButton
-  menuItem.onLeftElement = stepper
-  menuItem.onRightElement = stepper
   
   return menuItem
 end
@@ -157,36 +136,6 @@ function MenuItem:receiveInputs(inputs)
     if child.receiveInputs then
       child:receiveInputs(inputs)
       return
-    end
-  end
-end
-
-function MenuItem:onLeft()
-  if self.onLeftElement then
-    -- TODO: move these into each elements "onLeft"
-    if self.onLeftElement.TYPE == "Slider" then
-      self.onLeftElement:setValue(self.onLeftElement.value - 1)
-    elseif self.onLeftElement.TYPE == "ButtonGroup" then
-      if self.onLeftElement.selectedIndex > 1 then
-        self.onLeftElement:setActiveButton(self.onLeftElement.selectedIndex - 1)
-      end
-    elseif self.onLeftElement.TYPE == "Stepper" then
-      self.onLeftElement:setState(self.onLeftElement.selectedIndex - 1)
-    end
-  end
-end
-
-function MenuItem:onRight()
-  if self.onRightElement then
-    -- TODO: move these into each elements "onRight"
-    if self.onRightElement.TYPE == "Slider" then
-      self.onRightElement:setValue(self.onRightElement.value + 1)
-    elseif self.onRightElement.TYPE == "ButtonGroup" then
-      if #self.onRightElement.buttons > self.onRightElement.selectedIndex then
-        self.onRightElement:setActiveButton(self.onRightElement.selectedIndex + 1)
-      end
-    elseif self.onRightElement.TYPE == "Stepper" then
-      self.onRightElement:setState(self.onRightElement.selectedIndex + 1)
     end
   end
 end

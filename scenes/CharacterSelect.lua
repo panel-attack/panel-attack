@@ -266,16 +266,18 @@ function CharacterSelect:getCharacterButtons()
         return
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
-        -- super select
-        if character.panels and panels[character.panels] then
-          player:setPanels(character.panels)
+      if character then
+        if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
+          -- super select
+          if character.panels and panels[character.panels] then
+            player:setPanels(character.panels)
+          end
+          if character.stage and stages[character.stage] then
+            player:setStage(character.stage)
+          end
         end
-        if character.stage and stages[character.stage] then
-          player:setStage(character.stage)
-        end
+        character:playSelectionSfx()
       end
-      character:playSelectionSfx()
       player:setCharacter(self.characterId)
       player.cursor:updatePosition(9, 2)
     end
@@ -459,11 +461,11 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
 
   Focusable(levelSlider)
   levelSlider.receiveInputs = function(self, inputs)
-    if inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if inputs:shouldRespondToMenuLeft() then
       self:setValue(self.value - 1)
     end
 
-    if inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if inputs:shouldRespondToMenuRight() then
       self:setValue(self.value + 1)
     end
 

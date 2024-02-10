@@ -105,7 +105,7 @@ function InputConfigMenu:setAllKeys()
 end
 
 function InputConfigMenu:currentKeyLabelForIndex(index)
-  return self.menu.menuItems[index].onClickElement.children[1]
+  return self.menu.menuItems[index].textButton.children[1]
 end
 
 function InputConfigMenu:setKeyStart(key)

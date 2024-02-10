@@ -90,7 +90,7 @@ function MainMenu:createMainMenu()
       Menu.playValidationSfx()
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     end),
-    MenuItem.createButtonMenuItem("mm_quit", nil, nil, love.event.quit)
+    MenuItem.createButtonMenuItem("mm_quit", nil, nil, function() love.event.quit() end )
   }
 
   local menu = Menu.createCenteredMenu(menuItems)
