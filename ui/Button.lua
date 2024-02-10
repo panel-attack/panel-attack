@@ -30,6 +30,15 @@ function Button:onRelease(x, y, timeHeld)
   end
 end
 
+-- inputs as a passthrough in case we ever implement player specific menus
+function Button:receiveInputs(input)
+  if input.isDown["MenuSelect"] then
+    self:onClick()
+  elseif input.isDown["MenuEsc"] then
+    self:onClick()
+  end
+end
+
 function Button:drawBackground()
   if self.backgroundColor[4] > 0 then
     GraphicsUtil.setColor(self.backgroundColor)

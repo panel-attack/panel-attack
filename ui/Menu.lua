@@ -241,6 +241,12 @@ function Menu:update(dt)
 
   local selectedElement = self.menuItems[self.selectedIndex]
 
+  if selectedElement then
+    if not input.isDown["MenuEsc"] or self.selectedIndex == #self.menuItems then
+      selectedElement:receiveInputs(input, dt)
+    end
+  end
+
   if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     selectedElement:onLeft()
   end
@@ -249,16 +255,10 @@ function Menu:update(dt)
     selectedElement:onRight()
   end
   
-  if input.isDown["MenuSelect"]  then
-    selectedElement:onClick()
-  end
-  
   if input.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
       self:setSelectedIndex(#self.menuItems)
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    else
-      selectedElement:onClick()
     end
   end
 end

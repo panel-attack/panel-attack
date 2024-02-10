@@ -151,9 +151,13 @@ function MenuItem:drawSelf()
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
-function MenuItem:onClick()
-  if self.onClickElement then
-    self.onClickElement:onClick()
+-- inputs as a passthrough in case we ever implement player specific menus
+function MenuItem:receiveInputs(inputs)
+  for _, child in ipairs(self.children) do
+    if child.receiveInputs then
+      child:receiveInputs(inputs)
+      return
+    end
   end
 end
 
