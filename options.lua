@@ -1105,7 +1105,7 @@ local function userIDMenu(button_idx)
     ret = {
       function()
         local updateIDRet = nil
-        local id = read_user_id_file(userIDDirectories[currentButtonIndex])
+        local id = read_user_id_file(userIDDirectories[currentButtonIndex]) or ""
         love.keyboard.setTextInput(true) -- enables user to type
         while true do
           local to_print = "Enter User ID (or paste from clipboard)"
