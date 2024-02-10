@@ -138,16 +138,16 @@ function GridCursor:receiveInputs(inputs, dt)
     self.focused:receiveInputs(inputs, dt, self.player)
   elseif inputs.isDown["Swap2"] then
     self:escapeCallback()
-  elseif inputs:shouldRespondToMenuLeft() then
+  elseif inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.left)
-  elseif inputs:shouldRespondToMenuRight() then
+  elseif inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.right)
-  elseif inputs:shouldRespondToMenuUp() then
+  elseif inputs:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.up)
-  elseif inputs:shouldRespondToMenuDown() then
+  elseif inputs:isPressedWithRepeat("Down", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
     play_optional_sfx(themes[config.theme].sounds.menu_move)
     self:move(GridCursor.directions.down)
   elseif inputs.isDown["Swap1"] then
