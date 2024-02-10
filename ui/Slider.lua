@@ -44,9 +44,9 @@ function Slider:onRelease(x, y)
 end
 
 function Slider:receiveInputs(input)
-  if input:shouldRespondToMenuLeft() then
+  if input:isPressedWithRepeat("Left") then
     self:setValue(self.value - 1)
-  elseif input:shouldRespondToMenuRight() then
+  elseif input:isPressedWithRepeat("Right") then
     self:setValue(self.value + 1)
   end
 end

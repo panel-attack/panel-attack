@@ -231,11 +231,11 @@ function Menu:update(dt)
     return
   end
 
-  if input:shouldRespondToMenuUp() then
+  if input:isPressedWithRepeat("Up") then
     self:scrollUp()
   end
 
-  if input:shouldRespondToMenuDown() then
+  if input:isPressedWithRepeat("Down") then
     self:scrollDown()
   end
 

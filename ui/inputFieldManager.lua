@@ -17,11 +17,11 @@ function inputFieldManager.update()
     inputFieldManager.selectedInputField:onBackspace()
   end
   
-  if input.allKeys:shouldRespondToMenuLeft() then
+  if input.allKeys:isPressedWithRepeat("Left") then
     inputFieldManager.selectedInputField:onMoveCursor(-1)
   end
   
-  if input.allKeys:shouldRespondToMenuRight() then
+  if input.allKeys:isPressedWithRepeat("Right") then
     inputFieldManager.selectedInputField:onMoveCursor(1)
   end
 end

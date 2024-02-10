@@ -495,11 +495,11 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
 
   Focusable(levelSlider)
   levelSlider.receiveInputs = function(self, inputs)
-    if inputs:shouldRespondToMenuLeft() then
+    if inputs:isPressedWithRepeat("Left") then
       self:setValue(self.value - 1)
     end
 
-    if inputs:shouldRespondToMenuRight() then
+    if inputs:isPressedWithRepeat("Right") then
       self:setValue(self.value + 1)
     end
 

@@ -305,26 +305,6 @@ function inputManager:isPressedWithRepeat(key, delay, repeatPeriod, inputs)
   return isPressedWithRepeat(inputs, key, delay, repeatPeriod)
 end
 
-function inputManager:shouldRespondToMenuKey(key, delay, repeatPeriod, inputs)
-  return inputManager:isPressedWithRepeat(key, delay, repeatPeriod, inputs)
-end
-
-function inputManager:shouldRespondToMenuLeft(inputs, delay, repeatPeriod)
-  return self:shouldRespondToMenuKey("MenuLeft", inputs, delay, repeatPeriod)
-end
-
-function inputManager:shouldRespondToMenuRight(inputs, delay, repeatPeriod)
-  return self:shouldRespondToMenuKey("MenuRight", inputs, delay, repeatPeriod)
-end
-
-function inputManager:shouldRespondToMenuUp(inputs, delay, repeatPeriod)
-  return self:shouldRespondToMenuKey("MenuUp", inputs, delay, repeatPeriod)
-end
-
-function inputManager:shouldRespondToMenuDown(inputs, delay, repeatPeriod)
-  return self:shouldRespondToMenuKey("MenuDown", inputs, delay, repeatPeriod)
-end
-
 -- input migration utils
 local function convertButton(rawButton)
   local letterToDir = {u = "up", d = "down", l = "left", r = "right"}
@@ -409,21 +389,11 @@ for i = 1, inputManager.maxConfigurations do
     isPressed = {},
     isUp = {},
     isPressedWithRepeat = isPressedWithRepeat,
-    shouldRespondToMenuKey = inputManager.shouldRespondToMenuKey,
-    shouldRespondToMenuLeft = inputManager.shouldRespondToMenuLeft,
-    shouldRespondToMenuRight = inputManager.shouldRespondToMenuRight,
-    shouldRespondToMenuUp = inputManager.shouldRespondToMenuUp,
-    shouldRespondToMenuDown = inputManager.shouldRespondToMenuDown,
     usedByPlayer = nil
   }
 end
 
 inputManager.allKeys.isPressedWithRepeat = isPressedWithRepeat
-inputManager.allKeys.shouldRespondToMenuKey = inputManager.shouldRespondToMenuKey
-inputManager.allKeys.shouldRespondToMenuLeft = inputManager.shouldRespondToMenuLeft
-inputManager.allKeys.shouldRespondToMenuRight = inputManager.shouldRespondToMenuRight
-inputManager.allKeys.shouldRespondToMenuUp = inputManager.shouldRespondToMenuUp
-inputManager.allKeys.shouldRespondToMenuDown = inputManager.shouldRespondToMenuDown
 
 function inputManager:importConfigurations(configurations)
   for i = 1, #configurations do

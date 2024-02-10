@@ -61,10 +61,10 @@ function ReplayGame:runGame()
       self.match:togglePause()
       setMusicPaused(self.match.isPaused)
     end
-  elseif input:shouldRespondToMenuRight() then
+  elseif input:isPressedWithRepeat("Right") then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex + 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
-  elseif input:shouldRespondToMenuLeft() then
+  elseif input:isPressedWithRepeat("Left") then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex - 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
   elseif input.isDown["Swap2"] then

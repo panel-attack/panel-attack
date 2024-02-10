@@ -78,9 +78,9 @@ local ButtonGroup = class(
 )
 
 function ButtonGroup:receiveInputs(input)
-  if input:shouldRespondToMenuLeft() then
+  if input:isPressedWithRepeat("Left") then
     self:setActiveButton(self.selectedIndex - 1)
-  elseif input:shouldRespondToMenuRight() then
+  elseif input:isPressedWithRepeat("Right") then
     self:setActiveButton(self.selectedIndex + 1)
   end
 end
