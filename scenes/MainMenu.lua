@@ -145,7 +145,7 @@ function MainMenu:update(dt)
   end
 
   self.backgroundImg:update(dt)
-  self.menu:update()
+  self.menu:update(dt)
 end
 
 function MainMenu:draw()

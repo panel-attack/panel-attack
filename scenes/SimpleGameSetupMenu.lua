@@ -99,11 +99,11 @@ function SimpleGameSetupMenu:load(sceneParams)
   self.typeButtons = ButtonGroup(
     {
       buttons = {
-        TextButton({label = Label({text = "endless_classic"}), onClick = function()
+        TextButton({label = Label({text = "endless_classic"}), onClick = function(selfElement, inputSource, holdTime)
               self.modernMenu:detach()
               self.uiRoot:addChild(self.classicMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
-        TextButton({label = Label({text = "endless_modern"}), onClick = function()
+        TextButton({label = Label({text = "endless_modern"}), onClick = function(selfElement, inputSource, holdTime)
               self.classicMenu:detach()
               self.uiRoot:addChild(self.modernMenu)
               end, width = BUTTON_WIDTH, height = BUTTON_HEIGHT}),
@@ -146,9 +146,9 @@ function SimpleGameSetupMenu:update(dt)
   self.backgroundImg:update(dt)
 
   if self.typeButtons.value == "Classic" then
-    self.classicMenu:update()
+    self.classicMenu:update(dt)
   else
-    self.modernMenu:update()
+    self.modernMenu:update(dt)
   end
 end
 

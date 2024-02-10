@@ -40,8 +40,8 @@ local Stepper = class(
     self.selectedIndex = options.selectedIndex or 1
     
     local navButtonWidth = 25
-    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function() setState(self, self.selectedIndex - 1) end})
-    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function() setState(self, self.selectedIndex + 1) end})
+    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function(selfElement, inputSource, holdTime) setState(self, self.selectedIndex - 1) end})
+    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function(selfElement, inputSource, holdTime) setState(self, self.selectedIndex + 1) end})
     self:addChild(self.leftButton)
     self:addChild(self.rightButton)
 

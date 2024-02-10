@@ -20,9 +20,9 @@ end
 -- forced override for each of the button's onClick function
 -- this allows buttons to have individual custom behaviour while also triggering the global state change
 local function genButtonGroupFn(self, i, onClick)
-  return function()
+  return function(selfElement, inputSource, holdTime)
     setState(self, i)
-    onClick()
+    onClick(selfElement, inputSource, holdTime)
     self.onChange(self.value)
   end
 end
@@ -59,7 +59,7 @@ end
 
 local function setActiveButton(self, selectedIndex)
   local newIndex = util.bound(1, selectedIndex, #self.buttons)
-  self.buttons[newIndex].onClick()
+  self.buttons[newIndex]:onClick(nil, 0)
 end
 
 local ButtonGroup = class(

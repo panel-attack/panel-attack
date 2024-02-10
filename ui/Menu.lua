@@ -28,8 +28,8 @@ local Menu = class(
     -- bogus this should be passed in?
     self.centerVertically = themes[config.theme].centerMenusVertically 
 
-    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\", translate = false}), onClick = function() self:scrollUp() end})
-    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/", translate = false}), onClick = function() self:scrollDown() end})
+    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollUp() end})
+    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollDown() end})
     
     self:addChild(self.upButton)
     self:addChild(self.downButton)
@@ -226,7 +226,7 @@ function Menu:scrollDown()
   end
 end
 
-function Menu:update()
+function Menu:update(dt)
   if not self.isEnabled then
     return
   end

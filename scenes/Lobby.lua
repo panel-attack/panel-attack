@@ -343,7 +343,7 @@ function Lobby:update(dt)
     GAME.tcpClient:dropOldInputMessages()
 
     self:processServerMessages()
-    self.lobbyMenu:update()
+    self.lobbyMenu:update(dt)
   end
 
   if not GAME.tcpClient:processIncomingMessages() then

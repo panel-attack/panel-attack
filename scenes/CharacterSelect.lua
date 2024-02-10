@@ -139,7 +139,7 @@ function CharacterSelect:createReadyButton()
   })
 
   -- assign player generic callback
-  readyButton.onClick = function(self, inputSource)
+  readyButton.onClick = function(self, inputSource, holdTime)
     local player
     if inputSource and inputSource.player then
       player = inputSource.player
@@ -255,7 +255,7 @@ function CharacterSelect:getCharacterButtons()
   -- assign player generic callbacks
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
-    characterButton.onClick = function(self, inputSource, holdTime)
+    characterButton.onClick = function(selfElement, inputSource, holdTime)
       local character = characters[self.characterId]
       local player
       if inputSource and inputSource.player then
