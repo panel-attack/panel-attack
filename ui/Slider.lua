@@ -56,14 +56,14 @@ function Slider:setValue(value)
   end
 end
 
+local SLIDER_CIRCLE_COLOR = {0.5, 0.5, 1, 0.8}
 function Slider:drawSelf()
-  local sliderCircleColor = {0.5, 0.5, 1, 0.8}
   local light_gray = .5
   local alpha = .7
   GraphicsUtil.setColor(light_gray, light_gray, light_gray, alpha)
   GraphicsUtil.drawRectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
 
-  GraphicsUtil.setColor(unpack(sliderCircleColor))
+  GraphicsUtil.setColor(unpack(SLIDER_CIRCLE_COLOR))
   love.graphics.circle("fill", self.x + (self.value - self.min + .5) * self.tickLength, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)
   GraphicsUtil.setColor(1, 1, 1, 1)
   
