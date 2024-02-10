@@ -15,7 +15,7 @@ function write_key_file()
     function()
       local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
-      file:write(json.encode(inputManager.inputConfigurations))
+      file:write(json.encode(inputManager:getSaveKeyMap()))
       file:close()
     end
   )

@@ -126,6 +126,38 @@ function CharacterSelect:createPlayerIcon(player)
   })
   playerIcon:addChild(playerName)
 
+  -- load icon
+  local loadIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_loading,
+    hAlign = "center",
+    vAlign = "center",
+    hFill = true,
+    vFill = true,
+    isVisible = not player.hasLoaded
+  })
+  playerIcon:addChild(loadIcon)
+
+  -- ready icon
+  local readyIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_ready,
+    hAlign = "center",
+    vAlign = "center",
+    hFill = true,
+    vFill = true,
+    isVisible = player.settings.wantsReady and player.hasLoaded
+  })
+  playerIcon:addChild(readyIcon)
+
+  loadIcon.update = function(self, loaded)
+    self:setVisibility(not loaded)
+    readyIcon:setVisibility(loaded and player.settings.wantsReady)
+  end
+  player:connectSignal("hasLoadedChanged", loadIcon, loadIcon.update)
+  readyIcon.update = function(self, wantsReady)
+    self:setVisibility(wantsReady and player.hasLoaded)
+  end
+  player:connectSignal("wantsReadyChanged", readyIcon, readyIcon.update)
+
   return playerIcon
 end
 
@@ -389,7 +421,9 @@ function CharacterSelect:createCursor(grid, player)
     activeArea = {x1 = 1, y1 = 2, x2 = 9, y2 = 5},
     translateSubGrids = true,
     startPosition = {x = 9, y = 2},
-    player = player
+    player = player,
+    -- this needs to be index, not playerNumber, as playerNumber is a server prop
+    frameImages = themes[config.theme].images.IMG_char_sel_cursors[tableUtils.indexOf(GAME.battleRoom.players, player)],
   })
 
   player:connectSignal("wantsReadyChanged", cursor, cursor.setRapidBlinking)

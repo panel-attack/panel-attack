@@ -20,10 +20,12 @@ local GridCursor = class(function(self, options)
 
   self.player = options.player
   self.player.cursor = self
-  self.image = themes[config.theme].images.IMG_char_sel_cursors[self.player.playerNumber]
-  self.leftQuad = themes[config.theme].images.IMG_char_sel_cursor_halves.left[self.player.playerNumber]
-  self.rightQuad = themes[config.theme].images.IMG_char_sel_cursor_halves.right[self.player.playerNumber]
-  self.imageWidth, self.imageHeight = self.image[1]:getDimensions()
+  self.frameImages = options.frameImages or themes[config.theme].images.IMG_char_sel_cursors[self.player.playerNumber]
+  self.imageWidth, self.imageHeight = self.frameImages[1]:getDimensions()
+  self.quads = {}
+  self.quads.left = GraphicsUtil:newRecycledQuad(0, 0, self.imageWidth / 2, self.imageHeight, self.imageWidth, self.imageHeight)
+  self.quads.right = GraphicsUtil:newRecycledQuad(self.imageWidth / 2, 0, self.imageWidth / 2, self.imageHeight, self.imageWidth, self.imageHeight)
+
   self.imageScale = self.target.unitSize / self.imageHeight
 
   self.blinkFrequency = options.blinkFrequency or 8
@@ -122,12 +124,12 @@ function GridCursor:drawSelf()
     drawThisFrame = true
   end
 
-  local image = self.image[cursorFrame]
+  local image = self.frameImages[cursorFrame]
   local element = self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
   local x, y = element:getScreenPos()
   if drawThisFrame then
-    GraphicsUtil.drawQuad(image, self.leftQuad[cursorFrame], x - 7, y - 7, 0, self.imageScale, self.imageScale)
-    GraphicsUtil.drawQuad(image, self.rightQuad[cursorFrame], x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
+    GraphicsUtil.drawQuad(image, self.quads.left, x - 7, y - 7, 0, self.imageScale, self.imageScale)
+    GraphicsUtil.drawQuad(image, self.quads.right, x + element.width + 7 - self.imageWidth * self.imageScale / 2, y - 7, 0, self.imageScale, self.imageScale)
   end
 end
 

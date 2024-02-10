@@ -27,6 +27,7 @@ BattleRoom = class(function(self, mode)
 
   Signal.turnIntoEmitter(self)
   self:createSignal("rankedStatusChanged")
+  self:createSignal("allAssetsLoadedChanged")
 end)
 
 -- defining these here so they're available in network.BattleRoom too
@@ -239,6 +240,10 @@ function BattleRoom:addPlayer(player)
     player.playerNumber = #self.players + 1
   end
   self.players[#self.players + 1] = player
+
+  if player.isLocal then
+    self:connectSignal("allAssetsLoadedChanged", player, player.setLoaded)
+  end
 end
 
 function BattleRoom:updateLoadingState()
@@ -250,7 +255,10 @@ function BattleRoom:updateLoadingState()
     end
   end
 
-  self.allAssetsLoaded = fullyLoaded
+  if self.allAssetsLoaded ~= fullyLoaded then
+    self.allAssetsLoaded = fullyLoaded
+    self:emitSignal("allAssetsLoadedChanged", self.allAssetsLoaded)
+  end
 
   if not self.allAssetsLoaded then
     self:startLoadingNewAssets()
@@ -258,18 +266,21 @@ function BattleRoom:updateLoadingState()
 end
 
 function BattleRoom:refreshReadyStates()
-  -- ready should probably be a battleRoom prop, not a player prop? at least for local player(s)?
+  local minimumCondition = tableUtils.trueForAll(self.players, function(p)
+    -- everyone remote finished loading and actually wants to start
+    return p.isLocal or (p.hasLoaded and p.settings.wantsReady)
+  end)
+
   for _, player in ipairs(self.players) do
-    player.ready = tableUtils.trueForAll(self.players, function(p)
-      -- everyone finished loading or isLocal (in which case BattleRoom.allAssetsLoaded covers that)
-      return (p.settings.hasLoaded or p.isLocal)
-      -- everyone actually wants to start
-      and p.settings.wantsReady
-    end)
-    -- all needed assets for players are loaded
-    and self.allAssetsLoaded
-    -- every local human player has an input configuration assigned
-    and ((player.isLocal and player.human and player.inputConfiguration.usedByPlayer ~= nil) or (player.isLocal and not player.human))
+    if player.isLocal then
+      -- every local human player has an input configuration assigned
+      local ready = minimumCondition
+        and player.hasLoaded and player.settings.wantsReady
+        and (not player.human or player.inputConfiguration.usedByPlayer)
+      player:setReady(ready)
+    else
+      -- non local players send us their ready via network
+    end
   end
 end
 

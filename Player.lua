@@ -2,7 +2,6 @@ local class = require("class")
 local GameModes = require("GameModes")
 local LevelPresets = require("LevelPresets")
 local input = require("inputManager")
-local util = require("util")
 local MatchParticipant = require("MatchParticipant")
 local consts = require("consts")
 local Signal = require("helpers.signal")
@@ -60,7 +59,6 @@ local Player = class(function(self, name, publicId, isLocal)
   self:createSignal("ratingChanged")
   self:createSignal("leagueChanged")
   self:createSignal("wantsRankedChanged")
-  self:createSignal("hasLoadedChanged")
 end,
 MatchParticipant)
 
@@ -127,17 +125,6 @@ function Player:setWantsRanked(wantsRanked)
   if wantsRanked ~= self.settings.wantsRanked then
     self.settings.wantsRanked = wantsRanked
     self:emitSignal("wantsRankedChanged", wantsRanked)
-  end
-end
-
-function Player:setLoaded(hasLoaded)
-  -- loaded is only set for non-local players to determine if they are ready for the match
-  -- the battleRoom is in charge of checking whether all assets have been loaded locally
-  if not self.isLocal then
-    if hasLoaded ~= self.settings.hasLoaded then
-      self.settings.hasLoaded = hasLoaded
-      self:emitSignal("hasLoadedChanged", hasLoaded)
-    end
   end
 end
 
@@ -335,6 +322,10 @@ function Player:updateWithMenuState(menuState)
 
   self:setLevel(menuState.level)
   self:setInputMethod(menuState.inputMethod)
+
+  self:setWantsReady(menuState.wantsReady)
+  self:setLoaded(menuState.hasLoaded)
+  self:setReady(menuState.ready)
 end
 
 function Player:getInfo()
