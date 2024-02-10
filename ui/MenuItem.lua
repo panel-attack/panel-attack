@@ -117,17 +117,24 @@ function MenuItem:setSelected(selected)
   self.selected = selected
 end
 
-function MenuItem:drawSelf()
-  local currentColor = {1, 1, 1}
-  if self.selected then
-    currentColor = {0.6, 0.6, 1}
-    local animationOpacity = (math.cos(6 * love.timer.getTime()) + 1) / 16 + 0.05
-    GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height, currentColor[1], currentColor[2], currentColor[3], animationOpacity)
-  end
 
-  GraphicsUtil.setColor(currentColor[1], currentColor[2], currentColor[3], 0.7)
-  GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
-  GraphicsUtil.setColor(1, 1, 1, 1)
+local DEFAULT_BACKGROUND_COLOR = {1, 1, 1}
+local SELECTED_BACKGROUND_COLOR = {0.6, 0.6, 1}
+local DEFAULT_BORDER_COLOR = {1, 1, 1}
+local SELECTED_BORDER_COLOR = {0.6, 0.6, 1}
+
+function MenuItem:drawSelf()
+  local baseOpacity = 0.15
+  if self.selected then
+    local selectedAdditionalOpacity = 0.5
+    local fillOpacity = (math.cos(6 * love.timer.getTime()) + 1) / 16 + baseOpacity + selectedAdditionalOpacity
+    local borderOpacity = (math.cos(6 * love.timer.getTime()) + 1) / 4 + baseOpacity + selectedAdditionalOpacity
+    GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height, SELECTED_BACKGROUND_COLOR[1], SELECTED_BACKGROUND_COLOR[2], SELECTED_BACKGROUND_COLOR[3], fillOpacity)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height, SELECTED_BORDER_COLOR[1], SELECTED_BORDER_COLOR[2], SELECTED_BORDER_COLOR[3], borderOpacity)
+  else
+    GraphicsUtil.drawRectangle("fill", self.x, self.y, self.width, self.height, DEFAULT_BACKGROUND_COLOR[1], DEFAULT_BACKGROUND_COLOR[2], DEFAULT_BACKGROUND_COLOR[3], baseOpacity)
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height, DEFAULT_BORDER_COLOR[1], DEFAULT_BORDER_COLOR[2], DEFAULT_BORDER_COLOR[3], baseOpacity)
+  end
 end
 
 -- inputs as a passthrough in case we ever implement player specific menus
