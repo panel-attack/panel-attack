@@ -274,7 +274,7 @@ Given that functions are overridable on ANY table, even individual ones, it is h
 We have a cool localization.csv file. In the first column is the codename of a string, then the traductions into the different languages.  
 When adding text to the game, we can reference it by `loc(codename)` so that the loc function can automatically fetch the correct string based on the language configuration.  
 For text that is properly embedded within the new UI structure, `Label`s are used for display. `Label` possesses a `translate` attribute that defaults to `true` if not explicitly passed as `false` so that the codenames for the strings can often be passed directly.  
-If there are placeholders in a localized string, the `extraLabels` field can be passed with the values that should be used as replacements.  
+If there are placeholders in a localized string, the `replacements` field can be passed with the values that should be used as replacements.  
 If you add new localization entries please make sure to **always** add them at the bottom. There is a google doc we pull from where non-developers can submit changes / new localizations and it spoils any syncing attempt if we get new entries in the middle of the file.
 
 ## Mods and Assets

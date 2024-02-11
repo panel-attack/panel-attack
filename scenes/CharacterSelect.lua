@@ -171,7 +171,7 @@ function CharacterSelect:createReadyButton()
   })
 
   -- assign player generic callback
-  readyButton.onClick = function(self, inputSource)
+  readyButton.onClick = function(self, inputSource, holdTime)
     local player
     if inputSource and inputSource.player then
       player = inputSource.player
@@ -287,8 +287,8 @@ function CharacterSelect:getCharacterButtons()
   -- assign player generic callbacks
   for i = 1, #characterButtons do
     local characterButton = characterButtons[i]
-    characterButton.onClick = function(self, inputSource, holdTime)
-      local character = characters[self.characterId]
+    characterButton.onClick = function(selfElement, inputSource, holdTime)
+      local character = characters[selfElement.characterId]
       local player
       if inputSource and inputSource.player then
         player = inputSource.player
@@ -298,17 +298,19 @@ function CharacterSelect:getCharacterButtons()
         return
       end
       play_optional_sfx(themes[config.theme].sounds.menu_validate)
-      if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
-        -- super select
-        if character.panels and panels[character.panels] then
-          player:setPanels(character.panels)
+      if character then
+        if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
+          -- super select
+          if character.panels and panels[character.panels] then
+            player:setPanels(character.panels)
+          end
+          if character.stage and stages[character.stage] then
+            player:setStage(character.stage)
+          end
         end
-        if character.stage and stages[character.stage] then
-          player:setStage(character.stage)
-        end
+        character:playSelectionSfx()
       end
-      character:playSelectionSfx()
-      player:setCharacter(self.characterId)
+      player:setCharacter(selfElement.characterId)
       player.cursor:updatePosition(9, 2)
     end
 
@@ -493,11 +495,11 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
 
   Focusable(levelSlider)
   levelSlider.receiveInputs = function(self, inputs)
-    if inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if inputs:isPressedWithRepeat("Left") then
       self:setValue(self.value - 1)
     end
 
-    if inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+    if inputs:isPressedWithRepeat("Right") then
       self:setValue(self.value + 1)
     end
 

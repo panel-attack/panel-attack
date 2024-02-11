@@ -1,7 +1,7 @@
 local class = require("class")
 local Button = require("ui.Button")
 
-local TEXT_WIDTH_PADDING = 15
+local TEXT_WIDTH_PADDING = 6
 local TEXT_HEIGHT_PADDING = 6
 
 -- A TextButton is a button that sets itself apart from Button by automatically scaling its own size to fit the text inside

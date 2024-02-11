@@ -1,6 +1,7 @@
 local Scene = require("scenes.Scene")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local Label = require("ui.Label")
 local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
@@ -75,32 +76,12 @@ function TrainingMenu:load(sceneParams)
         height = 25}))
   end
 
-  local widthLabel = Label({text = "width"})
-  local heightLabel = Label({text = "height"})
-
-  local lightBlue = {.7, .7, 1, .7}
-  local darkBlue = {.5, .5, 1, .7}
-  local lightRed = {.7, .7, .7, .7}
-  local darkRed = {.5, .5, .5, .7}
-
   local garbagePatternStepper = Stepper({
       labels = garbagePatternLabels,
       values = garbagePatternValues,
       selectedIndex = 1,
       onChange = function(value)
         Menu.playMoveSfx()
-        
-        if value == nil then
-          widthLabel.color = darkBlue
-          widthLabel.borderColor = lightBlue
-          heightLabel.color = darkBlue
-          heightLabel.borderColor = lightBlue
-        else
-          widthLabel.color = darkRed
-          widthLabel.borderColor = lightRed
-          heightLabel.color = darkRed
-          heightLabel.borderColor = lightRed
-        end
       end
     }
   )
@@ -121,11 +102,11 @@ function TrainingMenu:load(sceneParams)
   })
 
   local menuItems = {
-    Menu.createMenuItem(Label({text = "Garbage Pattern", translate = false,}), garbagePatternStepper),
-    Menu.createMenuItem(widthLabel, widthSlider),
-    Menu.createMenuItem(heightLabel, heightSlider),
-    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end})),
-    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu})),
+    MenuItem.createStepperMenuItem("Garbage Pattern", nil, false, garbagePatternStepper),
+    MenuItem.createSliderMenuItem("width", nil, nil, widthSlider),
+    MenuItem.createSliderMenuItem("height", nil, nil, heightSlider),
+    MenuItem.createButtonMenuItem("go_", nil, nil, function() self:goToCharacterSelect(garbagePatternStepper.value, widthSlider.value, heightSlider.value) end),
+    MenuItem.createButtonMenuItem("back", nil, nil, exitMenu)
   }
 
   self.menu = Menu.createCenteredMenu(menuItems)

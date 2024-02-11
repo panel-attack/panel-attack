@@ -5,6 +5,7 @@ local Label = require("ui.Label")
 local TextButton = require("ui.TextButton")
 local ButtonGroup = require("ui.ButtonGroup")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local tableUtils = require("tableUtils")
 local class = require("class")
 local GraphicsUtil = require("graphics_util")
@@ -141,8 +142,8 @@ function SoundTest:load()
   musicTypeButtonGroup = ButtonGroup(
     {
       buttons = {
-        TextButton({label = Label({text = "Normal"}), translate = false}),
-        TextButton({label = Label({text = "Danger"}), translate = false}),
+        TextButton({label = Label({text = "Normal", translate = false})}),
+        TextButton({label = Label({text = "Danger", translate = false})}),
       },
       values = {"normal_music", "danger_music"},
       selectedIndex = 1,
@@ -200,16 +201,17 @@ function SoundTest:load()
 
   local menuLabelWidth = 120
   local soundTestMenuOptions = {
-    Menu.createMenuItem(Label({width = menuLabelWidth, text = "character"}), characterStepper),
-    Menu.createMenuItem(Label({width = menuLabelWidth, text = "stage"}), stageStepper),
-    Menu.createMenuItem(Label({width = menuLabelWidth, text = "op_music_type"}), musicTypeButtonGroup),
-    Menu.createMenuItem(Label({width = menuLabelWidth, text = "Background", translate = false}), playButtonGroup),
-    Menu.createMenuItem(TextButton({width = menuLabelWidth, label = Label({text = "op_music_sfx"}), onClick = playCharacterSFXFn}), sfxStepper),
-    Menu.createMenuItem(TextButton({width = menuLabelWidth, label = Label({text = "back"}), onClick = function()
+    MenuItem.createStepperMenuItem("character", nil, nil, characterStepper),
+    MenuItem.createStepperMenuItem("stage", nil, nil, stageStepper),
+    MenuItem.createToggleButtonGroupMenuItem("op_music_type", nil, nil, musicTypeButtonGroup),
+    MenuItem.createToggleButtonGroupMenuItem("Background", nil, false, playButtonGroup),
+    MenuItem.createStepperMenuItem("op_music_sfx", nil, nil, sfxStepper),
+    MenuItem.createButtonMenuItem("op_music_play", nil, nil, playCharacterSFXFn),
+    MenuItem.createButtonMenuItem("back", nil, nil, function()
       stop_all_audio()
       themes[config.theme].sounds.menu_validate = menuValidateSound
       sceneManager:switchToScene(sceneManager:createScene("OptionsMenu"))
-    end})),
+    end)
   }
   
   soundTestMenu = Menu.createCenteredMenu(soundTestMenuOptions)

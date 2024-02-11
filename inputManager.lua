@@ -275,6 +275,12 @@ local function quantize(x, period)
 end
 
 local function isPressedWithRepeat(inputs, key, delay, repeatPeriod)
+  if delay == nil then
+    delay = consts.KEY_DELAY
+  end
+  if repeatPeriod == nil then
+    repeatPeriod = consts.KEY_REPEAT_PERIOD
+  end
   if tableUtils.trueForAny(menuKeyNames, function(k)
     return k == key
   end) then

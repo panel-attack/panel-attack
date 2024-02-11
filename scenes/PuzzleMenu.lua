@@ -2,6 +2,7 @@ local Scene = require("scenes.Scene")
 local logger = require("logger")
 local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local ButtonGroup = require("ui.ButtonGroup")
 local LevelSlider = require("ui.LevelSlider")
 local Label = require("ui.Label")
@@ -21,6 +22,7 @@ local PuzzleMenu = class(
     self.levelSlider = nil
     self.randomColorButtons = nil
     self.menu = nil
+    self.puzzleLabel = nil
 
     self:load(sceneParams)
   end,
@@ -104,29 +106,31 @@ function PuzzleMenu:load(sceneParams)
   )
   
   local menuOptions = {
-    Menu.createMenuItem(Label({text = "level", isVisible = false}), self.levelSlider),
-    Menu.createMenuItem(Label({text = "randomColors", isVisible = false}), self.randomColorsButtons),
-    Menu.createMenuItem(Label({text = "randomHorizontalFlipped", isVisible = false}), self.randomlyFlipPuzzleButtons),
+    MenuItem.createSliderMenuItem("level", nil, nil, self.levelSlider),
+    MenuItem.createToggleButtonGroupMenuItem("randomColors", nil, nil, self.randomColorsButtons),
+    MenuItem.createToggleButtonGroupMenuItem("randomHorizontalFlipped", nil, nil, self.randomlyFlipPuzzleButtons),
   }
 
   for puzzleSetName, puzzleSet in pairsSortedByKeys(GAME.puzzleSets) do
-    menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = puzzleSetName, translate = false}), onClick = function() self:startGame(puzzleSet) end}))
+    menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem(puzzleSetName, nil, false, function() self:startGame(puzzleSet) end, nil, false)
   end
-  menuOptions[#menuOptions + 1] = Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = self.exit}))
+  menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil, self.exit)
   
   self.menu = Menu.createCenteredMenu(menuOptions)
 
+  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
+  self.puzzleLabel = Label({text = "pz_puzzles", x = x - 10, y = y - 40})
+  
   self.uiRoot:addChild(self.menu)
+  self.uiRoot:addChild(self.puzzleLabel)
 
   if themes[config.theme].musics.main then
     find_and_add_music(themes[config.theme].musics, "main")
   end
 end
 
-function PuzzleMenu:update()
-  GraphicsUtil.print(loc("pz_puzzles"), unpack(themes[config.theme].main_menu_screen_pos))
-  
-  self.menu:update()
+function PuzzleMenu:update(dt)
+  self.menu:update(dt)
 end
 
 function PuzzleMenu:draw()

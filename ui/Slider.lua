@@ -19,17 +19,16 @@ local Slider = class(
     self.maxText = love.graphics.newText(love.graphics.getFont(), self.max)
     self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
 
-    self.width = self.tickLength * (self.max - self.min + 1)
-    self.height = handleRadius * 2
+    self.width = self.tickLength * (self.max - self.min + 1) + 2
+    self.height = handleRadius * 2 + 12 -- magic
 
     self.TYPE = "Slider"
   end,
   UIElement
 )
 
-local xOffset = 0
 local yOffset = 15
-local textOffset = -3
+local textOffset = 0
 local sliderBarThickness = 5
 
 function Slider:onTouch(x, y)
@@ -42,6 +41,14 @@ end
 
 function Slider:onRelease(x, y)
   self:setValueFromPos(x)
+end
+
+function Slider:receiveInputs(input)
+  if input:isPressedWithRepeat("Left") then
+    self:setValue(self.value - 1)
+  elseif input:isPressedWithRepeat("Right") then
+    self:setValue(self.value + 1)
+  end
 end
 
 function Slider:setValueFromPos(x)
@@ -57,14 +64,14 @@ function Slider:setValue(value)
   end
 end
 
+local SLIDER_CIRCLE_COLOR = {0.5, 0.5, 1, 0.8}
 function Slider:drawSelf()
-  local dark_gray = .3
   local light_gray = .5
   local alpha = .7
   GraphicsUtil.setColor(light_gray, light_gray, light_gray, alpha)
   GraphicsUtil.drawRectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
 
-  GraphicsUtil.setColor(dark_gray, dark_gray, dark_gray, .9)
+  GraphicsUtil.setColor(unpack(SLIDER_CIRCLE_COLOR))
   love.graphics.circle("fill", self.x + (self.value - self.min + .5) * self.tickLength, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)
   GraphicsUtil.setColor(1, 1, 1, 1)
   

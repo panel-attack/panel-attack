@@ -3,6 +3,7 @@ local sceneManager = require("scenes.sceneManager")
 local class = require("class")
 local ChallengeMode = require("ChallengeMode")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local Label = require("ui.Label")
 local TextButton = require("ui.TextButton")
 local Stepper = require("ui.Stepper")
@@ -50,11 +51,11 @@ function ChallengeModeMenu:load(sceneParams)
   )
 
   local menuItems = {
-    Menu.createMenuItem(Label({text = "difficulty"}), difficultyStepper),
-    Menu.createMenuItem(TextButton({label = Label({text = "go_"}), onClick = function()
+    MenuItem.createStepperMenuItem("difficulty", nil, nil, difficultyStepper),
+    MenuItem.createButtonMenuItem("go_", nil, nil, function()
       self:goToCharacterSelect(difficultyStepper.value)
-    end})),
-    Menu.createMenuItem(TextButton({label = Label({text = "back"}), onClick = exitMenu})),
+    end),
+    MenuItem.createButtonMenuItem("back", nil, nil, exitMenu)
   }
 
   self.menu = Menu.createCenteredMenu(menuItems)
