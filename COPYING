@@ -6,9 +6,17 @@ Unless specified otherwise below, all code and assets in this project stand unde
 panel-attack
   License: zlib
   Copyright (C) 2011 Robert Burke
-  Copyright (C) 2023 The Panel Attack Contributors
+  Copyright (C) 2023-24 The Panel Attack Contributors
 
-batteries\manual_gc
+themes/Panel Attack Modern/music/main.ogg
+  License: CC BY-SA 4.0
+  Copyright (C) 2024 Andrew Anderson - "A2Z"
+
+themes/
+  License: CC BY-SA 4.0
+  Copyright (C) 2023-24 The Panel Attack Contributors
+
+batteries/manual_gc
   Website: https://github.com/1bardesign/batteries
   License: zlib
   Copyright 2021 Max Cahill
@@ -64,6 +72,9 @@ characters/__default/telegraph
 
 License text
 ============
+
+CC BY-SA 4.0
+  To view a copy of this license, visit http://creativecommons.org/licenses/by-sa/4.0/
 
 zlib license
 	This software is provided 'as-is', without any express or implied
