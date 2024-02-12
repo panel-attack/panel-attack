@@ -129,8 +129,15 @@ function Menu:layout()
 end
 
 function Menu:addMenuItem(index, menuItem)
+  local needsIncreasedIndex = false
+  if index <= self.selectedIndex then
+    needsIncreasedIndex = true
+  end
   table.insert(self.menuItems, index, menuItem)
   self:addChild(menuItem)
+  if needsIncreasedIndex then
+    self:setSelectedIndex(self.selectedIndex + 1)
+  end
   self:layout()
 end
 
@@ -160,8 +167,17 @@ function Menu:removeMenuItem(menuItemId)
     return
   end
 
+  local needsDecreasedIndex = false
+  if menuItemIndex <= self.selectedIndex then
+    needsDecreasedIndex = true
+  end
+
   local menuItem = table.remove(self.menuItems, menuItemIndex)
   menuItem:detach()
+  
+  if needsDecreasedIndex then
+    self:setSelectedIndex(self.selectedIndex - 1)
+  end
   
   self:layout()
   return menuItem
@@ -170,6 +186,10 @@ end
 -- Updates the selected index of the menu
 -- Also updates the scroll state to show the button if off screen
 function Menu:setSelectedIndex(index)
+  if index <= 0 then
+    index = 1 -- 1 index is the default if no items
+  end
+
   if #self.menuItems >= self.selectedIndex then
     self.menuItems[self.selectedIndex]:setSelected(false)
   end
@@ -187,7 +207,9 @@ function Menu:setSelectedIndex(index)
     self.yOffset = self.menuItemYOffsets[currentIndex]
   end
   self.selectedIndex = index
-  self.menuItems[self.selectedIndex]:setSelected(true)
+  if #self.menuItems > 0 then
+    self.menuItems[self.selectedIndex]:setSelected(true)
+  end
   self:layout()
 end
 

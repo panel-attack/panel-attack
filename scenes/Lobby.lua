@@ -8,6 +8,7 @@ local MenuItem = require("ui.MenuItem")
 local class = require("class")
 local input = require("inputManager")
 local logger = require("logger")
+local util = require("util")
 local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
 local ClientMessages = require("network.ClientProtocol")
@@ -107,6 +108,7 @@ function Lobby:initLobbyMenu()
   }
   self.leaderboardToggleLabel = menuItems[1].textButton.children[1]
 
+  self.lobbyMenuStartingUp = true
   self.lobbyMenu = Menu.createCenteredMenu(menuItems)
   self.lobbyMenu.x = self.lobbyMenuXoffsetMap[false]
 
@@ -254,6 +256,9 @@ end
 
 -- rebuilds the UI based on the new lobby information
 function Lobby:onLobbyStateUpdate()
+  local previousText = self.lobbyMenu.menuItems[self.lobbyMenu.selectedIndex].textButton.children[1].text
+  local desiredIndex = self.lobbyMenu.selectedIndex
+
   while #self.lobbyMenu.menuItems > 2 do
     self.lobbyMenu:removeMenuItemAtIndex(1)
   end
@@ -276,6 +281,19 @@ function Lobby:onLobbyStateUpdate()
       local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
       self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(roomName, nil, false, self:requestSpectateFunction(room)))
     end
+  end
+
+  if self.lobbyMenuStartingUp then
+    self.lobbyMenu:setSelectedIndex(1)
+    self.lobbyMenuStartingUp = false
+  else
+    for i = 1, #self.lobbyMenu.menuItems do
+      if self.lobbyMenu.menuItems[i].textButton.children[1].text == previousText then
+        desiredIndex = i
+        break
+      end
+    end
+    self.lobbyMenu:setSelectedIndex(util.bound(1, desiredIndex, #self.lobbyMenu.menuItems))
   end
 end
 
