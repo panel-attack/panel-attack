@@ -86,6 +86,9 @@ function BattleRoom.createFromServerMessage(message)
       battleRoom.players[i]:setRating(message.players[i].ratingInfo.new)
       battleRoom.players[i]:setLeague(message.players[i].ratingInfo.league)
     end
+    if message.winCounts then
+      battleRoom:setWinCounts(message.winCounts)
+    end
     battleRoom.spectating = true
   else
     battleRoom = BattleRoom(gameMode)
@@ -139,7 +142,7 @@ end
 
 function BattleRoom.setWinCounts(self, winCounts)
   for i = 1, #winCounts do
-    self.players[i].wins = winCounts[i]
+    self.players[i]:setWinCount(winCounts[i])
   end
 
   self:updateWinrates()
