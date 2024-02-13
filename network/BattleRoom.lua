@@ -235,10 +235,13 @@ function BattleRoom:reportLocalGameResult(winners)
 end
 
 function BattleRoom:shutdownNetwork()
-  GAME.tcpClient.receivedMessageQueue:clear()
-  if self.online and GAME.tcpClient:isConnected() then
-    GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
+  if GAME.tcpClient then
+    GAME.tcpClient:dropOldInputMessages()
+    if self.online and GAME.tcpClient:isConnected() then
+      GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
+    end
   end
+
   self.setupListeners = nil
   self.runningMatchListeners = nil
 end
