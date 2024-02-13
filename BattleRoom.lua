@@ -141,8 +141,9 @@ function BattleRoom.createLocalFromGameMode(gameMode)
 end
 
 function BattleRoom.setWinCounts(self, winCounts)
-  for i = 1, #winCounts do
-    self.players[i]:setWinCount(winCounts[i])
+  for _, player in ipairs(self.players) do
+    -- win counts are sent indexed by player number
+    player:setWinCount(winCounts[player.playerNumber])
   end
 
   self:updateWinrates()
