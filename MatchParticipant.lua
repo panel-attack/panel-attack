@@ -45,8 +45,7 @@ function MatchParticipant:setWinCount(count)
 end
 
 function MatchParticipant:incrementWinCount()
-  self.wins = self.wins + 1
-  self:emitSignal("winsChanged", self:getWinCountForDisplay())
+  self:setWinCount(self.wins + 1)
 end
 
 function MatchParticipant:setWinrate(winrate)
