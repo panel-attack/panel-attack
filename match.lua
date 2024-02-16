@@ -112,7 +112,7 @@ function Match:getWinners()
 
         -- now we check for this player whether they meet the current winCondition
         if winCon == GameModes.WinConditions.LAST_ALIVE then
-          if not potentialWinner.stack:game_ended() then
+          if potentialWinner.stack.game_over_clock <= 0 then
             table.insert(metCondition, potentialWinner)
           end
         elseif winCon == GameModes.WinConditions.SCORE then
