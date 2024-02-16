@@ -16,7 +16,8 @@ local function testSameFrameKeyPressRelease()
   assert(match.P1.clock == 200)
   -- need local to be true to process input locally
   match.P1.is_local = true
-  local raiseKey = GAME.input.inputConfigurations[1]["raise1"]
+  local raiseKey = GAME.input.inputConfigurations[1]["Raise1"]
+  assert(raiseKey ~= nil)
   love.event.push("keypressed", raiseKey, raiseKey, false)
   love.event.push("keyreleased", raiseKey, raiseKey, false)
   CustomRun.processEvents()
