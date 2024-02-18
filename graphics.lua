@@ -298,8 +298,8 @@ function Stack.draw_popfxs(self)
   local panelSize = 16
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    local draw_x = (self.panelOriginX) + (popfx.x - 1) * panelSize
-    local draw_y = (self.panelOriginY) + (11 - popfx.y) * panelSize + self.displacement
+    local drawX = (self.panelOriginX) + (popfx.x - 1) * panelSize
+    local drawY = (self.panelOriginY) + (11 - popfx.y) * panelSize + self.displacement
     local burstScale = characters[self.character].popfx_burstScale
     local fadeScale = characters[self.character].popfx_fadeScale
     local burstParticle_atlas = popfx.burstAtlas
@@ -315,63 +315,20 @@ function Stack.draw_popfxs(self)
     
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
-        local burstDistance, burstFrame = unpack(popfx_burst_animation[popfx.frame])
         if popfx_burst_animation[popfx.frame] then
+          local burstDistance, burstFrame = unpack(popfx_burst_animation[popfx.frame])
           burstParticle:setViewport(burstFrame * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
-          local positions = {
-            -- four corner
-            {x = draw_x - burstDistance, y = draw_y - burstDistance},
-            {x = draw_x + 15 + burstDistance, y = draw_y - burstDistance},
-            {x = draw_x - burstDistance, y = draw_y + 15 + burstDistance},
-            {x = draw_x + 15 + burstDistance, y = draw_y + 15 + burstDistance},
-            -- top and bottom
-            {x = draw_x + panelSize / 2, y = draw_y - (burstDistance * 2)},
-            {x = draw_x + panelSize / 2, y = draw_y + 10 + (burstDistance * 2)},
-            -- left and right
-            {x = draw_x + 5 - (burstDistance * 2), y = draw_y + panelSize / 2},
-            {x = draw_x + 10 + (burstDistance * 2), y = draw_y + panelSize / 2}
-          }
-
-          local topRot, bottomRot, leftRot, rightRot
-          if characters[self.character].popfx_burstRotate == true then
-            topRot = {math.rad(45), burstFrameScale, burstFrameScale}
-            bottomRot = {math.rad(-135), burstFrameScale, burstFrameScale}
-            leftRot = {math.rad(-45), burstFrameScale, burstFrameScale}
-            rightRot = {math.rad(135), burstFrameScale, burstFrameScale}
-          else
-            topRot = {0, burstFrameScale, burstFrameScale}
-            bottomRot = {0, burstFrameScale, -burstFrameScale}
-            leftRot = {0, burstFrameScale, burstFrameScale}
-            rightRot = {0, -burstFrameScale, burstFrameScale}
-          end
-
-          -- four corner
-          qdraw(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
-          qdraw(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
-          qdraw(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, burstFrameScale, -burstFrameScale, burstOrigin, burstOrigin)
-          qdraw(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -burstFrameScale, -burstFrameScale, burstOrigin, burstOrigin)
-
-          -- top and bottom
-          if popfx.popsize == "big" or popfx.popsize == "giant" then
-            qdraw(burstParticle_atlas, burstParticle, positions[5].x, positions[5].y, topRot[1], topRot[2], topRot[3], burstOrigin, burstOrigin)
-            qdraw(burstParticle_atlas, burstParticle, positions[6].x, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], burstOrigin, burstOrigin)
-          end
-
-          -- left and right
-          if popfx.popsize == "giant" then
-            qdraw(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y, leftRot[1], leftRot[2], leftRot[3], burstOrigin, burstOrigin)
-            qdraw(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y, rightRot[1], rightRot[2], rightRot[3], burstOrigin, burstOrigin)
-          end
+          self:drawPopFX(popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
         end
       end
     end
     
     if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["fade"] then
-        fadeFrame = popfx_fade_animation[popfx.frame]
+        local fadeFrame = popfx_fade_animation[popfx.frame]
         if (fadeFrame ~= nil) then
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          qdraw(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          qdraw(fadeParticle_atlas, fadeParticle, drawX + 8, drawY + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
@@ -379,6 +336,76 @@ function Stack.draw_popfxs(self)
     set_color(1, 1, 1, 1)
   end
 end
+
+function Stack:drawPopFX(popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  self:drawPopFXDirection("TopLeft", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  self:drawPopFXDirection("TopRight", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  self:drawPopFXDirection("BottomLeft", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  self:drawPopFXDirection("BottomRight", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+
+  if popfx.popsize == "big" or popfx.popsize == "giant" then
+    self:drawPopFXDirection("Top", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+    self:drawPopFXDirection("Bottom", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  end
+
+  if popfx.popsize == "giant" then
+    self:drawPopFXDirection("Left", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+    self:drawPopFXDirection("Right", popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  end
+end
+
+function Stack:drawPopFXDirection(direction, popfx, drawX, drawY, burstDistance, panelSize, burstFrameScale, burstOrigin)
+  local shouldRotate = characters[self.character].popfx_burstRotate
+  local x = drawX
+  local y = drawY
+  local rotation = 0
+  local scaleX = burstFrameScale
+  local scaleY = burstFrameScale
+  if direction == "TopLeft" then
+    x = x - burstDistance
+    y = y - burstDistance
+  elseif direction == "TopRight" then
+    x = x + 15 + burstDistance
+    y = y - burstDistance
+  elseif direction == "BottomLeft" then
+    x = x - burstDistance
+    y = y + 15 + burstDistance
+  elseif direction == "BottomRight" then
+    x = x + 15 + burstDistance
+    y = y + 15 + burstDistance
+  elseif direction == "Top" then
+    x = x + panelSize / 2
+    y = y - (burstDistance * 2)
+    if shouldRotate then
+      rotation = math.rad(45)
+    end
+  elseif direction == "Bottom" then
+    x = x + panelSize / 2
+    y = y + 10 + (burstDistance * 2)
+    if shouldRotate then
+      rotation = math.rad(-135)
+    else
+      scaleY = scaleY * -1
+    end
+  elseif direction == "Left" then
+    x = x + 5 - (burstDistance * 2)
+    y = y + panelSize / 2
+    if shouldRotate then
+      rotation = math.rad(-45)
+    end
+  elseif direction == "Right" then
+    x = x + 10 + (burstDistance * 2)
+    y = y + panelSize / 2
+    if shouldRotate then
+      rotation = math.rad(135)
+    else
+      scaleX = scaleX * -1
+    end
+  end
+
+  qdraw(popfx.burstAtlas, popfx.burstParticle, x, y, rotation, scaleX, scaleY, burstOrigin, burstOrigin)
+end
+
 
 local mask_shader = love.graphics.newShader [[
    vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
