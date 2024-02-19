@@ -344,15 +344,27 @@ function Stack:drawPopEffectsBurstPiece(direction, popfx, drawX, drawY, panelSiz
   if direction == "TopLeft" then
     x = x - burstDistance
     y = y - burstDistance
+    if shouldRotate then
+      rotation = math.rad(0)
+    end
   elseif direction == "TopRight" then
-    x = x + 15 + burstDistance
+    x = x + panelSize + burstDistance
     y = y - burstDistance
+    if shouldRotate then
+      rotation = math.rad(90)
+    end
   elseif direction == "BottomLeft" then
     x = x - burstDistance
-    y = y + 15 + burstDistance
+    y = y + panelSize + burstDistance
+    if shouldRotate then
+      rotation = math.rad(-90)
+    end
   elseif direction == "BottomRight" then
-    x = x + 15 + burstDistance
-    y = y + 15 + burstDistance
+    x = x + panelSize + burstDistance
+    y = y + panelSize + burstDistance
+    if shouldRotate then
+      rotation = math.rad(180)
+    end
   elseif direction == "Top" then
     x = x + panelSize / 2
     y = y - (burstDistance * 2)
@@ -361,25 +373,21 @@ function Stack:drawPopEffectsBurstPiece(direction, popfx, drawX, drawY, panelSiz
     end
   elseif direction == "Bottom" then
     x = x + panelSize / 2
-    y = y + 10 + (burstDistance * 2)
+    y = y + panelSize + (burstDistance * 2)
     if shouldRotate then
       rotation = math.rad(-135)
-    else
-      scaleY = scaleY * -1
     end
   elseif direction == "Left" then
-    x = x + 5 - (burstDistance * 2)
+    x = x - (burstDistance * 2)
     y = y + panelSize / 2
     if shouldRotate then
       rotation = math.rad(-45)
     end
   elseif direction == "Right" then
-    x = x + 10 + (burstDistance * 2)
+    x = x + panelSize + (burstDistance * 2)
     y = y + panelSize / 2
     if shouldRotate then
       rotation = math.rad(135)
-    else
-      scaleX = scaleX * -1
     end
   else 
     assert(false, "Unhandled popfx direction")
@@ -408,6 +416,9 @@ function Stack:drawRotatingCardBurstEffectGroup(card, drawX, drawY)
     local cardfx_x = drawX + panelSize / 2 + math.cos(totalRadians) * radius
     local cardfx_y = drawY + panelSize / 2 + math.sin(totalRadians) * radius
     local rotation = 0
+    if characters[self.character].popfx_burstRotate then
+      rotation = totalRadians
+    end
     
     self:drawPopBurstParticle(card.burstAtlas, card.burstParticle, 0, burstFrameDimension, cardfx_x, cardfx_y, panelSize, rotation)
   end
