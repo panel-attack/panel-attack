@@ -297,7 +297,8 @@ The style of popfx to use, options:
 
 #### popfx_burstRotate
 If this option set to true, the burst effects are rotated about the center of the panel or card.
-The top left one will not be rotated and the bottom right one will be rotated 180. The ones inbetween will be rotated proportionally.
+For the card burst the left of the frame will be pointing towards the center of the cards when rotation is on.
+For the panel burst, the top left one will not be rotated and the bottom right one will be rotated 180. The ones inbetween will be rotated proportionally.
 Default is false.
 
 #### popfx_burstScale
@@ -440,6 +441,7 @@ Recommended size: 168x168px
 
 The image atlas used for the burst effects (PopFX)
 The image should be 9 equal sized frames in a row, the first frame is used for the animation around the chain and combo cards
+The left of the frame will be pointing towards the center of the cards when rotation is on.
 Frames 2 to 9 are the animation used for the burst effect coming out of panels when they pop.
 
 Aspect ratio of each individual frame: 1:1 (square)
