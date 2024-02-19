@@ -409,18 +409,20 @@ function Stack:drawRotatingCardBurstEffectGroup(card, drawX, drawY)
   end
 
   local panelSize = 16
-  for i = 1, 6, 1 do
+  for i = 0, 5, 1 do
     local degrees = (i * 60)
     local bonusDegrees = (card.frame * 5)
     local totalRadians = math.rad(degrees + bonusDegrees)
-    local cardfx_x = drawX + panelSize / 2 + math.cos(totalRadians) * radius
-    local cardfx_y = drawY + panelSize / 2 + math.sin(totalRadians) * radius
+    local xOffset = math.cos(totalRadians) * radius
+    local yOffset = math.sin(totalRadians) * radius
+    local x = drawX + panelSize / 2 + xOffset
+    local y = drawY + panelSize / 2 + yOffset
     local rotation = 0
     if characters[self.character].popfx_burstRotate then
       rotation = totalRadians
     end
     
-    self:drawPopBurstParticle(card.burstAtlas, card.burstParticle, 0, burstFrameDimension, cardfx_x, cardfx_y, panelSize, rotation)
+    self:drawPopBurstParticle(card.burstAtlas, card.burstParticle, 0, burstFrameDimension, x, y, panelSize, rotation)
   end
 end
 
