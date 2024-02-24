@@ -168,9 +168,7 @@ function ChallengeMode:recordStageResult(winners, gameLength)
     end
   elseif #winners == 2 then
     -- tie, stay on the same stage
-    -- but since the player didn't lose, they shouldn't have to pay the timer
-    stage.expendedTime = stage.expendedTime - gameLength
-    self.expendedTime = self.expendedTime - gameLength
+    -- they don't lose a continue but their time still counts
   elseif #winners == 0 then
     -- this means an abort which is a LOSS because it's a local game and only manual abort is possible
     self.continues = self.continues + 1
