@@ -178,17 +178,18 @@ function ChallengeMode:recordStageResult(winners, gameLength)
 end
 
 function ChallengeMode:onMatchEnded(match)
-  -- TODO: call recordStageResult on top of what the regular BattleRoom does
   self.matchesPlayed = self.matchesPlayed + 1
 
   local winners = match:getWinners()
   -- an abort is always the responsibility of the local player in challenge mode
   -- so always record the result, even if it may have been an abort
-  local gameTime = match.clock
-  if match.doCountdown then
-    gameTime = gameTime - (consts.COUNTDOWN_START  + consts.COUNTDOWN_LENGTH)
+  local gameTime = 0
+  local stack = match.stacks[1]
+  if stack ~= nil and stack.game_stopwatch then
+    gameTime = stack.game_stopwatch
   end
   self:recordStageResult(winners, gameTime)
+
   if self.online and match:hasLocalPlayer() then
     self:reportLocalGameResult(winners)
   end
