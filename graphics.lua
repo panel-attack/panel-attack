@@ -56,81 +56,64 @@ local function shakeWaveResultForRadians(radians, maxCycleHeight)
   return result
 end
 
+  -- Setup the shake data used for rendering the stack shake animation
 local function calculateShakeData(maxShakeFrames, maxAmplitude)
 
   local shakeData = {}
-  shakeData.maxFrames = maxShakeFrames
-  shakeData.offsets = {}
 
-  local cycleLengthArray = cycleLengthArrayForTotalFrames(maxShakeFrames)
-
-  local frameIndex = 0
-  for currentCycle = 1, #cycleLengthArray do
-    -- Use pow to reduce the amplitude faster as we go farther
-    local maxCycleHeight = maxAmplitude * math.pow((#cycleLengthArray - currentCycle + 1) / #cycleLengthArray, 5.5) / 2
-    local shakeHeightMinimum = 2
-    if maxCycleHeight < shakeHeightMinimum then
-      maxCycleHeight = shakeHeightMinimum -- we always want some movement
-    end
-    local cycleLength = cycleLengthArray[currentCycle]
-    local x = 0
-    local step = math.pi * 2 / cycleLength
-    for j = 1, cycleLength do
-      local result = shakeWaveResultForRadians(x, maxCycleHeight)
-      shakeData.offsets[frameIndex] = result
+  local shakeIndex = -6
+  for i = 14, 6, -1 do
+    local x = -math.pi
+    local step = math.pi * 2 / i
+    for j = 1, i do
+      shakeData[shakeIndex] = (1 + math.cos(x)) / 2
       x = x + step
-      frameIndex = frameIndex + 1
+      shakeIndex = shakeIndex + 1
     end
   end
-  shakeData.offsets[frameIndex] = 0
+
+  -- 1 -> 1
+  -- #shake -> 0
+  local shakeStep = 1 / (#shakeData - 1)
+  local shakeMultiplier = 1
+  for i = 1, #shakeData do
+    shakeData[i] = shakeData[i] * shakeMultiplier * GFX_SCALE * 13
+    -- print(shakeData[i])
+    shakeMultiplier = shakeMultiplier - shakeStep
+  end
 
   return shakeData
 end
 
-local shakeOffsetData = {}
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(76, 50)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(66, 40)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(42, 30)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(24, 20)
-shakeOffsetData[#shakeOffsetData+1] = calculateShakeData(18, 10)
+local shakeOffsetData = calculateShakeData()
 
 function Stack:currentShakeOffset()
-  return self:shakeOffsetForShakeFrames(self.shake_time, self.peak_shake_time, self.prev_shake_time)
+  return self:shakeOffsetForShakeFrames(self.shake_time, self.prev_shake_time)
 end
 
-function Stack:shakeOffsetForShakeFrames(frames, maxShakeFrames, previousShakeTime, shakeReduction)
+function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeReduction)
+
   if shakeReduction == nil then
     shakeReduction = config.shakeReduction
   end
 
-  local result = self:privateShakeOffsetForShakeFrames(frames, maxShakeFrames, shakeReduction)
+  local result = self:privateShakeOffsetForShakeFrames(frames, shakeReduction)
   -- If we increased shake time we don't want to hard jump to the new value as its jarring.
   -- Interpolate on the first frame to smooth it out a little bit.
-  if self.prev_shake_time > 0 and self.prev_shake_time < self.shake_time then
-    local previousOffset = self:privateShakeOffsetForShakeFrames(previousShakeTime, maxShakeFrames, shakeReduction)
+  if previousShakeTime > 0 and previousShakeTime < frames then
+    local previousOffset = self:privateShakeOffsetForShakeFrames(previousShakeTime, shakeReduction)
     result = math.integerAwayFromZero((result + previousOffset) / 2, 0)
   end
   return result
 end
 
-function Stack:privateShakeOffsetForShakeFrames(frames, maxShakeFrames, shakeReduction)
-  assert(frames <= maxShakeFrames)
+function Stack:privateShakeOffsetForShakeFrames(frames, shakeReduction)
   if frames <= 0 then
     return 0
   end
 
-  local indexToUse = 1
-  for index, shakeData in ipairs(shakeOffsetData) do
-    local maxFrames = shakeData.maxFrames
-    if maxFrames <= maxShakeFrames then
-      indexToUse = index
-      break
-    end
-  end
-
-  local offsetData = shakeOffsetData[indexToUse].offsets
-  local lookupIndex = #offsetData - frames
-  local result = offsetData[lookupIndex] or 0
+  local lookupIndex = #shakeOffsetData - frames
+  local result = shakeOffsetData[lookupIndex] or 0
   if result ~= 0 then
     result = math.integerAwayFromZero(result / shakeReduction)
   end
@@ -545,12 +528,6 @@ function Stack:drawDebug()
   end
 end
 
-function shouldFlashForFrame(frame)
-  local flashFrames = 1
-  flashFrames = 2 -- add config
-  return frame % (flashFrames * 2) < flashFrames
-end
-
 -- Renders the player's stack on screen
 function Stack.render(self)
   if self.canvas == nil then
@@ -679,7 +656,7 @@ function Stack.render(self)
                 local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
                 draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
               end
-            elseif shouldFlashForFrame(flash_time) == false then
+            elseif flash_time % 2 == 1 then
               if panel.metal then
                 draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
                 draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
@@ -697,10 +674,10 @@ function Stack.render(self)
             local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
-            elseif shouldFlashForFrame(flash_time) == false then
+            elseif flash_time % 2 == 1 then
               draw_frame = 1
             else
-              draw_frame = 5 -- flash
+              draw_frame = 5
             end
           elseif panel.state == "popping" then
             draw_frame = 6
