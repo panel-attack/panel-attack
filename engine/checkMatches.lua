@@ -51,24 +51,6 @@ local function getOnScreenCount(stackHeight, panels)
   return count
 end
 
--- returns true if this panel can be matched
--- false if it cannot be matched
-local function canMatch(panel)
-  -- panels without colors can't match
-  if panel.color == 0 or panel.color == 9 then
-    return false
-  else
-    if panel.state == "normal"
-      or panel.state == "landing"
-      or (panel.matchAnyway and panel.state == "hovering")  then
-      return true
-    else
-      -- swapping, matched, popping, popped, hover, falling, dimmed, dead
-      return false
-    end
-  end
-end
-
 function Stack:checkMatches()
   if self.do_countdown then
     return
@@ -120,7 +102,7 @@ function Stack:getMatchingPanels()
   for row = 1, self.height do
     for col = 1, self.width do
       local panel = panels[row][col]
-      if panel.stateChanged and canMatch(panel) then
+      if panel.stateChanged and panel:canMatch() then
         candidatePanels[#candidatePanels + 1] = panel
       end
     end
@@ -137,7 +119,7 @@ function Stack:getMatchingPanels()
     -- below
     for row = candidatePanels[i].row - 1, 1, -1 do
       panel = panels[row][candidatePanels[i].column]
-      if panel.color == candidatePanels[i].color  and canMatch(panel) then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
         break
@@ -146,7 +128,7 @@ function Stack:getMatchingPanels()
     -- above
     for row = candidatePanels[i].row + 1, self.height do
       panel = panels[row][candidatePanels[i].column]
-      if panel.color == candidatePanels[i].color  and canMatch(panel) then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         verticallyConnected[#verticallyConnected + 1] = panel
       else
         break
@@ -155,7 +137,7 @@ function Stack:getMatchingPanels()
     -- to the left
     for column = candidatePanels[i].column - 1, 1, -1 do
       panel = panels[candidatePanels[i].row][column]
-      if panel.color == candidatePanels[i].color  and canMatch(panel) then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
         break
@@ -164,7 +146,7 @@ function Stack:getMatchingPanels()
     -- to the right
     for column = candidatePanels[i].column + 1, self.width do
       panel = panels[candidatePanels[i].row][column]
-      if panel.color == candidatePanels[i].color and canMatch(panel) then
+      if panel.color == candidatePanels[i].color and panel:canMatch() then
         horizontallyConnected[#horizontallyConnected + 1] = panel
       else
         break
@@ -436,11 +418,12 @@ end
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings
 function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
   local stopTime = 0
+  local danger_coef = { 11, 10, 10, 11,  9, 11, 10, 11, 10, 11, 11}
   if comboSize > 3 or isChain then
     if toppedOut and isChain then
       if self.level then
         local length = (chainCounter > 4) and 6 or chainCounter
-        stopTime = -8 * self.level + 168 + (length - 1) * (-2 * self.level + 22)
+        stopTime = -8 * danger_coef[self.level] + 168 + (length - 1) * (-2 * danger_coef[self.level] + 22)
       else
         stopTime = stop_time_danger[self.difficulty]
       end
@@ -467,7 +450,11 @@ function Stack:calculateStopTime(comboSize, toppedOut, isChain, chainCounter)
     end
   end
 
-  return stopTime
+  if self.level == 2 then
+    return 0
+  else
+    return stopTime
+  end
 end
 
 function Stack:awardStopTime(isChain, comboSize)
@@ -548,7 +535,7 @@ function Stack:clearChainingFlags()
     for column = 1, self.width do
       local panel = self.panels[row][column]
       -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
-      if not panel.matching and panel.chaining and not panel.matchAnyway and (canMatch(panel) or panel.color == 9) then
+      if not panel.matching and panel.chaining and not panel.matchAnyway and panel:canMatch() then
         if row > 1 then
           -- no swapping panel below so this panel loses its chain flag
           if self.panels[row - 1][column].state ~= "swapping" then
