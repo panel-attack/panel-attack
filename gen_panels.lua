@@ -69,13 +69,13 @@ function PanelGenerator.makePanels(seed, ncolors, prev_panels, mode, level, oppo
     return
   end
   local cut_panels = false
-  local disallowAdjacentColors = (mode == "vs" and level > 7)
+  local disallowAdjacentColors = (mode == "vs" and level > 0)
 
   if prev_panels == "" then
     ret = "000000"
     rows_to_make = 7
     -- During the initial board we can't allow adjacent colors if the other player can't
-    disallowAdjacentColors = (mode == "vs" and (level > 7 or (opponentLevel or 1) > 7))
+    disallowAdjacentColors = (mode == "vs" and (level > 0 or (opponentLevel or 1) > 0))
     if mode == "vs" or mode == "endless" or mode == "time" then
       cut_panels = true
     end
@@ -168,7 +168,7 @@ function PanelGenerator.makeGarbagePanels(seed, ncolors, prev_panels, mode, leve
     prev_panels = "000000"
   end
 
-  local disallowAdjacentColors = (mode == "vs" and level > 7)
+  local disallowAdjacentColors = (mode == "vs" and level > 0)
   local ret = PanelGenerator.privateGeneratePanels(20, ncolors, prev_panels, disallowAdjacentColors)
 
   if firstPanelSet then
