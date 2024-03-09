@@ -498,9 +498,6 @@ function BattleRoom:shutdown()
     self.match:deinit()
     self.match = nil
   end
-  if self.online and GAME.tcpClient:isConnected() then
-    GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
-  end
   stop_the_music()
   self:shutdownNetwork()
   self.hasShutdown = true
