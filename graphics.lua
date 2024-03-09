@@ -284,7 +284,7 @@ function Stack.drawPopEffects(self)
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
     local drawX = (self.panelOriginX) + (popfx.x - 1) * panelSize
-    local drawY = (self.panelOriginY) + (11 - popfx.y) * panelSize + self.displacement
+    local drawY = (self.panelOriginY) + (self.height - 1 - popfx.y) * panelSize + self.displacement
 
     set_color(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
     
@@ -300,12 +300,13 @@ function Stack.drawPopEffects(self)
       if characters[self.character].images["fade"] then
         local fadeFrame = popfx_fade_animation[popfx.frame]
         if (fadeFrame ~= nil) then
+          local fadeSize = 32
           local fadeScale = characters[self.character].popfx_fadeScale
           local fadeParticle_atlas = popfx.fadeAtlas
           local fadeParticle = popfx.fadeParticle
           local fadeFrameDimension = popfx.fadeFrameDimension
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          qdraw(fadeParticle_atlas, fadeParticle, drawX + 8, drawY + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          qdraw(fadeParticle_atlas, fadeParticle, drawX + panelSize / 2, drawY + panelSize / 2, 0, (fadeSize / fadeFrameDimension) * fadeScale, (fadeSize / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
