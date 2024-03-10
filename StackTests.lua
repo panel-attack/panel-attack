@@ -93,3 +93,40 @@ local function moveAfterCountdownV46Test()
 end
 
 moveAfterCountdownV46Test()
+
+local function testShakeFrames()
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
+  match.seed = 1 -- so we consistently have a panel to swap
+  match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
+  local stack = match.P1
+
+  assert(stack:shakeFramesForGarbageSize(0) == 0)
+  assert(stack:shakeFramesForGarbageSize(1) == 18)
+  assert(stack:shakeFramesForGarbageSize(2) == 18)
+  assert(stack:shakeFramesForGarbageSize(3) == 18)
+  assert(stack:shakeFramesForGarbageSize(4) == 18)
+  assert(stack:shakeFramesForGarbageSize(5) == 24)
+  assert(stack:shakeFramesForGarbageSize(6) == 42)
+  assert(stack:shakeFramesForGarbageSize(7) == 42)
+  assert(stack:shakeFramesForGarbageSize(8) == 42)
+  assert(stack:shakeFramesForGarbageSize(9) == 42)
+  assert(stack:shakeFramesForGarbageSize(10) == 42)
+  assert(stack:shakeFramesForGarbageSize(11) == 42)
+  assert(stack:shakeFramesForGarbageSize(12) == 66)
+  assert(stack:shakeFramesForGarbageSize(13) == 66)
+  assert(stack:shakeFramesForGarbageSize(14) == 66)
+  assert(stack:shakeFramesForGarbageSize(15) == 66)
+  assert(stack:shakeFramesForGarbageSize(16) == 66)
+  assert(stack:shakeFramesForGarbageSize(17) == 66)
+  assert(stack:shakeFramesForGarbageSize(18) == 66)
+  assert(stack:shakeFramesForGarbageSize(19) == 66)
+  assert(stack:shakeFramesForGarbageSize(20) == 66)
+  assert(stack:shakeFramesForGarbageSize(21) == 66)
+  assert(stack:shakeFramesForGarbageSize(22) == 66)
+  assert(stack:shakeFramesForGarbageSize(23) == 66)
+  assert(stack:shakeFramesForGarbageSize(24) == 76)
+  assert(stack:shakeFramesForGarbageSize(25) == 76)
+  assert(stack:shakeFramesForGarbageSize(72) == 76)
+end
+
+testShakeFrames()

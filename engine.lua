@@ -237,8 +237,10 @@ Stack =
     s.which = which
     s.player_number = player_number --player number according to the multiplayer server, for game outcome reporting
 
+    s.prev_shake_time = 0
     s.shake_time = 0
     s.shake_time_on_frame = 0
+    s.peak_shake_time = 0
 
     s.prev_states = {}
 
@@ -565,6 +567,7 @@ function Stack.rollbackCopy(source, other)
   other.cur_dir = source.cur_dir
   other.cur_row = source.cur_row
   other.cur_col = source.cur_col
+  other.prev_shake_time = source.prev_shake_time
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
@@ -832,7 +835,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
-              local shake_time = garbage_to_shake_time[width * height]
+              local shake_time = self:shakeFramesForGarbageSize(width * height)
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
@@ -1441,7 +1444,7 @@ function Stack.simulate(self)
 
     self:updatePanels()
 
-    local prev_shake_time = self.shake_time
+    self.prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
     self.shake_time = max(self.shake_time, self.shake_time_on_frame)
     if self.shake_time == 0 then
@@ -1778,7 +1781,7 @@ function Stack.simulate(self)
       if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i = 1, 3 do
-          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > self.prev_shake_time then
             self.theme.sounds.garbage_thud[i]:stop()
             interrupted_thud = i
           end
@@ -2175,6 +2178,7 @@ function Stack.processPuzzleSwap(self)
       -- start depleting stop / shake time
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
+      self.peak_shake_time = self.shake_time
     end
     self.puzzle.remaining_moves = self.puzzle.remaining_moves - 1
   end
@@ -2245,7 +2249,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
   end
 
   self.garbageCreatedCount = self.garbageCreatedCount + 1
-  local shakeTime = garbage_to_shake_time[width * height]
+  local shakeTime = self:shakeFramesForGarbageSize(width * height)
 
   for row = originRow, originRow + height - 1 do
     if not self.panels[row] then
@@ -2586,4 +2590,23 @@ function Stack:getInfo()
   end
 
   return info
+end
+
+
+local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
+  [0] = 0,
+  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
+  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
+  66, 66, 66, 76
+}
+
+function Stack:shakeFramesForGarbageSize(size)
+  assert(size > 0)
+  if size == 0 then
+    return 0
+  end
+  if size > 24 then
+    size = 24
+  end
+  return GARBAGE_SIZE_TO_SHAKE_FRAMES[size]
 end

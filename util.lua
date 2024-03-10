@@ -150,11 +150,26 @@ function math.sign(v)
 end
 
 function math.round(number, numberOfDecimalPlaces)
+  if number == 0 then
+    return number
+  end
   local multiplier = 10^(numberOfDecimalPlaces or 0)
-  if number >= 0 then
+  if number > 0 then
     return math.floor(number * multiplier + 0.5) / multiplier
   else 
     return math.ceil(number * multiplier - 0.5) / multiplier 
+  end
+end
+
+function math.integerAwayFromZero(number, numberOfDecimalPlaces)
+  if number == 0 then
+    return number
+  end
+  local multiplier = 10^(numberOfDecimalPlaces or 0)
+  if number > 0 then
+    return math.ceil(number * multiplier) / multiplier
+  else 
+    return math.floor(number * multiplier) / multiplier 
   end
 end
 
