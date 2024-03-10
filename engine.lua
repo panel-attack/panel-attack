@@ -2601,13 +2601,12 @@ local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
 }
 
 function Stack:shakeFramesForGarbageSize(size)
-  assert(size >= 0)
+  assert(size > 0)
   if size == 0 then
     return 0
   end
   if size > 24 then
     size = 24
   end
-  local result = GARBAGE_SIZE_TO_SHAKE_FRAMES[size]
-  return result
+  return GARBAGE_SIZE_TO_SHAKE_FRAMES[size]
 end

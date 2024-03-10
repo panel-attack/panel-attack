@@ -91,23 +91,7 @@ function Stack:currentShakeOffset()
   return self:shakeOffsetForShakeFrames(self.shake_time, self.prev_shake_time)
 end
 
-function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeReduction)
-
-  if shakeReduction == nil then
-    shakeReduction = config.shakeReduction
-  end
-
-  local result = self:privateShakeOffsetForShakeFrames(frames, shakeReduction)
-  -- If we increased shake time we don't want to hard jump to the new value as its jarring.
-  -- Interpolate on the first frame to smooth it out a little bit.
-  if previousShakeTime > 0 and previousShakeTime < frames then
-    local previousOffset = self:privateShakeOffsetForShakeFrames(previousShakeTime, shakeReduction)
-    result = math.integerAwayFromZero((result + previousOffset) / 2, 0)
-  end
-  return result
-end
-
-function Stack:privateShakeOffsetForShakeFrames(frames, shakeReduction)
+local function privateShakeOffsetForShakeFrames(frames, shakeReduction)
   if frames <= 0 then
     return 0
   end
@@ -116,6 +100,22 @@ function Stack:privateShakeOffsetForShakeFrames(frames, shakeReduction)
   local result = shakeOffsetData[lookupIndex] or 0
   if result ~= 0 then
     result = math.integerAwayFromZero(result / shakeReduction)
+  end
+  return result
+end
+
+function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeReduction)
+
+  if shakeReduction == nil then
+    shakeReduction = config.shakeReduction
+  end
+
+  local result = privateShakeOffsetForShakeFrames(frames, shakeReduction)
+  -- If we increased shake time we don't want to hard jump to the new value as its jarring.
+  -- Interpolate on the first frame to smooth it out a little bit.
+  if previousShakeTime > 0 and previousShakeTime < frames then
+    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeReduction)
+    result = math.integerAwayFromZero((result + previousOffset) / 2, 0)
   end
   return result
 end
