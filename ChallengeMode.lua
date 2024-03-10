@@ -144,7 +144,7 @@ function ChallengeMode:getAttackSettings(difficulty, stageIndex)
   return attackFile
 end
 
-function ChallengeMode:recordStageResult(winners, gameLength)
+function ChallengeMode:recordStageResult(winners, gameLength, aborted)
   local stage = self.stages[self.stageIndex]
   stage.expendedTime = stage.expendedTime + gameLength
   self.expendedTime = self.expendedTime + gameLength
@@ -167,8 +167,11 @@ function ChallengeMode:recordStageResult(winners, gameLength)
       end
     end
   elseif #winners == 2 then
-    -- tie, stay on the same stage
-    -- they don't lose a continue but their time still counts
+    -- tie, stay on the same stage and their time counts
+    if aborted then
+      -- they only lose a continue if the aborted, a real tie doesn't use a continue
+      self.continues = self.continues + 1
+    end
   elseif #winners == 0 then
     -- this means an abort which is a LOSS because it's a local game and only manual abort is possible
     self.continues = self.continues + 1
@@ -186,7 +189,7 @@ function ChallengeMode:onMatchEnded(match)
   if stack ~= nil and stack.game_stopwatch then
     gameTime = stack.game_stopwatch
   end
-  self:recordStageResult(winners, gameTime)
+  self:recordStageResult(winners, gameTime, match.aborted)
 
   if self.online and match:hasLocalPlayer() then
     self:reportLocalGameResult(winners)
