@@ -144,7 +144,7 @@ function ChallengeMode:getAttackSettings(difficulty, stageIndex)
   return attackFile
 end
 
-function ChallengeMode:recordStageResult(winners, gameLength)
+function ChallengeMode:recordStageResult(winners, gameLength, aborted)
   local stage = self.stages[self.stageIndex]
   stage.expendedTime = stage.expendedTime + gameLength
   self.expendedTime = self.expendedTime + gameLength
@@ -167,10 +167,11 @@ function ChallengeMode:recordStageResult(winners, gameLength)
       end
     end
   elseif #winners == 2 then
-    -- tie, stay on the same stage
-    -- but since the player didn't lose, they shouldn't have to pay the timer
-    stage.expendedTime = stage.expendedTime - gameLength
-    self.expendedTime = self.expendedTime - gameLength
+    -- tie, stay on the same stage and their time counts
+    if aborted then
+      -- they only lose a continue if the aborted, a real tie doesn't use a continue
+      self.continues = self.continues + 1
+    end
   elseif #winners == 0 then
     -- this means an abort which is a LOSS because it's a local game and only manual abort is possible
     self.continues = self.continues + 1
@@ -178,17 +179,18 @@ function ChallengeMode:recordStageResult(winners, gameLength)
 end
 
 function ChallengeMode:onMatchEnded(match)
-  -- TODO: call recordStageResult on top of what the regular BattleRoom does
   self.matchesPlayed = self.matchesPlayed + 1
 
   local winners = match:getWinners()
   -- an abort is always the responsibility of the local player in challenge mode
   -- so always record the result, even if it may have been an abort
-  local gameTime = match.clock
-  if match.doCountdown then
-    gameTime = gameTime - (consts.COUNTDOWN_START  + consts.COUNTDOWN_LENGTH)
+  local gameTime = 0
+  local stack = match.stacks[1]
+  if stack ~= nil and stack.game_stopwatch then
+    gameTime = stack.game_stopwatch
   end
-  self:recordStageResult(winners, gameTime)
+  self:recordStageResult(winners, gameTime, match.aborted)
+
   if self.online and match:hasLocalPlayer() then
     self:reportLocalGameResult(winners)
   end
