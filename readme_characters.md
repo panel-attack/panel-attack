@@ -285,7 +285,9 @@ Originally intended to display flags for language specific versions of the same 
 An icon will be display next to the character's name in character select if a file with the same name as the value of this field is found in the flags folder of your active theme.
 
 
-### PopFX configuration
+### Pop Effects configuration (PopFX)
+
+Pop effects is the general name used for the animations that come out of panels after they match and the effects that rotate around the chain and combo cards.
 
 #### popfx_style
 The style of popfx to use, options:  
@@ -294,7 +296,9 @@ The style of popfx to use, options:
  "fadeburst" - Shows both the burst and fade animations
 
 #### popfx_burstRotate
-If this option set to true, the burst popfx up, down, left, and right particles rotate to point to the direction they are moving in.
+If this option set to true, the burst effects are rotated about the center of the panel or card.
+For the card burst the left of the frame will be pointing towards the center of the cards when rotation is on.
+For the panel burst, the top left one will not be rotated and the bottom right one will be rotated 180. The ones inbetween will be rotated proportionally.
 Default is false.
 
 #### popfx_burstScale
@@ -433,14 +437,24 @@ Displays in character selection.
 Aspect ratio: 1:1 (square)  
 Recommended size: 168x168px
 
-#### "burst" or "fade"
+#### burst
 
-The image atlas used for PopFX.  
-The image should be 9 equal sized frames in a row, the first frame is currently unused, frames 2 to 9 are the burst or fade animation.  
+The image atlas used for the burst effects (PopFX)
+The image should be 9 equal sized frames in a row, the first frame is used for the animation around the chain and combo cards
+The left of the frame will be pointing towards the center of the cards when rotation is on.
+Frames 2 to 9 are the animation used for the burst effect coming out of panels when they pop.
 
 Aspect ratio of each individual frame: 1:1 (square)
-Recommended size per frame: 32x32px
+Recommended size per frame: 96x96px (size of a 2x resolution panel)
 
+#### fade
+
+The image atlas used for the fade pop effects (PopFX)  
+The image should be 9 equal sized frames in a row, the first frame is currently unused, frames 2 to 9 are the fade animation.
+The fade animation is centered over the panel but smaller than a panel.
+
+Aspect ratio of each individual frame: 1:1 (square)
+Recommended size per frame: 64x64px (scaled down to 32 pixels centered on panel center, so gives 2x resolution)
 
 -----------------------------------------------------------
 

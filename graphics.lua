@@ -292,7 +292,7 @@ function Stack.update_cards(self)
 end
 
 -- Render the card animations used to show "bursts" when a combo or chain happens
-function Stack.draw_cards(self)
+function Stack.drawCards(self)
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
     if card_animation[card.frame] then
@@ -300,21 +300,9 @@ function Stack.draw_cards(self)
       local draw_y = (self.panelOriginY) + (11 - card.y) * 16 + self.displacement - card_animation[card.frame]
       -- Draw burst around card
       if card.burstAtlas and card.frame then
-        local burstFrameDimension = card.burstAtlas:getWidth() / 9
-
-        local radius = -37.6 * math.log(card.frame) + 132.81
-        local maxRadius = 8
-        if radius < maxRadius then
-          radius = maxRadius
-        end
-
-        for i = 1, 6, 1 do
-          local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
-          local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
-          set_color(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
-          qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
-          set_color(1, 1, 1, 1)
-        end
+        set_color(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
+        self:drawRotatingCardBurstEffectGroup(card, draw_x, draw_y)
+        set_color(1, 1, 1, 1)
       end
       -- draw card
       local iconSize = 48 / GFX_SCALE
@@ -381,86 +369,164 @@ function Stack.update_popfxs(self)
 end
 
 -- Draw the pop animations that happen when matches are made
-function Stack.draw_popfxs(self)
+function Stack.drawPopEffects(self)
+  local panelSize = 16
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    local draw_x = (self.panelOriginX) + (popfx.x - 1) * 16
-    local draw_y = (self.panelOriginY) + (11 - popfx.y) * 16 + self.displacement
-    local burstScale = characters[self.character].popfx_burstScale
-    local fadeScale = characters[self.character].popfx_fadeScale
-    local burstParticle_atlas = popfx.burstAtlas
-    local burstParticle = popfx.burstParticle
-    local burstFrameDimension = popfx.burstFrameDimension
-    local fadeParticle_atlas = popfx.fadeAtlas
-    local fadeParticle = popfx.fadeParticle
-    local fadeFrameDimension = popfx.fadeFrameDimension
+    local drawX = (self.panelOriginX) + (popfx.x - 1) * panelSize
+    local drawY = (self.panelOriginY) + (self.height - 1 - popfx.y) * panelSize + self.displacement
 
     set_color(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
     
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
-        burstFrame = popfx_burst_animation[popfx.frame]
         if popfx_burst_animation[popfx.frame] then
-          burstParticle:setViewport(burstFrame[2] * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
-          positions = {
-            -- four corner
-            {x = draw_x - burstFrame[1], y = draw_y - burstFrame[1]},
-            {x = draw_x + 15 + burstFrame[1], y = draw_y - burstFrame[1]},
-            {x = draw_x - burstFrame[1], y = draw_y + 15 + burstFrame[1]},
-            {x = draw_x + 15 + burstFrame[1], y = draw_y + 15 + burstFrame[1]},
-            -- top and bottom
-            {x = draw_x, y = draw_y - (burstFrame[1] * 2)},
-            {x = draw_x, y = draw_y + 10 + (burstFrame[1] * 2)},
-            -- left and right
-            {x = draw_x + 5 - (burstFrame[1] * 2), y = draw_y},
-            {x = draw_x + 10 + (burstFrame[1] * 2), y = draw_y}
-          }
-
-          if characters[self.character].popfx_burstRotate == true then
-            topRot = {math.rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            bottomRot = {math.rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            leftRot = {math.rad(-45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            rightRot = {math.rad(135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-          else
-            topRot = {0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            bottomRot = {0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale}
-            leftRot = {0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            rightRot = {0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-          end
-
-          -- four corner
-          qdraw(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          qdraw(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          qdraw(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          qdraw(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-
-          -- top and bottom
-          if popfx.popsize == "big" or popfx.popsize == "giant" then
-            qdraw(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            qdraw(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-
-          -- left and right
-          if popfx.popsize == "giant" then
-            qdraw(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            qdraw(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
+          self:drawPopEffectsBurstGroup(popfx, drawX, drawY, panelSize)
         end
       end
     end
     
     if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["fade"] then
-        fadeFrame = popfx_fade_animation[popfx.frame]
+        local fadeFrame = popfx_fade_animation[popfx.frame]
         if (fadeFrame ~= nil) then
+          local fadeSize = 32
+          local fadeScale = characters[self.character].popfx_fadeScale
+          local fadeParticle_atlas = popfx.fadeAtlas
+          local fadeParticle = popfx.fadeParticle
+          local fadeFrameDimension = popfx.fadeFrameDimension
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          qdraw(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          qdraw(fadeParticle_atlas, fadeParticle, drawX + panelSize / 2, drawY + panelSize / 2, 0, (fadeSize / fadeFrameDimension) * fadeScale, (fadeSize / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
 
     set_color(1, 1, 1, 1)
   end
+end
+
+-- Draws the group of bursts effects that come out of the panel after it matches
+function Stack:drawPopEffectsBurstGroup(popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("TopLeft", popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("TopRight", popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("BottomLeft", popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("BottomRight", popfx, drawX, drawY, panelSize)
+
+  if popfx.popsize == "big" or popfx.popsize == "giant" then
+    self:drawPopEffectsBurstPiece("Top", popfx, drawX, drawY, panelSize)
+    self:drawPopEffectsBurstPiece("Bottom", popfx, drawX, drawY, panelSize)
+  end
+
+  if popfx.popsize == "giant" then
+    self:drawPopEffectsBurstPiece("Left", popfx, drawX, drawY, panelSize)
+    self:drawPopEffectsBurstPiece("Right", popfx, drawX, drawY, panelSize)
+  end
+end
+
+-- Draws a particular instance of the bursts effects that come out of the panel after it matches
+function Stack:drawPopEffectsBurstPiece(direction, popfx, drawX, drawY, panelSize)
+
+  local burstDistance = popfx_burst_animation[popfx.frame][1]
+  local shouldRotate = characters[self.character].popfx_burstRotate
+  local x = drawX
+  local y = drawY
+  local rotation = 0
+
+  if direction == "TopLeft" then
+    x = x - burstDistance
+    y = y - burstDistance
+    if shouldRotate then
+      rotation = math.rad(0)
+    end
+  elseif direction == "TopRight" then
+    x = x + panelSize + burstDistance
+    y = y - burstDistance
+    if shouldRotate then
+      rotation = math.rad(90)
+    end
+  elseif direction == "BottomLeft" then
+    x = x - burstDistance
+    y = y + panelSize + burstDistance
+    if shouldRotate then
+      rotation = math.rad(-90)
+    end
+  elseif direction == "BottomRight" then
+    x = x + panelSize + burstDistance
+    y = y + panelSize + burstDistance
+    if shouldRotate then
+      rotation = math.rad(180)
+    end
+  elseif direction == "Top" then
+    x = x + panelSize / 2
+    y = y - (burstDistance * 2)
+    if shouldRotate then
+      rotation = math.rad(45)
+    end
+  elseif direction == "Bottom" then
+    x = x + panelSize / 2
+    y = y + panelSize + (burstDistance * 2)
+    if shouldRotate then
+      rotation = math.rad(-135)
+    end
+  elseif direction == "Left" then
+    x = x - (burstDistance * 2)
+    y = y + panelSize / 2
+    if shouldRotate then
+      rotation = math.rad(-45)
+    end
+  elseif direction == "Right" then
+    x = x + panelSize + (burstDistance * 2)
+    y = y + panelSize / 2
+    if shouldRotate then
+      rotation = math.rad(135)
+    end
+  else 
+    assert(false, "Unhandled popfx direction")
+  end
+
+  local atlasDimension = popfx.burstFrameDimension
+  local burstFrame = popfx_burst_animation[popfx.frame][2]
+  self:drawPopBurstParticle(popfx.burstAtlas, popfx.burstParticle, burstFrame, atlasDimension, x, y, panelSize, rotation)
+end
+
+-- Draws the group of burst effects that rotate a combo or chain card
+function Stack:drawRotatingCardBurstEffectGroup(card, drawX, drawY)
+  local burstFrameDimension = card.burstAtlas:getWidth() / 9
+
+  local radius = -37.6 * math.log(card.frame) + 132.81
+  local maxRadius = 8
+  if radius < maxRadius then
+    radius = maxRadius
+  end
+
+  local panelSize = 16
+  for i = 0, 5, 1 do
+    local degrees = (i * 60)
+    local bonusDegrees = (card.frame * 5)
+    local totalRadians = math.rad(degrees + bonusDegrees)
+    local xOffset = math.cos(totalRadians) * radius
+    local yOffset = math.sin(totalRadians) * radius
+    local x = drawX + panelSize / 2 + xOffset
+    local y = drawY + panelSize / 2 + yOffset
+    local rotation = 0
+    if characters[self.character].popfx_burstRotate then
+      rotation = totalRadians
+    end
+    
+    self:drawPopBurstParticle(card.burstAtlas, card.burstParticle, 0, burstFrameDimension, x, y, panelSize, rotation)
+  end
+end
+
+-- Draws a burst partical with the given parameters
+function Stack:drawPopBurstParticle(atlas, quad, frameIndex, atlasDimension, drawX, drawY, panelSize, rotation)
+  
+  local burstScale = characters[self.character].popfx_burstScale
+  local burstFrameScale = (panelSize / atlasDimension) * burstScale
+  local burstOrigin = (atlasDimension * burstScale) / 2
+
+  quad:setViewport(frameIndex * atlasDimension, 0, atlasDimension, atlasDimension, atlas:getDimensions())
+
+  qdraw(atlas, quad, drawX, drawY, rotation, burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
 end
 
 local mask_shader = love.graphics.newShader [[
@@ -1214,8 +1280,8 @@ function Stack:drawTopLayers()
     self.telegraph:render()
   end
 
-  self:draw_popfxs()
-  self:draw_cards()
+  self:drawPopEffects()
+  self:drawCards()
 end
 
 -- Draw the pause menu
