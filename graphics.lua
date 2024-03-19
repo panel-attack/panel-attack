@@ -504,7 +504,7 @@ function Stack:drawDebug()
   end
 end
 
-function shouldFlashForFrame(frame)
+local function shouldFlashForFrame(frame)
   local flashFrames = 1
   flashFrames = 2 -- add config
   return frame % (flashFrames * 2) < flashFrames
