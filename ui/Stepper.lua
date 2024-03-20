@@ -5,8 +5,6 @@ local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local GraphicsUtil = require("graphics_util")
 
-local BUTTON_PADDING = 5
-
 local function setLabels(self, labels, values, selectedIndex)
   self.selectedIndex = selectedIndex
   self.values = values
@@ -42,8 +40,8 @@ local Stepper = class(
     self.selectedIndex = options.selectedIndex or 1
     
     local navButtonWidth = 25
-    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function() setState(self, self.selectedIndex - 1) end})
-    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function() setState(self, self.selectedIndex + 1) end})
+    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function(selfElement, inputSource, holdTime) setState(self, self.selectedIndex - 1) end})
+    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function(selfElement, inputSource, holdTime) setState(self, self.selectedIndex + 1) end})
     self:addChild(self.leftButton)
     self:addChild(self.rightButton)
 
@@ -68,6 +66,14 @@ local Stepper = class(
 
 Stepper.setLabels = setLabels
 Stepper.setState = setState
+
+function Stepper:receiveInputs(input)
+  if input:isPressedWithRepeat("Left") then
+    self:setState(self.selectedIndex - 1)
+  elseif input:isPressedWithRepeat("Right") then
+    self:setState(self.selectedIndex + 1)
+  end
+end
 
 function Stepper:refreshLocalization()
   for i, label in ipairs(self.labels) do

@@ -20,9 +20,9 @@ end
 -- forced override for each of the button's onClick function
 -- this allows buttons to have individual custom behaviour while also triggering the global state change
 local function genButtonGroupFn(self, i, onClick)
-  return function()
+  return function(selfElement, inputSource, holdTime)
     setState(self, i)
-    onClick()
+    onClick(selfElement, inputSource, holdTime)
     self.onChange(self.value)
   end
 end
@@ -39,20 +39,29 @@ local function setButtons(self, buttons, values, selectedIndex)
   self.values = values
   self.buttons = buttons
   
+  local overallWidth = 0
+  local overallHeight = 0
   for i, button in ipairs(buttons) do
+    overallWidth = overallWidth + button.width
     if i > 1 then 
        button.x = self.buttons[i - 1].x + self.buttons[i - 1].width + BUTTON_PADDING
+       overallWidth = overallWidth + BUTTON_PADDING
     end
     button.onClick = genButtonGroupFn(self, i, button.onClick)
     self:addChild(button)
+    overallHeight = math.max(overallHeight, button.height)
   end
+  self.width = overallWidth
+  self.height = overallHeight
   self.buttons[self.selectedIndex].backgroundColor = {.5, .5, 1, .7}
   self.value = self.values[self.selectedIndex]
 end
 
 local function setActiveButton(self, selectedIndex)
   local newIndex = util.bound(1, selectedIndex, #self.buttons)
-  self.buttons[newIndex].onClick()
+  if self.selectedIndex ~= newIndex then
+    self.buttons[newIndex]:onClick(nil, 0)
+  end
 end
 
 local ButtonGroup = class(
@@ -67,6 +76,14 @@ local ButtonGroup = class(
   end,
   UIElement
 )
+
+function ButtonGroup:receiveInputs(input)
+  if input:isPressedWithRepeat("Left") then
+    self:setActiveButton(self.selectedIndex - 1)
+  elseif input:isPressedWithRepeat("Right") then
+    self:setActiveButton(self.selectedIndex + 1)
+  end
+end
 
 ButtonGroup.setButtons = setButtons
 ButtonGroup.setActiveButton = setActiveButton

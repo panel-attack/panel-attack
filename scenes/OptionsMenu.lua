@@ -4,6 +4,7 @@ local Slider = require("ui.Slider")
 local Label = require("ui.Label")
 local sceneManager = require("scenes.sceneManager")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local ButtonGroup = require("ui.ButtonGroup")
 local Stepper = require("ui.Stepper")
 local inputManager = require("inputManager")
@@ -16,7 +17,6 @@ local tableUtils = require("tableUtils")
 local SoundTest = require("scenes.SoundTest")
 local SetUserIdMenu = require("scenes.SetUserIdMenu")
 local UiElement = require("ui.UIElement")
-local touchHandler = require("ui.touchHandler")
 
 -- @module optionsMenu
 -- Scene for the options menu
@@ -47,7 +47,6 @@ function OptionsMenu:loadScreens()
   menus.baseMenu = self:loadBaseMenu()
   menus.generalMenu = self:loadGeneralMenu()
   menus.graphicsMenu = self:loadGraphicsMenu()
-  menus.soundTestMenu = self:loadSoundTestMenu()
   menus.audioMenu = self:loadSoundMenu()
   menus.debugMenu = self:loadDebugMenu()
   menus.aboutMenu = self:loadAboutMenu()
@@ -79,10 +78,8 @@ end
 function OptionsMenu:switchToScreen(screenName)
   Menu.playValidationSfx()
   self.menus[self.activeMenuName]:detach()
-  touchHandler:unregisterTree(self.menus[self.activeMenuName])
   self.uiRoot:addChild(self.menus[screenName])
   self.activeMenuName = screenName
-  touchHandler:registerTree(self.menus[self.activeMenuName])
 end
 
 local function createToggleButtonGroup(configField, onChangeFn)
@@ -148,13 +145,13 @@ function OptionsMenu:loadInfoScreen(text)
       self.backgroundImage = themes[config.theme].images.bg_main
       self:switchToScreen("aboutMenu")
     end
-    if inputManager:isPressedWithRepeat("MenuUp", .25, 30 / 1000.0) then
+    if inputManager:isPressedWithRepeat("Up", .25, 30 / 1000.0) then
       Menu.playMoveSfx()
       if label.height > consts.CANVAS_HEIGHT - 15 then
         label.y = math.max(0, label.y + SCROLL_STEP)
       end
     end
-    if inputManager:isPressedWithRepeat("MenuDown", .25, 30 / 1000.0) then
+    if inputManager:isPressedWithRepeat("Down", .25, 30 / 1000.0) then
       Menu.playMoveSfx()
       if label.height > consts.CANVAS_HEIGHT - 15 then
         label.y = math.min(label.y - SCROLL_STEP, label.height - (consts.CANVAS_HEIGHT - 15))
@@ -164,28 +161,6 @@ function OptionsMenu:loadInfoScreen(text)
 
   infoScreen:addChild(label)
   return infoScreen
-end
-
-function OptionsMenu:repositionMenus()
-  local x, y = unpack(themes[config.theme].main_menu_screen_pos)
-  x = x - 20
-  y = y + 10
-  self.menus["baseMenu"].x = x
-  self.menus["baseMenu"].y = y
-  self.menus["generalMenu"].x = x
-  self.menus["generalMenu"].y = y
-  self.menus["graphicsMenu"].x = x
-  self.menus["graphicsMenu"].y = y
-  self.menus["soundTestMenu"].x = x
-  self.menus["soundTestMenu"].y = y
-  self.menus["audioMenu"].x = x
-  self.menus["audioMenu"].y = y
-  self.menus["debugMenu"].x = x
-  self.menus["debugMenu"].y = y
-  self.menus["aboutMenu"].x = x
-  self.menus["aboutMenu"].y = y
-  self.menus["modifyUserIdMenu"].x = x
-  self.menus["modifyUserIdMenu"].y = y
 end
 
 function OptionsMenu:loadBaseMenu()
@@ -209,58 +184,29 @@ function OptionsMenu:loadBaseMenu()
   })
 
   local baseMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_language"}), languageStepper}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_general"}),
-        onClick = function()
+      MenuItem.createStepperMenuItem("op_language", nil, nil, languageStepper),
+      MenuItem.createButtonMenuItem("op_general", nil, nil, function()
           self:switchToScreen("generalMenu")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_graphics"}),
-        onClick = function()
+        end), 
+      MenuItem.createButtonMenuItem("op_graphics", nil, nil, function()
           self:switchToScreen("graphicsMenu")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_audio"}),
-        onClick = function()
+        end),
+      MenuItem.createButtonMenuItem("op_audio", nil, nil, function()
           self:switchToScreen("audioMenu")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_debug"}),
-        onClick = function()
+        end),
+      MenuItem.createButtonMenuItem("op_debug", nil, nil, function()
           self:switchToScreen("debugMenu")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_about"}),
-        onClick = function()
+        end),
+      MenuItem.createButtonMenuItem("op_about", nil, nil, function()
           self:switchToScreen("aboutMenu")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "Modify User ID", translate = false}),
-        onClick = function()
+        end),
+      MenuItem.createButtonMenuItem("Modify User ID", nil, false, function()
           self:switchToScreen("modifyUserIdMenu")
-        end
-      })
-    }, {TextButton({width = MENU_WIDTH, label = Label({text = "back"}), onClick = self.exit})}
-  }
+        end),
+      MenuItem.createButtonMenuItem("back", nil, nil, self.exit)
+    }
 
-  local menu = Menu({menuItems = baseMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(baseMenuOptions)
   return menu
 end
 
@@ -280,25 +226,20 @@ function OptionsMenu:loadGeneralMenu()
   })
 
   local generalMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_countdown"}), createToggleButtonGroup("ready_countdown_1P")},
-    {Label({width = MENU_WIDTH, text = "op_fps"}), createToggleButtonGroup("show_fps")},
-    {Label({width = MENU_WIDTH, text = "op_ingame_infos"}), createToggleButtonGroup("show_ingame_infos")}, {
-      Label({width = MENU_WIDTH, text = "op_analytics"}), createToggleButtonGroup("enable_analytics", function()
-        analytics.init()
+    MenuItem.createToggleButtonGroupMenuItem("op_countdown", nil, nil, createToggleButtonGroup("ready_countdown_1P")),
+    MenuItem.createToggleButtonGroupMenuItem("op_fps", nil, nil, createToggleButtonGroup("show_fps")),
+    MenuItem.createToggleButtonGroupMenuItem("op_ingame_infos", nil, nil, createToggleButtonGroup("show_ingame_infos")),
+    MenuItem.createToggleButtonGroupMenuItem("op_analytics", nil, nil, createToggleButtonGroup("enable_analytics", function()
+      analytics.init()
+    end)),
+    MenuItem.createSliderMenuItem("op_input_delay", nil, nil, createConfigSlider("input_repeat_delay", 0, 50)),
+    MenuItem.createToggleButtonGroupMenuItem("op_replay_public", nil, nil, publicReplayButtonGroup),
+    MenuItem.createButtonMenuItem("back", nil, nil, function()
+        self:switchToScreen("baseMenu")
       end)
-    }, {Label({width = MENU_WIDTH, text = "op_input_delay"}), createConfigSlider("input_repeat_delay", 0, 50)},
-    {Label({width = MENU_WIDTH, text = "op_replay_public"}), publicReplayButtonGroup}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
-          self:switchToScreen("baseMenu")
-        end
-      })
-    }
   }
 
-  local menu = Menu({menuItems = generalMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(generalMenuOptions)
   return menu
 end
 
@@ -328,7 +269,6 @@ function OptionsMenu:loadGraphicsMenu()
       if themes[config.theme].musics["main"] then
         find_and_add_music(themes[config.theme].musics, "main")
       end
-      self:repositionMenus()
     end
   })
 
@@ -359,7 +299,7 @@ function OptionsMenu:loadGraphicsMenu()
 
   local fixedScaleButtonGroup = ButtonGroup({
     buttons = tableUtils.map(fixedScaleData, function(scaleType)
-      return TextButton({label = Label({text = scaleType.label}), translate = false})
+      return TextButton({label = Label({text = scaleType.label, translate = false})})
     end),
     values = tableUtils.map(fixedScaleData, function(scaleType)
       return scaleType.value
@@ -373,12 +313,12 @@ function OptionsMenu:loadGraphicsMenu()
     end
   })
 
-  local fixedScaleGroup = {Label({width = MENU_WIDTH, text = "op_scale_fixed_value"}), fixedScaleButtonGroup}
+  local fixedScaleGroup = MenuItem.createToggleButtonGroupMenuItem("op_scale_fixed_value", nil, nil, fixedScaleButtonGroup)
   local function updateFixedButtonGroupVisibility()
     if config.gameScaleType ~= "fixed" then
-      self.menus.graphicsMenu:removeMenuItem(fixedScaleGroup[1].id)
+      self.menus.graphicsMenu:removeMenuItem(fixedScaleGroup.id)
     else
-      if self.menus.graphicsMenu:containsMenuItemID(fixedScaleGroup[1].id) == false then
+      if self.menus.graphicsMenu:containsMenuItemID(fixedScaleGroup.id) == false then
         self.menus.graphicsMenu:addMenuItem(3, fixedScaleGroup)
       end
     end
@@ -410,44 +350,23 @@ function OptionsMenu:loadGraphicsMenu()
   })
 
   local graphicsMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_theme"}), themeStepper}, {Label({width = MENU_WIDTH, text = "op_scale"}), scaleButtonGroup},
-    {Label({width = MENU_WIDTH, text = "op_portrait_darkness"}), createConfigSlider("portrait_darkness", 0, 100)},
-    {Label({width = MENU_WIDTH, text = "op_popfx"}), createToggleButtonGroup("popfx")},
-    {Label({width = MENU_WIDTH, text = "op_renderTelegraph"}), createToggleButtonGroup("renderTelegraph")},
-    {Label({width = MENU_WIDTH, text = "op_renderAttacks"}), createToggleButtonGroup("renderAttacks")}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
+    MenuItem.createStepperMenuItem("op_theme", nil, nil, themeStepper),
+    MenuItem.createToggleButtonGroupMenuItem("op_scale", nil, nil, scaleButtonGroup),
+    MenuItem.createSliderMenuItem("op_portrait_darkness", nil, nil, createConfigSlider("portrait_darkness", 0, 100)),
+    MenuItem.createToggleButtonGroupMenuItem("op_popfx", nil, nil, createToggleButtonGroup("popfx")),
+    MenuItem.createToggleButtonGroupMenuItem("op_renderTelegraph", nil, nil, createToggleButtonGroup("renderTelegraph")),
+    MenuItem.createToggleButtonGroupMenuItem("op_renderAttacks", nil, nil, createToggleButtonGroup("renderAttacks")),
+    MenuItem.createButtonMenuItem("back", nil, nil, function()
           GAME.showGameScaleUntil = GAME.timer
           self:switchToScreen("baseMenu")
-        end
-      })
-    }
+        end)
   }
 
-  local menu = Menu({menuItems = graphicsMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(graphicsMenuOptions)
   if config.gameScaleType == "fixed" then
     menu:addMenuItem(3, fixedScaleGroup)
   end
   return menu
-end
-
-function OptionsMenu:loadSoundTestMenu()
-  local soundTestMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "character"})}, {Label({width = MENU_WIDTH, text = "op_music_type"})},
-    {Label({width = MENU_WIDTH, text = "op_music_play"})}, {Label({width = MENU_WIDTH, text = "op_music_sfx"})}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
-          self:switchToScreen("audioMenu")
-        end
-      })
-    }
-  }
-
-  return Menu({menuItems = soundTestMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
 end
 
 function OptionsMenu:loadSoundMenu()
@@ -466,134 +385,72 @@ function OptionsMenu:loadSoundMenu()
   })
 
   local audioMenuOptions = {
-    {
-      Label({width = MENU_WIDTH, text = "op_vol"}), createConfigSlider("master_volume", 0, 100, function()
+    MenuItem.createSliderMenuItem("op_vol", nil, nil, createConfigSlider("master_volume", 0, 100, function()
         apply_config_volume()
-      end)
-    }, {
-      Label({width = MENU_WIDTH, text = "op_vol_sfx"}), createConfigSlider("SFX_volume", 0, 100, function()
+      end)),
+    MenuItem.createSliderMenuItem("op_vol_sfx", nil, nil, createConfigSlider("SFX_volume", 0, 100, function()
         apply_config_volume()
-      end)
-    }, {
-      Label({width = MENU_WIDTH, text = "op_vol_music"}), createConfigSlider("music_volume", 0, 100, function()
+      end)),
+    MenuItem.createSliderMenuItem("op_vol_music", nil, nil, createConfigSlider("music_volume", 0, 100, function()
         apply_config_volume()
+      end)),
+      MenuItem.createStepperMenuItem("op_use_music_from", nil, nil, musicFrequencyStepper),
+      MenuItem.createToggleButtonGroupMenuItem("op_music_delay", nil, nil, createToggleButtonGroup("danger_music_changeback_delay")),
+    MenuItem.createButtonMenuItem("mm_music_test", nil, nil, function()
+        sceneManager:switchToScene(SoundTest())
+      end),
+    MenuItem.createButtonMenuItem("back", nil, nil, function()
+        self:switchToScreen("baseMenu")
       end)
-    }, {Label({width = MENU_WIDTH, text = "op_use_music_from"}), musicFrequencyStepper},
-    {Label({width = MENU_WIDTH, text = "op_music_delay"}), createToggleButtonGroup("danger_music_changeback_delay")}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "mm_music_test"}),
-        onClick = function()
-          sceneManager:switchToScene(SoundTest())
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
-          self:switchToScreen("baseMenu")
-        end
-      })
-    }
   }
 
-  local menu = Menu({menuItems = audioMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(audioMenuOptions)
   return menu
 end
 
 function OptionsMenu:loadDebugMenu()
   local debugMenuOptions = {
-    {Label({width = MENU_WIDTH, text = "op_debug"}), createToggleButtonGroup("debug_mode")},
-    {Label({width = MENU_WIDTH, text = "VS Frames Behind", translate = false}), createConfigSlider("debug_vsFramesBehind", 0, 200)},
-    {Label({width = MENU_WIDTH, text = "Show Debug Servers", translate = false}), createToggleButtonGroup("debugShowServers")},
-    {Label({width = MENU_WIDTH, text = "Show Design Helper", translate = false}), createToggleButtonGroup("debugShowDesignHelper")}, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
+    MenuItem.createToggleButtonGroupMenuItem("op_debug", nil, nil, createToggleButtonGroup("debug_mode")),
+    MenuItem.createSliderMenuItem("VS Frames Behind", nil, false, createConfigSlider("debug_vsFramesBehind", 0, 200)),
+    MenuItem.createToggleButtonGroupMenuItem("Show Debug Servers", nil, false, createToggleButtonGroup("debugShowServers")),
+    MenuItem.createToggleButtonGroupMenuItem("Show Design Helper", nil, false, createToggleButtonGroup("debugShowDesignHelper")),
+    MenuItem.createButtonMenuItem("back", nil, nil, function()
           self:switchToScreen("baseMenu")
-        end
-      })
-    }
+        end)
   }
 
-  return Menu({menuItems = debugMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu.createCenteredMenu(debugMenuOptions)
 end
 
 function OptionsMenu:loadAboutMenu()
   local aboutMenuOptions = {
-    {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_about_themes"}),
-        onClick = function()
+    MenuItem.createButtonMenuItem("op_about_themes", nil, nil, function()
           self:switchToScreen("aboutThemes")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_about_characters"}),
-        onClick = function()
+        end),
+    MenuItem.createButtonMenuItem("op_about_characters", nil, nil, function()
           self:switchToScreen("aboutCharacters")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_about_stages"}),
-        onClick = function()
+        end),
+    MenuItem.createButtonMenuItem("op_about_stages", nil, nil, function()
           self:switchToScreen("aboutStages")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "op_about_panels"}),
-        onClick = function()
+        end),
+    MenuItem.createButtonMenuItem("op_about_panels", nil, nil, function()
           self:switchToScreen("aboutPanels")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "About Attack Files"}),
-        translate = false,
-        onClick = function()
+        end),
+    MenuItem.createButtonMenuItem("About Attack Files", nil, nil, function()
           self:switchToScreen("aboutAttackFiles")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "Installing Mods"}),
-        translate = false,
-        onClick = function()
+        end, nil, false),
+    MenuItem.createButtonMenuItem("Installing Mods", nil, nil, function()
           self:switchToScreen("installingMods")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "System Info"}),
-        translate = false,
-        onClick = function()
+        end, nil, false),
+    MenuItem.createButtonMenuItem("System Info", nil, nil, function()
           self:switchToScreen("systemInfo")
-        end
-      })
-    }, {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = "back"}),
-        onClick = function()
+        end, nil, false),
+    MenuItem.createButtonMenuItem("back", nil, nil, function()
           self:switchToScreen("baseMenu")
-        end
-      })
-    }
+        end)
   }
 
-  local menu = Menu({menuItems = aboutMenuOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  local menu = Menu.createCenteredMenu(aboutMenuOptions)
   return menu
 end
 
@@ -601,32 +458,19 @@ function OptionsMenu:loadModifyUserIdMenu()
   local modifyUserIdOptions = {}
   local userIDDirectories = fileUtils.getFilteredDirectoryItems("servers")
   for i = 1, #userIDDirectories do
-    modifyUserIdOptions[#modifyUserIdOptions + 1] = {
-      TextButton({
-        width = MENU_WIDTH,
-        label = Label({text = userIDDirectories[i], translate = false}),
-        onClick = function()
+    modifyUserIdOptions[#modifyUserIdOptions + 1] = MenuItem.createButtonMenuItem(userIDDirectories[i], nil, false, function()
           sceneManager:switchToScene(SetUserIdMenu({serverIp = userIDDirectories[i]}))
-        end
-      })
-    }
+      end)
   end
-  modifyUserIdOptions[#modifyUserIdOptions + 1] = {
-    TextButton({
-      width = MENU_WIDTH,
-      label = Label({text = "back"}),
-      onClick = function()
+  modifyUserIdOptions[#modifyUserIdOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil, function()
         self:switchToScreen("baseMenu")
-      end
-    })
-  }
+      end)
 
-  return Menu({menuItems = modifyUserIdOptions, height = themes[config.theme].main_menu_max_height, itemHeight = ITEM_HEIGHT})
+  return Menu.createCenteredMenu(modifyUserIdOptions)
 end
 
 function OptionsMenu:load()
   self.menus = self:loadScreens()
-  self:repositionMenus()
 
   self.backgroundImage = themes[config.theme].images.bg_main
   if themes[config.theme].musics["main"] then

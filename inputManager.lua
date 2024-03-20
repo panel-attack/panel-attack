@@ -280,6 +280,12 @@ local function quantize(x, period)
 end
 
 local function isPressedWithRepeat(inputs, key, delay, repeatPeriod)
+  if delay == nil then
+    delay = consts.KEY_DELAY
+  end
+  if repeatPeriod == nil then
+    repeatPeriod = consts.KEY_REPEAT_PERIOD
+  end
   if tableUtils.trueForAny(menuKeyNames, function(k)
     return k == key
   end) then
@@ -339,6 +345,20 @@ local function convertKey(key)
 end
 
 function inputManager:migrateInputConfigs(inputConfigs)
+  local oldToNewKeyMap = self:getOldToNewKeyMap()
+  if tableUtils.trueForAll(inputConfigs, function(inputConfig)
+    return not inputConfig["Start"]
+  end) then
+    for i, inputConfig in ipairs(inputConfigs) do
+      for oldKey, newKey in pairs(oldToNewKeyMap) do
+        inputConfigs[i][newKey] = convertKey(inputConfig[oldKey])
+      end
+    end
+  end
+  return inputConfigs
+end
+
+function inputManager:getOldToNewKeyMap()
   local oldToNewKeyMap = {
     up = "Up",
     down = "Down",
@@ -352,16 +372,20 @@ function inputManager:migrateInputConfigs(inputConfigs)
     raise2 = "Raise2",
     pause = "Start"
   }
-  if tableUtils.trueForAll(inputConfigs, function(inputConfig)
-    return not inputConfig["Start"]
-  end) then
-    for i, inputConfig in ipairs(inputConfigs) do
-      for oldKey, newKey in pairs(oldToNewKeyMap) do
-        inputConfigs[i][newKey] = convertKey(inputConfig[oldKey])
-      end
+
+  return oldToNewKeyMap
+end
+
+-- Gets only the saved keymaps from each input config
+function inputManager:getSaveKeyMap()
+  local result = {}
+  for i, inputConfig in ipairs(inputManager.inputConfigurations) do
+    result[i] = {}
+    for _, keyName in ipairs(consts.KEY_NAMES) do
+      result[i][keyName] = inputConfig[keyName]
     end
   end
-  return inputConfigs
+  return result
 end
 
 for i = 1, inputManager.maxConfigurations do

@@ -1,5 +1,4 @@
 local class = require("class")
-local util = require("util")
 local consts = require("consts")
 local Signal = require("helpers.signal")
 local logger = require("logger")
@@ -15,8 +14,10 @@ local MatchParticipant = class(function(self)
     characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
     stageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
     panelId = config.panels,
-    wantsReady = false
+    wantsReady = false,
   }
+  self.hasLoaded = false
+  self.ready = false
   self.human = false
 
   Signal.turnIntoEmitter(self)
@@ -29,6 +30,8 @@ local MatchParticipant = class(function(self)
   self:createSignal("characterIdChanged")
   self:createSignal("selectedCharacterIdChanged")
   self:createSignal("wantsReadyChanged")
+  self:createSignal("readyChanged")
+  self:createSignal("hasLoadedChanged")
 end)
 
 -- returns the count of wins modified by the `modifiedWins` property
@@ -42,8 +45,7 @@ function MatchParticipant:setWinCount(count)
 end
 
 function MatchParticipant:incrementWinCount()
-  self.wins = self.wins + 1
-  self:emitSignal("winsChanged", self:getWinCountForDisplay())
+  self:setWinCount(self.wins + 1)
 end
 
 function MatchParticipant:setWinrate(winrate)
@@ -75,7 +77,12 @@ function MatchParticipant:refreshStage()
   self.settings.stageId = StageLoader.resolveBundle(self.settings.selectedStageId)
   if currentId ~= self.settings.stageId then
     self:emitSignal("stageIdChanged", self.settings.stageId)
-    CharacterLoader.load(self.settings.stageId)
+    if not stages[self.settings.stageId].fully_loaded then
+      CharacterLoader.load(self.settings.stageId)
+      if self.isLocal then
+        self:setLoaded(false)
+      end
+    end
   end
 end
 
@@ -93,7 +100,12 @@ function MatchParticipant:refreshCharacter()
   self.settings.characterId = CharacterLoader.resolveBundle(self.settings.selectedCharacterId)
   if currentId ~= self.settings.characterId then
     self:emitSignal("characterIdChanged", self.settings.characterId)
-    CharacterLoader.load(self.settings.characterId)
+    if not characters[self.settings.characterId].fully_loaded then
+      CharacterLoader.load(self.settings.characterId)
+      if self.isLocal then
+        self:setLoaded(false)
+      end
+    end
   end
 end
 
@@ -101,6 +113,20 @@ function MatchParticipant:setWantsReady(wantsReady)
   if wantsReady ~= self.settings.wantsReady then
     self.settings.wantsReady = wantsReady
     self:emitSignal("wantsReadyChanged", wantsReady)
+  end
+end
+
+function MatchParticipant:setReady(ready)
+  if ready ~= self.ready then
+    self.ready = ready
+    self:emitSignal("readyChanged", ready)
+  end
+end
+
+function MatchParticipant:setLoaded(hasLoaded)
+  if hasLoaded ~= self.hasLoaded then
+    self.hasLoaded = hasLoaded
+    self:emitSignal("hasLoadedChanged", hasLoaded)
   end
 end
 

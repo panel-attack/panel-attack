@@ -66,7 +66,7 @@ function SetNameMenu:load()
     y = y + 100,
     vAlign = "top",
     hAlign = "center",
-    onClick = function()
+    onClick = function(selfElement, inputSource, holdTime)
       self:confirmName()
     end
   })

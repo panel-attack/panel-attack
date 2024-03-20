@@ -243,11 +243,9 @@ Effectively there are two big new things in the new user interface that comes wi
 
 ### Touch
 
-Touch is implemented via the pair of `ui/touchHandler.lua` and `ui/Touchable.lua`.  
-UiElements that should support touch can be marked as touchable by implementing at least one of the three functions `onTouch`, `onDrag` and `onRelease` calling the function returned by `ui/Touchable.lua` on them.
-This registers them for touch in the `touchHandler` which in turn consumes mouse events through the respective love callbacks.  
-To allow for easier handling of touch registering, all scenes have an `uiRoot` that is registered/unregistered with the touch handler when the scene changes.  
-If there are sub elements that should be made visible/invisible dynamically on the scene, `setVisibility` or `touchHandler.registerTree`/`touchHandler.unregisterTree` should be called on the top most element to make sure that visible elements are touchable and invisible elements are not.
+Touch is implemented via the pair of `ui/touchHandler.lua` and `ui/UIElement.lua`.  
+UiElements that should support touch are automatically considered touchable by implementing at least one of the functions `onTouch`, `onDrag`, `onHold` and `onRelease`.
+All scenes have an `uiRoot` that is traversed by the touch handler through `UIElement:getTouchedElement` and only children of the active scene's uiRoot are active for touch.  
 
 ### UIElement composite
 
@@ -276,7 +274,7 @@ Given that functions are overridable on ANY table, even individual ones, it is h
 We have a cool localization.csv file. In the first column is the codename of a string, then the traductions into the different languages.  
 When adding text to the game, we can reference it by `loc(codename)` so that the loc function can automatically fetch the correct string based on the language configuration.  
 For text that is properly embedded within the new UI structure, `Label`s are used for display. `Label` possesses a `translate` attribute that defaults to `true` if not explicitly passed as `false` so that the codenames for the strings can often be passed directly.  
-If there are placeholders in a localized string, the `extraLabels` field can be passed with the values that should be used as replacements.  
+If there are placeholders in a localized string, the `replacements` field can be passed with the values that should be used as replacements.  
 If you add new localization entries please make sure to **always** add them at the bottom. There is a google doc we pull from where non-developers can submit changes / new localizations and it spoils any syncing attempt if we get new entries in the middle of the file.
 
 ## Mods and Assets

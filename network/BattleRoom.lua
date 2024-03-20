@@ -184,6 +184,7 @@ function BattleRoom:registerPlayerUpdates(messageType)
       player:connectSignal("levelChanged", player, update)
       player:connectSignal("colorCountChanged", player, update)
       player:connectSignal("inputMethodChanged", player, update)
+      player:connectSignal("hasLoadedChanged", player, update)
     else
       local update = function(player, menuStateMsg)
         local menuState = ServerMessages.sanitizeMenuState(menuStateMsg.menu_state)
@@ -234,10 +235,13 @@ function BattleRoom:reportLocalGameResult(winners)
 end
 
 function BattleRoom:shutdownNetwork()
-  GAME.tcpClient.receivedMessageQueue:clear()
-  if self.online and GAME.tcpClient:isConnected() then
-    GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
+  if GAME.tcpClient then
+    GAME.tcpClient:dropOldInputMessages()
+    if self.online and GAME.tcpClient:isConnected() then
+      GAME.tcpClient:sendRequest(ClientMessages.leaveRoom())
+    end
   end
+
   self.setupListeners = nil
   self.runningMatchListeners = nil
 end

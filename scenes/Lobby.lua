@@ -4,9 +4,11 @@ local Label = require("ui.Label")
 local ButtonGroup = require("ui.ButtonGroup")
 local TextButton = require("ui.TextButton")
 local Menu = require("ui.Menu")
+local MenuItem = require("ui.MenuItem")
 local class = require("class")
 local input = require("inputManager")
 local logger = require("logger")
+local util = require("util")
 local LoginRoutine = require("network.LoginRoutine")
 local MessageListener = require("network.MessageListener")
 local ClientMessages = require("network.ClientProtocol")
@@ -98,24 +100,18 @@ end
 
 function Lobby:initLobbyMenu()
   self.leaderboardLabel = Label({text = "", translate = false, hAlign = "center", vAlign = "center", x = 200, isVisible = false})
-  self.leaderboardToggleLabel = Label({text = "lb_show_board"})
-  self.leaderboardToggleButton = TextButton({
-    label = self.leaderboardToggleLabel,
-    onClick = function()
+  local menuItems = {
+    MenuItem.createButtonMenuItem("lb_show_board", nil, nil, function()
       self:toggleLeaderboard()
-    end
-  })
-  local menuItems = {{self.leaderboardToggleButton}, {TextButton({label = Label({text = "lb_back"}), onClick = exitMenu})}}
+    end),
+    MenuItem.createButtonMenuItem("lb_back", nil, nil, exitMenu)
+  }
+  self.leaderboardToggleLabel = menuItems[1].textButton.children[1]
 
-  self.lobbyMenu = Menu({
-    x = self.lobbyMenuXoffsetMap[false],
-    y = 0,
-    menuItems = menuItems,
-    -- this alignment setup does not quite work yet because Menu isn't acting like a proper container
-    hAlign = "center",
-    vAlign = "center",
-    height = themes[config.theme].main_menu_max_height,
-  })
+  self.lobbyMenuStartingUp = true
+  self.lobbyMenu = Menu.createCenteredMenu(menuItems)
+  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[false]
+
   self.uiRoot:addChild(self.lobbyMenu)
   self.uiRoot:addChild(self.leaderboardLabel)
 end
@@ -260,6 +256,9 @@ end
 
 -- rebuilds the UI based on the new lobby information
 function Lobby:onLobbyStateUpdate()
+  local previousText = self.lobbyMenu.menuItems[self.lobbyMenu.selectedIndex].textButton.children[1].text
+  local desiredIndex = self.lobbyMenu.selectedIndex
+
   while #self.lobbyMenu.menuItems > 2 do
     self.lobbyMenu:removeMenuItemAtIndex(1)
   end
@@ -272,9 +271,7 @@ function Lobby:onLobbyStateUpdate()
       if self.willingPlayers[v] then
         unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
       end
-      self.lobbyMenu:addMenuItem(1, {
-        TextButton({label = Label({text = unmatchedPlayer, translate = false}), onClick = self:requestGameFunction(v)})
-      })
+      self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(unmatchedPlayer, nil, false, self:requestGameFunction(v)))
     end
   end
   for _, room in ipairs(self.spectatableRooms) do
@@ -282,10 +279,21 @@ function Lobby:onLobbyStateUpdate()
       local playerA = room.a .. self:playerRatingString(room.a)
       local playerB = room.b .. self:playerRatingString(room.b)
       local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
-      self.lobbyMenu:addMenuItem(1, {
-        TextButton({label = Label({text = roomName, translate = false}), onClick = self:requestSpectateFunction(room)})
-      })
+      self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(roomName, nil, false, self:requestSpectateFunction(room)))
     end
+  end
+
+  if self.lobbyMenuStartingUp then
+    self.lobbyMenu:setSelectedIndex(1)
+    self.lobbyMenuStartingUp = false
+  else
+    for i = 1, #self.lobbyMenu.menuItems do
+      if self.lobbyMenu.menuItems[i].textButton.children[1].text == previousText then
+        desiredIndex = i
+        break
+      end
+    end
+    self.lobbyMenu:setSelectedIndex(util.bound(1, desiredIndex, #self.lobbyMenu.menuItems))
   end
 end
 
@@ -353,7 +361,7 @@ function Lobby:update(dt)
     GAME.tcpClient:dropOldInputMessages()
 
     self:processServerMessages()
-    self.lobbyMenu:update()
+    self.lobbyMenu:update(dt)
   end
 
   if not GAME.tcpClient:processIncomingMessages() then

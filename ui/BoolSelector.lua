@@ -1,11 +1,9 @@
 local UiElement = require("ui.UIElement")
 local class = require("class")
-local touchable = require("ui.Touchable")
 local GraphicsUtil = require("graphics_util")
 
 local BoolSelector = class(function(boolSelector, options)
   boolSelector.value = options.startValue or false
-  touchable(boolSelector)
   boolSelector.TYPE = "BoolSelector"
 end,
 UiElement)

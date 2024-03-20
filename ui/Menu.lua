@@ -3,6 +3,8 @@ local love = love
 
 local class = require("class")
 local UIElement = require("ui.UIElement")
+local StackPanel = require("ui.StackPanel")
+local MenuItem = require("ui.MenuItem")
 local TextButton = require("ui.TextButton")
 local Label = require("ui.Label")
 local input = require("inputManager")
@@ -11,10 +13,14 @@ local GraphicsUtil = require("graphics_util")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 
---@module MainMenu
+-- Menu is a collection of buttons that stack vertically and supports scrolling and keyboard navigation.
+-- It requires the passed in menu items to have valid widths and adds padding between each. The height also must be passed in
+-- and the width is the maximum of all buttons.
 local Menu = class(
   function(self, options)
-    self.selectedIndex = nil
+    self.TYPE = "VerticalScrollingButtonMenu"
+
+    self.selectedIndex = 1
     self.yMin = self.y
     self.menuItemYOffsets = {}
     self.allContentShowing = true
@@ -22,29 +28,36 @@ local Menu = class(
     -- bogus this should be passed in?
     self.centerVertically = themes[config.theme].centerMenusVertically 
 
+    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollUp() end})
+    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollDown() end})
+    
+    self:addChild(self.upButton)
+    self:addChild(self.downButton)
+
     self.yOffset = 0
-    self.firstActiveIndex = nil
-    self.lastActiveIndex = nil
-    self.menuItemContainer = UIElement({})
-    self:addChild(self.menuItemContainer)
-    self.itemHeight = options.itemHeight or 30
+    self.firstActiveIndex = 1
+    self.lastActiveIndex = 1
     self:setMenuItems(options.menuItems)
-    
-    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\"}), translate = false, onClick = function() self:scrollUp() end})
-    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/"}), translate = false, onClick = function() self:scrollDown() end})
-    
-    self.menuItemContainer:addChild(self.upButton)
-    self.menuItemContainer:addChild(self.downButton)
-
-    self:layout()
-
-    self.TYPE = "VerticalScrollingButtonMenu"
   end,
   UIElement
 )
 
+Menu.NAVIGATION_BUTTON_WIDTH = NAVIGATION_BUTTON_WIDTH
 Menu.BUTTON_HORIZONTAL_PADDING = 0
 Menu.BUTTON_VERTICAL_PADDING = 8
+
+function Menu.createCenteredMenu(items) 
+  local menu = Menu({
+    x = 0,
+    y = 0,
+    hAlign = "center",
+    vAlign = "center",
+    menuItems = items,
+    height = themes[config.theme].main_menu_max_height
+  })
+
+  return menu
+end
 
 -- Sets the menu items for this menu
 -- menuItems: a list of UIElement tuples of the form:
@@ -52,7 +65,6 @@ Menu.BUTTON_VERTICAL_PADDING = 8
 -- the actual self.menuItems list is formated slightly differently, consisting of a list of Labels or Buttons
 -- each of which may have a ButtonGroup, Stepper, or Slider child element which controls the action for that item
 function Menu:setMenuItems(menuItems)
-  self.selectedIndex = 1
   if self.menuItems then
     for i, menuItem in ipairs(self.menuItems) do
       menuItem:detach()
@@ -62,18 +74,10 @@ function Menu:setMenuItems(menuItems)
   self.menuItems = {}
   
   for i, menuItem in ipairs(menuItems) do
-    if i > 1 then 
-       menuItem[1].y = menuItems[i - 1][1].y + menuItems[i - 1][1].height + Menu.BUTTON_VERTICAL_PADDING
-    end
-    menuItem[1].height = math.max(self.itemHeight, menuItem[1].height)
-    if menuItem[2] then
-      menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
-      menuItem[2].height = math.max(self.itemHeight, menuItem[2].height)
-      menuItem[1]:addChild(menuItem[2])
-    end
-    self.menuItemContainer:addChild(menuItem[1])
-    self.menuItems[#self.menuItems + 1] = menuItem[1]
+    self:addChild(menuItem)
+    self.menuItems[#self.menuItems + 1] = menuItem
   end
+  self:setSelectedIndex(1)
 end
 
 function Menu:layout()
@@ -110,7 +114,7 @@ function Menu:layout()
     currentY = currentY + menuItem.height + Menu.BUTTON_VERTICAL_PADDING
     if menuFull == false then
       self.lastActiveIndex = i
-      totalMenuHeight = realY
+      totalMenuHeight = realY + menuItem.height
     end
     self.width = math.max(self.width, menuItem.width)
   end
@@ -125,14 +129,15 @@ function Menu:layout()
 end
 
 function Menu:addMenuItem(index, menuItem)
-  assert(type(menuItem) == "table")
-  if menuItem[2] then
-    menuItem[2].x = menuItem[1].width + Menu.BUTTON_HORIZONTAL_PADDING
-    menuItem[1]:addChild(menuItem[2])
+  local needsIncreasedIndex = false
+  if index <= self.selectedIndex then
+    needsIncreasedIndex = true
   end
-  table.insert(self.menuItems, index, menuItem[1])
-  self.menuItemContainer:addChild(menuItem[1])
-
+  table.insert(self.menuItems, index, menuItem)
+  self:addChild(menuItem)
+  if needsIncreasedIndex then
+    self:setSelectedIndex(self.selectedIndex + 1)
+  end
   self:layout()
 end
 
@@ -162,12 +167,17 @@ function Menu:removeMenuItem(menuItemId)
     return
   end
 
-  local menuItem = {table.remove(self.menuItems, menuItemIndex)}
-  if menuItem[1].children[1] then
-    menuItem[2] = menuItem[1].children[1]
-    menuItem[2]:detach()
+  local needsDecreasedIndex = false
+  if menuItemIndex <= self.selectedIndex then
+    needsDecreasedIndex = true
   end
-  menuItem[1]:detach()
+
+  local menuItem = table.remove(self.menuItems, menuItemIndex)
+  menuItem:detach()
+  
+  if needsDecreasedIndex then
+    self:setSelectedIndex(self.selectedIndex - 1)
+  end
   
   self:layout()
   return menuItem
@@ -176,6 +186,13 @@ end
 -- Updates the selected index of the menu
 -- Also updates the scroll state to show the button if off screen
 function Menu:setSelectedIndex(index)
+  if index <= 0 then
+    index = 1 -- 1 index is the default if no items
+  end
+
+  if #self.menuItems >= self.selectedIndex then
+    self.menuItems[self.selectedIndex]:setSelected(false)
+  end
   if self.firstActiveIndex > index then
     self.yOffset = self.menuItemYOffsets[index]
   elseif self.lastActiveIndex < index then
@@ -190,6 +207,9 @@ function Menu:setSelectedIndex(index)
     self.yOffset = self.menuItemYOffsets[currentIndex]
   end
   self.selectedIndex = index
+  if #self.menuItems > 0 then
+    self.menuItems[self.selectedIndex]:setSelected(true)
+  end
   self:layout()
 end
 
@@ -200,66 +220,53 @@ function Menu:updateNavButtonPos()
     return
   end
   
-  self.upButton:setVisibility(true)
-  self.downButton:setVisibility(true)
+  if self.selectedIndex > 1 then
+    self.upButton:setVisibility(true)
+  end
+  if self.selectedIndex < #self.menuItems then
+    self.downButton:setVisibility(true)
+  end
 
-  self.upButton.x = self.menuItems[1].width - self.upButton.width
+  self.upButton.x = 0
   self.upButton.y = self.menuItems[self.firstActiveIndex].y - (self.downButton.height + Menu.BUTTON_VERTICAL_PADDING)
   
-  self.downButton.x = self.menuItems[#self.menuItems].width - self.downButton.width
+  self.downButton.x = 0
   self.downButton.y = self.menuItems[self.lastActiveIndex].y + self.menuItems[self.lastActiveIndex].height + Menu.BUTTON_VERTICAL_PADDING
 end
 
 function Menu:scrollUp()
-  self:setSelectedIndex(((self.selectedIndex - 2) % #self.menuItems) + 1)
-  play_optional_sfx(themes[config.theme].sounds.menu_move)
+  if self.selectedIndex > 1 then
+    self:setSelectedIndex(self.selectedIndex - 1)
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+  end
 end
 
 function Menu:scrollDown()
-  self:setSelectedIndex((self.selectedIndex % #self.menuItems) + 1)
-  play_optional_sfx(themes[config.theme].sounds.menu_move)
+  if self.selectedIndex < #self.menuItems then
+    self:setSelectedIndex(self.selectedIndex + 1)
+    play_optional_sfx(themes[config.theme].sounds.menu_move)
+  end
 end
 
-function Menu:update()
+function Menu:update(dt)
   if not self.isEnabled then
     return
   end
 
-  if input:isPressedWithRepeat("MenuUp", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:isPressedWithRepeat("Up") then
     self:scrollUp()
   end
 
-  if input:isPressedWithRepeat("MenuDown", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
+  if input:isPressedWithRepeat("Down") then
     self:scrollDown()
   end
 
-  -- apparently this can crash here with the offset bug
-  local itemController = self.menuItems[self.selectedIndex].children[1]
-  if itemController then
-    if input:isPressedWithRepeat("MenuLeft", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      if itemController.TYPE == "Slider" then
-        itemController:setValue(itemController.value - 1)
-      elseif itemController.TYPE == "ButtonGroup" then
-        itemController:setActiveButton(itemController.selectedIndex - 1)
-      elseif itemController.TYPE == "Stepper" then
-        itemController:setState(itemController.selectedIndex - 1)
-      end
-    end
+  local selectedElement = self.menuItems[self.selectedIndex]
 
-    if input:isPressedWithRepeat("MenuRight", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-      if itemController.TYPE == "Slider" then
-        itemController:setValue(itemController.value + 1)
-      elseif itemController.TYPE == "ButtonGroup" then
-        itemController:setActiveButton(itemController.selectedIndex + 1)
-      elseif itemController.TYPE == "Stepper" then
-        itemController:setState(itemController.selectedIndex + 1)
-      end
-    end
-  end
-  
-  if input.isDown["MenuSelect"]  then
-    if self.menuItems[self.selectedIndex].TYPE == "Button" then
-      self.menuItems[self.selectedIndex].onClick()
+  if selectedElement then
+    -- Right now back on a button is only allowed on the last item. Later we should make it more explicit.
+    if not input.isDown["MenuEsc"] or self.selectedIndex == #self.menuItems then
+      selectedElement:receiveInputs(input, dt)
     end
   end
   
@@ -267,18 +274,13 @@ function Menu:update()
     if self.selectedIndex ~= #self.menuItems then
       self:setSelectedIndex(#self.menuItems)
       play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    else
-      self.menuItems[self.selectedIndex].onClick()
     end
   end
 end
 
 function Menu:drawSelf()
-  local selectedItem = self.menuItems[self.selectedIndex]
-  local animationOpacity = (math.cos(6 * love.timer.getTime()) + 1) / 8 + 0.4
-  GraphicsUtil.drawRectangle("fill", self.x + selectedItem.x, self.y + selectedItem.y, selectedItem.width, selectedItem.height, 1, 1, 1, animationOpacity)
-end
 
+end
 
 -- sound effects
 function Menu.playCancelSfx()

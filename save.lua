@@ -15,7 +15,7 @@ function write_key_file()
     function()
       local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
-      file:write(json.encode(inputManager.inputConfigurations))
+      file:write(json.encode(inputManager:getSaveKeyMap()))
       file:close()
     end
   )
@@ -62,7 +62,7 @@ function save.read_txt_file(path_and_filename)
     end
   )
   if not s then
-    s = "Failed to read file" .. path_and_filename
+    s = "Failed to read file " .. path_and_filename
   else
     s = s:gsub("\r\n?", "\n")
   end
