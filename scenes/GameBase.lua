@@ -58,18 +58,36 @@ function GameBase:customGameOverSetup() end
 
 -- end abstract functions
 
-local function pickUseMusicFrom()
+-- returns "stage" or "character" depending on which should be used according to the config.use_music_from setting
+function GameBase:getPreferredMusicSourceType()
   if config.use_music_from == "stage" or config.use_music_from == "characters" then
-    current_use_music_from = config.use_music_from
-    return
+    return config.use_music_from
   end
+
   local percent = math.random(1, 4)
   if config.use_music_from == "either" then
-    current_use_music_from = percent <= 2 and "stage" or "characters"
+    return (percent <= 2 and "stage" or "characters")
   elseif config.use_music_from == "often_stage" then
-    current_use_music_from = percent == 1 and "characters" or "stage"
+    return (percent == 1 and "characters" or "stage")
   else
-    current_use_music_from = percent == 1 and "stage" or "characters"
+    return (percent == 1 and "stage" or "characters")
+  end
+end
+
+-- returns the stage or character that is used as the music source
+-- returns nil in case none of them has music
+function GameBase:pickMusicSource()
+  local character = self.match:getWinningPlayerCharacter()
+  local stageHasMusic = self.stage.musics and self.stage.musics["normal_music"]
+  local characterHasMusic = character and character.musics and character.musics["normal_music"]
+  local preferredMusicSourceType = self:getPreferredMusicSourceType()
+
+  if not stageHasMusic and not characterHasMusic then
+    return nil
+  elseif (preferredMusicSourceType == "stage" and stageHasMusic) or not characterHasMusic then
+    return self.stage
+  else --if preferredMusicSourceType == "characters" and characterHasMusic then
+    return character
   end
 end
 
@@ -95,10 +113,11 @@ function GameBase:load(sceneParams)
   self:waitForAssets(sceneParams.match)
   self.match = sceneParams.match
   self.match:connectSignal("matchEnded", self, self.genericOnMatchEnded)
+  self.match:connectSignal("dangerMusicChanged", self, self.changeMusic)
 
   self.stage = stages[self.match.stageId]
   self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
-  pickUseMusicFrom()
+  self.musicSource = self:pickMusicSource()
 
   self:customLoad(sceneParams)
 
@@ -127,7 +146,7 @@ function GameBase:setupGameOver()
   self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
   self.maxDisplayTime = -1
   initialMusicVolumes = {}
-  
+
   self:customGameOverSetup()
 
   -- The music may have already been partially faded due to dynamic music or something else,
@@ -192,7 +211,8 @@ function GameBase:runGame(dt)
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
 
   self:customRun()
-  
+  self:updateMusic()
+
   self:handlePause()
 
   if self.match.isPaused and input.isDown["MenuEsc"] then
@@ -204,6 +224,104 @@ function GameBase:runGame(dt)
   if self.match:hasEnded() then
     self:setupGameOver()
     return
+  end
+end
+
+function GameBase:musicCanChange()
+  -- technically this condition shouldn't keep music from changing, just from actually playing above 0% volume
+  -- this may become a use case when users can change volume from any scene in the game
+  if GAME.muteSoundEffects then
+    return false
+  end
+
+  if self.match.isPaused then
+    return false
+  end
+
+  -- someone is still catching up
+  if tableUtils.trueForAny(self.match.players, function(p) return p.stack.play_to_end end) then
+    return false
+  end
+
+  -- we don't have to cover the rollback case because music updates are only called once per match:run()
+  -- meaning any stack that did a rollback should have caught up again by the time it is called
+  -- if tableUtils.trueForAny(self.players, function(p) return p:behindRollback() end) then
+  --   return false
+  -- end
+
+  -- music waits until countdown is over
+  if self.match.doCountdown and self.match.clock < (consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH) then
+    return false
+  end
+
+  if self.match.ended then
+    return false
+  end
+
+  return true
+end
+
+function GameBase:startMusic()
+
+end
+
+local musicFadeLength = 60
+function GameBase:updateMusic()
+  -- Update Music
+  if self.musicSource and self:musicCanChange() then
+    -- if we don't have danger music, the music can never change
+    if self.match.currentMusicIsDanger and not self.musicSource.musics["danger_music"] then
+      return
+    end
+
+    -- only dynamic music needs persistent updates beyond state changes
+    if self.musicSource.music_style == "dynamic" then
+      if not self.fade_music_clock then
+        self.fade_music_clock = musicFadeLength -- start fully faded in
+      end
+
+      local normalMusic = {self.musicSource.musics["normal_music"], self.musicSource.musics["normal_music_start"]}
+      local dangerMusic = {self.musicSource.musics["danger_music"], self.musicSource.musics["danger_music_start"]}
+
+      if #currently_playing_tracks == 0 then
+        find_and_add_music(self.musicSource.musics, "normal_music")
+        find_and_add_music(self.musicSource.musics, "danger_music")
+      end
+
+      if self.fade_music_clock < musicFadeLength then
+        self.fade_music_clock = self.fade_music_clock + 1
+      end
+
+      local fadePercentage = self.fade_music_clock / musicFadeLength
+      if self.match.currentMusicIsDanger then
+        setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
+        setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
+      else
+        setFadePercentageForGivenTracks(fadePercentage, normalMusic)
+        setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
+      end
+    end
+  end
+end
+
+function GameBase:changeMusic(useDangerMusic)
+  if self.musicSource and self:musicCanChange() then
+    if self.musicSource.music_style == "dynamic" then
+      if self.fade_music_clock >= musicFadeLength then
+        self.fade_music_clock = 0 -- Do a full fade
+      else
+        -- switched music before we fully faded, so start part way through
+        self.fade_music_clock = musicFadeLength - self.fade_music_clock
+      end
+    else -- classic music style
+      if useDangerMusic then
+        stop_the_music()
+        find_and_add_music(self.musicSource.musics, "danger_music")
+      else
+        stop_the_music()
+        find_and_add_music(self.musicSource.musics, "normal_music")
+      end
+    end
   end
 end
 

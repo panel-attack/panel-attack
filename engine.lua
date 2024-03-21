@@ -11,6 +11,7 @@ local GameModes = require("GameModes")
 local PanelGenerator = require("gen_panels")
 local StackBase = require("StackBase")
 local class = require("class")
+local Signal = require("helpers.signal")
 require("engine.panel")
 
 -- Stuff defined in this file:
@@ -268,6 +269,8 @@ Stack =
     s.garbageGenCount = 0
 
     s.warningsTriggered = {}
+    Signal.turnIntoEmitter(s)
+    s:createSignal("dangerMusicChanged")
 
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
@@ -1070,10 +1073,19 @@ function Stack.updateDangerBounce(self)
     end
   end
 end
+
+function Stack:updateDangerMusic()
+  local dangerMusic = self:shouldPlayDangerMusic()
+  if dangerMusic ~= self.danger_music then
+    self.danger_music = dangerMusic
+    self:emitSignal("dangerMusicChanged", self)
+  end
+end
+
 -- determine whether to play danger music
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
-function Stack.shouldPlayDangerMusic(self)
+function Stack:shouldPlayDangerMusic()
   if not self.danger_music then
     -- currently playing normal music
     for row = self.height - 2, self.height do
@@ -1166,7 +1178,7 @@ function Stack.simulate(self)
 
   self.panels_in_top_row = self:hasPanelsInTopRow()
   self:updateDangerBounce()
-  self.danger_music = self:shouldPlayDangerMusic()
+  self:updateDangerMusic()
 
   if self.displacement == 0 and self.has_risen then
     self.top_cur_row = self.height
