@@ -537,22 +537,7 @@ function Match:getInfo()
   return info
 end
 
-function Match:waitForAssets()
-  for i = 1, #self.players do
-    CharacterLoader.load(self.players[i].settings.characterId)
-    CharacterLoader.wait()
-  end
-
-  if not self.stageId then
-    self.stageId = StageLoader.fullyResolveStageSelection(self.stageId)
-    StageLoader.load(self.stageId)
-  end
-  StageLoader.wait()
-end
-
 function Match:start()
-  self:waitForAssets()
-
   -- battle room may add the players in any order
   -- match has to make sure the local player ends up as P1 (left side)
   -- if both are local or both are not, order by playerNumber

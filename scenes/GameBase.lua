@@ -73,12 +73,26 @@ local function pickUseMusicFrom()
   end
 end
 
+function GameBase:waitForAssets(match)
+  for i = 1, #match.players do
+    CharacterLoader.load(match.players[i].settings.characterId)
+    CharacterLoader.wait()
+  end
+
+  if not match.stageId then
+    match.stageId = StageLoader.fullyResolveStageSelection(match.stageId)
+    StageLoader.load(match.stageId)
+  end
+  StageLoader.wait()
+end
+
 function GameBase:initializeFrameInfo()
   self.frameInfo.startTime = nil
   self.frameInfo.frameCount = 0
 end
 
 function GameBase:load(sceneParams)
+  self:waitForAssets(sceneParams.match)
   self.match = sceneParams.match
   self.match:connectSignal("matchEnded", self, self.genericOnMatchEnded)
 
