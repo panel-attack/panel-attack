@@ -261,10 +261,6 @@ function GameBase:musicCanChange()
   return true
 end
 
-function GameBase:startMusic()
-
-end
-
 local musicFadeLength = 60
 function GameBase:updateMusic()
   -- Update Music
@@ -299,6 +295,10 @@ function GameBase:updateMusic()
       else
         setFadePercentageForGivenTracks(fadePercentage, normalMusic)
         setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
+      end
+    else
+      if #currently_playing_tracks == 0 then
+        find_and_add_music(self.musicSource.musics, "normal_music")
       end
     end
   end
