@@ -1361,6 +1361,12 @@ function Stack.simulate(self)
 
   self:updateActivePanels()
 
+  if self.puzzle and self.n_active_panels == 0 and self.n_prev_active_panels == 0 then
+    if self:checkGameOver() then
+      self:setGameOver()
+    end
+  end
+
   if self.telegraph then
     self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
   end

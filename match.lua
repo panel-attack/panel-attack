@@ -497,15 +497,15 @@ function Match:start()
     end
   end
 
-  for i = 1, #self.players do
+  for i, player in ipairs(self.players) do
     local pString = "P" .. tostring(i)
-    self[pString] = self.players[i].stack
-    if self.puzzle then
-      self.players[i].stack:set_puzzle_state(self.puzzle)
+    self[pString] = player.stack
+    if player.settings.puzzleSet then
+      -- puzzles are currently set directly on the player's stack
     else
-      self.players[i].stack:starting_state()
+      player.stack:starting_state()
       -- always need clock 0 as a base for rollback
-      self.players[i].stack:saveForRollback()
+      player.stack:saveForRollback()
     end
   end
 

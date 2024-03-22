@@ -23,7 +23,6 @@ local GameBase = class(
     self.text = ""
     self.keepMusic = false
     self.currentStage = config.stage
-    self.loadStageAndMusic = true
 
     self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
     self.maxDisplayTime = -1 -- the maximum amount of seconds the game over screen will be displayed for, -1 means no max time
@@ -307,7 +306,7 @@ end
 function GameBase:changeMusic(useDangerMusic)
   if self.musicSource and self:musicCanChange() then
     if self.musicSource.music_style == "dynamic" then
-      if self.fade_music_clock >= musicFadeLength then
+      if not self.fade_music_clock or self.fade_music_clock >= musicFadeLength then
         self.fade_music_clock = 0 -- Do a full fade
       else
         -- switched music before we fully faded, so start part way through
@@ -373,28 +372,30 @@ function GameBase:drawForegroundOverlay()
 end
 
 function GameBase:drawHUD()
-  for i, stack in ipairs(self.match.stacks) do
-    if stack.puzzle then
-      stack:drawMoveCount()
-    end
-    if config.show_ingame_infos then
-      if not self.puzzle then
-        stack:drawScore()
-        stack:drawSpeed()
+  if not self.match.isPaused then
+    for i, stack in ipairs(self.match.stacks) do
+      if stack.puzzle then
+        stack:drawMoveCount()
       end
-      stack:drawMultibar()
-    end
+      if config.show_ingame_infos then
+        if not stack.puzzle then
+          stack:drawScore()
+          stack:drawSpeed()
+        end
+        stack:drawMultibar()
+      end
 
-    -- Draw VS HUD
-    if stack.player then
-      stack:drawPlayerName()
-      stack:drawWinCount()
-      stack:drawRating()
-    end
+      -- Draw VS HUD
+      if stack.player then
+        stack:drawPlayerName()
+        stack:drawWinCount()
+        stack:drawRating()
+      end
 
-    stack:drawLevel()
-    if stack.analytic then
-      stack:drawAnalyticData()
+      stack:drawLevel()
+      if stack.analytic then
+        stack:drawAnalyticData()
+      end
     end
   end
 end

@@ -19,7 +19,6 @@ BattleRoom = class(function(self, mode)
   self.spectating = false
   self.allAssetsLoaded = false
   self.ranked = false
-  self.puzzles = {}
   self.state = 1
   self.matchesPlayed = 0
   -- this is a bit naive but effective for now
@@ -205,9 +204,6 @@ end
 function BattleRoom:createMatch()
   local supportsPause = not self.online or #self.players == 1
   local optionalArgs = { timeLimit = self.mode.timeLimit , ranked = self.ranked}
-  if #self.puzzles > 0 then
-    optionalArgs.puzzle = table.remove(self.puzzles, 1)
-  end
 
   self.match = Match(
     self.players,
@@ -311,8 +307,6 @@ end
 
 -- creates a match based on the room and player settings, starts it up and switches to the Game scene
 function BattleRoom:startMatch(stageId, seed, replayOfMatch)
-  -- TODO: lock down configuration to one per player to avoid macro like abuses via multiple configs
-  stop_the_music()
   local match = self:createMatch()
 
   match.replay = replayOfMatch
@@ -353,10 +347,6 @@ end
 -- not player specific, so this gets a separate callback that can only be overwritten once
 -- so the UI can update and load up the different controls for it
 function BattleRoom.onStyleChanged(style, player)
-end
-
-function BattleRoom:addPuzzle(puzzle)
-  self.puzzles[#self.puzzles + 1] = puzzle
 end
 
 function BattleRoom:startLoadingNewAssets()
@@ -535,7 +525,7 @@ function BattleRoom:onMatchEnded(match)
     -- other aborts come via network and are directly handled in response to the network message (or lack thereof)
   end
 
-  -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference
+  -- nilling the match here doesn't keep the game scene from rendering it as the scene has its own reference
   self.match = nil
   self.state = BattleRoom.states.Setup
 end
