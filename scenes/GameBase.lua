@@ -313,12 +313,14 @@ function GameBase:changeMusic(useDangerMusic)
         self.fade_music_clock = musicFadeLength - self.fade_music_clock
       end
     else -- classic music style
-      if useDangerMusic then
-        stop_the_music()
-        find_and_add_music(self.musicSource.musics, "danger_music")
-      else
-        stop_the_music()
-        find_and_add_music(self.musicSource.musics, "normal_music")
+      if self.musicSource.musics.danger_music then
+        if useDangerMusic then
+          stop_the_music()
+          find_and_add_music(self.musicSource.musics, "danger_music")
+        else
+          stop_the_music()
+          find_and_add_music(self.musicSource.musics, "normal_music")
+        end
       end
     end
   end
