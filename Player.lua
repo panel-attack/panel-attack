@@ -30,6 +30,7 @@ local Player = class(function(self, name, publicId, isLocal)
     inputMethod = "controller",
     attackEngineSettings = nil,
     puzzleSet = nil,
+    puzzleIndex = nil
   }
   -- planned for the future, players don't have public ids yet
   self.publicId = publicId or -1
@@ -39,9 +40,8 @@ local Player = class(function(self, name, publicId, isLocal)
   self.stack = nil
   self.playerNumber = nil
   self.isLocal = isLocal or false
-  -- a player has only one configuration at a time
-  -- this is either everything or a single input configuration
-  self.inputConfiguration = input
+  -- a player may have only one configuration at a time
+  self.inputConfiguration = nil
   self.human = true
 
   -- the player emits signals when its properties change that other components may be interested in
@@ -195,7 +195,14 @@ end
 function Player:setPuzzleSet(puzzleSet)
   if puzzleSet ~= self.settings.puzzleSet then
     self.settings.puzzleSet = puzzleSet
+    self.settings.puzzleIndex = 1
     self:emitSignal("puzzleSetChanged", puzzleSet)
+  end
+end
+
+function Player:setPuzzleIndex(puzzleIndex)
+  if puzzleIndex ~= self.settings.puzzleIndex then
+    self.settings.puzzleIndex = puzzleIndex
   end
 end
 
@@ -223,17 +230,17 @@ function Player:setAttackEngineSettings(attackEngineSettings)
 end
 
 function Player:restrictInputs(inputConfiguration)
-  if inputConfiguration.usedByPlayer ~= nil and inputConfiguration.usedByPlayer ~= self then
-    error("Trying to assign input configuration to player " .. self.playerNumber ..
-      " that is already in use by player " .. inputConfiguration.usedByPlayer.playerNumber)
+  if self.inputConfiguration and self.inputConfiguration ~= inputConfiguration then
+    error("Player " .. self.playerNumber .. " is trying to claim a second input configuration")
   end
-  self.inputConfiguration = inputConfiguration
-  self.inputConfiguration.usedByPlayer = self
+  self.inputConfiguration = input:claimConfiguration(self, inputConfiguration)
 end
 
 function Player:unrestrictInputs()
-  self.inputConfiguration.usedByPlayer = nil
-  self.inputConfiguration = input
+  if self.inputConfiguration then
+    input:releaseConfiguration(self, self.inputConfiguration)
+    self.inputConfiguration = nil
+  end
 end
 
 function Player.getLocalPlayer()

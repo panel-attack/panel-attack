@@ -11,6 +11,7 @@ local GameModes = require("GameModes")
 local PanelGenerator = require("gen_panels")
 local StackBase = require("StackBase")
 local class = require("class")
+local Signal = require("helpers.signal")
 require("engine.panel")
 
 -- Stuff defined in this file:
@@ -268,6 +269,8 @@ Stack =
     s.garbageGenCount = 0
 
     s.warningsTriggered = {}
+    Signal.turnIntoEmitter(s)
+    s:createSignal("dangerMusicChanged")
 
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
@@ -628,12 +631,12 @@ function Stack.set_puzzle_state(self, puzzle)
   self.behaviours.passiveRaise = false
 
   if puzzle.moves > 0 then
-    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NO_MOVES_LEFT
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.NO_MOVES_LEFT)
   end
 
   if puzzle.puzzleType == "clear" then
-    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NEGATIVE_HEALTH
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.NEGATIVE_HEALTH)
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE)
     -- also fill up the garbage queue so that the stack stays topped out even when downstacking
     local comboStorm = {}
     for i = 1, self.height do
@@ -642,10 +645,10 @@ function Stack.set_puzzle_state(self, puzzle)
     end
     self.garbage_q:push(comboStorm)
   elseif puzzle.puzzleType == "chain" then
-    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.CHAIN_DROPPED
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.CHAIN_DROPPED)
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_PANELS)
   elseif puzzle.puzzleType == "moves" then
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_PANELS)
   end
 
   -- transform any cleared garbage into colorless garbage panels
@@ -1070,10 +1073,19 @@ function Stack.updateDangerBounce(self)
     end
   end
 end
+
+function Stack:updateDangerMusic()
+  local dangerMusic = self:shouldPlayDangerMusic()
+  if dangerMusic ~= self.danger_music then
+    self.danger_music = dangerMusic
+    self:emitSignal("dangerMusicChanged", self)
+  end
+end
+
 -- determine whether to play danger music
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
-function Stack.shouldPlayDangerMusic(self)
+function Stack:shouldPlayDangerMusic()
   if not self.danger_music then
     -- currently playing normal music
     for row = self.height - 2, self.height do
@@ -1166,7 +1178,7 @@ function Stack.simulate(self)
 
   self.panels_in_top_row = self:hasPanelsInTopRow()
   self:updateDangerBounce()
-  self.danger_music = self:shouldPlayDangerMusic()
+  self:updateDangerMusic()
 
   if self.displacement == 0 and self.has_risen then
     self.top_cur_row = self.height
@@ -1348,6 +1360,12 @@ function Stack.simulate(self)
   end
 
   self:updateActivePanels()
+
+  if self.puzzle and self.n_active_panels == 0 and self.n_prev_active_panels == 0 then
+    if self:checkGameOver() then
+      self:setGameOver()
+    end
+  end
 
   if self.telegraph then
     self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)

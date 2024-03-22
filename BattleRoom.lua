@@ -19,7 +19,6 @@ BattleRoom = class(function(self, mode)
   self.spectating = false
   self.allAssetsLoaded = false
   self.ranked = false
-  self.puzzles = {}
   self.state = 1
   self.matchesPlayed = 0
   -- this is a bit naive but effective for now
@@ -205,16 +204,13 @@ end
 function BattleRoom:createMatch()
   local supportsPause = not self.online or #self.players == 1
   local optionalArgs = { timeLimit = self.mode.timeLimit , ranked = self.ranked}
-  if #self.puzzles > 0 then
-    optionalArgs.puzzle = table.remove(self.puzzles, 1)
-  end
 
   self.match = Match(
     self.players,
     self.mode.doCountdown,
     self.mode.stackInteraction,
-    self.mode.winConditions,
-    self.mode.gameOverConditions,
+    shallowcpy(self.mode.winConditions),
+    shallowcpy(self.mode.gameOverConditions),
     supportsPause,
     optionalArgs
   )
@@ -279,8 +275,7 @@ function BattleRoom:refreshReadyStates()
     if player.isLocal then
       -- every local human player has an input configuration assigned
       local ready = minimumCondition
-        and player.hasLoaded and player.settings.wantsReady
-        and (not player.human or player.inputConfiguration.usedByPlayer)
+        and (not player.human or player.inputConfiguration)
       player:setReady(ready)
     else
       -- non local players send us their ready via network
@@ -312,8 +307,6 @@ end
 
 -- creates a match based on the room and player settings, starts it up and switches to the Game scene
 function BattleRoom:startMatch(stageId, seed, replayOfMatch)
-  -- TODO: lock down configuration to one per player to avoid macro like abuses via multiple configs
-  stop_the_music()
   local match = self:createMatch()
 
   match.replay = replayOfMatch
@@ -356,10 +349,6 @@ end
 function BattleRoom.onStyleChanged(style, player)
 end
 
-function BattleRoom:addPuzzle(puzzle)
-  self.puzzles[#self.puzzles + 1] = puzzle
-end
-
 function BattleRoom:startLoadingNewAssets()
   if CharacterLoader.loading_queue:len() == 0 then
     for i = 1, #self.players do
@@ -385,10 +374,9 @@ end
 function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   if lock then
     for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
-      if not inputConfiguration.usedByPlayer and tableUtils.length(inputConfiguration.isDown) > 0 then
+      if not inputConfiguration.claimed and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:restrictInputs(inputConfiguration)
-        player:disconnectSignal("wantsReadyChanged", player)
         break
       end
     end
@@ -438,18 +426,13 @@ end
 function BattleRoom:tryAssignInputConfigurations()
   if self.tryLockInputs then
     for _, player in ipairs(self.players) do
-      if player.isLocal and player.human and not player.inputConfiguration.usedByPlayer then
-        -- in n player local, the first player can effectively ready up everyone before they can assign their input config
-        if player.settings.wantsReady then
-          -- so unready so they can finish configuring rather than having the game immediately start
-          player:setWantsReady(false)
-        end
+      if player.isLocal and player.human and not player.inputConfiguration then
         BattleRoom.updateInputConfigurationForPlayer(player, true)
       end
     end
     self.tryLockInputs = tableUtils.trueForAny(self.players,
                           function(p)
-                            return p.isLocal and p.human and not p.inputConfiguration.usedByPlayer
+                            return p.isLocal and p.human and not p.inputConfiguration
                           end)
   end
 end
@@ -522,7 +505,8 @@ function BattleRoom:onMatchEnded(match)
       self:reportLocalGameResult(winners)
     end
   else
-  -- match:deinit is the responsibility of the one switching out of the game scene
+    -- match:deinit is the responsibility of the one switching out of the game scene
+    stop_the_music()
     match:deinit()
     -- in the case of a network based abort, the network part of the battleRoom would unregister from the onMatchEnded signal
     -- and initialise the transition to wherever else before calling abort on the match to finalize it
@@ -542,7 +526,7 @@ function BattleRoom:onMatchEnded(match)
     -- other aborts come via network and are directly handled in response to the network message (or lack thereof)
   end
 
-  -- nilling the match here doesn't keep the game scene from rendering it as it has its own reference
+  -- nilling the match here doesn't keep the game scene from rendering it as the scene has its own reference
   self.match = nil
   self.state = BattleRoom.states.Setup
 end
