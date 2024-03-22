@@ -5,17 +5,27 @@ A video explanation is available at https://youtu.be/_SA1UeLwnSE
 # How to install a mod
 
 Panel Attack mods come in various shapes and forms.  
-The traditional mods based on image and sound assets consist of the theme, characters, stages and panels.  
+The traditional mods based on image and sound assets consist of theme, characters, stages and panels.  
 But there are other files you can "install" in effectively the same way so they become available in Panel Attack:
 Puzzles, training mode files and replays.
 
-## Step 1: Find your Panel Attack user data folder 
+## Drag and Drop
+
+Panel Attack supports the import of mods via drag and drop for characters, panels, stages and themes.  
+Simply drag the .zip file with the mods onto Panel Attack while in a menu.  
+This method only works on Windows, MacOS and Linux. It does not work on Android.
+
+## Manual installation
+
+Manual installation is necessary whenever you want to add files not supported by the drag and drop support or if you're on Android.
+
+### Step 1: Find your Panel Attack user data folder 
 
 Panel Attack saves most of its data in (somewhat hidden) user data folder so that multiple users of the same PC don't interfere with each other.  
 Depending on your operating system the location is different.  
 You can always find out about the save location by going to Options -> About -> System Info 
 
-### Windows
+#### Windows
 
 Press the Windows key then type "%appdata%" without quotes and hit enter.  
 or  
@@ -25,12 +35,12 @@ This folder will contain a directory called "Roaming" that holds application dat
   
 Regardless of which method you used, you should be able to find a Panel Attack directory in that location if you ever started Panel Attack before.
 
-### MacOS
+#### MacOS
 
 In your Finder, navigate to  
   /Users/user/Library/Application Support/Panel Attack
 
-### Linux
+#### Linux
 
 Depending on whether your $XDG_DATA_HOME environment variable is set or not, the Panel Attack folder will be located in either  
   $XDG_DATA_HOME/love/  
@@ -49,11 +59,13 @@ In early 2023 we changed Panel Attack to save its data in external (user-visible
   /Android/data/org.love2d.android/files/save/
 
 This automatically applies for new installations but old installations may go through a migration process.  
-Please ask in the discord for help with this.
+Please ask in the discord for help with this.  
 
-## Step 2: Unpacking your mod and understanding where it belongs
+Due to the restrictiveness on Android it is recommended to connect the device to a computer and install mods via the computer's file browser.
 
-### Unpacking a package
+### Step 2: Unpacking your mod and understanding where it belongs
+
+#### Unpacking a package
 
 This guide cannot know which exact mode you are trying to install but it is going to assume the "worst" case:  
 You are trying to install a big package with a theme, various characters, stages, panels and maybe even puzzles.
@@ -71,7 +83,7 @@ Inside you may find one or multiple folders. A good mod package will mimic the f
 Inside of each of these folders you will find the mod folders that need to be in the directory with the same name inside the Panel Attack folder.  
 Once you copied everything into its correct subfolder, you will have to restart Panel Attack in order for your new mods to show up!
 
-### Unpacking a single mod
+#### Unpacking a single mod
 
 For reference, still read the part about packages above.  
 The way in which single mods are different is that they may not follow the folder structure above but instead you have to know based on where you got the link from what kind of mod it is.  

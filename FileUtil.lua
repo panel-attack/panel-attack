@@ -1,5 +1,7 @@
 require("class")
+require("table_util")
 local logger = require("logger")
+local lfs = love.filesystem
 
 -- Utility methods for drawing
 FileUtil =
@@ -17,7 +19,7 @@ end
 function FileUtil.getFilteredDirectoryItems(path)
   local results = {}
 
-  local directoryList = love.filesystem.getDirectoryItems(path)
+  local directoryList = lfs.getDirectoryItems(path)
   for i = 1, #directoryList do
     local file = directoryList[i]
     
@@ -37,7 +39,6 @@ end
 
 -- copies a file from the given source to the given destination
 function copy_file(source, destination)
-  local lfs = love.filesystem
   local source_file = lfs.newFile(source)
   source_file:open("r")
   local source_size = source_file:getSize()
@@ -48,11 +49,12 @@ function copy_file(source, destination)
   new_file:open("w")
   local success, message = new_file:write(temp, source_size)
   new_file:close()
+
+  return success, message
 end
 
 -- copies a file from the given source to the given destination
 function recursive_copy(source, destination)
-  local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
@@ -63,20 +65,11 @@ function recursive_copy(source, destination)
     elseif info and info.type == "file" then
       local destination_info = lfs.getInfo(destination)
       if not destination_info or destination_info.type ~= "directory" then
-        love.filesystem.createDirectory(destination)
+        lfs.createDirectory(destination)
       end
       logger.trace("copying file:  " .. source .. "/" .. name .. " to " .. destination .. "/" .. name)
 
-      local source_file = lfs.newFile(source .. "/" .. name)
-      source_file:open("r")
-      local source_size = source_file:getSize()
-      temp = source_file:read(source_size)
-      source_file:close()
-
-      local new_file = lfs.newFile(destination .. "/" .. name)
-      new_file:open("w")
-      local success, message = new_file:write(temp, source_size)
-      new_file:close()
+      local success, message = copy_file(source .. "/" .. name, destination .. "/" .. name)
 
       if not success then
         logger.warn(message)
@@ -89,7 +82,6 @@ end
 
 -- Deletes any file matching the target name from the file tree recursively
 function recursiveRemoveFiles(folder, targetName)
-  local lfs = love.filesystem
   local filesTable = lfs.getDirectoryItems(folder)
   for _, fileName in ipairs(filesTable) do
     local file = folder .. "/" .. fileName
@@ -98,8 +90,27 @@ function recursiveRemoveFiles(folder, targetName)
       if info.type == "directory" then
         recursiveRemoveFiles(file, targetName)
       elseif info.type == "file" and fileName == targetName then
-        love.filesystem.remove(file)
+        lfs.remove(file)
       end
     end
+  end
+end
+
+function FileUtil.getSubDirectories(path)
+  local files = lfs.getDirectoryItems(path)
+  files = table.filter(files, function(file)
+    return lfs.getInfo(path .. "/" .. file, "directory")
+  end)
+  return files
+end
+
+function FileUtil.getDirectoryName(directoryPath)
+  local len = string.len(directoryPath)
+  local reversed = string.reverse(directoryPath)
+  local index, stop, _ = string.find(reversed, "/")
+  if index then
+    return string.sub(directoryPath, len - index + 1, len)
+  else
+    return directoryPath
   end
 end
