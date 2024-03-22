@@ -209,8 +209,8 @@ function BattleRoom:createMatch()
     self.players,
     self.mode.doCountdown,
     self.mode.stackInteraction,
-    self.mode.winConditions,
-    self.mode.gameOverConditions,
+    shallowcpy(self.mode.winConditions),
+    shallowcpy(self.mode.gameOverConditions),
     supportsPause,
     optionalArgs
   )
