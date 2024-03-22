@@ -631,12 +631,12 @@ function Stack.set_puzzle_state(self, puzzle)
   self.behaviours.passiveRaise = false
 
   if puzzle.moves > 0 then
-    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NO_MOVES_LEFT
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.NO_MOVES_LEFT)
   end
 
   if puzzle.puzzleType == "clear" then
-    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.NEGATIVE_HEALTH
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.NEGATIVE_HEALTH)
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.gameWinConditions.NO_MATCHABLE_GARBAGE)
     -- also fill up the garbage queue so that the stack stays topped out even when downstacking
     local comboStorm = {}
     for i = 1, self.height do
@@ -645,10 +645,10 @@ function Stack.set_puzzle_state(self, puzzle)
     end
     self.garbage_q:push(comboStorm)
   elseif puzzle.puzzleType == "chain" then
-    self.gameOverConditions[#self.gameOverConditions + 1] = GameModes.GameOverConditions.CHAIN_DROPPED
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.CHAIN_DROPPED)
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.gameWinConditions.NO_MATCHABLE_PANELS)
   elseif puzzle.puzzleType == "moves" then
-    self.gameWinConditions[#self.gameWinConditions + 1] = GameModes.GameWinConditions.NO_MATCHABLE_PANELS
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.gameWinConditions.NO_MATCHABLE_PANELS)
   end
 
   -- transform any cleared garbage into colorless garbage panels
