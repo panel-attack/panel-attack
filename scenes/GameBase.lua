@@ -242,12 +242,6 @@ function GameBase:musicCanChange()
     return false
   end
 
-  -- we don't have to cover the rollback case because music updates are only called once per match:run()
-  -- meaning any stack that did a rollback should have caught up again by the time it is called
-  -- if tableUtils.trueForAny(self.players, function(p) return p:behindRollback() end) then
-  --   return false
-  -- end
-
   -- music waits until countdown is over
   if self.match.doCountdown and self.match.clock < (consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH) then
     return false
