@@ -45,11 +45,15 @@ Thus, in order to protect the project and its contributors, all new assets must 
 Please ensure the following requirements are met for submitting pull requests containing assets:
 - All assets are mentioned by filepath and name in the repository's license file with the correct license and copyright holder
 - All assets additionally have the license and copyright notice stored in their metadata
-  - Music should additionally include a title and artist in the respective metadata fields; for other media (SFX, voicelines, visual assets) this is optional
   - If the copyright holder provided a link to their web presence, it has to be included in the metadata as well
-  - If an asset was created specifically for use in Panel Attack the metadata should also contain link to the Panel Attack website
-- Project files with the purpose to facilitate the creation of future derivatives are to be submitted to the [panel-attack/panel-attack-resources](https://github.com/panel-attack/panel-attack-resources) repository
+  - For music only:
+    - Music should additionally include a title and artist in the respective metadata fields
+    - If music was created specifically for use in Panel Attack the metadata should also contain link to the Panel Attack website
+
+Project files with the purpose to facilitate the creation of future derivatives are to be submitted to the [panel-attack/panel-attack-resources](https://github.com/panel-attack/panel-attack-resources) repository.
 
 ## Coordination
 
-Cohesiveness is a difficult task in a community of voluntary contributors but a much desired quality in a video game. Please use the [official Discord server](http://discord.panelattack.com) to coordinate with others in the #pacci channel in advance if you wish to contribute.  
+Cohesiveness is a difficult task in a community of voluntary contributors but a much desired quality in a video game.
+
+Please use the [official Discord server](http://discord.panelattack.com) to coordinate with others in the #pacci channel in advance if you wish to contribute.  
