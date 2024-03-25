@@ -38,7 +38,7 @@ We aren't lawyers but to our current understanding there are potential problems 
 
 Additionally Panel Attack is a project in the spirit of free open source software and no asset added to the project should make future users and contributors liable to consequences from using assets with unclear license status.  
 
-Thus, in order to protect the project and its contributors, all new assets must be licensed under the [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/) or other CC licenses. Excluded are CC licenses using the ND (no derivatives) clause as we feel this restriction to be too limiting for nature of the project.
+Thus, in order to protect the project and its contributors, all new assets must be licensed under the [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/) or other CC licenses. Excluded are CC licenses using the ND (no derivatives) clause as we feel this restriction to be too limiting for the nature of the project.
 
 ## Technicalities
 
