@@ -47,7 +47,7 @@ Please ensure the following requirements are met for submitting pull requests co
 - All assets additionally have the license and copyright notice stored in their metadata
   - Music should additionally include a title and artist in the respective metadata fields; for other media (SFX, voicelines, visual assets) this is optional
   - If the copyright holder provided a link to their web presence, it has to be included in the metadata as well
-  - If an asset was created for Panel Attack the metadata should also contain link to the Panel Attack website
+  - If an asset was created specifically for use in Panel Attack the metadata should also contain link to the Panel Attack website
 - Project files with the purpose to facilitate the creation of future derivatives are to be submitted to the [panel-attack/panel-attack-resources](https://github.com/panel-attack/panel-attack-resources) repository
 
 ## Coordination
