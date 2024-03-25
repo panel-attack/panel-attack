@@ -13,6 +13,7 @@ Try to follow the following code guidelines when contributing:
 - Follow the formatting guidelines below
 - Constants should be local to a file / scope unless they need to be shared everywhere
 - Avoid the use of shortlived tables and consider pooling if you can't
+- No use of luajit's ffi module
 
 Ordinarily, pull requests are to be pulled against the `beta` branch. Currently a major refactor of client and engine code is in the works on `sceneRefactor`.  
 Please coordinate with maintainers which branch you should work with for your feature.
@@ -23,7 +24,6 @@ Please coordinate with maintainers which branch you should work with for your fe
 - Class names start with a capital like `BattleRoom`
 - All other names use `camelCase`
 - You should set your editor to use 2 spaces of identation. (not tabs)
-- Set your column width to 1000
 - All control flow like if and functions should be on multiple lines, not condensed into a single line. Putting it all on a single line can make it harder to follow the flow.
 
 For those using VSCode we recommend using this [styling extension](https://marketplace.visualstudio.com/items?itemName=Koihik.vscode-lua-format) with the configuration file in the repository named VsCodeStyleConfig.lua-format
@@ -33,26 +33,22 @@ For those using VSCode we recommend using this [styling extension](https://marke
 ## Legal concerns and licensing
 
 There is no formal organization behind Panel Attack and there is none who possesses Panel Attack, it is the collective work of many individual contributors. This has legal implications when it comes to using assets in Panel Attack:  
-We aren't lawyers but to our current understanding there are potential problems with the project not being able to pose as a juridical person for the purpose of holding or buying copyright of assets or even having the ability to close deals.  
+We aren't lawyers but to our current understanding there are potential problems with the project not being able to act as a juridical person for the purpose of holding or buying copyright of assets or even being legally competent to sign any contracts.
 
 Additionally Panel Attack is a project in the spirit of free open source software and no asset added to the project should make future users and contributors liable to consequences from using assets with unclear license status.  
 
-Thus, in order to protect the project and its contributors, all new assets must be licensed under the [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/) or other CC licenses with the following guidelines applying:
-
-Any variation of the CC licenses using the ND (no derivatives) clause is not acceptable.
-
-If an artist has been commissioned by the Panel Attack community to specifically produce assets for the project against compensation, these assets cannot use the NC (non-commercial use only) clause. This is to ensure that assets that were paid for are compatible with the zlib license used for Panel Attack's code.
+Thus, in order to protect the project and its contributors, all new assets must be licensed under the [CC BY-SA](https://creativecommons.org/licenses/by-sa/4.0/) or other CC licenses excluding ones using the ND (no derivatives) clause.
 
 ## Technicalities
 
 Please ensure the following requirements are met for submitting pull requests containing assets:
-- All assets are mentioned by filepath and name in the license file with the correct license and copyright holder
+- All assets are mentioned by filepath and name in the repository's license file with the correct license and copyright holder
 - All assets additionally have the license and copyright notice stored in their metadata
-  - If they were created for Panel Attack they should also link to the Panel Attack website
-  - Music should additionally include a title and artist in the respective metadata fields
+  - Music should additionally include a title and artist in the respective metadata fields; for other media (SFX, voicelines, visual assets) this is optional
+  - If the copyright holder provided a link to their web presence, it has to be included in the metadata as well
+  - If an asset was created for Panel Attack the metadata should also contain link to the Panel Attack website
 - Project files with the purpose to facilitate the creation of future derivatives are to be submitted to the [panel-attack/panel-attack-resources](https://github.com/panel-attack/panel-attack-resources) repository
 
 ## Coordination
 
 Cohesiveness is a difficult task in a community of voluntary contributors but a much desired quality in a video game. Please use the [official Discord server](http://discord.panelattack.com) to coordinate with others in the #pacci channel in advance if you wish to contribute.  
-
