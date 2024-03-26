@@ -31,7 +31,7 @@ All pull requests require a review by a maintainer (or 1 review and written by a
 Feature and bug commits are done by maintainers using squash merges.  
 Merges are done by the maintainers as merge commits.  
 
-Please check the contribution guidelines for further information.
+Please check the [contribution guidelines](CONTRIBUTING.md) for further information.
 
 ## Release schedule
 
