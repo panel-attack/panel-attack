@@ -1,0 +1,12 @@
+name: create-love-archive
+on: [push]
+
+# Groups together all the jobs that run in the `learn-github-actions` workflow.
+jobs:
+  create-love-archive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./build.sh just-love
+
