@@ -1,4 +1,4 @@
-name: create-love-archive
+name: sceneRefactor-canary-release
 on: 
   push:
     branches:
