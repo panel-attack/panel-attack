@@ -60,6 +60,7 @@ Match =
 
     Signal.turnIntoEmitter(self)
     self:createSignal("matchEnded")
+    self:createSignal("dangerMusicChanged")
   end
 )
 
@@ -72,8 +73,6 @@ function Match:deinit()
   for i = 1, #self.stacks do
     self.stacks[i]:deinit()
   end
-
-  stop_the_music()
 end
 
 function Match:addPlayer(player)
@@ -293,7 +292,6 @@ function Match:run()
     self:handleMatchEnd()
   end
 
-  self:updateMusic()
   self:playCountdownSfx()
   self:playTimeLimitDepletingSfx()
   local endTime = love.timer.getTime()
@@ -365,11 +363,16 @@ function Match:rewindToFrame(frame)
 end
 
 -- updates the match clock to the clock time of the player furthest into the game
+-- also triggers the danger music from time running out if a timeLimit was set
 function Match:updateClock()
   for i = 1, #self.players do
     if self.players[i].stack.clock > self.clock then
       self.clock = self.players[i].stack.clock
     end
+  end
+
+  if self.panicTickStartTime and self.panicTickStartTime == self.clock then
+    self:updateDangerMusic()
   end
 end
 
@@ -384,107 +387,6 @@ function Match:getWinningPlayerCharacter()
   end
 
   return characters[character]
-end
-
-function Match:shouldChangeMusic()
-  if GAME.muteSoundEffects then
-    return false
-  end
-
-  if self.isPaused then
-    return false
-  end
-
-  -- someone is still catching up
-  if tableUtils.trueForAny(self.players, function(p) return p.stack.play_to_end end) then
-    return false
-  end
-
-  -- we don't have to cover the rollback case because music updates are only called once per match:run()
-  -- meaning any stack that did a rollback should have caught up again by the time it is called
-  -- if tableUtils.trueForAny(self.players, function(p) return p:behindRollback() end) then
-  --   return false
-  -- end
-
-  -- music waits until countdown is over
-  if self.doCountdown and self.clock < (consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH) then
-    return false
-  end
-
-  if self.ended then
-    return false
-  end
-
-  return true
-end
-
-function Match:updateMusic()
-  -- Update Music
-  if self.musicSource and self:shouldChangeMusic() then
-    -- danger music is played the moment one player is in danger
-    -- but only if we actually have danger music
-    local wantsDangerMusic = self.musicSource.musics["danger_music"] and tableUtils.trueForAny(self.players, function(p) return p.stack.danger_music end)
-
-    if self.timeLimit and not wantsDangerMusic then
-      -- danger music is played during panic time even if none is in danger
-      wantsDangerMusic = self.musicSource.musics["danger_music"] and self.clock >= self.panicTickStartTime
-    end
-
-    if self.musicSource.music_style == "dynamic" then
-      local fadeLength = 60
-      if not self.fade_music_clock then
-        self.fade_music_clock = fadeLength -- start fully faded in
-        self.currentMusicIsDanger = false
-      end
-
-      local normalMusic = {self.musicSource.musics["normal_music"], self.musicSource.musics["normal_music_start"]}
-      local dangerMusic = {self.musicSource.musics["danger_music"], self.musicSource.musics["danger_music_start"]}
-
-      if #currently_playing_tracks == 0 then
-        find_and_add_music(self.musicSource.musics, "normal_music")
-        find_and_add_music(self.musicSource.musics, "danger_music")
-      end
-
-      -- Do we need to switch music?
-      if self.currentMusicIsDanger ~= wantsDangerMusic then
-        self.currentMusicIsDanger = not self.currentMusicIsDanger
-
-        if self.fade_music_clock >= fadeLength then
-          self.fade_music_clock = 0 -- Do a full fade
-        else
-          -- switched music before we fully faded, so start part way through
-          self.fade_music_clock = fadeLength - self.fade_music_clock
-        end
-      end
-
-      if self.fade_music_clock < fadeLength then
-        self.fade_music_clock = self.fade_music_clock + 1
-      end
-
-      local fadePercentage = self.fade_music_clock / fadeLength
-      if wantsDangerMusic then
-        setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
-        setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
-      else
-        setFadePercentageForGivenTracks(fadePercentage, normalMusic)
-        setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
-      end
-    else -- classic music
-      if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-        if (self.currentMusicIsDanger == false or #currently_playing_tracks == 0) then
-          stop_the_music()
-          find_and_add_music(self.musicSource.musics, "danger_music")
-          self.currentMusicIsDanger = true
-        end
-      else --we should be playing normal_music or normal_music_start
-        if (self.currentMusicIsDanger or #currently_playing_tracks == 0) and self.musicSource.musics["normal_music"] then
-          stop_the_music()
-          find_and_add_music(self.musicSource.musics, "normal_music")
-          self.currentMusicIsDanger = false
-        end
-      end
-    end
-  end
 end
 
 function Match:playCountdownSfx()
@@ -537,22 +439,7 @@ function Match:getInfo()
   return info
 end
 
-function Match:waitForAssets()
-  for i = 1, #self.players do
-    CharacterLoader.load(self.players[i].settings.characterId)
-    CharacterLoader.wait()
-  end
-
-  if not self.stageId then
-    self.stageId = StageLoader.fullyResolveStageSelection(self.stageId)
-    StageLoader.load(self.stageId)
-  end
-  StageLoader.wait()
-end
-
 function Match:start()
-  self:waitForAssets()
-
   -- battle room may add the players in any order
   -- match has to make sure the local player ends up as P1 (left side)
   -- if both are local or both are not, order by playerNumber
@@ -566,6 +453,7 @@ function Match:start()
 
   for i, player in ipairs(self.players) do
     local stack = player:createStackFromSettings(self, i)
+    stack:connectSignal("dangerMusicChanged", self, self.updateDangerMusic)
     self.stacks[#self.stacks + 1] = stack
     stack.do_countdown = self.doCountdown
 
@@ -609,15 +497,15 @@ function Match:start()
     end
   end
 
-  for i = 1, #self.players do
+  for i, player in ipairs(self.players) do
     local pString = "P" .. tostring(i)
-    self[pString] = self.players[i].stack
-    if self.puzzle then
-      self.players[i].stack:set_puzzle_state(self.puzzle)
+    self[pString] = player.stack
+    if player.settings.puzzleSet then
+      -- puzzles are currently set directly on the player's stack
     else
-      self.players[i].stack:starting_state()
+      player.stack:starting_state()
       -- always need clock 0 as a base for rollback
-      self.players[i].stack:saveForRollback()
+      player.stack:saveForRollback()
     end
   end
 
@@ -637,25 +525,7 @@ function Match:start()
     end
   end
 
-  self.musicSource = self:getMusicSource()
-
   self.replay = Replay.createNewReplay(self)
-end
-
--- gets the stage or character the music is used of
--- returns the character or stage or, in case none of them has music, nil
-function Match:getMusicSource()
-  local character = self:getWinningPlayerCharacter()
-  local stageHasMusic = self.stageId and stages[self.stageId].musics and stages[self.stageId].musics["normal_music"]
-  local characterHasMusic = character and character.musics and character.musics["normal_music"]
-  if not stageHasMusic and not characterHasMusic then
-    -- no music loaded, early return
-    return nil
-  elseif ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
-    return stages[self.stageId]
-  else --if characterHasMusic then
-    return character
-  end
 end
 
 function Match:setStage(stageId)
@@ -892,4 +762,18 @@ function Match:shouldRun(stack, runsSoFar)
 
   -- and then the stack specific conditions in stack
   return stack:shouldRun(runsSoFar)
+end
+
+function Match:updateDangerMusic()
+  local dangerMusic
+  if self.panicTickStartTime == nil or self.clock < self.panicTickStartTime then
+    dangerMusic = tableUtils.trueForAny(self.stacks, function(s) return s.danger_music end)
+  else
+    dangerMusic = true
+  end
+
+  if dangerMusic ~= self.currentMusicIsDanger then
+    self:emitSignal("dangerMusicChanged", dangerMusic)
+    self.currentMusicIsDanger = dangerMusic
+  end
 end
