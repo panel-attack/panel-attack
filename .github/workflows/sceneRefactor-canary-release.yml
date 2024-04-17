@@ -13,7 +13,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - env: GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - env: 
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: ./build.sh just-love
       # it's a bit complicated to move the working directory for the upload-artifact action
       # so just move it into the working directory
