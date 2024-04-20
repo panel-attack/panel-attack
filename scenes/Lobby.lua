@@ -365,7 +365,7 @@ function Lobby:update(dt)
   end
 
   if not GAME.tcpClient:processIncomingMessages() then
-    if not sceneManager.transition then
+    if not sceneManager.transition and not self.loginScreenTimer then
       -- automatic reconnect if we're not about to switch scene
       self.state = STATES.Login
       self.loginRoutine = LoginRoutine(GAME.tcpClient, GAME.connected_server_ip, GAME.connected_server_port)
