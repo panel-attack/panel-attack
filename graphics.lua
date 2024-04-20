@@ -551,16 +551,22 @@ function Stack.render(self)
 
   local metals
   if self.opponentStack then
-    metals = panels[self.opponentStack.panels_dir].images.metals
+    metals = panels[self.opponentStack.panels_dir[8]].images.metals
   else
-    metals = panels[self.panels_dir].images.metals
+    metals = panels[self.panels_dir[8]].images.metals
   end
-  local metal_w, metal_h = metals.mid:getDimensions()
-  local metall_w, metall_h = metals.left:getDimensions()
-  local metalr_w, metalr_h = metals.right:getDimensions()
+  local metal_w, metal_h = AnimatedSprite.getFrameSize(metals[1])
+  local metalF_w, metalF_h = AnimatedSprite.getFrameSize(metals[4])
 
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  
+  for i = 1, 9 do
+    if i < 5 then
+      metals[i].spriteSheet:clear()
+    end
+    panels[self.panels_dir[i]].images.classic[i].spriteSheet:clear()
+  end
 
   -- Draw all the panels
   for row = 0, self.height do
@@ -569,126 +575,153 @@ function Stack.render(self)
       local draw_x = 4 + (col - 1) * 16
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
       if panel.color ~= 0 and panel.state ~= "popped" then
-        local draw_frame = 1
-        if panel.isGarbage then
-          local imgs = {flash = metals.flash}
-          if not panel.metal then
-            if not self.garbageTarget then 
-              imgs = characterObject.images
-            else
-              imgs = characters[self.garbageTarget.character].images
-            end
+        local anim = panels[self.panels_dir[panel.color]].images.classic[panel.color]
+        local panel_w, panel_h = AnimatedSprite.getFrameSize(anim)
+        local dangerCount = #anim.animations["danger"].quads
+        local state = panel.state
+        local isMetal = panel.metal
+        if panel.isGarbage and not isMetal then
+          local imgs = {}
+          if not self.garbageTarget then 
+            imgs = characterObject.images
+          else
+            imgs = characters[self.garbageTarget.character].images
           end
           if panel.x_offset == 0 and panel.y_offset == 0 then
             -- draw the entire block!
-            if panel.metal then
-              draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-              draw(metals.right, draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
-              for i = 1, 2 * (panel.width - 1) do
-                draw(metals.mid, draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
+            local height, width = panel.height, panel.width
+            local top_y = draw_y - (height - 1) * 16
+            local use_1 = ((height - (height % 2)) / 2) % 2 == 0
+            local filler_w, filler_h = imgs.filler1:getDimensions()
+            for i = 0, height - 1 do
+              for j = 1, width - 1 do
+                draw((use_1 or height < 3) and imgs.filler1 or imgs.filler2, draw_x + 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
+                use_1 = not use_1
               end
-            else
-              local height, width = panel.height, panel.width
-              local top_y = draw_y - (height - 1) * 16
-              local use_1 = ((height - (height % 2)) / 2) % 2 == 0
-              local filler_w, filler_h = imgs.filler1:getDimensions()
-              for i = 0, height - 1 do
-                for j = 1, width - 1 do
-                  draw((use_1 or height < 3) and imgs.filler1 or imgs.filler2, draw_x + 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
-                  use_1 = not use_1
-                end
-              end
-              if height % 2 == 1 then
-                local face
-                if imgs.face2 and width % 2 == 1 then
-                  face = imgs.face2
-                else
-                  face = imgs.face
-                end
-                local face_w, face_h = face:getDimensions()
-                draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
-              else
-                local face_w, face_h = imgs.doubleface:getDimensions()
-                draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
-              end
-              local corner_w, corner_h = imgs.topleft:getDimensions()
-              local lr_w, lr_h = imgs.left:getDimensions()
-              local topbottom_w, topbottom_h = imgs.top:getDimensions()
-              draw(imgs.left, draw_x, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-              draw(imgs.right, draw_x + 16 * (width - 1) + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-              draw(imgs.top, draw_x, top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-              draw(imgs.bot, draw_x, draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-              draw(imgs.topleft, draw_x, top_y, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.topright, draw_x + 16 * width - 8, top_y, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.botleft, draw_x, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
-              draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
             end
+            if height % 2 == 1 then
+              local face
+              if imgs.face2 and width % 2 == 1 then
+                face = imgs.face2
+              else
+                face = imgs.face
+              end
+              local face_w, face_h = face:getDimensions()
+              draw(face, draw_x + 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
+            else
+              local face_w, face_h = imgs.doubleface:getDimensions()
+              draw(imgs.doubleface, draw_x + 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
+            end
+            local corner_w, corner_h = imgs.topleft:getDimensions()
+            local lr_w, lr_h = imgs.left:getDimensions()
+            local topbottom_w, topbottom_h = imgs.top:getDimensions()
+            draw(imgs.left, draw_x, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+            draw(imgs.right, draw_x + 16 * (width - 1) + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+            draw(imgs.top, draw_x, top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+            draw(imgs.bot, draw_x, draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+            draw(imgs.topleft, draw_x, top_y, 0, 8 / corner_w, 3 / corner_h)
+            draw(imgs.topright, draw_x + 16 * width - 8, top_y, 0, 8 / corner_w, 3 / corner_h)
+            draw(imgs.botleft, draw_x, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+            draw(imgs.botright, draw_x + 16 * width - 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
           end
-          if panel.state == "matched" then
+          if state == "matched" then
             local flash_time = panel.initial_time - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               if panel.timer > panel.pop_time then
-                if panel.metal then
-                  draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                  draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
-                else
-                  local popped_w, popped_h = imgs.pop:getDimensions()
-                  draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
-                end
-              elseif panel.y_offset == -1 then
-                local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
-                draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
-              end
-            elseif shouldFlashForFrame(flash_time) == false then
-              if panel.metal then
-                draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
-              else
                 local popped_w, popped_h = imgs.pop:getDimensions()
                 draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+              elseif panel.y_offset == -1 then
+                panel:drawPanel(anim, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
               end
+            elseif shouldFlashForFrame(flash_time) == false then
+              local popped_w, popped_h = imgs.pop:getDimensions()
+              draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
             else
               local flashed_w, flashed_h = imgs.flash:getDimensions()
               draw(imgs.flash, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
             end
           end
         else
-          if panel.state == "matched" then
+          local switch = "normal"
+          local frame = 1
+          local wait = false
+          if state == "matched" then
             local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
-              draw_frame = 6
-            elseif shouldFlashForFrame(flash_time) == false then
-              draw_frame = 1
+              switch = "matched"
             else
-              draw_frame = 5 -- flash
+              switch = "flash"
             end
-          elseif panel.state == "popping" then
-            draw_frame = 6
-          elseif panel.state == "landing" then
-            draw_frame = bounce_table[panel.timer + 1]
-          elseif panel.state == "swapping" then
+          elseif state == "popping" then
+            switch = "popping"
+
+          elseif panel.state == "falling" then
+            switch = "falling"
+          
+          elseif state == "landing" then
+            switch = "landing"
+
+          elseif state == "swapping" and not isMetal then
             if panel.isSwappingFromLeft then
               draw_x = draw_x - panel.timer * 4
+              switch = "swappingLeft"
             else
               draw_x = draw_x + panel.timer * 4
+              switch = "swappingRight"
             end
-          elseif panel.state == "dead" then
-            draw_frame = 6
-          elseif panel.state == "dimmed" then
-            draw_frame = 7
+          elseif state == "dead" then
+            switch = "dead"
+          elseif state == "dimmed" and not isMetal then
+            switch = "dimmed"
           elseif panel.fell_from_garbage then
-            draw_frame = garbage_bounce_table[panel.fell_from_garbage] or 1
+            switch = "fromGarbage"
           elseif self.danger_col[col] then
-            draw_frame = danger_bounce_table[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #danger_bounce_table)]
-          else
-            draw_frame = 1
+            if self.hasPanelsInTopRow(self) and self.health > 0 then
+              switch = "panic"
+            else
+              switch = "danger"
+              frame = wrap(1, floor(self.danger_timer) + floor((col - 1) / 2), dangerCount)
+            end
+          elseif row == self.cur_row and (col == self.cur_col or col == self.cur_col+1) and not isMetal then
+            switch = "hover" 
+            wait = true
+          elseif panel.currentAnim ~= "hover" then
+            wait = true
           end
-          local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
-          draw(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+          panel:switchAnimation(switch, wait, frame)
+          if isMetal then
+            if state ~= "matched" and panel.x_offset == 0 and panel.y_offset == 0 then
+              panel:animUpdate(metals[1].animations[panel.currentAnim])
+              panel:drawMetalPanel(metals[1], draw_x, draw_y, 0, 8 / metal_w, 16 / metal_h)
+              panel:drawMetalPanel(metals[3], draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metal_w, 16 / metal_h)
+              for i = 1, 2 * (panel.width - 1) do
+                panel:drawMetalPanel(metals[2], draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
+              end
+            elseif state == "matched" then
+              if panel.timer > panel.pop_time  then
+                panel:drawPanel(metals[4], draw_x, draw_y, 0, 16 / metalF_w, 16 / metalF_h)
+              elseif panel.y_offset == -1 then
+                switch = "fromGarbage"
+                panel:switchAnimation(switch, wait, frame)
+                panel:drawPanel(anim, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+              end
+            end
+          elseif not isMetal then
+            panel:drawPanel(anim, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+          end
         end
       end
     end
   end
+
+  local drawB = love.graphics.draw
+  for i = 1, 9 do
+    if i < 5 then
+      drawB(metals[i].spriteSheet)
+    end
+    drawB(panels[self.panels_dir[i]].images.classic[i].spriteSheet)
+  end
+ 
 
   -- Draw the frames and wall at the bottom
   local frameImage = nil
@@ -830,8 +863,9 @@ function Stack.render(self)
     grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
   
     -- Panels cleared
-    icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
-    draw(panels[self.panels_dir].images.classic[1][6], x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    local img = panels[self.panels_dir[1]].images.classic[1]
+    icon_width, icon_height = AnimatedSprite.getFrameSize(img)
+    draw(AnimatedSprite.getFrameImage(img, "popping", 1), x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement

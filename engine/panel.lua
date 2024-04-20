@@ -1,3 +1,4 @@
+require("util")
 -- clears information relating to state, matches and various stuff
 -- a true argument must be supplied to clear the chaining flag as well
 local function clear_flags(panel, clearChaining)
@@ -105,7 +106,7 @@ class(
   function(p, id, row, column, frameTimes)
     local metatable = getmetatable(p)
     metatable.__tostring = function(panel)
-      return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state..",timer:"..panel.timer
+      return "row:"..panel.row..",col:"..panel.column..",color:"..panel.color..",state:"..panel.state..",timer:"..panel.timer.."currentAnim:"..panel.currentAnim..",currentTime:"..panel.currentTime..",frame:"..panel.frame..",loop:"..panel.loop..",finished:"..panel.finished
     end
     setmetatable(p, metatable)
     clear(p, true, true)
@@ -113,6 +114,11 @@ class(
     p.row = row
     p.column = column
     p.frameTimes = frameTimes
+    p.currentAnim = "normal"
+    p.currentTime = 1
+    p.frame = 1
+    p.loop = true
+    p.finished = false
   end
 )
 
@@ -730,4 +736,39 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   end
   self.combo_index = comboIndex
   self.combo_size = comboSize
+end
+
+function Panel:animUpdate(anim)
+  if ((self.finished == false) or anim.loop) then
+    if self.finished then
+      self.currentTime = 1
+      self.finished = false
+    end
+    self.currentTime = self.currentTime + anim.speed
+
+    self.frame = math.floor(wrap(1, self.currentTime, #anim.quads))
+    if (math.floor(self.currentTime) > #anim.quads)  then
+      self.finished = true;
+    end
+  end
+end
+
+function Panel:drawPanel(spr, x, y, rot, x_scale, y_scale)
+  self:animUpdate(spr.animations[self.currentAnim])
+  drawBatch(spr.spriteSheet, spr.animations[self.currentAnim].quads[self.frame], x, y, rot, x_scale, y_scale)
+end
+
+function Panel:drawMetalPanel(metal, x, y, rot, x_scale, y_scale)
+  qdraw(metal.spriteSheet:getTexture(), metal.animations[self.currentAnim].quads[self.frame], x, y, rot, x_scale, y_scale)
+end
+
+function Panel:switchAnimation(selected, finish, frame)
+  if self.currentAnim == selected then
+      return
+  end
+  if (finish ~= true) or self.finished then
+    self.currentAnim = selected
+    self.currentTime = (frame or 1);
+    self.finished = false
+  end
 end

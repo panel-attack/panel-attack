@@ -12,7 +12,7 @@ config = {
     language_code                 = "EN",
   
     theme                         = consts.DEFAULT_THEME_DIRECTORY,
-    panels                     	  = nil, -- setup later in panel init
+    panels                     	  = {}, -- setup later in panel init
     character                     = random_character_special_value,
     stage                         = random_stage_special_value,
   

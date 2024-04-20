@@ -171,7 +171,7 @@ level_to_ncolors_vs            = {  5,  5,  5,  5,  5,  5,  5,  5,  6,  6, 6}
 level_to_ncolors_time          = {  5,  5,  6,  6,  6,  6,  6,  6,  6,  6, 6}
 -- How long panels will hover if not supported by anything, in frames.
 level_to_hover                 = { 12, 12, 11, 10,  9,  6,  5,  4,  3,  6, 3}
--- How long newly-transformed panels from garbage will hover before falling, in frames.
+-- How long newly-transformed panels from fromGarbage will hover before falling, in frames.
 level_to_garbage_panel_hover   = { 41, 36, 31, 26, 21, 16, 13, 10,  7,  4, 3}
 -- How long panels flash for before popping, in frames.
 level_to_flash                 = { 44, 44, 42, 42, 38, 36, 34, 32, 30, 28, 22}
@@ -235,4 +235,74 @@ for i=25,1000 do
   garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
 end
 
+--defaults: {frames = 1, row = 1, fps = 30, loop = true}
+consts.DEFAULT_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 16,["height"] = 16},
+	normal = {},
+	swappingLeft = {},
+	swappingRight = {},
+	matched = {row = 5}, 
+	popping = {row = 5},
+	hover = {frames= 2, row = 8, fps = 2},
+	falling = {frames= 2, row = 2},
+	landing = {frames= 4, row = 8, fps = 20, loop = false},
+	danger = {frames= 6, row = 3, fps = 20},
+	panic = {row = 8},
+	dead = {row = 5},
+	flash = {frames= 2, row = 4},
+	dimmed = {row = 6}, 
+	fromGarbage = {frames= 4, row = 7, fps = 20}
+}
+consts.BLANK_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 16,["height"] = 16},
+	normal = {},
+	swappingLeft = {},
+	swappingRight = {},
+	matched = {},
+	popping = {},
+	hover = {},
+	falling = {},
+	landing = {},
+	danger = {},
+	panic = {},
+	dead = {},
+	flash = {},
+	dimmed = {},
+	fromGarbage = {}
+}
+consts.METAL_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 8,["height"] = 16},
+	normal = {},
+	falling = {},
+	landing = {},
+	danger = {},
+	panic = {},
+	dead = {}
+}
+
+consts.METAL_FLASH_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 16,["height"] = 16},
+	flash = {frames = 2},
+	matched = {},
+	popping = {},
+}
+consts.PANEL_ANIM_CONVERTS =
+{
+	{1},
+	{2,3},
+	{1,2,3,2,1,4},
+	{1,5},
+	{6},
+	{7},
+	{2,3,4,1},
+	{4,3,2,1}
+}
 return consts

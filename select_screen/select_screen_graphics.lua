@@ -312,12 +312,13 @@ function select_screen_graphics.draw_character(self, character)
       --   menu_drawf(themes[config.theme].images.IMG_loading, self.render_x +self.button_width * 0.5, self.render_y + self.button_height * 0.5, "center", "center", 0, scaleX, scaleX)
       -- end
       if character.stage then
-        local orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
+        orig_w, orig_h = stages[character.stage].images.thumbnail:getDimensions()
         menu_drawf(stages[character.stage].images.thumbnail, self.render_x + 10, self.render_y + self.button_height - 7, "center", "center", 0, 16 / orig_w, 9 / orig_h)
       end
       if character.panels then
-        local orig_w, orig_h = panels[character.panels].images.classic[1][1]:getDimensions()
-        menu_drawf(panels[character.panels].images.classic[1][1], self.render_x + 7, character.stage and self.render_y + self.button_height - 19 or self.render_y + self.button_height - 6, "center", "center", 0, 12 / orig_w, 12 / orig_h)
+        local panel = panels[character.panels].images.classic[1]
+        orig_w, orig_h = AnimatedSprite.getFrameSize(panel)
+        menu_drawf(AnimatedSprite.getFrameImage(panel, "normal", 1), self.render_x + 7, character.stage and self.render_y + self.button_height - 19 or self.render_y + self.button_height - 6, "center", "center", 0, 12 / orig_w, 12 / orig_h)
       end
     end
   elseif character and character:is_bundle() then -- draw bundle character generated thumbnails
@@ -438,16 +439,21 @@ function select_screen_graphics.draw_panels(self, player, player_number, y_paddi
   if is_selected then
     padding_x = padding_x - panels_width
   end
-  local panels_scale = panels_width / panels[player.panels_dir].images.classic[1][1]:getWidth()
   menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
   padding_x = padding_x + panels_width
   if is_selected then
     gprintf("<", self.render_x + padding_x - 0.5 * panels_width, self.render_y + y_padding - 0.5 * self.text_height, panels_width, "center")
     padding_x = padding_x + panels_width
   end
+  local panelCount = player.level >= 9 and 7 or 6
   for i = 1, 8 do
     if i ~= 7 and (i ~= 6 or player.level >= 9) then
-      menu_drawf(panels[player.panels_dir].images.classic[i][1], self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, panels_scale, panels_scale)
+      local panel = panels[player.panels_dir[i]].images.classic[i]
+      local panels_scale = panels_width / AnimatedSprite.getFrameSize(panel)
+      menu_drawf(AnimatedSprite.getFrameImage(panel, "normal", 1), self.render_x + padding_x, self.render_y + y_padding, "center", "center", 0, panels_scale, panels_scale)
+      if is_selected and bound(0, i, panelCount) == player.cursor.selectedPanel then
+        menu_drawf(themes[config.theme].images.IMG_players[player_number], self.render_x + padding_x, self.render_y + y_padding, "center", "center")
+      end
       padding_x = padding_x + panels_width
     end
   end

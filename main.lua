@@ -1,3 +1,6 @@
+if arg[2] == "debug" then
+  require("lldebugger").start()
+end
 require("class")
 socket = require("socket")
 GAME = require("Game")
@@ -32,6 +35,7 @@ require("sound")
 require("timezones")
 require("gen_panels")
 require("panels")
+require("graphics.animated_sprite")
 require("Theme")
 local utf8 = require("utf8Additions")
 require("click_menu")

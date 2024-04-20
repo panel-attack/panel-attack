@@ -11,9 +11,11 @@ GraphicsUtil = {
 }
 
 function GraphicsUtil.privateLoadImage(path_and_name)
+  local data = nil
   local image = nil
   local status = pcall(
     function()
+      data = love.image.newImageData(path_and_name)
       image = love.graphics.newImage(path_and_name)
     end
   )
@@ -21,7 +23,7 @@ function GraphicsUtil.privateLoadImage(path_and_name)
     return nil
   end
   logger.debug("loaded asset: " .. path_and_name)
-  return image
+  return image, data
 end
 
 function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
@@ -33,7 +35,7 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
   local fileName = pathAndName .. scaleSuffixString .. extension
 
   if love.filesystem.getInfo(fileName) then
-    local result = GraphicsUtil.privateLoadImage(fileName)
+    local result, data = GraphicsUtil.privateLoadImage(fileName)
     if result then
       assert(result:getDPIScale() == scale, "The image " .. pathAndName .. " didn't wasn't created with the scale: " .. scale .. " did you make sure the width and height are divisible by the scale?")
       -- We would like to use linear for shrinking and nearest for growing,
@@ -44,16 +46,16 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
       else
         result:setFilter("linear", "linear")
       end
-      return result
+      return result, data
     end
     
     logger.error("Error loading image: " .. fileName .. " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
-    result = GraphicsUtil.privateLoadImageWithExtensionAndScale("themes/Panel Attack/transparent", ".png", 1)
+    result, data = GraphicsUtil.privateLoadImageWithExtensionAndScale("themes/Panel Attack/transparent", ".png", 1)
     assert(result ~= next)
-    return result
+    return result, data
   end
 
-  return nil
+  return nil, nil
 end
 
 function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
@@ -61,14 +63,14 @@ function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
   local supportedScales = {3, 2, 1}
   for _, extension in ipairs(supportedImageFormats) do
     for _, scale in ipairs(supportedScales) do
-      local image = GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
+      local image, data = GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
       if image then
-        return image
+        return image, data
       end
     end
   end
 
-  return nil
+  return nil, nil
 end
 
 -- Draws a image at the given screen spot and scales.
@@ -263,6 +265,27 @@ function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirro
   else
     gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
       rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset}})
+  end
+end
+
+-- Draws a quad at the given position inside a spriteBatch
+function drawBatch(batch, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirror)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  x_offset = x_offset or 0
+  y_offset = y_offset or 0
+  mirror = mirror or 0
+
+  local qX, qY, qW, qH = quad:getViewport()
+  if mirror == 1 then
+    x = x - (qW*x_scale)
+  end
+  if GAME.isDrawing then
+    batch:add(quad, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset)
+  else
+    gfx_q:push({batch:add(quad, x*GFX_SCALE, y*GFX_SCALE,
+      rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset),{}})
   end
 end
 
