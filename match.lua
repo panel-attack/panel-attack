@@ -509,9 +509,7 @@ function Match:start()
     end
   end
 
-  if self.doCountdown then
-    self.ticksPlayed = { [0] = false, false, false, false }
-  end
+  self:setCountdown(self.doCountdown)
 
   if self.timeLimit then
     self.panicTicksPlayed = {}
@@ -775,5 +773,12 @@ function Match:updateDangerMusic()
   if dangerMusic ~= self.currentMusicIsDanger then
     self:emitSignal("dangerMusicChanged", dangerMusic)
     self.currentMusicIsDanger = dangerMusic
+  end
+end
+
+function Match:setCountdown(doCountdown)
+  self.doCountdown = doCountdown
+  if self.doCountdown then
+    self.ticksPlayed = { [0] = false, false, false, false }
   end
 end
