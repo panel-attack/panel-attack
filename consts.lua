@@ -245,7 +245,7 @@ consts.DEFAULT_PANEL_ANIM =
 	swappingRight = {},
 	matched = {row = 5}, 
 	popping = {row = 5},
-	hover = {frames= 2, row = 8, fps = 2},
+	hover = {},
 	falling = {frames= 2, row = 2},
 	landing = {frames= 4, row = 8, fps = 20, loop = false},
 	danger = {frames= 6, row = 3, fps = 20},
