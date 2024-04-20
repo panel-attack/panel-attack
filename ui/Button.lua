@@ -1,6 +1,7 @@
 local class = require("class")
 local UIElement = require("ui.UIElement")
 local GraphicsUtil = require("graphics_util")
+local input = require("inputManager")
 
 --@module Button
 local Button = class(
@@ -26,15 +27,15 @@ function Button:onRelease(x, y, timeHeld)
   self.backgroundColor[4] = 0.7
   if self:inBounds(x, y) then
     -- first argument non-self of onClick is the input source to accomodate inputs via controllers from different players
-    self:onClick(nil, timeHeld)
+    self:onClick(input.mouse, timeHeld)
   end
 end
 
 function Button:receiveInputs(input)
   if input.isDown["MenuSelect"] then
-    self:onClick()
+    self:onClick(input)
   elseif input.isDown["MenuEsc"] then
-    self:onClick()
+    self:onClick(input)
   end
 end
 

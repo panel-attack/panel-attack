@@ -273,9 +273,10 @@ function BattleRoom:refreshReadyStates()
 
   for _, player in ipairs(self.players) do
     if player.isLocal then
-      -- every local human player has an input configuration assigned
+      -- every local human player has an input configuration assigned; touch substitutes for an inputConfiguration
       local ready = minimumCondition
-        and (not player.human or player.inputConfiguration)
+        and self.allAssetsLoaded and player.settings.wantsReady
+        and (not player.human or (player.inputConfiguration or player.settings.inputMethod == "touch"))
       player:setReady(ready)
     else
       -- non local players send us their ready via network
@@ -376,8 +377,15 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
     for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
       if not inputConfiguration.claimed and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
+        player:setInputMethod("controller")
         player:restrictInputs(inputConfiguration)
         break
+      end
+    end
+    if not player.inputConfiguration and not GAME.input.mouse.claimed then
+      if tableUtils.length(GAME.input.mouse.isDown) > 0 then
+        player:setInputMethod("touch")
+        player:restrictInputs(GAME.input.mouse)
       end
     end
   else
