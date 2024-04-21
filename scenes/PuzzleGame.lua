@@ -30,6 +30,7 @@ function PuzzleGame:customLoad(sceneParams)
   local isValid, validationError = puzzle:validate()
   if isValid then
     self.match.players[1].stack:set_puzzle_state(puzzle)
+    self.match:setCountdown(puzzle.doCountdown)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                     .. validationError
@@ -42,7 +43,8 @@ function PuzzleGame:customRun()
   -- reset level
   if (self.inputConfiguration and self.inputConfiguration.isDown["TauntUp"]) and not self.match.isPaused then
     play_optional_sfx(themes[config.theme].sounds.menu_cancel)
-    self.match.players[1].stack:set_puzzle_state(self.puzzleSet.puzzles[self.puzzleIndex])
+    self.match:abort()
+    self.match.players[1]:setWantsReady(true)
   end
 end
 
@@ -72,10 +74,10 @@ function PuzzleGame:customGameOverSetup()
   -- as the player releases their inputConfiguration on puzzle end, we need to reassign it asap
   -- otherwise the next puzzle match will crash due to the player not having an input configuration assigned
 
-  if self.match.P1.game_over_clock <= 0 then -- puzzle has been solved successfully
+  if self.match.P1.game_over_clock <= 0 and not self.match.aborted then -- puzzle has been solved successfully
     self.text = loc("pl_you_win")
     self.match.players[1]:setPuzzleIndex(self.puzzleIndex + 1)
-  elseif self.match.P1.game_over_clock > 0 then -- puzzle failed
+  else -- puzzle failed or manually reset
     SFX_GameOver_Play = 1
     self.text = loc("pl_you_lose")
   end

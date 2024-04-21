@@ -3,16 +3,18 @@ local TouchDataEncoding = require("engine.TouchDataEncoding")
 local ClientMessages = require("network.ClientProtocol")
 
 function Stack.handle_input_taunt(self)
-  local input = self.player.inputConfiguration
-  if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
-    self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
-    if GAME.tcpClient:isConnected() then
-      GAME.tcpClient:sendRequest(ClientMessages.sendTaunt("up", self.taunt_up))
-    end
-  elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
-    self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
-    if GAME.tcpClient:isConnected() then
-      GAME.tcpClient:sendRequest(ClientMessages.sendTaunt("down", self.taunt_down))
+  if self.inputMethod ~= "touch" then
+    local input = self.player.inputConfiguration
+    if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
+      self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
+      if GAME.tcpClient:isConnected() then
+        GAME.tcpClient:sendRequest(ClientMessages.sendTaunt("up", self.taunt_up))
+      end
+    elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
+      self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
+      if GAME.tcpClient:isConnected() then
+        GAME.tcpClient:sendRequest(ClientMessages.sendTaunt("down", self.taunt_down))
+      end
     end
   end
 end

@@ -369,7 +369,7 @@ function CharacterSelect.applySuperSelectInteraction(characterButton)
   characterButton.onRelease = function(self, x, y, timeHeld)
     self.updateSuperSelectShader(self.superSelectImage, 0)
     if self:inBounds(x, y) then
-      self:onClick(nil, timeHeld)
+      self:onClick(input.mouse, timeHeld)
     end
   end
 
@@ -756,7 +756,7 @@ end
 
 function CharacterSelect:update(dt)
   for _, cursor in ipairs(self.ui.cursors) do
-    if cursor.player.isLocal and cursor.player.human then
+    if cursor.player.isLocal and cursor.player.human and cursor.player.settings.inputMethod == "controller" then
       cursor:receiveInputs(cursor.player.inputConfiguration or input, dt)
     end
   end

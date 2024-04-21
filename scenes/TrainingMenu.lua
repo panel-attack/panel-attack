@@ -40,7 +40,7 @@ local function createBasicTrainingMode(name, width, height)
     table.insert(attackPatterns, {width = width, height = height, startTime = i, metal = false, chain = false, endsChain = false})
   end
 
-  local customTrainingModeData = {name = name, attackSettings = {delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}}
+  local customTrainingModeData = {delayBeforeStart = delayBeforeStart, delayBeforeRepeat = delayBeforeRepeat, attackPatterns = attackPatterns}
 
   return customTrainingModeData
 end

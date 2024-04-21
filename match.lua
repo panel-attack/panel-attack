@@ -474,7 +474,7 @@ function Match:start()
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
       -- not really elegant but before deciding where the attacks are supposed to come from with more than 1 real player which = 2 works
       local attackEngineHost = SimulatedStack({which = 2, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
-      local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings.attackSettings)
+      local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
       attackEngine:setGarbageTarget(stack)
       self.attackEngines[stack] = attackEngineHost
     end
@@ -509,9 +509,7 @@ function Match:start()
     end
   end
 
-  if self.doCountdown then
-    self.ticksPlayed = { [0] = false, false, false, false }
-  end
+  self:setCountdown(self.doCountdown)
 
   if self.timeLimit then
     self.panicTicksPlayed = {}
@@ -777,5 +775,12 @@ function Match:updateDangerMusic()
   if dangerMusic ~= self.currentMusicIsDanger then
     self:emitSignal("dangerMusicChanged", dangerMusic)
     self.currentMusicIsDanger = dangerMusic
+  end
+end
+
+function Match:setCountdown(doCountdown)
+  self.doCountdown = doCountdown
+  if self.doCountdown then
+    self.ticksPlayed = { [0] = false, false, false, false }
   end
 end
