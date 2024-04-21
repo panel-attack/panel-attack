@@ -11,7 +11,6 @@ local GameModes = require("GameModes")
 local PanelGenerator = require("gen_panels")
 local StackBase = require("StackBase")
 local class = require("class")
-local Signal = require("helpers.signal")
 require("engine.panel")
 
 -- Stuff defined in this file:
@@ -269,8 +268,6 @@ Stack =
     s.garbageGenCount = 0
 
     s.warningsTriggered = {}
-    Signal.turnIntoEmitter(s)
-    s:createSignal("dangerMusicChanged")
 
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())

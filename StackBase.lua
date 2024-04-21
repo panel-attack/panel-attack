@@ -2,6 +2,7 @@ local class = require("class")
 local GraphicsUtil = require("graphics_util")
 local consts = require("consts")
 local GFX_SCALE = consts.GFX_SCALE
+local Signal = require("helpers.signal")
 
 local StackBase = class(function(self, args)
   assert(args.which)
@@ -19,6 +20,8 @@ local StackBase = class(function(self, args)
   self.clock = 0
   self.game_over_clock = -1 -- the exact clock frame the player lost, -1 while alive
   self.health = 1
+  Signal.turnIntoEmitter(self)
+  self:createSignal("dangerMusicChanged")
 
 
   -- rollback
