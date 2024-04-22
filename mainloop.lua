@@ -253,7 +253,8 @@ do
         gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, canvas_width, "right")
         infoYPosition = infoYPosition - fontHeight
         if has_game_update then
-          menu_draw(AnimatedSprite.getFrameImage(panels[config.panels[1]].images.classic[1], "normal", 1), 1262, 685)
+          local img = panels[config.panels].images.classic[1]
+          menu_drawq(img.spriteSheet:getTexture(), img:getFrameQuad("normal", 1), 1262, 685)
         end
       end
 

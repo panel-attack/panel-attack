@@ -11,11 +11,9 @@ GraphicsUtil = {
 }
 
 function GraphicsUtil.privateLoadImage(path_and_name)
-  local data = nil
   local image = nil
   local status = pcall(
     function()
-      data = love.image.newImageData(path_and_name)
       image = love.graphics.newImage(path_and_name)
     end
   )
@@ -23,7 +21,7 @@ function GraphicsUtil.privateLoadImage(path_and_name)
     return nil
   end
   logger.debug("loaded asset: " .. path_and_name)
-  return image, data
+  return image
 end
 
 function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
@@ -35,7 +33,7 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
   local fileName = pathAndName .. scaleSuffixString .. extension
 
   if love.filesystem.getInfo(fileName) then
-    local result, data = GraphicsUtil.privateLoadImage(fileName)
+    local result = GraphicsUtil.privateLoadImage(fileName)
     if result then
       assert(result:getDPIScale() == scale, "The image " .. pathAndName .. " didn't wasn't created with the scale: " .. scale .. " did you make sure the width and height are divisible by the scale?")
       -- We would like to use linear for shrinking and nearest for growing,
@@ -46,16 +44,16 @@ function GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extensi
       else
         result:setFilter("linear", "linear")
       end
-      return result, data
+      return result
     end
     
     logger.error("Error loading image: " .. fileName .. " Check it is valid and try resaving it in an image editor. If you are not the owner please get them to update it or download the latest version.")
-    result, data = GraphicsUtil.privateLoadImageWithExtensionAndScale("themes/Panel Attack/transparent", ".png", 1)
+    result = GraphicsUtil.privateLoadImageWithExtensionAndScale("themes/Panel Attack/transparent", ".png", 1)
     assert(result ~= next)
-    return result, data
+    return result
   end
 
-  return nil, nil
+  return nil
 end
 
 function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
@@ -63,14 +61,14 @@ function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
   local supportedScales = {3, 2, 1}
   for _, extension in ipairs(supportedImageFormats) do
     for _, scale in ipairs(supportedScales) do
-      local image, data = GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
+      local image = GraphicsUtil.privateLoadImageWithExtensionAndScale(pathAndName, extension, scale)
       if image then
-        return image, data
+        return image
       end
     end
   end
 
-  return nil, nil
+  return nil
 end
 
 -- Draws a image at the given screen spot and scales.
@@ -331,6 +329,32 @@ function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
   rot = rot or 0
   x_scale = x_scale or 1
   y_scale = y_scale or 1
+  if GAME.isDrawing then
+    love.graphics.draw(img, quad, x, y,
+    rot, x_scale, y_scale)
+  else
+    gfx_q:push({love.graphics.draw, {img, quad, x, y,
+    rot, x_scale, y_scale}})
+  end
+end
+
+function menu_drawfq(img, quad, x, y, halign, valign, rot, x_scale, y_scale)
+  rot = rot or 0
+  x_scale = x_scale or 1
+  y_scale = y_scale or 1
+  halign = halign or "left"
+  local qX, qY, qW, qH = quad:getViewport()
+  if halign == "center" then
+    x = x - math.floor(qW * 0.5 * x_scale)
+  elseif halign == "right" then
+    x = x - math.floor(qW * x_scale)
+  end
+  valign = valign or "top"
+  if valign == "center" then
+    y = y - math.floor(qH * 0.5 * y_scale)
+  elseif valign == "bottom" then
+    y = y - math.floor(qH * y_scale)
+  end
   if GAME.isDrawing then
     love.graphics.draw(img, quad, x, y,
     rot, x_scale, y_scale)

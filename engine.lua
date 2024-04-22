@@ -2417,10 +2417,76 @@ function Stack:getAttackPatternData()
   return data, state
 end
 
+local function switchFunc(self, panel)
+  local floor = math.floor
+  local state = panel.state
+  local col = panel.column
+  local row = panel.row
+  local isMetal = panel.metal
+  local dangerCount = #panel.animation[panel.color].animations["danger"].quads or 1
+  local switch = "normal"
+  local frame = 1
+  local wait = false
+  if state == "matched" then
+    local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
+    if flash_time >= self.FRAMECOUNTS.FLASH then
+      switch = "matched"
+    else
+      switch = "flash"
+    end
+
+    if isMetal and (not panel.timer > panel.pop_time) and panel.y_offset == -1 then
+        switch = "fromGarbage"
+    end
+  elseif state == "popping" then
+    switch = "popping"
+
+  elseif panel.state == "falling" then
+    switch = "falling"
+  
+  elseif state == "landing" then
+    switch = "landing"
+
+  elseif state == "swapping" and not isMetal then
+    if panel.isSwappingFromLeft then
+      switch = "swappingLeft"
+    else
+      switch = "swappingRight"
+    end
+  elseif state == "dead" then
+    switch = "dead"
+  elseif state == "dimmed" and not isMetal then
+    switch = "dimmed"
+  elseif panel.fell_from_garbage then
+    switch = "fromGarbage"
+  elseif self.danger_col and self.danger_col[col] then
+    if self.hasPanelsInTopRow(self) and self.health > 0 then
+      switch = "panic"
+    else
+      switch = "danger"
+      frame = wrap(1, floor(self.danger_timer) + floor((col - 1) / 2), dangerCount)
+    end
+  elseif row == self.cur_row and (col == self.cur_col or col == self.cur_col+1) and not isMetal then
+    switch = "hover" 
+    wait = panel.currentAnim ~= "normal"
+  elseif panel.currentAnim ~= "hover" then
+    wait = true
+  end
+  if isMetal and state == "matched" and
+    (not panel.timer > panel.pop_time) and panel.y_offset == -1 then
+        switch = "fromGarbage"
+        wait = false
+  end
+  panel.animation[panel.color]:switchAnimation(panel, switch, wait, frame)
+end
+
 -- creates a new panel at the specified row+column and adds it to the Stack's panels table
 function Stack.createPanelAt(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
   local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
+  Animation(panel, panels[self.panels_dir].images.classic)
+  panel.switchFunction = function() switchFunc(self, panel) end
+
   panel.onPop = function(panel)
     self:onPop(panel)
   end

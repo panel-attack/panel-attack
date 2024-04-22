@@ -62,10 +62,8 @@ function refreshBasedOnOwnMods(player)
 
   if player ~= nil then
     -- panels
-    for i = 1, 9 do
-      if player.panels_dir[i] == nil or panels[player.panels_dir[1]] == nil then
-        player.panels_dir[i] = config.panels[i]
-      end
+    if player.panels_dir == nil or panels[player.panels_dir] == nil then
+      player.panels_dir = config.panels
     end
 
     -- stage
@@ -215,14 +213,8 @@ function select_screen.on_select(self, player, super)
           player.stage = StageLoader.resolveStageSelection(player.selectedStage)
           StageLoader.load(player.stage)
         end
-        if character.panels then
-          if type(character.panels) == "string" and panels[character.panels] then
-            for i = 1, 9 do
-              player.panels_dir[i] = character.panels
-            end
-          elseif panels[character.panels[1]] then
-            player.panels_dir = character.panels
-          end
+        if character.panels and panels[character.panels] then
+          player.panels_dir = character.panels
         end
       end
     end
@@ -489,7 +481,7 @@ function select_screen.setInitialCursor(self, playerNumber)
   cursor.positionId = "__Ready"
   cursor.can_super_select = false
   cursor.selected = false
-  cursor.selectedPanel = 0
+  --cursor.selectedPanel = 0
 
   self.players[playerNumber].cursor = cursor
 
@@ -620,7 +612,7 @@ function select_screen.handleInput(self)
     for i = 1, #local_players do
       local player = self.players[local_players[i]]
       local cursor = player.cursor
-      local panelCount = ((player.level >= 9 and {1,2,3,4,5,[6]=6,[7]=8}) or {1,2,3,4,5,[6]=8})
+      --local panelCount = ((player.level >= 9 and {1,2,3,4,5,[6]=6,[7]=8}) or {1,2,3,4,5,[6]=8})
       if menu_prev_page(i) then
         if not cursor.selected then
           self.current_page = bound(1, self.current_page - 1, self.pages_amount)
@@ -630,30 +622,30 @@ function select_screen.handleInput(self)
           self.current_page = bound(1, self.current_page + 1, self.pages_amount)
         end
       elseif menu_up(i) then
-        if cursor.selected and cursor.positionId == "__Panels" then
-          if cursor.selectedPanel == 0 then
-            player.panels_dir[panelCount[1]] = self.change_panels_dir(player.panels_dir[panelCount[1]], 1)
-            for p= 2, 9 do
-              player.panels_dir[p] = player.panels_dir[1]
-            end
-          else
-            player.panels_dir[panelCount[cursor.selectedPanel]] = self.change_panels_dir(player.panels_dir[panelCount[cursor.selectedPanel]], 1)
-          end
-        end
+        -- if cursor.selected and cursor.positionId == "__Panels" then
+        --   if cursor.selectedPanel == 0 then
+        --     player.panels_dir[panelCount[1]] = self.change_panels_dir(player.panels_dir[panelCount[1]], 1)
+        --     for p= 2, 9 do
+        --       player.panels_dir[p] = player.panels_dir[1]
+        --     end
+        --   else
+        --     player.panels_dir[panelCount[cursor.selectedPanel]] = self.change_panels_dir(player.panels_dir[panelCount[cursor.selectedPanel]], 1)
+        --   end
+        -- end
         if not cursor.selected then
           self:move_cursor(cursor, up)
         end
       elseif menu_down(i) then
-        if cursor.selected and cursor.positionId == "__Panels" then
-          if cursor.selectedPanel == 0 then
-            player.panels_dir[panelCount[1]] = self.change_panels_dir(player.panels_dir[panelCount[1]], -1)
-            for p = 2, 9 do
-              player.panels_dir[p] = player.panels_dir[1]
-            end
-          else
-            player.panels_dir[panelCount[cursor.selectedPanel]] = self.change_panels_dir(player.panels_dir[panelCount[cursor.selectedPanel]], -1)
-          end
-        end
+        -- if cursor.selected and cursor.positionId == "__Panels" then
+        --   if cursor.selectedPanel == 0 then
+        --     player.panels_dir[panelCount[1]] = self.change_panels_dir(player.panels_dir[panelCount[1]], -1)
+        --     for p = 2, 9 do
+        --       player.panels_dir[p] = player.panels_dir[1]
+        --     end
+        --   else
+        --     player.panels_dir[panelCount[cursor.selectedPanel]] = self.change_panels_dir(player.panels_dir[panelCount[cursor.selectedPanel]], -1)
+        --   end
+        -- end
         if not cursor.selected then
           self:move_cursor(cursor, down)
         end
@@ -662,7 +654,8 @@ function select_screen.handleInput(self)
           if cursor.positionId == "__Level" then
             player.level = bound(1, player.level - 1, #level_to_starting_speed) --which should equal the number of levels in the game
           elseif cursor.positionId == "__Panels" then
-            cursor.selectedPanel = wrap(0, cursor.selectedPanel - 1, #panelCount)
+            --cursor.selectedPanel = wrap(0, cursor.selectedPanel - 1, #panelCount)
+            player.panels_dir = self.change_panels_dir(player.panels_dir, -1)
           elseif cursor.positionId == "__Stage" then
             self.change_stage(player, -1)
           end
@@ -675,7 +668,8 @@ function select_screen.handleInput(self)
           if cursor.positionId == "__Level" then
             player.level = bound(1, player.level + 1, #level_to_starting_speed) --which should equal the number of levels in the game
           elseif cursor.positionId == "__Panels" then
-            cursor.selectedPanel = wrap(0, cursor.selectedPanel + 1, #panelCount)
+            --cursor.selectedPanel = wrap(0, cursor.selectedPanel + 1, #panelCount)
+            player.panels_dir = self.change_panels_dir(player.panels_dir, 1)
           elseif cursor.positionId == "__Stage" then
             self.change_stage(player, 1)
           end

@@ -2,8 +2,77 @@ require("graphics_util")
 require("graphics.animated_sprite")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
-local consts = require("consts")
+--defaults: {frames = 1, row = 1, fps = 30, loop = true}
+local DEFAULT_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 16,["height"] = 16},
+	normal = {},
+	swappingLeft = {},
+	swappingRight = {},
+	matched = {row = 4}, 
+	popping = {row = 4},
+	hover = {},
+	falling = {frames= 2, row = 2},
+	landing = {frames= 4, row = 7, fps = 20, loop = false},
+	danger = {frames= 6, row = 3, fps = 20},
+	panic = {row = 7},
+	dead = {row = 4},
+	flash = {frames= 2},
+	dimmed = {row = 5}, 
+	fromGarbage = {frames= 4, row = 6, fps = 20}
+}
+local BLANK_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 16,["height"] = 16},
+	normal = {},
+	swappingLeft = {},
+	swappingRight = {},
+	matched = {},
+	popping = {},
+	hover = {},
+	falling = {},
+	landing = {},
+	danger = {},
+	panic = {},
+	dead = {},
+	flash = {},
+	dimmed = {},
+	fromGarbage = {}
+}
+local METAL_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 8,["height"] = 16},
+	normal = {},
+	falling = {},
+	landing = {},
+	danger = {},
+	panic = {},
+	dead = {}
+}
 
+local METAL_FLASH_PANEL_ANIM =
+{
+	filter = false,
+	size = {["width"] = 16,["height"] = 16},
+	flash = {frames = 2},
+	matched = {},
+	popping = {},
+}
+local PANEL_ANIM_CONVERTS =
+{
+	{1,5},
+	{2,3},
+	{1,2,3,2,1,4},
+	{6},
+	{7},
+	{2,3,4,1},
+	{4,3,2,1}
+}
+
+local metal_names = {"garbage-L", "garbage-M", "garbage-R", "garbage-flash"}
 -- The class representing the panel image data
 -- Not to be confused with "Panel" which is one individual panel in the game stack model
 Panels =
@@ -33,14 +102,12 @@ function Panels:id_init()
     self.sheet = read_data.sheet
   end
 
-  local metal_names = {"garbage-L", "garbage-M", "garbage-R", "garbage-flash"}
-
   for i = 0, 12 do
     local name = (i < 9 and "panel-"..tostring(i) or metal_names[i-8])
     if read_data.animations and read_data.animations[name] then
       self.animations[name] = read_data.animations[name]
     else
-      self.animations[name] = i ~= 0 and (i < 9 and consts.DEFAULT_PANEL_ANIM or (i ~= 12 and consts.METAL_PANEL_ANIM or consts.METAL_FLASH_PANEL_ANIM)) or consts.BLANK_PANEL_ANIM
+      self.animations[name] = i ~= 0 and (i < 9 and DEFAULT_PANEL_ANIM or (i ~= 12 and METAL_PANEL_ANIM or METAL_FLASH_PANEL_ANIM)) or BLANK_PANEL_ANIM
     end
   end
 
@@ -98,16 +165,11 @@ function panels_init()
   end
 
   -- fix config panel set if it's missing
-  if not config.panels or not panels[config.panels[1]] then
+  if not config.panels or not panels[config.panels] then
     if panels["pacci"] then
-      for i = 1, 9 do
-        config.panels[i] = "pacci"
-      end
+      config.panels = "pacci"
     else
-      local rand = tableUtils.getRandomElement(panels_ids)
-      for i = 1, 9 do
-        config.panels[i] = rand
-      end
+      config.panels = tableUtils.getRandomElement(panels_ids)
     end
   end
 
@@ -118,25 +180,24 @@ end
 
 function Panels:load()
   logger.debug("loading panels " .. self.id)
-  local oldFormat = not love.filesystem.getInfo(self.path.."/".."panels.png")
   local function load_panel_img(name)
-    local img, data = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. name)
+    local img = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. name)
     if not img then
-      img, data = GraphicsUtil.loadImageFromSupportedExtensions("panels/__default/" .. name)
+      img = GraphicsUtil.loadImageFromSupportedExtensions("panels/__default/" .. name)
       
       if not img then
         error("Could not find default panel image")
       end
     end
 
-    return img, data
+    return img
   end
   -- colors 1-7 are normal colors, 8 is [!], 9 is an empty panel.
   self.images.classic = {}
   local sheet = nil
-  local data = nil
   local panelSet = nil
-  local metal_names = {"garbage-L", "garbage-M", "garbage-R", "garbage-flash"}
+  local panelConverts = {}
+  local oldFormat = not love.filesystem.getInfo(self.path.."/".."panels.png")
   if (oldFormat or (not self.sheet)) then
     if oldFormat then
       local draw = love.graphics.draw
@@ -144,7 +205,7 @@ function Panels:load()
       for i = 1, 9 do
         local img = load_panel_img("panel"..(i ~= 9 and tostring(i).."1" or "00"))
         local width, height = img:getDimensions()
-        local newPanel = "panel-"..tostring(i ~= 9 and tostring(i) or 0)
+        local newPanel = "panel-"..tostring(i ~= 9 and tostring(i) or "0")
         self.animations[newPanel].size = {width = width, height = width}
         if height >= 48 then
           self.animations[newPanel].filter = true
@@ -152,7 +213,7 @@ function Panels:load()
         if i ~= 9 then
           local tempCanvas = newCanvas(width*6, height*8)
           tempCanvas:renderTo(function()
-              for row, anim in ipairs(consts.PANEL_ANIM_CONVERTS) do
+              for row, anim in ipairs(PANEL_ANIM_CONVERTS) do
                 for count, frame in ipairs(anim) do
                   img = load_panel_img("panel" .. tostring(i) .. tostring(frame))
                   draw(img, width*(count-1), height*(row-1))
@@ -160,7 +221,10 @@ function Panels:load()
               end
             end
           )
-          love.filesystem.write(self.path.."/"..newPanel..".png", tempCanvas:newImageData():encode("png"))
+          panelConverts[newPanel] = love.graphics.newImage(tempCanvas:newImageData())
+          --love.filesystem.write(self.path.."/"..newPanel..".png", tempCanvas:newImageData():encode("png"))
+        else
+          panelConverts[newPanel] = img
         end
       end
 
@@ -185,35 +249,35 @@ function Panels:load()
             end
           end
         )
-        love.filesystem.write(self.path.."/"..metal_names[i]..".png", tempCanvas:newImageData():encode("png"))
+        panelConverts[newPanel] = love.graphics.newImage(tempCanvas:newImageData())
+        --love.filesystem.write(self.path.."/"..metal_names[i]..".png", tempCanvas:newImageData():encode("png"))
       end
     end
-    local newInfo = {
-      ["id"] = self.id,
-      ["sheet"] = true,
-      ["animations"] = self.animations
-    }
-    love.filesystem.write(self.path.."/".."config.json", json.encode(newInfo))
+    -- local newInfo = {
+    --   ["id"] = self.id,
+    --   ["sheet"] = true,
+    --   ["animations"] = self.animations
+    -- }
+    -- love.filesystem.write(self.path.."/".."config.json", json.encode(newInfo))
   end
-  local spr = AnimatedSprite.newAnimation
   for i = 1, 9 do
     local name = "panel-" .. (i ~= 9 and tostring(i) or "0")
     panelSet = self.animations[name]
-    sheet, data = load_panel_img(i ~= 9 and name or "panel00")
+    sheet = oldFormat and panelConverts[name] or load_panel_img(name)
     if panelSet.filter then
       sheet:setFilter("linear", "linear")
     end
-    self.images.classic[i] = spr(sheet, data, i, panelSet, panelSet.size.width, panelSet.size.height)
+    self.images.classic[i] = AnimatedSprite(sheet, i, panelSet, panelSet.size.width, panelSet.size.height)
   end
 
   self.images.metals = {}
   for i = 1, 4 do
     local name = metal_names[i]
     panelSet = self.animations[name]
-    sheet, data = load_panel_img(name)
+    sheet = oldFormat and panelConverts[name] or load_panel_img(name)
     if panelSet.filter then
       sheet:setFilter("linear", "linear")
     end
-    self.images.metals[i] = spr(sheet, data, i, panelSet, panelSet.size.width, panelSet.size.height)
+    self.images.metals[i] = AnimatedSprite(sheet, i, panelSet, panelSet.size.width, panelSet.size.height)
   end
 end

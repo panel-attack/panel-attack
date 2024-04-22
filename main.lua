@@ -1,6 +1,3 @@
-if arg[2] == "debug" then
-  require("lldebugger").start()
-end
 require("class")
 socket = require("socket")
 GAME = require("Game")

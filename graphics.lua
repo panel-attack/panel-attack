@@ -551,12 +551,12 @@ function Stack.render(self)
 
   local metals
   if self.opponentStack then
-    metals = panels[self.opponentStack.panels_dir[8]].images.metals
+    metals = panels[self.opponentStack.panels_dir].images.metals
   else
-    metals = panels[self.panels_dir[8]].images.metals
+    metals = panels[self.panels_dir].images.metals
   end
-  local metal_w, metal_h = AnimatedSprite.getFrameSize(metals[1])
-  local metalF_w, metalF_h = AnimatedSprite.getFrameSize(metals[4])
+  local metal_w, metal_h = metals[1]:getFrameSize()
+  local metalF_w, metalF_h = metals[4]:getFrameSize()
 
   local shake_idx = #shake_arr - self.shake_time
   local shake = ceil((shake_arr[shake_idx] or 0) * 13)
@@ -565,7 +565,7 @@ function Stack.render(self)
     if i < 5 then
       metals[i].spriteSheet:clear()
     end
-    panels[self.panels_dir[i]].images.classic[i].spriteSheet:clear()
+    panels[self.panels_dir].images.classic[i].spriteSheet:clear()
   end
 
   -- Draw all the panels
@@ -575,9 +575,8 @@ function Stack.render(self)
       local draw_x = 4 + (col - 1) * 16
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
       if panel.color ~= 0 and panel.state ~= "popped" then
-        local anim = panels[self.panels_dir[panel.color]].images.classic[panel.color]
-        local panel_w, panel_h = AnimatedSprite.getFrameSize(anim)
-        local dangerCount = #anim.animations["danger"].quads
+        local anim = panels[self.panels_dir].images.classic[panel.color]
+        local panel_w, panel_h = anim:getFrameSize()
         local state = panel.state
         local isMetal = panel.metal
         if panel.isGarbage and not isMetal then
@@ -631,7 +630,7 @@ function Stack.render(self)
                 local popped_w, popped_h = imgs.pop:getDimensions()
                 draw(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
               elseif panel.y_offset == -1 then
-                panel:drawPanel(anim, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+                panel.animation[panel.color]:draw(panel, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
               end
             elseif shouldFlashForFrame(flash_time) == false then
               local popped_w, popped_h = imgs.pop:getDimensions()
@@ -642,84 +641,37 @@ function Stack.render(self)
             end
           end
         else
-          local switch = "normal"
-          local frame = 1
-          local wait = false
-          if state == "matched" then
-            local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
-            if flash_time >= self.FRAMECOUNTS.FLASH then
-              switch = "matched"
-            else
-              switch = "flash"
-            end
-          elseif state == "popping" then
-            switch = "popping"
-
-          elseif panel.state == "falling" then
-            switch = "falling"
-          
-          elseif state == "landing" then
-            switch = "landing"
-
-          elseif state == "swapping" and not isMetal then
+          if state == "swapping" and not isMetal then
             if panel.isSwappingFromLeft then
               draw_x = draw_x - panel.timer * 4
-              switch = "swappingLeft"
             else
               draw_x = draw_x + panel.timer * 4
-              switch = "swappingRight"
             end
-          elseif state == "dead" then
-            switch = "dead"
-          elseif state == "dimmed" and not isMetal then
-            switch = "dimmed"
-          elseif panel.fell_from_garbage then
-            switch = "fromGarbage"
-          elseif self.danger_col[col] then
-            if self.hasPanelsInTopRow(self) and self.health > 0 then
-              switch = "panic"
-            else
-              switch = "danger"
-              frame = wrap(1, floor(self.danger_timer) + floor((col - 1) / 2), dangerCount)
-            end
-          elseif row == self.cur_row and (col == self.cur_col or col == self.cur_col+1) and not isMetal then
-            switch = "hover" 
-            wait = true
-          elseif panel.currentAnim ~= "hover" then
-            wait = true
           end
-          panel:switchAnimation(switch, wait, frame)
-          if isMetal then
-            if state ~= "matched" and panel.x_offset == 0 and panel.y_offset == 0 then
-              panel:animUpdate(metals[1].animations[panel.currentAnim])
-              panel:drawMetalPanel(metals[1], draw_x, draw_y, 0, 8 / metal_w, 16 / metal_h)
-              panel:drawMetalPanel(metals[3], draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metal_w, 16 / metal_h)
+
+          if isMetal and panel.currentAnim ~= "fromGarbage" then
+            if panel.state ~= "matched" and panel.x_offset == 0 and panel.y_offset == 0 then
+              metals[1]:drawMetal(panel, draw_x, draw_y, 0, 8 / metal_w, 16 / metal_h)
+              metals[3]:drawMetal(panel, draw_x + 16 * (panel.width - 1) + 8, draw_y, 0, 8 / metal_w, 16 / metal_h)
               for i = 1, 2 * (panel.width - 1) do
-                panel:drawMetalPanel(metals[2], draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
+                metals[2]:drawMetal(panel, draw_x + 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
               end
             elseif state == "matched" then
-              if panel.timer > panel.pop_time  then
-                panel:drawPanel(metals[4], draw_x, draw_y, 0, 16 / metalF_w, 16 / metalF_h)
-              elseif panel.y_offset == -1 then
-                switch = "fromGarbage"
-                panel:switchAnimation(switch, wait, frame)
-                panel:drawPanel(anim, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
-              end
+                metals[4]:draw(panel, draw_x, draw_y, 0, 16 / metalF_w, 16 / metalF_h)
             end
-          elseif not isMetal then
-            panel:drawPanel(anim, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+          elseif not isMetal and panel.animation then
+            panel.animation[panel.color]:draw(panel, draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
           end
         end
       end
     end
   end
 
-  local drawB = love.graphics.draw
   for i = 1, 9 do
     if i < 5 then
-      drawB(metals[i].spriteSheet)
+      love.graphics.draw(metals[i].spriteSheet)
     end
-    drawB(panels[self.panels_dir[i]].images.classic[i].spriteSheet)
+    love.graphics.draw(panels[self.panels_dir].images.classic[i].spriteSheet)
   end
  
 
@@ -863,9 +815,9 @@ function Stack.render(self)
     grectangle_color("fill", (x - backgroundPadding) / GFX_SCALE , (y - backgroundPadding) / GFX_SCALE, width/GFX_SCALE, height/GFX_SCALE, 0, 0, 0, 0.5)
   
     -- Panels cleared
-    local img = panels[self.panels_dir[1]].images.classic[1]
-    icon_width, icon_height = AnimatedSprite.getFrameSize(img)
-    draw(AnimatedSprite.getFrameImage(img, "popping", 1), x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
+    local img = panels[self.panels_dir].images.classic[1]
+    icon_width, icon_height = img:getFrameSize()
+    qdraw(img.spriteSheet:getTexture(), img:getFrameQuad("popping", 1), x / GFX_SCALE, y / GFX_SCALE, 0, iconSize / icon_width, iconSize / icon_height)
     gprintf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, canvas_width, "left", nil, 1, fontIncrement)
   
     y = y + nextIconIncrement
