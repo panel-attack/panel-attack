@@ -16,6 +16,7 @@ class(
 
 function Replay.createNewReplay(match)
   local result = {}
+  result.timestamp = to_UTC(os.time())
   result.engineVersion = match.engineVersion
   result.replayVersion = REPLAY_VERSION
   result.seed = match.seed
