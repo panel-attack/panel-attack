@@ -182,7 +182,7 @@ function GameBase:runGameOver()
   self.match:run()
 
   -- if conditions are met, leave the game over screen
-  local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
+  local keyPressed = (tableUtils.length(input.isDown) > 0) or (tableUtils.length(input.mouse.isDown) > 0)
 
   if ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed)) then
     play_optional_sfx(themes[config.theme].sounds.menu_validate)
