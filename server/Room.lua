@@ -227,7 +227,9 @@ function Room:resolve_game_outcome()
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --use UTC time for dates on replays
-      local now = os.date("*t", to_UTC(os.time()))
+      self.replay.timestamp = to_UTC(os.time())
+      self.replay.engineVersion = ENGINE_VERSION
+      local now = os.date("*t", self.replay.timestamp)
       local path = "ftp" .. sep .. "replays" .. sep .. "v" .. ENGINE_VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
       local rep_a_name, rep_b_name = self.a.name, self.b.name
       if self.a.save_replays_publicly == "anonymously" then

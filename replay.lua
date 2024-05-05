@@ -84,7 +84,7 @@ function Replay.loadFromPath(path)
     return false, replay
   else
     if not replay.engineVersion then
-      -- really really bold assumption LOL
+      -- really really bold assumption; serverside replays haven't been tracking engineVersion ever
       replay.engineVersion = "046"
     end
     if not replay.replayVersion then
