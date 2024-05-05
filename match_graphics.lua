@@ -83,7 +83,7 @@ function Match:drawCommunityMessage()
 end
 
 function Match:render()
-  if GAME.droppedFrames > 0 and config.show_fps then
+  if config.show_fps then
     GraphicsUtil.print("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 

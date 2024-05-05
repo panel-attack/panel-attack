@@ -234,6 +234,7 @@ function OptionsMenu:loadGeneralMenu()
     end)),
     MenuItem.createSliderMenuItem("op_input_delay", nil, nil, createConfigSlider("input_repeat_delay", 0, 50)),
     MenuItem.createToggleButtonGroupMenuItem("op_replay_public", nil, nil, publicReplayButtonGroup),
+    MenuItem.createSliderMenuItem("op_performance_drain", nil, nil, createConfigSlider("activeGarbageCollectionPercent", 20, 80)),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
         self:switchToScreen("baseMenu")
       end)

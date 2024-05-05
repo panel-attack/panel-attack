@@ -208,6 +208,7 @@ function GameBase:runGame(dt)
     framesRun = framesRun + 1
     self.match:run()
   until (self.frameInfo.frameCount >= self.frameInfo.expectedFrameCount)
+  GAME.droppedFrames = GAME.droppedFrames + (framesRun - 1)
 
   self:customRun()
   self:updateMusic()

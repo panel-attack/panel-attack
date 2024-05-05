@@ -526,8 +526,8 @@ function Stack.render(self)
     self.telegraph:render()
   end
 
-  self:draw_popfxs()
-  self:draw_cards()
+  self:drawPopEffects()
+  self:drawCards()
 
   self:drawDebugPanels(shake)
   self:drawDebug()
@@ -846,9 +846,6 @@ function Stack:drawMoveCount()
     end
     self:drawNumber(moveNumber, themes[config.theme].move_Pos, themes[config.theme].move_Scale, true)
   end
-
-  self:drawPopEffects()
-  self:drawCards()
 end
 
 local function shouldFlashForFrame(frame)
