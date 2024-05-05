@@ -96,4 +96,26 @@ function ReplayGame:customGameOverSetup()
   self.nextSceneParams = nil
 end
 
+function ReplayGame:drawHUD()
+  for i, stack in ipairs(self.match.stacks) do
+    if config.show_ingame_infos then
+      stack:drawScore()
+      stack:drawSpeed()
+      stack:drawMultibar()
+    end
+
+    -- Draw VS HUD
+    if stack.player then
+      stack:drawPlayerName()
+      stack:drawWinCount()
+      stack:drawRating()
+    end
+
+    stack:drawLevel()
+    if stack.analytic then
+      stack:drawAnalyticData()
+    end
+  end
+end
+
 return ReplayGame
