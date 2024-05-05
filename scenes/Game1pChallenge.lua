@@ -52,7 +52,7 @@ function Game1pChallenge:drawHUD()
   drawY = 320
   self:drawTimeSplits(drawX, drawY)
 
-  if config.show_ingame_infos then
+  if config.show_ingame_infos and not self.match.isPaused then
     for i, stack in ipairs(self.match.stacks) do
       if stack.player and stack.player.human then
         stack:drawMultibar()
