@@ -615,8 +615,14 @@ function Stack.rollbackToFrame(self, frame)
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
+    -- this is for the interpolation of the shake animation only (not a physics relevant field)
     if prev_states[frame - 1] then
       self.prev_shake_time = prev_states[frame - 1].shake_time
+    else
+      -- if this is the oldest rollback frame we don't need to interpolate with previous values
+      -- because there are no previous values, pretend it just went down smoothly
+      -- this can lead to minor differences in display for the same frame when using rewind
+      self.prev_shake_time = self.shake_time + 1
     end
 
     for f = frame, currentFrame do
