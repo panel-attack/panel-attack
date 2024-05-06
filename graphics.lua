@@ -5,6 +5,9 @@ local TouchDataEncoding = require("engine.TouchDataEncoding")
 
 local floor = math.floor
 
+-- there were some experiments for different shake animation
+-- their stale code was removed with commit 4104c86b3005f8d8c2931767d3d2df5618f2ac15
+
   -- Setup the shake data used for rendering the stack shake animation
 local function calculateShakeData(maxShakeFrames, maxAmplitude)
 
