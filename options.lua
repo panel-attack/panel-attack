@@ -313,7 +313,7 @@ local function graphics_menu()
   update_popfx(true)
   update_renderTelegraph(true)
   update_renderAttacks(true)
-  updateShakeIntensity(true)
+  updateShakeIntensity()
 
   while true do
     graphicsMenu:draw()
