@@ -93,3 +93,47 @@ local function moveAfterCountdownV46Test()
 end
 
 moveAfterCountdownV46Test()
+
+local function testShakeFrames()
+  local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
+  match.seed = 1 -- so we consistently have a panel to swap
+  match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
+  local stack = match.P1
+
+  -- imaginary garbage should crash
+  assert(pcall(stack.shakeFrameForGarbageSize, 6, 0) == false)
+  assert(pcall(stack.shakeFrameForGarbageSize, 6, -1) == false)
+
+  assert(stack:shakeFramesForGarbageSize(1, 1) == 18)
+  assert(stack:shakeFramesForGarbageSize(2, 1) == 18)
+  assert(stack:shakeFramesForGarbageSize(1, 2) == 18)
+  assert(stack:shakeFramesForGarbageSize(3, 1) == 18)
+  assert(stack:shakeFramesForGarbageSize(4, 1) == 18)
+  assert(stack:shakeFramesForGarbageSize(2, 2) == 18)
+  assert(stack:shakeFramesForGarbageSize(5, 1) == 24)
+  assert(stack:shakeFramesForGarbageSize(6, 1) == 42)
+  assert(stack:shakeFramesForGarbageSize(3, 2) == 42)
+  assert(stack:shakeFramesForGarbageSize(7, 1) == 42)
+  assert(stack:shakeFramesForGarbageSize(4, 2) == 42)
+  assert(stack:shakeFramesForGarbageSize(3, 3) == 42)
+  assert(stack:shakeFramesForGarbageSize(5, 2) == 42)
+  assert(stack:shakeFramesForGarbageSize(11, 1) == 42)
+  assert(stack:shakeFramesForGarbageSize(6, 2) == 66)
+  assert(stack:shakeFramesForGarbageSize(13, 1) == 66)
+  assert(stack:shakeFramesForGarbageSize(7, 2) == 66)
+  assert(stack:shakeFramesForGarbageSize(5, 3) == 66)
+  assert(stack:shakeFramesForGarbageSize(4, 4) == 66)
+  assert(stack:shakeFramesForGarbageSize(17, 1) == 66)
+  assert(stack:shakeFramesForGarbageSize(6, 3) == 66)
+  assert(stack:shakeFramesForGarbageSize(19, 1) == 66)
+  assert(stack:shakeFramesForGarbageSize(5, 4) == 66)
+  assert(stack:shakeFramesForGarbageSize(7, 3) == 66)
+  assert(stack:shakeFramesForGarbageSize(11, 2) == 66)
+  assert(stack:shakeFramesForGarbageSize(23, 1) == 66)
+  assert(stack:shakeFramesForGarbageSize(6, 4) == 76)
+  assert(stack:shakeFramesForGarbageSize(5, 5) == 76)
+  assert(stack:shakeFramesForGarbageSize(6, 8) == 76)
+  assert(stack:shakeFramesForGarbageSize(6, 1000) == 76)
+end
+
+testShakeFrames()

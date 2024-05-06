@@ -224,15 +224,4 @@ colors = {  red     = {220/255, 50/255,  47/255 },
 
 e_chain_or_combo = { combo=0, chain=1, shock=2 }
 
-garbage_to_shake_time = {
-  [0] = 0,
-  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
-  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
-  66, 66, 66, 76
-}
-
-for i=25,1000 do
-  garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
-end
-
 return consts

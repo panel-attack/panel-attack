@@ -270,6 +270,20 @@ local function graphics_menu()
     graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
+  local function updateShakeIntensity()
+    graphicsMenu:set_button_setting(8, config.shakeIntensity)
+  end
+
+  local function decreaseShakeIntensity()
+    config.shakeIntensity = bound(0.5, config.shakeIntensity - 0.05, 1)
+    updateShakeIntensity()
+  end
+
+  local function increaseShakeIntensity()
+    config.shakeIntensity = bound(0.5, config.shakeIntensity + 0.05, 1)
+    updateShakeIntensity()
+  end
+
   local function nextMenu()
     graphicsMenu:selectNextIndex()
   end
@@ -290,6 +304,7 @@ local function graphics_menu()
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
+  graphicsMenu:add_button(loc("op_shakeIntensity"), increaseShakeIntensity, goEscape, decreaseShakeIntensity, increaseShakeIntensity)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
   updateScaleType(true)
@@ -298,6 +313,7 @@ local function graphics_menu()
   update_popfx(true)
   update_renderTelegraph(true)
   update_renderAttacks(true)
+  updateShakeIntensity()
 
   while true do
     graphicsMenu:draw()
