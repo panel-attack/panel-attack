@@ -567,7 +567,6 @@ function Stack.rollbackCopy(source, other)
   other.cur_dir = source.cur_dir
   other.cur_row = source.cur_row
   other.cur_col = source.cur_col
-  other.prev_shake_time = source.prev_shake_time
   other.shake_time = source.shake_time
   other.peak_shake_time = source.peak_shake_time
   other.do_countdown = source.do_countdown
@@ -600,7 +599,7 @@ function Stack.restoreFromRollbackCopy(self, other)
   end
 end
 
-function Stack.rollbackToFrame(self, frame) 
+function Stack.rollbackToFrame(self, frame)
   local currentFrame = self.clock
   local difference = currentFrame - frame
   local safeToRollback = difference <= MAX_LAG
@@ -616,6 +615,9 @@ function Stack.rollbackToFrame(self, frame)
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
+    if prev_states[frame - 1] then
+      self.prev_shake_time = prev_states[frame - 1].shake_time
+    end
 
     for f = frame, currentFrame do
       self:deleteRollbackCopy(f)
