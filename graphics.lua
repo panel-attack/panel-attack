@@ -2,59 +2,8 @@ require("input")
 require("util")
 local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
-local logger = require("logger")
 
 local floor = math.floor
-local ceil = math.ceil
-
--- Splits the total shake frames into an array of smaller lengths 1 per sine wave
-local function cycleLengthArrayForTotalFrames(frames)
-  local shakeCycleFrames = {}
-  local maxPeriod = math.ceil(frames * 0.2)
-  maxPeriod = math.max(6, maxPeriod) -- we don't want the first shake to ever be too small
-
-  -- We want the lengths to be even so they are symmetrical and hit 0 halfway through
-  if maxPeriod % 2 == 1 then
-    maxPeriod = maxPeriod + 1
-  end
-
-  local remainingFrames = frames
-  while remainingFrames > 0 do
-    if remainingFrames >= maxPeriod then
-      shakeCycleFrames[#shakeCycleFrames+1] = maxPeriod
-      remainingFrames = remainingFrames - maxPeriod
-
-      -- Reduce the length each time so the shake "speeds up" as it gets smaller
-      maxPeriod = math.max(4, math.ceil(maxPeriod * 0.8))
-      if maxPeriod % 2 == 1 then
-        maxPeriod = maxPeriod + 1
-      end
-    else
-      -- Excess frames should go to the beginning not the end, we never want the end to have a bump in frames
-      shakeCycleFrames[1] = shakeCycleFrames[1] + remainingFrames
-      remainingFrames = 0
-    end
-  end
-  return shakeCycleFrames
-end
-
-local function shakeWaveResultForRadians(radians, maxCycleHeight)
-  -- We use -1 here so we go "down" with the first shake to simulate the garbage pushing the stack down on impact
-  local result = -1 * math.sin(radians)
-  result = math.round(result, 4) -- fix rounding errors with floats to keep the rounding down below stable
-
-  -- Pin the top and bottom to have less movement?
-  if result > 0.9 then
-    result = 1
-  end
-  if result < -0.9 then
-    result = -1
-  end
-
-  result = result * maxCycleHeight
-  result = math.integerAwayFromZero(result)
-  return result
-end
 
   -- Setup the shake data used for rendering the stack shake animation
 local function calculateShakeData(maxShakeFrames, maxAmplitude)
