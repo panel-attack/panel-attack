@@ -685,7 +685,9 @@ function Match:handleMatchEnd()
   -- this prepares everything about the replay except the save location
   Replay.finalizeReplay(self, self.replay)
 
-  if not self.aborted then
+  if self.aborted then
+    self.winners = {}
+  else
     local winners = self:getWinners()
     -- determine result
     -- play win sfx
