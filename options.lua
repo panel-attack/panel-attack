@@ -5,7 +5,6 @@ local wait = coroutine.yield
 local memory_before_options_menu = nil
 local theme_index
 local scaleTypeIndex
-local shakeReductionTypeIndex
 local fixedScaleIndex
 local found_themes = {}
 local utf8 = require("utf8")
@@ -270,32 +269,19 @@ local function graphics_menu()
     end
     graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
-  
-  local shakeReductionOptions = {1, 2, 4}
-  local translatedShakeReductionOptions = {loc("op_shake_reduction_none"), loc("op_shake_reduction_normal"), loc("op_shake_reduction_high")}
-  shakeReductionTypeIndex = 1
-  for index, shakeType in ipairs(shakeReductionOptions) do
-    if shakeType == config.shakeReduction then
-      shakeReductionTypeIndex = index
-      break
-    end
+
+  local function updateShakeReduction()
+    graphicsMenu:set_button_setting(8, config.shakeReduction)
   end
 
-  local function updateShakeReductionType(noUpdate)
-    if noUpdate == false then
-      config.shakeReduction = shakeReductionOptions[shakeReductionTypeIndex]
-    end
-    graphicsMenu:set_button_setting(8, translatedShakeReductionOptions[shakeReductionTypeIndex])
+  local function decreaseShakeIntensity()
+    config.shakeReduction = bound(0.5, config.shakeReduction - 0.05, 1)
+    updateShakeReduction()
   end
 
-  local function previousShakeReductionType()
-    shakeReductionTypeIndex = bound(1, shakeReductionTypeIndex - 1, #shakeReductionOptions)
-    updateShakeReductionType(false)
-  end
-
-  local function nextShakeReductionType()
-    shakeReductionTypeIndex = bound(1, shakeReductionTypeIndex + 1, #shakeReductionOptions)
-    updateShakeReductionType(false)
+  local function increaseShakeIntensity()
+    config.shakeReduction = bound(0.5, config.shakeReduction + 0.05, 1)
+    updateShakeReduction()
   end
 
   local function nextMenu()
@@ -318,7 +304,7 @@ local function graphics_menu()
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
-  graphicsMenu:add_button(loc("op_shakeReduction"), nextShakeReductionType, goEscape, previousShakeReductionType, nextShakeReductionType)
+  graphicsMenu:add_button(loc("op_shakeIntensity"), increaseShakeIntensity, goEscape, decreaseShakeIntensity, increaseShakeIntensity)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
   updateScaleType(true)
@@ -327,7 +313,7 @@ local function graphics_menu()
   update_popfx(true)
   update_renderTelegraph(true)
   update_renderAttacks(true)
-  updateShakeReductionType(true)
+  updateShakeReduction(true)
 
   while true do
     graphicsMenu:draw()

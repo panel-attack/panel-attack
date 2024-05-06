@@ -222,7 +222,7 @@ config = {
           configTable.popfx = read_data.popfx
         end
         if type(read_data.shakeReduction) == "number" then
-          configTable.shakeReduction = bound(1, read_data.shakeReduction, 4)
+          configTable.shakeReduction = bound(0.5, read_data.shakeReduction, 1)
         end
         if type(read_data.cardfx_scale) == "number" then
           configTable.cardfx_scale = bound(1, read_data.cardfx_scale, 200)
