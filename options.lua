@@ -270,18 +270,18 @@ local function graphics_menu()
     graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
-  local function updateShakeReduction()
-    graphicsMenu:set_button_setting(8, config.shakeReduction)
+  local function updateShakeIntensity()
+    graphicsMenu:set_button_setting(8, config.shakeIntensity)
   end
 
   local function decreaseShakeIntensity()
-    config.shakeReduction = bound(0.5, config.shakeReduction - 0.05, 1)
-    updateShakeReduction()
+    config.shakeIntensity = bound(0.5, config.shakeIntensity - 0.05, 1)
+    updateShakeIntensity()
   end
 
   local function increaseShakeIntensity()
-    config.shakeReduction = bound(0.5, config.shakeReduction + 0.05, 1)
-    updateShakeReduction()
+    config.shakeIntensity = bound(0.5, config.shakeIntensity + 0.05, 1)
+    updateShakeIntensity()
   end
 
   local function nextMenu()
@@ -313,7 +313,7 @@ local function graphics_menu()
   update_popfx(true)
   update_renderTelegraph(true)
   update_renderAttacks(true)
-  updateShakeReduction(true)
+  updateShakeIntensity(true)
 
   while true do
     graphicsMenu:draw()

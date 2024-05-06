@@ -161,15 +161,14 @@ function math.round(number, numberOfDecimalPlaces)
   end
 end
 
-function math.integerAwayFromZero(number, numberOfDecimalPlaces)
+function math.integerAwayFromZero(number)
   if number == 0 then
     return number
   end
-  local multiplier = 10^(numberOfDecimalPlaces or 0)
   if number > 0 then
-    return math.ceil(number * multiplier) / multiplier
+    return math.ceil(number)
   else 
-    return math.floor(number * multiplier) / multiplier 
+    return math.floor(number)
   end
 end
 

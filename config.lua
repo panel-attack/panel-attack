@@ -65,7 +65,7 @@ config = {
     -- Whether to show the popfx from panels
     popfx                         = true,
     -- How much to divide the shake animation
-    shakeReduction = 1,
+    shakeIntensity = 1,
     -- Not currently settable in game, spacing of popfx
     cardfx_scale                  = 100,
     -- Whether to render the telegraph
@@ -221,8 +221,8 @@ config = {
         if type(read_data.popfx) == "boolean" then
           configTable.popfx = read_data.popfx
         end
-        if type(read_data.shakeReduction) == "number" then
-          configTable.shakeReduction = bound(0.5, read_data.shakeReduction, 1)
+        if type(read_data.shakeIntensity) == "number" then
+          configTable.shakeIntensity = bound(0.5, read_data.shakeIntensity, 1)
         end
         if type(read_data.cardfx_scale) == "number" then
           configTable.cardfx_scale = bound(1, read_data.cardfx_scale, 200)

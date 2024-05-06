@@ -34,10 +34,6 @@ assert(math.integerAwayFromZero(-0.51) == -1)
 assert(math.integerAwayFromZero(-1.1) == -2)
 assert(math.integerAwayFromZero(-1.5) == -2)
 assert(math.integerAwayFromZero(-1.51) == -2)
-assert(math.integerAwayFromZero(12, -1) == 20)
-assert(math.integerAwayFromZero(0.11, 1) == 0.2)
-assert(math.integerAwayFromZero(-1.11, 1) == -1.2)
-assert(math.integerAwayFromZero(0.119, 2) == 0.12)
 
 local dirtyCharacterJson = "{\n\t\"id\":\"Giana\",\n\t\"name\":\"Giana\"\n\t\"chain_style\":\"per_chain\"\n\t\"music_style\":\"dynamic\"\n}"
 local puzzleJson = "{\n  \"Version\": 2,\n  \"Puzzle Sets\": [\n    [\n      \"Set Name\": \"clear puzzle test\",\n      \"Puzzles\": [\n\t\t[\n          \"Puzzle Type\": \"clear\",\n          \"Do Countdown\": false,\n          \"Moves\": 1,\n          \"Stack\": \n           \"\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   920000\n\t\t   290000\n\t\t   920000\",\n        ],\n\t\t[\n          \"Puzzle Type\": \"clear\",\n          \"Do Countdown\": false,\n          \"Moves\": 0,\n          \"Stack\": \n           \"\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   020000\n\t\t   122[=]\n\t\t   245156\n\t\t   325363\",\n\t\t   \"Stop\": 60\n        ],\n      ]\n    ],\n  ]\n}"
