@@ -350,6 +350,27 @@ function OptionsMenu:loadGraphicsMenu()
     end
   })
 
+  local function getShakeIntensitySlider()
+    
+    local slider = Slider({
+      min = 50,
+      max = 100,
+      value = (config.shakeIntensity * 100) or 100,
+      tickLength = 2,
+      onValueChange = function(slider)
+        config.shakeIntensity = slider.value / 100
+      end
+    })
+    slider.receiveInputs = function(s, input)
+      if input:isPressedWithRepeat("Left") then
+        s:setValue(s.value - 5)
+      elseif input:isPressedWithRepeat("Right") then
+        s:setValue(s.value + 5)
+      end
+    end
+    return slider
+  end
+
   local graphicsMenuOptions = {
     MenuItem.createStepperMenuItem("op_theme", nil, nil, themeStepper),
     MenuItem.createToggleButtonGroupMenuItem("op_scale", nil, nil, scaleButtonGroup),
@@ -357,6 +378,7 @@ function OptionsMenu:loadGraphicsMenu()
     MenuItem.createToggleButtonGroupMenuItem("op_popfx", nil, nil, createToggleButtonGroup("popfx")),
     MenuItem.createToggleButtonGroupMenuItem("op_renderTelegraph", nil, nil, createToggleButtonGroup("renderTelegraph")),
     MenuItem.createToggleButtonGroupMenuItem("op_renderAttacks", nil, nil, createToggleButtonGroup("renderAttacks")),
+    MenuItem.createSliderMenuItem("op_shakeIntensity", nil, nil, getShakeIntensitySlider()),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
           GAME.showGameScaleUntil = GAME.timer
           self:switchToScreen("baseMenu")

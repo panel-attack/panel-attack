@@ -4,7 +4,6 @@ local TouchDataEncoding = require("engine.TouchDataEncoding")
 local consts = require("consts")
 
 local floor = math.floor
-local ceil = math.ceil
 
 -- frames to use for bounce animation
 local BOUNCE_TABLE = {1, 1, 1, 1,
@@ -36,28 +35,72 @@ local POPFX_FADE_ANIMATION = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
 
 local GFX_SCALE = consts.GFX_SCALE
 
-local shake_arr = {}
 
--- Setup the shake_arr data used for rendering the stack shake animation
-local shake_idx = -6
-for i = 14, 6, -1 do
-  local x = -math.pi
-  local step = math.pi * 2 / i
-  for j = 1, i do
-    shake_arr[shake_idx] = (1 + math.cos(x)) / 2
-    x = x + step
-    shake_idx = shake_idx + 1
+-- there were some experiments for different shake animation
+-- their stale code was removed with commit 4104c86b3005f8d8c2931767d3d2df5618f2ac15
+
+-- Setup the shake data used for rendering the stack shake animation
+local function calculateShakeData(maxShakeFrames, maxAmplitude)
+
+  local shakeData = {}
+
+  local shakeIndex = -6
+  for i = 14, 6, -1 do
+    local x = -math.pi
+    local step = math.pi * 2 / i
+    for j = 1, i do
+      shakeData[shakeIndex] = (1 + math.cos(x)) / 2
+      x = x + step
+      shakeIndex = shakeIndex + 1
+    end
   end
+
+  -- 1 -> 1
+  -- #shake -> 0
+  local shakeStep = 1 / (#shakeData - 1)
+  local shakeMultiplier = 1
+  for i = 1, #shakeData do
+    shakeData[i] = shakeData[i] * shakeMultiplier * GFX_SCALE * 13
+    -- print(shakeData[i])
+    shakeMultiplier = shakeMultiplier - shakeStep
+  end
+
+  return shakeData
 end
 
--- 1 -> 1
--- #shake -> 0
-local shake_step = 1 / (#shake_arr - 1)
-local shake_mult = 1
-for i = 1, #shake_arr do
-  shake_arr[i] = shake_arr[i] * shake_mult
-  -- print(shake_arr[i])
-  shake_mult = shake_mult - shake_step
+local shakeOffsetData = calculateShakeData()
+
+function Stack:currentShakeOffset()
+  return self:shakeOffsetForShakeFrames(self.shake_time, self.prev_shake_time)
+end
+
+local function privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+  if frames <= 0 then
+    return 0
+  end
+
+  local lookupIndex = #shakeOffsetData - frames
+  local result = shakeOffsetData[lookupIndex] or 0
+  if result ~= 0 then
+    result = math.integerAwayFromZero(result * shakeIntensity)
+  end
+  return result
+end
+
+function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeIntensity)
+
+  if shakeIntensity == nil then
+    shakeIntensity = config.shakeIntensity
+  end
+
+  local result = privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+  -- If we increased shake time we don't want to hard jump to the new value as its jarring.
+  -- Interpolate on the first frame to smooth it out a little bit.
+  if previousShakeTime > 0 and previousShakeTime < frames then
+    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeIntensity)
+    result = math.integerAwayFromZero((result + previousOffset) / 2)
+  end
+  return result
 end
 
 -- Update all the card frames used for doing the card animation
@@ -506,17 +549,16 @@ function Stack.render(self)
     shockGarbageImages = panels[self.panels_dir].images.metals
   end
 
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local shakeOffset = self:currentShakeOffset() / GFX_SCALE
 
-  self:drawPanels(garbageImages, shockGarbageImages, shake)
+  self:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
 
   self:drawFrame()
-  self:drawWall(shake, self.height)
+  self:drawWall(shakeOffset, self.height)
 
   -- Draw the cursor
   if self:game_ended() == false then
-    self:render_cursor(shake)
+    self:render_cursor(shakeOffset)
   end
 
   self:drawCountdown()
@@ -529,7 +571,7 @@ function Stack.render(self)
   self:drawPopEffects()
   self:drawCards()
 
-  self:drawDebugPanels(shake)
+  self:drawDebugPanels(shakeOffset)
   self:drawDebug()
 
 end
@@ -625,16 +667,10 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   end
 
   -- Shake bar
-  if shake_time == 0 or self.maxShake == nil then
-    self.maxShake = 0
-  end
-  if shake_time > self.maxShake then
-    self.maxShake = shake_time
-  end
 
   local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
-  if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-    multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
+  if self.peak_shake_time > 0 and shake_time >= self.pre_stop_time + stop_time then
+    multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.peak_shake_time) * 3
   end
   if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
     multi_stop_bar = stop_time * (self.theme.images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
