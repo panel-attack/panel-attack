@@ -80,6 +80,23 @@ local function general_menu()
     update_replay_preference()
   end
 
+  local activeGarbageCollectionPercent = config.activeGarbageCollectionPercent * 100
+
+  local function updateGarbageCollectionPercent()
+    config.activeGarbageCollectionPercent = activeGarbageCollectionPercent / 100
+    generalMenu:set_button_setting(7, activeGarbageCollectionPercent)
+  end
+
+  local function increaseGarbageCollectionPercent()
+    activeGarbageCollectionPercent = bound(10, activeGarbageCollectionPercent + 1, 80)
+    updateGarbageCollectionPercent()
+  end
+
+  local function decreaseGarbageCollectionPercent()
+    activeGarbageCollectionPercent = bound(10, activeGarbageCollectionPercent - 1, 80)
+    updateGarbageCollectionPercent()
+  end
+
   local function nextMenu()
     generalMenu:selectNextIndex()
   end
@@ -99,6 +116,7 @@ local function general_menu()
   generalMenu:add_button(loc("op_analytics"), update_analytics, goEscape, update_analytics, update_analytics)
   generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
+  generalMenu:add_button(loc("op_performance_drain"), nextMenu, goEscape, decreaseGarbageCollectionPercent, increaseGarbageCollectionPercent)
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_countdown(true)
   update_fps(true)
@@ -106,6 +124,7 @@ local function general_menu()
   update_analytics(true)
   update_input_repeat_delay()
   update_replay_preference()
+  updateGarbageCollectionPercent()
 
   while true do
     generalMenu:draw()

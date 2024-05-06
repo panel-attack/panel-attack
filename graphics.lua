@@ -594,6 +594,12 @@ function Stack:drawDebug()
   end
 end
 
+local function shouldFlashForFrame(frame)
+  local flashFrames = 1
+  flashFrames = 2 -- add config
+  return frame % (flashFrames * 2) < flashFrames
+end
+
 -- Renders the player's stack on screen
 function Stack.render(self)
   if self.canvas == nil then
@@ -722,7 +728,7 @@ function Stack.render(self)
                 local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
                 draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
               end
-            elseif flash_time % 2 == 1 then
+            elseif shouldFlashForFrame(flash_time) == false then
               if panel.metal then
                 draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
                 draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
@@ -740,10 +746,10 @@ function Stack.render(self)
             local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
-            elseif flash_time % 2 == 1 then
+            elseif shouldFlashForFrame(flash_time) == false then
               draw_frame = 1
             else
-              draw_frame = 5
+              draw_frame = 5 -- flash
             end
           elseif panel.state == "popping" then
             draw_frame = 6
