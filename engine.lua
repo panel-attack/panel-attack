@@ -835,7 +835,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
-              local shake_time = self:shakeFramesForGarbageSize(width * height)
+              local shake_time = self:shakeFramesForGarbageSize(width, height)
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
@@ -2249,7 +2249,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
   end
 
   self.garbageCreatedCount = self.garbageCreatedCount + 1
-  local shakeTime = self:shakeFramesForGarbageSize(width * height)
+  local shakeTime = self:shakeFramesForGarbageSize(width, height)
 
   for row = originRow, originRow + height - 1 do
     if not self.panels[row] then
@@ -2594,19 +2594,24 @@ end
 
 
 local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
-  [0] = 0,
-  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
-  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
-  66, 66, 66, 76
+  18, 18, 18, 18, 24, 42,
+  42, 42, 42, 42, 42, 66,
+  66, 66, 66, 66, 66, 66,
+  66, 66, 66, 66, 66, 76
 }
 
-function Stack:shakeFramesForGarbageSize(size)
-  assert(size > 0)
-  if size == 0 then
-    return 0
+-- returns the amount of shake frames for a piece of garbage with the given dimensions
+function Stack:shakeFramesForGarbageSize(width, height)
+  -- shake time directly scales with the number of panels contained in the garbage
+  local panelCount = width * height
+
+  -- sanitization for garbage dimensions has to happen elsewhere (garbage queue?), not here
+
+  if panelCount > #GARBAGE_SIZE_TO_SHAKE_FRAMES then
+    return GARBAGE_SIZE_TO_SHAKE_FRAMES[#GARBAGE_SIZE_TO_SHAKE_FRAMES]
+  elseif panelCount > 0 then
+    return GARBAGE_SIZE_TO_SHAKE_FRAMES[panelCount]
+  else
+    error("Trying to determine shake time of a garbage block with width " .. width .. " and height " .. height)
   end
-  if size > 24 then
-    size = 24
-  end
-  return GARBAGE_SIZE_TO_SHAKE_FRAMES[size]
 end
