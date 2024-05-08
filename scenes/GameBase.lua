@@ -136,7 +136,7 @@ function GameBase:handlePause()
     if self.match.isPaused then
       SoundController:pauseMusic()
     else
-      SoundController:playMusic()
+      SoundController:playMusic(self.musicSource.stageTrack)
     end
     Menu.playValidationSfx()
   end

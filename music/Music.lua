@@ -8,7 +8,7 @@ local Music = class(function(music, main, start)
   music.start = start
   music.currentSource = nil
   music.mainStartTime = nil
-  music.isPaused = false
+  music.paused = false
 end)
 
 
@@ -28,6 +28,7 @@ function Music:play()
   end
 
   self.currentSource:play()
+  self.paused = false
 end
 
 function Music:isPlaying()
@@ -37,7 +38,7 @@ end
 function Music:stop()
   self.currentSource = nil
   self.mainStartTime = nil
-  self.isPaused = false
+  self.paused = false
   self.main:stop()
   if self.start then
     self.start:stop()
@@ -45,10 +46,14 @@ function Music:stop()
 end
 
 function Music:pause()
-  self.isPaused = true
+  self.paused = true
   if self.currentSource then
     self.currentSource:pause()
   end
+end
+
+function Music:isPaused()
+  return self.paused
 end
 
 function Music:setVolume(volume)
@@ -71,7 +76,7 @@ function Music:isLooping()
 end
 
 function Music:update()
-  if not self.isPaused then
+  if not self.paused then
     if self.start and self.currentSource == self.start then
       if self.mainStartTime - love.timer.getTime() < 0.007 then
         self.currentSource = self.main
