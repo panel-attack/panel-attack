@@ -113,7 +113,7 @@ function GameBase:load(sceneParams)
   self.match = sceneParams.match
   self.match:connectSignal("matchEnded", self, self.genericOnMatchEnded)
   self.match:connectSignal("dangerMusicChanged", self, self.changeMusic)
-  self.match:connectSignal("countdownEnded", self, self.onCountdownEnd)
+  self.match:connectSignal("countdownEnded", self, self.onGameStart)
 
   self.stage = stages[self.match.stageId]
   self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
@@ -233,7 +233,7 @@ function GameBase:musicCanChange()
   return true
 end
 
-function GameBase:onCountdownEnd(match)
+function GameBase:onGameStart(match)
   SoundController:playMusic(self.musicSource.stageTrack)
 end
 

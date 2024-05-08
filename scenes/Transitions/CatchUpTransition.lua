@@ -17,6 +17,7 @@ function CatchUpTransition:update(dt)
   self.timePassed = self.timePassed + dt
   if not self.match.P1.play_to_end then
     self.progress = 1
+    self.newScene:onGameStart()
   else
     self.progress = self.match.P1.clock / #self.match.P1.confirmedInput
   end
