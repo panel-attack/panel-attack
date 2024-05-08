@@ -42,7 +42,7 @@ end
 function PuzzleGame:customRun()
   -- reset level
   if (self.inputConfiguration and self.inputConfiguration.isDown["TauntUp"]) and not self.match.isPaused then
-    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
     self.match:abort()
     self.match.players[1]:setWantsReady(true)
   end
@@ -57,13 +57,11 @@ function PuzzleGame:runGameOver()
   local keyPressed = tableUtils.trueForAny(self.inputConfiguration.isDown, function(key) return key end)
 
   if (keyPressed) then
-    play_optional_sfx(themes[config.theme].sounds.menu_validate)
-    setMusicFadePercentage(1) -- reset the music back to normal config volume
+    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
     SFX_GameOver_Play = 0
     if self.match.players[1].settings.puzzleIndex <= #self.match.players[1].settings.puzzleSet.puzzles then
       self.match.players[1]:setWantsReady(true)
     else
-      stop_the_music()
       sceneManager:switchToScene(sceneManager:createScene("PuzzleMenu"))
     end
   end

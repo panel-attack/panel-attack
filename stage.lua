@@ -4,6 +4,10 @@ local fileUtils = require("FileUtils")
 local consts = require("consts")
 local sceneManager = require("scenes.sceneManager")
 local GraphicsUtil = require("graphics_util")
+local Music = require("music.Music")
+local StageTrack = require("music.StageTrack")
+local DynamicStageTrack = require("music.DynamicStageTrack")
+local RelayStageTrack = require("music.RelayStageTrack")
 require("UpdatingImage")
 
 -- Stuff defined in this file:
@@ -31,6 +35,7 @@ Stage =
     s.fully_loaded = false
     s.is_visible = true
     s.music_style = "normal"
+    s.stageTrack = nil
   end
 )
 
@@ -270,8 +275,8 @@ function Stage.graphics_uninit(self)
 end
 
 -- applies the current configuration volume to a stage
-function Stage.apply_config_volume(self)
-  set_volume(self.musics, config.music_volume / 100)
+function Stage.applyConfigVolume(self)
+  SoundController:applyMusicVolume(self.musics)
 end
 
 -- initializes stage music
@@ -281,7 +286,7 @@ function Stage.sound_init(self, full, yields)
   end
   local stage_musics = full and other_musics or basic_musics
   for _, music in ipairs(stage_musics) do
-    self.musics[music] = load_sound_from_supported_extensions(self.path .. "/" .. music, true)
+    self.musics[music] = fileUtils.loadSoundFromSupportExtensions(self.path .. "/" .. music, true)
     -- Set looping status for music.
     -- Intros won't loop, but other parts should.
     if self.musics[music] then
@@ -299,7 +304,22 @@ function Stage.sound_init(self, full, yields)
     end
   end
 
-  self:apply_config_volume()
+  self:applyConfigVolume()
+
+  if full and self.musics.normal_music then
+    local normalMusic = Music(self.musics.normal_music, self.musics.normal_music_start)
+    local dangerMusic
+    if self.musics.danger_music then
+      dangerMusic = Music(self.musics.danger_music, self.musics.danger_music_start)
+    end
+    if self.music_style == "normal" then
+      self.stageTrack = StageTrack(normalMusic, dangerMusic)
+    elseif self.music_style == "dynamic" then
+      self.stageTrack = DynamicStageTrack(normalMusic, dangerMusic)
+    elseif self.music_style == "relay" then
+      self.stageTrack = RelayStageTrack(normalMusic, dangerMusic)
+    end
+  end
 end
 
 -- uninits stage music

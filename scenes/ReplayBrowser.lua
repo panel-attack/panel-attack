@@ -127,30 +127,30 @@ function ReplayBrowser:update()
       sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
     if input.isDown["MenuSelect"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
       if selectMenuItem() then
         state = "info"
       end
     end
     if input.isDown["MenuBack"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
       setPathToParentDir()
     end
     if input.isDown["MenuUp"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_move)
+      SoundController:playSfx(themes[config.theme].sounds.menu_move)
       moveCursor(-1)
     end
     if input.isDown["MenuDown"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_move)
+      SoundController:playSfx(themes[config.theme].sounds.menu_move)
       moveCursor(1)
     end
   elseif state == "info" then
     if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
       state = "browser"
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
       local match = Match.createFromReplay(selectedReplay, false)
       match.renderDuringPause = true
       match:start()
@@ -220,7 +220,6 @@ function ReplayBrowser:draw()
 end
 
 function ReplayBrowser:unload()
-  stop_the_music()
 end
 
 return ReplayBrowser

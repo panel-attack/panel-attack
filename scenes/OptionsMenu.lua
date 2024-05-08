@@ -262,14 +262,12 @@ function OptionsMenu:loadGraphicsMenu()
     onChange = function(value)
       Menu.playMoveSfx()
       config.theme = value
-      stop_the_music()
+      SoundController:stopMusic()
       theme_init()
       stages_init()
       CharacterLoader.initCharacters()
       self.backgroundImage = themes[config.theme].images.bg_main
-      if themes[config.theme].musics["main"] then
-        find_and_add_music(themes[config.theme].musics, "main")
-      end
+      SoundController:playMusic(themes[config.theme].stageTracks.main)
     end
   })
 
@@ -408,14 +406,14 @@ function OptionsMenu:loadSoundMenu()
   })
 
   local audioMenuOptions = {
-    MenuItem.createSliderMenuItem("op_vol", nil, nil, createConfigSlider("master_volume", 0, 100, function()
-        apply_config_volume()
+    MenuItem.createSliderMenuItem("op_vol", nil, nil, createConfigSlider("master_volume", 0, 100, function(slider)
+        SoundController:setMasterVolume(slider.value)
       end)),
     MenuItem.createSliderMenuItem("op_vol_sfx", nil, nil, createConfigSlider("SFX_volume", 0, 100, function()
-        apply_config_volume()
+        SoundController:applyConfigVolumes()
       end)),
     MenuItem.createSliderMenuItem("op_vol_music", nil, nil, createConfigSlider("music_volume", 0, 100, function()
-        apply_config_volume()
+        SoundController:applyConfigVolumes()
       end)),
       MenuItem.createStepperMenuItem("op_use_music_from", nil, nil, musicFrequencyStepper),
       MenuItem.createToggleButtonGroupMenuItem("op_music_delay", nil, nil, createToggleButtonGroup("danger_music_changeback_delay")),
@@ -496,9 +494,7 @@ function OptionsMenu:load()
   self.menus = self:loadScreens()
 
   self.backgroundImage = themes[config.theme].images.bg_main
-  if themes[config.theme].musics["main"] then
-    find_and_add_music(themes[config.theme].musics, "main")
-  end
+  SoundController:playMusic(themes[config.theme].stageTracks.main)
   self.uiRoot:addChild(self.menus.baseMenu)
 end
 

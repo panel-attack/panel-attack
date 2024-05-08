@@ -47,7 +47,7 @@ local BUTTON_WIDTH = 60
 local BUTTON_HEIGHT = 25
 
 function SimpleGameSetupMenu:startGame()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
   GAME.localPlayer:setSpeed(self.speedSlider.value)
   GAME.localPlayer:setDifficulty(self.difficultyButtons.value)
   if self.typeButtons.value == "Classic" then
@@ -60,7 +60,7 @@ function SimpleGameSetupMenu:startGame()
 end
 
 function SimpleGameSetupMenu:exit()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
   GAME.battleRoom:shutdown()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
@@ -83,7 +83,7 @@ function SimpleGameSetupMenu:load(sceneParams)
         },
         values = {1, 2, 3, 4},
         selectedIndex = GAME.config.endless_difficulty or 1,
-        onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
+        onChange = function() SoundController:playSfx(themes[config.theme].sounds.menu_move) end
       }
   )
 
@@ -92,7 +92,7 @@ function SimpleGameSetupMenu:load(sceneParams)
       tickLength = tickLength,
       value = config.endless_level or 5,
       onValueChange = function(s)
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        SoundController:playSfx(themes[config.theme].sounds.menu_move)
       end
     })
   
@@ -110,7 +110,7 @@ function SimpleGameSetupMenu:load(sceneParams)
       },
       values = {"Classic", "Modern"},
       selectedIndex = config.endless_level and 2 or 1,
-      onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
+      onChange = function() SoundController:playSfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
@@ -137,9 +137,7 @@ function SimpleGameSetupMenu:load(sceneParams)
     self.uiRoot:addChild(self.modernMenu)
   end
   
-  if themes[config.theme].musics["main"] then
-    find_and_add_music(themes[config.theme].musics, "main")
-  end
+  SoundController:playMusic(themes[config.theme].stageTracks.main)
 end
 
 function SimpleGameSetupMenu:update(dt)

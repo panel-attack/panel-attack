@@ -53,7 +53,7 @@ function DesignHelper:loadGrid()
   -- })
   -- self.uiRoot:addChild(self.cursor)
   -- self.cursor.escapeCallback = function()
-  --   play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+  --   SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
   --   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   -- end
 end

@@ -9,6 +9,10 @@ local fileUtils = require("FileUtils")
 local consts = require("consts")
 local GFX_SCALE = consts.GFX_SCALE
 local GraphicsUtil = require("graphics_util")
+local Music = require("music.Music")
+local StageTrack = require("music.StageTrack")
+local DynamicStageTrack = require("music.DynamicStageTrack")
+local RelayStageTrack = require("music.RelayStageTrack")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -38,6 +42,7 @@ Character =
     self.popfx_burstScale = 1
     self.popfx_fadeScale = 1
     self.music_style = "normal"
+    self.stageTrack = nil
     self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return fileUtils.getFileNameWithoutExtension(file) end)
   end
 )
@@ -352,7 +357,7 @@ function Character.sound_init(self, full, yields)
   -- music
   local character_musics = full and other_musics or basic_musics
   for _, music in ipairs(character_musics) do
-    self.musics[music] = load_sound_from_supported_extensions(self.path .. "/" .. music, true)
+    self.musics[music] = fileUtils.loadSoundFromSupportExtensions(self.path .. "/" .. music, true)
     -- Set looping status for music.
     -- Intros won't loop, but other parts should.
     if self.musics[music] then
@@ -370,7 +375,22 @@ function Character.sound_init(self, full, yields)
     end
   end
 
-  self:apply_config_volume()
+  self:applyConfigVolume()
+
+  if full and self.musics.normal_music then
+    local normalMusic = Music(self.musics.normal_music, self.musics.normal_music_start)
+    local dangerMusic
+    if self.musics.danger_music then
+      dangerMusic = Music(self.musics.danger_music, self.musics.danger_music_start)
+    end
+    if self.music_style == "normal" then
+      self.stageTrack = StageTrack(normalMusic, dangerMusic)
+    elseif self.music_style == "dynamic" then
+      self.stageTrack = DynamicStageTrack(normalMusic, dangerMusic)
+    elseif self.music_style == "relay" then
+      self.stageTrack = RelayStageTrack(normalMusic, dangerMusic)
+    end
+  end
 end
 
 function Character.sound_uninit(self)
@@ -503,7 +523,7 @@ function Character.loadSfx(self, name, yields)
         sfx[targetIndex] = self:loadSubSfx(name, index)
       end
     else
-      local sound = load_sound_from_supported_extensions(self.path .. "/" .. files[i], false)
+      local sound = fileUtils.loadSoundFromSupportExtensions(self.path .. "/" .. files[i], false)
       if sound ~= nil then
         sfx[targetIndex] = sound
       end
@@ -552,7 +572,7 @@ function Character.loadSubSfx(self, name, index, yields)
 
   if #subfiles > 0 then
     for j = 1, #subfiles do
-      local subSound = load_sound_from_supported_extensions(self.path .. "/" .. subfiles[j], false)
+      local subSound = fileUtils.loadSoundFromSupportExtensions(self.path .. "/" .. subfiles[j], false)
       if subSound ~= nil then
         sfxTable[#sfxTable+1] = subSound
       end
@@ -603,22 +623,11 @@ end
 
 -- sound playing / sound control
 
-local function playRandomSfx(sfxTable, fallback)
-  if not GAME.muteSoundEffects then
-    if sfxTable and #sfxTable > 0 then
-      local sfx = tableUtils.getRandomElement(sfxTable)
-      sfx:play()
-    elseif fallback then
-      playRandomSfx(fallback)
-    end
-  end
-end
-
 function Character.playSelectionSfx(self)
   if self.sounds.selection and #self.sounds.selection > 0 then
-    playRandomSfx(self.sounds.selection)
+    SoundController:playRandomSfx(self.sounds.selection)
   else
-    play_optional_sfx(themes[config.theme].sounds.menu_validate)
+    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
   end
 end
 
@@ -631,32 +640,32 @@ function Character.playComboSfx(self, size)
       -- so if this error ever occurs, something is seriously cursed
       error("Found neither chain nor combo sfx upon trying to play combo sfx")
     else
-      playRandomSfx(self.sounds.chain[0])
+      SoundController:playRandomSfx(self.sounds.chain[0])
     end
   else
     -- combo sfx available!
     if self.combo_style == comboStyle.classic then
       -- roll among all combos in case a per_combo style character had its combostyle changed to classic
       local rolledIndex = math.random(#self.sounds.combo)
-      playRandomSfx(self.sounds.combo[rolledIndex])
+      SoundController:playRandomSfx(self.sounds.combo[rolledIndex])
     else
       -- use fallback sound if the combo size is higher than the highest combo sfx
-      playRandomSfx(self.sounds.combo[size], self.sounds.combo[0])
+      SoundController:playRandomSfx(self.sounds.combo[size], self.sounds.combo[0])
     end
   end
 end
 
 function Character.playChainSfx(self, length)
   -- chain[0] always exists by virtue of the default character SFX
-  playRandomSfx(self.sounds.chain[length], self.sounds.chain[0])
+  SoundController:playRandomSfx(self.sounds.chain[length], self.sounds.chain[0])
 end
 
 function Character.playShockSfx(self, size)
   if #self.sounds.shock > 0 then
-    playRandomSfx(self.sounds.shock[size], self.sounds.shock[0])
+    SoundController:playRandomSfx(self.sounds.shock[size], self.sounds.shock[0])
   else
     if size >= 6 and #self.sounds.combo_echo > 0 then
-      playRandomSfx(self.sounds.combo_echo)
+      SoundController:playRandomSfx(self.sounds.combo_echo)
     else
       self:playComboSfx(size)
     end
@@ -665,33 +674,26 @@ end
 
 -- Stops old combo / chain sounds and plays the appropriate chain or combo sound
 function Character.playAttackSfx(self, attack)
-  local function stopPreviousSounds()
-    -- stop previous sounds if any
+  -- stop previous attack sounds if any
+  local function stopAttackSounds()
     for _, v in pairs(self.sounds.combo) do
-      for i = 1, #v do
-        stopIfPlaying(v[i])
-      end
+      SoundController:stopSfx(v)
     end
+
     if tableUtils.length(self.sounds.shock) > 0 then
       for _, v in pairs(self.sounds.shock) do
-        for i = 1, #v do
-          stopIfPlaying(v[i])
-        end
+        SoundController:stopSfx(v)
       end
     else
-      for i = 1, #self.sounds.combo_echo do
-        stopIfPlaying(self.sounds.combo_echo[i])
-      end
+      SoundController:stopSfx(self.sounds.combo_echo)
     end
 
     for _, v in pairs(self.sounds.chain) do
-      for i = 1, #v do
-        stopIfPlaying(v[i])
-      end
+      SoundController:stopSfx(v)
     end
   end
 
-  stopPreviousSounds()
+  stopAttackSounds()
 
   -- play combos or chains
   if attack.type == consts.ATTACK_TYPE.combo then
@@ -705,47 +707,39 @@ end
 
 function Character.playGarbageMatchSfx(self)
   if #self.sounds.garbage_match ~= 0 then
-    for _, v in pairs(self.sounds.garbage_match) do
-      stopIfPlaying(v)
-    end
-    playRandomSfx(self.sounds.garbage_match)
+    SoundController:stopSfx(self.sounds.garbage_match)
+    SoundController:playRandomSfx(self.sounds.garbage_match)
   end
 end
 
 function Character.playGarbageLandSfx(self)
   if #self.sounds.garbage_land ~= 0 then
-    for _, v in pairs(self.sounds.garbage_land) do
-      stopIfPlaying(v)
-    end
-    playRandomSfx(self.sounds.garbage_land)
+    SoundController:stopSfx(self.sounds.garbage_land)
+    SoundController:playRandomSfx(self.sounds.garbage_land)
   end
 end
 
 -- tauntUp is rolled externally in order to send the exact same taunt index to the enemy as plays locally
 function Character.playTauntUpSfx(self, tauntUp)
   if #self.sounds.taunt_up ~= 0 then
-    for _, t in ipairs(self.sounds.taunt_up) do
-      stopIfPlaying(t)
-    end
+    SoundController:stopSfx(self.sounds.taunt_up)
     -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_up[tauntUp] then
-      self.sounds.taunt_up[tauntUp]:play()
+      SoundController:playSfx(self.sounds.taunt_up[tauntUp])
     else
-      playRandomSfx(self.sounds.taunt_up)
+      SoundController:playRandomSfx(self.sounds.taunt_up, self.sounds.taunt_down)
     end
   end
 end
 
 function Character.playTauntDownSfx(self, tauntDown)
   if #self.sounds.taunt_down ~= 0 then
-    for _, t in ipairs(self.sounds.taunt_down) do
-      stopIfPlaying(t)
-    end
+    SoundController:stopSfx(self.sounds.taunt_down)
     -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_down[tauntDown] then
-      self.sounds.taunt_down[tauntDown]:play()
+      SoundController:playSfx(self.sounds.taunt_down[tauntDown])
     else
-      playRandomSfx(self.sounds.taunt_down)
+      SoundController:playRandomSfx(self.sounds.taunt_down, self.sounds.taunt_up)
     end
   end
 end
@@ -760,14 +754,10 @@ function Character.playTaunt(self, tauntType, index)
 end
 
 function Character:playWinSfx()
-  if #self.sounds.win > 0 then
-    playRandomSfx(self.sounds.win)
-  else
-    themes[config.theme].sounds.fanfare1:play()
-  end
+  SoundController:playRandomSfx(self.sounds.win, themes[config.theme].sounds.fanfare1)
 end
 
-function Character.apply_config_volume(self)
-  set_volume(self.sounds, config.SFX_volume / 100)
-  set_volume(self.musics, config.music_volume / 100)
+function Character.applyConfigVolume(self)
+  SoundController:applySfxVolume(self.sounds)
+  SoundController:applyMusicVolume(self.musics)
 end

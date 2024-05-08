@@ -35,7 +35,6 @@ function TitleScreen:update(dt)
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then
     Menu.playValidationSfx()
-    stop_the_music()
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
@@ -46,10 +45,7 @@ function TitleScreen:draw()
 end
 
 function TitleScreen:load(sceneParams)
-  stop_the_music()
-  if themes[config.theme].musics["title_screen"] then
-    find_and_add_music(themes[config.theme].musics, "title_screen")
-  end
+  SoundController:playMusic(themes[config.theme].stageTracks.title_screen)
 end
 
 function TitleScreen:unload()

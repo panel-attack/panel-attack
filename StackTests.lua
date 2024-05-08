@@ -20,8 +20,6 @@ local function puzzleTest()
   match:run()
   match:run()
   assert(stack:canSwap(1, 4), "should be able to swap")
-
-  stop_the_music()
 end
 
 puzzleTest()
@@ -42,8 +40,6 @@ local function clearPuzzleTest()
   match:run()
   match:run()
   assert(stack:canSwap(1, 4), "should be able to swap")
-
-  stop_the_music()
 end
 
 clearPuzzleTest()
@@ -62,8 +58,6 @@ local function basicSwapTest()
   assert(stack.queuedSwapRow == 1)
   stack:new_row()
   assert(stack.queuedSwapRow == 2)
-
-  stop_the_music()
 end
 
 basicSwapTest()
@@ -83,8 +77,6 @@ local function moveAfterCountdownV46Test()
 
   StackReplayTestingUtils:simulateMatchUntil(match, lastBlockedCursorMovementFrame + 1)
   assert(stack.cursorLock == nil, "Cursor should not be locked after countdown")
-
-  stop_the_music()
 end
 
 moveAfterCountdownV46Test()

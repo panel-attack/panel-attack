@@ -59,7 +59,11 @@ function ReplayGame:runGame()
       self.frameAdvance = true
     else
       self.match:togglePause()
-      setMusicPaused(self.match.isPaused)
+      if self.match.isPaused then
+        SoundController:pauseMusic()
+      else
+        SoundController:playMusic()
+      end
     end
   elseif input:isPressedWithRepeat("Right") then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex + 1, #self.playbackSpeeds)
@@ -73,7 +77,11 @@ function ReplayGame:runGame()
     end
   elseif input.isDown["MenuPause"] then
     self.match:togglePause()
-    setMusicPaused(self.match.isPaused)
+    if self.match.isPaused then
+      SoundController:pauseMusic()
+    else
+      SoundController:playMusic()
+    end
   end
 
   if self.match.isPaused and input.isDown["MenuEsc"] then

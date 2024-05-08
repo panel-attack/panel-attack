@@ -237,14 +237,14 @@ end
 function Menu:scrollUp()
   if self.selectedIndex > 1 then
     self:setSelectedIndex(self.selectedIndex - 1)
-    play_optional_sfx(themes[config.theme].sounds.menu_move)
+    SoundController:playSfx(themes[config.theme].sounds.menu_move)
   end
 end
 
 function Menu:scrollDown()
   if self.selectedIndex < #self.menuItems then
     self:setSelectedIndex(self.selectedIndex + 1)
-    play_optional_sfx(themes[config.theme].sounds.menu_move)
+    SoundController:playSfx(themes[config.theme].sounds.menu_move)
   end
 end
 
@@ -273,7 +273,7 @@ function Menu:update(dt)
   if input.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
       self:setSelectedIndex(#self.menuItems)
-      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
     end
   end
 end
@@ -284,15 +284,15 @@ end
 
 -- sound effects
 function Menu.playCancelSfx()
-  play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+  SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
 end
 
 function Menu.playValidationSfx()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
 end
 
 function Menu.playMoveSfx()
-  play_optional_sfx(themes[config.theme].sounds.menu_move)
+  SoundController:playSfx(themes[config.theme].sounds.menu_move)
 end
 
 return Menu

@@ -58,15 +58,14 @@ function PuzzleMenu:startGame(puzzleSet)
     end
   end
 
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
 
   GAME.localPlayer:setPuzzleSet(puzzleSet)
   GAME.localPlayer:setWantsReady(true)
 end
 
 function PuzzleMenu:exit()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
-  stop_the_music()
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
   GAME.battleRoom:shutdown()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
@@ -77,7 +76,7 @@ function PuzzleMenu:load(sceneParams)
       tickLength = tickLength,
       value = config.puzzle_level or 5,
       onValueChange = function(s)
-        play_optional_sfx(themes[config.theme].sounds.menu_move)
+        SoundController:playSfx(themes[config.theme].sounds.menu_move)
       end
     })
   
@@ -89,7 +88,7 @@ function PuzzleMenu:load(sceneParams)
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomColors and 2 or 1,
-      onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
+      onChange = function() SoundController:playSfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
@@ -101,7 +100,7 @@ function PuzzleMenu:load(sceneParams)
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomFlipped and 2 or 1,
-      onChange = function() play_optional_sfx(themes[config.theme].sounds.menu_move) end
+      onChange = function() SoundController:playSfx(themes[config.theme].sounds.menu_move) end
     }
   )
   
@@ -124,9 +123,7 @@ function PuzzleMenu:load(sceneParams)
   self.uiRoot:addChild(self.menu)
   self.uiRoot:addChild(self.puzzleLabel)
 
-  if themes[config.theme].musics.main then
-    find_and_add_music(themes[config.theme].musics, "main")
-  end
+  SoundController:playMusic(themes[config.theme].stageTracks.main)
 end
 
 function PuzzleMenu:update(dt)

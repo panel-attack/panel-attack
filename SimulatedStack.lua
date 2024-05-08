@@ -69,7 +69,7 @@ end
 function SimulatedStack:setGameOver()
   self.game_over_clock = self.clock
 
-  themes[config.theme].sounds.game_over:play()
+  SoundController:playSfx(themes[config.theme].sounds.game_over)
 end
 
 function SimulatedStack:shouldRun(runsSoFar)

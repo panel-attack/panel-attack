@@ -30,35 +30,24 @@ local soundTestMenu
 local menuValidateSound
 
 local function playMusic(source, id, musicType)
-  local musicToUse
-  local musicStyle
+  local musicSource
   if source == "character" then
     if not characters[id].fully_loaded and not characters[id].musics[musicType] then
       characters[id]:sound_init(true, false)
     end
-    musicToUse = characters[id].musics
-    musicStyle = characters[id].music_style
+    musicSource = characters[id]
   elseif source == "stage" then
     if not stages[id].fully_loaded and not stages[id].musics[musicType] then
       stages[id]:sound_init(true, false)
     end
-    musicToUse = stages[id].musics
-    musicStyle = stages[id].music_style
+    musicSource = stages[id]
   end
-          
-  if musicStyle == "dynamic" then
-    find_and_add_music(musicToUse, "normal_music")
-    find_and_add_music(musicToUse, "danger_music")
-    if musicType == "danger_music" then
-      setFadePercentageForGivenTracks(0, {musicToUse["normal_music"], musicToUse["normal_music_start"]})
-      setFadePercentageForGivenTracks(1, {musicToUse["danger_music"], musicToUse["danger_music_start"]})
-    else
-      setFadePercentageForGivenTracks(1, {musicToUse["normal_music"], musicToUse["normal_music_start"]})
-      setFadePercentageForGivenTracks(0, {musicToUse["danger_music"], musicToUse["danger_music_start"]})
-    end
+
+  if musicSource.stageTrack then
+    musicSource.stageTrack:changeMusic(musicType == "danger_music")
+    SoundController:playMusic(musicSource.stageTrack)
   else
-    stop_the_music()
-    find_and_add_music(musicToUse, musicType)
+    SoundController:stopMusic()
   end
 end
 
@@ -174,7 +163,7 @@ function SoundTest:load()
         elseif value == "stage" then
           playMusic(value, stageStepper.value, musicTypeButtonGroup.value)
         else
-          stop_the_music()
+          SoundController:stopMusic()
         end
       end
     }
@@ -208,7 +197,8 @@ function SoundTest:load()
     MenuItem.createStepperMenuItem("op_music_sfx", nil, nil, sfxStepper),
     MenuItem.createButtonMenuItem("op_music_play", nil, nil, playCharacterSFXFn),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
-      stop_all_audio()
+      love.audio.stop()
+      SoundController:stopMusic()
       themes[config.theme].sounds.menu_validate = menuValidateSound
       sceneManager:switchToScene(sceneManager:createScene("OptionsMenu"))
     end)
@@ -221,7 +211,7 @@ function SoundTest:load()
   self.backgroundImg = themes[config.theme].images.bg_main
 
   -- stop main music
-  stop_all_audio()
+  SoundController:stopMusic()
 
   -- disable the menu_validate sound and keep a copy of it to restore later
   menuValidateSound = themes[config.theme].sounds.menu_validate

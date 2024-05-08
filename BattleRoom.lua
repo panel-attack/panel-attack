@@ -489,7 +489,7 @@ function BattleRoom:shutdown()
     self.match:deinit()
     self.match = nil
   end
-  stop_the_music()
+  SoundController:stopMusic()
   self:shutdownNetwork()
   self.hasShutdown = true
   GAME:initializeLocalPlayer()
@@ -514,7 +514,6 @@ function BattleRoom:onMatchEnded(match)
     end
   else
     -- match:deinit is the responsibility of the one switching out of the game scene
-    stop_the_music()
     match:deinit()
     -- in the case of a network based abort, the network part of the battleRoom would unregister from the onMatchEnded signal
     -- and initialise the transition to wherever else before calling abort on the match to finalize it

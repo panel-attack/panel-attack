@@ -193,9 +193,7 @@ function InputConfigMenu:load(sceneParams)
 
   self.uiRoot:addChild(self.menu)
 
-  if themes[config.theme].musics["main"] then
-    find_and_add_music(themes[config.theme].musics, "main")
-  end
+  SoundController:playMusic(themes[config.theme].stageTracks.main)
 end
 
 function InputConfigMenu:update(dt)

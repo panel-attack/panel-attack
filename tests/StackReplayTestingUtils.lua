@@ -88,7 +88,7 @@ function StackReplayTestingUtils:simulateMatchWithRollbackAtClock(match, clock)
 end
 
 function StackReplayTestingUtils:setupReplayWithPath(path)
-  GAME.muteSoundEffects = true
+  GAME.muteSound = true
 
   local success, replay = Replay.loadFromPath(path)
   local match = Match.createFromReplay(replay, false)
@@ -106,7 +106,6 @@ function StackReplayTestingUtils:cleanup(match)
   if match then
     match:deinit()
   end
-  stop_the_music()
   GAME:reset()
 end
 

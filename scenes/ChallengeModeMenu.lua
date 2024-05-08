@@ -22,7 +22,7 @@ ChallengeModeMenu.name = "ChallengeModeMenu"
 sceneManager:addScene(ChallengeModeMenu)
 
 local function exitMenu()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 

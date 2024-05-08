@@ -936,10 +936,10 @@ function Stack.run(self)
 
   if self.is_local == false then
     if self.play_to_end then
-      GAME.muteSoundEffects = true
+      GAME.muteSound = true
       if #self.input_buffer < 4 then
         self.play_to_end = nil
-        GAME.muteSoundEffects = false
+        GAME.muteSound = false
       end
     end
   end
@@ -1427,29 +1427,26 @@ function Stack.simulate(self)
   -- Update Sound FX
   if self:canPlaySfx() then
     if SFX_Swap_Play == 1 then
-      themes[config.theme].sounds.swap:stop()
-      themes[config.theme].sounds.swap:play()
+      SoundController:playSfx(themes[config.theme].sounds.swap)
       SFX_Swap_Play = 0
     end
     if SFX_Cur_Move_Play == 1 then
       -- I have no idea why this makes a distinction for vs, like what?
       if not (self.match.stackInteraction ~= GameModes.StackInteractions.NONE and themes[config.theme].sounds.swap:isPlaying()) and not self.do_countdown then
-        themes[config.theme].sounds.cur_move:stop()
-        themes[config.theme].sounds.cur_move:play()
+        SoundController:playSfx(themes[config.theme].sounds.cur_move)
       end
       SFX_Cur_Move_Play = 0
     end
     if self.sfx_land then
-      themes[config.theme].sounds.land:stop()
-      themes[config.theme].sounds.land:play()
+      SoundController:playSfx(themes[config.theme].sounds.land)
       self.sfx_land = false
     end
     if self.combo_chain_play then
       -- stop ongoing landing sound
-      themes[config.theme].sounds.land:stop()
+      SoundController:stopSfx(themes[config.theme].sounds.land)
       -- and cancel it because an attack is performed on the exact same frame (takes priority)
       self.sfx_land = false
-      themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+      SoundController:stopSfx(themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed])
       characters[self.character]:playAttackSfx(self.combo_chain_play)
       self.combo_chain_play = nil
     end
@@ -1460,25 +1457,25 @@ function Stack.simulate(self)
     if SFX_Fanfare_Play == 0 then
       --do nothing
     elseif SFX_Fanfare_Play >= 6 then
-      themes[config.theme].sounds.fanfare3:play()
+      SoundController:playSfx(themes[config.theme].sounds.fanfare3)
     elseif SFX_Fanfare_Play >= 5 then
-      themes[config.theme].sounds.fanfare2:play()
+      SoundController:playSfx(themes[config.theme].sounds.fanfare2)
     elseif SFX_Fanfare_Play >= 4 then
-      themes[config.theme].sounds.fanfare1:play()
+      SoundController:playSfx(themes[config.theme].sounds.fanfare1)
     end
     SFX_Fanfare_Play = 0
     if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
       local interrupted_thud = nil
       for i = 1, 3 do
         if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > self.prev_shake_time then
-          themes[config.theme].sounds.garbage_thud[i]:stop()
+          SoundController:stopSfx(themes[config.theme].sounds.garbage_thud[i])
           interrupted_thud = i
         end
       end
       if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-        themes[config.theme].sounds.garbage_thud[interrupted_thud]:play()
+        SoundController:playSfx(themes[config.theme].sounds.garbage_thud[interrupted_thud])
       else
-        themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud]:play()
+        SoundController:playSfx(themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud])
       end
       if interrupted_thud == nil then
         characters[self.character]:playGarbageLandSfx()
@@ -1494,9 +1491,9 @@ function Stack.simulate(self)
         popIndex = min(self.poppedPanelIndex, 10)
       end
       --stop the previous pop sound
-      themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
+      SoundController:stopSfx(themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed])
       --play the appropriate pop sound
-      themes[config.theme].sounds.pops[popLevel][popIndex]:play()
+      SoundController:playSfx(themes[config.theme].sounds.pops[popLevel][popIndex])
       self.lastPopLevelPlayed = popLevel
       self.lastPopIndexPlayed = popIndex
       SFX_Pop_Play = nil
@@ -1644,7 +1641,7 @@ function Stack.setGameOver(self)
     return
   end
 
-  themes[config.theme].sounds.game_over:play()
+  SoundController:playSfx(themes[config.theme].sounds.game_over)
 
   self.game_over_clock = self.clock
 

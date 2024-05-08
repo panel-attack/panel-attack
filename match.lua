@@ -61,6 +61,7 @@ Match =
     Signal.turnIntoEmitter(self)
     self:createSignal("matchEnded")
     self:createSignal("dangerMusicChanged")
+    self:createSignal("countdownEnded")
   end
 )
 
@@ -362,6 +363,7 @@ function Match:rewindToFrame(frame)
   self.clock = frame
 end
 
+local countdownEnd = consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH
 -- updates the match clock to the clock time of the player furthest into the game
 -- also triggers the danger music from time running out if a timeLimit was set
 function Match:updateClock()
@@ -373,6 +375,12 @@ function Match:updateClock()
 
   if self.panicTickStartTime and self.panicTickStartTime == self.clock then
     self:updateDangerMusic()
+  end
+
+  if self.doCountdown and self.clock == countdownEnd then
+    self:emitSignal("countdownEnded")
+  elseif not self.doCountdown and self.clock == consts.COUNTDOWN_START then
+    self:emitSignal("countdownEnded")
   end
 end
 
@@ -390,16 +398,14 @@ function Match:getWinningPlayerCharacter()
 end
 
 function Match:playCountdownSfx()
-  if not GAME.muteSoundEffects and self.doCountdown then
+  if self.doCountdown then
     if self.clock < 200 then
       local tickIndex = math.floor(self.clock / 60)
       if not self.ticksPlayed[tickIndex] then
         if tickIndex < 3 then
-          themes[config.theme].sounds.countdown:stop()
-          themes[config.theme].sounds.countdown:play()
+          SoundController:playSfx(themes[config.theme].sounds.countdown)
         else
-          themes[config.theme].sounds.go:stop()
-          themes[config.theme].sounds.go:play()
+          SoundController:playSfx(themes[config.theme].sounds.go)
         end
         self.ticksPlayed[tickIndex] = true
       end
@@ -408,13 +414,12 @@ function Match:playCountdownSfx()
 end
 
 function Match:playTimeLimitDepletingSfx()
-  if not GAME.muteSoundEffects and self.timeLimit then
+  if self.timeLimit then
     -- have to account for countdown
     if self.clock >= self.panicTickStartTime then
       local tickIndex = math.ceil((self.clock - self.panicTickStartTime) / 60)
       if self.panicTicksPlayed[tickIndex] == false then
-        themes[config.theme].sounds.countdown:stop()
-        themes[config.theme].sounds.countdown:play()
+        SoundController:playSfx(themes[config.theme].sounds.countdown)
         self.panicTicksPlayed[tickIndex] = true
       end
     end
@@ -440,6 +445,7 @@ function Match:getInfo()
 end
 
 function Match:start()
+  SoundController:stopMusic()
   -- battle room may add the players in any order
   -- match has to make sure the local player ends up as P1 (left side)
   -- if both are local or both are not, order by playerNumber

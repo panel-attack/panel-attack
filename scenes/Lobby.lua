@@ -65,7 +65,7 @@ sceneManager:addScene(Lobby)
 ----------
 
 local function exitMenu()
-  play_optional_sfx(themes[config.theme].sounds.menu_validate)
+  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
   GAME.tcpClient:resetNetwork()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
@@ -88,12 +88,7 @@ function Lobby:load(sceneParams)
   self.messageListeners["game_request"] = MessageListener("game_request")
   self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
 
-  if next(currently_playing_tracks) == nil then
-    stop_the_music()
-    if themes[config.theme].musics["main"] then
-      find_and_add_music(themes[config.theme].musics, "main")
-    end
-  end
+  SoundController:playMusic(themes[config.theme].stageTracks.main)
 
   self:initLobbyMenu()
 end
@@ -177,7 +172,7 @@ function Lobby:processGameRequest(gameRequestMessage)
   if gameRequestMessage.game_request then
     self.willingPlayers[gameRequestMessage.game_request.sender] = true
     love.window.requestAttention()
-    play_optional_sfx(themes[config.theme].sounds.notification)
+    SoundController:playSfx(themes[config.theme].sounds.notification)
     -- this might be moot if the server sends a lobby update to everyone after receiving the challenge
     self:onLobbyStateUpdate()
   end
@@ -212,7 +207,7 @@ function Lobby:start2pVsOnlineMatch(createRoomMessage)
   -- Not yet implemented
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   love.window.requestAttention()
-  play_optional_sfx(themes[config.theme].sounds.notification)
+  SoundController:playSfx(themes[config.theme].sounds.notification)
   sceneManager:switchToScene(CharacterSelect2p())
 end
 

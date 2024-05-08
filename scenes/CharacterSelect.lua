@@ -48,11 +48,10 @@ end
 -- end abstract functions
 
 function CharacterSelect:playThemeMusic()
-  if themes[config.theme].musics.select_screen then
-    stop_the_music()
-    find_and_add_music(themes[config.theme].musics, "select_screen")
-  elseif themes[config.theme].musics.main then
-    find_and_add_music(themes[config.theme].musics, "main")
+  if themes[config.theme].stageTracks.select_screen then
+    SoundController:playMusic(themes[config.theme].stageTracks.select_screen)
+  else
+    SoundController:playMusic(themes[config.theme].stageTracks.main)
   end
 end
 
@@ -297,7 +296,7 @@ function CharacterSelect:getCharacterButtons()
       else
         return
       end
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
       if character then
         if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
           -- super select
@@ -487,7 +486,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
     tickLength = imageWidth,
     value = player.settings.level,
     onValueChange = function(s)
-      play_optional_sfx(themes[config.theme].sounds.menu_move)
+      SoundController:playSfx(themes[config.theme].sounds.menu_move)
     end,
     hAlign = "center",
     vAlign = "center",
@@ -507,7 +506,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
       if self.onBackCallback then
         self:onBackCallback()
       end
-      play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+      SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
       self:yieldFocus()
     end
 
@@ -515,7 +514,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
       if self.onSelectCallback then
         self:onSelectCallback()
       end
-      play_optional_sfx(themes[config.theme].sounds.menu_validate)
+      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
       self:yieldFocus()
     end
   end
@@ -781,7 +780,7 @@ function CharacterSelect:leave()
   if GAME.battleRoom then
     -- in 2p local, with the current input shenanigans leave may be called twice
     GAME.battleRoom:shutdown()
-    play_optional_sfx(themes[config.theme].sounds.menu_cancel)
+    SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end

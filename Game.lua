@@ -9,7 +9,6 @@ local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
 local class = require("class")
 local logger = require("logger")
-local sound = require("sound")
 local analytics = require("analytics")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
@@ -49,7 +48,7 @@ local Game = class(
     self.replay = {}
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = nil
-    self.muteSoundEffects = false
+    self.muteSound = false
     self.canvasX = 0
     self.canvasY = 0
     self.canvasXScale = 1
@@ -119,7 +118,7 @@ function Game:setupRoutine()
   coroutine.yield(loc("ld_analytics"))
   analytics.init()
 
-  apply_config_volume()
+  SoundController:applyConfigVolumes()
 
   self:createDirectoriesIfNeeded()
 
@@ -269,7 +268,7 @@ function Game:update(dt)
   end
 
   self:updateMouseVisibility(dt)
-  update_music()
+  SoundController:update()
   self.rich_presence:runCallbacks()
   handleShortcuts()
 end
@@ -327,7 +326,7 @@ end
 
 function Game:reset()
   self.currently_paused_tracks = {}
-  self.muteSoundEffects = false
+  self.muteSound = false
 end
 
 function Game.errorData(errorString, traceBack)

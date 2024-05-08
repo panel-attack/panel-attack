@@ -1,6 +1,5 @@
 require("developer")
 require("graphics_util")
-require("sound_util")
 local consts = require("consts")
 require("class")
 local logger = require("logger")
@@ -8,6 +7,7 @@ local fileUtils = require("FileUtils")
 local levelPresets = require("LevelPresets")
 local GraphicsUtil = require("graphics_util")
 local ImageContainer = require("ui.ImageContainer")
+local Music = require("music.Music")
 
 local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
 
@@ -492,9 +492,9 @@ function Theme:deinitializeGraphics()
 end
 
 -- applies the config volume to the theme
-function Theme.apply_config_volume(self)
-  set_volume(self.sounds, config.SFX_volume / 100)
-  set_volume(self.musics, config.music_volume / 100)
+function Theme:applyConfigVolume()
+  SoundController:applySfxVolume(self.sounds)
+  SoundController:applyMusicVolume(self.musics)
 end
 
 -- initializes the theme sounds
@@ -504,10 +504,10 @@ function Theme.sound_init(self)
       Theme.themeDirectoryPath .. self.name .. "/sfx/",
       Theme.defaultThemeDirectoryPath .. "sfx/"
     }
-    return find_sound(SFX_name, dirs_to_check)
+    return fileUtils.findSound(SFX_name, dirs_to_check)
   end
 
-  self.zero_sound = load_sound_from_supported_extensions("zero_music")
+  self.zero_sound = fileUtils.loadSoundFromSupportExtensions("zero_music")
 
   -- SFX
   self.sounds = {
@@ -542,7 +542,7 @@ function Theme.sound_init(self)
   -- music
   self.musics = {}
   for _, music in ipairs(musics) do
-    self.musics[music] = load_sound_from_supported_extensions(Theme.themeDirectoryPath .. self.name .. "/music/" .. music, true)
+    self.musics[music] = fileUtils.loadSoundFromSupportExtensions(Theme.themeDirectoryPath .. self.name .. "/music/" .. music, true)
     if self.musics[music] then
       if not string.find(music, "start") then
         self.musics[music]:setLooping(true)
@@ -552,7 +552,21 @@ function Theme.sound_init(self)
     end
   end
 
-  self:apply_config_volume()
+  self.stageTracks = {}
+
+  if self.musics.main then
+    self.stageTracks.main = Music(self.musics.main, self.musics.main_start)
+  end
+
+  if self.musics.select_screen then
+    self.stageTracks.select_screen = Music(self.musics.select_screen, self.musics.select_screen_start)
+  end
+
+  if self.musics.title_screen then
+    self.stageTracks.title_screen = Music(self.musics.title_screen, self.musics.title_screen_start)
+  end
+
+  self:applyConfigVolume()
 end
 
 function Theme.upgradeAndSaveVerboseConfig(self)

@@ -11,7 +11,7 @@ local function finishedMatchForPath(path)
     end
   )
 
-  GAME.muteSoundEffects = true
+  GAME.muteSound = true
 
   local replay = Replay.loadFromPath(path)
   local match = Match.createFromReplay(replay)
@@ -26,7 +26,7 @@ local function finishedMatchForPath(path)
       match:run()
     end
 
-    stop_the_music()
+    SoundController:stopMusic()
     match:deinit()
     return match
   end
