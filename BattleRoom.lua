@@ -383,7 +383,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
       end
     end
     if not player.inputConfiguration and not GAME.input.mouse.claimed then
-      if tableUtils.length(GAME.input.mouse.isDown) > 0 then
+      if GAME.input.mouse.isDown[1] or GAME.input.mouse.isPressed[1] then
         player:setInputMethod("touch")
         player:restrictInputs(GAME.input.mouse)
       end

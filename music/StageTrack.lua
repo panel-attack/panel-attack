@@ -60,10 +60,6 @@ function StageTrack:pause()
   end
 end
 
-function StageTrack:isPaused()
-  return self.currentMusic.isPaused
-end
-
 -- sets the volume of the track in % relative to the configured music volume
 function StageTrack:setVolume(volume)
   self.normalMusic:setVolume(volume)

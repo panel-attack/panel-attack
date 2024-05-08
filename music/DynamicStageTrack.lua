@@ -48,10 +48,6 @@ function DynamicStageTrack:pause()
   self.dangerMusic:pause()
 end
 
-function DynamicStageTrack:isPaused()
-  return self.normalMusic:isPaused()
-end
-
 function DynamicStageTrack:setVolume(volume)
   self.volume = volume
   self:updateTrackVolumes()
