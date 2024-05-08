@@ -17,6 +17,7 @@ local tableUtils = require("tableUtils")
 local SoundTest = require("scenes.SoundTest")
 local SetUserIdMenu = require("scenes.SetUserIdMenu")
 local UiElement = require("ui.UIElement")
+local GraphicsUtil = require("graphics_util")
 
 -- @module optionsMenu
 -- Scene for the options menu
@@ -62,9 +63,16 @@ function OptionsMenu:loadScreens()
   return menus
 end
 
-local foundThemes = {}
-
 function OptionsMenu.exit()
+  if not themes[config.theme].fullyLoaded then
+    themes[config.theme]:load()
+    for _, theme in pairs(themes) do
+      if theme.fullyLoaded then
+        -- unload previous theme to free resources
+        theme:preload()
+      end
+    end
+  end
   Menu.playValidationSfx()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
@@ -127,7 +135,7 @@ function OptionsMenu:getSystemInfo()
   sysInfo[#sysInfo + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme .. "/" .. #characters_ids}
   sysInfo[#sysInfo + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme .. "/" .. #stages_ids}
   sysInfo[#sysInfo + 1] = {name = "Total Panel Sets", value = #panels_ids}
-  sysInfo[#sysInfo + 1] = {name = "Total Themes", value = #foundThemes}
+  sysInfo[#sysInfo + 1] = {name = "Total Themes", value = #themeIds}
 
   local infoString = ""
   for index, info in ipairs(sysInfo) do
@@ -247,25 +255,21 @@ end
 function OptionsMenu:loadGraphicsMenu()
   local themeIndex
   local themeLabels = {}
-  foundThemes = {}
-  for i, v in ipairs(fileUtils.getFilteredDirectoryItems("themes")) do
-    foundThemes[#foundThemes + 1] = v
+  for i, v in ipairs(themeIds) do
     themeLabels[#themeLabels + 1] = Label({text = v, translate = false})
     if config.theme == v then
-      themeIndex = #foundThemes
+      themeIndex = i
     end
   end
   local themeStepper = Stepper({
     labels = themeLabels,
-    values = foundThemes,
+    values = themeIds,
     selectedIndex = themeIndex,
     onChange = function(value)
       Menu.playMoveSfx()
       config.theme = value
       SoundController:stopMusic()
-      theme_init()
-      stages_init()
-      CharacterLoader.initCharacters()
+      GraphicsUtil.setGlobalFont(themes[config.theme].font.path, themes[config.theme].font.size)
       self.backgroundImage = themes[config.theme].images.bg_main
       SoundController:playMusic(themes[config.theme].stageTracks.main)
     end

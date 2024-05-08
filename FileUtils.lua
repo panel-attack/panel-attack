@@ -7,17 +7,21 @@ local PREFIX_OF_IGNORED_DIRECTORIES = "__"
 -- Collection of functions for file operations
 local fileUtils = {}
 
-function fileUtils.getFilteredDirectoryItems(path)
+-- returns the directory items with a default filter and an optional filetype filter
+-- by default, filters out everything starting with __ and Mac's .DS_Store file
+-- optionally the result can be filtered to return only "file" or "directory" items
+function fileUtils.getFilteredDirectoryItems(path, fileType)
   local results = {}
 
   local directoryList = love.filesystem.getDirectoryItems(path)
-  for i = 1, #directoryList do
-    local file = directoryList[i]
-    
+  for _, file in ipairs(directoryList) do
+
     local startOfFile = string.sub(file, 0, string.len(PREFIX_OF_IGNORED_DIRECTORIES))
    -- macOS sometimes puts these files in folders without warning, they are never useful for PA, so filter them.
     if startOfFile ~= PREFIX_OF_IGNORED_DIRECTORIES and file ~= ".DS_Store" then
-      results[#results+1] = file
+      if not fileType or love.filesystem.getInfo(path .. "/" .. file, fileType) then
+        results[#results+1] = file
+      end
     end
   end
 
