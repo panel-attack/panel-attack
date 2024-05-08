@@ -204,7 +204,9 @@ function Game:runUnitTests()
   GAME.localPlayer.isLocal = false
 
   logger.info("Running Unit Tests...")
+  GAME.muteSound = true
   require("tests.Tests")
+  SoundController:applyConfigVolumes()
 end
 
 function Game:runPerformanceTests()

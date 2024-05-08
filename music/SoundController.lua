@@ -36,7 +36,7 @@ end
 
 -- Sets the volumes based on the current player configuration settings
 function SoundController:applyConfigVolumes()
-  GAME.muteSound = (config.master_volume == 0 or config.SFX_volume == 0)
+  GAME.muteSound = (config.master_volume == 0 or (config.SFX_volume == 0 and config.music_volume == 0))
 
   love.audio.setVolume(config.master_volume / 100)
   themes[config.theme]:applyConfigVolume()
