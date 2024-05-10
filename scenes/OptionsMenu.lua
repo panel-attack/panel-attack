@@ -67,7 +67,7 @@ function OptionsMenu.exit()
   if not themes[config.theme].fullyLoaded then
     themes[config.theme]:load()
     for _, theme in pairs(themes) do
-      if theme.fullyLoaded then
+      if theme.name ~= config.theme and theme.fullyLoaded then
         -- unload previous theme to free resources
         theme:preload()
       end
@@ -267,6 +267,7 @@ function OptionsMenu:loadGraphicsMenu()
     selectedIndex = themeIndex,
     onChange = function(value)
       Menu.playMoveSfx()
+      themes[value]:preload()
       config.theme = value
       SoundController:stopMusic()
       GraphicsUtil.setGlobalFont(themes[config.theme].font.path, themes[config.theme].font.size)

@@ -3,6 +3,7 @@ General character informating, loading and unloading
 Graphics
 Sound
 ]]--
+local class = require("class")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
@@ -13,6 +14,7 @@ local Music = require("music.Music")
 local StageTrack = require("music.StageTrack")
 local DynamicStageTrack = require("music.DynamicStageTrack")
 local RelayStageTrack = require("music.RelayStageTrack")
+local Mod = require("mods.Mod")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -44,89 +46,85 @@ Character =
     self.music_style = "normal"
     self.stageTrack = nil
     self.files = tableUtils.map(love.filesystem.getDirectoryItems(self.path), function(file) return fileUtils.getFileNameWithoutExtension(file) end)
-  end
+    self.TYPE = "character"
+  end,
+  Mod
 )
 
 function Character.json_init(self)
-  local read_data = {}
-  local config_file, err = love.filesystem.newFile(self.path .. "/config.json", "r")
-  if config_file then
-    local teh_json = config_file:read(config_file:getSize())
-    config_file:close()
-    for k, v in pairs(json.decode(teh_json)) do
-      read_data[k] = v
-    end
-  end
+  local read_data = fileUtils.readJsonFile(self.path .. "/config.json")
 
-  if read_data.id and type(read_data.id) == "string" then
-    self.id = read_data.id
+  if read_data then
+    if read_data.id and type(read_data.id) == "string" then
+      self.id = read_data.id
 
-    -- sub ids for bundles
-    if read_data.sub_ids and type(read_data.sub_ids) == "table" then
-      self.sub_characters = read_data.sub_ids
-    end
-    -- display name
-    if read_data.name and type(read_data.name) == "string" then
-      self.display_name = read_data.name
-    end
-    -- is visible
-    if read_data.visible ~= nil and type(read_data.visible) == "boolean" then
-      self.is_visible = read_data.visible
-    elseif read_data.visible and type(read_data.visible) == "string" then
-      self.is_visible = read_data.visible == "true"
-    end
+      -- sub ids for bundles
+      if read_data.sub_ids and type(read_data.sub_ids) == "table" then
+        self.sub_characters = read_data.sub_ids
+      end
+      -- display name
+      if read_data.name and type(read_data.name) == "string" then
+        self.display_name = read_data.name
+      end
+      -- is visible
+      if read_data.visible ~= nil and type(read_data.visible) == "boolean" then
+        self.is_visible = read_data.visible
+      elseif read_data.visible and type(read_data.visible) == "string" then
+        self.is_visible = read_data.visible == "true"
+      end
 
-    -- chain_style
-    if read_data.chain_style and type(read_data.chain_style) == "string" then
-      self.chain_style = read_data.chain_style == "per_chain" and chainStyle.per_chain or chainStyle.classic
-    end
+      -- chain_style
+      if read_data.chain_style and type(read_data.chain_style) == "string" then
+        self.chain_style = read_data.chain_style == "per_chain" and chainStyle.per_chain or chainStyle.classic
+      end
 
-    -- combo_style
-    if read_data.combo_style and type(read_data.combo_style) == "string" then
-      self.combo_style = read_data.combo_style == "per_combo" and comboStyle.per_combo or comboStyle.classic
-    end
+      -- combo_style
+      if read_data.combo_style and type(read_data.combo_style) == "string" then
+        self.combo_style = read_data.combo_style == "per_combo" and comboStyle.per_combo or comboStyle.classic
+      end
 
-    --popfx_burstRotate
-    if read_data.popfx_burstRotate and type(read_data.popfx_burstRotate) == "boolean" then
-      self.popfx_burstRotate = read_data.popfx_burstRotate
-    end
+      --popfx_burstRotate
+      if read_data.popfx_burstRotate and type(read_data.popfx_burstRotate) == "boolean" then
+        self.popfx_burstRotate = read_data.popfx_burstRotate
+      end
 
-    --popfx_type
-    if read_data.popfx_style and type(read_data.popfx_style) == "string" then
-      self.popfx_style = read_data.popfx_style
-    end
+      --popfx_type
+      if read_data.popfx_style and type(read_data.popfx_style) == "string" then
+        self.popfx_style = read_data.popfx_style
+      end
 
-    --popfx_burstScale
-    if read_data.popfx_burstScale and type(read_data.popfx_burstScale) == "number" then
-      self.popfx_burstScale = read_data.popfx_burstScale
-    end
+      --popfx_burstScale
+      if read_data.popfx_burstScale and type(read_data.popfx_burstScale) == "number" then
+        self.popfx_burstScale = read_data.popfx_burstScale
+      end
 
-    --popfx_fadeScale
-    if read_data.popfx_fadeScale and type(read_data.popfx_fadeScale) == "number" then
-      self.popfx_fadeScale = read_data.popfx_fadeScale
-    end
+      --popfx_fadeScale
+      if read_data.popfx_fadeScale and type(read_data.popfx_fadeScale) == "number" then
+        self.popfx_fadeScale = read_data.popfx_fadeScale
+      end
 
-    --music style
-    if read_data.music_style and type(read_data.music_style) == "string" then
-      self.music_style = read_data.music_style
-    end
+      --music style
+      if read_data.music_style and type(read_data.music_style) == "string" then
+        self.music_style = read_data.music_style
+      end
 
-    -- associated stage
-    if read_data.stage and type(read_data.stage) == "string" and stages[read_data.stage] and not stages[read_data.stage]:is_bundle() then
-      self.stage = read_data.stage
-    end
-    -- associated panel
-    if read_data.panels and type(read_data.panels) == "string" and panels[read_data.panels] then
-      self.panels = read_data.panels
-    end
+      -- associated stage
+      if read_data.stage and type(read_data.stage) == "string" and stages[read_data.stage] and not stages[read_data.stage]:is_bundle() then
+        self.stage = read_data.stage
+      end
+      -- associated panel
+      if read_data.panels and type(read_data.panels) == "string" and panels[read_data.panels] then
+        self.panels = read_data.panels
+      end
 
-    -- flag
-    if read_data.flag and type(read_data.flag) == "string" then
-      self.flag = read_data.flag
-    end
+      -- flag
+      if read_data.flag and type(read_data.flag) == "string" then
+        self.flag = read_data.flag
+      end
 
-    return true
-  end
+      return true
+    end
+end
 
   return false
 end

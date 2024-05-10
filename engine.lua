@@ -993,12 +993,6 @@ function Stack.enqueue_card(self, chain, x, y, n)
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
 
-function Stack:wait_for_random_character()
-  self.character = CharacterLoader.fullyResolveCharacterSelection(self.character)
-  CharacterLoader.load(self.character)
-  CharacterLoader.wait()
-end
-
 -- Enqueue a pop animation
 function Stack.enqueue_popfx(self, x, y, popsize)
   if self.canvas == nil then

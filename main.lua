@@ -16,8 +16,8 @@ require("util")
 local tableUtils = require("tableUtils")
 local fileUtils = require("FileUtils")
 require("globals")
-require("character_loader") -- after globals!
-require("stage_loader") -- after globals!
+require("mods.CharacterLoader") -- after globals!
+require("mods.StageLoader") -- after globals!
 local CustomRun = require("CustomRun")
 local GraphicsUtil = require("graphics_util")
 

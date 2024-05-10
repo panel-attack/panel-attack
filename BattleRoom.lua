@@ -9,6 +9,8 @@ local ClientMessages = require("network.ClientProtocol")
 local ReplayV1 = require("replayV1")
 local Signal = require("helpers.signal")
 local MessageTransition = require("scenes.Transitions.MessageTransition")
+local ModController = require("mods.ModController")
+local ModLoader = require("mods.ModLoader")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom = class(function(self, mode)
@@ -351,19 +353,14 @@ function BattleRoom.onStyleChanged(style, player)
 end
 
 function BattleRoom:startLoadingNewAssets()
-  if CharacterLoader.loading_queue:len() == 0 then
-    for i = 1, #self.players do
-      local playerSettings = self.players[i].settings
-      if not characters[playerSettings.characterId].fully_loaded then
-        CharacterLoader.load(playerSettings.characterId)
-      end
-    end
-  end
-  if StageLoader.loading_queue:len() == 0 then
+  if ModLoader.loading_queue:len() == 0 then
     for i = 1, #self.players do
       local playerSettings = self.players[i].settings
       if not stages[playerSettings.stageId].fully_loaded then
-        StageLoader.load(playerSettings.stageId)
+        ModController:loadModFor(stages[playerSettings.stageId], i)
+      end
+      if not characters[playerSettings.characterId].fully_loaded then
+        ModController:loadModFor(characters[playerSettings.characterId], i)
       end
     end
   end
@@ -389,6 +386,8 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
       end
     end
   else
+    -- player can always go from controller to touch but not the other way around
+    player:setInputMethod("controller")
     player:unrestrictInputs()
   end
 end
@@ -447,8 +446,7 @@ end
 
 function BattleRoom:update(dt)
   -- if there are still unloaded assets, we can load them 1 asset a frame in the background
-  StageLoader.update()
-  CharacterLoader.update()
+  ModController:update()
 
   if self.online then
     -- here we fetch network updates and update the battleroom / match

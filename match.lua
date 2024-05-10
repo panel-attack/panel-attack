@@ -8,6 +8,9 @@ local SimulatedStack = require("SimulatedStack")
 local ChallengeModePlayer = require("ChallengeModePlayer")
 local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
+local ModController = require("mods.ModController")
+local CharacterLoader = require("mods.CharacterLoader")
+local StageLoader = require("mods.StageLoader")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =
@@ -541,7 +544,7 @@ function Match:setStage(stageId)
   else
     self.stageId = StageLoader.fullyResolveStageSelection()
   end
-  StageLoader.load(self.stageId)
+  ModController:loadModFor(stages[self.stageId], "match")
 end
 
 function Match:generateSeed()

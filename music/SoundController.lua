@@ -50,6 +50,7 @@ end
 
 function SoundController:setMasterVolume(volume)
   config.master_volume = volume
+  GAME.muteSound = (config.master_volume == 0 or (config.SFX_volume == 0 and config.music_volume == 0))
   love.audio.setVolume(volume / 100)
 end
 

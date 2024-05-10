@@ -594,7 +594,6 @@ local basicMusics = {"main", "main_start"}
 local fullMusics = {"main", "main_start", "select_screen", "select_screen_start", "title_screen", "title_screen_start"} -- the music used in a theme
 
 function Theme:loadMusic(full)
-  self.musics = {}
   local musics = full and fullMusics or basicMusics
   for _, music in ipairs(musics) do
     self.musics[music] = fileUtils.loadSoundFromSupportExtensions(Theme.themeDirectoryPath .. self.name .. "/music/" .. music, true)
@@ -766,8 +765,6 @@ function theme_init()
       themes[dirName] = Theme(dirName)
       if dirName == config.theme then
         themes[dirName]:load()
-      else
-        themes[dirName]:preload()
       end
     end
   end

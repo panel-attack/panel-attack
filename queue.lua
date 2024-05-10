@@ -47,3 +47,5 @@ function Queue.clear(self)
   self.first = 0
   self.last = -1
 end
+
+return Queue

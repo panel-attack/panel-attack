@@ -1,73 +1,12 @@
-require("queue")
 require("globals")
-require("character")
+require("mods.Character")
 local logger = require("logger")
 local fileUtils = require("FileUtils")
 local tableUtils = require("tableUtils")
 local consts = require("consts")
+local ModController = require("mods.ModController")
 
-CharacterLoader = {}
-
-CharacterLoader.loading_queue = Queue()
-CharacterLoader.loading_character = nil
-
--- queues a character to be loaded
-function CharacterLoader.load(character_id)
-  if characters[character_id] and not characters[character_id].fully_loaded then
-    CharacterLoader.loading_queue:push(character_id)
-  end
-end
-
-local instant_load_enabled = false
-
--- return true if there is still data to load
-function CharacterLoader.update()
-  if not CharacterLoader.loading_character and CharacterLoader.loading_queue:len() > 0 then
-    local character_name = CharacterLoader.loading_queue:pop()
-    CharacterLoader.loading_character = {
-      character_name,
-      coroutine.create(
-        function()
-          characters[character_name]:load(instant_load_enabled)
-        end
-      )
-    }
-  end
-
-  if CharacterLoader.loading_character then
-    if coroutine.status(CharacterLoader.loading_character[2]) == "suspended" then
-      coroutine.resume(CharacterLoader.loading_character[2])
-      return true
-    elseif coroutine.status(CharacterLoader.loading_character[2]) == "dead" then
-      CharacterLoader.loading_character = nil
-      return CharacterLoader.loading_queue:len() > 0
-    -- TODO: unload characters if too much data have been loaded (be careful not to release currently-used characters)
-    end
-  end
-
-  return false
-end
-
--- Waits for all queued characters to be loaded
-function CharacterLoader.wait()
-  instant_load_enabled = true
-  while true do
-    if not CharacterLoader.update() then
-      break
-    end
-  end
-  instant_load_enabled = false
-end
-
--- Unloads all characters not in use by config or player 2
-function CharacterLoader.clear()
-  local p2_local_character = global_op_state and global_op_state.character or nil
-  for character_id, character in pairs(characters) do
-    if character.fully_loaded and character_id ~= config.character and character_id ~= p2_local_character then
-      character:unload()
-    end
-  end
-end
+local CharacterLoader = {}
 
 -- Adds all the characters recursively in a folder to the global characters variable
 function CharacterLoader.addCharactersFromDirectoryRecursively(path)
@@ -190,11 +129,6 @@ function CharacterLoader.initCharacters()
       characters_ids_by_display_names[character.display_name] = {character.id}
     end
   end
-
-  if config.character ~= consts.RANDOM_CHARACTER_SPECIAL_VALUE and not characters[config.character]:is_bundle() then
-    CharacterLoader.load(config.character)
-    CharacterLoader.wait()
-  end
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
@@ -218,3 +152,5 @@ function CharacterLoader.fullyResolveCharacterSelection(characterId)
   characterId = CharacterLoader.resolveCharacterSelection(characterId)
   return CharacterLoader.resolveBundle(characterId)
 end
+
+return CharacterLoader

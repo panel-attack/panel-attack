@@ -3,6 +3,8 @@ local GameModes = require("GameModes")
 local levelPresets = require("LevelPresets")
 local consts = require("consts")
 local util = require("util")
+local CharacterLoader = require("mods.CharacterLoader")
+
 
 local ReplayV1 = {}
 
@@ -114,9 +116,6 @@ function ReplayV1.transform(legacyReplay)
       r.duration = math.min(string.len(r.players[1].settings.inputs), string.len(r.players[2].settings.inputs))
     end
   end
-
-  -- done, overwrite the global so none has to deal with the old format!
-  replay = r
 
   return r
 end

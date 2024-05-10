@@ -75,16 +75,22 @@ end
 function deep_content_equal(a, b)
   if type(a) ~= "table" or type(b) ~= "table" then
     return a == b
-  end
-  for i = 1, 2 do
-    for k, v in pairs(a) do
-      if not deep_content_equal(v, b[k]) then
-        return false
+  else
+    if a == b then
+      -- two tables can still be the same by reference which also makes them === exactly equal
+      return true
+    else
+      for i = 1, 2 do
+        for k, v in pairs(a) do
+          if not deep_content_equal(v, b[k]) then
+            return false
+          end
+        end
+        a, b = b, a
       end
+      return true
     end
-    a, b = b, a
   end
-  return true
 end
 
 -- copy the table one key deep

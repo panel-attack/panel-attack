@@ -24,13 +24,7 @@ stages_ids_for_current_theme = {} -- initialized in stage.lua
 panels = {} -- initialized in panels.lua
 panels_ids = {} -- initialized in panels.lua
 
-replay = {}
-
 -- sfx play
 SFX_Fanfare_Play = 0
 SFX_GarbageThud_Play = 0
 SFX_GameOver_Play = 0
-
-global_op_state = nil
-
-current_use_music_from = "stage" -- either "stage" or "characters", no other values!

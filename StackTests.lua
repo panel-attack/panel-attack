@@ -67,7 +67,6 @@ local function moveAfterCountdownV46Test()
   match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
   local stack = match.P1
   stack.do_countdown = true
-  stack:wait_for_random_character()
   assert(characters ~= nil, "no characters")
   local lastBlockedCursorMovementFrame = 33
   stack:receiveConfirmedInput(string.rep(stack:idleInput(), lastBlockedCursorMovementFrame + 1))

@@ -2,6 +2,9 @@ local class = require("class")
 local consts = require("consts")
 local Signal = require("helpers.signal")
 local logger = require("logger")
+local CharacterLoader = require("mods.CharacterLoader")
+local StageLoader = require("mods.StageLoader")
+local ModController = require("mods.ModController")
 
 -- a match participant represents the minimum spec for a what constitutes a "player" in a battleRoom / match
 local MatchParticipant = class(function(self)
@@ -78,9 +81,11 @@ function MatchParticipant:refreshStage()
   if currentId ~= self.settings.stageId then
     self:emitSignal("stageIdChanged", self.settings.stageId)
     if not stages[self.settings.stageId].fully_loaded then
-      CharacterLoader.load(self.settings.stageId)
       if self.isLocal then
+        ModController:loadModFor(stages[self.settings.stageId], "local")
         self:setLoaded(false)
+      else
+        ModController:loadModFor(stages[self.settings.stageId], self.playerNumber)
       end
     end
   end
@@ -101,9 +106,11 @@ function MatchParticipant:refreshCharacter()
   if currentId ~= self.settings.characterId then
     self:emitSignal("characterIdChanged", self.settings.characterId)
     if not characters[self.settings.characterId].fully_loaded then
-      CharacterLoader.load(self.settings.characterId)
       if self.isLocal then
         self:setLoaded(false)
+        ModController:loadModFor(characters[self.settings.characterId], "local")
+      else
+        ModController:loadModFor(characters[self.settings.characterId], self.playerNumber)
       end
     end
   end

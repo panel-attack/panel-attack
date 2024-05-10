@@ -127,8 +127,6 @@ function MainMenu:load(sceneParams)
   self.uiRoot:addChild(self.menu)
 
   SoundController:playMusic(themes[config.theme].stageTracks.main)
-  CharacterLoader.clear()
-  StageLoader.clear()
   GAME.tcpClient:resetNetwork()
   GAME.battleRoom = nil
 end

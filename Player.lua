@@ -5,6 +5,7 @@ local input = require("inputManager")
 local MatchParticipant = require("MatchParticipant")
 local consts = require("consts")
 local Signal = require("helpers.signal")
+local CharacterLoader = require("mods.CharacterLoader")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)
@@ -245,6 +246,7 @@ end
 
 function Player.getLocalPlayer()
   local player = Player(config.name)
+  player.isLocal = true
 
   player:setDifficulty(config.endless_difficulty)
   player:setSpeed(config.endless_speed)
@@ -260,8 +262,6 @@ function Player.getLocalPlayer()
   else
     player:setStyle(GameModes.Styles.CLASSIC)
   end
-
-  player.isLocal = true
 
   return player
 end

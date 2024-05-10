@@ -10,6 +10,9 @@ local tableUtils = require("tableUtils")
 local Menu = require("ui.Menu")
 local consts = require("consts")
 local Signal = require("helpers.signal")
+local StageLoader = require("mods.StageLoader")
+local ModLoader = require("mods.ModLoader")
+local ModController = require("mods.ModController")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
@@ -92,15 +95,14 @@ end
 
 function GameBase:waitForAssets(match)
   for i = 1, #match.players do
-    CharacterLoader.load(match.players[i].settings.characterId)
-    CharacterLoader.wait()
+    ModController:loadModFor(characters[match.players[i].settings.characterId], i)
   end
 
   if not match.stageId then
     match.stageId = StageLoader.fullyResolveStageSelection(match.stageId)
-    StageLoader.load(match.stageId)
+    ModController:loadModFor(stages[match.stageId], "match")
   end
-  StageLoader.wait()
+  ModLoader.wait()
 end
 
 function GameBase:initializeFrameInfo()

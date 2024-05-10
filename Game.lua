@@ -1,6 +1,8 @@
 require("TimeQueue")
 require("queue")
 require("server_queue")
+local CharacterLoader = require("mods.CharacterLoader")
+local StageLoader = require("mods.StageLoader")
 local Signal = require("helpers.signal")
 
 -- The main game object for tracking everything in Panel Attack.
@@ -107,7 +109,7 @@ function Game:setupRoutine()
   
   -- stages and panels before characters since they are part of their loading!
   coroutine.yield(loc("ld_stages"))
-  stages_init()
+  StageLoader.initStages()
   
   coroutine.yield(loc("ld_panels"))
   panels_init()
