@@ -22,6 +22,7 @@ local Signal    = require("helpers.signal")
 local StackPanel = require("ui.StackPanel")
 local PixelFontLabel = require("ui.PixelFontLabel")
 local GraphicsUtil = require("graphics_util")
+local SoundController = require("music.SoundController")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -568,6 +569,7 @@ end
 function CharacterSelect:createRankedSelection(player, width)
   local rankedSelector = BoolSelector({startValue = player.settings.wantsRanked, vFill = true, width = width, vAlign = "center", hAlign = "center"})
   rankedSelector.onValueChange = function(boolSelector, value)
+    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
     player:setWantsRanked(value)
   end
 

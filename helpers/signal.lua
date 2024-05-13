@@ -30,8 +30,10 @@ function Signal.createSignal(t, signalName)
 end
 
 function Signal.emitSignal(emitter, signalName, ...)
-  for subscriber, callback in pairs(emitter.signalSubscriptions[signalName]) do
-    callback(subscriber, ...)
+  for subscriber, array in pairs(emitter.signalSubscriptions[signalName]) do
+    for _, callback in ipairs(array) do
+      callback(subscriber, ...)
+    end
   end
 end
 
@@ -42,7 +44,12 @@ function Signal.connectSignal(emitter, signalName, subscriber, callback)
   assert(emitter.emitsSignals and emitter.signalSubscriptions, "trying to connect to a table that does not emit signals")
   assert(emitter.signalSubscriptions[signalName], "trying to connect to undefined signal " .. signalName)
 
-  emitter.signalSubscriptions[signalName][subscriber] = callback
+  local t
+  if not emitter.signalSubscriptions[signalName][subscriber] then
+    emitter.signalSubscriptions[signalName][subscriber] = {}
+  end
+  t = emitter.signalSubscriptions[signalName][subscriber]
+  t[#t+1] = callback
 end
 
 -- normally we don't need to actively disconnect from a signal as subscriptions automatically get removed when their subscriber is garbage collected

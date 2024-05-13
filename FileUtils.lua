@@ -103,7 +103,7 @@ end
 
 function fileUtils.readJsonFile(file)
   if not love.filesystem.getInfo(file, "file") then
-    logger.info("No file at specified path " .. file)
+    logger.debug("No file at specified path " .. file)
     return nil
   else
     local fileContent, info = love.filesystem.read(file)
