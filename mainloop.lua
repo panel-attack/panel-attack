@@ -101,7 +101,9 @@ function variable_step(f)
 
       leftover_time = leftover_time - 1 / 60
       if leftover_time >= 1 / 60 then
-        GAME.droppedFrames = GAME.droppedFrames + 1
+        if GAME.match and GAME.match.P1.clock and GAME.match.P1.clock > 1 then
+          GAME.droppedFrames = GAME.droppedFrames + 1
+        end
       end
     end
   end
@@ -588,13 +590,10 @@ end
 function challenge_mode_setup()
   local difficultySettings = {}
   local customModeID = 1
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-  difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
-
+  for i = 1, 8 do
+    difficultySettings[#difficultySettings+1] = { name = loc("challenge_difficulty_" .. #difficultySettings+1), challengeMode = ChallengeMode(#difficultySettings+1) }
+  end
+  
   local ret = nil
   local menu_x, menu_y = unpack(themes[config.theme].main_menu_screen_pos)
 

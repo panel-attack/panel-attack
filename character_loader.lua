@@ -72,7 +72,7 @@ end
 function CharacterLoader.addCharactersFromDirectoryRecursively(path)
   local lfs = love.filesystem
   local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
-  for i, v in ipairs(raw_dir_list) do
+  for _, v in ipairs(raw_dir_list) do
     local start_of_v = string.sub(v, 0, string.len(prefix_of_ignored_dirs))
     if start_of_v ~= prefix_of_ignored_dirs then
       local current_path = path .. "/" .. v

@@ -237,8 +237,10 @@ Stack =
     s.which = which
     s.player_number = player_number --player number according to the multiplayer server, for game outcome reporting
 
+    s.prev_shake_time = 0
     s.shake_time = 0
     s.shake_time_on_frame = 0
+    s.peak_shake_time = 0
 
     s.prev_states = {}
 
@@ -597,7 +599,7 @@ function Stack.restoreFromRollbackCopy(self, other)
   end
 end
 
-function Stack.rollbackToFrame(self, frame) 
+function Stack.rollbackToFrame(self, frame)
   local currentFrame = self.clock
   local difference = currentFrame - frame
   local safeToRollback = difference <= MAX_LAG
@@ -613,6 +615,15 @@ function Stack.rollbackToFrame(self, frame)
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(prev_states[frame])
     self:restoreFromRollbackCopy(prev_states[frame])
+    -- this is for the interpolation of the shake animation only (not a physics relevant field)
+    if prev_states[frame - 1] then
+      self.prev_shake_time = prev_states[frame - 1].shake_time
+    else
+      -- if this is the oldest rollback frame we don't need to interpolate with previous values
+      -- because there are no previous values, pretend it just went down smoothly
+      -- this can lead to minor differences in display for the same frame when using rewind
+      self.prev_shake_time = self.shake_time + 1
+    end
 
     for f = frame, currentFrame do
       self:deleteRollbackCopy(f)
@@ -832,7 +843,7 @@ function Stack.setPanelsForPuzzleString(self, puzzleString)
               local height = connectedGarbagePanels[#connectedGarbagePanels].y_offset + 1
               -- this is disregarding the possible existence of irregularly shaped garbage
               local width = garbageStartColumn - column + 1
-              local shake_time = garbage_to_shake_time[width * height]
+              local shake_time = self:shakeFramesForGarbageSize(width, height)
               for i = 1, #connectedGarbagePanels do
                 connectedGarbagePanels[i].x_offset = connectedGarbagePanels[i].x_offset - column
                 connectedGarbagePanels[i].height = height
@@ -1170,9 +1181,11 @@ function Stack.enqueue_card(self, chain, x, y, n)
   local card_burstAtlas = nil
   local card_burstParticle = nil
   if config.popfx == true then
-    card_burstAtlas = characters[self.character].images["burst"]
-    local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
-    card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+    if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
+      card_burstAtlas = characters[self.character].images["burst"]
+      local card_burstFrameDimension = card_burstAtlas:getWidth() / 9
+      card_burstParticle = GraphicsUtil:newRecycledQuad(card_burstFrameDimension, 0, card_burstFrameDimension, card_burstFrameDimension, card_burstAtlas:getDimensions())
+    end
   end
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
 end
@@ -1217,7 +1230,6 @@ function Stack.enqueue_popfx(self, x, y, popsize)
       fadeFrameDimension = fadeFrameDimension,
       fadeParticle = fadeParticle,
       bigParticle = bigParticle,
-      bigTimer = 0,
       popsize = popsize,
       x = x,
       y = y
@@ -1440,7 +1452,7 @@ function Stack.simulate(self)
 
     self:updatePanels()
 
-    local prev_shake_time = self.shake_time
+    self.prev_shake_time = self.shake_time
     self.shake_time = self.shake_time - 1
     self.shake_time = max(self.shake_time, self.shake_time_on_frame)
     if self.shake_time == 0 then
@@ -1777,7 +1789,7 @@ function Stack.simulate(self)
       if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
         local interrupted_thud = nil
         for i = 1, 3 do
-          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > prev_shake_time then
+          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > self.prev_shake_time then
             self.theme.sounds.garbage_thud[i]:stop()
             interrupted_thud = i
           end
@@ -2174,6 +2186,7 @@ function Stack.processPuzzleSwap(self)
       -- start depleting stop / shake time
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
+      self.peak_shake_time = self.shake_time
     end
     self.puzzle.remaining_moves = self.puzzle.remaining_moves - 1
   end
@@ -2244,7 +2257,7 @@ function Stack.dropGarbage(self, width, height, isMetal)
   end
 
   self.garbageCreatedCount = self.garbageCreatedCount + 1
-  local shakeTime = garbage_to_shake_time[width * height]
+  local shakeTime = self:shakeFramesForGarbageSize(width, height)
 
   for row = originRow, originRow + height - 1 do
     if not self.panels[row] then
@@ -2585,4 +2598,28 @@ function Stack:getInfo()
   end
 
   return info
+end
+
+
+local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
+  18, 18, 18, 18, 24, 42,
+  42, 42, 42, 42, 42, 66,
+  66, 66, 66, 66, 66, 66,
+  66, 66, 66, 66, 66, 76
+}
+
+-- returns the amount of shake frames for a piece of garbage with the given dimensions
+function Stack:shakeFramesForGarbageSize(width, height)
+  -- shake time directly scales with the number of panels contained in the garbage
+  local panelCount = width * height
+
+  -- sanitization for garbage dimensions has to happen elsewhere (garbage queue?), not here
+
+  if panelCount > #GARBAGE_SIZE_TO_SHAKE_FRAMES then
+    return GARBAGE_SIZE_TO_SHAKE_FRAMES[#GARBAGE_SIZE_TO_SHAKE_FRAMES]
+  elseif panelCount > 0 then
+    return GARBAGE_SIZE_TO_SHAKE_FRAMES[panelCount]
+  else
+    error("Trying to determine shake time of a garbage block with width " .. width .. " and height " .. height)
+  end
 end

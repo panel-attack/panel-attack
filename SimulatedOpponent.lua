@@ -8,6 +8,8 @@ SimulatedOpponent =
     self.character = character
     self.frameOriginX = positionX / GFX_SCALE
     self.frameOriginY = positionY / GFX_SCALE
+    self.panelOriginX = self.frameOriginX
+    self.panelOriginY = self.frameOriginY
     self.mirror_x = mirror
     self.clock = 0
   end

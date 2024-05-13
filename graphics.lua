@@ -4,30 +4,72 @@ local graphicsUtil = require("graphics_util")
 local TouchDataEncoding = require("engine.TouchDataEncoding")
 
 local floor = math.floor
-local ceil = math.ceil
 
-local shake_arr = {}
+-- there were some experiments for different shake animation
+-- their stale code was removed with commit 4104c86b3005f8d8c2931767d3d2df5618f2ac15
 
--- Setup the shake_arr data used for rendering the stack shake animation
-local shake_idx = -6
-for i = 14, 6, -1 do
-  local x = -math.pi
-  local step = math.pi * 2 / i
-  for j = 1, i do
-    shake_arr[shake_idx] = (1 + math.cos(x)) / 2
-    x = x + step
-    shake_idx = shake_idx + 1
+  -- Setup the shake data used for rendering the stack shake animation
+local function calculateShakeData(maxShakeFrames, maxAmplitude)
+
+  local shakeData = {}
+
+  local shakeIndex = -6
+  for i = 14, 6, -1 do
+    local x = -math.pi
+    local step = math.pi * 2 / i
+    for j = 1, i do
+      shakeData[shakeIndex] = (1 + math.cos(x)) / 2
+      x = x + step
+      shakeIndex = shakeIndex + 1
+    end
   end
+
+  -- 1 -> 1
+  -- #shake -> 0
+  local shakeStep = 1 / (#shakeData - 1)
+  local shakeMultiplier = 1
+  for i = 1, #shakeData do
+    shakeData[i] = shakeData[i] * shakeMultiplier * GFX_SCALE * 13
+    -- print(shakeData[i])
+    shakeMultiplier = shakeMultiplier - shakeStep
+  end
+
+  return shakeData
 end
 
--- 1 -> 1
--- #shake -> 0
-local shake_step = 1 / (#shake_arr - 1)
-local shake_mult = 1
-for i = 1, #shake_arr do
-  shake_arr[i] = shake_arr[i] * shake_mult
-  -- print(shake_arr[i])
-  shake_mult = shake_mult - shake_step
+local shakeOffsetData = calculateShakeData()
+
+function Stack:currentShakeOffset()
+  return self:shakeOffsetForShakeFrames(self.shake_time, self.prev_shake_time)
+end
+
+local function privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+  if frames <= 0 then
+    return 0
+  end
+
+  local lookupIndex = #shakeOffsetData - frames
+  local result = shakeOffsetData[lookupIndex] or 0
+  if result ~= 0 then
+    result = math.integerAwayFromZero(result * shakeIntensity)
+  end
+  return result
+end
+
+function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeIntensity)
+
+  if shakeIntensity == nil then
+    shakeIntensity = config.shakeIntensity
+  end
+
+  local result = privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+  -- If we increased shake time we don't want to hard jump to the new value as its jarring.
+  -- Interpolate on the first frame to smooth it out a little bit.
+  if previousShakeTime > 0 and previousShakeTime < frames then
+    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeIntensity)
+    result = math.integerAwayFromZero((result + previousOffset) / 2)
+  end
+  return result
 end
 
 -- Provides the X origin to draw an element of the stack
@@ -202,29 +244,17 @@ function Stack.update_cards(self)
 end
 
 -- Render the card animations used to show "bursts" when a combo or chain happens
-function Stack.draw_cards(self)
+function Stack.drawCards(self)
   for i = self.card_q.first, self.card_q.last do
     local card = self.card_q[i]
     if card_animation[card.frame] then
       local draw_x = (self.panelOriginX) + (card.x - 1) * 16
       local draw_y = (self.panelOriginY) + (11 - card.y) * 16 + self.displacement - card_animation[card.frame]
-      if config.popfx == true and card.frame then
-        burstFrameDimension = card.burstAtlas:getWidth() / 9
-        -- draw cardfx
-        if card.frame <= 21 then
-          radius = (200 - (card.frame * 7)) * (config.cardfx_scale / 100)
-        end
-        if card.frame > 21 then
-          radius = (100 - (card.frame * 3)) * (config.cardfx_scale / 100)
-        end
-        if radius < 10 then
-          radius = 10
-        end
-        for i = 1, 6, 1 do
-          local cardfx_x = draw_x + math.cos(math.rad((i * 60) + (card.frame * 5))) * radius
-          local cardfx_y = draw_y + math.sin(math.rad((i * 60) + (card.frame * 5))) * radius
-          qdraw(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
-        end
+      -- Draw burst around card
+      if card.burstAtlas and card.frame then
+        set_color(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
+        self:drawRotatingCardBurstEffectGroup(card, draw_x, draw_y)
+        set_color(1, 1, 1, 1)
       end
       -- draw card
       local iconSize = 48 / GFX_SCALE
@@ -236,13 +266,24 @@ function Stack.draw_cards(self)
       end
       if cardImage then
         local icon_width, icon_height = cardImage:getDimensions()
-        local fade = 1 - math.min(0.5 * ((card.frame-1) / 22), 0.5)
-        set_color(1, 1, 1, fade)
+        set_color(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
         draw(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
         set_color(1, 1, 1, 1)
       end
     end
   end
+end
+
+function Stack:opacityForFrame(frame, startFadeFrame, maxFadeFrame)
+  local opacity = 1
+  if frame >= startFadeFrame then
+    local currentFrame = frame - startFadeFrame
+    local maxFrame = maxFadeFrame - startFadeFrame
+    local minOpacity = 0.5
+    local maxOpacitySubtract = 1 - minOpacity
+    opacity = 1 - math.min(maxOpacitySubtract * (currentFrame / maxFrame), maxOpacitySubtract)
+  end
+  return opacity
 end
 
 -- Update all the pop animations
@@ -280,119 +321,164 @@ function Stack.update_popfxs(self)
 end
 
 -- Draw the pop animations that happen when matches are made
-function Stack.draw_popfxs(self)
+function Stack.drawPopEffects(self)
+  local panelSize = 16
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
-    local draw_x = (self.panelOriginX) + (popfx.x - 1) * 16
-    local draw_y = (self.panelOriginY) + (11 - popfx.y) * 16 + self.displacement
-    local burstScale = characters[self.character].popfx_burstScale
-    local fadeScale = characters[self.character].popfx_fadeScale
-    local burstParticle_atlas = popfx.burstAtlas
-    local burstParticle = popfx.burstParticle
-    local burstFrameDimension = popfx.burstFrameDimension
-    local fadeParticle_atlas = popfx.fadeAtlas
-    local fadeParticle = popfx.fadeParticle
-    local fadeFrameDimension = popfx.fadeFrameDimension
+    local drawX = (self.panelOriginX) + (popfx.x - 1) * panelSize
+    local drawY = (self.panelOriginY) + (self.height - 1 - popfx.y) * panelSize + self.displacement
+
+    set_color(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
+    
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
-        burstFrame = popfx_burst_animation[popfx.frame]
         if popfx_burst_animation[popfx.frame] then
-          burstParticle:setViewport(burstFrame[2] * burstFrameDimension, 0, burstFrameDimension, burstFrameDimension, burstParticle_atlas:getDimensions())
-          positions = {
-            -- four corner
-            {x = draw_x - burstFrame[1], y = draw_y - burstFrame[1]},
-            {x = draw_x + 15 + burstFrame[1], y = draw_y - burstFrame[1]},
-            {x = draw_x - burstFrame[1], y = draw_y + 15 + burstFrame[1]},
-            {x = draw_x + 15 + burstFrame[1], y = draw_y + 15 + burstFrame[1]},
-            -- top and bottom
-            {x = draw_x, y = draw_y - (burstFrame[1] * 2)},
-            {x = draw_x, y = draw_y + 10 + (burstFrame[1] * 2)},
-            -- left and right
-            {x = draw_x + 5 - (burstFrame[1] * 2), y = draw_y},
-            {x = draw_x + 10 + (burstFrame[1] * 2), y = draw_y}
-          }
-
-          if characters[self.character].popfx_burstrotate == true then
-            topRot = {math.rad(45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            bottomRot = {math.rad(-135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            leftRot = {math.rad(-45), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            rightRot = {math.rad(135), (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-          else
-            topRot = {0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            bottomRot = {0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale}
-            leftRot = {0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-            rightRot = {0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale}
-          end
-
-          randomMax = 0
-
-          if popsize == "normal" then
-            randomMax = 4
-          end
-          if popsize == "big" then
-            randomMax = 6
-          end
-          if popsize == "giant" then
-            randomMax = 8
-          end
-          if popsize ~= "small" and popfx.bigTimer == 0 then
-            big_position = math.random(randomMax)
-            big_position = 0
-            popfx.bigTimer = 2
-          end
-          popfx.bigTimer = popfx.bigTimer - 1
-
-          -- four corner
-          if big_position ~= 1 then
-            qdraw(burstParticle_atlas, burstParticle, positions[1].x, positions[1].y, 0, (16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          if big_position ~= 2 then
-            qdraw(burstParticle_atlas, burstParticle, positions[2].x, positions[2].y, 0, -(16 / burstFrameDimension) * burstScale, (16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          if big_position ~= 3 then
-            qdraw(burstParticle_atlas, burstParticle, positions[3].x, positions[3].y, 0, (16 / burstFrameDimension) * burstScale, -(16 / burstFrameDimension) * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          if big_position ~= 4 then
-            qdraw(burstParticle_atlas, burstParticle, positions[4].x, positions[4].y, 0, -(16 / burstFrameDimension) * burstScale, -16 / burstFrameDimension * burstScale, (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-          end
-          -- top and bottom
-          if popfx.popsize == "big" or popfx.popsize == "giant" then
-            if big_position ~= 5 then
-              qdraw(burstParticle_atlas, burstParticle, positions[5].x + 8, positions[5].y, topRot[1], topRot[2], topRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
-            if big_position ~= 6 then
-              qdraw(burstParticle_atlas, burstParticle, positions[6].x + 8, positions[6].y, bottomRot[1], bottomRot[2], bottomRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
-          end
-          -- left and right
-          if popfx.popsize == "giant" then
-            if big_position ~= 7 then
-              qdraw(burstParticle_atlas, burstParticle, positions[7].x, positions[7].y + 8, leftRot[1], leftRot[2], leftRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
-            if big_position ~= 8 then
-              qdraw(burstParticle_atlas, burstParticle, positions[8].x, positions[8].y + 8, rightRot[1], rightRot[2], rightRot[3], (burstFrameDimension * burstScale) / 2, (burstFrameDimension * burstScale) / 2)
-            end
-          end
-        --big particle
-        --[[
-          if popsize ~= "small" then
-            qdraw(particle_atlas, popfx.bigParticle, 
-            positions[big_position].x, positions[big_position].y, 0, 16/frameDimension, 16/frameDimension, frameDimension/2, frameDimension/2)
-          end
-        ]]
+          self:drawPopEffectsBurstGroup(popfx, drawX, drawY, panelSize)
         end
       end
     end
+    
     if characters[self.character].popfx_style == "fade" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["fade"] then
-        fadeFrame = popfx_fade_animation[popfx.frame]
+        local fadeFrame = popfx_fade_animation[popfx.frame]
         if (fadeFrame ~= nil) then
+          local fadeSize = 32
+          local fadeScale = characters[self.character].popfx_fadeScale
+          local fadeParticle_atlas = popfx.fadeAtlas
+          local fadeParticle = popfx.fadeParticle
+          local fadeFrameDimension = popfx.fadeFrameDimension
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          qdraw(fadeParticle_atlas, fadeParticle, draw_x + 8, draw_y + 8, 0, (32 / fadeFrameDimension) * fadeScale, (32 / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          qdraw(fadeParticle_atlas, fadeParticle, drawX + panelSize / 2, drawY + panelSize / 2, 0, (fadeSize / fadeFrameDimension) * fadeScale, (fadeSize / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
+
+    set_color(1, 1, 1, 1)
   end
+end
+
+-- Draws the group of bursts effects that come out of the panel after it matches
+function Stack:drawPopEffectsBurstGroup(popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("TopLeft", popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("TopRight", popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("BottomLeft", popfx, drawX, drawY, panelSize)
+  self:drawPopEffectsBurstPiece("BottomRight", popfx, drawX, drawY, panelSize)
+
+  if popfx.popsize == "big" or popfx.popsize == "giant" then
+    self:drawPopEffectsBurstPiece("Top", popfx, drawX, drawY, panelSize)
+    self:drawPopEffectsBurstPiece("Bottom", popfx, drawX, drawY, panelSize)
+  end
+
+  if popfx.popsize == "giant" then
+    self:drawPopEffectsBurstPiece("Left", popfx, drawX, drawY, panelSize)
+    self:drawPopEffectsBurstPiece("Right", popfx, drawX, drawY, panelSize)
+  end
+end
+
+-- Draws a particular instance of the bursts effects that come out of the panel after it matches
+function Stack:drawPopEffectsBurstPiece(direction, popfx, drawX, drawY, panelSize)
+
+  local burstDistance = popfx_burst_animation[popfx.frame][1]
+  local shouldRotate = characters[self.character].popfx_burstRotate
+  local x = drawX
+  local y = drawY
+  local rotation = 0
+
+  if direction == "TopLeft" then
+    x = x - burstDistance
+    y = y - burstDistance
+    if shouldRotate then
+      rotation = math.rad(0)
+    end
+  elseif direction == "TopRight" then
+    x = x + panelSize + burstDistance
+    y = y - burstDistance
+    if shouldRotate then
+      rotation = math.rad(90)
+    end
+  elseif direction == "BottomLeft" then
+    x = x - burstDistance
+    y = y + panelSize + burstDistance
+    if shouldRotate then
+      rotation = math.rad(-90)
+    end
+  elseif direction == "BottomRight" then
+    x = x + panelSize + burstDistance
+    y = y + panelSize + burstDistance
+    if shouldRotate then
+      rotation = math.rad(180)
+    end
+  elseif direction == "Top" then
+    x = x + panelSize / 2
+    y = y - (burstDistance * 2)
+    if shouldRotate then
+      rotation = math.rad(45)
+    end
+  elseif direction == "Bottom" then
+    x = x + panelSize / 2
+    y = y + panelSize + (burstDistance * 2)
+    if shouldRotate then
+      rotation = math.rad(-135)
+    end
+  elseif direction == "Left" then
+    x = x - (burstDistance * 2)
+    y = y + panelSize / 2
+    if shouldRotate then
+      rotation = math.rad(-45)
+    end
+  elseif direction == "Right" then
+    x = x + panelSize + (burstDistance * 2)
+    y = y + panelSize / 2
+    if shouldRotate then
+      rotation = math.rad(135)
+    end
+  else 
+    assert(false, "Unhandled popfx direction")
+  end
+
+  local atlasDimension = popfx.burstFrameDimension
+  local burstFrame = popfx_burst_animation[popfx.frame][2]
+  self:drawPopBurstParticle(popfx.burstAtlas, popfx.burstParticle, burstFrame, atlasDimension, x, y, panelSize, rotation)
+end
+
+-- Draws the group of burst effects that rotate a combo or chain card
+function Stack:drawRotatingCardBurstEffectGroup(card, drawX, drawY)
+  local burstFrameDimension = card.burstAtlas:getWidth() / 9
+
+  local radius = -37.6 * math.log(card.frame) + 132.81
+  local maxRadius = 8
+  if radius < maxRadius then
+    radius = maxRadius
+  end
+
+  local panelSize = 16
+  for i = 0, 5, 1 do
+    local degrees = (i * 60)
+    local bonusDegrees = (card.frame * 5)
+    local totalRadians = math.rad(degrees + bonusDegrees)
+    local xOffset = math.cos(totalRadians) * radius
+    local yOffset = math.sin(totalRadians) * radius
+    local x = drawX + panelSize / 2 + xOffset
+    local y = drawY + panelSize / 2 + yOffset
+    local rotation = 0
+    if characters[self.character].popfx_burstRotate then
+      rotation = totalRadians
+    end
+    
+    self:drawPopBurstParticle(card.burstAtlas, card.burstParticle, 0, burstFrameDimension, x, y, panelSize, rotation)
+  end
+end
+
+-- Draws a burst partical with the given parameters
+function Stack:drawPopBurstParticle(atlas, quad, frameIndex, atlasDimension, drawX, drawY, panelSize, rotation)
+  
+  local burstScale = characters[self.character].popfx_burstScale
+  local burstFrameScale = (panelSize / atlasDimension) * burstScale
+  local burstOrigin = (atlasDimension * burstScale) / 2
+
+  quad:setViewport(frameIndex * atlasDimension, 0, atlasDimension, atlasDimension, atlas:getDimensions())
+
+  qdraw(atlas, quad, drawX, drawY, rotation, burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
 end
 
 local mask_shader = love.graphics.newShader [[
@@ -460,6 +546,12 @@ function Stack:drawDebug()
   end
 end
 
+local function shouldFlashForFrame(frame)
+  local flashFrames = 1
+  flashFrames = 2 -- add config
+  return frame % (flashFrames * 2) < flashFrames
+end
+
 -- Renders the player's stack on screen
 function Stack.render(self)
   if self.canvas == nil then
@@ -509,15 +601,14 @@ function Stack.render(self)
   local metall_w, metall_h = metals.left:getDimensions()
   local metalr_w, metalr_h = metals.right:getDimensions()
 
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local shakeOffset = self:currentShakeOffset() / GFX_SCALE
 
   -- Draw all the panels
   for row = 0, self.height do
     for col = 1, self.width do
       local panel = self.panels[row][col]
       local draw_x = 4 + (col - 1) * 16
-      local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shake
+      local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shakeOffset
       if panel.color ~= 0 and panel.state ~= "popped" then
         local draw_frame = 1
         if panel.isGarbage then
@@ -589,7 +680,7 @@ function Stack.render(self)
                 local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
                 draw(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
               end
-            elseif flash_time % 2 == 1 then
+            elseif shouldFlashForFrame(flash_time) == false then
               if panel.metal then
                 draw(metals.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
                 draw(metals.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
@@ -607,10 +698,10 @@ function Stack.render(self)
             local flash_time = self.FRAMECOUNTS.MATCH - panel.timer
             if flash_time >= self.FRAMECOUNTS.FLASH then
               draw_frame = 6
-            elseif flash_time % 2 == 1 then
+            elseif shouldFlashForFrame(flash_time) == false then
               draw_frame = 1
             else
-              draw_frame = 5
+              draw_frame = 5 -- flash
             end
           elseif panel.state == "popping" then
             draw_frame = 6
@@ -654,7 +745,7 @@ function Stack.render(self)
     graphicsUtil.drawScaledImage(frameImage, 0, 0, 312, 612)
   end
   if wallImage then
-    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shake + self.height * 16)*GFX_SCALE, 288)
+    graphicsUtil.drawScaledWidthImage(wallImage, 12, (4 - shakeOffset + self.height * 16)*GFX_SCALE, 288)
   end
 
   -- Draw the cursor
@@ -674,9 +765,6 @@ function Stack.render(self)
   love.graphics.draw(self.canvas, self.frameOriginX * GFX_SCALE, self.frameOriginY * GFX_SCALE)
   love.graphics.setBlendMode("alpha", "alphamultiply")
 
-  self:draw_popfxs()
-  self:draw_cards()
-
   -- Draw debug graphics if set
   if config.debug_mode then
     local mouseX, mouseY = GAME:transform_coordinates(love.mouse.getPosition())
@@ -685,7 +773,7 @@ function Stack.render(self)
       for col = 1, self.width do
         local panel = self.panels[row][col]
         local draw_x = (self.panelOriginX + (col - 1) * 16) * GFX_SCALE
-        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shake) * GFX_SCALE
+        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shakeOffset) * GFX_SCALE
 
         -- Require hovering over a stack to show details
         if mouseX >= self.panelOriginX * GFX_SCALE and mouseX <= (self.panelOriginX + self.width * 16) * GFX_SCALE then
@@ -976,8 +1064,7 @@ function Stack.render_cursor(self)
   end
 
   local cursorImage = self.theme.images.IMG_cursor[(floor(self.clock / 16) % 2) + 1]
-  local shake_idx = #shake_arr - self.shake_time
-  local shake = ceil((shake_arr[shake_idx] or 0) * 13)
+  local shakeOffset = self:currentShakeOffset() / GFX_SCALE
   local desiredCursorWidth = 40
   local panelWidth = 16
   local scale_x = desiredCursorWidth / cursorImage:getWidth()
@@ -991,9 +1078,9 @@ function Stack.render_cursor(self)
   end
   if renderCursor then
     local xPosition = (self.cur_col - 1) * panelWidth
-    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    qdraw(cursorImage, self.cursorQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shakeOffset, 0, scale_x, scale_y)
     if self.inputMethod == "touch" then
-      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+      qdraw(cursorImage, self.cursorQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shakeOffset, 0, scale_x, scale_y)
     end
   end
 end
@@ -1067,16 +1154,10 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   end
 
   -- Shake bar
-  if shake_time == 0 or self.maxShake == nil then
-    self.maxShake = 0
-  end
-  if shake_time > self.maxShake then
-    self.maxShake = shake_time
-  end
 
   local multi_shake_bar, multi_stop_bar, multi_prestop_bar = 0, 0, 0
-  if self.maxShake > 0 and shake_time >= self.pre_stop_time + stop_time then
-    multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.maxShake) * 3
+  if self.peak_shake_time > 0 and shake_time >= self.pre_stop_time + stop_time then
+    multi_shake_bar = shake_time * (self.theme.images.IMG_multibar_shake_bar:getHeight() / self.peak_shake_time) * 3
   end
   if self.maxStop > 0 and shake_time < self.pre_stop_time + stop_time then
     multi_stop_bar = stop_time * (self.theme.images.IMG_multibar_stop_bar:getHeight() / self.maxStop) * 1.5
@@ -1150,6 +1231,15 @@ function Stack:drawAbsoluteMultibar(stop_time, shake_time)
       end
     end
   end
+end
+
+function Stack:drawTopLayers()
+  if self.telegraph then
+    self.telegraph:render()
+  end
+
+  self:drawPopEffects()
+  self:drawCards()
 end
 
 -- Draw the pause menu

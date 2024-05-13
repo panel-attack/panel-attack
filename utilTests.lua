@@ -8,6 +8,7 @@ assert(math.sign(-2) == -1)
 assert(math.sign(0) == 1)
 
 -- math.round tests
+assert(math.round(0) == 0)
 assert(math.round(0.5) == 1)
 assert(math.round(0.49) == 0)
 assert(math.round(0.1) == 0)
@@ -21,6 +22,18 @@ assert(math.round(12, -1) == 10)
 assert(math.round(0.11, 1) == 0.1)
 assert(math.round(-1.11, 1) == -1.1)
 assert(math.round(0.119, 2) == 0.12)
+
+-- math.integerAwayFromZero tests
+assert(math.integerAwayFromZero(0) == 0)
+assert(math.integerAwayFromZero(0.5) == 1)
+assert(math.integerAwayFromZero(0.49) == 1)
+assert(math.integerAwayFromZero(0.1) == 1)
+assert(math.integerAwayFromZero(-0.1) == -1)
+assert(math.integerAwayFromZero(-0.5) == -1)
+assert(math.integerAwayFromZero(-0.51) == -1)
+assert(math.integerAwayFromZero(-1.1) == -2)
+assert(math.integerAwayFromZero(-1.5) == -2)
+assert(math.integerAwayFromZero(-1.51) == -2)
 
 local dirtyCharacterJson = "{\n\t\"id\":\"Giana\",\n\t\"name\":\"Giana\"\n\t\"chain_style\":\"per_chain\"\n\t\"music_style\":\"dynamic\"\n}"
 local puzzleJson = "{\n  \"Version\": 2,\n  \"Puzzle Sets\": [\n    [\n      \"Set Name\": \"clear puzzle test\",\n      \"Puzzles\": [\n\t\t[\n          \"Puzzle Type\": \"clear\",\n          \"Do Countdown\": false,\n          \"Moves\": 1,\n          \"Stack\": \n           \"\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   920000\n\t\t   290000\n\t\t   920000\",\n        ],\n\t\t[\n          \"Puzzle Type\": \"clear\",\n          \"Do Countdown\": false,\n          \"Moves\": 0,\n          \"Stack\": \n           \"\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   [====]\n\t\t   020000\n\t\t   122[=]\n\t\t   245156\n\t\t   325363\",\n\t\t   \"Stop\": 60\n        ],\n      ]\n    ],\n  ]\n}"
@@ -127,4 +140,13 @@ end
 
 testFramesToTimeStringHours()
 
+
+local function testfloatsEqualWithPrecision()
+  assert(math.floatsEqualWithPrecision(1, 1, 20))
+  assert(math.floatsEqualWithPrecision(1, 2, 20) == false)
+  assert(math.floatsEqualWithPrecision(1.333, 1.334, 2))
+  assert(math.floatsEqualWithPrecision(1.333, 1.334, 3) == false)
+end
+
+testfloatsEqualWithPrecision()
 

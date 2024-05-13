@@ -79,6 +79,23 @@ local function general_menu()
     update_replay_preference()
   end
 
+  local activeGarbageCollectionPercent = config.activeGarbageCollectionPercent * 100
+
+  local function updateGarbageCollectionPercent()
+    config.activeGarbageCollectionPercent = activeGarbageCollectionPercent / 100
+    generalMenu:set_button_setting(7, activeGarbageCollectionPercent)
+  end
+
+  local function increaseGarbageCollectionPercent()
+    activeGarbageCollectionPercent = bound(10, activeGarbageCollectionPercent + 1, 80)
+    updateGarbageCollectionPercent()
+  end
+
+  local function decreaseGarbageCollectionPercent()
+    activeGarbageCollectionPercent = bound(10, activeGarbageCollectionPercent - 1, 80)
+    updateGarbageCollectionPercent()
+  end
+
   local function nextMenu()
     generalMenu:selectNextIndex()
   end
@@ -98,6 +115,7 @@ local function general_menu()
   generalMenu:add_button(loc("op_analytics"), update_analytics, goEscape, update_analytics, update_analytics)
   generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
+  generalMenu:add_button(loc("op_performance_drain"), nextMenu, goEscape, decreaseGarbageCollectionPercent, increaseGarbageCollectionPercent)
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_countdown(true)
   update_fps(true)
@@ -105,6 +123,7 @@ local function general_menu()
   update_analytics(true)
   update_input_repeat_delay()
   update_replay_preference()
+  updateGarbageCollectionPercent()
 
   while true do
     generalMenu:draw()
@@ -251,6 +270,20 @@ local function graphics_menu()
     graphicsMenu:set_button_setting(7, config.renderAttacks and loc("op_on") or loc("op_off"))
   end
 
+  local function updateShakeIntensity()
+    graphicsMenu:set_button_setting(8, config.shakeIntensity)
+  end
+
+  local function decreaseShakeIntensity()
+    config.shakeIntensity = bound(0.5, config.shakeIntensity - 0.05, 1)
+    updateShakeIntensity()
+  end
+
+  local function increaseShakeIntensity()
+    config.shakeIntensity = bound(0.5, config.shakeIntensity + 0.05, 1)
+    updateShakeIntensity()
+  end
+
   local function nextMenu()
     graphicsMenu:selectNextIndex()
   end
@@ -271,6 +304,7 @@ local function graphics_menu()
   graphicsMenu:add_button(loc("op_popfx"), update_popfx, goEscape, update_popfx, update_popfx)
   graphicsMenu:add_button(loc("op_renderTelegraph"), update_renderTelegraph, goEscape, update_renderTelegraph, update_renderTelegraph)
   graphicsMenu:add_button(loc("op_renderAttacks"), update_renderAttacks, goEscape, update_renderAttacks, update_renderAttacks)
+  graphicsMenu:add_button(loc("op_shakeIntensity"), increaseShakeIntensity, goEscape, decreaseShakeIntensity, increaseShakeIntensity)
   graphicsMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_theme()
   updateScaleType(true)
@@ -279,6 +313,7 @@ local function graphics_menu()
   update_popfx(true)
   update_renderTelegraph(true)
   update_renderAttacks(true)
+  updateShakeIntensity()
 
   while true do
     graphicsMenu:draw()
@@ -1105,7 +1140,7 @@ local function userIDMenu(button_idx)
     ret = {
       function()
         local updateIDRet = nil
-        local id = read_user_id_file(userIDDirectories[currentButtonIndex])
+        local id = read_user_id_file(userIDDirectories[currentButtonIndex]) or ""
         love.keyboard.setTextInput(true) -- enables user to type
         while true do
           local to_print = "Enter User ID (or paste from clipboard)"

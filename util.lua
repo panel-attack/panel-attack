@@ -150,11 +150,25 @@ function math.sign(v)
 end
 
 function math.round(number, numberOfDecimalPlaces)
+  if number == 0 then
+    return number
+  end
   local multiplier = 10^(numberOfDecimalPlaces or 0)
-  if number >= 0 then
+  if number > 0 then
     return math.floor(number * multiplier + 0.5) / multiplier
   else 
     return math.ceil(number * multiplier - 0.5) / multiplier 
+  end
+end
+
+function math.integerAwayFromZero(number)
+  if number == 0 then
+    return number
+  end
+  if number > 0 then
+    return math.ceil(number)
+  else 
+    return math.floor(number)
   end
 end
 
@@ -422,4 +436,20 @@ function string.toCharTable(self)
     t[#t+1] = character
   end
   return t
+end
+
+-- Returns if two floats are equal within a certain number of decimal places
+-- @param decimalPrecision the number of decimal places to compare
+function math.floatsEqualWithPrecision(a, b, decimalPrecision)
+  assert(type(a) == "number", "floatsEqualWithPrecision expects a number argument for the first argument")
+  assert(type(b) == "number", "floatsEqualWithPrecision expects a number argument for the second argument")
+  assert(type(decimalPrecision) == "number", "floatsEqualWithPrecision expects a number argument for the third argument")
+
+  local threshold = math.pow(0.1, decimalPrecision)
+  local diff = math.abs(a - b) -- Absolute value of difference
+  return diff < threshold
+end
+
+function assertEqual(a, b) 
+  assert(a == b, "Expected " .. a .. " to be equal to " .. b)
 end

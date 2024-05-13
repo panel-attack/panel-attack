@@ -354,8 +354,8 @@ end
 function Match.render(self)
   local P1 = self.P1
   local P2 = self.P2
-  
-  if GAME.droppedFrames > 10 and config.show_fps then
+
+  if config.show_fps then
     gprint("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
   end
 
@@ -549,13 +549,11 @@ function Match.render(self)
         challengeMode:render()
       end
 
-      if self.battleRoom then
-        if P1 and P1.telegraph then
-          P1.telegraph:render()
-        end
-        if P2 and P2.telegraph then
-          P2.telegraph:render()
-        end
+      if P1 then
+        P1:drawTopLayers()
+      end
+      if P2 then
+        P2:drawTopLayers()
       end
 
       -- Draw VS HUD

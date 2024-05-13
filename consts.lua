@@ -14,6 +14,8 @@ consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE = "047"
 VERSION = consts.ENGINE_VERSIONS.TOUCH_COMPATIBLE -- The current engine version
 VERSION_MIN_VIEW = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE -- The lowest version number that can be watched
 
+ENGINE_VERSION = VERSION -- temporary until sceneRefactor lands on beta
+
 consts.COUNTDOWN_CURSOR_SPEED = 4 --one move every this many frames
 consts.COUNTDOWN_LENGTH = 180 --3 seconds at 60 fps
 
@@ -96,7 +98,7 @@ score_chain_TA = {  0,   50,   80,  150,  300,
 
 GFX_SCALE = 3
 
--- frames to use for the card animation
+-- frames of the card animation and corresponding y offset
 card_animation = {false,
    -1, 0, 1, 2, 3, 4, 4, 5, 5, 6,
    6, 7, 7, 8, 8, 8, 9, 9, 9, 9,
@@ -105,11 +107,12 @@ card_animation = {false,
    11}
 
 -- The popping particle animation. First number is how far the particles go, second is which frame to show from the spritesheet
- popfx_burst_animation = {{1, 1}, {4, 1}, {7, 1}, {8, 1},
+popfx_burst_animation = {{1, 1}, {4, 1}, {7, 1}, {8, 1},
     {9, 1}, {9, 1}, {10, 1}, {10, 2}, {10, 2}, {10, 3},
     {10, 3}, {10, 4}, {10, 4}, {10, 5}, {10, 5}, {10, 6}, {10, 6}, {10, 7}, {10, 7}, {10, 8}, {10, 8}, {10, 8}}
 
-  popfx_fade_animation = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
+-- The fade effect animation that happens when a panel disappears. Just the frame to use, note 0 is unused right now which is sad
+popfx_fade_animation = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
 
 FC_HOVER = {12,  9,  6, 3}
 -- TODO: delete FC_MATCH?
@@ -220,16 +223,5 @@ colors = {  red     = {220/255, 50/255,  47/255 },
             dgray   = {28/255,  28/255,  28/255 }}
 
 e_chain_or_combo = { combo=0, chain=1, shock=2 }
-
-garbage_to_shake_time = {
-  [0] = 0,
-  18, 18, 18, 18, 24, 42, 42, 42, 42, 42,
-  42, 66, 66, 66, 66, 66, 66, 66, 66, 66,
-  66, 66, 66, 76
-}
-
-for i=25,1000 do
-  garbage_to_shake_time[i] = garbage_to_shake_time[i-1]
-end
 
 return consts

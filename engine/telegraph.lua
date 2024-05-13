@@ -13,6 +13,8 @@ Telegraph = class(function(self, sender)
   assert(sender.clock ~= nil, "telegraph sender invalid")
   assert(sender.frameOriginX ~= nil, "telegraph sender invalid")
   assert(sender.frameOriginY ~= nil, "telegraph sender invalid")
+  assert(sender.panelOriginX ~= nil, "telegraph sender invalid")
+  assert(sender.panelOriginY ~= nil, "telegraph sender invalid")
   assert(sender.character ~= nil, "telegraph sender invalid")
 
   -- Stores the actual queue of garbages in the telegraph but not queued long enough to exceed the "stoppers"
@@ -114,16 +116,16 @@ function Telegraph.rollbackCopy(source, other)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph:push(garbage, attackOriginCol, attackOriginRow, frameEarned)
+function Telegraph:push(garbage, attackDrawCol, attackDrawRow, frameEarned)
   assert(self.sender ~= nil, "telegraph needs sender set")
   assert(frameEarned == self.sender.clock, "expected sender clock to equal attack")
 
   -- the attack only starts interacting with the telegraph on the next frame, not the same it was earned
-  self:privatePush(garbage, attackOriginCol, attackOriginRow, frameEarned + 1)
+  self:privatePush(garbage, attackDrawCol, attackDrawRow, frameEarned + 1)
 end
 
 -- Adds a piece of garbage to the queue
-function Telegraph.privatePush(self, garbage, attackOriginColumn, attackOriginRow, timeAttackInteracts)
+function Telegraph.privatePush(self, garbage, attackDrawColumn, attackDrawRow, timeAttackInteracts)
   local garbageToSend
   if garbage.isChain then
     garbageToSend = self:grow_chain(timeAttackInteracts)
@@ -137,7 +139,7 @@ function Telegraph.privatePush(self, garbage, attackOriginColumn, attackOriginRo
       self.attacks[timeAttackInteracts] = {}
     end
     self.attacks[timeAttackInteracts][#self.attacks[timeAttackInteracts]+1] =
-      {timeAttackInteracts=timeAttackInteracts, origin_col=attackOriginColumn, origin_row= attackOriginRow, stuff_to_send=garbageToSend}
+      {timeAttackInteracts=timeAttackInteracts, attackDrawColumn=attackDrawColumn, attackDrawRow=attackDrawRow, stuff_to_send=garbageToSend}
   end
 end
 
@@ -309,23 +311,31 @@ function Telegraph:telegraphRenderXPosition(index)
   return result
 end
 
-function Telegraph:attackStartFrame()
+function Telegraph:attackAnimationStartFrame()
+  -- In games PA is inspired by the attack animation only happens after the card_animation
+  -- In PA garbage is removed from telegraph early in order to afford the 1 second desync tolerance for online play
+  -- to compensate, both attacks and telegraph are shown earlier so they are shown long enough and early enough
+  -- their attacks being rendered immediately produces a decent compromise on visuals
   return 1
 end
 
-function Telegraph:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+function Telegraph:attackAnimationEndFrame()
+  return GARBAGE_TRANSIT_TIME
+end
 
-  local resultX, resultY = garbage_block.origin_x, garbage_block.origin_y
+function Telegraph:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
 
-  if frames_since_earned > self:attackStartFrame() + #telegraph_attack_animation_speed then
-    frames_since_earned = self:attackStartFrame() + #telegraph_attack_animation_speed
+  local resultX, resultY = attack.origin_x, attack.origin_y
+
+  if frames_since_earned > self:attackAnimationStartFrame() + #telegraph_attack_animation_speed then
+    frames_since_earned = self:attackAnimationStartFrame() + #telegraph_attack_animation_speed
   end
 
   -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
-  for frame=1, frames_since_earned - self:attackStartFrame() do
-    resultX = resultX + telegraph_attack_animation[garbage_block.direction][frame].dx
-    resultY = resultY + telegraph_attack_animation[garbage_block.direction][frame].dy
+  for frame=1, frames_since_earned - self:attackAnimationStartFrame() do
+    resultX = resultX + telegraph_attack_animation[attack.direction][frame].dx
+    resultY = resultY + telegraph_attack_animation[attack.direction][frame].dy
   end
 
   return resultX, resultY
@@ -343,9 +353,9 @@ function Telegraph:render()
 
     for timeAttackInteracts, attacks_this_frame in pairs(telegraph_to_render.attacks) do
       local frames_since_earned = telegraph_to_render.sender.clock - timeAttackInteracts
-      if frames_since_earned <= self:attackStartFrame() then
+      if frames_since_earned < self:attackAnimationStartFrame() then
         --don't draw anything yet, card animation is still in progress.
-      elseif frames_since_earned >= GARBAGE_TRANSIT_TIME then
+      elseif frames_since_earned >= self:attackAnimationEndFrame() then
         --Attack is done, remove.
         telegraph_to_render.attacks[timeAttackInteracts] = nil
       else
@@ -354,35 +364,39 @@ function Telegraph:render()
             garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
             garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.originY - TELEGRAPH_PADDING)
             
-            if not garbage_block.origin_x or not garbage_block.origin_y then
-              garbage_block.origin_x = (attack.origin_col-1) * 16 + telegraph_to_render.sender.frameOriginX
-              garbage_block.origin_y = (11-attack.origin_row) * 16 + telegraph_to_render.sender.frameOriginY + (telegraph_to_render.sender.displacement or 0) - card_animation[#card_animation]
-              garbage_block.x = garbage_block.origin_x
-              garbage_block.y = garbage_block.origin_y
-              garbage_block.direction = garbage_block.direction or math.sign(garbage_block.destination_x - garbage_block.origin_x) --should give -1 for left, or 1 for right
+            if not attack.origin_x or not attack.origin_y then
+              attack.origin_x = (attack.attackDrawColumn-1) * 16 + telegraph_to_render.sender.panelOriginX
+              attack.origin_y = (11-attack.attackDrawRow) * 16 + telegraph_to_render.sender.panelOriginY + (telegraph_to_render.sender.displacement or 0) - (card_animation[frames_since_earned] or 0)
+              attack.direction = math.sign(garbage_block.destination_x - attack.origin_x) --should give -1 for left, or 1 for right
             end
 
-            if frames_since_earned <= self:attackStartFrame() + #telegraph_attack_animation_speed then
+            if self.sender.opacityForFrame then
+              set_color(1, 1, 1, self.sender:opacityForFrame(frames_since_earned, 1, 8))
+            end
+
+            if frames_since_earned <= self:attackAnimationStartFrame() + #telegraph_attack_animation_speed then
               --draw telegraph attack animation, little loop down and to the side of origin.
       
               -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
               -- TODO make this more performant?
-              garbage_block.x, garbage_block.y = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
+              local garbageBlockX, garbageBlockY = telegraph_to_render:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
             else
               --move toward destination
 
-              local loopX, loopY = telegraph_to_render:telegraphLoopAttackPosition(garbage_block, frames_since_earned)
-              local framesHappened = frames_since_earned - (self:attackStartFrame() + #telegraph_attack_animation_speed)
-              local totalFrames = GARBAGE_TRANSIT_TIME - (self:attackStartFrame() + #telegraph_attack_animation_speed)
+              local loopX, loopY = telegraph_to_render:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
+              local framesHappened = frames_since_earned - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
+              local totalFrames = self:attackAnimationEndFrame() - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
               local percent =  framesHappened / totalFrames
 
-              garbage_block.x = loopX + percent * (garbage_block.destination_x - loopX)
-              garbage_block.y = loopY + percent * (garbage_block.destination_y - loopY)
+              local garbageBlockX = loopX + percent * (garbage_block.destination_x - loopX)
+              local garbageBlockY = loopY + percent * (garbage_block.destination_y - loopY)
 
-              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbage_block.x, garbage_block.y, 0, atk_scale, atk_scale)
+              draw(characters[senderCharacter].telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
             end
+
+            set_color(1, 1, 1, 1)
           end
         end
       end
@@ -398,12 +412,12 @@ function Telegraph:render()
       draw(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.originY, 0, atk_scale, atk_scale)
     end
 
-    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives (earned_frame-GARBAGE_TRANSIT_TIME)
+    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives
     local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
     local current_block = g_queue_to_draw:pop()
     local draw_y = telegraph_to_render.originY
     local drewChain = false
-    local attackAnimationLength = GARBAGE_TRANSIT_TIME
+    local attackAnimationLength = self:attackAnimationEndFrame()
     if not config.renderAttacks then
       attackAnimationLength = 0
     end

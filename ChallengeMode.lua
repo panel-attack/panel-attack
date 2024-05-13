@@ -59,6 +59,20 @@ ChallengeMode =
       lineClearGPMBase = 35
       lineClearGPMIncrement = 1.5
       panelLevel = 10
+    elseif difficulty == 7 then
+      stageCount = 12
+      secondsToppedOutToLoseBase = 6
+      secondsToppedOutToLoseIncrement = 4.0
+      lineClearGPMBase = 37
+      lineClearGPMIncrement = 1.5
+      panelLevel = 10
+    elseif difficulty == 8 then
+      stageCount = 12
+      secondsToppedOutToLoseBase = 12
+      secondsToppedOutToLoseIncrement = 4.0
+      lineClearGPMBase = 39
+      lineClearGPMIncrement = 1.5
+      panelLevel = 10
     end
 
     for stageIndex = 1, stageCount, 1 do
