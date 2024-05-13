@@ -1,8 +1,8 @@
-name: sceneRefactor-canary-release
+name: canary-release
 on: 
   push:
     branches:
-      - "sceneRefactor"
+      - "beta"
 
 permissions:
   contents: write
