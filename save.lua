@@ -1,40 +1,57 @@
+local tableUtils = require("tableUtils")
+local inputManager = require("inputManager")
+local fileUtils = require("FileUtils")
+
 -- the save.lua file contains the read/write functions
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 local logger = require("logger")
 
+local save = {}
+
 -- writes to the "keys.txt" file
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keysV2.txt")
+      local file = love.filesystem.newFile("keysV3.txt")
       file:open("w")
-      file:write(json.encode(GAME.input.inputConfigurations))
+      file:write(json.encode(inputManager:getSaveKeyMap()))
       file:close()
     end
   )
 end
--- reads the "keys.txt" file
-function read_key_file()
-  pcall(
-    function()
-      local inputConfigs = GAME.input.inputConfigurations
-      local file = love.filesystem.newFile("keysV2.txt")
-      file:open("r")
-      local teh_json = file:read(file:getSize())
-      file:close()
-      local user_conf = json.decode(teh_json)
-      for k, v in ipairs(user_conf) do
-        inputConfigs[k] = v
-      end
 
-      GAME.input.inputConfigurations = inputConfigs
-    end
-  )
+-- reads the "keys.txt" file
+function save.read_key_file()
+  local file = love.filesystem.newFile("keysV3.txt")
+  local ok, err = file:open("r")
+  local migrateInputs = false
+  
+  if not ok then
+    file = love.filesystem.newFile("keysV2.txt")
+    ok, err = file:open("r")
+    migrateInputs = true
+  end
+  
+  if not ok then
+    return inputManager.inputConfigurations
+  end
+  
+  local jsonInputConfig = file:read(file:getSize())
+  file:close()
+  
+  local inputConfigs = json.decode(jsonInputConfig)
+  
+  if migrateInputs then
+    -- migrate old input configs
+    inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+  end
+  
+  return inputConfigs
 end
 
 -- reads the .txt file of the given path and filename
-function read_txt_file(path_and_filename)
+function save.read_txt_file(path_and_filename)
   local s
   pcall(
     function()
@@ -45,7 +62,7 @@ function read_txt_file(path_and_filename)
     end
   )
   if not s then
-    s = "Failed to read file" .. path_and_filename
+    s = "Failed to read file " .. path_and_filename
   else
     s = s:gsub("\r\n?", "\n")
   end
@@ -85,7 +102,7 @@ end
 function write_puzzles()
   pcall(
     function()
-      local currentPuzzles = FileUtil.getFilteredDirectoryItems("puzzles") or {}
+      local currentPuzzles = fileUtils.getFilteredDirectoryItems("puzzles") or {}
       local customPuzzleExists = false
       for _, filename in pairs(currentPuzzles) do
         if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "stock (example).json" and filename ~= "README.txt" then
@@ -97,7 +114,7 @@ function write_puzzles()
       if customPuzzleExists == false then
         love.filesystem.createDirectory("puzzles")
 
-        recursive_copy("default_data/puzzles", "puzzles")
+        fileUtils.recursiveCopy("default_data/puzzles", "puzzles")
       end
     end
   )
@@ -111,7 +128,7 @@ function read_puzzles()
       -- replay.in_buf=table.concat(replay.in_buf)
       -- end
 
-      puzzle_packs = FileUtil.getFilteredDirectoryItems("puzzles") or {}
+      puzzle_packs = fileUtils.getFilteredDirectoryItems("puzzles") or {}
       logger.debug("loading custom puzzles...")
       for _, filename in pairs(puzzle_packs) do
         logger.trace(filename)
@@ -163,7 +180,7 @@ function readAttackFile(path)
       if not trainingConf.name or type(trainingConf.name) ~= "string" then
         local filenameOnly = path:match('%' .. sep .. '?(.*)$')
         if filenameOnly ~= nil then
-          trainingConf.name = FileUtil.getFileNameWithoutExtension(filenameOnly)
+          trainingConf.name = fileUtils.getFileNameWithoutExtension(filenameOnly)
         end
       end
       return trainingConf
@@ -176,7 +193,7 @@ end
 function readAttackFiles(path)
   local results = {}
   local lfs = love.filesystem
-  local raw_dir_list = FileUtil.getFilteredDirectoryItems(path)
+  local raw_dir_list = fileUtils.getFilteredDirectoryItems(path)
   for _, v in ipairs(raw_dir_list) do
     local current_path = path .. "/" .. v
     if lfs.getInfo(current_path) then
@@ -210,3 +227,5 @@ function print_list(t)
     print(v)
   end
 end
+
+return save

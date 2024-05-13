@@ -11,28 +11,23 @@ local function finishedMatchForPath(path)
     end
   )
 
-  GAME.muteSoundEffects = true
+  GAME.muteSound = true
 
-  Replay.loadFromPath(path)
-  Replay.loadFromFile(replay)
+  local replay = Replay.loadFromPath(path)
+  local match = Match.createFromReplay(replay)
 
-  assert(GAME ~= nil)
-  assert(GAME.match ~= nil)
+  assert(match ~= nil)
+  assert(match.players ~= nil)
 
-  if GAME.match.P1 and GAME.match.P2 then
-    local match = GAME.match
-    local matchOutcome = match.battleRoom:matchOutcome()
+  if #match.players > 1 then
     local lastClock = -1
-    while matchOutcome == nil and lastClock ~= match.P1.clock do
+    while not match:hasEnded() and lastClock ~= match.P1.clock do
       lastClock = match.P1.clock
       match:run()
-      matchOutcome = match.battleRoom:matchOutcome()
     end
 
-    reset_filters()
-    stop_the_music()
-    replay = {}
-    GAME:clearMatch()
+    SoundController:stopMusic()
+    match:deinit()
     return match
   end
 end

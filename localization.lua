@@ -1,6 +1,7 @@
 -- TODO rename
 local FILENAME = "localization.csv"
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 -- Holds all the data for localizing the game
 Localization =
@@ -38,13 +39,13 @@ function Localization.set_language(self, lang_code)
   config.language_code = self.codes[self.lang_index]
 
   if themes[config.theme] and themes[config.theme].font and themes[config.theme].font.path then
-    set_global_font(themes[config.theme].font.path, themes[config.theme].font.size)
+    GraphicsUtil.setGlobalFont(themes[config.theme].font.path, themes[config.theme].font.size)
   elseif config.language_code == "JP" then
-    set_global_font("jp.ttf", 14)
+    GraphicsUtil.setGlobalFont("jp.ttf", 14)
   elseif config.language_code == "TH" then
-    set_global_font("th.otf", 14)
+    GraphicsUtil.setGlobalFont("th.otf", 14)
   else
-    set_global_font(nil, 12)
+    GraphicsUtil.setGlobalFont(nil, 12)
   end
 
   self:refresh_global_strings()

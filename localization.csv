@@ -288,6 +288,7 @@ op_countdown,,Ready countdown,Compte à rebours avant une partie,Contagem regres
 op_debug,,Debug Mode,Mode Debug,Modo de Depuração,デバッグモード,Modo Depuración,Debug Modus,Modalità Debug,โหมด debug
 op_default_char,,Use default characters,Utiliser les personnages par défaut,Usar personagens padrão,デフォルトのキャラクターを使用,Usar personajes por defecto.,Standardcharaktere verwenden,Usa i personaggi di base,ใช้ตัวละครค่าเริ่มต้น
 op_enter_name,,Enter your name:,Entrez votre pseudo :,Digite seu apelido:,ユーザー名を入力して下さい：,Ingresa tu nombre:,Gib deinen Benutzernamen ein:,Inserisci il tuo nome:,กรอกชื่อของคุณ:
+op_username_blank_warning,shown in user name input when nothing is entered,Username cannot be blank,Le nom d'utilisateur ne peut pas être vide,O nome de usuário não pode ficar em branco,ユーザー名を空白にすることはできません,Nombre de usuario no puede estar en blanco,Benutzername darf nicht leer sein,Il nome utente non può essere vuoto
 op_fps,,Show FPS,Afficher les FPS,Mostrar FPS,FPS表示,Mostrar FPS (cuadros por segundo),FPS anzeigen,Mostra FPS (frame al secondo),แสดง FPS
 op_language,,Language,Langue,Idioma,言語,Idioma,Sprache,Lingua,ภาษา
 op_theme,,Theme,Thème,Tema,テーマ,Tema,Theme,Tema,ธีม

@@ -1,5 +1,4 @@
 -- Inspired by https://github.com/icrawler/FPSGraph but mostly rewritten.
-
 local BarGraph = class(function(self, x, y, width, height, delay, maxValue, valueCount, subValueCount)
   assert(width >= 10)
   assert(maxValue ~= nil)

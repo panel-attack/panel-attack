@@ -1,11 +1,14 @@
 require("developer")
 require("graphics_util")
-require("sound_util")
 local consts = require("consts")
 require("class")
 local logger = require("logger")
-
-local musics = {"main", "select_screen", "main_start", "select_screen_start", "title_screen"} -- the music used in a theme
+local fileUtils = require("FileUtils")
+local levelPresets = require("LevelPresets")
+local GraphicsUtil = require("graphics_util")
+local ImageContainer = require("ui.ImageContainer")
+local Music = require("music.Music")
+local tableUtils = require("tableUtils")
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {
@@ -29,6 +32,7 @@ Theme =
     self.name = name
     self.version = self.VERSIONS.original
     self.images = {} -- theme images
+    self.fontMaps = {}
     self.sounds = {} -- theme sfx
     self.musics = {} -- theme music
     self.font = {} -- font
@@ -37,8 +41,6 @@ Theme =
     self.main_menu_screen_pos = {0, 0} -- the top center position of most menus
     self.main_menu_y_max = 0
     self.main_menu_max_height = 0
-
-    self:load()
   end
 )
 
@@ -208,25 +210,43 @@ function Theme:load_theme_img(name, useBackup)
   return img
 end
 
-function Theme.graphics_init(self)
-  self.images = {}
+function Theme:loadFont()
+  for key, value in pairs(fileUtils.getFilteredDirectoryItems(Theme.themeDirectoryPath .. self.name)) do
+    if value:lower():match(".*%.ttf") or value:lower():match(".*%.otf") then -- Any .ttf file
+      self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
+      break
+    end
+  end
 
+end
+
+function Theme:loadMenuGraphics()
+  self.images.bg_main = UpdatingImage(self:load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
+
+  self:loadFont()
+
+  local titleImage = self:load_theme_img("background/title", false)
+  if titleImage then
+    self.images.bg_title = UpdatingImage(titleImage, self.bg_title_is_tiled, self.bg_title_speed_x, self.bg_title_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
+  end
+
+  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_screen_speed_x, self.bg_select_screen_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
+  self.images.bg_readme = UpdatingImage(self:load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
+  self.images.IMG_bug = self:load_theme_img("bug")
+end
+
+function Theme:loadSelectionGraphics()
   self.images.flags = {}
   for _, flag in ipairs(flags) do
     self.images.flags[flag] = self:load_theme_img("flags/" .. flag)
   end
-
-  self.images.bg_overlay = self:load_theme_img("background/bg_overlay")
-  self.images.fg_overlay = self:load_theme_img("background/fg_overlay")
-
-  self.images.pause = self:load_theme_img("pause")
 
   self.images.IMG_level_cursor = self:load_theme_img("level/level_cursor")
   self.images.IMG_levels = {}
   self.images.IMG_levels_unfocus = {}
   self.images.IMG_levels[1] = self:load_theme_img("level/level1")
   self.images.IMG_levels_unfocus[1] = nil -- meaningless by design
-  for i = 2, #level_to_starting_speed do --which should equal the number of levels in the game
+  for i = 2, levelPresets.modernPresetCount do --which should equal the number of levels in the game
     self.images.IMG_levels[i] = self:load_theme_img("level/level" .. i .. "")
     self.images.IMG_levels_unfocus[i] = self:load_theme_img("level/level" .. i .. "unfocus")
   end
@@ -239,20 +259,86 @@ function Theme.graphics_init(self)
     self.images.IMG_numbers[i] = self:load_theme_img(i .. "")
   end
 
-  self.images.burst = self:load_theme_img("burst")
+  local pixelFontCharacters = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ&?!%*."
+  local pixelFontBlueAtlas = self:load_theme_img("pixel_font_blue")
+  local pixelFontGreyAtlas = self:load_theme_img("pixel_font_grey")
+  local pixelFontYellowAtlas = self:load_theme_img("pixel_font_yellow")
 
+  self.fontMaps.pixelFontBlue = GraphicsUtil.createPixelFontMap(pixelFontCharacters, pixelFontBlueAtlas)
+  self.fontMaps.pixelFontGrey = GraphicsUtil.createPixelFontMap(pixelFontCharacters, pixelFontGreyAtlas)
+  self.fontMaps.pixelFontYellow = GraphicsUtil.createPixelFontMap(pixelFontCharacters, pixelFontYellowAtlas)
+
+  self.images.IMG_random_stage = self:load_theme_img("random_stage")
+  self.images.IMG_random_character = self:load_theme_img("random_character")
+
+  local MAX_SUPPORTED_PLAYERS = 2
+  self.images.IMG_char_sel_cursors = {}
+  self.images.IMG_players = {}
+  for player_num = 1, MAX_SUPPORTED_PLAYERS do
+    self.images.IMG_players[player_num] = self:load_theme_img("p" .. player_num)
+    self.images.IMG_char_sel_cursors[player_num] = {}
+    for position_num = 1, 2 do
+      self.images.IMG_char_sel_cursors[player_num][position_num] = self:load_theme_img("p" .. player_num .. "_select_screen_cursor" .. position_num)
+    end
+  end
+end
+
+function Theme:loadIngameGraphics()
+  local bgOverlay = self:load_theme_img("background/bg_overlay")
+  local fgOverlay = self:load_theme_img("background/fg_overlay")
+  if bgOverlay then
+    self.images.bg_overlay = ImageContainer({
+      image = bgOverlay,
+      hAlign = "center",
+      vAlign = "center",
+      width = consts.CANVAS_WIDTH,
+      height = consts.CANVAS_HEIGHT
+    })
+  end
+
+  if fgOverlay then
+    self.images.fg_overlay = ImageContainer({
+      image = fgOverlay,
+      hAlign = "center",
+      vAlign = "center",
+      width = consts.CANVAS_WIDTH,
+      height = consts.CANVAS_HEIGHT
+    })
+  end
+
+  self.images.pause = self:load_theme_img("pause")
+
+  self.images.burst = self:load_theme_img("burst")
   self.images.fade = self:load_theme_img("fade")
 
-  self.images.IMG_number_atlas_1P = self:load_theme_img("numbers_1P")
-  self.images.IMG_number_atlas_2P = self:load_theme_img("numbers_2P")
+  --play field frames, plus the wall at the bottom.
+  self.images.frames = {}
+  self.images.walls = {}
+  self.images.frames[1] = self:load_theme_img("frame/frame1P")
+  self.images.frames[2] = self:load_theme_img("frame/frame2P")
+  self.images.walls[1] = self:load_theme_img("frame/wall1P")
+  self.images.walls[2] = self:load_theme_img("frame/wall2P")
+
+  self:loadIngameLabels()
+  self:loadMultibar()
+  self:loadAnalyticsIcons()
+  self:loadCards()
+  self:loadGameCursor()
+end
+
+function Theme:loadIngameLabels()
+  local numberAtlasCharacters = "0123456789"
+  local numberAtlas1 = self:load_theme_img("numbers_1P")
+  local numberAtlas2 = self:load_theme_img("numbers_2P")
+  self.fontMaps.numbers = {}
+  self.fontMaps.numbers[1] = GraphicsUtil.createPixelFontMap(numberAtlasCharacters, numberAtlas1)
+  self.fontMaps.numbers[2] = GraphicsUtil.createPixelFontMap(numberAtlasCharacters, numberAtlas2)
 
   self.images.IMG_time = self:load_theme_img("time")
 
-  self.images.IMG_timeNumber_atlas = self:load_theme_img("time_numbers")
-
-  self.images.IMG_pixelFont_blue_atlas = self:load_theme_img("pixel_font_blue")
-  self.images.IMG_pixelFont_grey_atlas = self:load_theme_img("pixel_font_grey")
-  self.images.IMG_pixelFont_yellow_atlas = self:load_theme_img("pixel_font_yellow")
+  local timeAtlasCharacters = "0123456789:'"
+  local timeAtlas = self:load_theme_img("time_numbers")
+  self.fontMaps.time = GraphicsUtil.createPixelFontMap(timeAtlasCharacters, timeAtlas)
 
   self.images.IMG_moves = self:load_theme_img("moves")
 
@@ -267,48 +353,40 @@ function Theme.graphics_init(self)
 
   self.images.IMG_wins = self:load_theme_img("wins")
 
-  self.images.IMG_levelNumber_atlas_1P = self:load_theme_img("level_numbers_1P")
-  self.images.levelNumberWidth_1P = self.images.IMG_levelNumber_atlas_1P:getWidth() / 11
-  self.images.levelNumberHeight_1P = self.images.IMG_levelNumber_atlas_1P:getHeight()
-  self.images.IMG_levelNumber_atlas_2P = self:load_theme_img("level_numbers_2P")
-  self.images.levelNumberWidth_2P = self.images.IMG_levelNumber_atlas_2P:getWidth() / 11
-  self.images.levelNumberHeight_2P = self.images.IMG_levelNumber_atlas_2P:getHeight()
+  self:loadLevelNumberAtlasses()
 
   self.images.IMG_casual = self:load_theme_img("casual")
-
   self.images.IMG_ranked = self:load_theme_img("ranked")
 
   self.images.IMG_rating_1P = self:load_theme_img("rating_1P")
   self.images.IMG_rating_2P = self:load_theme_img("rating_2P")
+end
 
-  self.images.IMG_random_stage = self:load_theme_img("random_stage")
-  self.images.IMG_random_character = self:load_theme_img("random_character")
+function Theme:loadMultibar()
+  self.images.healthbarFrames = {}
+  self.images.healthbarFrames.relative = {}
+  self.images.healthbarFrames.relative[1]  = self:load_theme_img("healthbar_frame_1P")
+  self.images.healthbarFrames.relative[2]  = self:load_theme_img("healthbar_frame_2P")
+  self.images.healthbarFrames.absolute = {}
+  self.images.healthbarFrames.absolute[1] = self:load_theme_img("healthbar_frame_1P_absolute")
+  self.images.healthbarFrames.absolute[2] = self:load_theme_img("healthbar_frame_2P_absolute")
 
-  self.images.IMG_healthbar_frame_1P = self:load_theme_img("healthbar_frame_1P")
-  self.images.IMG_healthbar_frame_2P = self:load_theme_img("healthbar_frame_2P")
-  self.images.IMG_healthbar_frame_1P_absolute = self:load_theme_img("healthbar_frame_1P_absolute")
-  self.images.IMG_healthbar_frame_2P_absolute = self:load_theme_img("healthbar_frame_2P_absolute")
-  
   self.images.IMG_healthbar = self:load_theme_img("healthbar")
 
   self.images.IMG_multibar_frame = self:load_theme_img("multibar_frame")
   self.images.IMG_multibar_prestop_bar = self:load_theme_img("multibar_prestop_bar")
   self.images.IMG_multibar_stop_bar = self:load_theme_img("multibar_stop_bar")
   self.images.IMG_multibar_shake_bar = self:load_theme_img("multibar_shake_bar")
+end
 
-  self.images.IMG_bug = self:load_theme_img("bug")
-
-  --play field frames, plus the wall at the bottom.
-  self.images.IMG_frame1P = self:load_theme_img("frame/frame1P")
-  self.images.IMG_wall1P = self:load_theme_img("frame/wall1P")
-  self.images.IMG_frame2P = self:load_theme_img("frame/frame2P")
-  self.images.IMG_wall2P = self:load_theme_img("frame/wall2P")
-
+function Theme:loadAnalyticsIcons()
   self.images.IMG_swap = self:load_theme_img("swap")
   self.images.IMG_apm = self:load_theme_img("apm")
   self.images.IMG_gpm = self:load_theme_img("GPM")
   self.images.IMG_cursorCount = self:load_theme_img("CursorCount")
+end
 
+function Theme:loadCards()
   self.images.IMG_cards = {}
   self.images.IMG_cards[true] = {}
   self.images.IMG_cards[false] = {}
@@ -339,21 +417,33 @@ function Theme.graphics_init(self)
       break
     end
   end
+end
 
-  local MAX_SUPPORTED_PLAYERS = 2
-  self.images.IMG_char_sel_cursors = {}
-  self.images.IMG_players = {}
-  self.images.IMG_cursor = {}
-  for player_num = 1, MAX_SUPPORTED_PLAYERS do
-    self.images.IMG_players[player_num] = self:load_theme_img("p" .. player_num)
-    self.images.IMG_char_sel_cursors[player_num] = {}
-    for position_num = 1, 2 do
-      self.images.IMG_char_sel_cursors[player_num][position_num] = self:load_theme_img("p" .. player_num .. "_select_screen_cursor" .. position_num)
+function Theme:loadLevelNumberAtlasses()
+  self.images.levelNumberAtlas = {}
+  self.images.levelNumberAtlas[1] = {}
+  self.images.levelNumberAtlas[1].image = self:load_theme_img("level_numbers_1P")
+  self.images.levelNumberAtlas[2] = {}
+  self.images.levelNumberAtlas[2].image = self:load_theme_img("level_numbers_2P")
+  local levels = 11
+  for i = 1, #self.images.levelNumberAtlas do
+    local charWidth = self.images.levelNumberAtlas[i].image:getWidth() / levels
+    local charHeight = self.images.levelNumberAtlas[i].image:getHeight()
+    local quads = {}
+    for j = 1, levels do
+      quads[j] = GraphicsUtil:newRecycledQuad((j - 1) * charWidth, 0, charWidth, charHeight, self.images.levelNumberAtlas[i].image:getDimensions())
     end
+    self.images.levelNumberAtlas[i].quads = quads
+    self.images.levelNumberAtlas[i].charWidth = charWidth
+    self.images.levelNumberAtlas[i].charHeight = charHeight
   end
+end
 
+function Theme:loadGameCursor()
+  self.images.cursor = {}
   -- Cursor animation is 2 frames
   for i = 1, 2 do
+    self.images.cursor[i] = {}
     -- Cursor images used to be named weird and make modders think they were for different players
     -- Load either format from the custom theme, and fallback to the built in cursor otherwise.
     local cursorImage = self:load_theme_img("cursor" .. i, false)
@@ -366,86 +456,147 @@ function Theme.graphics_init(self)
       end
     end
     assert(cursorImage ~= nil)
-    self.images.IMG_cursor[i] = cursorImage
+    self.images.cursor[i].image = cursorImage
+    self.images.cursor[i].touchQuads = { }
+    -- For touch we will show just one panels worth of cursor. 
+    -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
+    -- The cursor image has a margin that extends past the panel and two panels in the middle
+    -- We want to render the margin and just the outer half of the panel
+    local imageWidth, imageHeight = cursorImage:getDimensions()
+    local cursorWidth = 40
+    local panelWidth = 16
+    local margin = (cursorWidth - panelWidth * 2) / 2
+    local halfCursorWidth = margin + panelWidth / 2
+    local percentDesired = halfCursorWidth / 40
+    local quadWidth = math.floor(imageWidth * percentDesired)
+    self.images.cursor[i].touchQuads[1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+    self.images.cursor[i].touchQuads[2] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
+  end
+end
+
+-- releases all quads loaded on the same back into the quad pool
+-- currently not in use but could routinely be done for theme switching in the future
+function Theme:deinitializeGraphics()
+  -- deinit cursor quads for recycling
+  for i = 1, #self.images.cursor do
+    for j = 1, #self.images.cursor[i].touchQuads do
+      GraphicsUtil:releaseQuad(self.images.cursor[i].touchQuads[j])
+    end
   end
 
-  self.images.IMG_char_sel_cursor_halves = {left = {}, right = {}}
-  for player_num = 1, MAX_SUPPORTED_PLAYERS do
-    self.images.IMG_char_sel_cursor_halves.left[player_num] = {}
-    for position_num = 1, 2 do
-      local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
-      local half_width, half_height = cur_width / 2, cur_height / 2 -- TODO: is these unused vars an error ??? -Endu
-      self.images.IMG_char_sel_cursor_halves["left"][player_num][position_num] = GraphicsUtil:newRecycledQuad(0, 0, half_width, cur_height, cur_width, cur_height)
-    end
-    self.images.IMG_char_sel_cursor_halves.right[player_num] = {}
-    for position_num = 1, 2 do
-      local cur_width, cur_height = self.images.IMG_char_sel_cursors[player_num][position_num]:getDimensions()
-      local half_width, half_height = cur_width / 2, cur_height / 2
-      self.images.IMG_char_sel_cursor_halves.right[player_num][position_num] = GraphicsUtil:newRecycledQuad(half_width, 0, half_width, cur_height, cur_width, cur_height)
+  -- deinit level atlas for recycling
+  for i = 1, #self.images.levelNumberAtlas do
+    for j = 1, #self.images.levelNumberAtlas[i].quads do
+      GraphicsUtil:releaseQuad(self.images.levelNumberAtlas[i].quads[j])
     end
   end
 
-  for key, value in pairs(FileUtil.getFilteredDirectoryItems(Theme.themeDirectoryPath .. self.name)) do
-    if value:lower():match(".*%.ttf") then -- Any .ttf file
-      self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
-      set_global_font(self.font.path, self.font.size)
-      break
+  -- deinit pixel font quads for recycling
+  for index, fontMap in pairs(self.fontMaps) do
+    if index == "numbers" then
+      -- numbers have 1 more level of nesting so make a union of that and set it to fontMap
+      local f = {}
+      for i = 1, #fontMap do
+        for _, value in pairs(fontMap[i]) do
+          f[#f + 1] = value
+        end
+      end
+      fontMap = f
     end
+
+    for symbol, value in pairs(fontMap) do
+      if tostring(symbol):len() == 1 and type(value) == "userdata" and value:typeOf("Quad") then
+        -- userdata means this is a love object which in turn means we can safely use typeOf to confirm it's a quad
+        GraphicsUtil:releaseQuad(value)
+      end
+    end
+  end
+end
+
+function Theme:graphics_init(full)
+  self.images = {}
+  self.fontMaps = {}
+
+  self:loadMenuGraphics()
+
+  if full then
+    self:loadSelectionGraphics()
+    self:loadIngameGraphics()
   end
 end
 
 -- applies the config volume to the theme
-function Theme.apply_config_volume(self)
-  set_volume(self.sounds, config.SFX_volume / 100)
-  set_volume(self.musics, config.music_volume / 100)
+function Theme:applyConfigVolume()
+  SoundController:applySfxVolume(self.sounds)
+  SoundController:applyMusicVolume(self.musics)
+end
+
+local function loadThemeSfx(theme, SFX_name)
+  local dirs_to_check = {
+    Theme.themeDirectoryPath .. theme.name .. "/sfx/",
+    Theme.defaultThemeDirectoryPath .. "sfx/"
+  }
+  return fileUtils.findSound(SFX_name, dirs_to_check)
 end
 
 -- initializes the theme sounds
-function Theme.sound_init(self)
-  local function load_theme_sfx(SFX_name)
-    local dirs_to_check = {
-      Theme.themeDirectoryPath .. self.name .. "/sfx/",
-      Theme.defaultThemeDirectoryPath .. "sfx/"
+function Theme:sound_init(full)
+  self.zero_sound = fileUtils.loadSoundFromSupportExtensions("zero_music")
+
+  self.sounds = {}
+  self:loadSfx(full)
+  self:loadMusic(full)
+
+  self:applyConfigVolume()
+end
+
+function Theme:loadMenuSfx()
+  self.sounds.menu_move = loadThemeSfx(self, "menu_move")
+  self.sounds.menu_validate = loadThemeSfx(self, "menu_validate")
+  self.sounds.menu_cancel = loadThemeSfx(self, "menu_cancel")
+  self.sounds.notification = loadThemeSfx(self, "notification")
+end
+
+function Theme:loadIngameSfx()
+  self.sounds.cur_move = loadThemeSfx(self, "move")
+  self.sounds.swap = loadThemeSfx(self, "swap")
+  self.sounds.land = loadThemeSfx(self, "land")
+  self.sounds.fanfare1 = loadThemeSfx(self, "fanfare1")
+  self.sounds.fanfare2 = loadThemeSfx(self, "fanfare2")
+  self.sounds.fanfare3 = loadThemeSfx(self, "fanfare3")
+  self.sounds.game_over = loadThemeSfx(self, "gameover")
+  self.sounds.countdown = loadThemeSfx(self, "countdown")
+  self.sounds.go = loadThemeSfx(self, "go")
+  self.sounds.garbage_thud = {
+      loadThemeSfx(self, "thud_1"),
+      loadThemeSfx(self, "thud_2"),
+      loadThemeSfx(self, "thud_3")
     }
-    return find_sound(SFX_name, dirs_to_check)
-  end
-
-  self.zero_sound = load_sound_from_supported_extensions("zero_music")
-
-  -- SFX
-  self.sounds = {
-    cur_move = load_theme_sfx("move"),
-    swap = load_theme_sfx("swap"),
-    land = load_theme_sfx("land"),
-    fanfare1 = load_theme_sfx("fanfare1"),
-    fanfare2 = load_theme_sfx("fanfare2"),
-    fanfare3 = load_theme_sfx("fanfare3"),
-    game_over = load_theme_sfx("gameover"),
-    countdown = load_theme_sfx("countdown"),
-    go = load_theme_sfx("go"),
-    menu_move = load_theme_sfx("menu_move"),
-    menu_validate = load_theme_sfx("menu_validate"),
-    menu_cancel = load_theme_sfx("menu_cancel"),
-    notification = load_theme_sfx("notification"),
-    garbage_thud = {
-      load_theme_sfx("thud_1"),
-      load_theme_sfx("thud_2"),
-      load_theme_sfx("thud_3")
-    },
-    pops = {}
-  }
+    self.sounds.pops = {}
 
   for popLevel = 1, 4 do
     self.sounds.pops[popLevel] = {}
     for popIndex = 1, 10 do
-      self.sounds.pops[popLevel][popIndex] = load_theme_sfx("pop" .. popLevel .. "-" .. popIndex)
+      self.sounds.pops[popLevel][popIndex] = loadThemeSfx(self, "pop" .. popLevel .. "-" .. popIndex)
     end
   end
+end
 
-  -- music
-  self.musics = {}
+function Theme:loadSfx(full)
+  self:loadMenuSfx()
+
+  if full then
+    self:loadIngameSfx()
+  end
+end
+
+local basicMusics = {"main", "main_start"}
+local fullMusics = {"main", "main_start", "select_screen", "select_screen_start", "title_screen", "title_screen_start"} -- the music used in a theme
+
+function Theme:loadMusic(full)
+  local musics = full and fullMusics or basicMusics
   for _, music in ipairs(musics) do
-    self.musics[music] = load_sound_from_supported_extensions(Theme.themeDirectoryPath .. self.name .. "/music/" .. music, true)
+    self.musics[music] = fileUtils.loadSoundFromSupportExtensions(Theme.themeDirectoryPath .. self.name .. "/music/" .. music, true)
     if self.musics[music] then
       if not string.find(music, "start") then
         self.musics[music]:setLooping(true)
@@ -455,7 +606,19 @@ function Theme.sound_init(self)
     end
   end
 
-  self:apply_config_volume()
+  self.stageTracks = {}
+
+  if self.musics.main then
+    self.stageTracks.main = Music(self.musics.main, self.musics.main_start)
+  end
+
+  if self.musics.select_screen then
+    self.stageTracks.select_screen = Music(self.musics.select_screen, self.musics.select_screen_start)
+  end
+
+  if self.musics.title_screen then
+    self.stageTracks.title_screen = Music(self.musics.title_screen, self.musics.title_screen_start)
+  end
 end
 
 function Theme.upgradeAndSaveVerboseConfig(self)
@@ -469,7 +632,7 @@ function Theme.saveVerboseConfig(self)
   local jsonPath = Theme.themeDirectoryPath .. self.name .. "/config.json"
 
   -- Get the data from the file in case there is something we don't know about
-  local jsonData = self:getJSONDataForFile(jsonPath)
+  local jsonData = fileUtils.readJsonFile(jsonPath)
 
   -- Save off any configurable data that may have changed / upgraded
   local configurableKeys = self:configurableKeys()
@@ -490,12 +653,12 @@ end
 -- initializes theme using the json settings
 function Theme.json_init(self)
   -- Start with the default theme
-  local defaultData = self:getJSONDataForFile(Theme.defaultThemeDirectoryPath .. "config.json")
+  local defaultData = fileUtils.readJsonFile(Theme.defaultThemeDirectoryPath .. "config.json")
   self:applyJSONData(defaultData)
 
   -- Then override with custom theme
   if self.name ~= consts.DEFAULT_THEME_DIRECTORY then
-    local customData = self:getJSONDataForFile(Theme.themeDirectoryPath .. self.name .. "/config.json")
+    local customData = fileUtils.readJsonFile(Theme.themeDirectoryPath .. self.name .. "/config.json")
     local version = self:versionForJSONVersion(customData.version)
     if version == self.VERSIONS.original then
       self:loadVersion1DefaultValues()
@@ -516,22 +679,6 @@ function Theme:versionForJSONVersion(jsonVersion)
   end
 end
 
-function Theme:getJSONDataForFile(filePath)
-  local read_data = {}
-
-  -- First read the default theme json
-  local config_file, err = love.filesystem.newFile(filePath, "r")
-  if config_file then
-    local teh_json = config_file:read(config_file:getSize())
-    config_file:close()
-    for k, v in pairs(json.decode(teh_json)) do
-      read_data[k] = v
-    end
-  end
-
-  return read_data
-end
-
 -- applies all the JSON values from a table
 function Theme:applyJSONData(read_data)
   local configurableKeys = self:configurableKeys()
@@ -550,25 +697,15 @@ function Theme:applyJSONData(read_data)
 end
 
 function Theme:final_init()
-
-  local titleImage = self:load_theme_img("background/title", false)
-  if titleImage then
-    self.images.bg_title = UpdatingImage(titleImage, self.bg_title_is_tiled, self.bg_title_speed_x, self.bg_title_speed_y, canvas_width, canvas_height)
-  end
-
-  self.images.bg_main = UpdatingImage(self:load_theme_img("background/main"), self.bg_main_is_tiled, self.bg_main_speed_x, self.bg_main_speed_y, canvas_width, canvas_height)
-  self.images.bg_select_screen = UpdatingImage(self:load_theme_img("background/select_screen"), self.bg_select_screen_is_tiled, self.bg_select_screen_speed_x, self.bg_select_screen_speed_y, canvas_width, canvas_height)
-  self.images.bg_readme = UpdatingImage(self:load_theme_img("background/readme"), self.bg_readme_is_tiled, self.bg_readme_speed_x, self.bg_readme_speed_y, canvas_width, canvas_height)
-
   local menuYPadding = 10
   self.centerMenusVertically = true
   if self.images.bg_title then
     menuYPadding = 100
     self.main_menu_screen_pos = {532, menuYPadding}
-    self.main_menu_y_max = canvas_height - menuYPadding
+    self.main_menu_y_max = consts.CANVAS_HEIGHT - menuYPadding
   else
     self.main_menu_screen_pos = {532, 249}
-    self.main_menu_y_max = canvas_height - menuYPadding
+    self.main_menu_y_max = consts.CANVAS_HEIGHT - menuYPadding
     self.centerMenusVertically = false
   end
   self.main_menu_max_height = (self.main_menu_y_max - self.main_menu_screen_pos[2])
@@ -597,19 +734,38 @@ function Theme:comboImage(comboAmount)
 end
 
 -- loads a theme into the game
-function Theme.load(self)
+function Theme:load()
   logger.debug("loading theme " .. self.name)
   self:json_init()
-  self:graphics_init()
-  self:sound_init()
+  self:graphics_init(true)
+  self:sound_init(true)
   self:final_init()
+  self.fullyLoaded = true
   logger.debug("loaded theme " .. self.name)
+end
+
+function Theme:preload()
+  logger.debug("preloading theme " .. self.name)
+  self:json_init()
+  self:graphics_init(false)
+  self:sound_init(false)
+  self:final_init()
+  self.fullyLoaded = false
+  logger.debug("preloaded theme " .. self.name)
 end
 
 -- initializes a theme
 function theme_init()
   -- only one theme at a time for now, but we may decide to allow different themes in the future
   themes = {}
-  local themeName = config.theme
-  themes[themeName] = Theme(themeName)
+  themeIds = {}
+  for _, dirName in ipairs(fileUtils.getFilteredDirectoryItems("themes", "directory")) do
+    if tableUtils.contains(fileUtils.getFilteredDirectoryItems("themes/" .. dirName, "file"), "config.json") then
+      themeIds[#themeIds + 1] = dirName
+      themes[dirName] = Theme(dirName)
+      if dirName == config.theme then
+        themes[dirName]:load()
+      end
+    end
+  end
 end

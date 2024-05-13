@@ -426,7 +426,7 @@ matchedState.enterHoverState = function(panel)
   clear(panel, false, false)
   panel.chaining = true
   panel.propagatesChaining = true
-  panel.timer = panel.frameTimes.GPHOVER
+  panel.timer = panel.frameTimes.GARBAGE_HOVER
   panel.fell_from_garbage = 12
   panel.state = "hovering"
   panel.stateChanged = true
@@ -721,7 +721,7 @@ end
 function Panel:match(isChainLink, comboIndex, comboSize)
   self.state = "matched"
   -- +1 because match always occurs before the timer decrements on the frame
-  self:setTimer(self.frameTimes.MATCH + 1)
+  self:setTimer(self.frameTimes.FLASH + self.frameTimes.FACE + 1)
   if isChainLink then
     self.chaining = true
   end

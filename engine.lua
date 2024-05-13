@@ -3,9 +3,15 @@ local TouchDataEncoding = require("engine.TouchDataEncoding")
 local TouchInputController = require("engine.TouchInputController")
 local consts = require("consts")
 local logger = require("logger")
-local utf8 = require("utf8")
-require("engine.panel")
 local tableUtils = require("tableUtils")
+local util = require("util")
+local utf8 = require("utf8")
+local GraphicsUtil = require("graphics_util")
+local GameModes = require("GameModes")
+local PanelGenerator = require("gen_panels")
+local StackBase = require("StackBase")
+local class = require("class")
+require("engine.panel")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -16,7 +22,30 @@ local tableUtils = require("tableUtils")
 local min, pairs, deepcpy = math.min, pairs, deepcpy
 local max = math.max
 
+local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
+  18, 18, 18, 18, 24, 42,
+  42, 42, 42, 42, 42, 66,
+  66, 66, 66, 66, 66, 66,
+  66, 66, 66, 66, 66, 76
+}
+
 local DT_SPEED_INCREASE = 15 * 60 -- frames it takes to increase the speed level by 1
+
+-- endless and 1P time attack use a speed system in which
+-- speed increases based on the number of panels you clear.
+-- For example, to get from speed 1 to speed 2, you must
+-- clear 9 panels.
+local PANELS_TO_NEXT_SPEED =
+  {9, 12, 12, 12, 12, 12, 15, 15, 18, 18,
+  24, 24, 24, 24, 24, 24, 21, 18, 18, 18,
+  36, 36, 36, 36, 36, 36, 36, 36, 36, 36,
+  39, 39, 39, 39, 39, 39, 39, 39, 39, 39,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, 45, 45,
+  45, 45, 45, 45, 45, 45, 45, 45, math.huge}
 
 -- Represents the full panel stack for one player
 Stack =
@@ -29,23 +58,30 @@ Stack =
     local is_local = arguments.is_local
     local panels_dir = arguments.panels_dir or config.panels
     -- level or difficulty should be set
-    assert(arguments.level ~= nil or arguments.difficulty ~= nil)
+    assert(arguments.levelData ~= nil)
+    local levelData = arguments.levelData
+    -- level and difficulty only for icon display and score saving, all actual data is in levelData
     local level = arguments.level
-    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local difficulty = arguments.difficulty
-    local speed = arguments.speed
+
+    s.gameOverConditions = arguments.gameOverConditions or {GameModes.GameOverConditions.NEGATIVE_HEALTH}
+    s.gameWinConditions = arguments.gameWinConditions or {}
+
+    local inputMethod = arguments.inputMethod or "controller" --"touch" or "controller"
     local player_number = arguments.player_number or which
-    local wantsCanvas = arguments.wantsCanvas
-    if wantsCanvas == nil then
-      wantsCanvas = true
-    end
+  
     local character = arguments.character or config.character
     local theme = arguments.theme or themes[config.theme]
+    s.allowAdjacentColors = arguments.allowAdjacentColors
+
+    -- the behaviour table contains a bunch of flags to modify the stack behaviour for custom game modes in broader chunks of functionality
+    s.behaviours = {}
+    s.behaviours.passiveRaise = true
+    s.behaviours.allowManualRaise = true
 
     s.match = match
     s.character = character
     s.theme = theme
-    s.max_health = 1
     s.panels_dir = panels_dir
     s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
     s.is_local = is_local
@@ -56,57 +92,24 @@ Stack =
       s.panels_dir = config.panels
     end
 
-    if s.match.mode == "puzzle" then
+    if s.puzzle then
       s.drawsAnalytics = false
     else
       s.do_first_row = true
     end
 
-    if difficulty then
-      if s.match.mode == "endless" then
-        s.NCOLORS = difficulty_to_ncolors_endless[difficulty]
-      elseif s.match.mode == "time" then
-        s.NCOLORS = difficulty_to_ncolors_1Ptime[difficulty]
-      end
-    end
-
-    -- frame.png dimensions
-    if wantsCanvas then
-      s.canvas = love.graphics.newCanvas(104 * GFX_SCALE, 204 * GFX_SCALE, {dpiscale=GAME:newCanvasSnappedScale()})
-    end
-
-    -- The player's speed level decides the amount of time
-    -- the stack takes to rise automatically
-    if speed then
-      s.speed = speed
-    end
-
-    s.FRAMECOUNTS = {}
-
-    if level then
-      s:setLevel(level)
+    s.difficulty = difficulty
+    s.level = level
+    s.levelData = levelData
+    s.speed = s.levelData.startingSpeed
+    if s.levelData.speedIncreaseMode == 1 then
       -- mode 1: increase speed based on fixed intervals
-      s.speedIncreaseMode = 1
       s.nextSpeedIncreaseClock = DT_SPEED_INCREASE
     else
-      s.difficulty = difficulty or 2
-
-      -- These change depending on the difficulty and speed levels:
-      s.FRAMECOUNTS.HOVER = s.FRAMECOUNTS.HOVER or FC_HOVER[s.difficulty]
-      s.FRAMECOUNTS.FLASH = s.FRAMECOUNTS.FLASH or FC_FLASH[s.difficulty]
-      s.FRAMECOUNTS.FACE = s.FRAMECOUNTS.FACE or FC_FACE[s.difficulty]
-      s.FRAMECOUNTS.POP = s.FRAMECOUNTS.POP or FC_POP[s.difficulty]
-      s.FRAMECOUNTS.MATCH = s.FRAMECOUNTS.FACE + s.FRAMECOUNTS.FLASH
-
-      -- mode 2: increase speed based on how many panels were cleared
-      s.speedIncreaseMode = 2
-      if not speed then
-        s.speed = 1
-      end
-      s.panels_to_speedup = panels_to_next_speed[s.speed]
+      s.panels_to_speedup = PANELS_TO_NEXT_SPEED[s.speed]
     end
 
-    s.health = s.max_health
+    s.health = s.levelData.maxHealth
 
     -- Which columns each size garbage is allowed to fall in.
     -- This is typically constant but maybe some day we would allow different ones 
@@ -124,7 +127,7 @@ Stack =
     s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
     s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
-    s.garbage_q = GarbageQueue(s) -- Queue of garbage that is about to be dropped
+    s.garbage_q = GarbageQueue() -- Queue of garbage that is about to be dropped
     
     s.inputMethod = inputMethod
     if s.inputMethod == "touch" then
@@ -155,12 +158,9 @@ Stack =
         s:createPanelAt(i, j)
       end
     end
-    s:moveForPlayerNumber(which)
+    s:moveForRenderIndex(s.which)
 
-    s.clock = 0
-    s.game_stopwatch = 0
     s.game_stopwatch_running = true -- set to false if countdown starts
-    s.do_countdown = true
     s.max_runs_per_frame = 3
 
     s.displacement = 16
@@ -184,7 +184,6 @@ Stack =
     s.stop_time = 0
     s.pre_stop_time = 0
 
-    s.NCOLORS = s.NCOLORS or 5
     s.score = 0 -- der skore
     s.chain_counter = 0 -- how high is the current chain (starts at 2)
 
@@ -195,7 +194,7 @@ Stack =
     s.n_active_panels = 0
     s.n_prev_active_panels = 0
 
-    s.rise_timer = speed_to_rise_time[s.speed]
+    s.rise_timer = consts.SPEED_TO_RISE_TIME[s.speed]
 
     -- Player input stuff:
     s.manual_raise = false -- set until raising is completed
@@ -217,7 +216,7 @@ Stack =
     s.cur_col = 3 -- the column the left half of the cursor's on
     s.queuedSwapColumn = 0 -- the left column of the two columns to swap or 0 if no swap queued
     s.queuedSwapRow = 0 -- the row of the queued swap or 0 if no swap queued
-    s.top_cur_row = s.height + (s.match.mode == "puzzle" and 0 or -1)
+    s.top_cur_row = s.height + (s.puzzle and 0 or -1)
 
     s.poppedPanelIndex = s.poppedPanelIndex or 1
     s.panels_cleared = s.panels_cleared or 0
@@ -225,8 +224,6 @@ Stack =
     s.lastPopLevelPlayed = s.lastPopLevelPlayed or 1
     s.lastPopIndexPlayed = s.lastPopIndexPlayed or 1
     s.combo_chain_play = nil
-    s.game_over = false -- only set if this player got a game over
-    s.game_over_clock = 0 -- only set if game_over is true, the exact clock frame the player lost
     s.sfx_land = false
     s.sfx_garbage_thud = 0
 
@@ -242,15 +239,13 @@ Stack =
     s.shake_time_on_frame = 0
     s.peak_shake_time = 0
 
-    s.prev_states = {}
-
     s.analytic = AnalyticsInstance(s.is_local)
 
     s.opponentStack = nil -- the other stack you are playing against
     s.garbageTarget = nil -- the target you are sending attacks to
 
-    if s.match.mode == "vs" then
-      s.telegraph = Telegraph(s) 
+    if s.match.stackInteraction == GameModes.StackInteractions.VERSUS or s.match.stackInteraction == GameModes.StackInteractions.SELF then
+      s.telegraph = Telegraph(s)
       -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
       -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
       -- .sender = us
@@ -270,28 +265,15 @@ Stack =
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
-    s.clonePool = {} -- pool of stale rollback copies, used to save memory on consecutive rollback
-    s.rollbackCount = 0 -- the number of times total we have done rollback
-    s.lastRollbackFrame = -1 -- the last frame we had to rollback from
-
-    s.framesBehindArray = {}
-    s.totalFramesBehind = 0
     s.warningsTriggered = {}
 
-    s.move_quads = {}
-    s.score_quads = {}
-    s.speed_quads = {}
-    s.wins_quads = {}
-    s.rating_quads = {}
-    s.level_quad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getWidth() / 11, s.theme.images["IMG_levelNumber_atlas" .. s.id]:getHeight(), s.theme.images["IMG_levelNumber_atlas" .. s.id]:getDimensions())
-    s.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight(), s.theme.images.IMG_healthbar:getWidth(), s.theme.images.IMG_healthbar:getHeight())
     s.multi_prestopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight(), s.theme.images.IMG_multibar_prestop_bar:getWidth(), s.theme.images.IMG_multibar_prestop_bar:getHeight())
     s.multi_stopQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight(), s.theme.images.IMG_multibar_stop_bar:getWidth(), s.theme.images.IMG_multibar_stop_bar:getHeight())
     s.multi_shakeQuad = GraphicsUtil:newRecycledQuad(0, 0, s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight(), s.theme.images.IMG_multibar_shake_bar:getWidth(), s.theme.images.IMG_multibar_shake_bar:getHeight())
     s.multiBarFrameCount = s:calculateMultibarFrameCount()
-
-    s:createCursors()
-  end)
+  end,
+  StackBase
+)
 
 -- calculates at how many frames the stack's multibar tops out
 function Stack:calculateMultibarFrameCount()
@@ -319,120 +301,20 @@ function Stack:calculateMultibarFrameCount()
   -- this is a first idea going from 2s prestop on 10 to nearly 4s prestop on 1
   --local preStopFrameCount = 30 + (10 - self.level) * 5
 
-  local minFrameCount = maxStop + (level_to_hang_time[self.level] or 1) --+ preStopFrameCount
+  local minFrameCount = maxStop + self.levelData.maxHealth --+ preStopFrameCount
 
   --return minFrameCount + preStopFrameCount
   return math.max(240, minFrameCount)
-end
-
-function Stack:createCursors()
-  local cursorImage = self.theme.images.IMG_cursor[1]
-  local imageWidth = cursorImage:getWidth()
-  local imageHeight = cursorImage:getHeight()
-  self.cursorQuads = {}
-  if self.inputMethod == "touch" then
-    -- For touch we will show just one panels worth of cursor. 
-    -- Until we decide to make an asset for that we can just use the left and right side of the controller cursor.
-    -- The cursor image has a margin that extends past the panel and two panels in the middle
-    -- We want to render the margin and just the outer half of the panel
-    local cursorWidth = 40
-    local panelWidth = 16
-    local margin = (cursorWidth - panelWidth * 2) / 2
-    local halfCursorWidth = margin + panelWidth / 2
-    local percentDesired = halfCursorWidth / 40
-    local quadWidth = math.floor(imageWidth * percentDesired)
-    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, quadWidth, imageHeight, imageWidth, imageHeight)
-    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(imageWidth-quadWidth, 0, quadWidth, imageHeight, imageWidth, imageHeight)
-  else
-    self.cursorQuads[#self.cursorQuads+1] = GraphicsUtil:newRecycledQuad(0, 0, imageWidth, imageHeight, imageWidth, imageHeight)
-  end
-end
-
-function Stack.setLevel(self, level)
-  self.level = level
-  if not self.speed then
-    -- there is no UI for it yet but we may want to support using levels with a different starting speed at some point
-    self.speed = level_to_starting_speed[level]
-  end
-  -- mode 1: increase speed per time interval?
-  self.max_health = level_to_hang_time[level]
-  self.FRAMECOUNTS.HOVER = level_to_hover[level]
-  self.FRAMECOUNTS.GPHOVER = level_to_garbage_panel_hover[level]
-  self.FRAMECOUNTS.FLASH = level_to_flash[level]
-  self.FRAMECOUNTS.FACE = level_to_face[level]
-  self.FRAMECOUNTS.POP = level_to_pop[level]
-  self.FRAMECOUNTS.MATCH = self.FRAMECOUNTS.FACE + self.FRAMECOUNTS.FLASH
-  self.combo_constant = level_to_combo_constant[level]
-  self.combo_coefficient = level_to_combo_coefficient[level]
-  self.chain_constant = level_to_chain_constant[level]
-  self.chain_coefficient = level_to_chain_coefficient[level]
-  if self.match.mode == "2ptime" then
-    self.NCOLORS = level_to_ncolors_time[level]
-  else
-    self.NCOLORS = level_to_ncolors_vs[level]
-  end
 end
 
 -- Should be called prior to clearing the stack.
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
 function Stack:deinit()
-  for _, quad in ipairs(self.move_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.score_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.speed_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.wins_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  for _, quad in ipairs(self.rating_quads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-  GraphicsUtil:releaseQuad(self.level_quad)
   GraphicsUtil:releaseQuad(self.healthQuad)
   GraphicsUtil:releaseQuad(self.multi_prestopQuad)
   GraphicsUtil:releaseQuad(self.multi_stopQuad)
   GraphicsUtil:releaseQuad(self.multi_shakeQuad)
-  for _, quad in ipairs(self.cursorQuads) do
-    GraphicsUtil:releaseQuad(quad)
-  end
-end
-
--- Positions the stack draw position for the given player
-function Stack:moveForPlayerNumber(player_num)
-  -- Position of elements should ideally be on even coordinates to avoid non pixel alignment
-  if player_num == 1 then
-    self.mirror_x = 1
-    self.multiplication = 0
-    self.id = "_1P"
-  elseif player_num == 2 then
-    self.mirror_x = -1
-    self.multiplication = 1
-    self.id = "_2P"
-  end
-  local centerX = (canvas_width / 2)
-  local stackWidth = self:stackCanvasWidth()
-  local innerStackXMovement = 100
-  local outerStackXMovement = stackWidth + innerStackXMovement
-  self.panelOriginXOffset = 4
-  self.panelOriginYOffset = 4
-
-  local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
-  self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
-
-  local frameOriginNonScaled = outerNonScaled
-  if self.mirror_x == -1 then
-    frameOriginNonScaled = outerNonScaled - stackWidth
-  end
-  self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
-  self.frameOriginY = 108 / GFX_SCALE
-
-  self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
-  self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
 end
 
 function Stack.divergenceString(stackToTest)
@@ -477,11 +359,11 @@ function Stack.rollbackCopy(source, other)
   local restoringStack = getmetatable(other) ~= nil
 
   if other == nil then
-    if #source.clonePool == 0 then
+    if #source.rollbackCopyPool == 0 then
       other = {}
     else
-      other = source.clonePool[#source.clonePool]
-      source.clonePool[#source.clonePool] = nil
+      other = source.rollbackCopyPool[#source.rollbackCopyPool]
+      source.rollbackCopyPool[#source.rollbackCopyPool] = nil
     end
   end
   other.queuedSwapColumn = source.queuedSwapColumn
@@ -542,7 +424,6 @@ function Stack.rollbackCopy(source, other)
     other.panels[i] = nil
   end
 
-  other.countdown_clock = source.countdown_clock
   other.countdown_timer = source.countdown_timer
   other.clock = source.clock
   other.game_stopwatch = source.game_stopwatch
@@ -611,13 +492,12 @@ function Stack.rollbackToFrame(self, frame)
   end
 
   if frame < currentFrame then
-    local prev_states = self.prev_states
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
-    assert(prev_states[frame])
-    self:restoreFromRollbackCopy(prev_states[frame])
+    assert(self.rollbackCopies[frame])
+    self:restoreFromRollbackCopy(self.rollbackCopies[frame])
     -- this is for the interpolation of the shake animation only (not a physics relevant field)
-    if prev_states[frame - 1] then
-      self.prev_shake_time = prev_states[frame - 1].shake_time
+    if self.rollbackCopies[frame - 1] then
+      self.prev_shake_time = self.rollbackCopies[frame - 1].shake_time
     else
       -- if this is the oldest rollback frame we don't need to interpolate with previous values
       -- because there are no previous values, pretend it just went down smoothly
@@ -677,46 +557,18 @@ function Stack.rollbackToFrame(self, frame)
   return true
 end
 
-function Stack:shouldSaveRollback()
-  if not GAME.match then
-    return false
-  end
-
-  if GAME.match.isFromReplay then
-    return true
-  end
-
-  local opponentStack = self.opponentStack
-  -- if we don't have a garbage target, its is assumed we aren't being attacked either, which means we don't need to rollback
-  if not opponentStack then
-    return false
-  -- If we are behind the time that the opponent's new attacks would land, then we don't need to rollback
-  -- don't save the rollback info for performance reasons
-  -- this also includes local play and single player, since the clocks are <= 1 difference
-  elseif opponentStack.clock + GARBAGE_DELAY_LAND_TIME > self.clock then
-    return false
-  end
-
-  return true
-end
-
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the clock time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
-
-  if self:shouldSaveRollback() == false then
-    return
-  end
-
   local opponentStack = self.opponentStack
-  local prev_states = self.prev_states
+  local rollbackCopies = self.rollbackCopies
   local attackTarget = self.garbageTarget
   self.opponentStack = nil
   self.garbageTarget = nil
-  self.prev_states = nil
+  self.rollbackCopies = nil
   self:remove_extra_rows()
-  prev_states[self.clock] = Stack.rollbackCopy(self)
-  self.prev_states = prev_states
+  rollbackCopies[self.clock] = Stack.rollbackCopy(self)
+  self.rollbackCopies = rollbackCopies
   self.opponentStack = opponentStack
   self.garbageTarget = attackTarget
   local deleteFrame = self.clock - MAX_LAG - 1
@@ -724,21 +576,15 @@ function Stack.saveForRollback(self)
 end
 
 function Stack.deleteRollbackCopy(self, frame)
-  if self.prev_states[frame] then
-    Telegraph.saveClone(self.prev_states[frame].telegraph)
+  if self.rollbackCopies[frame] then
+    Telegraph.saveClone(self.rollbackCopies[frame].telegraph)
 
      -- Has a reference to stacks we don't want kept around
-    self.prev_states[frame].telegraph = nil
+    self.rollbackCopies[frame].telegraph = nil
 
-    self.clonePool[#self.clonePool + 1] = self.prev_states[frame]
-    self.prev_states[frame] = nil
+    self.rollbackCopyPool[#self.rollbackCopyPool + 1] = self.rollbackCopies[frame]
+    self.rollbackCopies[frame] = nil
   end
-end
-
--- Sets the opponent stack we are playing against.
--- This object must be a full stack object, it is used to determine who is winning, clock value and more.
-function Stack.setOpponent(self, newOpponent)
-  self.opponentStack = newOpponent
 end
 
 -- Target must be able to take calls of
@@ -760,14 +606,9 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
   if self.telegraph then
     self.telegraph:updatePositionForGarbageTarget(newGarbageTarget)
   end
-end
 
-function Stack:stackCanvasWidth()
-  local stackCanvasWidth = 0
-  if self.canvas then 
-    stackCanvasWidth = math.floor(self.canvas:getWidth())
-  end
-  return stackCanvasWidth
+  -- in the longrun, opponentStack should not be known to the stack
+  self.opponentStack = newGarbageTarget
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -784,15 +625,39 @@ function Stack.taunt(self, taunt_type)
 end
 
 function Stack.set_puzzle_state(self, puzzle)
-  puzzle.stack = Puzzle.fillMissingPanelsInPuzzleString(puzzle.stack, self.width, self.height)
+  puzzle.stack = puzzle:fillMissingPanelsInPuzzleString(self.width, self.height)
 
   self.puzzle = puzzle
   self:setPanelsForPuzzleString(puzzle.stack)
   self.do_countdown = puzzle.doCountdown or false
   self.puzzle.remaining_moves = puzzle.moves
+  self.behaviours.allowManualRaise = false
+  self.behaviours.passiveRaise = false
+
+  if puzzle.moves > 0 then
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.NO_MOVES_LEFT)
+  end
+
+  if puzzle.puzzleType == "clear" then
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.NEGATIVE_HEALTH)
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE)
+    -- also fill up the garbage queue so that the stack stays topped out even when downstacking
+    local comboStorm = {}
+    for i = 1, self.height do
+                            --  width        height, metal, from chain
+      table.insert(comboStorm, {self.width - 1,   1, false, false})
+    end
+    self.garbage_q:push(comboStorm)
+  elseif puzzle.puzzleType == "chain" then
+    tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.CHAIN_DROPPED)
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_PANELS)
+  elseif puzzle.puzzleType == "moves" then
+    tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_PANELS)
+  end
 
   -- transform any cleared garbage into colorless garbage panels
   self.gpanel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
+  self.panel_buffer = "9999999999999999999999999999999999999999999999999999999999999999999999999"
 end
 
 function Stack.setPanelsForPuzzleString(self, puzzleString)
@@ -880,45 +745,12 @@ end
 
 function Stack.toPuzzleInfo(self)
   local puzzleInfo = {}
-  if self.match.battleRoom then
-    puzzleInfo["Player"] = self.match.battleRoom.playerNames[self.which]
-  else
-    puzzleInfo["Player"] = config.name
-  end
   puzzleInfo["Stop"] = self.stop_time
   puzzleInfo["Shake"] = self.shake_time
   puzzleInfo["Pre-Stop"] = self.pre_stop_time
   puzzleInfo["Stack"] = Puzzle.toPuzzleString(self.panels)
 
   return puzzleInfo
-end
-
-function Stack.puzzle_done(self)
-  if not self.do_countdown then
-    -- For now don't require active panels to be 0, we will still animate in game over,
-    -- and we need to win immediately to avoid the failure below in the chain case.
-    --if P1.n_active_panels == 0 then
-    --if self.puzzle.puzzleType == "chain" or P1.n_prev_active_panels == 0 then
-    if self.puzzle.puzzleType == "clear" then
-      return not self:hasGarbage()
-    else
-      local panels = self.panels
-      for row = 1, self.height do
-        for col = 1, self.width do
-          local color = panels[row][col].color
-          if color ~= 0 and color ~= 9 then
-            return false
-          end
-        end
-      end
-    end
-
-    return true
-  --end
-  --end
-  end
-
-  return false
 end
 
 function Stack.hasGarbage(self)
@@ -928,29 +760,6 @@ function Stack.hasGarbage(self)
       if self.panels[row][column].isGarbage
         and self.panels[row][column].state ~= "matched" then
         return true
-      end
-    end
-  end
-
-  return false
-end
-
-function Stack.puzzle_failed(self)
-  if not self.do_countdown and not self:hasActivePanels() then
-    if self.puzzle.puzzleType == "moves" then
-        return self.puzzle.remaining_moves == 0
-    elseif self.puzzle.puzzleType == "chain" then
-      if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
-        -- We finished matching but never made a chain -> fail
-        return true
-      end
-      if #self.analytic.data.reached_chains > 0 and not self:hasChainingPanels() then
-        -- We achieved a chain, finished chaining, but haven't won yet -> fail
-        return true
-      end
-    elseif self.puzzle.puzzleType == "clear" then
-      if self:hasGarbage() then
-        return (self.puzzle.moves > 0 and self.puzzle.remaining_moves <= 0) or self.health <= 0
       end
     end
   end
@@ -1073,11 +882,13 @@ function Stack.controls(self)
   end
 end
 
-function Stack.shouldRun(self, runsSoFar) 
-
-  -- We want to run after game over to show game over effects.
+function Stack:shouldRun(runsSoFar)
   if self:game_ended() then
-    return runsSoFar == 0
+    return false
+  end
+
+  if self:behindRollback() then
+    return true
   end
 
   -- Decide how many frames of input we should run.
@@ -1086,40 +897,32 @@ function Stack.shouldRun(self, runsSoFar)
   -- If we are local we always want to catch up and run the new input which is already appended
   if self.is_local then
     return buffer_len > 0
-  end
-
-  if self:behindRollback() then
-    return true
-  end
-
-  -- In debug mode allow forcing a certain number of frames behind
-  if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind ~= 0 then
-    if (config.debug_vsFramesBehind > 0) == (self.which == 2) then
-      -- Don't fall behind if the game is over for the other player
+  else
+    -- In debug mode allow non-local player 2 to fall a certain number of frames behind
+    if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and self.which == 2 then
+      -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
       if self.opponentStack and self.opponentStack:game_ended() == false then
-        -- If we are at the end of the replay we want to catch up
-        if network_connected() or #self.opponentStack.input_buffer > 0 then
-          local framesBehind = math.abs(config.debug_vsFramesBehind)
-          if self.clock >= self.opponentStack.clock - framesBehind then
+        if GAME.tcpClient:isConnected() then
+          if self.clock + config.debug_vsFramesBehind >= self.opponentStack.clock then
             return false
           end
         end
       end
     end
-  end
-    
-  -- If we are not local, we want to run faster to catch up.
-  if buffer_len >= 15 - runsSoFar then
-    -- way behind, run at max speed.
-    return runsSoFar < self.max_runs_per_frame
-  elseif buffer_len >= 10 - runsSoFar then
-    -- When we're closer, run fewer times per frame, so things are less choppy.
-    -- This might have a side effect of taking a little longer to catch up
-    -- since we don't always run at top speed.
-    local maxRuns = math.min(2, self.max_runs_per_frame)
-    return runsSoFar < maxRuns
-  elseif buffer_len >= 1 then
-    return runsSoFar == 0
+
+    -- If we are not local, we want to run faster to catch up.
+    if buffer_len >= 15 - runsSoFar then
+      -- way behind, run at max speed.
+      return runsSoFar < self.max_runs_per_frame
+    elseif buffer_len >= 10 - runsSoFar then
+      -- When we're closer, run fewer times per frame, so things are less choppy.
+      -- This might have a side effect of taking a little longer to catch up
+      -- since we don't always run at top speed.
+      local maxRuns = math.min(2, self.max_runs_per_frame)
+      return runsSoFar < maxRuns
+    elseif buffer_len >= 1 then
+      return runsSoFar == 0
+    end
   end
 
   return false
@@ -1127,16 +930,16 @@ end
 
 -- Runs one step of the stack.
 function Stack.run(self)
-  if GAME.gameIsPaused then
+  if self.match.isPaused then
     return
   end
 
   if self.is_local == false then
     if self.play_to_end then
-      GAME.preventSounds = true
+      GAME.muteSound = true
       if #self.input_buffer < 4 then
         self.play_to_end = nil
-        GAME.preventSounds = false
+        GAME.muteSound = false
       end
     end
   end
@@ -1188,12 +991,6 @@ function Stack.enqueue_card(self, chain, x, y, n)
     end
   end
   self.card_q:push({frame = 1, chain = chain, x = x, y = y, n = n, burstAtlas = card_burstAtlas, burstParticle = card_burstParticle})
-end
-
-function Stack:wait_for_random_character()
-  self.character = CharacterLoader.resolveCharacterSelection(self.character)
-  CharacterLoader.load(self.character)
-  CharacterLoader.wait()
 end
 
 -- Enqueue a pop animation
@@ -1263,7 +1060,7 @@ function Stack.updateDangerBounce(self)
     end
   end
   if self.danger then
-    if self.panels_in_top_row and self.speed ~= 0 and self.match.mode ~= "puzzle" then
+    if self.panels_in_top_row and self.speed ~= 0 and not self.puzzle then
       -- Player has topped out, panels hold the "flattened" frame
       self.danger_timer = 15
     elseif self.stop_time == 0 then
@@ -1274,47 +1071,50 @@ function Stack.updateDangerBounce(self)
     end
   end
 end
+
+function Stack:updateDangerMusic()
+  local dangerMusic = self:shouldPlayDangerMusic()
+  if dangerMusic ~= self.danger_music then
+    self.danger_music = dangerMusic
+    self:emitSignal("dangerMusicChanged", self)
+  end
+end
+
 -- determine whether to play danger music
 -- Changed this to play danger when something in top 3 rows
 -- and to play normal music when nothing in top 3 or 4 rows
-function Stack.shouldPlayDangerMusic(self)
-  if self.match.mode == "time" then
-    if self.game_stopwatch > TIME_ATTACK_TIME * 60 - 900 --[[15 seconds assuming 60 FPS]] then
-      return true
+function Stack:shouldPlayDangerMusic()
+  if not self.danger_music then
+    -- currently playing normal music
+    for row = self.height - 2, self.height do
+      local panelRow = self.panels[row]
+      for column = 1, self.width do
+        if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
+          if self.shake_time > 0 then
+            return false
+          else
+            return true
+          end
+        end
+      end
     end
   else
-    if not self.danger_music then
-      -- currently playing normal music
-      for row = self.height - 2, self.height do
-        local panelRow = self.panels[row]
+    --currently playing danger
+    local minRowForDangerMusic = self.height - 2
+    if config.danger_music_changeback_delay then
+      minRowForDangerMusic = self.height - 3
+    end
+    for row = minRowForDangerMusic, self.height do
+      local panelRow = self.panels[row]
+      if panelRow ~= nil and type(panelRow) == "table" then
         for column = 1, self.width do
-          if panelRow[column].color ~= 0 and panelRow[column].state ~= "falling" or panelRow[column]:dangerous() then
-            if self.shake_time > 0 then
-              return false
-            else
-              return true
-            end
+          if panelRow[column].color ~= 0 then
+            return true
           end
         end
-      end
-    else
-      --currently playing danger
-      local minRowForDangerMusic = self.height - 2
-      if config.danger_music_changeback_delay then
-        minRowForDangerMusic = self.height - 3
-      end
-      for row = minRowForDangerMusic, self.height do
-        local panelRow = self.panels[row]
-        if panelRow ~= nil and type(panelRow) == "table" then
-          for column = 1, self.width do
-            if panelRow[column].color ~= 0 then
-              return true
-            end
-          end
-        elseif self.warningsTriggered["Panels Invalid"] == nil then
-          logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
-          self.warningsTriggered["Panels Invalid"] = true
-        end
+      elseif self.warningsTriggered["Panels Invalid"] == nil then
+        logger.warn("Panels have invalid data in them, please tell your local developer." .. dump(panels, true))
+        self.warningsTriggered["Panels Invalid"] = true
       end
     end
   end
@@ -1354,492 +1154,362 @@ function Stack.shouldDropGarbage(self)
       -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
       -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
       -- and because of that hack, we need to do another hack here and allow n-height combo garbage
-      -- but only if trainingmodesettings have been set on the GAME global
-      return next_garbage_block_height > 1 and GAME.battleRoom.trainingModeSettings ~= nil
+      -- but only if the player is targetted by a detached attackengine
+      return next_garbage_block_height > 1 and self.match.attackEngines[self.player] ~= nil
     end
   end
 end
 
 -- One run of the engine routine.
 function Stack.simulate(self)
-  -- Don't run the main logic if the player has simulated past one of the game overs or the time attack time
-  if self:game_ended() == false then
-    self:prep_first_row()
-    local panels = self.panels
-    local swapped_this_frame = nil
-    self.garbageLandedThisFrame = {}
-    self:runCountDownIfNeeded()
+  self:prep_first_row()
+  local panels = self.panels
+  local swapped_this_frame = nil
+  self.garbageLandedThisFrame = {}
+  self:runCountDownIfNeeded()
 
-    if self.pre_stop_time ~= 0 then
-      self.pre_stop_time = self.pre_stop_time - 1
-    elseif self.stop_time ~= 0 then
-      self.stop_time = self.stop_time - 1
-    end
+  if self.pre_stop_time ~= 0 then
+    self.pre_stop_time = self.pre_stop_time - 1
+  elseif self.stop_time ~= 0 then
+    self.stop_time = self.stop_time - 1
+  end
 
-    self.panels_in_top_row = self:hasPanelsInTopRow()
-    self:updateDangerBounce()
-    self.danger_music = self:shouldPlayDangerMusic()
+  self.panels_in_top_row = self:hasPanelsInTopRow()
+  self:updateDangerBounce()
+  self:updateDangerMusic()
 
-    if self.displacement == 0 and self.has_risen then
-      self.top_cur_row = self.height
-      self:new_row()
-    end
+  if self.displacement == 0 and self.has_risen then
+    self.top_cur_row = self.height
+    self:new_row()
+  end
 
-    self:updateRiseLock()
+  self:updateRiseLock()
 
-    -- Increase the speed if applicable
-    if self.speedIncreaseMode == 1 then
-      -- increase per interval
-      if self.clock == self.nextSpeedIncreaseClock then
-        self.speed = min(self.speed + 1, 99)
-        self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
-      end
-    elseif self.panels_to_speedup <= 0 then
-      -- mode 2: increase speed based on cleared panels
+  -- Increase the speed if applicable
+  if self.levelData.speedIncreaseMode == 1 then
+    -- increase per interval
+    if self.clock == self.nextSpeedIncreaseClock then
       self.speed = min(self.speed + 1, 99)
-      self.panels_to_speedup = self.panels_to_speedup + panels_to_next_speed[self.speed]
+      self.nextSpeedIncreaseClock = self.nextSpeedIncreaseClock + DT_SPEED_INCREASE
     end
+  elseif self.panels_to_speedup <= 0 then
+    -- mode 2: increase speed based on cleared panels
+    self.speed = min(self.speed + 1, 99)
+    self.panels_to_speedup = self.panels_to_speedup + PANELS_TO_NEXT_SPEED[self.speed]
+  end
 
-    -- Phase 0 //////////////////////////////////////////////////////////////
-    -- Stack automatic rising
-    if self.speed ~= 0 and not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
-      if self.match.mode == "puzzle" then
-        -- only reduce health after the first swap to give the player a chance to strategize
-        if self.puzzle.puzzleType == "clear" and self.puzzle.remaining_moves - self.puzzle.moves < 0 and self.shake_time < 1 then
-          self.health = self.health - 1
-          -- no gameover because it can't return otherwise, exit is taken care of by puzzle_failed
-        end
+  -- Phase 0 //////////////////////////////////////////////////////////////
+  -- Stack automatic rising
+  if self.behaviours.passiveRaise then
+    if not self.manual_raise and self.stop_time == 0 and not self.rise_lock then
+      if self.panels_in_top_row then
+        self.health = self.health - 1
       else
-        if self.panels_in_top_row then
-          self.health = self.health - 1
-          if self.health < 1 and self.shake_time < 1 then
-            self:set_game_over()
+        self.rise_timer = self.rise_timer - 1
+        if self.rise_timer <= 0 then -- try to rise
+          self.displacement = self.displacement - 1
+          if self.displacement == 0 then
+            self.prevent_manual_raise = false
+            self.top_cur_row = self.height
+            self:new_row()
           end
-        else
-          if self.match.mode ~= "puzzle" then
-            self.rise_timer = self.rise_timer - 1
-            if self.rise_timer <= 0 then -- try to rise
-              self.displacement = self.displacement - 1
-              if self.displacement == 0 then
-                self.prevent_manual_raise = false
-                self.top_cur_row = self.height
-                self:new_row()
-              end
-              self.rise_timer = self.rise_timer + speed_to_rise_time[self.speed]
-            end
-          end
+          self.rise_timer = self.rise_timer + consts.SPEED_TO_RISE_TIME[self.speed]
         end
       end
     end
 
-    if not self.panels_in_top_row and self.match.mode ~= "puzzle" and not self:has_falling_garbage() then
-      self.health = self.max_health
+    if self:checkGameOver() then
+      self:setGameOver()
     end
+  end
 
-    if self.displacement % 16 ~= 0 then
-      self.top_cur_row = self.height - 1
-    end
+  if not self.panels_in_top_row and not self:has_falling_garbage() then
+    self.health = self.levelData.maxHealth
+  end
 
-    -- Begin the swap we input last frame.
-    if self:swapQueued() then
-      self:swap(self.queuedSwapRow, self.queuedSwapColumn)
-      swapped_this_frame = true
-      self:setQueuedSwapPosition(0, 0)
-    end
+  if self.displacement % 16 ~= 0 then
+    self.top_cur_row = self.height - 1
+  end
 
-    -- Look for matches.
-    self:checkMatches()
+  -- Begin the swap we input last frame.
+  if self:swapQueued() then
+    self:swap(self.queuedSwapRow, self.queuedSwapColumn)
+    swapped_this_frame = true
+    self:setQueuedSwapPosition(0, 0)
+  end
 
-    self:updatePanels()
+  self:checkMatches()
+  self:updatePanels()
 
-    self.prev_shake_time = self.shake_time
-    self.shake_time = self.shake_time - 1
-    self.shake_time = max(self.shake_time, self.shake_time_on_frame)
-    if self.shake_time == 0 then
-      self.peak_shake_time = 0
-    end
+  self.prev_shake_time = self.shake_time
+  self.shake_time = self.shake_time - 1
+  self.shake_time = max(self.shake_time, self.shake_time_on_frame)
+  if self.shake_time == 0 then
+    self.peak_shake_time = 0
+  end
 
-    -- Phase 3. /////////////////////////////////////////////////////////////
-    -- Actions performed according to player input
+  -- Phase 3. /////////////////////////////////////////////////////////////
+  -- Actions performed according to player input
 
-    -- CURSOR MOVEMENT
-    local playMoveSounds = true -- set this to false to disable move sounds for debugging
-    if self.inputMethod == "touch" then
-        --with touch, cursor movement happen at stack:control time
+  -- CURSOR MOVEMENT
+  local playMoveSounds = true -- set this to false to disable move sounds for debugging
+  if self.inputMethod == "touch" then
+      --with touch, cursor movement happen at stack:control time
+  else
+    if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and self.cursorLock == nil then
+      local prev_row = self.cur_row
+      local prev_col = self.cur_col
+      self:moveCursorInDirection(self.cur_dir)
+      if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
+        if self:canPlaySfx() then
+          SFX_Cur_Move_Play = 1
+        end
+        if self.cur_timer ~= self.cur_wait_time then
+          self.analytic:register_move()
+        end
+      end
     else
-      if self.cur_dir and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and self.cursorLock == nil then
-        local prev_row = self.cur_row
-        local prev_col = self.cur_col
-        self:moveCursorInDirection(self.cur_dir)
-        if (playMoveSounds and (self.cur_timer == 0 or self.cur_timer == self.cur_wait_time) and (self.cur_row ~= prev_row or self.cur_col ~= prev_col)) then
-          if self:shouldChangeSoundEffects() then
-            SFX_Cur_Move_Play = 1
-          end
-          if self.cur_timer ~= self.cur_wait_time then
-            self.analytic:register_move()
-          end
-        end
-      else
-        self.cur_row = bound(1, self.cur_row, self.top_cur_row)
-      end
+      self.cur_row = util.bound(1, self.cur_row, self.top_cur_row)
     end
+  end
 
-    if self.cur_timer ~= self.cur_wait_time then
-      self.cur_timer = self.cur_timer + 1
+  if self.cur_timer ~= self.cur_wait_time then
+    self.cur_timer = self.cur_timer + 1
+  end
+  -- TAUNTING
+  if self:canPlaySfx() then
+    if self.taunt_up ~= nil then
+      characters[self.character]:playTauntUpSfx(self.taunt_up)
+      self:taunt("taunt_up")
+      self.taunt_up = nil
+    elseif self.taunt_down ~= nil then
+      characters[self.character]:playTauntDownSfx(self.taunt_down)
+      self:taunt("taunt_down")
+      self.taunt_down = nil
     end
-    -- TAUNTING
-    if self:shouldChangeSoundEffects() then
-      if self.taunt_up ~= nil then
-        characters[self.character]:playTauntUpSfx(self.taunt_up)
-        self:taunt("taunt_up")
-        self.taunt_up = nil
-      elseif self.taunt_down ~= nil then
-        characters[self.character]:playTauntDownSfx(self.taunt_down)
-        self:taunt("taunt_down")
-        self.taunt_down = nil
-      end
-    end
+  end
 
-    -- Queue Swapping
-    -- Note: Swapping is queued in Stack.controls for touch mode
-    if self.inputMethod == "controller" then
-      if (self.swap_1 or self.swap_2) and not swapped_this_frame then
-        local canSwap = self:canSwap(self.cur_row, self.cur_col)
-        if canSwap then
-          self:setQueuedSwapPosition(self.cur_col, self.cur_row)
-          self.analytic:register_swap()
-        end
-        self.swap_1 = false
-        self.swap_2 = false
+  -- Queue Swapping
+  -- Note: Swapping is queued in Stack.controls for touch mode
+  if self.inputMethod == "controller" then
+    if (self.swap_1 or self.swap_2) and not swapped_this_frame then
+      local canSwap = self:canSwap(self.cur_row, self.cur_col)
+      if canSwap then
+        self:setQueuedSwapPosition(self.cur_col, self.cur_row)
+        self.analytic:register_swap()
       end
+      self.swap_1 = false
+      self.swap_2 = false
     end
+  end
 
-    -- MANUAL STACK RAISING
-    if self.manual_raise and self.match.mode ~= "puzzle" then
+  -- MANUAL STACK RAISING
+  if self.behaviours.allowManualRaise then
+    if self.manual_raise then
       if not self.rise_lock then
         if self.panels_in_top_row then
-          self:set_game_over()
-        end
-        self.has_risen = true
-        self.displacement = self.displacement - 1
-        if self.displacement == 1 then
-          self.manual_raise = false
-          self.rise_timer = 1
-          if not self.prevent_manual_raise then
-            self.score = self.score + 1
+          if self:checkGameOver() then
+            self:setGameOver()
           end
-          self.prevent_manual_raise = true
+        else
+          self.has_risen = true
+          self.displacement = self.displacement - 1
+          if self.displacement == 1 then
+            self.manual_raise = false
+            self.rise_timer = 1
+            if not self.prevent_manual_raise then
+              self.score = self.score + 1
+            end
+            self.prevent_manual_raise = true
+          end
+          self.manual_raise_yet = true --ehhhh
+          self.stop_time = 0
         end
-        self.manual_raise_yet = true --ehhhh
-        self.stop_time = 0
       elseif not self.manual_raise_yet then
         self.manual_raise = false
       end
     -- if the stack is rise locked when you press the raise button,
     -- the raising is cancelled
     end
+  end
 
-    -- if at the end of the routine there are no chain panels, the chain ends.
-    if self.chain_counter ~= 0 and not self:hasChainingPanels() then
-      self.chains[self.currentChainStartFrame].finish = self.clock
-      self.chains[self.currentChainStartFrame].size = self.chain_counter
-      self.currentChainStartFrame = nil
-      if self:shouldChangeSoundEffects() then
-        SFX_Fanfare_Play = self.chain_counter
-      end
-      self.analytic:register_chain(self.chain_counter)
-      self.chain_counter = 0
-
-      if self.telegraph then
-        logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
-        self.telegraph:chainingEnded(self.clock)
-      end
+  -- if at the end of the routine there are no chain panels, the chain ends.
+  if self.chain_counter ~= 0 and not self:hasChainingPanels() then
+    self.chains[self.currentChainStartFrame].finish = self.clock
+    self.chains[self.currentChainStartFrame].size = self.chain_counter
+    self.currentChainStartFrame = nil
+    if self:canPlaySfx() then
+      SFX_Fanfare_Play = self.chain_counter
     end
-
-    if (self.score > 99999) then
-      self.score = 99999
-    -- lol owned
-    end
-
-    self:updateActivePanels()
+    self.analytic:register_chain(self.chain_counter)
+    self.chain_counter = 0
 
     if self.telegraph then
-      self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
-    end
-    
-    if self.later_garbage[self.clock] then
-      self.garbage_q:push(self.later_garbage[self.clock])
-      self.later_garbage[self.clock] = nil
-    end
-
-    self:remove_extra_rows()
-    
-    --double-check panels_in_top_row
-
-    self.panels_in_top_row = false
-    -- If any dangerous panels are in the top row, garbage should not fall.
-    for col_idx = 1, self.width do
-      if panels[self.height][col_idx]:dangerous() then
-        self.panels_in_top_row = true
-      end
-    end
-
-    -- local garbage_fits_in_populated_top_row 
-    -- if self.garbage_q:len() > 0 then
-    --   --even if there are some panels in the top row,
-    --   --check if the next block in the garbage_q would fit anyway
-    --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-    --   garbage_fits_in_populated_top_row = true
-    --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-    --   local cols = self.garbage_cols[next_garbage_block_width]
-    --   local spawn_col = cols[cols.idx]
-    --   local spawn_row = #self.panels
-    --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-    --     if panelRow[idx]:dangerous() then 
-    --       garbage_fits_in_populated_top_row = nil
-    --     end
-    --   end
-    -- end
-    
-    -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
-    for row_idx = self.height + 1, #self.panels do
-      for col_idx = 1, self.width do
-        if panels[row_idx][col_idx].color ~= 0 then
-          self.panels_in_top_row = true
-        end
-      end
-    end
-
-    if self.garbage_q:len() > 0 then
-      if self:shouldDropGarbage() then
-        if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
-          self.garbage_q:pop()
-        end
-      end
-    end
-
-    -- Update Music
-    if self:shouldChangeMusic() then
-      if self.do_countdown then
-        if SFX_Go_Play == 1 then
-          self.theme.sounds.go:stop()
-          self.theme.sounds.go:play()
-          SFX_Go_Play = 0
-        elseif SFX_Countdown_Play == 1 then
-          self.theme.sounds.countdown:stop()
-          self.theme.sounds.countdown:play()
-          SFX_Go_Play = 0
-        end
-      else
-        local winningPlayer = self
-        if GAME.battleRoom then
-          winningPlayer = GAME.battleRoom:winningPlayer(P1, P2)
-        end
-
-        local musics_to_use = nil
-        local dynamicMusic = false
-        local stageHasMusic = current_stage and stages[current_stage].musics and stages[current_stage].musics["normal_music"]
-        local characterHasMusic = winningPlayer.character and characters[winningPlayer.character].musics and characters[winningPlayer.character].musics["normal_music"]
-        if ((current_use_music_from == "stage") and stageHasMusic) or not characterHasMusic then
-          if stages[current_stage].music_style == "dynamic" then
-            dynamicMusic = true
-          end
-          musics_to_use = stages[current_stage].musics
-        elseif characterHasMusic then
-          if characters[winningPlayer.character].music_style == "dynamic" then
-            dynamicMusic = true
-          end
-          musics_to_use = characters[winningPlayer.character].musics
-        else
-          -- no music loaded
-        end
-
-        local wantsDangerMusic = self.danger_music
-        if self.opponentStack and self.opponentStack.danger_music then
-          wantsDangerMusic = true
-        end
-
-        if dynamicMusic then
-          local fadeLength = 60
-          if not self.fade_music_clock then
-            self.fade_music_clock = fadeLength -- start fully faded in
-            self.match.currentMusicIsDanger = false
-          end
-
-          local normalMusic = {musics_to_use["normal_music"], musics_to_use["normal_music_start"]}
-          local dangerMusic = {musics_to_use["danger_music"], musics_to_use["danger_music_start"]}
-
-          if #currently_playing_tracks == 0 then
-            find_and_add_music(musics_to_use, "normal_music")
-            find_and_add_music(musics_to_use, "danger_music")
-          end
-
-          -- Do we need to switch music?
-          if self.match.currentMusicIsDanger ~= wantsDangerMusic then
-            self.match.currentMusicIsDanger = not self.match.currentMusicIsDanger
-
-            if self.fade_music_clock >= fadeLength then
-              self.fade_music_clock = 0 -- Do a full fade
-            else
-              -- switched music before we fully faded, so start part way through
-              self.fade_music_clock = fadeLength - self.fade_music_clock
-            end
-          end
-
-          if self.fade_music_clock < fadeLength then
-            self.fade_music_clock = self.fade_music_clock + 1
-          end
-
-          local fadePercentage = self.fade_music_clock / fadeLength
-          if wantsDangerMusic then
-            setFadePercentageForGivenTracks(1 - fadePercentage, normalMusic)
-            setFadePercentageForGivenTracks(fadePercentage, dangerMusic)
-          else
-            setFadePercentageForGivenTracks(fadePercentage, normalMusic)
-            setFadePercentageForGivenTracks(1 - fadePercentage, dangerMusic)
-          end
-        else -- classic music
-          if wantsDangerMusic then --may have to rethink this bit if we do more than 2 players
-            if (self.match.currentMusicIsDanger == false or #currently_playing_tracks == 0) and musics_to_use["danger_music"] then -- disabled when danger_music is unspecified
-              stop_the_music()
-              find_and_add_music(musics_to_use, "danger_music")
-              self.match.currentMusicIsDanger = true
-            elseif #currently_playing_tracks == 0 and musics_to_use["normal_music"] then
-              stop_the_music()
-              find_and_add_music(musics_to_use, "normal_music")
-              self.match.currentMusicIsDanger = false
-            end
-          else --we should be playing normal_music or normal_music_start
-            if (self.match.currentMusicIsDanger or #currently_playing_tracks == 0) and musics_to_use["normal_music"] then
-              stop_the_music()
-              find_and_add_music(musics_to_use, "normal_music")
-              self.match.currentMusicIsDanger = false
-            end
-          end
-        end
-      end
-    end
-
-    -- In time attack, play countdown sound every second when there's 15 seconds left
-    if  self.match.mode == "time" and 
-        self.game_stopwatch and 
-        self.game_stopwatch >= TIME_ATTACK_TIME * 60 - 900 and 
-        self.game_stopwatch % 60 == 0 and 
-        self.game_stopwatch ~= TIME_ATTACK_TIME * 60 and           -- don't play on the last frame
-        self:shouldChangeSoundEffects() then
-      SFX_Countdown_Play = 1
-    end
-
-    -- Update Sound FX
-    if self:shouldChangeSoundEffects() then
-      if SFX_Swap_Play == 1 then
-        self.theme.sounds.swap:stop()
-        self.theme.sounds.swap:play()
-        SFX_Swap_Play = 0
-      end
-      if SFX_Cur_Move_Play == 1 then
-        if not (self.match.mode == "vs" and self.theme.sounds.swap:isPlaying()) and not self.do_countdown then
-          self.theme.sounds.cur_move:stop()
-          self.theme.sounds.cur_move:play()
-        end
-        SFX_Cur_Move_Play = 0
-      end
-      if self.sfx_land then
-        self.theme.sounds.land:stop()
-        self.theme.sounds.land:play()
-        self.sfx_land = false
-      end
-      if SFX_Countdown_Play == 1 then
-        if self.which == 1 then
-          self.theme.sounds.countdown:stop()
-          self.theme.sounds.countdown:play()
-        end
-        SFX_Countdown_Play = 0
-      end
-      if SFX_Go_Play == 1 then
-        if self.which == 1 then
-          self.theme.sounds.go:stop()
-          self.theme.sounds.go:play()
-        end
-        SFX_Go_Play = 0
-      end
-      if self.combo_chain_play then
-        -- stop ongoing landing sound
-        self.theme.sounds.land:stop()
-        -- and cancel it because an attack is performed on the exact same frame (takes priority)
-        self.sfx_land = false
-        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        characters[self.character]:playAttackSfx(self.combo_chain_play)
-        self.combo_chain_play = nil
-      end
-      if SFX_garbage_match_play then
-        characters[self.character]:playGarbageMatchSfx()
-        SFX_garbage_match_play = nil
-      end
-      if SFX_Fanfare_Play == 0 then
-        --do nothing
-      elseif SFX_Fanfare_Play >= 6 then
-        self.theme.sounds.fanfare3:play()
-      elseif SFX_Fanfare_Play >= 5 then
-        self.theme.sounds.fanfare2:play()
-      elseif SFX_Fanfare_Play >= 4 then
-        self.theme.sounds.fanfare1:play()
-      end
-      SFX_Fanfare_Play = 0
-      if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
-        local interrupted_thud = nil
-        for i = 1, 3 do
-          if self.theme.sounds.garbage_thud[i]:isPlaying() and self.shake_time > self.prev_shake_time then
-            self.theme.sounds.garbage_thud[i]:stop()
-            interrupted_thud = i
-          end
-        end
-        if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
-          self.theme.sounds.garbage_thud[interrupted_thud]:play()
-        else
-          self.theme.sounds.garbage_thud[self.sfx_garbage_thud]:play()
-        end
-        if interrupted_thud == nil then
-          characters[self.character]:playGarbageLandSfx()
-        end
-        self.sfx_garbage_thud = 0
-      end
-      if SFX_Pop_Play or SFX_Garbage_Pop_Play then
-        local popLevel = min(max(self.chain_counter, 1), 4)
-        local popIndex = 1
-        if SFX_Garbage_Pop_Play then
-          popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
-        else
-          popIndex = min(self.poppedPanelIndex, 10)
-        end
-        --stop the previous pop sound
-        self.theme.sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed]:stop()
-        --play the appropriate pop sound
-        self.theme.sounds.pops[popLevel][popIndex]:play()
-        self.lastPopLevelPlayed = popLevel
-        self.lastPopIndexPlayed = popIndex
-        SFX_Pop_Play = nil
-        SFX_Garbage_Pop_Play = nil
-      end
-      if self.game_over or (self.opponentStack and self.opponentStack.game_over) then
-        if self:shouldChangeSoundEffects() then
-          SFX_GameOver_Play = 1
-        end
-      end
-    end
-
-    self.clock = self.clock + 1
-
-    if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
-      self.opponentStack.tooFarBehindError = true
-    end
-
-    local gameEndedClockTime = self.match:gameEndedClockTime()
-    if self.game_stopwatch_running and (gameEndedClockTime == 0 or self.clock <= gameEndedClockTime) then
-      self.game_stopwatch = (self.game_stopwatch or -1) + 1
+      logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
+      self.telegraph:chainingEnded(self.clock)
     end
   end
 
+  if (self.score > 99999) then
+    self.score = 99999
+  -- lol owned
+  end
+
+  self:updateActivePanels()
+
+  if self.puzzle and self.n_active_panels == 0 and self.n_prev_active_panels == 0 then
+    if self:checkGameOver() then
+      self:setGameOver()
+    end
+  end
+
+  if self.telegraph then
+    self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
+  end
+
+  if self.later_garbage[self.clock] then
+    self.garbage_q:push(self.later_garbage[self.clock])
+    self.later_garbage[self.clock] = nil
+  end
+
+  self:remove_extra_rows()
+
+  --double-check panels_in_top_row
+
+  self.panels_in_top_row = false
+  -- If any dangerous panels are in the top row, garbage should not fall.
+  for col_idx = 1, self.width do
+    if panels[self.height][col_idx]:dangerous() then
+      self.panels_in_top_row = true
+    end
+  end
+
+  -- local garbage_fits_in_populated_top_row 
+  -- if self.garbage_q:len() > 0 then
+  --   --even if there are some panels in the top row,
+  --   --check if the next block in the garbage_q would fit anyway
+  --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
+  --   garbage_fits_in_populated_top_row = true
+  --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
+  --   local cols = self.garbage_cols[next_garbage_block_width]
+  --   local spawn_col = cols[cols.idx]
+  --   local spawn_row = #self.panels
+  --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
+  --     if panelRow[idx]:dangerous() then 
+  --       garbage_fits_in_populated_top_row = nil
+  --     end
+  --   end
+  -- end
+  
+  -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
+  for row_idx = self.height + 1, #self.panels do
+    for col_idx = 1, self.width do
+      if panels[row_idx][col_idx].color ~= 0 then
+        self.panels_in_top_row = true
+      end
+    end
+  end
+
+  if self.garbage_q:len() > 0 then
+    if self:shouldDropGarbage() then
+      if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
+        self.garbage_q:pop()
+      end
+    end
+  end
+
+  -- Update Sound FX
+  if self:canPlaySfx() then
+    if SFX_Swap_Play == 1 then
+      SoundController:playSfx(themes[config.theme].sounds.swap)
+      SFX_Swap_Play = 0
+    end
+    if SFX_Cur_Move_Play == 1 then
+      -- I have no idea why this makes a distinction for vs, like what?
+      if not (self.match.stackInteraction ~= GameModes.StackInteractions.NONE and themes[config.theme].sounds.swap:isPlaying()) and not self.do_countdown then
+        SoundController:playSfx(themes[config.theme].sounds.cur_move)
+      end
+      SFX_Cur_Move_Play = 0
+    end
+    if self.sfx_land then
+      SoundController:playSfx(themes[config.theme].sounds.land)
+      self.sfx_land = false
+    end
+    if self.combo_chain_play then
+      -- stop ongoing landing sound
+      SoundController:stopSfx(themes[config.theme].sounds.land)
+      -- and cancel it because an attack is performed on the exact same frame (takes priority)
+      self.sfx_land = false
+      SoundController:stopSfx(themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed])
+      characters[self.character]:playAttackSfx(self.combo_chain_play)
+      self.combo_chain_play = nil
+    end
+    if SFX_garbage_match_play then
+      characters[self.character]:playGarbageMatchSfx()
+      SFX_garbage_match_play = nil
+    end
+    if SFX_Fanfare_Play == 0 then
+      --do nothing
+    elseif SFX_Fanfare_Play >= 6 then
+      SoundController:playSfx(themes[config.theme].sounds.fanfare3)
+    elseif SFX_Fanfare_Play >= 5 then
+      SoundController:playSfx(themes[config.theme].sounds.fanfare2)
+    elseif SFX_Fanfare_Play >= 4 then
+      SoundController:playSfx(themes[config.theme].sounds.fanfare1)
+    end
+    SFX_Fanfare_Play = 0
+    if self.sfx_garbage_thud >= 1 and self.sfx_garbage_thud <= 3 then
+      local interrupted_thud = nil
+      for i = 1, 3 do
+        if themes[config.theme].sounds.garbage_thud[i]:isPlaying() and self.shake_time > self.prev_shake_time then
+          SoundController:stopSfx(themes[config.theme].sounds.garbage_thud[i])
+          interrupted_thud = i
+        end
+      end
+      if interrupted_thud and interrupted_thud > self.sfx_garbage_thud then
+        SoundController:playSfx(themes[config.theme].sounds.garbage_thud[interrupted_thud])
+      else
+        SoundController:playSfx(themes[config.theme].sounds.garbage_thud[self.sfx_garbage_thud])
+      end
+      if interrupted_thud == nil then
+        characters[self.character]:playGarbageLandSfx()
+      end
+      self.sfx_garbage_thud = 0
+    end
+    if SFX_Pop_Play or SFX_Garbage_Pop_Play then
+      local popLevel = min(max(self.chain_counter, 1), 4)
+      local popIndex = 1
+      if SFX_Garbage_Pop_Play then
+        popIndex = min(SFX_Garbage_Pop_Play + self.poppedPanelIndex, 10)
+      else
+        popIndex = min(self.poppedPanelIndex, 10)
+      end
+      --stop the previous pop sound
+      SoundController:stopSfx(themes[config.theme].sounds.pops[self.lastPopLevelPlayed][self.lastPopIndexPlayed])
+      --play the appropriate pop sound
+      SoundController:playSfx(themes[config.theme].sounds.pops[popLevel][popIndex])
+      self.lastPopLevelPlayed = popLevel
+      self.lastPopIndexPlayed = popIndex
+      SFX_Pop_Play = nil
+      SFX_Garbage_Pop_Play = nil
+    end
+  end
+
+  self.clock = self.clock + 1
+
+  if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
+    self.opponentStack.tooFarBehindError = true
+  end
+
+  if self.game_stopwatch_running and (not self.match.gameOverClock or self.clock <= self.match.gameOverClock) then
+    self.game_stopwatch = (self.game_stopwatch or -1) + 1
+  end
+
+  self:update_popfxs()
+  self:update_cards()
+end
+
+function Stack:runGameOver()
   self:update_popfxs()
   self:update_cards()
 end
@@ -1848,19 +1518,18 @@ function Stack:runCountDownIfNeeded()
   if self.do_countdown then
     self.game_stopwatch_running = false
     self.rise_lock = true
-    if not self.countdown_clock then
-      self.countdown_clock = self.clock
+    if self.clock == 0 then
       self.animatingCursorDuringCountdown = true
       if self.match.engineVersion == consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE then
         self.cursorLock = true
       end
       self.cur_row = self.height
-      self.cur_col = self.width - 1
       if self.inputMethod == "touch" then
         self.cur_col = self.width
+      elseif self.inputMethod == "controller" then
+        self.cur_col = self.width - 1
       end
-    end
-    if self.countdown_clock == 8 then
+    elseif self.clock == consts.COUNTDOWN_START then
       self.countdown_timer = consts.COUNTDOWN_LENGTH
     end
     if self.countdown_timer then
@@ -1888,31 +1557,19 @@ function Stack:runCountDownIfNeeded()
         --we are done counting down
         self.do_countdown = false
         self.countdown_timer = nil
-        self.countdown_clock = nil
         self.game_stopwatch_running = true
-        if self.which == 1 and self:shouldChangeSoundEffects() then
-          SFX_Go_Play = 1
-        end
-      elseif self.countdown_timer and self.countdown_timer % 60 == 0 and self.which == 1 then
-        --play beep for timer dropping to next second in 3-2-1 countdown
-        if self.which == 1 and self:shouldChangeSoundEffects() then
-          SFX_Countdown_Play = 1
-        end
       end
       if self.countdown_timer then
         self.countdown_timer = self.countdown_timer - 1
       end
-    end
-    if self.countdown_clock then
-      self.countdown_clock = self.countdown_clock + 1
     end
   end
 end
 
 function Stack:moveCursorInDirection(directionString)
   assert(directionString ~= nil and type(directionString) == "string")
-  self.cur_row = bound(1, self.cur_row + d_row[directionString], self.top_cur_row)
-  self.cur_col = bound(1, self.cur_col + d_col[directionString], self.width - 1)
+  self.cur_row = util.bound(1, self.cur_row + d_row[directionString], self.top_cur_row)
+  self.cur_col = util.bound(1, self.cur_col + d_col[directionString], self.width - 1)
 end
 
 -- Called on a stack by the attacker with the time to start processing the garbage drop
@@ -1930,16 +1587,6 @@ function Stack:receiveGarbage(frameToReceive, garbageList)
   self.later_garbage[frameToReceive] = garbage
 end
 
-function Stack:updateFramesBehind()
-  if self.opponentStack then
-    if not self.framesBehindArray[self.clock] then
-      local framesBehind = math.max(0, self.opponentStack.clock - self.clock)
-      self.framesBehindArray[self.clock] = framesBehind
-      self.totalFramesBehind = self.totalFramesBehind + framesBehind
-    end
-  end
-end
-
 function Stack.behindRollback(self)
   if self.lastRollbackFrame > self.clock then
     return true
@@ -1948,137 +1595,48 @@ function Stack.behindRollback(self)
   return false
 end
 
-function Stack.shouldChangeMusic(self)
-  local result = not GAME.gameIsPaused and not GAME.preventSounds
+function Stack:canPlaySfx()
+  -- this should be superfluous because there is no code being run that would play sfx
+  -- if self:game_ended() then
+  --   return false
+  -- end
 
-  if result then
-    if self:game_ended() or self.canvas == nil then
-      result = false
-    end
-
-    -- If we are still catching up from rollback don't play sounds again
-    if self:behindRollback() then
-      result = false
-    end
-
-    if self.play_to_end then
-      result = false
-    end
-
-    if self.opponentStack and self.opponentStack.play_to_end then
-      result = false
-    end
+  -- If we are still catching up from rollback don't play sounds again
+  if self:behindRollback() then
+    return false
   end
 
-  return result
-end
+  -- this is catchup mode, don't play sfx during this
+  if self.play_to_end then
+    return false
+  end
 
-
-function Stack.shouldChangeSoundEffects(self)
-  local result = self:shouldChangeMusic() and not GAME.muteSoundEffects
-
-  return result
-end
-
-function Stack:averageFramesBehind()
-  local average = tonumber(string.format("%1.1f", round(self.totalFramesBehind / math.max(self.clock, 1)), 1))
-  return average
+  return true
 end
 
 -- Returns true if the stack is simulated past the end of the match.
-function Stack.game_ended(self)
-
-  local gameEndedClockTime = self.match:gameEndedClockTime()
-
-  if self.match.mode == "vs" then
-    if self.match.simulatedOpponent and self.match.simulatedOpponent:isDefeated() then
-      return true
-    end
-
-    -- Note we use "greater" and not "greater than or equal" because our stack may be currently processing this clock frame.
-    -- At the end of the clock frame it will be incremented and we know we have process the game over clock frame.
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return true
-    end
-  elseif self.match.mode == "time" then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return true
-    elseif self.game_stopwatch then
-      if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
-        return true
-      end
-    end
-  elseif self.match.mode == "endless" then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return true
-    end
-  elseif self.match.mode == "puzzle" then
-    if self:puzzle_done() or self:puzzle_failed() then
-      return true
-    end
+function Stack:game_ended()
+  if self.game_over_clock > 0 then
+    return self.clock >= self.game_over_clock
+  else
+    return self:checkGameWin()
   end
-
-  return false
-end
-
--- Returns 1 if this player won, 0 for draw, and -1 for loss, nil if no result yet
-function Stack.gameResult(self)
-  if self:game_ended() == false then
-    return nil
-  end
-
-  local gameEndedClockTime = self.match:gameEndedClockTime()
-
-  if self.match.mode == "vs" then
-    if self.opponentStack == nil then
-      if self.match.simulatedOpponent then
-        if self.match.simulatedOpponent:isDefeated() then
-          return 1
-        end
-      end
-      return -1
-    -- We can't call it until someone has lost and everyone has played up to that point in time.
-    elseif self.opponentStack:game_ended() then
-      if self.game_over_clock == gameEndedClockTime and self.opponentStack.game_over_clock == gameEndedClockTime then
-        return 0
-      elseif self.game_over_clock == gameEndedClockTime then
-        return -1
-      elseif self.opponentStack.game_over_clock == gameEndedClockTime then
-        return 1
-      end
-    end
-  elseif self.match.mode == "time" then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return -1
-    elseif self.game_stopwatch then
-      if self.game_stopwatch > TIME_ATTACK_TIME * 60 then
-        return 1
-      end
-    end
-  elseif self.match.mode == "endless" then
-    if gameEndedClockTime > 0 and self.clock > gameEndedClockTime then
-      return -1
-    end
-  elseif self.match.mode == "puzzle" then
-    if self:puzzle_done() then
-      return 1
-    elseif self:puzzle_failed() then
-      return -1
-    end
-  end
-
-  return nil
 end
 
 -- Sets the current stack as "lost"
 -- Also begins drawing game over effects
-function Stack.set_game_over(self)
+function Stack.setGameOver(self)
 
-  if self.game_over_clock ~= 0 then
-    error("should not set gameover when it is already set")
+  if self.game_over_clock > 0 then
+    -- it is possible that game over is set twice on the same frame
+    -- this happens if someone died to passive raise while holding manual raise
+    -- we shouldn't try to set game over again under any other circumstances however
+    assert(self.clock == self.game_over_clock, "game over was already set to a different clock time")
+    return
   end
-  
-  self.game_over = true
+
+  SoundController:playSfx(themes[config.theme].sounds.game_over)
+
   self.game_over_clock = self.clock
 
   if self.canvas then
@@ -2101,7 +1659,7 @@ function Stack.pick_win_sfx(self)
   if #characters[self.character].sounds.win ~= 0 then
     return characters[self.character].sounds.win[math.random(#characters[self.character].sounds.win)]
   else
-    return self.theme.sounds.fanfare1 -- TODO add a default win sound
+    return themes[config.theme].sounds.fanfare1 -- TODO add a default win sound
   end
 end
 
@@ -2151,7 +1709,7 @@ function Stack:swap(row, col)
   rightPanel:startSwap(false)
   Panel.switch(leftPanel, rightPanel, panels)
 
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     SFX_Swap_Play = 1
   end
 
@@ -2184,6 +1742,7 @@ function Stack.processPuzzleSwap(self)
   if self.puzzle then
     if self.puzzle.remaining_moves == self.puzzle.moves and self.puzzle.puzzleType == "clear" then
       -- start depleting stop / shake time
+      self.behaviours.passiveRaise = true
       self.stop_time = self.puzzle.stop_time
       self.shake_time = self.puzzle.shake_time
       self.peak_shake_time = self.shake_time
@@ -2293,7 +1852,7 @@ function Stack.new_row(self)
   local panels = self.panels
   -- move cursor up
   if self.cur_row ~= 0 then
-    self.cur_row = bound(1, self.cur_row + 1, self.top_cur_row)
+    self.cur_row = util.bound(1, self.cur_row + 1, self.top_cur_row)
   end
   if self.queuedSwapRow > 0 then
     self.queuedSwapRow = self.queuedSwapRow + 1
@@ -2328,13 +1887,7 @@ function Stack.new_row(self)
   end
 
   if string.len(self.panel_buffer) <= 10 * self.width then
-    local opponentLevel = nil
-    if self.opponentStack then
-      opponentLevel = self.opponentStack.level
-    end
-    self.panel_buffer = PanelGenerator.makePanels(self.match.seed + self.panelGenCount, self.NCOLORS, self.panel_buffer, self.match.mode, self.level, opponentLevel)
-    logger.debug("generating panels with seed: " .. self.match.seed + self.panelGenCount .. " buffer: " .. self.panel_buffer)
-    self.panelGenCount = self.panelGenCount + 1
+    self.panel_buffer = self:makePanels()
   end
 
   -- assign colors to the new row 0
@@ -2346,6 +1899,7 @@ function Stack.new_row(self)
     self.metal_panels_queued = self.metal_panels_queued - 1
     metal_panels_this_row = 1
   end
+
   for col = 1, self.width do
     local panel = panels[0][col]
     local this_panel_color = string.sub(self.panel_buffer, col, col)
@@ -2376,10 +1930,7 @@ function Stack:getAttackPatternData()
 
   local data = {}
   data.extraInfo = {}
-  data.extraInfo.playerName = "Player"
-  if self.match.battleRoom then
-    data.extraInfo.playerName = self.match.battleRoom.playerNames[self.which]
-  end
+  data.extraInfo.playerName = self.player.name
   data.extraInfo.gpm = self.analytic:getRoundedGPM(self.clock) or 0
   data.extraInfo.matchLength = " "
   if self.game_stopwatch and tonumber(self.game_stopwatch) then
@@ -2432,7 +1983,7 @@ end
 -- creates a new panel at the specified row+column and adds it to the Stack's panels table
 function Stack.createPanelAt(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
-  local panel = Panel(self.panelsCreatedCount, row, column, self.FRAMECOUNTS)
+  local panel = Panel(self.panelsCreatedCount, row, column, self.levelData.frameConstants)
   panel.onPop = function(panel)
     self:onPop(panel)
   end
@@ -2454,7 +2005,7 @@ function Stack.onPop(self, panel)
     if config.popfx == true then
       self:enqueue_popfx(panel.column, panel.row, self.popSizeThisFrame)
     end
-    if self:shouldChangeSoundEffects() then
+    if self:canPlaySfx() then
       SFX_Garbage_Pop_Play = panel.pop_index
     end
   else
@@ -2473,10 +2024,11 @@ function Stack.onPop(self, panel)
     self.score = self.score + 10
 
     self.panels_cleared = self.panels_cleared + 1
-    if self.match.mode == "vs" and self.panels_cleared % level_to_metal_panel_frequency[self.level] == 0 then
-      self.metal_panels_queued = min(self.metal_panels_queued + 1, level_to_metal_panel_cap[self.level])
+    if self.match.stackInteraction ~= GameModes.StackInteractions.NONE
+        and self.panels_cleared % self.levelData.shockFrequency == 0 then
+          self.metal_panels_queued = min(self.metal_panels_queued + 1, self.levelData.shockCap)
     end
-    if self:shouldChangeSoundEffects() then
+    if self:canPlaySfx() then
       SFX_Pop_Play = 1
     end
     self.poppedPanelIndex = panel.combo_index
@@ -2490,7 +2042,7 @@ function Stack.onPopped(self, panel)
 end
 
 function Stack.onLand(self, panel)
-  if self:shouldChangeSoundEffects() then
+  if self:canPlaySfx() then
     self.sfx_land = true
   end
 end
@@ -2501,7 +2053,7 @@ function Stack.onGarbageLand(self, panel)
     and panel.row <= self.height then
     --runtime optimization to not repeatedly update shaketime for the same piece of garbage
     if not tableUtils.contains(self.garbageLandedThisFrame, panel.garbageId) then
-      if self:shouldChangeSoundEffects() then
+      if self:canPlaySfx() then
         if panel.height > 3 then
           self.sfx_garbage_thud = 3
         else
@@ -2591,8 +2143,8 @@ function Stack:getInfo()
   info.character = self.character
   info.panels = self.panels_dir
   info.rollbackCount = self.rollbackCount
-  if self.prev_states then
-    info.rollbackCopyCount = tableUtils.length(self.prev_states)
+  if self.rollbackCopies then
+    info.rollbackCopyCount = tableUtils.length(self.rollbackCopies)
   else
     info.rollbackCopyCount = 0
   end
@@ -2600,13 +2152,111 @@ function Stack:getInfo()
   return info
 end
 
+function Stack:makePanels()
+  PanelGenerator:setSeed(self.match.seed + self.panelGenCount)
+  local ret
+  if self.panel_buffer == "" then
+    ret = self:makeStartingBoardPanels()
+  else
+    ret = PanelGenerator.privateGeneratePanels(100, self.width, self.levelData.colors, self.panel_buffer, not self.allowAdjacentColors)
+    ret = PanelGenerator.assignMetalLocations(ret, self.width)
+  end
 
-local GARBAGE_SIZE_TO_SHAKE_FRAMES = {
-  18, 18, 18, 18, 24, 42,
-  42, 42, 42, 42, 42, 66,
-  66, 66, 66, 66, 66, 66,
-  66, 66, 66, 66, 66, 76
-}
+  self.panelGenCount = self.panelGenCount + 1
+
+  return ret
+end
+
+function Stack:makeStartingBoardPanels()
+  local allowAdjacentColors = tableUtils.trueForAll(self.match.players, function(player) return player.stack.allowAdjacentColors end)
+
+  local ret = PanelGenerator.privateGeneratePanels(7, self.width, self.levelData.colors, self.panel_buffer, not allowAdjacentColors)
+  -- technically there can never be metal on the starting board but we need to call it to advance the RNG (compatibility)
+  ret = PanelGenerator.assignMetalLocations(ret, self.width)
+
+  -- legacy crutch, the arcane magic for the non-uniform starting board assumes this is there and it really doesn't work without it
+  ret = string.rep("0", self.width) .. ret
+  -- arcane magic to get a non-uniform starting board
+  ret = procat(ret)
+  local maxStartingHeight = 7
+  local height = tableUtils.map(procat(string.rep(maxStartingHeight, self.width)), function(s) return tonumber(s) end)
+  local to_remove = 2 * self.width
+  while to_remove > 0 do
+    local idx = PanelGenerator:random(1, self.width) -- pick a random column
+    if height[idx] > 0 then
+      ret[idx + self.width * (-height[idx] + 8)] = "0" -- delete the topmost panel in this column
+      height[idx] = height[idx] - 1
+      to_remove = to_remove - 1
+    end
+  end
+
+  ret = table.concat(ret)
+  ret = string.sub(ret, self.width + 1)
+
+  PanelGenerator.privateCheckPanels(ret, self.width)
+
+  return ret
+end
+
+function Stack:checkGameOver()
+  if self.game_over_clock <= 0 then
+    for _, gameOverCondition in ipairs(self.gameOverConditions) do
+      if gameOverCondition == GameModes.GameOverConditions.NEGATIVE_HEALTH then
+        if self.health <= 0 and self.shake_time <= 0 then
+          return true
+        elseif not self.rise_lock and self.behaviours.allowManualRaise and self.panels_in_top_row and self.manual_raise then
+          return true
+        end
+      elseif gameOverCondition == GameModes.GameOverConditions.NO_MOVES_LEFT then
+        if self.puzzle.remaining_moves <= 0 and not self:hasActivePanels() then
+          return true
+        end
+      elseif gameOverCondition == GameModes.GameOverConditions.CHAIN_DROPPED then
+        if #self.analytic.data.reached_chains == 0 and self.analytic.data.destroyed_panels > 0 then
+          -- We finished matching but never made a chain -> fail
+          return true
+        end
+        if #self.analytic.data.reached_chains > 0 and not self:hasChainingPanels() then
+          -- We achieved a chain, finished chaining, but haven't won yet -> fail
+          return true
+        end
+      end
+    end
+  else
+    return true
+  end
+end
+
+function Stack:checkGameWin()
+  for _, gameWinCondition in ipairs(self.gameWinConditions) do
+    if gameWinCondition == GameModes.GameWinConditions.NO_MATCHABLE_PANELS then
+      local panels = self.panels
+      local matchablePanelFound = false
+      for row = 1, self.height do
+        for col = 1, self.width do
+          local color = panels[row][col].color
+          if color ~= 0 and color ~= 9 then
+             matchablePanelFound = true
+          end
+        end
+      end
+      if not matchablePanelFound then
+        return true
+      end
+    elseif gameWinCondition == GameModes.GameWinConditions.NO_MATCHABLE_GARBAGE then
+      if not self:hasGarbage() then
+        return true
+      end
+    end
+  end
+
+  -- match is over and we didn't die so clearly we won
+  if self.match.ended and self.game_over_clock <= 0 then
+    return true
+  end
+
+  return false
+end
 
 -- returns the amount of shake frames for a piece of garbage with the given dimensions
 function Stack:shakeFramesForGarbageSize(width, height)

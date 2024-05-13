@@ -1,0 +1,20 @@
+name: create-love-archive
+on: [push]
+
+jobs:
+  create-love-archive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - run: ./build.sh just-love
+      # it's a bit complicated to move the working directory for the upload-artifact action
+      # so just move it into the working directory
+      - run: mv ../dev-build/panel-attack.love ./panel-attack.love
+      - uses: actions/upload-artifact@v4
+        with:
+          name: panel-attack.love
+          path: panel-attack.love
+          # it's already a zip
+          compression-level: 0
+

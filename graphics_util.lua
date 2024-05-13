@@ -1,14 +1,31 @@
-require("consts")
+local consts = require("consts")
 local logger = require("logger")
-local tableUtils = require("tableUtils")
+local GFX_SCALE = consts.GFX_SCALE
 
 -- Utility methods for drawing
-GraphicsUtil = { 
+local GraphicsUtil = {
   fontFile = nil,
-  fontSize = 12, 
+  fontSize = 12,
   fontCache = {},
   quadPool = {}
 }
+
+function GraphicsUtil.createPixelFontMap(characters, atlas)
+  local pixelFontMap = { atlas = atlas }
+
+  local atlasWidth, atlasHeight = atlas:getDimensions()
+  local charWidth = atlasWidth / characters:len()
+
+  pixelFontMap.charWidth = charWidth
+  pixelFontMap.charHeight = atlasHeight
+
+  for i = 1, characters:len() do
+    local char = characters:sub(i, i)
+    pixelFontMap[char] = love.graphics.newQuad((i - 1) * charWidth, 0, charWidth, atlasHeight, atlasWidth, atlasHeight)
+  end
+
+  return pixelFontMap
+end
 
 function GraphicsUtil.privateLoadImage(path_and_name)
   local image = nil
@@ -71,157 +88,65 @@ function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
   return nil
 end
 
--- Draws a image at the given screen spot and scales.
-function GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
-  if image ~= nil and x ~= nil and y ~= nil and scaleX ~= nil and scaleY ~= nil then
-    if GAME.isDrawing then
-      love.graphics.draw(image, x, y, 0, scaleX, scaleY)
-    else
-      gfx_q:push({love.graphics.draw, {image, x, y,
-      0, scaleX, scaleY}})
-    end
-  end
+-- Draws an image at the given spot while scaling all coordinate and scale values with GFX_SCALE
+function GraphicsUtil.drawGfxScaled(img, x, y, rot, xScale, yScale)
+  xScale = xScale or 1
+  yScale = yScale or 1
+  GraphicsUtil.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
 end
 
--- Draws a image at the given screen spot with the given width and height. Scaling as needed.
-function GraphicsUtil.drawScaledImage(image, x, y, width, height)
-  if image ~= nil and x ~= nil and y ~= nil and width ~= nil and height ~= nil then
-    local scaleX = width / image:getWidth()
-    local scaleY = height / image:getHeight()
-    GraphicsUtil.drawImage(image, x, y, scaleX, scaleY)
-  end
+-- Draws an image, texture or canvas at the given spot
+function GraphicsUtil.draw(img, x, y, rot, xScale, yScale, offsetX, offsetY)
+  love.graphics.draw(img, x, y, rot, xScale, yScale, offsetX, offsetY)
 end
-
--- Draws a image at the given screen spot with the given width. Scaling to keep the ratio.
-function GraphicsUtil.drawScaledWidthImage(image, x, y, width)
-  if image ~= nil and x ~= nil and y ~= nil and width ~= nil then
-    local scaleX = width / image:getWidth()
-    GraphicsUtil.drawImage(image, x, y, scaleX, scaleX)
-  end
-end
-
--- Draws an image at the given spot
--- TODO rename
-function draw(img, x, y, rot, x_scale, y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  if GAME.isDrawing then
-    love.graphics.draw(img, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE)
-  else
-    gfx_q:push({love.graphics.draw, {img, x*GFX_SCALE, y*GFX_SCALE,
-    rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE}})
-  end
-end
-
--- A pixel font map to use with numbers
-local number_pixel_font_map = {}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  number_pixel_font_map[tostring(i)] = i
-end
-
--- A pixel font map to use with times
-local time_pixel_font_map = {}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  time_pixel_font_map[tostring(i)] = i
-end
-time_pixel_font_map[":"] = 10
-time_pixel_font_map["'"] = 11
-
--- A pixel font map to use with strings
-local standard_pixel_font_map = {["&"]=36, ["?"]=37, ["!"]=38, ["%"]=39, ["*"]=40, ["."]=41}
---0-9 = 0-9
-for i = 0, 9, 1 do
-  standard_pixel_font_map[tostring(i)] = i
-end
-
---10-35 = A-Z
-for i = 10, 35, 1 do
-  local characterString = string.char(97+(i-10))
-  standard_pixel_font_map[characterString] = i
-end
-
 
 -- Draws the given string with the given pixel font image atlas
 -- string - the string to draw
 -- TODO support both upper and lower case
 -- atlas - the image to use as the pixel font
 -- font map - a dictionary of a character mapped to the column number in the pixel font image
-local function drawPixelFontWithMap(string, atlas, font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
+function GraphicsUtil.drawPixelFont(str, fontMap, x, y, xScale, yScale, align, characterSpacing)
+  xScale = xScale or 1
+  yScale = yScale or 1
   align = align or "left"
-  font_map = font_map or standard_pixel_font_map
-  assert(quads ~= nil)
+  fontMap = fontMap or themes[config.theme].fontMaps.pixelFontBlue
 
-  local atlasFrameCount = tableUtils.length(font_map)
-  local atlasWidth = atlas:getWidth()
-  local atlasHeight = atlas:getHeight()
-  local characterWidth = atlasWidth/atlasFrameCount
-  local characterHeight = atlasHeight
   characterSpacing = characterSpacing or 2
-  local characterDistanceScaled = (characterWidth + characterSpacing) * x_scale
+  local characterDistanceScaled = (fontMap.charWidth + characterSpacing) * xScale
 
-  if string == nil or atlas == nil or atlasFrameCount == nil or characterWidth == nil or characterHeight == nil then
+  if str == nil or fontMap.charWidth == nil or fontMap.charHeight == nil then
     logger.error("Error initalizing draw pixel font")
-    return 
+    return
   end
 
-  while #quads < #string do
-    table.insert(quads, GraphicsUtil:newRecycledQuad(0, 0, characterWidth, characterHeight, atlasWidth, atlasHeight))
-  end
+  str = tostring(str)
 
-  for i = 1, #string, 1 do
-    local c = string:sub(i,i)
-    if c == nil or c == " " then
-      goto continue
+  for i = 1, #str, 1 do
+    local character = str:sub(i,i):upper()
+    if character and character ~= " " then
+
+      local characterIndex = i - 1
+      local characterX = x + (characterIndex * characterDistanceScaled)
+      if align == "center" then
+        characterX = x + ((characterIndex-(#str/2))*characterDistanceScaled)
+      elseif align == "right" then
+        characterX = x + ((characterIndex-#str)*characterDistanceScaled)
+      end
+
+      -- Render it at the proper digit location
+      GraphicsUtil.drawQuad(fontMap.atlas, fontMap[character], characterX, y, 0, xScale, yScale)
+
     end
-
-    local frameNumber = font_map[c]
-
-    -- Select the portion of the atlas that is the current character
-    quads[i]:setViewport(frameNumber*characterWidth, 0, characterWidth, characterHeight, atlasWidth, atlasHeight)
-
-    local characterIndex = i - 1
-    local characterX = x + (characterIndex * characterDistanceScaled)
-    if align == "center" then
-      characterX = x + ((characterIndex-(#string/2))*characterDistanceScaled)
-    elseif align == "right" then
-      characterX = x + ((characterIndex-#string)*characterDistanceScaled)
-    end
-
-    -- Render it at the proper digit location
-    if GAME.isDrawing then
-      love.graphics.draw(atlas, quads[i], characterX, y, 0, x_scale, y_scale)
-    else
-      gfx_q:push({love.graphics.draw, {atlas, quads[i], characterX, y, 0, x_scale, y_scale}})
-    end
-    ::continue::
   end
 
 end
 
 -- Draws a time centered horizontally using the theme's time pixel font which is 0-9, then : then '
-function GraphicsUtil.draw_time(time, quads, x, y, scale)
-  drawPixelFontWithMap(time, themes[config.theme].images.IMG_timeNumber_atlas, time_pixel_font_map, x, y, scale, scale, "center", 0, quads)
-end
-
--- Draws a number via the given font image that has 0-9
-function GraphicsUtil.draw_number(number, atlas, quads, x, y, scale, align)
-  drawPixelFontWithMap(tostring(number), atlas, number_pixel_font_map, x, y, scale, scale, align, 0, quads)
-end
-
--- Draws the given string with a pixel font image atlas that has 0-9 than a-z
--- string - the string to draw
--- atlas - the image to use as the pixel font
-function draw_pixel_font(string, atlas, x, y, x_scale, y_scale, align, characterSpacing, quads)
-  drawPixelFontWithMap(string, atlas, standard_pixel_font_map, x, y, x_scale, y_scale, align, characterSpacing, quads)
+function GraphicsUtil.draw_time(time, x, y, scale)
+  GraphicsUtil.drawPixelFont(time, themes[config.theme].fontMaps.time, x, y, scale, scale, "center", 0)
 end
 
 local maxQuadPool = 100
-
 -- Creates a new quad, recycling one if one exists in the pool to reduce memory.
 function GraphicsUtil:newRecycledQuad(x, y, width, height, sw, sh)
   local result = nil
@@ -245,124 +170,46 @@ function GraphicsUtil:releaseQuad(quad)
   end
 end
 
+-- Draws an image at the given position, using the quad for the viewport, scaling all coordinate values and scales by GFX_SCALE
+function GraphicsUtil.drawQuadGfxScaled(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset, mirror)
+  xScale = xScale or 1
+  yScale = yScale or 1
+
+  if mirror and mirror == 1 then
+    local qX, qY, qW, qH = quad:getViewport()
+    x = x - (qW*xScale)
+  end
+
+  GraphicsUtil.drawQuad(image, quad, x * GFX_SCALE, y * GFX_SCALE, rotation, xScale * GFX_SCALE, yScale * GFX_SCALE, xOffset, yOffset)
+end
+
 -- Draws an image at the given position, using the quad for the viewport
-function qdraw(img, quad, x, y, rot, x_scale, y_scale, x_offset, y_offset, mirror)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  x_offset = x_offset or 0
-  y_offset = y_offset or 0
-  mirror = mirror or 0
+function GraphicsUtil.drawQuad(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset, mirror)
+  if mirror and mirror == 1 then
+    local qX, qY, qW, qH = quad:getViewport()
+    x = x - (qW*xScale)
+  end
 
-  local qX, qY, qW, qH = quad:getViewport()
-  if mirror == 1 then
-    x = x - (qW*x_scale)
-  end
-  if GAME.isDrawing then
-    love.graphics.draw(img, quad, x*GFX_SCALE, y*GFX_SCALE, rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset)
-  else
-    gfx_q:push({love.graphics.draw, {img, quad, x*GFX_SCALE, y*GFX_SCALE,
-      rot, x_scale*GFX_SCALE, y_scale*GFX_SCALE, x_offset, y_offset}})
-  end
-end
-
-function menu_draw(img, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  if GAME.isDrawing then
-    love.graphics.draw(img, x, y,
-    rot, x_scale, y_scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, x, y,
-    rot, x_scale, y_scale}})
-  end
-  
-end
-
-function menu_drawf(img, x, y, halign, valign, rot, x_scale, y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  halign = halign or "left"
-  if halign == "center" then
-    x = x - math.floor(img:getWidth() * 0.5 * x_scale)
-  elseif halign == "right" then
-    x = x - math.floor(img:getWidth() * x_scale)
-  end
-  valign = valign or "top"
-  if valign == "center" then
-    y = y - math.floor(img:getHeight() * 0.5 * y_scale)
-  elseif valign == "bottom" then
-    y = y - math.floor(img:getHeight() * y_scale)
-  end
-  if GAME.isDrawing then
-    love.graphics.draw(img, x, y, rot, x_scale, y_scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, x, y,
-      rot, x_scale, y_scale}})
-  end
-end
-
-function menu_drawq(img, quad, x, y, rot, x_scale,y_scale)
-  rot = rot or 0
-  x_scale = x_scale or 1
-  y_scale = y_scale or 1
-  if GAME.isDrawing then
-    love.graphics.draw(img, quad, x, y,
-    rot, x_scale, y_scale)
-  else
-    gfx_q:push({love.graphics.draw, {img, quad, x, y,
-    rot, x_scale, y_scale}})
-  end
+  love.graphics.draw(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset)
 end
 
 -- Draws a rectangle at the given coordinates
-function grectangle(mode, x, y, w, h)
-  if GAME.isDrawing then
-    love.graphics.rectangle(mode, x, y, w, h)
-  else
-    gfx_q:push({love.graphics.rectangle, {mode, x, y, w, h}})
-  end
-end
-
--- Draws a colored rectangle at the given coordinates
-function grectangle_color(mode, x, y, w, h, r, g, b, a)
+function GraphicsUtil.drawRectangle(mode, x, y, w, h, r, g, b, a, rx, ry)
   a = a or 1
-  if GAME.isDrawing then
-    love.graphics.setColor(r, g, b, a)
-    love.graphics.rectangle(mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE)
-    love.graphics.setColor(1, 1, 1, 1)
-  else
-    gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-    gfx_q:push({love.graphics.rectangle, {mode, x*GFX_SCALE, y*GFX_SCALE, w*GFX_SCALE, h*GFX_SCALE}})
-    gfx_q:push({love.graphics.setColor, {1, 1, 1, 1}})
+  if r then
+    GraphicsUtil.setColor(r, g, b, a)
   end
+
+  love.graphics.rectangle(mode, x, y, w, h, rx, ry)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
--- Draws text at the given spot
-function gprint(str, x, y, color, scale)
-  x = x or 0
-  y = y or 0
-  scale = scale or 1
-  color = color or nil
-  set_color(0, 0, 0, 1)
-  if GAME.isDrawing then
-    love.graphics.print(str, x+1, y+1, 0, scale)
-  else
-    gfx_q:push({love.graphics.print, {str, x+1, y+1, 0, scale}})
-  end
-  local r, g, b, a = 1,1,1,1
-  if color ~= nil then
-    r,g,b,a = unpack(color)
-  end
-  set_color(r,g,b,a)
-  if GAME.isDrawing then
-    love.graphics.print(str, x, y, 0, scale)
-  else
-    gfx_q:push({love.graphics.print, {str, x, y, 0, scale}})
-  end
-  set_color(1,1,1,1)
+function GraphicsUtil.drawStraightLine(x1, y1, x2, y2, r, g, b, a)
+  a = a or 1
+
+  GraphicsUtil.setColor(r, g, b, a)
+  love.graphics.line(x1, y1, x2, y2)
+  GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
 local function privateMakeFont(fontPath, size)
@@ -379,7 +226,7 @@ local function privateMakeFont(fontPath, size)
 end
 
 -- Creates a new font based on the current font and a delta
-function get_global_font_with_size(fontSize)
+function GraphicsUtil.getGlobalFontWithSize(fontSize)
   local f = GraphicsUtil.fontCache[fontSize]
   if not f then
     f = privateMakeFont(GraphicsUtil.fontFile, fontSize)
@@ -388,92 +235,137 @@ function get_global_font_with_size(fontSize)
   return f
 end
 
-function set_global_font(filepath, size)
+function GraphicsUtil.setGlobalFont(filepath, size)
   GraphicsUtil.fontCache = {}
   GraphicsUtil.fontFile = filepath
   GraphicsUtil.fontSize = size
-  local createdFont = get_global_font_with_size(size)
+  local createdFont = GraphicsUtil.getGlobalFontWithSize(size)
   love.graphics.setFont(createdFont)
 end
 
 -- Returns the current global font
-function get_global_font()
-  return get_global_font_with_size(GraphicsUtil.fontSize)
+function GraphicsUtil.getGlobalFont()
+  return GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize)
 end
 
--- Creates a new font based on the current font and a delta
-function get_font_delta(with_delta_size)
-  local font_size = GraphicsUtil.fontSize + with_delta_size
-  return get_global_font_with_size(font_size)
+function GraphicsUtil.setFont(font)
+  love.graphics.setFont(font)
 end
 
-function set_font(font)
-  if GAME.isDrawing then
-    love.graphics.setFont(font)
-  else
-    gfx_q:push({love.graphics.setFont, {font}})
-  end
+function GraphicsUtil.setShader(shader)
+  love.graphics.setShader(shader)
 end
 
-function set_shader(shader)
-  if GAME.isDrawing then
-    love.graphics.setShader(shader)
-  else
-    gfx_q:push({love.graphics.setShader, {shader}})
-  end
-end
-
--- Draws a font with a given font delta from the standard font
-function gprintf(str, x, y, limit, halign, color, scale, font_delta_size)
+-- Draws text at the given spot
+function GraphicsUtil.print(str, x, y, color, scale)
   x = x or 0
   y = y or 0
   scale = scale or 1
   color = color or nil
-  limit = limit or canvas_width
-  font_delta_size = font_delta_size or 0
-  halign = halign or "left"
-  set_color(0, 0, 0, 1)
-  if font_delta_size ~= 0 then
-    set_font(get_font_delta(font_delta_size))
-  end
-  if GAME.isDrawing then
-    love.graphics.printf(str, x+1, y+1, limit, halign, 0, scale)
-  else
-    gfx_q:push({love.graphics.printf, {str, x+1, y+1, limit, halign, 0, scale}})
-  end
+  GraphicsUtil.setColor(0, 0, 0, 1)
+  love.graphics.print(str, x+1, y+1, 0, scale)
+
   local r, g, b, a = 1,1,1,1
   if color ~= nil then
     r,g,b,a = unpack(color)
   end
-  set_color(r,g,b,a)
-  if GAME.isDrawing then
-    love.graphics.printf(str, x, y, limit, halign, 0, scale)
-  else
-    gfx_q:push({love.graphics.printf, {str, x, y, limit, halign, 0, scale}})
-  end
+  GraphicsUtil.setColor(r,g,b,a)
+  love.graphics.print(str, x, y, 0, scale)
+  GraphicsUtil.setColor(1,1,1,1)
+end
+
+-- Draws a font with a given font delta from the standard font
+function GraphicsUtil.printf(str, x, y, limit, halign, color, scale, font_delta_size)
+  x = x or 0
+  y = y or 0
+  scale = scale or 1
+  color = color or nil
+  limit = limit or consts.CANVAS_WIDTH
+  font_delta_size = font_delta_size or 0
+  halign = halign or "left"
+  GraphicsUtil.setColor(0, 0, 0, 1)
   if font_delta_size ~= 0 then
-    set_font(get_global_font())
+    GraphicsUtil.setFont(GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize + font_delta_size))
   end
-  set_color(1,1,1,1)
+  love.graphics.printf(str, x+1, y+1, limit, halign, 0, scale)
+
+  local r, g, b, a = 1,1,1,1
+  if color ~= nil then
+    r,g,b,a = unpack(color)
+  end
+  GraphicsUtil.setColor(r,g,b,a)
+  love.graphics.printf(str, x, y, limit, halign, 0, scale)
+
+  if font_delta_size ~= 0 then
+    GraphicsUtil.setFont(GraphicsUtil.getGlobalFont())
+  end
+  GraphicsUtil.setColor(1,1,1,1)
 end
 
 local _r, _g, _b, _a
-function set_color(r, g, b, a)
+function GraphicsUtil.setColor(r, g, b, a)
   a = a or 1
   -- only do it if this color isn't the same as the previous one...
   if _r~=r or _g~=g or _b~=b or _a~=a then
       _r,_g,_b,_a = r,g,b,a
-      if GAME.isDrawing then
-        love.graphics.setColor(r, g, b, a)
-      else
-        gfx_q:push({love.graphics.setColor, {r, g, b, a}})
-      end
+      love.graphics.setColor(r, g, b, a)
     end
 end
 
-function reset_filters()
-  GAME.background_overlay = nil
-  GAME.foreground_overlay = nil
+-- temporary work around to drawing clearer text until we use better fonts
+-- draws multiple copies of the same text slightly offset from each other
+-- to simultate thickness
+-- also draw in 2 stages, first for a drop shadow and second for the main text
+-- text: Drawable text object
+-- x: The position to draw the object (x-axis).
+-- y: The position to draw the object (y-axis).
+-- ox: Origin offset (x-axis).
+-- oy: Origin offset (y-axis).
+function GraphicsUtil.drawClearText(text, x, y, ox, oy)
+  GraphicsUtil.setColor(0, 0, 0, 1)
+  GraphicsUtil.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
+
+  GraphicsUtil.setColor(1, 1, 1, 1)
+  GraphicsUtil.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
+end
+
+function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
+  local xOffset, yOffset
+  if childElement.hAlign == "center" then
+    xOffset = parentElement.width / 2 - childElement.width / 2
+  elseif childElement.hAlign == "right" then
+    xOffset = parentElement.width - childElement.width
+  else -- if hAlign == "left" then
+    -- default
+    xOffset = 0
+  end
+
+  if childElement.vAlign == "center" then
+    yOffset = parentElement.height / 2 - childElement.height / 2
+  elseif childElement.vAlign == "bottom" then
+    yOffset = parentElement.height - childElement.height
+  else --if uiElement.vAlign == "top" then
+    -- default
+    yOffset = 0
+  end
+
+  return xOffset, yOffset
+end
+
+-- sets the translation for a childElement inside of a parentElement so that
+-- x=0, y=0 aligns the childElement inside the parentElement according to the settings
+function GraphicsUtil.applyAlignment(parentElement, childElement)
+  love.graphics.push("transform")
+  love.graphics.translate(GraphicsUtil.getAlignmentOffset(parentElement, childElement))
+end
+
+-- resets the translation of the last alignment adjustment
+function GraphicsUtil.resetAlignment()
+  love.graphics.pop()
 end
 
 return GraphicsUtil

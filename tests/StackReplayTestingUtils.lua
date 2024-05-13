@@ -1,4 +1,7 @@
 local logger = require("logger")
+local GameModes = require("GameModes")
+local Player = require("Player")
+local LevelPresets = require("LevelPresets")
 
 local StackReplayTestingUtils = {}
 
@@ -8,25 +11,39 @@ function StackReplayTestingUtils:simulateReplayWithPath(path)
 end
 
 function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wantsCanvas, playerCount, theme)
-  if wantsCanvas == nil then
-    wantsCanvas = false
-  end
+  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
   if playerCount == nil then
     playerCount = 1
+  elseif playerCount == 2 then
+    local player = Player.getLocalPlayer()
+    battleRoom:addPlayer(player)
   end
-  local match = Match("endless")
-  match.seed = 1
-  local P1 = Stack{which=1, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, theme=theme, inputMethod="controller"}
-  P1.max_runs_per_frame = 1
-  match:addPlayer(P1)
-  P1:wait_for_random_character()
-  P1:starting_state()
-  if playerCount == 2 then
-    local P2 = Stack{which=2, match=match, wantsCanvas=false, is_local=false, panels_dir=config.panels, speed=speed, difficulty=difficulty, level=level, character=config.character, theme=theme, inputMethod="controller"}
-    P2.max_runs_per_frame = 1
-    match:addPlayer(P2)
-    P2:wait_for_random_character()
-    P2:starting_state()
+  for _, player in ipairs(battleRoom.players) do
+    if speed then
+      player:setSpeed(speed)
+    end
+    if difficulty then
+      player:setDifficulty(difficulty)
+    end
+    if level then
+      player:setLevel(level)
+    end
+  end
+
+  if level then
+    battleRoom:setStyle(GameModes.Styles.MODERN)
+  else
+    battleRoom:setStyle(GameModes.Styles.CLASSIC)
+  end
+
+  local match = battleRoom:createMatch()
+  match:setSeed(1)
+  match:start()
+  if not wantsCanvas then
+    match:removeCanvases()
+  end
+  for i = 1, #match.players do
+    match.players[i].stack.max_runs_per_frame = 1
   end
 
   return match
@@ -35,14 +52,12 @@ end
 function StackReplayTestingUtils:fullySimulateMatch(match)
   local startTime = love.timer.getTime()
 
-  local gameResult = match.P1:gameResult()
-  while gameResult == nil do
-      match:run()
-      gameResult = match.P1:gameResult()
+  while not match:hasEnded() do
+    match:run()
   end
   local endTime = love.timer.getTime()
 
-  self:cleanupReplay()
+  self:cleanup(match)
 
   return match, endTime - startTime
 end
@@ -58,7 +73,7 @@ end
 function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
   assert(match.P1.is_local == false, "Don't use 'local' for tests, we might simulate the clock time too much if local")
   while match.P1.clock < clockGoal do
-    assert(match:matchOutcome() == nil, "Game isn't expected to end yet")
+    assert(not match:hasEnded(), "Game isn't expected to end yet")
     assert(#match.P1.input_buffer > 0)
     match:run()
   end
@@ -73,24 +88,24 @@ function StackReplayTestingUtils:simulateMatchWithRollbackAtClock(match, clock)
 end
 
 function StackReplayTestingUtils:setupReplayWithPath(path)
-  GAME.muteSoundEffects = true
+  GAME.muteSound = true
 
-  Replay.loadFromPath(path)
-  Replay.loadFromFile(replay, false)
+  local success, replay = Replay.loadFromPath(path)
+  local match = Match.createFromReplay(replay, false)
+  match:start(replay)
+  match:removeCanvases()
 
   assert(GAME ~= nil)
-  assert(GAME.match ~= nil)
-  assert(GAME.match.P1 ~= nil)
-
-  local match = GAME.match
+  assert(match ~= nil)
+  assert(match.P1)
 
   return match
 end
 
-function StackReplayTestingUtils:cleanupReplay()
-  reset_filters()
-  stop_the_music()
-  replay = {}
+function StackReplayTestingUtils:cleanup(match)
+  if match then
+    match:deinit()
+  end
   GAME:reset()
 end
 

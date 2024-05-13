@@ -40,7 +40,7 @@ function CustomRun.sleep()
   local idleTime = targetTime - currentTime
   -- actively collecting garbage is very CPU intensive
   -- only do it while a match is on-going
-  if GAME and GAME.match and GAME.focused and not GAME.gameIsPaused then
+  if GAME and GAME.battleRoom and GAME.battleRoom.match and GAME.focused and not GAME.battleRoom.match.isPaused then
     -- Spend as much time as necessary collecting garbage, but at least 0.1ms
     -- manualGc itself has a ceiling at which it will stop
     manualGc(math.max(0.001, idleTime * config.activeGarbageCollectionPercent))

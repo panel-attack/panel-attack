@@ -35,6 +35,8 @@ Please check the [contribution guidelines](CONTRIBUTING.md) for further informat
 
 ## Release schedule
 
+### Main releases
+
 **Beginning of the month:**  
 beta feature development followed by a release
 
@@ -47,6 +49,10 @@ Hot fix stable as needed
 
 Release notes are posted in #panel-attack-updates on the discord when updates go out.
 
+### Canary releases
+
+Canary releases are temporarily available via https://github.com/Endaris/panel-attack/releases, automatically generated with each push to the sceneRefactor development branch.  
+We may adopt this for future releases on the main repository.
 
 ## Useful Lua Programming Tips
 

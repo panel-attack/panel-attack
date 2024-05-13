@@ -1,22 +1,22 @@
 json = require("libraries.dkjson")
-require("util")
+local util = require("util")
 local consts = require("consts")
 require("Theme") -- needed for directory location
 
 -- Default configuration values
 config = {
     -- The last used engine version
-    version                       = VERSION,
-  
-    -- Lang used for localization
+    version                       = consts.ENGINE_VERSION,
+
+      -- Lang used for localization
     language_code                 = "EN",
-  
+
     -- Last selected theme, panels, character and stage
     theme                         = consts.DEFAULT_THEME_DIRECTORY,
     panels                     	  = nil, -- setup later in panel init
-    character                     = random_character_special_value,
-    stage                         = random_stage_special_value,
-  
+    character                     = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
+    stage                         = consts.RANDOM_STAGE_SPECIAL_VALUE,
+
     -- Last choice for ranked and input method
     ranked                        = true,
     inputMethod                   = "controller",
@@ -45,6 +45,7 @@ config = {
     -- Debug mode flag
     debug_mode                    = false,
     debugShowServers              = false,
+    debugShowDesignHelper         = false,
     -- Show FPS in the top-left corner of the screen
     show_fps                      = false,
     -- controls how much of the remaining time after a frame is run is used for active garbage collection
@@ -55,7 +56,7 @@ config = {
     ready_countdown_1P            = true,
     -- Change danger music back later flag
     danger_music_changeback_delay = false,
-    input_repeat_delay            = default_input_repeat_delay,
+    input_repeat_delay            = consts.DEFAULT_INPUT_REPEAT_DELAY,
     -- analytics
     enable_analytics              = true,
     -- Save replays setting
@@ -81,13 +82,14 @@ config = {
     gameScaleFixedValue           = 2,
 
     -- Love configuration variables
-    windowWidth                   = canvas_width,
-    windowHeight                  = canvas_height,
+    windowWidth                   = consts.CANVAS_WIDTH,
+    windowHeight                  = consts.CANVAS_HEIGHT,
     borderless                    = false,
     fullscreen                    = false,
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
+    -- inputMethod                 = "touch"
   }
 
   -- writes to the "conf.json" file
@@ -154,19 +156,19 @@ config = {
         end
 
         if type(read_data.level) == "number" then
-          configTable.level = bound(1, read_data.level, 10)
+          configTable.level = util.bound(1, read_data.level, 10)
         end
         if type(read_data.endless_speed) == "number" then
-          configTable.endless_speed = bound(1, read_data.endless_speed, 99)
+          configTable.endless_speed = util.bound(1, read_data.endless_speed, 99)
         end
         if type(read_data.endless_difficulty) == "number" then
-          configTable.endless_difficulty = bound(1, read_data.endless_difficulty, 3)
+          configTable.endless_difficulty = util.bound(1, read_data.endless_difficulty, 3)
         end
         if type(read_data.endless_level) == "number" then
-          configTable.endless_level = bound(1, read_data.endless_level, 11)
+          configTable.endless_level = util.bound(1, read_data.endless_level, 11)
         end
         if type(read_data.puzzle_level) == "number" then
-          configTable.puzzle_level = bound(1, read_data.puzzle_level, 11)
+          configTable.puzzle_level = util.bound(1, read_data.puzzle_level, 11)
         end
         if type(read_data.puzzle_randomColors) == "boolean" then
           configTable.puzzle_randomColors = read_data.puzzle_randomColors
@@ -180,22 +182,25 @@ config = {
         end
 
         if type(read_data.master_volume) == "number" then
-          configTable.master_volume = bound(0, read_data.master_volume, 100)
+          configTable.master_volume = util.bound(0, read_data.master_volume, 100)
         end
         if type(read_data.SFX_volume) == "number" then
-          configTable.SFX_volume = bound(0, read_data.SFX_volume, 100)
+          configTable.SFX_volume = util.bound(0, read_data.SFX_volume, 100)
         end
         if type(read_data.music_volume) == "number" then
-          configTable.music_volume = bound(0, read_data.music_volume, 100)
+          configTable.music_volume = util.bound(0, read_data.music_volume, 100)
         end
         if type(read_data.input_repeat_delay) == "number" then
-          configTable.input_repeat_delay = bound(1, read_data.input_repeat_delay, 50)
+          configTable.input_repeat_delay = util.bound(1, read_data.input_repeat_delay, 50)
         end
         if type(read_data.debug_mode) == "boolean" then
           configTable.debug_mode = read_data.debug_mode
         end
         if type(read_data.debugShowServers) == "boolean" then
           configTable.debugShowServers = read_data.debugShowServers
+        end
+        if type(read_data.debugShowDesignHelper) == "boolean" then
+          configTable.debugShowDesignHelper = read_data.debugShowDesignHelper
         end
         if type(read_data.show_fps) == "boolean" then
           configTable.show_fps = read_data.show_fps
@@ -216,7 +221,7 @@ config = {
           configTable.save_replays_publicly = read_data.save_replays_publicly
         end
         if type(read_data.portrait_darkness) == "number" then
-          configTable.portrait_darkness = bound(0, read_data.portrait_darkness, 100)
+          configTable.portrait_darkness = util.bound(0, read_data.portrait_darkness, 100)
         end
         if type(read_data.popfx) == "boolean" then
           configTable.popfx = read_data.popfx
@@ -225,7 +230,7 @@ config = {
           configTable.shakeIntensity = bound(0.5, read_data.shakeIntensity, 1)
         end
         if type(read_data.cardfx_scale) == "number" then
-          configTable.cardfx_scale = bound(1, read_data.cardfx_scale, 200)
+          configTable.cardfx_scale = util.bound(1, read_data.cardfx_scale, 200)
         end
         if type(read_data.renderTelegraph) == "boolean" then
           configTable.renderTelegraph = read_data.renderTelegraph

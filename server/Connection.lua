@@ -1,8 +1,7 @@
 require("class")
 local logger = require("logger")
 local tableUtils = require("tableUtils")
-local NetworkProtocol = require("NetworkProtocol")
-
+local NetworkProtocol = require("network.NetworkProtocol")
 local time = os.time
 local utf8 = require("utf8Additions")
 local Player = require("server.Player")

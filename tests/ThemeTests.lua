@@ -1,5 +1,5 @@
 local consts = require("consts")
-require("FileUtil")
+local fileUtils = require("FileUtils")
 require("Theme")
 
 assert(Theme ~= nil)
@@ -17,7 +17,7 @@ assert(defaultTheme.images.IMG_cards[true][13] ~= nil)
 assert(defaultTheme.images.IMG_cards[true][99] ~= nil)
 assert(defaultTheme.chainCardLimit == 99)
 
-recursive_copy("tests/ThemeTestData/", Theme.themeDirectoryPath)
+fileUtils.recursiveCopy("tests/ThemeTestData/", Theme.themeDirectoryPath)
 
 -- Deletes an entire directory. BE VERY CAREFUL
 local function recursiveRemoveDirectory(folder)

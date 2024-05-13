@@ -1,10 +1,11 @@
-local utf8 = require("utf8Additions")
 local tableUtils = require("tableUtils")
-local pairs = pairs
-local type, setmetatable, getmetatable = type, setmetatable, getmetatable
+local utf8 = require("utf8Additions")
+local pairs, type, setmetatable, getmetatable = pairs, type, setmetatable, getmetatable
+
+local util = {}
 
 -- bounds b so a<=b<=c
-function bound(a, b, c)
+function util.bound(a, b, c)
   if b < a then
     return a
   elseif b > c then
@@ -74,23 +75,27 @@ end
 function deep_content_equal(a, b)
   if type(a) ~= "table" or type(b) ~= "table" then
     return a == b
-  end
-  for i = 1, 2 do
-    for k, v in pairs(a) do
-      if not deep_content_equal(v, b[k]) then
-        return false
+  else
+    if a == b then
+      -- two tables can still be the same by reference which also makes them === exactly equal
+      return true
+    else
+      for i = 1, 2 do
+        for k, v in pairs(a) do
+          if not deep_content_equal(v, b[k]) then
+            return false
+          end
+        end
+        a, b = b, a
       end
+      return true
     end
-    a, b = b, a
   end
-  return true
 end
 
 -- copy the table one key deep
 function shallowcpy(tab)
-  if tab == nil then
-    return nil
-  end
+  assert(tab ~= nil)
   local ret = {}
   for k, v in pairs(tab) do
     ret[k] = v
@@ -213,7 +218,7 @@ for i = 1, 64 do
 end
 
 -- split the input string on some separator, returns table
-function split(inputstr, sep)
+function util.split(inputstr, sep)
   sep = sep or "%s"
   local t = {}
   for field, s in string.gmatch(inputstr, "([^" .. sep .. "]*)(" .. sep .. "?)") do
@@ -438,6 +443,32 @@ function string.toCharTable(self)
   return t
 end
 
+local metaTableForWeakKeys = { __mode = "k"}
+local metaTableForWeakValues = { __mode = "v"}
+local metaTableForWeakKeysAndValues = { __mode = "kv" }
+-- a table having weak keys means 
+--  that references to a table in the key portion of that table are ignored for the purpose of garbage collection
+--  that these tables will get collected if the reference in the key portion of the table is the only remaining reference
+--  that the key value pair this key belongs to will automatically get removed from its table
+-- this is mostly useful to prevent memory leaks and keeping references to objects that are technically dead
+function util.getWeaklyKeyedTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakKeys)
+  return t
+end
+
+function util.getWeaklyValuedTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakValues)
+  return t
+end
+
+function util.getWeakTable()
+  local t = {}
+  setmetatable(t, metaTableForWeakKeysAndValues)
+  return t
+end
+
 -- Returns if two floats are equal within a certain number of decimal places
 -- @param decimalPrecision the number of decimal places to compare
 function math.floatsEqualWithPrecision(a, b, decimalPrecision)
@@ -450,6 +481,8 @@ function math.floatsEqualWithPrecision(a, b, decimalPrecision)
   return diff < threshold
 end
 
-function assertEqual(a, b) 
+function assertEqual(a, b)
   assert(a == b, "Expected " .. a .. " to be equal to " .. b)
 end
+
+return util
