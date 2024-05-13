@@ -15,8 +15,7 @@ Try to follow the following code guidelines when contributing:
 - Avoid the use of shortlived tables and consider pooling if you can't
 - No use of luajit's ffi module
 
-Ordinarily, pull requests are to be pulled against the `beta` branch. Currently a major refactor of client and engine code is in the works on `sceneRefactor`.  
-Please coordinate with maintainers which branch you should work with for your feature.
+Pull requests are to be pulled against the `beta` branch.  
 
 ## Formatting Guidelines
 
