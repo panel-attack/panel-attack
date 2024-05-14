@@ -32,30 +32,32 @@ function Game1pChallenge:onMatchEnded(match)
 end
 
 function Game1pChallenge:drawHUD()
-  local drawX = consts.CANVAS_WIDTH / 2
-  local drawY = 110
-  local width = 200
-  local height = consts.CANVAS_HEIGHT - drawY
+  if GAME.battleRoom then
+    local drawX = consts.CANVAS_WIDTH / 2
+    local drawY = 110
+    local width = 200
+    local height = consts.CANVAS_HEIGHT - drawY
 
-  -- Background
-  GraphicsUtil.drawRectangle("fill", drawX - width / 2, drawY, width, height, 0, 0, 0, 0.5)
+    -- Background
+    GraphicsUtil.drawRectangle("fill", drawX - width / 2, drawY, width, height, 0, 0, 0, 0.5)
 
-  drawY = 140
-  self:drawDifficultyName(drawX, drawY)
+    drawY = 140
+    self:drawDifficultyName(drawX, drawY)
 
-  drawY = 220
-  self:drawStageInfo(drawX, drawY)
+    drawY = 220
+    self:drawStageInfo(drawX, drawY)
 
-  drawY = 280
-  self:drawContinueInfo(drawX, drawY)
+    drawY = 280
+    self:drawContinueInfo(drawX, drawY)
 
-  drawY = 320
-  self:drawTimeSplits(drawX, drawY)
+    drawY = 320
+    self:drawTimeSplits(drawX, drawY)
 
-  if config.show_ingame_infos and not self.match.isPaused then
-    for i, stack in ipairs(self.match.stacks) do
-      if stack.player and stack.player.human then
-        stack:drawMultibar()
+    if config.show_ingame_infos and not self.match.isPaused then
+      for i, stack in ipairs(self.match.stacks) do
+        if stack.player and stack.player.human then
+          stack:drawMultibar()
+        end
       end
     end
   end

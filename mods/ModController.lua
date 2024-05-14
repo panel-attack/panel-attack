@@ -96,7 +96,7 @@ function ModController:unloadUnusedMods()
 end
 
 function ModController:releaseModsFor(user)
-  for type, mod in pairs(self.users[user]) do
+  for _, mod in ipairs(self.toUnload) do
     mod:unregister(user)
   end
   self.users[user] = nil

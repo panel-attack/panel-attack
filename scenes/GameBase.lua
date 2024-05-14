@@ -96,14 +96,18 @@ end
 -- unlike regular asset load, this function connects the used assets to the match so they cannot be unloaded
 function GameBase:loadAssets(match)
   for i, player in ipairs(match.players) do
-    ModController:loadModFor(characters[player.settings.characterId], match)
+    characters[player.settings.characterId]:register(match)
   end
 
   if not match.stageId then
     match.stageId = StageLoader.fullyResolveStageSelection(match.stageId)
   end
-  ModController:loadModFor(stages[match.stageId], match)
-  ModLoader.wait()
+  if stages[match.stageId].fully_loaded then
+    stages[match.stageId]:register(match)
+  else
+    ModController:loadModFor(stages[match.stageId], match)
+    ModLoader.wait()
+  end
 end
 
 function GameBase:initializeFrameInfo()
