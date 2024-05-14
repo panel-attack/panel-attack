@@ -32,15 +32,17 @@ function BattleRoom:registerNetworkCallbacks()
   self.setupListeners["match_start"] = matchStartListener
   self.setupListeners["taunt"] = tauntListener
   self.setupListeners["spectators"] = spectatorListListener
+  self.setupListeners["character_select"] = characterSelectListener
 
   self.runningMatchListeners = {}
 
   self.runningMatchListeners["win_counts"] = winCountListener
   self.runningMatchListeners["leave_room"] = leaveRoomListener
   self.runningMatchListeners["taunt"] = tauntListener
-  self.runningMatchListeners["character_select"] = characterSelectListener
   self.runningMatchListeners["match_start"] = matchStartListener
   self.runningMatchListeners["spectators"] = spectatorListListener
+  self.runningMatchListeners["character_select"] = characterSelectListener
+
 end
 
 function BattleRoom:createListener(messageType, callback)
@@ -69,10 +71,12 @@ function BattleRoom:processCharacterSelectMessage(message)
   for i = 1, #message.players do
     for j = 1, #self.players do
       if message.players[i].playerNumber == self.players[j].playerNumber then
-        self.players[j]:updateWithMenuState(message.players[i])
         if message.players[i].ratingInfo then
           self.players[j]:setRating(message.players[i].ratingInfo.new)
           self.players[j]:setLeague(message.players[i].ratingInfo.league)
+        end
+        if not self.players[j].isLocal then
+          self.players[j]:updateWithMenuState(message.players[i])
         end
       end
     end
@@ -163,8 +167,7 @@ end
 
 function BattleRoom:registerPlayerUpdates(messageType)
   local listener = MessageListener(messageType)
-  for i = 1, #self.players do
-    local player = self.players[i]
+  for _, player in ipairs(self.players) do
     if player.isLocal then
       -- we want to send updates for every change in settings
       -- at a later point we might care about the value but at the moment, just send everything

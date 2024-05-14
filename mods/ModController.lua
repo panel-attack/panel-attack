@@ -77,6 +77,11 @@ function ModController:loadModFor(mod, user, instantly)
     if instantly then
       ModLoader.wait()
     end
+  else
+    if instantly then
+      ModLoader.load(mod)
+      ModLoader.wait()
+    end
   end
 end
 

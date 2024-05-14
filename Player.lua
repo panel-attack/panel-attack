@@ -330,7 +330,9 @@ function Player:updateWithMenuState(menuState)
   self:setLevel(menuState.level)
   self:setInputMethod(menuState.inputMethod)
 
-  self:setWantsReady(menuState.wantsReady)
+  if menuState.wantsReady then
+    self:setWantsReady(menuState.wantsReady)
+  end
   self:setLoaded(menuState.hasLoaded)
   self:setReady(menuState.ready)
 end
