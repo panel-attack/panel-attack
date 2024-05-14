@@ -28,7 +28,7 @@ local ChallengeMode =
   BattleRoom
 )
 
-ChallengeMode.numDifficulties = 6
+ChallengeMode.numDifficulties = 8
 
 function ChallengeMode:createStages(difficulty)
   local stages = {}
@@ -96,6 +96,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 37
     lineClearGPMIncrement = 1.5
     panelLevel = 10
+    lineHeightToKill = 6
   elseif difficulty == 8 then
     stageCount = 12
     framesToppedOutToLoseBase = 720
@@ -103,6 +104,7 @@ function ChallengeMode:createStages(difficulty)
     lineClearGPMBase = 39
     lineClearGPMIncrement = 1.5
     panelLevel = 10
+    lineHeightToKill = 6
   else
     error("Invalid challenge mode difficulty level of " .. difficulty)
   end

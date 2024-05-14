@@ -16,7 +16,7 @@ Panels =
 )
 
 function Panels.id_init(self)
-  local read_data = fileUtils.readJsonFile("config.json")
+  local read_data = fileUtils.readJsonFile(self.path .. "/config.json")
 
   if read_data and read_data.id then
     self.id = read_data.id
