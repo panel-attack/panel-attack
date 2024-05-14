@@ -27,7 +27,7 @@ end
 function Stack.send_controls(self)
   if self.is_local and GAME.tcpClient:isConnected() and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
     -- Send 1 frame at clock time 0 then wait till we get our first input from the other player.
-    -- This will cause a player that got the start message earlierer than the other player to wait for the other player just once.
+    -- This will cause a player that got the start message earlier than the other player to wait for the other player just once.
     -- print("self.confirmedInput="..(self.confirmedInput or "nil"))
     -- print("self.input_buffer="..(self.input_buffer or "nil"))
     -- print("send_controls returned immediately")

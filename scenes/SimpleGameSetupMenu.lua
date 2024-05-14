@@ -48,14 +48,6 @@ local BUTTON_HEIGHT = 25
 
 function SimpleGameSetupMenu:startGame()
   SoundController:playSfx(themes[config.theme].sounds.menu_validate)
-  GAME.localPlayer:setSpeed(self.speedSlider.value)
-  GAME.localPlayer:setDifficulty(self.difficultyButtons.value)
-  if self.typeButtons.value == "Classic" then
-    GAME.localPlayer:setStyle(GameModes.Styles.CLASSIC)
-  else
-    GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
-  end
-  write_conf_file()
   GAME.localPlayer:setWantsReady(true)
 end
 
@@ -67,9 +59,12 @@ end
 
 function SimpleGameSetupMenu:load(sceneParams)
   self.speedSlider = Slider({
-    min = 1, 
-    max = 99, 
-    value = GAME.config.endless_speed or 1
+    min = 1,
+    max = 99,
+    value = GAME.config.endless_speed or 1,
+    onValueChange = function(slider)
+      config.endless_speed = slider.value
+    end
   })
 
   self.difficultyButtons = ButtonGroup(
@@ -83,7 +78,10 @@ function SimpleGameSetupMenu:load(sceneParams)
         },
         values = {1, 2, 3, 4},
         selectedIndex = GAME.config.endless_difficulty or 1,
-        onChange = function() SoundController:playSfx(themes[config.theme].sounds.menu_move) end
+        onChange = function(value)
+          SoundController:playSfx(themes[config.theme].sounds.menu_move)
+          config.endless_difficulty = value
+        end
       }
   )
 
@@ -93,6 +91,8 @@ function SimpleGameSetupMenu:load(sceneParams)
       value = config.endless_level or 5,
       onValueChange = function(s)
         SoundController:playSfx(themes[config.theme].sounds.menu_move)
+        GAME.localPlayer:setLevel(s.value)
+        config.level = s.value
       end
     })
   
@@ -110,7 +110,19 @@ function SimpleGameSetupMenu:load(sceneParams)
       },
       values = {"Classic", "Modern"},
       selectedIndex = config.endless_level and 2 or 1,
-      onChange = function() SoundController:playSfx(themes[config.theme].sounds.menu_move) end
+      onChange = function(value)
+        SoundController:playSfx(themes[config.theme].sounds.menu_move)
+        if value == 1 then
+          GAME.localPlayer:setStyle(GameModes.Styles.CLASSIC)
+          GAME.localPlayer:setDifficulty(self.difficultyButtons.value)
+          GAME.localPlayer:setSpeed(config.endless_speed)
+          config.endless_level = nil
+        elseif value == 2 then
+          GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
+          GAME.localPlayer:setLevel(self.levelSlider.value)
+          config.endless_level = self.levelSlider.value
+        end
+      end
     }
   )
   
