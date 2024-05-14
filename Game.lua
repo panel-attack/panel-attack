@@ -337,7 +337,13 @@ function Game.errorData(errorString, traceBack)
   local systemInfo = "OS: " .. (love.system.getOS() or "Unknown")
   local loveVersion = Game.loveVersionString() or "Unknown"
   local username = config.name or "Unknown"
-  local buildVersion = GAME_UPDATER and GAME_UPDATER.activeReleaseStream.name or "Unknown"
+  local buildVersion
+  if GAME_UPDATER then
+    buildVersion = GAME_UPDATER.activeReleaseStream.name .. " " .. GAME_UPDATER.activeVersion.version
+  else
+    buildVersion = "Unknown"
+  end
+   
   local name, version, vendor, device = love.graphics.getRendererInfo()
   local rendererInfo = name .. ";" .. version .. ";" .. vendor .. ";" .. device
 
