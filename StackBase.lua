@@ -225,22 +225,20 @@ local mask_shader = love.graphics.newShader [[
 
 
 function StackBase:setCanvas()
-  local function frameMask()
-    love.graphics.setShader(mask_shader)
-    love.graphics.setBackgroundColor(1, 1, 1)
-    local canvas_w, canvas_h = self.canvas:getDimensions()
-    GraphicsUtil.drawRectangle("fill", 0, 0, canvas_w, canvas_h)
-    love.graphics.setBackgroundColor(unpack(GAME.backgroundColor))
-    love.graphics.setShader()
-  end
-
   love.graphics.setCanvas({self.canvas, stencil = true})
   love.graphics.clear()
-  love.graphics.stencil(frameMask, "replace", 1)
-  love.graphics.setStencilTest("greater", 0)
+  -- basically we draw to the stencil with a black rectangle at canvas size
+  love.graphics.setStencilState("increment", "always", 1)
+  love.graphics.setShader(mask_shader)
+  love.graphics.setBackgroundColor(1, 1, 1)
+  local canvas_w, canvas_h = self.canvas:getDimensions()
+  GraphicsUtil.drawRectangle("fill", 0, 0, canvas_w, canvas_h)
+  love.graphics.setBackgroundColor(unpack(GAME.backgroundColor))
+  love.graphics.setShader()
+  love.graphics.setStencilState("keep", "equal", 1)
+  -- then for all subsequent drawing to the canvas, only pixels that are on the black rectangle are drawn
 
-  self:drawCharacter()
-  self:drawFrame()
+  -- until the stencil is disabled via love.graphics.setStencilState() when the canvas is drawn
 end
 
 function StackBase:drawCharacter()
@@ -315,7 +313,7 @@ function StackBase:stackCanvasWidth()
 end
 
 function StackBase:drawCanvas()
-  love.graphics.setStencilTest()
+  love.graphics.setStencilState()
   love.graphics.setCanvas(GAME.globalCanvas)
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(self.canvas, self.frameOriginX * GFX_SCALE, self.frameOriginY * GFX_SCALE)

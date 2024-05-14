@@ -96,10 +96,7 @@ config = {
   function write_conf_file()
     pcall(
       function()
-        local file = love.filesystem.newFile("conf.json")
-        file:open("w")
-        file:write(json.encode(config))
-        file:close()
+        love.filesystem.write("conf.json", json.encode(config))
       end
     )
   end
@@ -114,7 +111,7 @@ config = {
         -- config current values are defined in globals.lua,
         -- we consider those values are currently in config
 
-        local file = love.filesystem.newFile("conf.json")
+        local file = love.filesystem.openFile("conf.json")
         file:open("r")
         local read_data = {}
         local teh_json = file:read(file:getSize())

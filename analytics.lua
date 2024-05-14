@@ -129,7 +129,7 @@ end
 function analytics.init()
   pcall(
     function()
-      local analytics_file, err = love.filesystem.newFile("analytics.json", "r")
+      local analytics_file, err = love.filesystem.openFile("analytics.json", "r")
       if analytics_file then
         local teh_json = analytics_file:read(analytics_file:getSize())
         analytics_file:close()
@@ -182,10 +182,7 @@ local function output_pretty_analytics()
   end
   pcall(
     function()
-      local file = love.filesystem.newFile("analytics.txt")
-      file:open("w")
-      file:write(text)
-      file:close()
+      love.filesystem.write("analytics.txt", text)
     end
   )
 end
@@ -197,10 +194,7 @@ local function write_analytics_files()
         return
       end
 
-      local file = love.filesystem.newFile("analytics.json")
-      file:open("w")
-      file:write(json.encode(analytics_data))
-      file:close()
+      love.filesystem.write("analytics.json", json.encode(analytics_data))
     end
   )
   output_pretty_analytics()

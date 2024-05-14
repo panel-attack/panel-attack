@@ -87,7 +87,7 @@ local function read_score_file()
   pcall(
     function()
       local read_data = {}
-      local file, err = love.filesystem.newFile("scores.json", "r")
+      local file, err = love.filesystem.openFile("scores.json", "r")
       if file then
         local teh_json = file:read(file:getSize())
         file:close()
@@ -124,7 +124,7 @@ function Scores.saveToFile(self)
   if self.version == currentVersion then
     pcall(
       function()
-        local file = love.filesystem.newFile("scores.json")
+        local file = love.filesystem.openFile("scores.json")
         file:open("w")
         file:write(json.encode(self))
         file:close()

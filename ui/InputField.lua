@@ -9,7 +9,7 @@ local GraphicsUtil = require("graphics_util")
 --@module InputField
 local InputField = class(
   function(self, options)
-    self.placeholderText = love.graphics.newText(love.graphics.getFont(), options.placeholder) or love.graphics.newText(love.graphics.getFont(), "Input Field")
+    self.placeholderText = love.graphics.newTextBatch(love.graphics.getFont(), options.placeholder) or love.graphics.newTextBatch(love.graphics.getFont(), "Input Field")
     self.value = options.value or ""
     self.charLimit = options.charLimit or NAME_LENGTH_LIMIT
     self.filterAlphanumeric = options.filterAlphanumeric or (options.filterAlphanumeric == nil and true)
@@ -23,7 +23,7 @@ local InputField = class(
     self.hAlign = options.hAlign or 'left'
     self.vAlign = options.vAlign or 'center'
     
-    self.text = love.graphics.newText(love.graphics.getFont(), self.value)
+    self.text = love.graphics.newTextBatch(love.graphics.getFont(), self.value)
     -- stretch to fit text
     local textWidth, textHeight = self.text:getDimensions()
     self.width = math.max(textWidth + 6, self.width)
@@ -56,7 +56,7 @@ function InputField:onRelease(x, y)
 end
 
 local textOffset = 4
-local textCursor = love.graphics.newText(love.graphics.getFont(), "|")
+local textCursor = love.graphics.newTextBatch(love.graphics.getFont(), "|")
 
 function InputField:onVisibilityChanged()
   if self.isVisible then
@@ -73,7 +73,7 @@ function InputField:getCursorPos()
 
   local byteoffset = utf8.offset(self.value, self.offset)
   local text = string.sub(self.value, 1, byteoffset)
-  return self.x + textOffset + love.graphics.newText(love.graphics.getFont(), text):getWidth()
+  return self.x + textOffset + love.graphics.newTextBatch(love.graphics.getFont(), text):getWidth()
 end
 
 function InputField:unfocus()

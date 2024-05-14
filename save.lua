@@ -13,31 +13,26 @@ local save = {}
 function write_key_file()
   pcall(
     function()
-      local file = love.filesystem.newFile("keysV3.txt")
-      file:open("w")
-      file:write(json.encode(inputManager:getSaveKeyMap()))
-      file:close()
+      love.filesystem.write("keysV3.txt", json.encode(inputManager:getSaveKeyMap()))
     end
   )
 end
 
 -- reads the "keys.txt" file
 function save.read_key_file()
-  local file = love.filesystem.newFile("keysV3.txt")
-  local ok, err = file:open("r")
+  local file, err = love.filesystem.openFile("keysV3.txt", "r")
   local migrateInputs = false
-  
-  if not ok then
-    file = love.filesystem.newFile("keysV2.txt")
-    ok, err = file:open("r")
+
+  if not file then
+    file = love.filesystem.openFile("keysV2.txt", "r")
     migrateInputs = true
   end
-  
-  if not ok then
+
+  if not file then
     return inputManager.inputConfigurations
   end
-  
-  local jsonInputConfig = file:read(file:getSize())
+
+  local jsonInputConfig = file:read()
   file:close()
   
   local inputConfigs = json.decode(jsonInputConfig)
@@ -55,9 +50,8 @@ function save.read_txt_file(path_and_filename)
   local s
   pcall(
     function()
-      local file = love.filesystem.newFile(path_and_filename)
-      file:open("r")
-      s = file:read(file:getSize())
+      local file = love.filesystem.openFile(path_and_filename, "r")
+      s = file:read()
       file:close()
     end
   )
@@ -74,8 +68,7 @@ function write_user_id_file(userID, serverIP)
   pcall(
     function()
       love.filesystem.createDirectory("servers/" .. serverIP)
-      local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
-      file:open("w")
+      local file = love.filesystem.openFile("servers/" .. serverIP .. "/user_id.txt", "w")
       file:write(tostring(userID))
       file:close()
     end
@@ -87,12 +80,10 @@ function read_user_id_file(serverIP)
   local userID
   pcall(
     function()
-      local file = love.filesystem.newFile("servers/" .. serverIP .. "/user_id.txt")
-      file:open("r")
+      local file = love.filesystem.openFile("servers/" .. serverIP .. "/user_id.txt", "r")
       userID = file:read()
       file:close()
       userID = userID:match("^%s*(.-)%s*$")
-      
     end
   )
   return userID
@@ -134,11 +125,7 @@ function read_puzzles()
         logger.trace(filename)
         if love.filesystem.getInfo("puzzles/" .. filename) and filename ~= "README.txt" then
           logger.debug("loading custom puzzle set: " .. (filename or "nil"))
-          local current_set = {}
-          local file = love.filesystem.newFile("puzzles/" .. filename)
-          file:open("r")
-          local teh_json = file:read(file:getSize())
-          file:close()
+          local teh_json = love.filesystem.read("puzzles/" .. filename)
           local current_json = json.decode(teh_json) or {}
           if current_json["Version"] == 2 then
             for _, puzzleSet in pairs(current_json["Puzzle Sets"]) do
@@ -214,8 +201,7 @@ end
 function saveJSONToPath(data, state, path)
   pcall(
     function()
-      local file = love.filesystem.newFile(path)
-      file:open("w")
+      local file = love.filesystem.openFile(path, "w")
       file:write(json.encode(data, state))
       file:close()
     end

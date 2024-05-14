@@ -121,8 +121,7 @@ local function correctAndroidStartupConfig()
     
     pcall(
       function()
-        local file = love.filesystem.newFile("UseAndroidExternalStorage")
-        file:open("w")
+        local file = love.filesystem.openFile("UseAndroidExternalStorage", "w")
         file:write(tostring(UseAndroidExternalStorage))
         file:close()
       end

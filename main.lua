@@ -28,8 +28,8 @@ local ClientMessages = require("network.ClientProtocol")
 -- move to load once global dependencies have been resolved
 GAME = Game()
 
-require("engine/GarbageQueue")
-require("engine/telegraph")
+require("engine.GarbageQueue")
+require("engine.telegraph")
 require("engine")
 require("engine.checkMatches")
 require("network.Stack")

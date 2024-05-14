@@ -15,9 +15,9 @@ local Slider = class(
     self.tickLength = options.tickLength or 1
     self.onValueChange = options.onValueChange or function() end
     
-    self.minText = love.graphics.newText(love.graphics.getFont(), self.min)
-    self.maxText = love.graphics.newText(love.graphics.getFont(), self.max)
-    self.valueText = love.graphics.newText(love.graphics.getFont(), self.value)
+    self.minText = love.graphics.newTextBatch(love.graphics.getFont(), self.min)
+    self.maxText = love.graphics.newTextBatch(love.graphics.getFont(), self.max)
+    self.valueText = love.graphics.newTextBatch(love.graphics.getFont(), self.value)
 
     self.width = self.tickLength * (self.max - self.min + 1) + 2
     self.height = handleRadius * 2 + 12 -- magic

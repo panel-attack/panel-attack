@@ -161,10 +161,7 @@ function Replay.writeReplayFile(path, filename, replayJSON)
   pcall(
     function()
       love.filesystem.createDirectory(path)
-      local file = love.filesystem.newFile(path .. "/" .. filename)
-      file:open("w")
-      file:write(replayJSON)
-      file:close()
+      love.filesystem.write(path .. "/" .. filename, replayJSON)
     end
   )
 end

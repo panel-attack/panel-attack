@@ -642,8 +642,7 @@ function Theme.saveVerboseConfig(self)
   
   pcall(
     function()
-      local file = love.filesystem.newFile(jsonPath)
-      file:open("w")
+      local file = love.filesystem.openFile(jsonPath, "w")
       file:write(json.encode(jsonData))
       file:close()
     end
