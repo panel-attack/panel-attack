@@ -334,11 +334,12 @@ function Game:reset()
 end
 
 function Game.errorData(errorString, traceBack)
-  local system_info = "OS: " .. love.system.getOS()
+  local systemInfo = "OS: " .. (love.system.getOS() or "Unknown")
   local loveVersion = Game.loveVersionString() or "Unknown"
   local username = config.name or "Unknown"
-  local buildVersion = GAME_UPDATER_GAME_VERSION or "Unknown"
-  local systemInfo = system_info or "Unknown"
+  local buildVersion = GAME_UPDATER and GAME_UPDATER.activeReleaseStream.name or "Unknown"
+  local name, version, vendor, device = love.graphics.getRendererInfo()
+  local rendererInfo = name .. ";" .. version .. ";" .. vendor .. ";" .. device
 
   local errorData = {
       stack = traceBack,
@@ -348,6 +349,7 @@ function Game.errorData(errorString, traceBack)
       release_version = buildVersion,
       operating_system = systemInfo,
       love_version = loveVersion,
+      rendererInfo = rendererInfo,
       theme = config.theme
     }
 
@@ -375,6 +377,7 @@ function Game.detailedErrorLogString(errorData)
     "Build Version: " .. errorData.release_version .. newLine ..
     "Operating System: " .. errorData.operating_system .. newLine ..
     "Love Version: " .. errorData.love_version .. newLine ..
+    "Renderer Info: " .. errorData.rendererInfo .. newLine ..
     "UTC Time: " .. formattedTime .. newLine ..
     "Scene: " .. sceneManager.activeScene.name .. newLine
 

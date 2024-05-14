@@ -201,7 +201,7 @@ function love.errorhandler(msg)
     end
   end
   local sanitizedTrace = table.concat(traceLines, "\n")
-  
+
   local function getGameErrorData(sanitizedMessage, sanitizedTrace)
     local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
     local detailedErrorLogString = Game.detailedErrorLogString(errorData)
