@@ -639,14 +639,8 @@ function Theme.saveVerboseConfig(self)
   for key, _ in pairs(configurableKeys) do
     jsonData[key] = self[key]
   end
-  
-  pcall(
-    function()
-      local file = love.filesystem.openFile(jsonPath, "w")
-      file:write(json.encode(jsonData))
-      file:close()
-    end
-  )
+
+  love.filesystem.write(jsonPath, json.encode(jsonData))
 end
 
 -- initializes theme using the json settings

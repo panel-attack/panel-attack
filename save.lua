@@ -13,48 +13,41 @@ local save = {}
 function write_key_file()
   pcall(
     function()
-      love.filesystem.write("keysV3.txt", json.encode(inputManager:getSaveKeyMap()))
+      love.filesystem.write("keysV3.json", json.encode(inputManager:getSaveKeyMap()))
     end
   )
 end
 
 -- reads the "keys.txt" file
 function save.read_key_file()
-  local file, err = love.filesystem.openFile("keysV3.txt", "r")
+  local filename
   local migrateInputs = false
 
-  if not file then
-    file = love.filesystem.openFile("keysV2.txt", "r")
+  if love.filesystem.getInfo("keysV3.json", "file") then
+    filename = "keysV3.json"
+  else
+    filename = "keysV2.txt"
     migrateInputs = true
   end
 
-  if not file then
+  if not love.filesystem.getInfo(filename, "file") then
     return inputManager.inputConfigurations
-  end
+  else
+    local inputConfigs = fileUtils.readJsonFile(filename)
 
-  local jsonInputConfig = file:read()
-  file:close()
-  
-  local inputConfigs = json.decode(jsonInputConfig)
-  
-  if migrateInputs then
-    -- migrate old input configs
-    inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+    if migrateInputs then
+      -- migrate old input configs
+      inputConfigs = inputManager:migrateInputConfigs(inputConfigs)
+    end
+
+    return inputConfigs
   end
-  
-  return inputConfigs
 end
 
 -- reads the .txt file of the given path and filename
 function save.read_txt_file(path_and_filename)
   local s
-  pcall(
-    function()
-      local file = love.filesystem.openFile(path_and_filename, "r")
-      s = file:read()
-      file:close()
-    end
-  )
+  s = love.filesystem.read(path_and_filename)
   if not s then
     s = "Failed to read file " .. path_and_filename
   else
@@ -68,9 +61,7 @@ function write_user_id_file(userID, serverIP)
   pcall(
     function()
       love.filesystem.createDirectory("servers/" .. serverIP)
-      local file = love.filesystem.openFile("servers/" .. serverIP .. "/user_id.txt", "w")
-      file:write(tostring(userID))
-      file:close()
+      love.filesystem.write("servers/" .. serverIP .. "/user_id.txt", tostring(userID))
     end
   )
 end
@@ -80,9 +71,7 @@ function read_user_id_file(serverIP)
   local userID
   pcall(
     function()
-      local file = love.filesystem.openFile("servers/" .. serverIP .. "/user_id.txt", "r")
-      userID = file:read()
-      file:close()
+      userID = love.filesystem.read("servers/" .. serverIP .. "/user_id.txt")
       userID = userID:match("^%s*(.-)%s*$")
     end
   )
@@ -199,13 +188,7 @@ function readAttackFiles(path)
 end
 
 function saveJSONToPath(data, state, path)
-  pcall(
-    function()
-      local file = love.filesystem.openFile(path, "w")
-      file:write(json.encode(data, state))
-      file:close()
-    end
-  )
+  love.filesystem.write(path, json.encode(data, state))
 end
 
 function print_list(t)

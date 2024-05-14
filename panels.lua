@@ -16,17 +16,9 @@ Panels =
 )
 
 function Panels.id_init(self)
-  local read_data = {}
-  local config_file, err = love.filesystem.openFile(self.path .. "/config.json", "r")
-  if config_file then
-    local teh_json = config_file:read(config_file:getSize())
-    config_file:close()
-    for k, v in pairs(json.decode(teh_json)) do
-      read_data[k] = v
-    end
-  end
+  local read_data = fileUtils.readJsonFile("config.json")
 
-  if read_data.id then
+  if read_data and read_data.id then
     self.id = read_data.id
     return true
   end

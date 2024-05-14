@@ -1,4 +1,5 @@
 local levelPresets = require("LevelPresets")
+local fileUtils = require("FileUtils")
 
 -- 1 had only vs scores in an incompatible format
 -- 2 has vs self, time attack, endless
@@ -86,30 +87,22 @@ local function read_score_file()
   local scores = Scores()
   pcall(
     function()
-      local read_data = {}
-      local file, err = love.filesystem.openFile("scores.json", "r")
-      if file then
-        local teh_json = file:read(file:getSize())
-        file:close()
-        for k, v in pairs(json.decode(teh_json)) do
-          read_data[k] = v
+      local read_data = fileUtils.readJsonFile("scores.json")
+      if read_data then
+        if read_data.version and type(read_data.version) == "number" then
+          scores.version = read_data.version
+        elseif read_data.vsSelf["last"] then
+          scores.version = 1
+        end
+
+        -- Ignore the scores save file if its the old format
+        if scores.version == 1 then
+        elseif scores.version == currentVersion then
+          if read_data.vsSelf then scores.vsSelf = read_data.vsSelf end
+          if read_data.timeAttack1P then scores.timeAttack1P = read_data.timeAttack1P end
+          if read_data.endless then scores.endless = read_data.endless end
         end
       end
-
-      if read_data.version and type(read_data.version) == "number" then
-        scores.version = read_data.version
-      elseif read_data.vsSelf["last"] then
-        scores.version = 1
-      end
-
-      -- Ignore the scores save file if its the old format
-      if scores.version == 1 then
-      elseif scores.version == currentVersion then
-        if read_data.vsSelf then scores.vsSelf = read_data.vsSelf end
-        if read_data.timeAttack1P then scores.timeAttack1P = read_data.timeAttack1P end
-        if read_data.endless then scores.endless = read_data.endless end
-      end
-
     end
   )
 
@@ -122,14 +115,7 @@ end
 
 function Scores.saveToFile(self)
   if self.version == currentVersion then
-    pcall(
-      function()
-        local file = love.filesystem.openFile("scores.json")
-        file:open("w")
-        file:write(json.encode(self))
-        file:close()
-      end
-    )
+    love.filesystem.write("scores.json", json.encode(self))
   end
 end
 

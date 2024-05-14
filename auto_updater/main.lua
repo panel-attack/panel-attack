@@ -118,14 +118,8 @@ local function correctAndroidStartupConfig()
         UseAndroidExternalStorage = true
       end
     end
-    
-    pcall(
-      function()
-        local file = love.filesystem.openFile("UseAndroidExternalStorage", "w")
-        file:write(tostring(UseAndroidExternalStorage))
-        file:close()
-      end
-    )
+
+    love.filesystem.write("UseAndroidExternalStorage", tostring(UseAndroidExternalStorage))
 
     if storageChanged == true then
       reinitLove()

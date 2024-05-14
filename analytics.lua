@@ -1,3 +1,4 @@
+local fileUtils = require("FileUtils")
 local analytics = {}
 
 local analytics_version = 3
@@ -129,13 +130,8 @@ end
 function analytics.init()
   pcall(
     function()
-      local analytics_file, err = love.filesystem.openFile("analytics.json", "r")
-      if analytics_file then
-        local teh_json = analytics_file:read(analytics_file:getSize())
-        analytics_file:close()
-        analytics_data = json.decode(teh_json)
-
-
+      analytics_data = fileUtils.readJsonFile("analytics.json")
+      if analytics_data then
         analytic_clear(analytics_data.last_game)
         analytics_data = correctComboIndices(analytics_data)
 
