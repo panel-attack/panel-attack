@@ -82,10 +82,10 @@ function MatchParticipant:refreshStage()
     self:emitSignal("stageIdChanged", self.settings.stageId)
     if not stages[self.settings.stageId].fully_loaded then
       if self.isLocal then
-        ModController:loadModFor(stages[self.settings.stageId], "local")
+        ModController:loadModFor(stages[self.settings.stageId], self)
         self:setLoaded(false)
       else
-        ModController:loadModFor(stages[self.settings.stageId], self.playerNumber)
+        ModController:loadModFor(stages[self.settings.stageId], self)
       end
     end
   end
@@ -108,9 +108,9 @@ function MatchParticipant:refreshCharacter()
     if not characters[self.settings.characterId].fully_loaded then
       if self.isLocal then
         self:setLoaded(false)
-        ModController:loadModFor(characters[self.settings.characterId], "local")
+        ModController:loadModFor(characters[self.settings.characterId], self)
       else
-        ModController:loadModFor(characters[self.settings.characterId], self.playerNumber)
+        ModController:loadModFor(characters[self.settings.characterId], self)
       end
     end
   end

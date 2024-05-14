@@ -137,20 +137,19 @@ end
 
 -- Loads all the sounds and graphics
 function Character.load(self, instant)
-  logger.trace("loading character " .. self.id)
   self:graphics_init(true, (not instant))
   self:sound_init(true, (not instant))
   self.fully_loaded = true
-  logger.trace("loaded character " .. self.id)
+  logger.debug("loaded character " .. self.id)
 end
 
 -- Unloads the sounds and graphics
 function Character.unload(self)
-  logger.trace("unloading character " .. self.id)
+  logger.debug("unloading character " .. self.id)
   self:graphics_uninit()
   self:sound_uninit()
   self.fully_loaded = false
-  logger.trace("unloaded character " .. self.id)
+  logger.debug("unloaded character " .. self.id)
 end
 
 function Character.loadDefaultCharacter()

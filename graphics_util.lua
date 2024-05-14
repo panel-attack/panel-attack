@@ -37,7 +37,7 @@ function GraphicsUtil.privateLoadImage(path_and_name)
   if image == nil then
     return nil
   end
-  logger.debug("loaded asset: " .. path_and_name)
+  logger.trace("loaded asset: " .. path_and_name)
   return image
 end
 

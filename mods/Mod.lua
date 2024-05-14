@@ -1,4 +1,6 @@
 local class = require("class")
+local utils = require("util")
+local tableUtils = require("tableUtils")
 
 local Mod = class(function(mod, fullPath, folderName)
   mod.path = fullPath -- string | path to the mod folder content
@@ -6,6 +8,11 @@ local Mod = class(function(mod, fullPath, folderName)
 
   -- every mod needs to be assigned an id
   mod.id = nil
+
+  -- the users table is to track who uses this mod currently
+  -- the weak key is a safety net so that users that get garbage collected don't stay listed as using the mod
+  -- explicitly unregistering via Mod:unregister(user) is encouraged however
+  mod.users = utils.getWeaklyKeyedTable()
 
   -- mods should declare what type of mod they are
   mod.TYPE = nil
@@ -31,6 +38,14 @@ function Mod:getSubMods()
   if self:is_bundle() then
     error("All mods that support bundles need to implement a getSubMods function, even if it just returns nil")
   end
+end
+
+function Mod:register(user)
+  self.users[user] = true
+end
+
+function Mod:unregister(user)
+  self.users[user] = nil
 end
 
 return Mod

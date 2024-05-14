@@ -93,15 +93,16 @@ function GameBase:pickMusicSource()
   end
 end
 
-function GameBase:waitForAssets(match)
-  for i = 1, #match.players do
-    ModController:loadModFor(characters[match.players[i].settings.characterId], i)
+-- unlike regular asset load, this function connects the used assets to the match so they cannot be unloaded
+function GameBase:loadAssets(match)
+  for i, player in ipairs(match.players) do
+    ModController:loadModFor(characters[player.settings.characterId], match)
   end
 
   if not match.stageId then
     match.stageId = StageLoader.fullyResolveStageSelection(match.stageId)
-    ModController:loadModFor(stages[match.stageId], "match")
   end
+  ModController:loadModFor(stages[match.stageId], match)
   ModLoader.wait()
 end
 
@@ -111,7 +112,7 @@ function GameBase:initializeFrameInfo()
 end
 
 function GameBase:load(sceneParams)
-  self:waitForAssets(sceneParams.match)
+  self:loadAssets(sceneParams.match)
   self.match = sceneParams.match
   self.match:connectSignal("matchEnded", self, self.genericOnMatchEnded)
   self.match:connectSignal("dangerMusicChanged", self, self.changeMusic)

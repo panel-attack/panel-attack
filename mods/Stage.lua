@@ -80,27 +80,26 @@ end
 
 -- preemptively loads a stage
 function Stage.preload(self)
-  logger.trace("preloading stage " .. self.id)
+  logger.debug("preloading stage " .. self.id)
   self:graphics_init(false, false)
   self:sound_init(false, false)
 end
 
 -- loads a stage
 function Stage.load(self, instant)
-  logger.trace("loading stage " .. self.id)
   self:graphics_init(true, (not instant))
   self:sound_init(true, (not instant))
   self.fully_loaded = true
-  logger.trace("loaded stage " .. self.id)
+  logger.debug("loaded stage " .. self.id)
 end
 
 -- unloads a stage
 function Stage.unload(self)
-  logger.trace("unloading stage " .. self.id)
+  logger.debug("unloading stage " .. self.id)
   self:graphics_uninit()
   self:sound_uninit()
   self.fully_loaded = false
-  logger.trace("unloaded stage " .. self.id)
+  logger.debug("unloaded stage " .. self.id)
 end
 
 -- for reloading the graphics if the window was resized
