@@ -371,7 +371,7 @@ end
 function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   if lock then
     for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
-      if not inputConfiguration.claimed and inputConfiguration.isDown.Swap1 then
+      if not inputConfiguration.claimed and (inputConfiguration.isDown.Swap1 or inputConfiguration.isDown.Start) then
         -- assign the first unclaimed input configuration that is used
         player:setInputMethod("controller")
         player:restrictInputs(inputConfiguration)
