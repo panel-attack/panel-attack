@@ -510,7 +510,7 @@ function Game:refreshCanvasAndImagesForNewScale()
   -- We need to reload all assets and fonts to get the new scaling info and filters
 
   -- Reload theme to get the new resolution assets
-  themes[config.theme]:graphics_init()
+  themes[config.theme]:graphics_init(true)
   themes[config.theme]:final_init()
   -- Reload stages to get the new resolution assets
   stages_reload_graphics()
