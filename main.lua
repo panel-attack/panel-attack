@@ -48,7 +48,7 @@ require("computerPlayers.computerPlayer")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
-love.pa_runInternal = CustomRun.innerRun
+love.runInternal = CustomRun.innerRun
 if GAME_UPDATER == nil then
   -- We don't have an autoupdater, so we need to override run.
   -- In the autoupdater case run will already have been overridden and be running
