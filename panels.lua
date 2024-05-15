@@ -197,8 +197,8 @@ function Panels:load()
   local sheet = nil
   local panelSet = nil
   local panelConverts = {}
-  local oldFormat = not love.filesystem.getInfo(self.path.."/".."panels.png")
-  if (oldFormat or (not self.sheet)) then
+  local oldFormat = not self.sheet
+  if (oldFormat) then
     if oldFormat then
       local draw = love.graphics.draw
       local newCanvas = love.graphics.newCanvas
