@@ -130,7 +130,10 @@ end
 function analytics.init()
   pcall(
     function()
-      analytics_data = fileUtils.readJsonFile("analytics.json")
+      local data = fileUtils.readJsonFile("analytics.json")
+      if data then
+        analytics_data = data
+      end
       if analytics_data then
         analytic_clear(analytics_data.last_game)
         analytics_data = correctComboIndices(analytics_data)
