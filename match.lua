@@ -404,14 +404,12 @@ end
 function Match:playCountdownSfx()
   if self.doCountdown then
     if self.clock < 200 then
-      local tickIndex = math.floor(self.clock / 60)
-      if not self.ticksPlayed[tickIndex] then
-        if tickIndex < 3 then
-          SoundController:playSfx(themes[config.theme].sounds.countdown)
-        else
+      if (self.clock - consts.COUNTDOWN_START) % 60 == 0 then
+        if self.clock == countdownEnd then
           SoundController:playSfx(themes[config.theme].sounds.go)
+        else
+          SoundController:playSfx(themes[config.theme].sounds.countdown)
         end
-        self.ticksPlayed[tickIndex] = true
       end
     end
   end
@@ -518,8 +516,6 @@ function Match:start()
       player.stack:saveForRollback()
     end
   end
-
-  self:setCountdown(self.doCountdown)
 
   if self.timeLimit then
     self.panicTicksPlayed = {}
@@ -790,7 +786,4 @@ end
 
 function Match:setCountdown(doCountdown)
   self.doCountdown = doCountdown
-  if self.doCountdown then
-    self.ticksPlayed = { [0] = false, false, false, false }
-  end
 end
