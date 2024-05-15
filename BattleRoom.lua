@@ -486,7 +486,6 @@ function BattleRoom:shutdown()
     self.match:deinit()
     self.match = nil
   end
-  SoundController:stopMusic()
   self:shutdownNetwork()
   self.hasShutdown = true
   GAME:initializeLocalPlayer()
