@@ -168,6 +168,7 @@ function love.quit()
   config.maximizeOnStartup = love.window.isMaximized()
   config.fullscreen = love.window.getFullscreen()
   write_conf_file()
+  pcall(love.filesystem.write, "debug.log", table.concat(logger.messages, "\n"))
 end
 
 function love.errorhandler(msg)
@@ -221,8 +222,13 @@ function love.errorhandler(msg)
   table.insert(errorLines, "Error\n")
   if success then
     table.insert(errorLines, detailedErrorLogString)
+    logger.info(detailedErrorLogString)
   else
     table.insert(errorLines, sanitizedMessage)
+    logger.info(sanitizedMessage)
+  end
+  if logger.messages then
+    pcall(love.filesystem.write, "debug.log", table.concat(logger.messages, "\n"))
   end
   if #sanitizedMessage ~= #msg then
     table.insert(errorLines, "Invalid UTF-8 string in error message.")
