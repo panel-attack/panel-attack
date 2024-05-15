@@ -415,6 +415,18 @@ function CharacterSelect:createPageIndicator(pagedUniGrid)
   return pageCounterLabel
 end
 
+function CharacterSelect:createPageTurnButtons(pagedUniGrid)
+  local x, y = pagedUniGrid:getScreenPos()
+  pagedUniGrid.pageTurnButtons.left.x = x - pagedUniGrid.unitSize
+  pagedUniGrid.pageTurnButtons.right.x = x + pagedUniGrid.width + pagedUniGrid.unitSize / 2
+  pagedUniGrid.pageTurnButtons.left.y = y + pagedUniGrid.height / 2 - pagedUniGrid.unitSize / 4
+  pagedUniGrid.pageTurnButtons.right.y = y + pagedUniGrid.height / 2 - pagedUniGrid.unitSize / 4
+
+  self.uiRoot:addChild(pagedUniGrid.pageTurnButtons.left)
+  self.uiRoot:addChild(pagedUniGrid.pageTurnButtons.right)
+  return pagedUniGrid.pageTurnButtons
+end
+
 function CharacterSelect:createCursor(grid, player)
   local cursor = GridCursor({
     grid = grid,

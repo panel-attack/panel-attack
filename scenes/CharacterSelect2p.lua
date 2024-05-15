@@ -43,6 +43,8 @@ function CharacterSelect2p:loadUserInterface()
 
   self.ui.pageIndicator = self:createPageIndicator(self.ui.characterGrid)
 
+  self.ui.pageTurnButtons = self:createPageTurnButtons(self.ui.characterGrid)
+
   self.ui.leaveButton = self:createLeaveButton()
   self.ui.rankedSelection = MultiPlayerSelectionWrapper({vFill = true, alignment = "left", hAlign = "center", vAlign = "center"})
   local trueLabel = Label({text = "ss_ranked", vAlign = "top", hAlign = "center"})

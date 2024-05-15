@@ -78,6 +78,8 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.pageIndicator = self:createPageIndicator(self.ui.characterGrid)
   self.ui.grid:createElementAt(5, 6, 1, 1, "pageIndicator", self.ui.pageIndicator)
 
+  self.ui.pageTurnButtons = self:createPageTurnButtons(self.ui.characterGrid)
+
   self.ui.leaveButton = self:createLeaveButton()
   self.ui.grid:createElementAt(9, 6, 1, 1, "leaveButton", self.ui.leaveButton)
 

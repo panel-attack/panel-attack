@@ -11,8 +11,9 @@ local touchHandler = {
 
 function touchHandler:touch(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
-  -- prevent multitouch
+  -- if there is no active scene that implies an on-going scene switch, no interactions should be possible
   if sceneManager.activeScene then
+    -- prevent multitouch
     if not self.touchedElement then
       self.touchedElement = sceneManager.activeScene.uiRoot:getTouchedElement(canvasX, canvasY)
       if self.touchedElement and self.touchedElement.onTouch then
