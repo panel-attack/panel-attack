@@ -22,7 +22,7 @@ function CharacterSelectChallenge:customLoad(sceneParams)
 end
 
 function CharacterSelectChallenge:loadUserInterface()
-  self.ui.grid = Grid({unitSize = 98, gridWidth = 9, gridHeight = 6, unitMargin = 7, hAlign = "center", vAlign = "center"})
+  self.ui.grid = Grid({unitSize = 100, gridWidth = 9, gridHeight = 6, unitMargin = 8, hAlign = "center", vAlign = "center"})
   self.uiRoot:addChild(self.ui.grid)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
@@ -34,6 +34,7 @@ function CharacterSelectChallenge:loadUserInterface()
   local characterGridWidth, characterGridHeight = self.ui.grid.gridWidth, 3
   self.ui.characterGrid = self:createCharacterGrid(characterButtons, self.ui.grid, characterGridWidth, characterGridHeight)
   self.ui.pageIndicator = self:createPageIndicator(self.ui.characterGrid)
+  self.ui.pageTurnButtons = self:createPageTurnButtons(self.ui.characterGrid)
   self.ui.leaveButton = self:createLeaveButton()
 
   local panelHeight
