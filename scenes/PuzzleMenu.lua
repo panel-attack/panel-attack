@@ -77,9 +77,11 @@ function PuzzleMenu:load(sceneParams)
       value = config.puzzle_level or 5,
       onValueChange = function(s)
         SoundController:playSfx(themes[config.theme].sounds.menu_move)
+        config.puzzle_level = s.value
+        GAME.localPlayer:setLevel(s.value)
       end
     })
-  
+
   self.randomColorsButtons = ButtonGroup(
     {
       buttons = {
