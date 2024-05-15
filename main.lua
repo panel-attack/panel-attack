@@ -46,7 +46,7 @@ require("Theme")
 local utf8 = require("utf8Additions")
 require("computerPlayers.computerPlayer")
 
--- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
+-- We override love.run with a function that refers to `runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.runInternal = CustomRun.innerRun
 if GAME_UPDATER == nil then

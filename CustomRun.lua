@@ -174,8 +174,8 @@ function CustomRun.run()
 
   -- Main loop time.
   return function()
-    if love.pa_runInternal then
-      local result = love.pa_runInternal()
+    if love.runInternal then
+      local result = love.runInternal()
       if result then
         return result
       end
