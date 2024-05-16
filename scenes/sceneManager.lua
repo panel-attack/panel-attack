@@ -1,5 +1,5 @@
 local Easings = require("Easings")
-local BlackFadeTransition = require("scenes.Transitions.BlackFadeTransition")
+local DirectTransition = require("scenes.Transitions.DirectTransition")
 
 --@module sceneManager
 -- Contains all initialized scenes and handles scene transitions 
@@ -13,7 +13,7 @@ local sceneManager = {
 function sceneManager:switchToScene(newScene, transition)
   GAME.rich_presence:setPresence(nil, newScene.name, true)
   if not transition or type(transition) ~= "table" then
-    self.transition = BlackFadeTransition(GAME.timer, 0.4, self.activeScene, newScene, Easings.linear)
+    self.transition = DirectTransition(GAME.timer, 0, self.activeScene, newScene)
   else
     self.transition = transition
   end

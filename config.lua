@@ -259,6 +259,7 @@ config = {
           if type(read_data.display) == "number" then
             configTable.display = read_data.display
           end
+        
 
           if type(read_data.activeGarbageCollectionPercent) == "number" then
             config.activeGarbageCollectionPercent = util.bound(0.1, read_data.activeGarbageCollectionPercent, 0.8)

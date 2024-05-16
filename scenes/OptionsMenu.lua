@@ -104,12 +104,13 @@ local function createToggleButtonGroup(configField, onChangeFn)
   })
 end
 
-local function createConfigSlider(configField, min, max, onValueChangeFn)
+local function createConfigSlider(configField, min, max, onValueChangeFn, precision)
   return Slider({
     min = min,
     max = max,
     value = config[configField] or 0,
     tickLength = math.ceil(100 / max),
+    precision = precision,
     onValueChange = function(slider)
       config[configField] = slider.value
       if onValueChangeFn then

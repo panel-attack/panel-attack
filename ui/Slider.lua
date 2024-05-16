@@ -13,6 +13,7 @@ local Slider = class(
     self.value = options.value and util.bound(self.min, options.value, self.max) or math.floor((self.max - self.min) / 2)
     -- pixels per value change
     self.tickLength = options.tickLength or 1
+    self.precision = math.floor(options.precision or 0)
     self.onValueChange = options.onValueChange or function() end
     
     self.minText = love.graphics.newTextBatch(love.graphics.getFont(), self.min)
@@ -21,7 +22,7 @@ local Slider = class(
 
     self.width = self.tickLength * (self.max - self.min + 1) + 2
     self.height = handleRadius * 2 + 12 -- magic
-
+    
     self.TYPE = "Slider"
   end,
   UIElement
@@ -45,15 +46,19 @@ end
 
 function Slider:receiveInputs(input)
   if input:isPressedWithRepeat("Left") then
-    self:setValue(self.value - 1)
+    self:setValue(self.value - 1 / math.pow(10, self.precision))
   elseif input:isPressedWithRepeat("Right") then
-    self:setValue(self.value + 1)
+    self:setValue(self.value + 1 / math.pow(10, self.precision))
   end
 end
 
 function Slider:setValueFromPos(x)
   local screenX, screenY = self:getScreenPos()
-  self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)
+  if self.precision > 0 then
+    self:setValue(math.round((x - screenX) / self.tickLength, self.precision) + self.min - .5)
+  else
+    self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)
+  end
 end
 
 function Slider:setValue(value)
