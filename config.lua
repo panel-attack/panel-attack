@@ -75,7 +75,7 @@ config = {
     -- Whether to render the attacks that come from the panels
     renderAttacks                 = true,
     -- The duration in seconds for menu fadeouts
-    fadeDuration                  = 0.4,
+    fadeDuration                  = 0,
     -- Tracks if the default panels have been copied over yet
     defaultPanelsCopied           = false,
 
