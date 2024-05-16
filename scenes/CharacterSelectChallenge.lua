@@ -34,7 +34,6 @@ function CharacterSelectChallenge:loadUserInterface()
   local characterGridWidth, characterGridHeight = self.ui.grid.gridWidth, 3
   self.ui.characterGrid = self:createCharacterGrid(characterButtons, self.ui.grid, characterGridWidth, characterGridHeight)
   self.ui.pageIndicator = self:createPageIndicator(self.ui.characterGrid)
-  self.ui.pageTurnButtons = self:createPageTurnButtons(self.ui.characterGrid)
   self.ui.leaveButton = self:createLeaveButton()
 
   local panelHeight
@@ -78,6 +77,10 @@ function CharacterSelectChallenge:loadUserInterface()
 
   self.ui.grid:createElementAt(1, 1, 1, 1, "p1 icon", self.ui.characterIcons[1])
   self.ui.grid:createElementAt(9, 1, 1, 1, "p2 icon", self.ui.characterIcons[2])
+
+  -- need to be created at the end after the character grid has been settled in
+  -- otherwise the placement will be wrong
+  self.ui.pageTurnButtons = self:createPageTurnButtons(self.ui.characterGrid)
 end
 
 return CharacterSelectChallenge

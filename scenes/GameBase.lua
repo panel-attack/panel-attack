@@ -5,14 +5,12 @@ local logger = require("logger")
 local analytics = require("analytics")
 local sceneManager = require("scenes.sceneManager")
 local input = require("inputManager")
-local save = require("save")
 local tableUtils = require("tableUtils")
-local Menu = require("ui.Menu")
 local consts = require("consts")
 local Signal = require("helpers.signal")
 local StageLoader = require("mods.StageLoader")
-local ModLoader = require("mods.ModLoader")
 local ModController = require("mods.ModController")
+local SoundController = require("music.SoundController")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
@@ -125,7 +123,7 @@ function GameBase:load(sceneParams)
   self.stage = stages[self.match.stageId]
   self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
   self.musicSource = self:pickMusicSource()
-  if self.musicSource.stageTrack then
+  if self.musicSource.stageTrack and not self.keepMusic then
     -- reset the track to make sure it starts from the default settings
     self.musicSource.stageTrack:stop()
   end
