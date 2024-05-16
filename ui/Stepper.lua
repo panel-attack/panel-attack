@@ -38,10 +38,24 @@ local Stepper = class(
   function(self, options)
     self.onChange = options.onChange or function() end
     self.selectedIndex = options.selectedIndex or 1
-    
+
     local navButtonWidth = 25
-    self.leftButton = TextButton({width = navButtonWidth, label = Label({text = "<", translate = false}), onClick = function(selfElement, inputSource, holdTime) setState(self, self.selectedIndex - 1) end})
-    self.rightButton = TextButton({width = navButtonWidth, label = Label({text = ">", translate = false}), onClick = function(selfElement, inputSource, holdTime) setState(self, self.selectedIndex + 1) end})
+    self.leftButton = TextButton({
+      width = navButtonWidth,
+      vAlign = "center",
+      label = Label({text = "<", translate = false}),
+      onClick = function(selfElement, inputSource, holdTime)
+        setState(self, self.selectedIndex - 1)
+      end
+    })
+    self.rightButton = TextButton({
+      width = navButtonWidth,
+      vAlign = "center",
+      label = Label({text = ">", translate = false}),
+      onClick = function(selfElement, inputSource, holdTime)
+        setState(self, self.selectedIndex + 1)
+      end
+    })
     self:addChild(self.leftButton)
     self:addChild(self.rightButton)
 
@@ -53,6 +67,7 @@ local Stepper = class(
     if #self.labels > 0 then
       for i = 1, #self.labels do
         self.labels[i].hAlign = "center"
+        self.labels[i].vAlign = "center"
         self.width = math.max(self.labels[i].width + 10 + navButtonWidth * 2, self.width)
         self.height = math.max(self.labels[i].height + 4, self.height)
       end
