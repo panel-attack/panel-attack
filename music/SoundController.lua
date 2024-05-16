@@ -117,9 +117,16 @@ function SoundController:updateFadeOut()
   end
 end
 
+function SoundController:cancelFadeOut()
+  self.fadeOutStartTime = nil
+  self.fadeOutDuration = nil
+  self.fadeOutStartVolume = nil
+end
+
 -- starts playing the music, resetting its volume to config.music_volume and stops the currently playing track if any
 function SoundController:playMusic(music)
   if not GAME.muteSound and music then
+    self:cancelFadeOut()
     if self.activeTrack then
       if music ~= self.activeTrack then
         self.activeTrack:stop()
@@ -153,9 +160,6 @@ end
 
 function SoundController:update()
   if self.activeTrack then
-    if not self.activeTrack.update then
-      local phi = 5
-    end
     self.activeTrack:update()
     self:updateFadeOut()
   end

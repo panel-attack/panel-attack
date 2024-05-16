@@ -207,11 +207,6 @@ function GameBase:runGame(dt)
     self.match:abort()
     return
   end
-
-  if self.match:hasEnded() then
-    self:setupGameOver()
-    return
-  end
 end
 
 function GameBase:musicCanChange()
@@ -260,6 +255,8 @@ function GameBase:update(dt)
   else
     if not self.match:hasLocalPlayer() then
       if input.isDown["MenuEsc"] then
+        self.match:disconnectSignal("matchEnded", self)
+        SoundController:stopMusic()
         GAME.theme:playCancelSfx()
         self.match:abort()
         if GAME.tcpClient:isConnected() then
@@ -332,6 +329,7 @@ function GameBase:drawHUD()
 end
 
 function GameBase:genericOnMatchEnded(match)
+  self:setupGameOver()
   -- matches always sort players to have locals in front so if 1 isn't local, none is
   if match.players[1].isLocal then
     analytics.game_ends(match.players[1].stack.analytic)
