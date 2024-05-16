@@ -21,7 +21,7 @@ local Slider = class(
 
     self.width = self.tickLength * (self.max - self.min + 1) + 2
     self.height = handleRadius * 2 + 12 -- magic
-
+    self.precision = math.floor(options.precision or 0)
     self.TYPE = "Slider"
   end,
   UIElement
@@ -45,15 +45,15 @@ end
 
 function Slider:receiveInputs(input)
   if input:isPressedWithRepeat("Left") then
-    self:setValue(self.value - 1)
+    self:setValue(self.value - 1 / math.pow(10, self.precision))
   elseif input:isPressedWithRepeat("Right") then
-    self:setValue(self.value + 1)
+    self:setValue(self.value + 1 / math.pow(10, self.precision))
   end
 end
 
 function Slider:setValueFromPos(x)
   local screenX, screenY = self:getScreenPos()
-  self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)
+  self:setValue(math.round((x - screenX) / self.tickLength, self.precision) + self.min)
 end
 
 function Slider:setValue(value)

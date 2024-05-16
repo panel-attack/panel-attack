@@ -13,7 +13,7 @@ local sceneManager = {
 function sceneManager:switchToScene(newScene, transition)
   GAME.rich_presence:setPresence(nil, newScene.name, true)
   if not transition or type(transition) ~= "table" then
-    self.transition = BlackFadeTransition(GAME.timer, 0.4, self.activeScene, newScene, Easings.linear)
+    self.transition = BlackFadeTransition(GAME.timer, config.fadeDuration, self.activeScene, newScene, Easings.linear)
   else
     self.transition = transition
   end
