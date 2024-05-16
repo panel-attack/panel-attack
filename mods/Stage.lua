@@ -156,6 +156,27 @@ function Stage.graphics_init(self, full, yields)
   end
 end
 
+-- bundles without stage thumbnail display up to 4 thumbnails of their substages
+function Stage:createThumbnail()
+  local canvas = love.graphics.newCanvas(2 * 80, 2 * 45)
+  canvas:renderTo(function()
+    for i, substageId in ipairs(self.sub_stages) do
+      local stage = stages[substageId]
+      local x = 0
+      local y = 0
+      if i % 2 == 0 then
+        x = 80
+      end
+      if i > 2 then
+        y = 45
+      end
+      local width, height = stage.images.thumbnail:getDimensions()
+      love.graphics.draw(stage.images.thumbnail, x, y, 0, 80 / width, 45 / height)
+    end
+  end)
+  return canvas
+end
+
 -- uninits stage graphics
 function Stage.graphics_uninit(self)
   for imageName, _ in pairs(self.images) do

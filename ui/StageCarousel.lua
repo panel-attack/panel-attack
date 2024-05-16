@@ -29,6 +29,7 @@ function StageCarousel:loadCurrentStages()
     else
       stage = stages[stages_ids_for_current_theme[i]]
     end
+
     local passenger = StageCarousel:createPassenger(stage.id, stage.images.thumbnail, stage.display_name)
     self:addPassenger(passenger)
   end
