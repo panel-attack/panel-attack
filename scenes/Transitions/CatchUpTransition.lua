@@ -17,7 +17,7 @@ local CatchUpTransition = class(function(transition, oldScene, newScene)
   transition.match = newScene.match
   local state = states.catchingUp
 
-  for _, player in ipairs(match.players) do
+  for _, player in ipairs(transition.match.players) do
     local character = characters[player.settings.characterId]
     if not character.fully_loaded then
       state = states.loadingMods
@@ -25,7 +25,7 @@ local CatchUpTransition = class(function(transition, oldScene, newScene)
     end
   end
 
-  local stage = stages[match.stageId]
+  local stage = stages[transition.match.stageId]
   if not stage.fully_loaded then
     state = states.loadingMods
     ModController:loadModFor(stage, match)
@@ -51,7 +51,7 @@ function CatchUpTransition:update(dt)
   local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end))
   -- spend 90% of frame time on catchup
   -- since we're not drawing anything big that should be realistic for catching ASAP
-  while shouldCatchUp and hasTimeLeft() do
+  while shouldCatchUp and hasTimeLeft(t) do
     if self.state == states.loadingMods then
       if not ModLoader.update() then
         self.state = states.catchingUp
