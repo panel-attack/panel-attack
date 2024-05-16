@@ -323,14 +323,10 @@ end
 -- oy: Origin offset (y-axis).
 function GraphicsUtil.drawClearText(text, x, y, ox, oy)
   GraphicsUtil.setColor(0, 0, 0, 1)
-  GraphicsUtil.draw(text, x - 1, y - 1, 0, 1, 1, ox, oy)
-  GraphicsUtil.draw(text, x - 1, y + 1, 0, 1, 1, ox, oy)
-  GraphicsUtil.draw(text, x + 2, y - 1, 0, 1, 1, ox, oy)
-  GraphicsUtil.draw(text, x + 2, y + 1, 0, 1, 1, ox, oy)
+  GraphicsUtil.draw(text, x + 1, y + 1, 0, 1, 1, ox, oy)
 
   GraphicsUtil.setColor(1, 1, 1, 1)
   GraphicsUtil.draw(text, x + 0, y + 0, 0, 1, 1, ox, oy)
-  GraphicsUtil.draw(text, x + 1, y + 0, 0, 1, 1, ox, oy)
 end
 
 function GraphicsUtil.getAlignmentOffset(parentElement, childElement)
