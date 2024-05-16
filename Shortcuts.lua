@@ -128,7 +128,7 @@ function handleShortcuts()
     if input.allKeys.isDown["return"] then
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
       config.fullscreen = love.window.getFullscreen()
-      input.isDown["MenuSelect"] = nil
+      input.isDown = {}
     elseif input.allKeys.isDown["1"] then
       modifyWinCounts(1)
     elseif input.allKeys.isDown["2"] then
