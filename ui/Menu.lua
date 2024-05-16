@@ -237,14 +237,14 @@ end
 function Menu:scrollUp()
   if self.selectedIndex > 1 then
     self:setSelectedIndex(self.selectedIndex - 1)
-    SoundController:playSfx(themes[config.theme].sounds.menu_move)
+    GAME.theme:playMoveSfx()
   end
 end
 
 function Menu:scrollDown()
   if self.selectedIndex < #self.menuItems then
     self:setSelectedIndex(self.selectedIndex + 1)
-    SoundController:playSfx(themes[config.theme].sounds.menu_move)
+    GAME.theme:playMoveSfx()
   end
 end
 
@@ -269,11 +269,11 @@ function Menu:update(dt)
       selectedElement:receiveInputs(input, dt)
     end
   end
-  
+
   if input.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
       self:setSelectedIndex(#self.menuItems)
-      SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
+      GAME.theme:playCancelSfx()
     end
   end
 end

@@ -624,7 +624,7 @@ function Character.playSelectionSfx(self)
   if self.sounds.selection and #self.sounds.selection > 0 then
     SoundController:playRandomSfx(self.sounds.selection)
   else
-    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+    GAME.theme:playValidationSfx()
   end
 end
 

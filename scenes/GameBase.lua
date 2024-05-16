@@ -175,7 +175,7 @@ function GameBase:runGameOver()
   local keyPressed = (tableUtils.length(input.isDown) > 0) or (tableUtils.length(input.mouse.isDown) > 0)
 
   if ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed)) then
-    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+    GAME.theme:playValidationSfx()
     SFX_GameOver_Play = 0
     sceneManager:switchToScene(sceneManager:createScene(self.nextScene, self.nextSceneParams))
   end

@@ -300,7 +300,7 @@ function CharacterSelect:getCharacterButtons()
       else
         return
       end
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
       if character then
         if character:canSuperSelect() and holdTime > consts.SUPER_SELECTION_START + consts.SUPER_SELECTION_DURATION then
           -- super select
@@ -503,7 +503,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
     tickLength = imageWidth,
     value = player.settings.level,
     onValueChange = function(s)
-      SoundController:playSfx(themes[config.theme].sounds.menu_move)
+      GAME.theme:playMoveSfx()
     end,
     hAlign = "center",
     vAlign = "center",
@@ -523,7 +523,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
       if self.onBackCallback then
         self:onBackCallback()
       end
-      SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
+      GAME.theme:playCancelSfx()
       self:yieldFocus()
     end
 
@@ -531,7 +531,7 @@ function CharacterSelect:createLevelSlider(player, imageWidth, height)
       if self.onSelectCallback then
         self:onSelectCallback()
       end
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
       self:yieldFocus()
     end
   end
@@ -585,7 +585,7 @@ end
 function CharacterSelect:createRankedSelection(player, width)
   local rankedSelector = BoolSelector({startValue = player.settings.wantsRanked, vFill = true, width = width, vAlign = "center", hAlign = "center"})
   rankedSelector.onValueChange = function(boolSelector, value)
-    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+    GAME.theme:playValidationSfx()
     player:setWantsRanked(value)
   end
 

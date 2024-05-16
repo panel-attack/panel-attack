@@ -52,7 +52,7 @@ function Carousel.removeSelectedPassenger(self)
 end
 
 function Carousel.moveToNextPassenger(self, directionSign)
-  SoundController:playSfx(themes[config.theme].sounds.menu_move)
+  GAME.theme:playMoveSfx()
   self.passengers[self.selectedId].uiElement:setVisibility(false)
   self.selectedId = wrap(1, self.selectedId + directionSign, #self.passengers)
   self.passengers[self.selectedId].uiElement:setVisibility(true)
@@ -112,10 +112,10 @@ function Carousel:receiveInputs(inputs)
   elseif inputs:isPressedWithRepeat("Right", 0.25, 0.25) then
     self:moveToNextPassenger(1)
   elseif inputs.isDown["Swap1"] or inputs.isDown["Start"] then
-    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+    GAME.theme:playValidationSfx()
     self:onSelect()
   elseif inputs.isDown["Swap2"] or inputs.isDown["Escape"] then
-    SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
+    GAME.theme:playCancelSfx()
     self:onBack()
   end
 end

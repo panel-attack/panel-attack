@@ -65,7 +65,7 @@ sceneManager:addScene(Lobby)
 ----------
 
 local function exitMenu()
-  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+  GAME.theme:playValidationSfx()
   GAME.tcpClient:resetNetwork()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end

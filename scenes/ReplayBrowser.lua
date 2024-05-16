@@ -127,30 +127,30 @@ function ReplayBrowser:update()
       sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
     end
     if input.isDown["MenuSelect"] then
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
       if selectMenuItem() then
         state = "info"
       end
     end
     if input.isDown["MenuBack"] then
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
       setPathToParentDir()
     end
     if input.isDown["MenuUp"] then
-      SoundController:playSfx(themes[config.theme].sounds.menu_move)
+      GAME.theme:playMoveSfx()
       moveCursor(-1)
     end
     if input.isDown["MenuDown"] then
-      SoundController:playSfx(themes[config.theme].sounds.menu_move)
+      GAME.theme:playMoveSfx()
       moveCursor(1)
     end
   elseif state == "info" then
     if input.isDown["MenuEsc"] or input.isDown["MenuBack"] then
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
       state = "browser"
     end
     if input.isDown["MenuSelect"] and Replay.replayCanBeViewed(selectedReplay) then
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
       local match = Match.createFromReplay(selectedReplay, false)
       match.renderDuringPause = true
       match:start()

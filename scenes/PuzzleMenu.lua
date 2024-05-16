@@ -56,14 +56,14 @@ function PuzzleMenu:startGame(puzzleSet)
     end
   end
 
-  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+  GAME.theme:playValidationSfx()
 
   GAME.localPlayer:setPuzzleSet(puzzleSet)
   GAME.localPlayer:setWantsReady(true)
 end
 
 function PuzzleMenu:exit()
-  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+  GAME.theme:playValidationSfx()
   GAME.battleRoom:shutdown()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
@@ -74,7 +74,7 @@ function PuzzleMenu:load(sceneParams)
       tickLength = tickLength,
       value = config.puzzle_level or 5,
       onValueChange = function(s)
-        SoundController:playSfx(themes[config.theme].sounds.menu_move)
+        GAME.theme:playMoveSfx()
         config.puzzle_level = s.value
         GAME.localPlayer:setLevel(s.value)
       end
@@ -89,7 +89,7 @@ function PuzzleMenu:load(sceneParams)
       values = {false, true},
       selectedIndex = config.puzzle_randomColors and 2 or 1,
       onChange = function(value)
-        SoundController:playSfx(themes[config.theme].sounds.menu_move)
+        GAME.theme:playMoveSfx()
         config.puzzle_randomColors = value
       end
     }
@@ -104,7 +104,7 @@ function PuzzleMenu:load(sceneParams)
       values = {false, true},
       selectedIndex = config.puzzle_randomFlipped and 2 or 1,
       onChange = function(value)
-        SoundController:playSfx(themes[config.theme].sounds.menu_move)
+        GAME.theme:playMoveSfx()
         config.puzzle_randomFlipped = value
       end
     }

@@ -11,7 +11,7 @@ local Button = class(
 
     -- callbacks
     self.onClick = options.onClick or function()
-      SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+      GAME.theme:playValidationSfx()
     end
 
     self.TYPE = "Button"

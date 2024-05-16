@@ -139,19 +139,19 @@ function GridCursor:receiveInputs(inputs, dt)
   elseif inputs.isDown.Swap2 then
     self:escapeCallback()
   elseif inputs:isPressedWithRepeat("Left", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-    SoundController:playSfx(themes[config.theme].sounds.menu_move)
+    GAME.theme:playMoveSfx()
     self:move(GridCursor.directions.left)
   elseif inputs:isPressedWithRepeat("Right", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-    SoundController:playSfx(themes[config.theme].sounds.menu_move)
+    GAME.theme:playMoveSfx()
     self:move(GridCursor.directions.right)
   elseif inputs:isPressedWithRepeat("Up", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-    SoundController:playSfx(themes[config.theme].sounds.menu_move)
+    GAME.theme:playMoveSfx()
     self:move(GridCursor.directions.up)
   elseif inputs:isPressedWithRepeat("Down", consts.KEY_DELAY, consts.KEY_REPEAT_PERIOD) then
-    SoundController:playSfx(themes[config.theme].sounds.menu_move)
+    GAME.theme:playMoveSfx()
     self:move(GridCursor.directions.down)
   elseif inputs.isDown.Swap1 or inputs.isDown.Start then
-    SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+    GAME.theme:playValidationSfx()
     self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x):onSelect(self)
   elseif inputs.isDown.Raise1 then
     if self.raise1Callback then
