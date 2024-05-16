@@ -271,8 +271,6 @@ function analytics.game_ends(analytic)
   if config.enable_analytics then
     write_analytics_files()
   end
-
-  analytic_clear(analytics_data.last_game)
 end
 
 function AnalyticsInstance:getRoundedGPM(clock)
