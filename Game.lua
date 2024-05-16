@@ -317,7 +317,7 @@ function Game:drawFPS()
 end
 
 function Game:drawScaleInfo()
-  if self.showGameScaleUntil > self.timer or config.debug_mode then
+  if self.showGameScaleUntil > self.timer then
     local scaleString = "Scale: " .. self.canvasXScale .. " (" .. consts.CANVAS_WIDTH * self.canvasXScale .. " x " .. consts.CANVAS_HEIGHT * self.canvasYScale .. ")"
     local newPixelWidth = love.graphics.getWidth()
 
