@@ -75,7 +75,7 @@ config = {
     -- Whether to render the attacks that come from the panels
     renderAttacks                 = true,
     -- The duration in seconds for menu fadeouts
-    fadeDuration                  = 0,
+    doFadeTransitions             = true,
     -- Tracks if the default panels have been copied over yet
     defaultPanelsCopied           = false,
 
@@ -232,8 +232,8 @@ config = {
           if type(read_data.renderAttacks) == "boolean" then
             configTable.renderAttacks = read_data.renderAttacks
           end
-          if type(read_data.display) == "number" then
-            configTable.fadeDuration = read_data.fadeDuration
+          if type(read_data.display) == "boolean" then
+            configTable.doFadeTransitions = read_data.doFadeTransitions
           end
           if type(read_data.defaultPanelsCopied) == "boolean" then
             configTable.defaultPanelsCopied = read_data.defaultPanelsCopied

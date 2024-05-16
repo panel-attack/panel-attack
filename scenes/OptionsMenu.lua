@@ -110,7 +110,7 @@ local function createConfigSlider(configField, min, max, onValueChangeFn, precis
     min = min,
     max = max,
     value = config[configField] or 0,
-    tickLength = math.floor(100 / max),
+    tickLength = math.ceil(100 / max),
     precision = precision,
     onValueChange = function(slider)
       config[configField] = slider.value
@@ -382,7 +382,7 @@ function OptionsMenu:loadGraphicsMenu()
     MenuItem.createToggleButtonGroupMenuItem("op_popfx", nil, nil, createToggleButtonGroup("popfx")),
     MenuItem.createToggleButtonGroupMenuItem("op_renderTelegraph", nil, nil, createToggleButtonGroup("renderTelegraph")),
     MenuItem.createToggleButtonGroupMenuItem("op_renderAttacks", nil, nil, createToggleButtonGroup("renderAttacks")),
-    MenuItem.createSliderMenuItem("Fade Duration", nil, nil, createConfigSlider("fadeDuration", 0, 3, nil, 1)),
+    MenuItem.createSliderMenuItem("Use Menu Fade Transitions", nil, nil, createToggleButtonGroup("doFadeTransitions")),
     MenuItem.createSliderMenuItem("op_shakeIntensity", nil, nil, getShakeIntensitySlider()),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
           GAME.showGameScaleUntil = GAME.timer
