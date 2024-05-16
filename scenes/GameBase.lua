@@ -158,7 +158,11 @@ function GameBase:setupGameOver()
   self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
   self.maxDisplayTime = -1
 
-  SoundController:fadeOutActiveTrack(3)
+  if not self.match.aborted then
+    SoundController:fadeOutActiveTrack(3)
+  else
+    SoundController:stopMusic()
+  end
 
   self:customGameOverSetup()
 end
@@ -205,7 +209,6 @@ function GameBase:runGame(dt)
   if self.match.isPaused and input.isDown["MenuEsc"] then
     GAME.theme:playCancelSfx()
     self.match:abort()
-    return
   end
 end
 
@@ -255,8 +258,6 @@ function GameBase:update(dt)
   else
     if not self.match:hasLocalPlayer() then
       if input.isDown["MenuEsc"] then
-        self.match:disconnectSignal("matchEnded", self)
-        SoundController:stopMusic()
         GAME.theme:playCancelSfx()
         self.match:abort()
         if GAME.tcpClient:isConnected() then

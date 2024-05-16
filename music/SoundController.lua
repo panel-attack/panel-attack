@@ -147,6 +147,7 @@ end
 -- stops the currently playing track
 function SoundController:stopMusic()
   if self.activeTrack then
+    self:cancelFadeOut()
     self.activeTrack:stop()
   end
 end
