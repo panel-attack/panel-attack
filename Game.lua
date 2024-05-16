@@ -265,6 +265,8 @@ function Game:update(dt)
   if self.battleRoom then
     self.battleRoom:update(dt)
   end
+  
+  handleShortcuts()
 
   sceneManager:update(dt)
 
@@ -275,7 +277,6 @@ function Game:update(dt)
   self:updateMouseVisibility(dt)
   SoundController:update()
   self.rich_presence:runCallbacks()
-  handleShortcuts()
 end
 
 function Game:switchToStartScene()
