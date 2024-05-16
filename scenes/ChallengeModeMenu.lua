@@ -22,13 +22,14 @@ ChallengeModeMenu.name = "ChallengeModeMenu"
 sceneManager:addScene(ChallengeModeMenu)
 
 local function exitMenu()
-  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
+  GAME.theme:playCancelSfx()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 
 function ChallengeModeMenu:goToCharacterSelect(difficulty)
   GAME.battleRoom = ChallengeMode(difficulty)
-  
+  GAME.theme:playValidationSfx()
+
   local scene = sceneManager:createScene("CharacterSelectChallenge")
   sceneManager:switchToScene(scene)
 end
@@ -46,7 +47,10 @@ function ChallengeModeMenu:load(sceneParams)
       values = challengeModes,
       selectedIndex = 1,
       width = 70,
-      height = 25
+      height = 25,
+      onChange = function(value)
+        GAME.theme:playMoveSfx()
+      end
     }
   )
 

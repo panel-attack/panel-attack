@@ -192,7 +192,10 @@ function CharacterSelect:createLeaveButton()
     label = Label({text = "leave"}),
     backgroundColor = {1, 1, 1, 0},
     outlineColor = {1, 1, 1, 1},
-    onClick = self.leave
+    onClick = function()
+        GAME.theme:playCancelSfx()
+        self:leave()
+      end
   })
   leaveButton.onSelect = leaveButton.onClick
 
@@ -441,6 +444,7 @@ function CharacterSelect:createCursor(grid, player)
   player:connectSignal("wantsReadyChanged", cursor, cursor.setRapidBlinking)
 
   cursor.escapeCallback = function()
+    GAME.theme:playCancelSfx()
     if cursor.selectedGridPos.x == 9 and cursor.selectedGridPos.y == 6 then
       self:leave()
     elseif player.settings.wantsReady then
@@ -794,7 +798,6 @@ function CharacterSelect:leave()
   if GAME.battleRoom then
     -- in 2p local, with the current input shenanigans leave may be called twice
     GAME.battleRoom:shutdown()
-    SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end
 end
