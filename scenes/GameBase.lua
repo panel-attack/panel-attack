@@ -142,7 +142,7 @@ function GameBase:handlePause()
 
     if self.match.isPaused then
       SoundController:pauseMusic()
-    else
+    elseif self.musicSource then
       SoundController:playMusic(self.musicSource.stageTrack)
     end
     Menu.playValidationSfx()
@@ -241,11 +241,13 @@ function GameBase:musicCanChange()
 end
 
 function GameBase:onGameStart(match)
-  SoundController:playMusic(self.musicSource.stageTrack)
+  if self.musicSource then
+    SoundController:playMusic(self.musicSource.stageTrack)
+  end
 end
 
 function GameBase:changeMusic(useDangerMusic)
-  if self.musicSource.stageTrack and self:musicCanChange() then
+  if self.musicSource and self.musicSource.stageTrack and self:musicCanChange() then
     self.musicSource.stageTrack:changeMusic(useDangerMusic)
   end
 end
