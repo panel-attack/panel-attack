@@ -371,6 +371,7 @@ end
 
 function Lobby:draw()
   self.backgroundImg:draw()
+  self:drawCommunityMessage()
   if self.state == STATES.Lobby then
     self.uiRoot:draw()
   elseif self.state == STATES.Login then

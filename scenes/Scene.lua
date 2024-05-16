@@ -1,6 +1,7 @@
 local class = require("class")
 local UiElement = require("ui.UIElement")
 local consts = require("consts")
+local GraphicsUtil = require("graphics_util")
 
 --@module Scene
 -- Base class for a container representing a single screen of PanelAttack.
@@ -30,6 +31,13 @@ end
 
 function Scene:refreshLocalization()
   self.uiRoot:refreshLocalization()
+end
+
+function Scene:drawCommunityMessage()
+  -- Draw the community message
+  if not config.debug_mode then
+    GraphicsUtil.printf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
+  end
 end
 
 -- Ran every time the scene is ending

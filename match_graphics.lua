@@ -116,8 +116,6 @@ function Match:render()
     end
   end
 
-  self:drawCommunityMessage()
-
   if config.debug_mode then
     local padding = 14
     local drawX = 500

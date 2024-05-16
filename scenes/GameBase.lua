@@ -325,6 +325,7 @@ function GameBase:drawHUD()
         stack:drawAnalyticData()
       end
     end
+    self:drawCommunityMessage()
   end
 end
 
