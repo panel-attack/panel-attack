@@ -98,7 +98,7 @@ function fileUtils.readJsonFile(file)
     else
       local value, _, errorMsg = json.decode(fileContent)
       if errorMsg then
-        logger.error(errorMsg .. ":\n" .. fileContent)
+        logger.error("Error reading " .. file .. ":\n" .. errorMsg .. ":\n" .. fileContent)
         return nil
       else
         return value
