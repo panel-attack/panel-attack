@@ -106,6 +106,7 @@ function Game:setupRoutine()
   
   coroutine.yield(loc("ld_theme"))
   theme_init()
+  self.theme = themes[config.theme]
   
   -- stages and panels before characters since they are part of their loading!
   coroutine.yield(loc("ld_stages"))

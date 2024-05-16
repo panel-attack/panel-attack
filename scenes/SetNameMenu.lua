@@ -80,7 +80,7 @@ end
 
 function SetNameMenu:confirmName()
   if self.nameField.value ~= "" then
-    Menu.playValidationSfx()
+    GAME.theme:playValidationSfx()
     config.name = self.nameField.value
     write_conf_file()
     self.nameField:unfocus()
@@ -98,7 +98,7 @@ function SetNameMenu:update(dt)
     self:confirmName()
   end
   if input.allKeys.isDown["escape"] then
-    Menu.playCancelSfx()
+    GAME.theme:playCancelSfx()
     self.nameField:unfocus()
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   end

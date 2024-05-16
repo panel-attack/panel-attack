@@ -52,12 +52,12 @@ function SetUserIdMenu:confirmId()
   local hasNonDigits = string.match(self.idInputField.value, "[^%d]")
   if not hasNonDigits and self.idInputField.value:len() > 0 then
     -- not much point in doing validation but let's stay numeric and non-empty at least
-    Menu.playValidationSfx()
+    GAME.theme:playValidationSfx()
     write_user_id_file(self.idInputField.value, self.serverIp)
     -- this is dirty but with how stupid nested OptionsMenu is, there is no way to get back right to where we came from
     sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   else
-    Menu.playCancelSfx()
+    GAME.theme:playCancelSfx()
   end
 end
 

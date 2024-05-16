@@ -81,7 +81,7 @@ function TrainingMenu:load(sceneParams)
       values = garbagePatternValues,
       selectedIndex = 1,
       onChange = function(value)
-        Menu.playMoveSfx()
+        GAME.theme:playMoveSfx()
       end
     }
   )

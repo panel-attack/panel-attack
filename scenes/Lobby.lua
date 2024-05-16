@@ -116,7 +116,7 @@ end
 -----------------
 
 function Lobby:toggleLeaderboard()
-  Menu.playMoveSfx()
+  GAME.theme:playMoveSfx()
   if not self.leaderboardLabel.isVisible then
     self.leaderboardToggleLabel:setText("lb_hide_board")
     self.leaderboardResponse = GAME.tcpClient:sendRequest(ClientMessages.requestLeaderboard())

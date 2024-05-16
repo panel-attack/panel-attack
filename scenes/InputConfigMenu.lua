@@ -74,7 +74,7 @@ function InputConfigMenu:updateInputConfigMenuLabels(index)
 end
 
 function InputConfigMenu:updateKey(key, pressedKey, index)
-  Menu.playValidationSfx()
+  GAME.theme:playValidationSfx()
   GAME.input.inputConfigurations[self.configIndex][key] = pressedKey
   local keyDisplayName = self:getKeyDisplayName(pressedKey)
   self:currentKeyLabelForIndex(index + 1):setText(keyDisplayName)
@@ -109,7 +109,7 @@ function InputConfigMenu:currentKeyLabelForIndex(index)
 end
 
 function InputConfigMenu:setKeyStart(key)
-  Menu.playValidationSfx()
+  GAME.theme:playValidationSfx()
   self.key = key
   self.index = nil
   for i, k in ipairs(consts.KEY_NAMES) do
@@ -124,7 +124,7 @@ function InputConfigMenu:setKeyStart(key)
 end
 
 function InputConfigMenu:setAllKeysStart()
-  Menu.playValidationSfx()
+  GAME.theme:playValidationSfx()
   self.index = 1
   self:currentKeyLabelForIndex(self.index + 1):setText(pendingInputText)
   self.menu:setSelectedIndex(self.index + 1)
@@ -132,7 +132,7 @@ function InputConfigMenu:setAllKeysStart()
 end
 
 function InputConfigMenu:clearAllInputs()
-  Menu.playValidationSfx()
+  GAME.theme:playValidationSfx()
   for i, key in ipairs(consts.KEY_NAMES) do
     GAME.input.inputConfigurations[self.configIndex][key] = nil
     local keyName = loc("op_none")
@@ -142,7 +142,7 @@ function InputConfigMenu:clearAllInputs()
 end
 
 function InputConfigMenu:resetToDefault(menuOptions) 
-  Menu.playValidationSfx() 
+  GAME.theme:playValidationSfx() 
   local i = 1 
   for keyName, key in pairs(input.defaultKeys) do 
     GAME.input.inputConfigurations[1][keyName] = key
@@ -154,14 +154,14 @@ function InputConfigMenu:resetToDefault(menuOptions)
       GAME.input.inputConfigurations[j][key] = nil
     end
   end
-  Menu.playMoveSfx()
+  GAME.theme:playMoveSfx()
   self.slider:setValue(1)
   self:updateInputConfigMenuLabels(1)
   write_key_file() 
 end
 
 local function exitMenu()
-  Menu.playValidationSfx()
+  GAME.theme:playValidationSfx()
   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
 end
 

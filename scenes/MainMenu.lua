@@ -35,7 +35,7 @@ MainMenu.name = "MainMenu"
 sceneManager:addScene(MainMenu)
 
 local function switchToScene(sceneName, transition)
-  Menu.playValidationSfx()
+  GAME.theme:playValidationSfx()
   sceneManager:switchToScene(sceneName, transition)
 end
 
@@ -87,7 +87,7 @@ function MainMenu:createMainMenu()
       switchToScene(OptionsMenu())
     end),
     MenuItem.createButtonMenuItem("mm_fullscreen", {"\n(Alt+Enter)"}, nil, function()
-      Menu.playValidationSfx()
+      GAME.theme:playValidationSfx()
       love.window.setFullscreen(not love.window.getFullscreen(), "desktop")
     end),
     MenuItem.createButtonMenuItem("mm_quit", nil, nil, function() love.event.quit() end )

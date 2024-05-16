@@ -282,17 +282,4 @@ function Menu:drawSelf()
 
 end
 
--- sound effects
-function Menu.playCancelSfx()
-  SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
-end
-
-function Menu.playValidationSfx()
-  SoundController:playSfx(themes[config.theme].sounds.menu_validate)
-end
-
-function Menu.playMoveSfx()
-  SoundController:playSfx(themes[config.theme].sounds.menu_move)
-end
-
 return Menu

@@ -91,7 +91,7 @@ function SoundTest:load()
       values = characterIds,
       selectedIndex = 1,
       onChange = function(value)
-        Menu.playMoveSfx()
+        GAME.theme:playMoveSfx()
 
         local labels, values = createSfxMenuInfo(value)
         sfxStepper:setLabels(labels, values, 1)
@@ -120,7 +120,7 @@ function SoundTest:load()
       values = stageIds,
       selectedIndex = 1,
       onChange = function(value) 
-        Menu.playMoveSfx()
+        GAME.theme:playMoveSfx()
         if playButtonGroup.value == "stage" then
           playMusic("stage", value, musicTypeButtonGroup.value)
         end
@@ -137,7 +137,7 @@ function SoundTest:load()
       values = {"normal_music", "danger_music"},
       selectedIndex = 1,
       onChange = function(value)
-        Menu.playMoveSfx()
+        GAME.theme:playMoveSfx()
         if playButtonGroup.value == "character" then
           playMusic(playButtonGroup.value, characterStepper.value, value)
         elseif playButtonGroup.value == "stage" then
@@ -157,7 +157,7 @@ function SoundTest:load()
       values = {"", "character", "stage"},
       selectedIndex = 1,
       onChange = function(value)
-        Menu.playMoveSfx()
+        GAME.theme:playMoveSfx()
         if value == "character" then
           playMusic(value, characterStepper.value, musicTypeButtonGroup.value)
         elseif value == "stage" then
@@ -177,7 +177,7 @@ function SoundTest:load()
       values = values,
       selectedIndex = 1,
       onChange = function(value)
-        Menu.playMoveSfx()
+        GAME.theme:playMoveSfx()
       end
     }
   )

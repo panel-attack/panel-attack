@@ -9,6 +9,7 @@ local GraphicsUtil = require("graphics_util")
 local ImageContainer = require("ui.ImageContainer")
 local Music = require("music.Music")
 local tableUtils = require("tableUtils")
+local SoundController = require("music.SoundController")
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {
@@ -761,4 +762,16 @@ function theme_init()
       end
     end
   end
+end
+
+function Theme:playCancelSfx()
+  SoundController:playSfx(self.sounds.menu_cancel)
+end
+
+function Theme:playValidationSfx()
+  SoundController:playSfx(self.sounds.menu_validate)
+end
+
+function Theme:playMoveSfx()
+  SoundController:playSfx(self.sounds.menu_move)
 end

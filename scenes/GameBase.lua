@@ -145,7 +145,7 @@ function GameBase:handlePause()
     elseif self.musicSource then
       SoundController:playMusic(self.musicSource.stageTrack)
     end
-    Menu.playValidationSfx()
+    GAME.theme:playValidationSfx()
   end
 end
 
@@ -201,7 +201,7 @@ function GameBase:runGame(dt)
   self:handlePause()
 
   if self.match.isPaused and input.isDown["MenuEsc"] then
-    Menu.playCancelSfx()
+    GAME.theme:playCancelSfx()
     self.match:abort()
     return
   end
@@ -258,7 +258,7 @@ function GameBase:update(dt)
   else
     if not self.match:hasLocalPlayer() then
       if input.isDown["MenuEsc"] then
-        Menu.playCancelSfx()
+        GAME.theme:playCancelSfx()
         self.match:abort()
         if GAME.tcpClient:isConnected() then
           GAME.battleRoom:shutdown()
