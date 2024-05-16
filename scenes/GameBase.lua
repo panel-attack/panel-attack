@@ -125,6 +125,10 @@ function GameBase:load(sceneParams)
   self.stage = stages[self.match.stageId]
   self.backgroundImage = UpdatingImage(self.stage.images.background, false, 0, 0, consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT)
   self.musicSource = self:pickMusicSource()
+  if self.musicSource.stageTrack then
+    -- reset the track to make sure it starts from the default settings
+    self.musicSource.stageTrack:stop()
+  end
 
   self:customLoad(sceneParams)
 

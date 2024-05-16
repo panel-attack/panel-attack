@@ -10,13 +10,18 @@ end)
 
 function StageTrack:changeMusic(useDangerMusic)
   if self.dangerMusic then
-    self:stop()
+    local stateChanged = false
     if useDangerMusic then
+      stateChanged = self.state == "normal"
       self.state = "danger"
     else
+      stateChanged = self.state == "danger"
       self.state = "normal"
     end
-    self:play()
+    if stateChanged and self:isPlaying() then
+      self.currentMusic:stop()
+      self:play()
+    end
   end
 end
 
@@ -51,6 +56,7 @@ function StageTrack:stop()
   end
 
   self.currentMusic = nil
+  self.state = "normal"
 end
 
 -- pauses the currently running music

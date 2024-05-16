@@ -11,17 +11,23 @@ end,
 StageTrack)
 
 function DynamicStageTrack:changeMusic(useDangerMusic)
+  local stateChanged = false
   if useDangerMusic then
+    stateChanged = self.state == "normal"
     self.state = "danger"
   else
+    stateChanged = self.state == "danger"
     self.state = "normal"
   end
 
-  if self.crossfadeTimer == 0 then
-    self.crossfadeTimer = CROSSFADE_DURATION
-  else
-    -- basically reversing an on-going fade
-    self.crossfadeTimer = CROSSFADE_DURATION - self.crossfadeTimer
+  -- only crossfade if the music actually changed
+  if stateChanged then
+    if self.crossfadeTimer == 0 then
+      self.crossfadeTimer = CROSSFADE_DURATION
+    else
+      -- basically reversing an on-going fade
+      self.crossfadeTimer = CROSSFADE_DURATION - self.crossfadeTimer
+    end
   end
 end
 
@@ -46,6 +52,14 @@ end
 function DynamicStageTrack:pause()
   self.normalMusic:pause()
   self.dangerMusic:pause()
+end
+
+function DynamicStageTrack:stop()
+  self.normalMusic:stop()
+  self.dangerMusic:stop()
+  self.crossfadeTimer = 0
+  self:updateTrackVolumes()
+  self.state = "normal"
 end
 
 function DynamicStageTrack:setVolume(volume)
