@@ -1,5 +1,5 @@
-require("developer") -- Require developer here as this is basically the first thing to load in love 2D
-require("config") -- We need to setup the config save data so we can setup the window properties right from the start when love asks for them
+require("client.src.developer") -- Require developer here as this is basically the first thing to load in love 2D
+require("client.src.config") -- We need to setup the config save data so we can setup the window properties right from the start when love asks for them
 
 function love.conf(t)
   -- Set the identity before loading the config file

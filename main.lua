@@ -1,50 +1,18 @@
-local touchHandler = require("ui.touchHandler")
-local inputFieldManager = require("ui.inputFieldManager")
-local inputManager = require("inputManager")
-local logger = require("logger")
-local consts = require("consts")
-require("developer")
-require("class")
-socket = require("socket")
-require("localization")
-require("music.SoundController")
-require("match")
-local RunTimeGraph = require("RunTimeGraph")
-require("BattleRoom")
-require("network.BattleRoom")
-require("util")
-local tableUtils = require("tableUtils")
-local fileUtils = require("FileUtils")
-require("globals")
-require("mods.CharacterLoader") -- after globals!
-require("mods.StageLoader") -- after globals!
-local CustomRun = require("CustomRun")
-local GraphicsUtil = require("graphics_util")
+local logger = require("common.lib.logger")
+local utf8 = require("common.lib.utf8Additions")
+local inputManager = require("common.lib.inputManager")
+require("client.src.globals")
+local consts = require("client.src.CustomRun")
+local touchHandler = require("client.src.ui.touchHandler")
+local inputFieldManager = require("client.src.ui.inputFieldManager")
+local ClientMessages = require("client.src.network.ClientProtocol")
+local RunTimeGraph = require("client.src.RunTimeGraph")
+local CustomRun = require("client.src.CustomRun")
+local GraphicsUtil = require("client.src.graphics_util")
 
-require("queue")
-local save = require("save")
-local Game = require("Game")
-local ClientMessages = require("network.ClientProtocol")
+local Game = require("client.src.Game")
 -- move to load once global dependencies have been resolved
 GAME = Game()
-
-require("engine.GarbageQueue")
-require("engine.telegraph")
-require("engine")
-require("engine.checkMatches")
-require("network.Stack")
-require("AttackEngine")
-
-require("graphics")
-require("replay")
-require("Puzzle")
-require("PuzzleSet")
-require("puzzles")
-require("timezones")
-require("panels")
-require("Theme")
-local utf8 = require("utf8Additions")
-require("computerPlayers.computerPlayer")
 
 -- We override love.run with a function that refers to `runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
@@ -55,17 +23,11 @@ if GAME_UPDATER == nil then
   love.run = CustomRun.run
 end
 
-GAME.rich_presence = RichPresence()
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
-function love.load(args) 
+function love.load(args)
   love.keyboard.setTextInput(false)
-
-  if PROFILING_ENABLED then
-    GAME.profiler = require("profiler")
-    GAME.profiler:start()
-  end
 
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
@@ -73,13 +35,7 @@ function love.load(args)
   end
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
   GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
-  math.randomseed(os.time())
-  for i = 1, 4 do
-    math.random()
-  end
-  -- construct game here
-  GAME.rich_presence:initialize("902897593049301004")
-  -- TODO: pull game updater from from args
+
   GAME:load(GAME_UPDATER)
 
   GAME.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=GAME:newCanvasSnappedScale()})

@@ -10,7 +10,7 @@ RichPresence =
 function RichPresence.initialize(self, applicationId)
   pcall(
     function()
-      self.discordRPC = require("rich_presence.discordRPC")
+      self.discordRPC = require("client.lib.rich_presence.discordRPC")
       self.discordRPC.initialize(applicationId --[["902897593049301004"]], true)
     end
   )
@@ -38,3 +38,5 @@ function RichPresence.runCallbacks(self)
     self.discordRPC.runCallbacks()
   end
 end
+
+return RichPresence

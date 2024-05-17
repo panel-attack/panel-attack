@@ -1,28 +1,28 @@
-require("TimeQueue")
-require("queue")
-require("server_queue")
-local CharacterLoader = require("mods.CharacterLoader")
-local StageLoader = require("mods.StageLoader")
-local Signal = require("helpers.signal")
+require("client.src.queue")
+require("client.src.server_queue")
+local CharacterLoader = require("client.src.mods.CharacterLoader")
+local StageLoader = require("client.src.mods.StageLoader")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
-local class = require("class")
-local logger = require("logger")
-local analytics = require("analytics")
-local sceneManager = require("scenes.sceneManager")
-local input = require("inputManager")
-local save = require("save")
-local fileUtils = require("FileUtils")
-local handleShortcuts = require("Shortcuts")
-local Player = require("Player")
-local GameModes = require("GameModes")
-local TcpClient = require("network.TcpClient")
-local StartUp = require("scenes.StartUp")
+local consts = require("common.engine.consts")
+local GraphicsUtil = require("client.src.graphics_util")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local analytics = require("client.src.analytics")
+local sceneManager = require("client.src.scenes.sceneManager")
+local input = require("common.lib.inputManager")
+local save = require("client.src.save")
+local fileUtils = require("client.src.FileUtils")
+local handleShortcuts = require("client.src.Shortcuts")
+local Player = require("client.src.Player")
+local GameModes = require("common.engine.GameModes")
+local TcpClient = require("client.src.network.TcpClient")
+local StartUp = require("client.src.scenes.StartUp")
+require("client.src.BattleRoom")
+require("client.src.network.BattleRoom")
 
-require("rich_presence.RichPresence")
+local RichPresence = require("client.lib.rich_presence.RichPresence")
 
 -- Provides a scale that is on .5 boundary to make sure it renders well.
 -- Useful for creating new canvas with a solid DPI
@@ -31,7 +31,6 @@ local function newCanvasSnappedScale(self)
   return result
 end
 
---- @module Game
 local Game = class(
   function(self)
     self.scores = require("scores")
@@ -49,7 +48,13 @@ local Game = class(
     self.localization = Localization()
     self.replay = {}
     self.currently_paused_tracks = {} -- list of tracks currently paused
-    self.rich_presence = nil
+    self.rich_presence = RichPresence()
+    self.rich_presence:initialize("902897593049301004")
+    if PROFILING_ENABLED then
+      self.profiler = require("client.src.profiler")
+      self.profiler:start()
+    end
+
     self.muteSound = false
     self.canvasX = 0
     self.canvasY = 0
@@ -87,9 +92,9 @@ local Game = class(
 
 Game.newCanvasSnappedScale = newCanvasSnappedScale
 
-function Game:load(game_updater)
+function Game:load(gameUpdater)
   -- move to constructor
-  self.game_updater = game_updater
+  self.gameUpdater = gameUpdater
   local user_input_conf = save.read_key_file()
   if user_input_conf then
     self.input:importConfigurations(user_input_conf)
@@ -192,8 +197,8 @@ end
 
 function Game:checkForUpdates()
   --check for game updates
-  if self.game_updater and self.game_updater.check_update_ingame then
-    wait_game_update = self.game_updater:async_download_latest_version()
+  if self.gameUpdater and self.gameUpdater.check_update_ingame then
+    wait_game_update = self.gameUpdater:async_download_latest_version()
   end
 end
 

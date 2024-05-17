@@ -1,9 +1,10 @@
-local logger = require("logger")
-local NetworkProtocol = require("network.NetworkProtocol")
-local ClientMessages = require("network.ClientProtocol")
-require("TimeQueue")
-local class = require("class")
-local Request = require("network.Request")
+local logger = require("common.lib.logger")
+local socket = require("socket")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+local ClientMessages = require("client.src.network.ClientProtocol")
+require("client.src.TimeQueue")
+local class = require("common.lib.class")
+local Request = require("client.src.network.Request")
 
 local TcpClient = class(function(tcpClient)
   -- holds data fragments
@@ -12,6 +13,10 @@ local TcpClient = class(function(tcpClient)
   tcpClient.connectionUptime = 0
   tcpClient.receivedMessageQueue = ServerQueue()
   tcpClient.delayedProcessing = false
+  math.randomseed(os.time())
+  for i = 1, 4 do
+    math.random()
+  end
 end)
 
 -- setup the network connection on the given IP and port
