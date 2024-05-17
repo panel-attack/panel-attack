@@ -1,9 +1,8 @@
-local Label = require("ui.Label")
-local TextButton = require("ui.TextButton")
-local UiElement = require("ui.UIElement")
-local class = require("class")
-local tableUtils = require("tableUtils")
-local GraphicsUtil = require("graphics_util")
+local Label = require("client.src.ui.Label")
+local TextButton = require("client.src.ui.TextButton")
+local UiElement = require("client.src.ui.UIElement")
+local class = require("common.lib.class")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 -- MenuItem is a specific UIElement that all children of Menu should be
 local MenuItem = class(function(self, options)

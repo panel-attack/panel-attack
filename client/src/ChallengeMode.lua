@@ -1,11 +1,10 @@
-local logger = require("logger")
-local class = require("class")
-local ChallengeModePlayer = require("ChallengeModePlayer")
-local GameModes = require("GameModes")
-local sceneManager = require("scenes.sceneManager")
-local MessageTransition = require("scenes.Transitions.MessageTransition")
-local levelPresets = require("LevelPresets")
-local consts = require("consts")
+local logger = require("common.lib.logger")
+local class = require("common.lib.class")
+local ChallengeModePlayer = require("client.src.ChallengeModePlayer")
+local GameModes = require("common.engine.GameModes")
+local sceneManager = require("client.src.scenes.sceneManager")
+local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
+local levelPresets = require("client.src.LevelPresets")
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =

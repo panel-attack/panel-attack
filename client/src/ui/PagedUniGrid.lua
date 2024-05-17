@@ -1,10 +1,10 @@
-local UiElement = require("ui.UIElement")
-local Grid = require("ui.Grid")
-local class = require("class")
-local TextButton = require("ui.TextButton")
-local Label = require("ui.Label")
-local Signal = require("helpers.signal")
-local GraphicsUtil = require("graphics_util")
+local UiElement = require("client.src.ui.UIElement")
+local Grid = require("client.src.ui.Grid")
+local class = require("common.lib.class")
+local TextButton = require("client.src.ui.TextButton")
+local Label = require("client.src.ui.Label")
+local Signal = require("common.lib.signal")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local function addNewPage(pagedUniGrid)
   local grid = Grid({

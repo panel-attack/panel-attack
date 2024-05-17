@@ -1,9 +1,8 @@
-local GameBase = require("scenes.GameBase")
-local sceneManager = require("scenes.sceneManager")
-local Replay = require("replay")
-local class = require("class")
-local GameModes = require("GameModes")
-local Signal = require("helpers.signal")
+local GameBase = require("client.src.scenes.GameBase")
+local sceneManager = require("client.src.scenes.sceneManager")
+local Replay = require("common.engine.replay")
+local class = require("common.lib.class")
+local GameModes = require("common.engine.GameModes")
 
 --@module timeAttackGame
 -- Scene for an time attack mode instance of the game

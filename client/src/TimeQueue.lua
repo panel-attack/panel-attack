@@ -1,6 +1,6 @@
-require("class")
-local logger = require("logger")
-require("queue")
+require("common.lib.class")
+local logger = require("common.lib.logger")
+local Queue = require("client.src.queue")
 
 -- A class representing a Queue that pops based on time
 TimeQueue =

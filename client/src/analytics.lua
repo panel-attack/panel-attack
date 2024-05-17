@@ -1,4 +1,4 @@
-local fileUtils = require("FileUtils")
+local fileUtils = require("client.src.FileUtils")
 local analytics = {}
 
 local analytics_version = 3

@@ -1,5 +1,3 @@
-local consts = require("consts")
-
 -- this file is an attempt to sanitize the somewhat crazy messages the server sends during match setup
 local ServerMessages = {}
 

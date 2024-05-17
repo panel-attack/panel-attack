@@ -1,8 +1,8 @@
-local class = require("class")
-local UiElement = require("ui.UIElement")
-local GraphicsUtil = require("graphics_util")
-local canBeFocused = require("ui.Focusable")
-local tableUtils = require("tableUtils")
+local class = require("common.lib.class")
+local UiElement = require("client.src.ui.UIElement")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local canBeFocused = require("client.src.ui.Focusable")
+local tableUtils = require("common.lib.tableUtils")
 
 local function calculateFontSize(height)
   return math.floor(height / 2) + 1

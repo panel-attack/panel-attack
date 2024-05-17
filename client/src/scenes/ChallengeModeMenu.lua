@@ -1,12 +1,11 @@
-local Scene = require("scenes.Scene")
-local sceneManager = require("scenes.sceneManager")
-local class = require("class")
-local ChallengeMode = require("ChallengeMode")
-local Menu = require("ui.Menu")
-local MenuItem = require("ui.MenuItem")
-local Label = require("ui.Label")
-local TextButton = require("ui.TextButton")
-local Stepper = require("ui.Stepper")
+local Scene = require("client.src.scenes.Scene")
+local sceneManager = require("client.src.scenes.sceneManager")
+local class = require("common.lib.class")
+local ChallengeMode = require("client.src.ChallengeMode")
+local Menu = require("client.src.ui.Menu")
+local MenuItem = require("client.src.ui.MenuItem")
+local Label = require("client.src.ui.Label")
+local Stepper = require("client.src.ui.Stepper")
 
 --@module ChallengeModeMenu
 -- 

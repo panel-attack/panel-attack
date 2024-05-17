@@ -1,6 +1,6 @@
-local UiElement = require("ui.UIElement")
-local class = require("class")
-local GraphicsUtil = require("graphics_util")
+local UiElement = require("client.src.ui.UIElement")
+local class = require("common.lib.class")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local BoolSelector = class(function(boolSelector, options)
   boolSelector.value = options.startValue or false

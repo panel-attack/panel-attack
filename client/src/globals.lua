@@ -1,4 +1,4 @@
-local consts = require("consts")
+local consts = require("common.engine.consts")
 score_mode = consts.SCOREMODE_TA
 
 GARBAGE_TELEGRAPH_TIME = 45 -- the amount of time the garbage stays in the telegraph after getting there from the attack animation

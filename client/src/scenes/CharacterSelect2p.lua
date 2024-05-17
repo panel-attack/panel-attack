@@ -1,10 +1,9 @@
-local sceneManager = require("scenes.sceneManager")
-local CharacterSelect = require("scenes.CharacterSelect")
-local class = require("class")
-local Grid = require("ui.Grid")
-local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
-local Label = require("ui.Label")
-local StackPanel = require("ui.StackPanel")
+local sceneManager = require("client.src.scenes.sceneManager")
+local CharacterSelect = require("client.src.scenes.CharacterSelect")
+local class = require("common.lib.class")
+local Grid = require("client.src.ui.Grid")
+local MultiPlayerSelectionWrapper = require("client.src.ui.MultiPlayerSelectionWrapper")
+local Label = require("client.src.ui.Label")
 
 --@module CharacterSelect2p
 -- 

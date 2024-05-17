@@ -1,5 +1,5 @@
-local class = require("class")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local uniqueId = 0
 

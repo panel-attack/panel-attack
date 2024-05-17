@@ -1,16 +1,16 @@
-local logger = require("logger")
-local tableUtils = require("tableUtils")
-local fileUtils = require("FileUtils")
-local consts = require("consts")
-local sceneManager = require("scenes.sceneManager")
-local GraphicsUtil = require("graphics_util")
-local Music = require("music.Music")
-local StageTrack = require("music.StageTrack")
-local DynamicStageTrack = require("music.DynamicStageTrack")
-local RelayStageTrack = require("music.RelayStageTrack")
-local class = require("class")
-local Mod = require("mods.Mod")
-require("UpdatingImage")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local fileUtils = require("client.src.FileUtils")
+local consts = require("common.engine.consts")
+local sceneManager = require("client.src.scenes.sceneManager")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local Music = require("client.src.music.Music")
+local StageTrack = require("client.src.music.StageTrack")
+local DynamicStageTrack = require("client.src.music.DynamicStageTrack")
+local RelayStageTrack = require("client.src.music.RelayStageTrack")
+local class = require("common.lib.class")
+local Mod = require("client.src.mods.Mod")
+local UpdatingImage = require("client.src.graphics.UpdatingImage")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data
@@ -25,7 +25,7 @@ local defaulted_musics = {} -- those musics will be defaulted if missing
 local default_stage = nil -- holds default assets fallbacks
 local randomStage = nil -- acts as the bundle stage for all theme stages
 
-Stage =
+local Stage =
   class(
   function(s, full_path, folder_name)
     s.path = full_path -- string | path to the stage folder content
@@ -258,3 +258,5 @@ function Stage.getRandomStage()
 
   return randomStage
 end
+
+return Stage

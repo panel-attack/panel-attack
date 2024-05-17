@@ -1,6 +1,6 @@
-local tableUtils = require("tableUtils")
-local joystickManager = require("joystickManager")
-local consts = require("consts")
+local tableUtils = require("common.lib.tableUtils")
+local joystickManager = require("common.lib.joystickManager")
+local consts = require("common.engine.consts")
 
 -- @module inputManager 
 -- table containing the set of keys in various states 

@@ -1,5 +1,5 @@
-local tableUtils = require("tableUtils")
-local utf8 = require("utf8Additions")
+local tableUtils = require("common.lib.tableUtils")
+local utf8 = require("common.lib.utf8Additions")
 local pairs, type, setmetatable, getmetatable = pairs, type, setmetatable, getmetatable
 
 local util = {}

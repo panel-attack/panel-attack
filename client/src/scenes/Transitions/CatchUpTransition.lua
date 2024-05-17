@@ -1,9 +1,9 @@
-local class = require("class")
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
-local ModController = require("mods.ModController")
-local ModLoader = require("mods.ModLoader")
-local logger = require("logger")
+local class = require("common.lib.class")
+local consts = require("common.engine.consts")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local ModController = require("client.src.mods.ModController")
+local ModLoader = require("client.src.mods.ModLoader")
+local logger = require("common.lib.logger")
 
 local states = { loadingMods = 1, catchingUp = 2 }
 

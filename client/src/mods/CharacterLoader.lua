@@ -1,10 +1,8 @@
-require("globals")
-require("mods.Character")
-local logger = require("logger")
-local fileUtils = require("FileUtils")
-local tableUtils = require("tableUtils")
-local consts = require("consts")
-local ModController = require("mods.ModController")
+local Character = require("client.src.mods.Character")
+local logger = require("common.lib.logger")
+local fileUtils = require("client.src.FileUtils")
+local tableUtils = require("common.lib.tableUtils")
+local consts = require("common.engine.consts")
 
 local CharacterLoader = {}
 

@@ -1,7 +1,7 @@
-local class = require("class")
-local UiElement = require("ui.UIElement")
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UiElement = require("client.src.ui.UIElement")
+local consts = require("common.engine.consts")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 --@module Scene
 -- Base class for a container representing a single screen of PanelAttack.

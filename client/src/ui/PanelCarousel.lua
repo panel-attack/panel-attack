@@ -1,7 +1,7 @@
-local Carousel = require("ui.Carousel")
-local class = require("class")
-local StackPanel = require("ui.StackPanel")
-local ImageContainer = require("ui.ImageContainer")
+local Carousel = require("client.src.ui.Carousel")
+local class = require("common.lib.class")
+local StackPanel = require("client.src.ui.StackPanel")
+local ImageContainer = require("client.src.ui.ImageContainer")
 
 local PanelCarousel = class(function(carousel, options)
   carousel.colorCount = 5

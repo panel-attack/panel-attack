@@ -1,9 +1,9 @@
-local class = require("class")
-local util = require("util")
-local UIElement = require("ui.UIElement")
-local TextButton = require("ui.TextButton")
-local Label = require("ui.Label")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local util = require("common.lib.util")
+local UIElement = require("client.src.ui.UIElement")
+local TextButton = require("client.src.ui.TextButton")
+local Label = require("client.src.ui.Label")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local function setLabels(self, labels, values, selectedIndex)
   self.selectedIndex = selectedIndex

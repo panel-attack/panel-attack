@@ -1,14 +1,12 @@
-local Scene = require("scenes.Scene")
-local InputField = require("ui.InputField")
-local sceneManager = require("scenes.sceneManager")
-local Menu = require("ui.Menu")
-local input = require("inputManager")
-local save = require("save")
-local utf8 = require("utf8")
-local class = require("class")
-local GraphicsUtil = require("graphics_util")
-local TextButton = require("ui.TextButton")
-local Label = require("ui.Label")
+local Scene = require("client.src.scenes.Scene")
+local InputField = require("client.src.ui.InputField")
+local sceneManager = require("client.src.scenes.sceneManager")
+local input = require("common.lib.inputManager")
+local utf8 = require("common.lib.utf8Additions")
+local class = require("common.lib.class")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local TextButton = require("client.src.ui.TextButton")
+local Label = require("client.src.ui.Label")
 
 -- @module setNameMenu
 -- Scene for setting the username

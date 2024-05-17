@@ -1,4 +1,4 @@
-local class = require("class")
+local class = require("common.lib.class")
 
 local StageTrack = class(function(stageTrack, normalMusic, dangerMusic)
   assert(normalMusic, "A stage track needs at least a normal music!")

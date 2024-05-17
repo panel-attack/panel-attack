@@ -1,8 +1,8 @@
-json = require("libraries.dkjson")
-local util = require("util")
-local fileUtils = require("FileUtils")
-local consts = require("consts")
-require("Theme") -- needed for directory location
+json = require("common.lib.dkjson")
+local util = require("common.lib.util")
+local fileUtils = require("client.src.FileUtils")
+local consts = require("common.engine.consts")
+local Theme = require("client.src.mods.Theme") -- needed for directory location
 
 -- Default configuration values
 config = {

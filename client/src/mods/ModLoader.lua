@@ -1,5 +1,5 @@
-local Queue = require("queue")
-local tableUtils = require("tableUtils")
+local Queue = require("client.src.queue")
+local tableUtils = require("common.lib.tableUtils")
 
 local ModLoader = {}
 

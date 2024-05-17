@@ -1,8 +1,7 @@
-local GameBase = require("scenes.GameBase")
-local sceneManager = require("scenes.sceneManager")
-local Replay = require("replay")
-local class = require("class")
-local Signal = require("helpers.signal")
+local GameBase = require("client.src.scenes.GameBase")
+local sceneManager = require("client.src.scenes.sceneManager")
+local Replay = require("common.engine.replay")
+local class = require("common.lib.class")
 
 --@module endlessGame
 -- Scene for an endless mode instance of the game

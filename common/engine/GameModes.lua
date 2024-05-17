@@ -1,4 +1,5 @@
-require("localization")
+-- TODO: need to inverse this dependency, rich presence should instead be able to pull a loc based on game mode
+require("client.src.localization")
 
 local TIME_ATTACK_TIME = 120
 

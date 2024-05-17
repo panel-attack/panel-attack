@@ -3,18 +3,18 @@ General character informating, loading and unloading
 Graphics
 Sound
 ]]--
-local class = require("class")
-local logger = require("logger")
-local tableUtils = require("tableUtils")
-local fileUtils = require("FileUtils")
-local consts = require("consts")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local fileUtils = require("client.src.FileUtils")
+local consts = require("common.engine.consts")
 local GFX_SCALE = consts.GFX_SCALE
-local GraphicsUtil = require("graphics_util")
-local Music = require("music.Music")
-local StageTrack = require("music.StageTrack")
-local DynamicStageTrack = require("music.DynamicStageTrack")
-local RelayStageTrack = require("music.RelayStageTrack")
-local Mod = require("mods.Mod")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local Music = require("client.src.music.Music")
+local StageTrack = require("client.src.music.StageTrack")
+local DynamicStageTrack = require("client.src.music.DynamicStageTrack")
+local RelayStageTrack = require("client.src.music.RelayStageTrack")
+local Mod = require("client.src.mods.Mod")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -22,7 +22,7 @@ local randomCharacter = nil -- acts as the bundle character for all theme charac
 local chainStyle = {classic = 0, per_chain = 1}
 local comboStyle = {classic = 0, per_combo = 1}
 
-Character =
+local Character =
   class(
   function(self, full_path, folder_name)
     self.path = full_path -- string | path to the character folder content
@@ -758,3 +758,5 @@ function Character.applyConfigVolume(self)
   SoundController:applySfxVolume(self.sounds)
   SoundController:applyMusicVolume(self.musics)
 end
+
+return Character

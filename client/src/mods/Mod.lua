@@ -1,6 +1,5 @@
-local class = require("class")
-local utils = require("util")
-local tableUtils = require("tableUtils")
+local class = require("common.lib.class")
+local utils = require("common.lib.util")
 
 local Mod = class(function(mod, fullPath, folderName)
   mod.path = fullPath -- string | path to the mod folder content

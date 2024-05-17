@@ -1,11 +1,10 @@
-local GameBase = require("scenes.GameBase")
-local sceneManager = require("scenes.sceneManager")
-local input = require("inputManager")
-local class = require("class")
-local tableUtils = require("tableUtils")
-local MessageTransition = require("scenes.Transitions.MessageTransition")
-local GraphicsUtil = require("graphics_util")
-local consts = require("consts")
+local GameBase = require("client.src.scenes.GameBase")
+local sceneManager = require("client.src.scenes.sceneManager")
+local class = require("common.lib.class")
+local tableUtils = require("common.lib.tableUtils")
+local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local consts = require("common.engine.consts")
 
 --@module puzzleGame
 -- Scene for a puzzle mode instance of the game

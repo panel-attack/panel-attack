@@ -1,6 +1,6 @@
-local class = require("class")
-local UiElement = require("ui.UIElement")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UiElement = require("client.src.ui.UIElement")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local GridElement = class(function(gridElement, options)
   if options.content then

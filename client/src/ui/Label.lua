@@ -1,6 +1,6 @@
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UIElement = require("client.src.ui.UIElement")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 --@module Label
 local Label = class(

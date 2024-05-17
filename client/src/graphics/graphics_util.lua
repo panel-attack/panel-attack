@@ -1,5 +1,5 @@
-local consts = require("consts")
-local logger = require("logger")
+local consts = require("common.engine.consts")
+local logger = require("common.lib.logger")
 local GFX_SCALE = consts.GFX_SCALE
 
 -- Utility methods for drawing

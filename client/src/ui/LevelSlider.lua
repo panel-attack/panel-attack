@@ -1,8 +1,7 @@
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local Slider = require("ui.Slider")
-local util = require("util")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local Slider = require("client.src.ui.Slider")
+local util = require("common.lib.util")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 --@module LevelSlider
 local LevelSlider = class(

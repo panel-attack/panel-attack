@@ -1,7 +1,7 @@
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local util = require("util")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UIElement = require("client.src.ui.UIElement")
+local util = require("common.lib.util")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local handleRadius = 7.5
 

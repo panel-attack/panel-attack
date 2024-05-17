@@ -1,9 +1,8 @@
-local UiElement = require("ui.UIElement")
-local class = require("class")
-local directsFocus = require("ui.FocusDirector")
-local input = require("inputManager")
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
+local UiElement = require("client.src.ui.UIElement")
+local class = require("common.lib.class")
+local directsFocus = require("client.src.ui.FocusDirector")
+local consts = require("common.engine.consts")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 -- create a new cursor that can navigate on the specified grid
 -- grid: the target grid that is navigated on

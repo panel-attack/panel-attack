@@ -1,5 +1,4 @@
-local input = require("inputManager")
-local consts = require("consts")
+local input = require("common.lib.inputManager")
 
 --@module inputFieldManager
 -- recieves love events and passes them to the correct button object

@@ -1,12 +1,12 @@
-local Scene = require("scenes.Scene")
-local sceneManager = require("scenes.sceneManager")
-local input = require("inputManager")
-local GraphicsUtil = require("graphics_util")
-local fileUtils = require("FileUtils")
-local Replay = require("replay")
-local class = require("class")
-local GameModes = require("GameModes")
-local ReplayGame = require("scenes.ReplayGame")
+local Scene = require("client.src.scenes.Scene")
+local sceneManager = require("client.src.scenes.sceneManager")
+local input = require("common.lib.inputManager")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local fileUtils = require("client.src.FileUtils")
+local Replay = require("common.engine.replay")
+local class = require("common.lib.class")
+local GameModes = require("common.engine.GameModes")
+local ReplayGame = require("client.src.scenes.ReplayGame")
 
 --@module replayBrowser
 local ReplayBrowser = class(

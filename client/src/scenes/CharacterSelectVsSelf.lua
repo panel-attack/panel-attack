@@ -1,12 +1,8 @@
-local CharacterSelect = require("scenes.CharacterSelect")
-local sceneManager = require("scenes.sceneManager")
-local class = require("class")
-local GameModes = require("GameModes")
-local Grid = require("ui.Grid")
-local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
-local UiElement = require("ui.UIElement")
-local PixelFontLabel = require("ui.PixelFontLabel")
-local StackPanel = require("ui.StackPanel")
+local CharacterSelect = require("client.src.scenes.CharacterSelect")
+local sceneManager = require("client.src.scenes.sceneManager")
+local class = require("common.lib.class")
+local Grid = require("client.src.ui.Grid")
+local MultiPlayerSelectionWrapper = require("client.src.ui.MultiPlayerSelectionWrapper")
 
 --@module CharacterSelectVsSelf
 -- The character select screen scene

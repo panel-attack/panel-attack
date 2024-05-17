@@ -1,12 +1,10 @@
-local Scene = require("scenes.Scene")
-local sceneManager = require("scenes.sceneManager")
-local consts = require("consts")
-local input = require("inputManager")
-local tableUtils = require("tableUtils")
-local Menu = require("ui.Menu")
-local class = require("class")
-local GraphicsUtil = require("graphics_util")
-require("scenes.MainMenu")
+local Scene = require("client.src.scenes.Scene")
+local sceneManager = require("client.src.scenes.sceneManager")
+local consts = require("common.engine.consts")
+local input = require("common.lib.inputManager")
+local tableUtils = require("common.lib.tableUtils")
+local class = require("common.lib.class")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 --@module titleScreen
 -- The title screen scene

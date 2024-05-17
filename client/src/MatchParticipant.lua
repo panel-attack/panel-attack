@@ -1,10 +1,10 @@
-local class = require("class")
-local consts = require("consts")
-local Signal = require("helpers.signal")
-local logger = require("logger")
-local CharacterLoader = require("mods.CharacterLoader")
-local StageLoader = require("mods.StageLoader")
-local ModController = require("mods.ModController")
+local class = require("common.lib.class")
+local consts = require("common.engine.consts")
+local Signal = require("common.lib.signal")
+local logger = require("common.lib.logger")
+local CharacterLoader = require("client.src.mods.CharacterLoader")
+local StageLoader = require("client.src.mods.StageLoader")
+local ModController = require("client.src.mods.ModController")
 
 -- a match participant represents the minimum spec for a what constitutes a "player" in a battleRoom / match
 local MatchParticipant = class(function(self)

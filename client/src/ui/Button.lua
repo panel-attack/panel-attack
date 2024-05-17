@@ -1,7 +1,7 @@
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local GraphicsUtil = require("graphics_util")
-local input = require("inputManager")
+local class = require("common.lib.class")
+local UIElement = require("client.src.ui.UIElement")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local input = require("common.lib.inputManager")
 
 --@module Button
 local Button = class(

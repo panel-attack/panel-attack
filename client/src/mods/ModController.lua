@@ -1,7 +1,7 @@
-local tableUtils = require("tableUtils")
-local ModLoader = require("mods.ModLoader")
-local utils = require("util")
-local logger = require("logger")
+local tableUtils = require("common.lib.tableUtils")
+local ModLoader = require("client.src.mods.ModLoader")
+local utils = require("common.lib.util")
+local logger = require("common.lib.logger")
 
 -- the mod controller is a global accessor for loading mods
 -- internally it keeps tabs on who uses which mod

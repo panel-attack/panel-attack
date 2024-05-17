@@ -1,11 +1,10 @@
-local GameBase = require("scenes.GameBase")
-local sceneManager = require("scenes.sceneManager")
-local input = require("inputManager")
-local consts = require("consts")
-local util = require("util")
-local Replay = require("replay")
-local class = require("class")
-local GraphicsUtil = require("graphics_util")
+local GameBase = require("client.src.scenes.GameBase")
+local sceneManager = require("client.src.scenes.sceneManager")
+local input = require("common.lib.inputManager")
+local consts = require("common.engine.consts")
+local util = require("common.lib.util")
+local class = require("common.lib.class")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 --@module replayGame
 local ReplayGame = class(

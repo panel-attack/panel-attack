@@ -1,7 +1,7 @@
-local class = require("class")
-local UiElement = require("ui.UIElement")
-local GridElement = require("ui.GridElement")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UiElement = require("client.src.ui.UIElement")
+local GridElement = require("client.src.ui.GridElement")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local Grid = class(function(self, options)
   self.unitSize = options.unitSize

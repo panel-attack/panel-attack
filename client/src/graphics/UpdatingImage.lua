@@ -1,9 +1,8 @@
 
-local logger = require("logger")
-local GraphicsUtil = require("graphics_util")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 -- A image that can update allowing it to do various things like tile and animate.
-UpdatingImage =
+local UpdatingImage =
   class(
   function(self, image, tiled, speedX, speedY, width, height)
     assert(image ~= nil)
@@ -43,3 +42,5 @@ function UpdatingImage:draw()
     GraphicsUtil.drawQuad(self.image, self.quad, 0, 0, 0, x_scale, y_scale)
   end
 end
+
+return UpdatingImage

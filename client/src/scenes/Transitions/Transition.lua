@@ -1,6 +1,6 @@
-local class = require("class")
-local UiElement = require("ui.UIElement")
-local consts = require("consts")
+local class = require("common.lib.class")
+local UiElement = require("client.src.ui.UIElement")
+local consts = require("common.engine.consts")
 
 -- A transition, or more specifically a scene transition represents an object that handles going from one scene to the next
 -- For the duration of handover, the transition is responsible for handling both update and draw calls on the scenes

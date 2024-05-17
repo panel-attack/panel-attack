@@ -1,10 +1,8 @@
-require("queue")
-require("globals")
-require("mods.Stage")
-local consts = require("consts")
-local tableUtils = require("tableUtils")
-local logger = require("logger")
-local fileUtils = require("FileUtils")
+local Stage = require("client.src.mods.Stage")
+local consts = require("common.engine.consts")
+local tableUtils = require("common.lib.tableUtils")
+local logger = require("common.lib.logger")
+local fileUtils = require("client.src.FileUtils")
 
 local StageLoader = {}
 

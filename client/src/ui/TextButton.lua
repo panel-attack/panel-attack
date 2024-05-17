@@ -1,5 +1,5 @@
-local class = require("class")
-local Button = require("ui.Button")
+local class = require("common.lib.class")
+local Button = require("client.src.ui.Button")
 
 local TEXT_WIDTH_PADDING = 6
 local TEXT_HEIGHT_PADDING = 6

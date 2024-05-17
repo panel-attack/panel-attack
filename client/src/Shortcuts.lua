@@ -1,7 +1,7 @@
-local input = require("inputManager")
-local sceneManager = require("scenes.sceneManager")
-local tableUtils = require("tableUtils")
-local inputFieldManager = require("ui.inputFieldManager")
+local input = require("common.lib.inputManager")
+local sceneManager = require("client.src.scenes.sceneManager")
+local tableUtils = require("common.lib.tableUtils")
+local inputFieldManager = require("client.src.ui.inputFieldManager")
 
 local function runSystemCommands()
   -- toggle debug mode

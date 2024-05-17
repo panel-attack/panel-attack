@@ -1,5 +1,5 @@
-local class = require("class")
-local StageTrack = require("music.StageTrack")
+local class = require("common.lib.class")
+local StageTrack = require("client.src.music.StageTrack")
 
 local RelayStageTrack = class(function(stageTrack, normalMusic, dangerMusic)
   assert(dangerMusic, "Relay tracks need danger music!")

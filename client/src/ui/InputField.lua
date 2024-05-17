@@ -1,5 +1,5 @@
-local utf8 = require("utf8")
-local util = require("util")
+local utf8 = require("common.lib.utf8Additions")
+local util = require("common.lib.util")
 
 local class = require("class")
 local UIElement = require("ui.UIElement")

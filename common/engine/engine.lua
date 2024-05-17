@@ -2272,3 +2272,5 @@ function Stack:shakeFramesForGarbageSize(width, height)
     error("Trying to determine shake time of a garbage block with width " .. width .. " and height " .. height)
   end
 end
+
+return Stack

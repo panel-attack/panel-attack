@@ -1,15 +1,10 @@
 local table = table
-local love = love
 
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local StackPanel = require("ui.StackPanel")
-local MenuItem = require("ui.MenuItem")
-local TextButton = require("ui.TextButton")
-local Label = require("ui.Label")
-local input = require("inputManager")
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UIElement = require("client.src.ui.UIElement")
+local TextButton = require("client.src.ui.TextButton")
+local Label = require("client.src.ui.Label")
+local input = require("common.lib.inputManager")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 

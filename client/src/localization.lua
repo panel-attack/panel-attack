@@ -1,7 +1,7 @@
 -- TODO rename
 local FILENAME = "localization.csv"
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
+local consts = require("common.engine.consts")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 -- Holds all the data for localizing the game
 Localization =

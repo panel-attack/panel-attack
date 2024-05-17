@@ -1,9 +1,8 @@
-local Scene = require("scenes.Scene")
-local sceneManager = require("scenes.sceneManager")
-local CharacterSelect = require("scenes.CharacterSelect")
-local class = require("class")
-local MultiPlayerSelectionWrapper = require("ui.MultiPlayerSelectionWrapper")
-local Grid = require("ui.Grid")
+local sceneManager = require("client.src.scenes.sceneManager")
+local CharacterSelect = require("client.src.scenes.CharacterSelect")
+local class = require("common.lib.class")
+local MultiPlayerSelectionWrapper = require("client.src.ui.MultiPlayerSelectionWrapper")
+local Grid = require("client.src.ui.Grid")
 
 --@module CharacterSelectChallenge
 -- 

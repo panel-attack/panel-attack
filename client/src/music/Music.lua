@@ -1,4 +1,4 @@
-local class = require("class")
+local class = require("common.lib.class")
 
 -- construct a music object with a looping `main` music and an optional `start` played as the intro
 local Music = class(function(music, main, start)

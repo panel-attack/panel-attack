@@ -1,5 +1,4 @@
-local Easings = require("Easings")
-local DirectTransition = require("scenes.Transitions.DirectTransition")
+local DirectTransition = require("client.src.scenes.Transitions.DirectTransition")
 
 --@module sceneManager
 -- Contains all initialized scenes and handles scene transitions 
@@ -25,7 +24,7 @@ end
 
 function sceneManager:createScene(sceneName, sceneParams)
   if not self.scenes[sceneName] then
-    self.scenes[sceneName] = require("scenes." .. sceneName)
+    self.scenes[sceneName] = require("client.src.scenes." .. sceneName)
   end
   return self.scenes[sceneName](sceneParams)
 end

@@ -1,7 +1,7 @@
-local SimpleGameSetupMenu = require("scenes.SimpleGameSetupMenu")
-local sceneManager = require("scenes.sceneManager")
-local class = require("class")
-local GameModes = require("GameModes")
+local SimpleGameSetupMenu = require("client.src.scenes.SimpleGameSetupMenu")
+local sceneManager = require("client.src.scenes.sceneManager")
+local class = require("common.lib.class")
+local GameModes = require("common.engine.GameModes")
 
 --@module endlessMenu
 -- Scene for the endless game setup menu

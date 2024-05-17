@@ -1,11 +1,10 @@
-local class = require("class")
-local GameModes = require("GameModes")
-local LevelPresets = require("LevelPresets")
-local input = require("inputManager")
-local MatchParticipant = require("MatchParticipant")
-local consts = require("consts")
-local Signal = require("helpers.signal")
-local CharacterLoader = require("mods.CharacterLoader")
+local class = require("common.lib.class")
+local GameModes = require("common.engine.GameModes")
+local LevelPresets = require("client.src.LevelPresets")
+local input = require("common.lib.inputManager")
+local MatchParticipant = require("client.src.MatchParticipant")
+local consts = require("common.engine.consts")
+local CharacterLoader = require("client.src.mods.CharacterLoader")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)

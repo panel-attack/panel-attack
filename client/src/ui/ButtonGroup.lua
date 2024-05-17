@@ -1,6 +1,6 @@
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local util = require("util")
+local class = require("common.lib.class")
+local UIElement = require("client.src.ui.UIElement")
+local util = require("common.lib.util")
 
 local BUTTON_PADDING = 5
 

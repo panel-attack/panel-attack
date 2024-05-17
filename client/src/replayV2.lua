@@ -1,4 +1,4 @@
-local GameModes = require("GameModes")
+local GameModes = require("common.engine.GameModes")
 
 local ReplayV2 = {}
 

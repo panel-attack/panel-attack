@@ -1,7 +1,5 @@
-local class = require("class")
-local Transition = require("scenes.Transitions.Transition")
-local consts = require("consts")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local Transition = require("client.src.scenes.Transitions.Transition")
 
 local DirectTransition = class(function(transition, startTime, duration, oldScene, newScene)
 end,

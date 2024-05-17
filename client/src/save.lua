@@ -1,6 +1,5 @@
-local tableUtils = require("tableUtils")
-local inputManager = require("inputManager")
-local fileUtils = require("FileUtils")
+local inputManager = require("common.lib.inputManager")
+local fileUtils = require("client.src.FileUtils")
 
 -- the save.lua file contains the read/write functions
 

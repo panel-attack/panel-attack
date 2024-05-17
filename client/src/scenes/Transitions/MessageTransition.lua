@@ -1,7 +1,7 @@
-local class = require("class")
-local Transition = require("scenes.Transitions.Transition")
-local Label = require("ui.Label")
-local input = require("inputManager")
+local class = require("common.lib.class")
+local Transition = require("client.src.scenes.Transitions.Transition")
+local Label = require("client.src.ui.Label")
+local input = require("common.lib.inputManager")
 
 local MessageTransition = class(function(transition, startTime, duration, oldScene, newScene, message)
   transition.message = message

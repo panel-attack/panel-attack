@@ -1,5 +1,5 @@
-local input = require("inputManager")
-local sceneManager = require("scenes.sceneManager")
+local input = require("common.lib.inputManager")
+local sceneManager = require("client.src.scenes.sceneManager")
 -- handles all touch interactions
 -- all elements that implement touch interactions must register themselves with the touch handler on construction
 

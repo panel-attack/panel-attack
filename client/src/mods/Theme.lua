@@ -1,15 +1,13 @@
-require("developer")
-require("graphics_util")
-local consts = require("consts")
-require("class")
-local logger = require("logger")
-local fileUtils = require("FileUtils")
-local levelPresets = require("LevelPresets")
-local GraphicsUtil = require("graphics_util")
-local ImageContainer = require("ui.ImageContainer")
-local Music = require("music.Music")
-local tableUtils = require("tableUtils")
-local SoundController = require("music.SoundController")
+local consts = require("common.engine.consts")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local fileUtils = require("client.src.FileUtils")
+local levelPresets = require("client.src.LevelPresets")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local ImageContainer = require("client.src.ui.ImageContainer")
+local Music = require("client.src.music.Music")
+local tableUtils = require("common.lib.tableUtils")
+local SoundController = require("client.src.music.SoundController")
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {
@@ -775,3 +773,5 @@ end
 function Theme:playMoveSfx()
   SoundController:playSfx(self.sounds.menu_move)
 end
+
+return Theme

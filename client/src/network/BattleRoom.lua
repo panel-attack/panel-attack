@@ -1,12 +1,10 @@
-require("BattleRoom")
-local MessageListener = require("network.MessageListener")
-local ServerMessages = require("network.ServerMessages")
-local ClientMessages = require("network.ClientProtocol")
-local tableUtils = require("tableUtils")
-local sceneManager = require("scenes.sceneManager")
-local Signal = require("helpers.signal")
-local NetworkProtocol = require("network.NetworkProtocol")
-local logger = require("logger")
+local MessageListener = require("client.src.network.MessageListener")
+local ServerMessages = require("client.src.network.ServerMessages")
+local ClientMessages = require("client.src.network.ClientProtocol")
+local tableUtils = require("common.lib.tableUtils")
+local sceneManager = require("client.src.scenes.sceneManager")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+local logger = require("common.lib.logger")
 
 -- the entire network part of BattleRoom
 -- this tries to hide away most of the "ugly" handling necessary for to the network communication

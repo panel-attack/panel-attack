@@ -1,9 +1,7 @@
-local GameModes = require("GameModes")
---local Replay = require("replay")
-local levelPresets = require("LevelPresets")
-local consts = require("consts")
-local util = require("util")
-local CharacterLoader = require("mods.CharacterLoader")
+local GameModes = require("common.engine.GameModes")
+local levelPresets = require("client.src.LevelPresets")
+local consts = require("common.engine.consts")
+local CharacterLoader = require("client.src.mods.CharacterLoader")
 
 
 local ReplayV1 = {}

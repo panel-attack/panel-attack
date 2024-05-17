@@ -1,5 +1,5 @@
-local levelPresets = require("LevelPresets")
-local fileUtils = require("FileUtils")
+local levelPresets = require("client.src.LevelPresets")
+local fileUtils = require("client.src.FileUtils")
 
 -- 1 had only vs scores in an incompatible format
 -- 2 has vs self, time attack, endless

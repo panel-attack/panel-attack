@@ -1,4 +1,4 @@
-local manualGc = require("libraries.batteries.manual_gc")
+local manualGc = require("client.lib.batteries.manual_gc")
 
 local CustomRun = {}
 CustomRun.FRAME_RATE = 1 / 60
