@@ -173,6 +173,7 @@ end
 
 function love.errorhandler(msg)
   if lldebugger then
+    pcall(love.filesystem.write, "debug.log", table.concat(logger.messages, "\n"))
     error(msg, 2)
   end
 
@@ -228,7 +229,7 @@ function love.errorhandler(msg)
     logger.info(sanitizedMessage)
   end
   if logger.messages then
-    pcall(love.filesystem.write, "debug.log", table.concat(logger.messages, "\n"))
+    pcall(love.filesystem.write, "crash.log", table.concat(logger.messages, "\n"))
   end
   if #sanitizedMessage ~= #msg then
     table.insert(errorLines, "Invalid UTF-8 string in error message.")
