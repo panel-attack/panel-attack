@@ -10,7 +10,7 @@ local Signal = require("common.lib.signal")
 local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
 local ModController = require("client.src.mods.ModController")
 local ModLoader = require("client.src.mods.ModLoader")
-local Match = require("common.engine.match")
+local Match = require("common.engine.Match")
 require("client.src.graphics.match_graphics")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc

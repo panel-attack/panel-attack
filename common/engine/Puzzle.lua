@@ -203,3 +203,5 @@ function Puzzle.toPuzzleString(panels)
 
   return table.concat(puzzleMatrix)
 end
+
+return Puzzle

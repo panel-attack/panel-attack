@@ -1,4 +1,4 @@
-require("puzzles")
+require("common.engine.Puzzle")
 
 local PuzzleTests = class(function() end)
 

@@ -1,6 +1,6 @@
 local logger = require("common.lib.logger")
 local tableUtils = require("common.lib.tableUtils")
-local PanelGenerator = require("common.engine.gen_panels")
+local PanelGenerator = require("common.engine.PanelGenerator")
 local consts = require("common.engine.consts")
 
 -- score lookup tables

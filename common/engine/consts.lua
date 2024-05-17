@@ -1,3 +1,10 @@
+--[[
+   TODO:
+   consts is currently kind of the "all over the place" collection
+   it should get split into 
+   1. constants decisively important for the engine
+   2. constants decisively important for the client
+]]
 require("common.lib.util")
 local tableUtils = require("common.lib.tableUtils")
 

@@ -10,12 +10,12 @@ local tableUtils = require("common.lib.tableUtils")
 local util = require("common.lib.util")
 local utf8 = require("common.lib.utf8Additions")
 local GameModes = require("common.engine.GameModes")
-local PanelGenerator = require("common.engine.gen_panels")
+local PanelGenerator = require("common.engine.PanelGenerator")
 local StackBase = require("common.engine.StackBase")
 local class = require("common.lib.class")
-local Panel = require("common.engine.panel")
+local Panel = require("common.engine.Panel")
 local GarbageQueue = require("common.engine.GarbageQueue")
-local Telegraph = require("common.engine.telegraph")
+local Telegraph = require("common.engine.Telegraph")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of

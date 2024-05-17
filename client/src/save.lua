@@ -1,6 +1,8 @@
 local inputManager = require("common.lib.inputManager")
 local fileUtils = require("client.src.FileUtils")
 local logger = require("common.lib.logger")
+local Puzzle = require("common.engine.Puzzle")
+local PuzzleSet = require("client.src.PuzzleSet")
 
 -- the save.lua file contains the read/write functions
 

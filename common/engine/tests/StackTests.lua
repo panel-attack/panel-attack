@@ -1,6 +1,7 @@
 local consts = require("consts")
 local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
 local GameModes = require("GameModes")
+local Puzzle = require("common.engine.Puzzle")
 local Player = require("Player")
 
 local function puzzleTest()
