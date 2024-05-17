@@ -65,10 +65,10 @@ function ReplayGame:runGame()
         SoundController:playMusic()
       end
     end
-  elseif input:isPressedWithRepeat("Right") then
+  elseif input:isPressedWithRepeat("MenuRight") then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex + 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
-  elseif input:isPressedWithRepeat("Left") then
+  elseif input:isPressedWithRepeat("MenuLeft") then
     self.playbackSpeedIndex = util.bound(1, self.playbackSpeedIndex - 1, #self.playbackSpeeds)
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
   elseif input.isDown["Swap2"] then
