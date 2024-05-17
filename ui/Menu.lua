@@ -253,11 +253,11 @@ function Menu:update(dt)
     return
   end
 
-  if input:isPressedWithRepeat("Up") then
+  if input:isPressedWithRepeat("MenuUp") then
     self:scrollUp()
   end
 
-  if input:isPressedWithRepeat("Down") then
+  if input:isPressedWithRepeat("MenuDown") then
     self:scrollDown()
   end
 

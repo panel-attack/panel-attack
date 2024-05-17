@@ -232,8 +232,10 @@ function inputManager:updateKeyMaps()
         self:aliasKey(key, keyAlias)
       end
 
-      -- copy over configured keys into the menu reserved key aliases if they are not menu reserved keys themselves
-      if keyNameToMenuKeys[keyAlias] and not menuReservedKeys[key] then
+      -- copy over configured keys into the menu reserved key aliases
+      -- (even if they are not menu reserved keys themselves?) could lead to funky results when binding arrow keys to other stuff
+      -- but the alternative is not being able to bind arrow keys to other stuff whatsoever
+      if keyNameToMenuKeys[keyAlias] --[[and not menuReservedKeys[key]] then
         local menuKeyAlias = keyNameToMenuKeys[keyAlias]
         -- but they may contain the generic Menu input representation as these are meant to be used only in non-exclusive ways
         self:aliasKey(key, menuKeyAlias)
