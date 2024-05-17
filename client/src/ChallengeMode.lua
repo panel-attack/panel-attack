@@ -130,7 +130,7 @@ end
 
 function ChallengeMode:attackFilePath(difficulty, stageIndex)
   for i = stageIndex, 1, -1 do
-    local path = "default_data/training/challenge-" .. difficulty .. "-" .. i .. ".json"
+    local path = "client/assets/default_data/training/challenge-" .. difficulty .. "-" .. i .. ".json"
     if love.filesystem.getInfo(path) then
       return path
     end

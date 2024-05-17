@@ -3,6 +3,7 @@ local Health = require("common.engine.Health")
 local StackBase = require("common.engine.StackBase")
 local class = require("common.lib.class")
 local consts = require("common.engine.consts")
+local AttackEngine = require("common.engine.AttackEngine")
 
 -- TODO move graphics related functionality to client
 local GraphicsUtil = require("client.src.graphics.graphics_util")

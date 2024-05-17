@@ -195,7 +195,7 @@ function Game:createDirectoriesIfNeeded()
   end
 
   if #fileUtils.getFilteredDirectoryItems("training") == 0 then
-    fileUtils.recursiveCopy("default_data/training", "training")
+    fileUtils.recursiveCopy("client/assets/default_data/training", "training")
   end
   readAttackFiles("training")
 

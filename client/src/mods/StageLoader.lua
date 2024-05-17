@@ -80,7 +80,7 @@ function StageLoader.initStages()
   fill_stages_ids()
 
   if #stages_ids == 0 then
-    fileUtils.recursiveCopy("default_data/stages", "stages")
+    fileUtils.recursiveCopy("client/assets/default_data/stages", "stages")
     add_stages_from_dir_rec("stages")
     fill_stages_ids()
   end

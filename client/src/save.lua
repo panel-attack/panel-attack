@@ -95,7 +95,7 @@ function write_puzzles()
       if customPuzzleExists == false then
         love.filesystem.createDirectory("puzzles")
 
-        fileUtils.recursiveCopy("default_data/puzzles", "puzzles")
+        fileUtils.recursiveCopy("client/assets/default_data/puzzles", "puzzles")
       end
     end
   )

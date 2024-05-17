@@ -13,7 +13,7 @@ AttackPattern =
 )
 
 -- An attack engine sends attacks based on a set of rules.
-AttackEngine =
+local AttackEngine =
   class(
   function(self, attackSettings, telegraph, character)
     -- The number of frames before the first attack starts. Note if this is changed after attack patterns are added their times won't be updated.
@@ -162,3 +162,5 @@ function AttackEngine.render(self)
   self.telegraph:render()
 
 end
+
+return AttackEngine

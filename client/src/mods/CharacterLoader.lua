@@ -80,7 +80,7 @@ function CharacterLoader.initCharacters()
   CharacterLoader.fillCharactersIds()
 
   if #characters_ids == 0 then
-    fileUtils.recursiveCopy("default_data/characters", "characters")
+    fileUtils.recursiveCopy("client/assets/default_data/characters", "characters")
     CharacterLoader.addCharactersFromDirectoryRecursively("characters")
     CharacterLoader.fillCharactersIds()
   end
