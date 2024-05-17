@@ -94,17 +94,23 @@ end
 -- unlike regular asset load, this function connects the used assets to the match so they cannot be unloaded
 function GameBase:loadAssets(match)
   for i, player in ipairs(match.players) do
-    ModController:loadModFor(characters[player.settings.characterId], player, true)
-    characters[player.settings.characterId]:register(match)
+    local character = characters[player.settings.characterId]
+    logger.debug("Force loading character " .. character.id .. " as part of GameBase:load")
+    ModController:loadModFor(character, player, true)
+    character:register(match)
   end
 
   if not match.stageId then
+    logger.debug("Match has somehow no stageId at GameBase:load()")
     match.stageId = StageLoader.fullyResolveStageSelection(match.stageId)
   end
-  if stages[match.stageId].fully_loaded then
-    stages[match.stageId]:register(match)
+  local stage = stages[match.stageId]
+  if stage.fully_loaded then
+    logger.debug("Match stage " .. stage.id .. " already fully loaded in GameBase:load()")
+    stage:register(match)
   else
-    ModController:loadModFor(stages[match.stageId], match, true)
+    logger.debug("Force loading stage " .. stage.id .. " as part of GameBase:load")
+    ModController:loadModFor(stage, match, true)
   end
 end
 
@@ -149,6 +155,11 @@ function GameBase:handlePause()
     end
     GAME.theme:playValidationSfx()
   end
+
+  if self.match.isPaused and input.isDown["MenuEsc"] then
+    GAME.theme:playCancelSfx()
+    self.match:abort()
+  end
 end
 
 local gameOverStartTime = nil -- timestamp for when game over screen was first displayed
@@ -158,11 +169,7 @@ function GameBase:setupGameOver()
   self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
   self.maxDisplayTime = -1
 
-  if not self.match.aborted then
-    SoundController:fadeOutActiveTrack(3)
-  else
-    SoundController:stopMusic()
-  end
+  SoundController:fadeOutActiveTrack(3)
 
   self:customGameOverSetup()
 end
@@ -205,11 +212,6 @@ function GameBase:runGame(dt)
   self:customRun()
 
   self:handlePause()
-
-  if self.match.isPaused and input.isDown["MenuEsc"] then
-    GAME.theme:playCancelSfx()
-    self.match:abort()
-  end
 end
 
 function GameBase:musicCanChange()

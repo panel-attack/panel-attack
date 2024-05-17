@@ -356,9 +356,11 @@ function BattleRoom:startLoadingNewAssets()
   if ModLoader.loading_mod == nil then
     for _, player in ipairs(self.players) do
       if not stages[player.settings.stageId].fully_loaded then
+        logger.debug("Loading stage " .. player.settings.stageId .. " as part of BattleRoom:startLoadingNewAssets")
         ModController:loadModFor(stages[player.settings.stageId], player)
       end
       if not characters[player.settings.characterId].fully_loaded then
+        logger.debug("Loading stage " .. player.settings.characterId .. " as part of BattleRoom:startLoadingNewAssets")
         ModController:loadModFor(characters[player.settings.characterId], player)
       end
     end

@@ -532,6 +532,7 @@ function Match:start()
 end
 
 function Match:setStage(stageId)
+  logger.debug("Setting match stage id to " .. (stageId or ""))
   if stageId then
     -- we got one from the server
     self.stageId = StageLoader.fullyResolveStageSelection(stageId)

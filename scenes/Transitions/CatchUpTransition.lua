@@ -3,6 +3,7 @@ local consts = require("consts")
 local GraphicsUtil = require("graphics_util")
 local ModController = require("mods.ModController")
 local ModLoader = require("mods.ModLoader")
+local logger = require("logger")
 
 local states = { loadingMods = 1, catchingUp = 2 }
 
@@ -21,6 +22,7 @@ local CatchUpTransition = class(function(transition, oldScene, newScene)
     local character = characters[player.settings.characterId]
     if not character.fully_loaded then
       state = states.loadingMods
+      logger.debug("triggering character load from catchup transition for mod " .. character.id)
       ModController:loadModFor(character, player)
     end
   end
@@ -28,6 +30,7 @@ local CatchUpTransition = class(function(transition, oldScene, newScene)
   local stage = stages[transition.match.stageId]
   if not stage.fully_loaded then
     state = states.loadingMods
+    logger.debug("triggering stage load from catchup transition for mod " .. stage.id)
     ModController:loadModFor(stage, match)
   end
 
@@ -48,7 +51,7 @@ function CatchUpTransition:update(dt)
     self.progress = self.match.P1.clock / #self.match.P1.confirmedInput
   end
   local t = love.timer.getTime()
-  local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end))
+  local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end)) or ModLoader.loading_mod
   -- spend 90% of frame time on catchup
   -- since we're not drawing anything big that should be realistic for catching ASAP
   while shouldCatchUp and hasTimeLeft(t) do

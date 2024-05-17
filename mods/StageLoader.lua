@@ -150,8 +150,11 @@ function StageLoader.resolveBundle(stageId)
 end
 
 function StageLoader.fullyResolveStageSelection(stageId)
+  logger.debug("Resolving stageId " .. (stageId or ""))
   stageId = StageLoader.resolveStageSelection(stageId)
-  return StageLoader.resolveBundle(stageId)
+  stageId = StageLoader.resolveBundle(stageId)
+  logger.debug("Resolved stageId to " .. stageId)
+  return stageId
 end
 
 return StageLoader

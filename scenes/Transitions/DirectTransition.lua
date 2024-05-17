@@ -7,12 +7,8 @@ local DirectTransition = class(function(transition, startTime, duration, oldScen
 end,
 Transition)
 
-function DirectTransition:updateScenes(dt)
-  self.newScene:update(dt)
-end
-
 function DirectTransition:draw()
-  self.newScene:draw()
+  self.oldScene:draw()
 end
 
 return DirectTransition
