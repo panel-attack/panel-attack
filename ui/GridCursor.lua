@@ -66,7 +66,7 @@ function GridCursor:move(direction)
     local newX = wrap(self.activeArea.x1, self.selectedGridPos.x + direction.x, self.activeArea.x2)
     nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
     -- look for a different UiElement until we wrapped back to our position before the move
-    while (nextGridElement.content.TYPE == "GridPlaceholder" and not acceptPlaceholders) or (selectedGridElement == nextGridElement and newX ~= self.selectedGridPos.x) do
+    while (not nextGridElement.onSelect and not acceptPlaceholders) or (selectedGridElement == nextGridElement and newX ~= self.selectedGridPos.x) do
       newX = wrap(self.activeArea.x1, newX + direction.x, self.activeArea.x2)
       nextGridElement = self:getElementAt(self.selectedGridPos.y, newX)
       if self.selectedGridPos.x == newX then
@@ -87,7 +87,7 @@ function GridCursor:move(direction)
     local newY = wrap(self.activeArea.y1, self.selectedGridPos.y + direction.y, self.activeArea.y2)
     nextGridElement = self:getElementAt(newY,self.selectedGridPos.x)
     -- look for a different UiElement until we wrapped back to our position before the move
-    while (nextGridElement.content.TYPE == "GridPlaceholder" and not acceptPlaceholders) or (selectedGridElement == nextGridElement and newY ~= self.selectedGridPos.y) do
+    while (not nextGridElement.onSelect and not acceptPlaceholders) or (selectedGridElement == nextGridElement and newY ~= self.selectedGridPos.y) do
       newY = wrap(self.activeArea.y1, newY + direction.y, self.activeArea.y2)
       nextGridElement = self:getElementAt(newY,self.selectedGridPos.x)
       if self.selectedGridPos.y == newY then
@@ -151,8 +151,13 @@ function GridCursor:receiveInputs(inputs, dt)
     GAME.theme:playMoveSfx()
     self:move(GridCursor.directions.down)
   elseif inputs.isDown.Swap1 or inputs.isDown.Start then
-    GAME.theme:playValidationSfx()
-    self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x):onSelect(self)
+    local element = self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x)
+    if element.onSelect then
+      GAME.theme:playValidationSfx()
+      self:getElementAt(self.selectedGridPos.y, self.selectedGridPos.x):onSelect(self)
+    else
+      GAME.theme:playCancelSfx()
+    end
   elseif inputs.isDown.Raise1 then
     if self.raise1Callback then
       self:raise1Callback()
