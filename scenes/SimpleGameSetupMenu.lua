@@ -140,7 +140,18 @@ function SimpleGameSetupMenu:load(sceneParams)
     MenuItem.createButtonMenuItem("go_", nil, nil, function() self:startGame() end),
     MenuItem.createButtonMenuItem("back", nil, nil, self.exit)
   }
+
+  -- the go buttons are game starting ones, therefore they shouldn't react to the default config
+  -- but only key configs instead
+  local function receiveInputs(menuItem, input)
+    if input.isDown.Swap1 or input.isDown.Start then
+      menuItem.textButton:onClick(input)
+    end
+  end
   
+  modernMenuOptions[3].receiveInputs = receiveInputs
+  classicMenuOptions[4].receiveInputs = receiveInputs
+
   self.classicMenu = Menu.createCenteredMenu(classicMenuOptions)
   self.modernMenu = Menu.createCenteredMenu(modernMenuOptions)
   if self.typeButtons.value == "Classic" then
