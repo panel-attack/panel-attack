@@ -1,7 +1,7 @@
-local Request = require("network.Request")
-local NetworkProtocol = require("network.NetworkProtocol")
+local Request = require("client.src.network.Request")
+local NetworkProtocol = require("common.network.NetworkProtocol")
 local msgTypes = NetworkProtocol.clientMessageTypes
-local consts = require("consts")
+local consts = require("common.engine.consts")
 
 local ClientMessages = {}
 

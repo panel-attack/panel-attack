@@ -1,5 +1,5 @@
-local class = require("class")
-local ClientMessages = require("network.ClientProtocol")
+local class = require("common.lib.class")
+local ClientMessages = require("client.src.network.ClientProtocol")
 
 -- returns true/false as the first return value to indicate success or failure of the login
 -- returns a string with a message to display for the user

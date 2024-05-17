@@ -1,6 +1,6 @@
-local NetworkProtocol = require("network.NetworkProtocol")
-local class = require("class")
-local util = require("util")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+local class = require("common.lib.class")
+local util = require("common.lib.util")
 
 -- a message listener listens to exactly ONE type of server message
 local MessageListener = class(function(self, messageHeader)

@@ -153,7 +153,7 @@ function Character.unload(self)
 end
 
 function Character.loadDefaultCharacter()
-  default_character = Character("characters/__default", "__default")
+  default_character = Character("client/assets/characters/__default", "__default")
   default_character:preload()
   default_character:load(true)
 end

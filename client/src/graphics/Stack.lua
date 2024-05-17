@@ -1,7 +1,7 @@
-require("util")
-local GraphicsUtil = require("graphics_util")
-local TouchDataEncoding = require("engine.TouchDataEncoding")
-local consts = require("consts")
+require("common.lib.util")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+local TouchDataEncoding = require("common.engine.TouchDataEncoding")
+local consts = require("common.engine.consts")
 
 local floor = math.floor
 

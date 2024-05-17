@@ -1,5 +1,5 @@
 -- TODO rename
-local FILENAME = "localization.csv"
+local FILENAME = "client/assets/localization.csv"
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 

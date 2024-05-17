@@ -1,3 +1,4 @@
+local class = require("common.lib.class")
 
 -- how many seconds it takes for a request to give up waiting for a response
 local REQUEST_TIMEOUT = 5

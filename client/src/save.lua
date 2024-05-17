@@ -1,10 +1,10 @@
 local inputManager = require("common.lib.inputManager")
 local fileUtils = require("client.src.FileUtils")
+local logger = require("common.lib.logger")
 
 -- the save.lua file contains the read/write functions
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
-local logger = require("logger")
 
 local save = {}
 

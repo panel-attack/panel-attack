@@ -13,7 +13,9 @@ local GameModes = require("common.engine.GameModes")
 local PanelGenerator = require("common.engine.gen_panels")
 local StackBase = require("common.engine.StackBase")
 local class = require("common.lib.class")
-local Panel = require("engine.panel")
+local Panel = require("common.engine.panel")
+local GarbageQueue = require("common.engine.GarbageQueue")
+local Telegraph = require("common.engine.telegraph")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -2274,5 +2276,11 @@ function Stack:shakeFramesForGarbageSize(width, height)
     error("Trying to determine shake time of a garbage block with width " .. width .. " and height " .. height)
   end
 end
+
+-- other parts of stack
+require("common.engine.checkMatches")
+-- TODO: does this stay on client or not?
+require("client.src.network.Stack")
+
 
 return Stack

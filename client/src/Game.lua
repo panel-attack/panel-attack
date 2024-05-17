@@ -1,12 +1,14 @@
+require("client.src.localization")
 require("client.src.queue")
 require("client.src.server_queue")
 local CharacterLoader = require("client.src.mods.CharacterLoader")
 local StageLoader = require("client.src.mods.StageLoader")
+local Panels = require("client.src.mods.Panels")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
 local consts = require("common.engine.consts")
-local GraphicsUtil = require("client.src.graphics_util")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
 local logger = require("common.lib.logger")
 local analytics = require("client.src.analytics")
@@ -33,7 +35,7 @@ end
 
 local Game = class(
   function(self)
-    self.scores = require("scores")
+    self.scores = require("client.src.scores")
     self.input = input
     self.match = nil -- Match - the current match going on or nil if inbetween games
     self.battleRoom = nil -- BattleRoom - the current room being used for battles
@@ -93,6 +95,11 @@ local Game = class(
 Game.newCanvasSnappedScale = newCanvasSnappedScale
 
 function Game:load(gameUpdater)
+  love.filesystem.mount("client/assets/characters", "characters")
+  love.filesystem.mount("client/assets/panels", "panels")
+  love.filesystem.mount("client/assets/stages", "stages")
+  love.filesystem.mount("client/assets/themes", "themes")
+  love.filesystem.mount("client/assets/default_data", "default_data")
   -- move to constructor
   self.gameUpdater = gameUpdater
   local user_input_conf = save.read_key_file()

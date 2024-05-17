@@ -4,6 +4,7 @@ local StackPanel = require("client.src.ui.StackPanel")
 local Label = require("client.src.ui.Label")
 local ImageContainer = require("client.src.ui.ImageContainer")
 local consts = require("common.engine.consts")
+local Stage = require("client.src.mods.Stage")
 
 local StageCarousel = class(function(carousel, options)
 

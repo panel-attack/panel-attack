@@ -1,4 +1,4 @@
-local tableUtils = require("tableUtils")
+local tableUtils = require("common.lib.tableUtils")
 
 local function stopIfPlaying(audioSource)
   if audioSource:isPlaying() then

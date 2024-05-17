@@ -1,10 +1,10 @@
 local utf8 = require("common.lib.utf8Additions")
 local util = require("common.lib.util")
 
-local class = require("class")
-local UIElement = require("ui.UIElement")
-local inputFieldManager = require("ui.inputFieldManager")
-local GraphicsUtil = require("graphics_util")
+local class = require("common.lib.class")
+local UIElement = require("client.src.ui.UIElement")
+local inputFieldManager = require("client.src.ui.inputFieldManager")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 --@module InputField
 local InputField = class(

@@ -8,6 +8,7 @@ local ImageContainer = require("client.src.ui.ImageContainer")
 local Music = require("client.src.music.Music")
 local tableUtils = require("common.lib.tableUtils")
 local SoundController = require("client.src.music.SoundController")
+local UpdatingImage = require("client.src.graphics.UpdatingImage")
 
 -- from https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
 local flags = {
@@ -195,7 +196,7 @@ function Theme:loadVersion2DefaultValues()
 end
 
 Theme.themeDirectoryPath = "themes/"
-Theme.defaultThemeDirectoryPath = Theme.themeDirectoryPath .. consts.DEFAULT_THEME_DIRECTORY .. "/"
+Theme.defaultThemeDirectoryPath = "client/assets/themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/"
 
 -- loads the image of the given name
 function Theme:load_theme_img(name, useBackup)

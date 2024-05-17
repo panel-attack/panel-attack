@@ -5,6 +5,8 @@ local input = require("common.lib.inputManager")
 local MatchParticipant = require("client.src.MatchParticipant")
 local consts = require("common.engine.consts")
 local CharacterLoader = require("client.src.mods.CharacterLoader")
+local Stack = require("common.engine.Stack")
+require("client.src.graphics.Stack")
 
 -- A player is mostly a data representation of a Panel Attack player
 -- It holds data pertaining to their online status (like name, public id)

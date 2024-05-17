@@ -21,6 +21,7 @@ local StackPanel = require("client.src.ui.StackPanel")
 local PixelFontLabel = require("client.src.ui.PixelFontLabel")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local SoundController = require("client.src.music.SoundController")
+local Character = require("client.src.mods.Character")
 
 -- @module CharacterSelect
 -- The character select screen scene

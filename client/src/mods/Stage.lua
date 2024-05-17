@@ -134,7 +134,7 @@ function Stage:getSubMods()
 end
 
 function Stage.loadDefaultStage()
-  default_stage = Stage("stages/__default", "__default")
+  default_stage = Stage("client/assets/stages/__default", "__default")
   default_stage:preload()
   default_stage:load(true)
 end

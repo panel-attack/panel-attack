@@ -1,5 +1,5 @@
 local class = require("common.lib.class")
-local Scene = require("common.src.scenes.Scene")
+local Scene = require("client.src.scenes.Scene")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local logger = require("common.lib.logger")
 local analytics = require("client.src.analytics")
@@ -10,6 +10,7 @@ local consts = require("common.engine.consts")
 local StageLoader = require("client.src.mods.StageLoader")
 local ModController = require("client.src.mods.ModController")
 local SoundController = require("client.src.music.SoundController")
+local UpdatingImage = require("client.src.graphics.UpdatingImage")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)

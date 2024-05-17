@@ -72,8 +72,6 @@ Match =
   end
 )
 
-require("match_graphics")
-
 -- Should be called prior to clearing the match.
 -- Consider recycling any memory that might leave around a lot of garbage.
 -- Note: You can just leave the variables to clear / garbage collect on their own if they aren't large.
@@ -791,3 +789,5 @@ end
 function Match:setCountdown(doCountdown)
   self.doCountdown = doCountdown
 end
+
+return Match

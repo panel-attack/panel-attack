@@ -160,3 +160,5 @@ GarbageQueue = class(function(s, allowIllegalStuff, mergeComboMetalQueue)
   
     return idx
   end
+
+return GarbageQueue

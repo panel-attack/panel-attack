@@ -8,7 +8,7 @@ local inputFieldManager = require("client.src.ui.inputFieldManager")
 local ClientMessages = require("client.src.network.ClientProtocol")
 local RunTimeGraph = require("client.src.RunTimeGraph")
 local CustomRun = require("client.src.CustomRun")
-local GraphicsUtil = require("client.src.graphics_util")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 local Game = require("client.src.Game")
 -- move to load once global dependencies have been resolved

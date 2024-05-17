@@ -1,6 +1,7 @@
 local logger = require("common.lib.logger")
 local GameModes = require("common.engine.GameModes")
 local consts = require("common.engine.consts")
+require("common.lib.timezones")
 
 -- TODO: cut down replay to the definition of the replay spec and the legacy loading
 -- the legacy loaders should probably move to common

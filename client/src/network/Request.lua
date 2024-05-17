@@ -1,8 +1,7 @@
-local class = require("class")
-local Response = require("network.Response")
-local NetworkProtocol = require("network.NetworkProtocol")
-local consts = require("consts")
-local logger = require("logger")
+local class = require("common.lib.class")
+local Response = require("client.src.network.Response")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+local logger = require("common.lib.logger")
 
 local Request = class(function(self, tcpClient, messageType, messageText, responseTypes)
   self.tcpClient = tcpClient

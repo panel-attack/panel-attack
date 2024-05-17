@@ -499,3 +499,5 @@ function Telegraph:render()
   end
 
 end
+
+return Telegraph
