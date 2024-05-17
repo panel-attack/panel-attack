@@ -1,13 +1,13 @@
 local logger = require("common.lib.logger")
 local GameModes = require("common.engine.GameModes")
 local consts = require("common.engine.consts")
+local ReplayV1 = require("common.engine.replayV1")
+local ReplayV2 = require("common.engine.replayV2")
 require("common.lib.timezones")
 
 -- TODO: cut down replay to the definition of the replay spec and the legacy loading
 -- the legacy loaders should probably move to common
 local fileUtils = require("client.src.FileUtils")
-local ReplayV1 = require("client.src.replayV1")
-local ReplayV2 = require("client.src.replayV2")
 
 local REPLAY_VERSION = 2
 
