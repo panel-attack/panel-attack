@@ -166,7 +166,9 @@ function Match:render()
           GraphicsUtil.print(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
         end
 
-        self:drawMatchType()
+        if tableUtils.trueForAll(self.players, function(p) return p.human end) or self.ranked then
+          self:drawMatchType()
+        end
       end
 
       self:drawTimer()

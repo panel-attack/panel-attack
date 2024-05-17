@@ -30,6 +30,7 @@ local StackBase = class(function(self, args)
 
   -- graphics
   self.canvas = love.graphics.newCanvas(312, 612, {dpiscale = GAME:newCanvasSnappedScale()})
+  self.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
 end)
 

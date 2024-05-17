@@ -31,6 +31,14 @@ function Game1pChallenge:onMatchEnded(match)
   Replay.finalizeAndWriteReplay("Challenge Mode", extraFilename, match.replay)
 end
 
+function Game1pChallenge:draw()
+  if self.backgroundImage then
+    self.backgroundImage:draw()
+  end
+  self.match:render()
+  self:drawHUD()
+end
+
 function Game1pChallenge:drawHUD()
   if GAME.battleRoom then
     local drawX = consts.CANVAS_WIDTH / 2

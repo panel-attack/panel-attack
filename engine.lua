@@ -83,7 +83,6 @@ Stack =
     s.character = character
     s.theme = theme
     s.panels_dir = panels_dir
-    s.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
     s.is_local = is_local
 
     s.drawsAnalytics = true
