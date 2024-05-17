@@ -1,7 +1,7 @@
 local logger = require("common.lib.logger")
 local socket = require("socket")
 local NetworkProtocol = require("common.network.NetworkProtocol")
-local ClientMessages = require("client.src.network.ClientProtocol")
+local ClientMessages = require("common.network.ClientProtocol")
 require("client.src.TimeQueue")
 local class = require("common.lib.class")
 local Request = require("client.src.network.Request")

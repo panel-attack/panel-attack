@@ -1,6 +1,6 @@
 local NetworkProtocol = require("common.network.NetworkProtocol")
 local TouchDataEncoding = require("common.engine.TouchDataEncoding")
-local ClientMessages = require("client.src.network.ClientProtocol")
+local ClientMessages = require("common.network.ClientProtocol")
 
 function Stack.handle_input_taunt(self)
   if self.inputMethod ~= "touch" then

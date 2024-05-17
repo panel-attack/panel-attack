@@ -1,6 +1,6 @@
 local MessageListener = require("client.src.network.MessageListener")
 local ServerMessages = require("client.src.network.ServerMessages")
-local ClientMessages = require("client.src.network.ClientProtocol")
+local ClientMessages = require("common.network.ClientProtocol")
 local tableUtils = require("common.lib.tableUtils")
 local sceneManager = require("client.src.scenes.sceneManager")
 local NetworkProtocol = require("common.network.NetworkProtocol")
