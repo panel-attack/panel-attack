@@ -1,5 +1,5 @@
 You can also find this file with prettier formatting at 
-https://github.com/panel-attack/panel-attack/blob/beta/readme_installmods.md  
+https://github.com/panel-attack/panel-attack/blob/beta/docs/installMods.md  
 A video explanation is available at https://youtu.be/_SA1UeLwnSE
 
 # How to install a mod

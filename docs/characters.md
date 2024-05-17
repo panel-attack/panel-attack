@@ -1,5 +1,5 @@
 You can also find this file with prettier formatting at  
-https://github.com/panel-attack/panel-attack/blob/beta/readme_characters.md  
+https://github.com/panel-attack/panel-attack/blob/beta/docs/characters.md  
 
 This README consists of 3 parts.  
 In part 1 some general thoughts on character creation are discussed.  

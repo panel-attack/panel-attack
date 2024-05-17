@@ -20,7 +20,7 @@ echo "Building... Results can be found at ${build_dir}"
 echo "Generating panel attack love file"
 
 # We are explicitly specifying which files are included. Make sure to add specific files in alphabetical order.
-zip -r --quiet "${build_dir}panel-attack.love" *.lua *.ttf *.otf readme*.txt *.md *.ogg characters computerPlayers default_data engine helpers libraries localization.csv mods music network panels rich_presence scenes select_screen stages themes ui -x ".*" \*__MACOSX* \*\.DS_Store
+zip -r --quiet "${build_dir}panel-attack.love" *.lua *.ttf *.otf *.md *.ogg characters computerPlayers default_data docs engine helpers libraries localization.csv mods music network panels rich_presence scenes select_screen stages themes ui -x ".*" \*__MACOSX* \*\.DS_Store
 
 if [ -n "$1" ] && [ $1 == "auto-updater" ]
 then

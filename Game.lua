@@ -102,7 +102,7 @@ function Game:setupRoutine()
   -- loading various assets into the game
   coroutine.yield("Loading localization...")
   Localization.init(localization)
-  fileUtils.copyFile("readme_puzzles.txt", "puzzles/README.txt")
+  fileUtils.copyFile("docs/puzzles.txt", "puzzles/README.txt")
   
   coroutine.yield(loc("ld_theme"))
   theme_init()

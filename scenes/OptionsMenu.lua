@@ -53,12 +53,12 @@ function OptionsMenu:loadScreens()
   menus.aboutMenu = self:loadAboutMenu()
   menus.modifyUserIdMenu = self:loadModifyUserIdMenu()
   menus.systemInfo = self:loadInfoScreen(self:getSystemInfo())
-  menus.aboutThemes = self:loadInfoScreen(save.read_txt_file("readme_themes.md"))
-  menus.aboutCharacters = self:loadInfoScreen(save.read_txt_file("readme_characters.md"))
-  menus.aboutStages = self:loadInfoScreen(save.read_txt_file("readme_stages.md"))
-  menus.aboutPanels = self:loadInfoScreen(save.read_txt_file("readme_panels.md"))
-  menus.aboutAttackFiles = self:loadInfoScreen(save.read_txt_file("readme_training.md"))
-  menus.installingMods = self:loadInfoScreen(save.read_txt_file("readme_installmods.md"))
+  menus.aboutThemes = self:loadInfoScreen(save.read_txt_file("docs/themes.md"))
+  menus.aboutCharacters = self:loadInfoScreen(save.read_txt_file("docs/characters.md"))
+  menus.aboutStages = self:loadInfoScreen(save.read_txt_file("docs/stages.md"))
+  menus.aboutPanels = self:loadInfoScreen(save.read_txt_file("docs/panels.md"))
+  menus.aboutAttackFiles = self:loadInfoScreen(save.read_txt_file("docs/training.md"))
+  menus.installingMods = self:loadInfoScreen(save.read_txt_file("docs/installMods.md"))
 
   return menus
 end
