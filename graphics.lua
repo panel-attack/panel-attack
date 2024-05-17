@@ -364,16 +364,6 @@ function Stack:drawPopBurstParticle(atlas, quad, frameIndex, atlasDimension, dra
   GraphicsUtil.drawQuadGfxScaled(atlas, quad, drawX, drawY, rotation, burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
 end
 
-local mask_shader = love.graphics.newShader [[
-   vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
-         // a discarded pixel wont be applied as the stencil.
-         discard;
-      }
-      return vec4(1.0);
-   }
-]]
-
 function Stack:drawDebug()
   if config.debug_mode then
     local x = self.origin_x + 480

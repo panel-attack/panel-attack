@@ -214,32 +214,10 @@ function StackBase:moveForRenderIndex(renderIndex)
     self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
 end
 
-local mask_shader = love.graphics.newShader [[
-   vec4 effect(vec4 color, Image texture, vec2 texture_coords, vec2 screen_coords) {
-      if (Texel(texture, texture_coords).rgb == vec3(0.0)) {
-         // a discarded pixel wont be applied as the stencil.
-         discard;
-      }
-      return vec4(1.0);
-   }
-]]
-
-
 function StackBase:setCanvas()
-  love.graphics.setCanvas({self.canvas, stencil = true})
-  love.graphics.clear()
-  -- basically we draw to the stencil with a black rectangle at canvas size
-  love.graphics.setStencilState("increment", "always", 1)
-  love.graphics.setShader(mask_shader)
-  love.graphics.setBackgroundColor(1, 1, 1)
-  local canvas_w, canvas_h = self.canvas:getDimensions()
-  GraphicsUtil.drawRectangle("fill", 0, 0, canvas_w, canvas_h)
-  love.graphics.setBackgroundColor(unpack(GAME.backgroundColor))
-  love.graphics.setShader()
-  love.graphics.setStencilState("keep", "equal", 1)
-  -- then for all subsequent drawing to the canvas, only pixels that are on the black rectangle are drawn
-
-  -- until the stencil is disabled via love.graphics.setStencilState() when the canvas is drawn
+  love.graphics.setCanvas(self.canvas)
+  -- we want a transparent background
+  love.graphics.clear(0, 0, 0, 0)
 end
 
 function StackBase:drawCharacter()
@@ -314,7 +292,6 @@ function StackBase:stackCanvasWidth()
 end
 
 function StackBase:drawCanvas()
-  love.graphics.setStencilState()
   love.graphics.setCanvas(GAME.globalCanvas)
   love.graphics.setBlendMode("alpha", "premultiplied")
   love.graphics.draw(self.canvas, self.frameOriginX * GFX_SCALE, self.frameOriginY * GFX_SCALE)
