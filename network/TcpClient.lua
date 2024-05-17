@@ -162,7 +162,7 @@ function TcpClient:queueMessage(type, data)
     if not current_message then
       error(loc("nt_msg_err", (data or "nil")))
     end
-    logger.debug("Queuing JSON: " .. dump(current_message))
+    logger.trace("Queuing JSON: " .. dump(current_message))
     self.receivedMessageQueue:push(current_message)
   end
 end
