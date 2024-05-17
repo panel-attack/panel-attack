@@ -1,4 +1,4 @@
-local logger = require("logger")
+local logger = require("common.lib.logger")
 
 GarbageQueue = class(function(s, allowIllegalStuff, mergeComboMetalQueue)
     s.chain_garbage = Queue()

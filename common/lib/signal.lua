@@ -1,5 +1,5 @@
-local util = require("util")
-local logger = require("logger")
+local util = require("common.lib.util")
+local logger = require("common.lib.logger")
 local Signal = {}
 
 function Signal.turnIntoEmitter(t)

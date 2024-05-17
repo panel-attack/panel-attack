@@ -1,16 +1,20 @@
-local logger = require("logger")
-local tableUtils = require("tableUtils")
-local GameModes = require("GameModes")
-local Player = require("Player")
-local Replay = require("replay")
-local Signal = require("helpers.signal")
-local SimulatedStack = require("SimulatedStack")
-local ChallengeModePlayer = require("ChallengeModePlayer")
-local consts = require("consts")
-local ModController = require("mods.ModController")
-local CharacterLoader = require("mods.CharacterLoader")
-local StageLoader = require("mods.StageLoader")
-local SoundController = require("music.SoundController")
+-- TODO: move asset loading related and client only required components into client
+local ModController = require("client.src.mods.ModController")
+local CharacterLoader = require("client.src.mods.CharacterLoader")
+local StageLoader = require("client.src.mods.StageLoader")
+local SoundController = require("client.src.music.SoundController")
+-- Match should at most need the MatchParticipant properties rather than these;
+-- TODO: move the related createFromReplay func
+local Player = require("client.src.Player")
+local ChallengeModePlayer = require("client.src.ChallengeModePlayer")
+
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local GameModes = require("common.engine.GameModes")
+local Replay = require("common.engine.replay")
+local Signal = require("common.lib.signal")
+local SimulatedStack = require("common.engine.SimulatedStack")
+local consts = require("common.engine.consts")
 
 -- A match is a particular instance of the game, for example 1 time attack round, or 1 vs match
 Match =

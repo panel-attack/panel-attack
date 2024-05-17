@@ -1,4 +1,4 @@
---local logger = require("logger")
+--local logger = require("common.lib.logger")
 local database = require("server.PADatabase")
 Player =
   class(

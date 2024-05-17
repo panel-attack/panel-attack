@@ -1,8 +1,9 @@
-local class = require("class")
-local GraphicsUtil = require("graphics_util")
-local consts = require("consts")
+local class = require("common.lib.class")
+local consts = require("common.engine.consts")
+local Signal = require("common.lib.signal")
+-- TODO: move graphics related functionality to client
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 local GFX_SCALE = consts.GFX_SCALE
-local Signal = require("helpers.signal")
 
 local StackBase = class(function(self, args)
   assert(args.which)

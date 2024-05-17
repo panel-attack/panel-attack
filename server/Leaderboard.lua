@@ -1,5 +1,5 @@
-require("class")
-local logger = require("logger")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
 
 -- Object that represents players rankings and placement matches, along with login times
 Leaderboard =

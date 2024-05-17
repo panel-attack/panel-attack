@@ -1,21 +1,20 @@
 SERVER_MODE = true -- global to know the server is running the process
 
 local socket = require("socket")
-local logger = require("logger")
-require("class")
-json = require("libraries.dkjson")
+local logger = require("common.lib.logger")
+local class = require("common.lib.class")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+json = require("common.lib.dkjson")
+require("common.lib.util")
+require("common.lib.timezones")
+require("common.lib.csprng")
 require("server.stridx")
-require("csprng")
-local NetworkProtocol = require("network.NetworkProtocol")
 require("server.server_globals")
 require("server.server_file_io")
 require("server.Connection")
 require("server.Leaderboard")
 require("server.PlayerBase")
 require("server.Room")
-require("util")
-require("timezones")
-local database = require("server.PADatabase")
 
 local pairs = pairs
 local ipairs = ipairs

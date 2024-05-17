@@ -1,4 +1,4 @@
-local utf8 = require("utf8Additions")
+local utf8 = require("common.lib.utf8Additions")
 
 -- Represents an encoding scheme that saves a panel column, row, and raise data into a single unicode character
 -- so it can be somewhat understood in the replay file and easy to trasmit over the network.

@@ -1,6 +1,6 @@
-require("class")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
 require("server.server_file_io")
-local logger = require("logger")
 
 -- Represents all player accounts on the server.
 Playerbase =

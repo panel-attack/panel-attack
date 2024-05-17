@@ -1,17 +1,19 @@
-require("analytics")
-local TouchDataEncoding = require("engine.TouchDataEncoding")
-local TouchInputController = require("engine.TouchInputController")
-local consts = require("consts")
-local logger = require("logger")
-local tableUtils = require("tableUtils")
-local util = require("util")
-local utf8 = require("utf8")
-local GraphicsUtil = require("graphics_util")
-local GameModes = require("GameModes")
-local PanelGenerator = require("gen_panels")
-local StackBase = require("StackBase")
-local class = require("class")
-require("engine.panel")
+-- TODO: move render focused components to client
+local analytics = require("client.src.analytics")
+local GraphicsUtil = require("client.src.graphics.graphics_util")
+
+local TouchDataEncoding = require("common.engine.TouchDataEncoding")
+local TouchInputController = require("common.engine.TouchInputController")
+local consts = require("common.engine.consts")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local util = require("common.lib.util")
+local utf8 = require("common.lib.utf8Additions")
+local GameModes = require("common.engine.GameModes")
+local PanelGenerator = require("common.engine.gen_panels")
+local StackBase = require("common.engine.StackBase")
+local class = require("common.lib.class")
+local Panel = require("engine.panel")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of

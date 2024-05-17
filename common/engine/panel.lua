@@ -731,3 +731,5 @@ function Panel:match(isChainLink, comboIndex, comboSize)
   self.combo_index = comboIndex
   self.combo_size = comboSize
 end
+
+return Panel

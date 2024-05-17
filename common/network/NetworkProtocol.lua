@@ -1,5 +1,4 @@
-local logger = require("logger")
-local utf8 = require("utf8Additions")
+local logger = require("common.lib.logger")
 
 local NetworkProtocol = {}
 

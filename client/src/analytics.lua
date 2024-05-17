@@ -277,5 +277,5 @@ function AnalyticsInstance:getRoundedGPM(clock)
   local garbagePerMinute = self.data.sent_garbage_lines / (clock / 60 / 60)
   return string.format("%0.1f", round(garbagePerMinute, 1))
 end
-  
+
 return analytics

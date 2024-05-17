@@ -1,7 +1,7 @@
-local logger = require("logger")
-local tableUtils = require("tableUtils")
-local PanelGenerator = require("gen_panels")
-local consts = require("consts")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local PanelGenerator = require("common.engine.gen_panels")
+local consts = require("common.engine.consts")
 
 -- score lookup tables
 local SCORE_COMBO_PdP64 = {} --size 40

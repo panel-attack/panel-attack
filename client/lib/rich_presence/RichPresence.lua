@@ -1,3 +1,5 @@
+local class = require("common.lib.class")
+
 RichPresence =
   class(
   function(self)

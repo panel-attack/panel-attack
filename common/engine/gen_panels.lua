@@ -1,6 +1,6 @@
-require("util")
-require("csprng")
-local logger = require("logger")
+local util = require("common.lib.util")
+require("common.lib.csprng")
+local logger = require("common.lib.logger")
 
 -- table of static functions used for generating panels
 local PanelGenerator = { rng = love.math.newRandomGenerator(), generatedCount = 0}

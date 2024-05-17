@@ -1,5 +1,5 @@
-local logger = require("logger")
-local consts = require("consts")
+local logger = require("common.lib.logger")
+local consts = require("common.engine.consts")
 
 Health =
   class(

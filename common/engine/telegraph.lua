@@ -1,7 +1,7 @@
-local logger = require("logger")
-local util = require("util")
-local GraphicsUtil = require("graphics_util")
-local consts = require("consts")
+local logger = require("common.lib.logger")
+local consts = require("common.engine.consts")
+-- TODO: move graphics related functionality to client
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 local GFX_SCALE = consts.GFX_SCALE
 
 local TELEGRAPH_HEIGHT = 16

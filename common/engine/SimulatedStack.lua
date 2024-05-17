@@ -1,10 +1,11 @@
-local logger = require("logger")
-local Health = require("Health")
-local GraphicsUtil = require("graphics_util")
-local StackBase = require("StackBase")
-local class = require("class")
-local consts = require("consts")
-require("queue")
+local logger = require("common.lib.logger")
+local Health = require("common.engine.Health")
+local StackBase = require("common.engine.StackBase")
+local class = require("common.lib.class")
+local consts = require("common.engine.consts")
+
+-- TODO move graphics related functionality to client
+local GraphicsUtil = require("client.src.graphics.graphics_util")
 
 -- A simulated stack sends attacks and takes damage from a player, it "loses" if it takes too many attacks.
 SimulatedStack = class(function(self, arguments)

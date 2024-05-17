@@ -1,7 +1,9 @@
-local logger = require("logger")
-local TouchDataEncoding = require("engine.TouchDataEncoding")
-local util = require("util")
-local consts = require("consts")
+local logger = require("common.lib.logger")
+local TouchDataEncoding = require("common.engine.TouchDataEncoding")
+local util = require("common.lib.util")
+local consts = require("common.engine.consts")
+
+-- TODO: Eliminate GFX_SCALE in favor of a scaling field that lives on stack
 local GFX_SCALE = consts.GFX_SCALE
 
 local TOUCH_SWAP_COOLDOWN = 5  -- default number of cooldown frames between touch-input swaps, applied after the first 2 swaps after a touch is initiated, to prevent excessive or accidental stealths

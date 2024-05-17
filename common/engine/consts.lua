@@ -1,7 +1,6 @@
-require("util")
-local tableUtils = require("tableUtils")
+require("common.lib.util")
+local tableUtils = require("common.lib.tableUtils")
 
---- @module consts
 local consts = {
   CANVAS_WIDTH = 1280,
   CANVAS_HEIGHT = 720,
