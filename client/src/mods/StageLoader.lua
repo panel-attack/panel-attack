@@ -85,8 +85,8 @@ function StageLoader.initStages()
     fill_stages_ids()
   end
 
-  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") then
-    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/stages.txt") do
+  if love.filesystem.getInfo(themes[config.theme].path .. "/stages.txt") then
+    for line in love.filesystem.lines(themes[config.theme].path .. "/stages.txt") do
       line = trim(line) -- remove whitespace
       -- found at least a valid stage in a stages.txt file
       if stages[line] then

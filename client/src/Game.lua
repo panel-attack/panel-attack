@@ -98,7 +98,7 @@ function Game:load(gameUpdater)
   love.filesystem.mount("client/assets/characters", "characters")
   love.filesystem.mount("client/assets/panels", "panels")
   love.filesystem.mount("client/assets/stages", "stages")
-  love.filesystem.mount("client/assets/themes", "themes")
+  love.filesystem.mount("client/assets/themes", "themes", true)
   love.filesystem.mount("client/assets/default_data", "default_data")
   -- TODO: include this with save.lua?
   require("client.src.puzzles")

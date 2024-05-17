@@ -27,9 +27,10 @@ local flags = {
 -- Represents the current styles and images to apply to the game UI
 Theme =
   class(
-  function(self, name)
+  function(self, fullPath, foldername)
     self.VERSIONS = { original = 1, two = 2, fixedOffsets = 3, current = 3}
-    self.name = name
+    self.path = fullPath
+    self.name = foldername
     self.version = self.VERSIONS.original
     self.images = {} -- theme images
     self.fontMaps = {}
@@ -203,7 +204,7 @@ function Theme:load_theme_img(name, useBackup)
   if useBackup == nil then
     useBackup = true
   end
-  local img = GraphicsUtil.loadImageFromSupportedExtensions(Theme.themeDirectoryPath .. self.name .. "/" .. name)
+  local img = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. name)
   if not img and useBackup then
     img = GraphicsUtil.loadImageFromSupportedExtensions(Theme.defaultThemeDirectoryPath .. name)
   end
@@ -211,9 +212,9 @@ function Theme:load_theme_img(name, useBackup)
 end
 
 function Theme:loadFont()
-  for key, value in pairs(fileUtils.getFilteredDirectoryItems(Theme.themeDirectoryPath .. self.name)) do
+  for key, value in pairs(fileUtils.getFilteredDirectoryItems(self.path)) do
     if value:lower():match(".*%.ttf") or value:lower():match(".*%.otf") then -- Any .ttf file
-      self.font.path = Theme.themeDirectoryPath .. self.name .. "/" .. value
+      self.font.path = self.path .. "/" .. value
       break
     end
   end
@@ -401,7 +402,7 @@ function Theme:loadCards()
   -- Chain card loading
   -- load as many chain cards as there are available until 99
   -- we assume if the theme provided any chains, they want to control all of them so don't load backups
-  local hasChainCards = love.filesystem.getInfo(Theme.themeDirectoryPath .. self.name .. "/chain")
+  local hasChainCards = love.filesystem.getInfo(self.path .. "/chain")
   local wantsBackupChainCards = hasChainCards == nil
   for i = 2, 13 do
     -- with backup from default theme
@@ -533,7 +534,7 @@ end
 
 local function loadThemeSfx(theme, SFX_name)
   local dirs_to_check = {
-    Theme.themeDirectoryPath .. theme.name .. "/sfx/",
+    theme.path .. "/sfx/",
     Theme.defaultThemeDirectoryPath .. "sfx/"
   }
   return fileUtils.findSound(SFX_name, dirs_to_check)
@@ -596,7 +597,7 @@ local fullMusics = {"main", "main_start", "select_screen", "select_screen_start"
 function Theme:loadMusic(full)
   local musics = full and fullMusics or basicMusics
   for _, music in ipairs(musics) do
-    self.musics[music] = fileUtils.loadSoundFromSupportExtensions(Theme.themeDirectoryPath .. self.name .. "/music/" .. music, true)
+    self.musics[music] = fileUtils.loadSoundFromSupportExtensions(self.path .. "/music/" .. music, true)
     if self.musics[music] then
       if not string.find(music, "start") then
         self.musics[music]:setLooping(true)
@@ -621,15 +622,15 @@ function Theme:loadMusic(full)
   end
 end
 
-function Theme.upgradeAndSaveVerboseConfig(self)
+function Theme:upgradeAndSaveVerboseConfig()
   if self.version == self.VERSIONS.original then
     self.version = self.VERSIONS.two
     self:saveVerboseConfig()
   end
 end
 
-function Theme.saveVerboseConfig(self)
-  local jsonPath = Theme.themeDirectoryPath .. self.name .. "/config.json"
+function Theme:saveVerboseConfig()
+  local jsonPath = self.path .. "/config.json"
 
   -- Get the data from the file in case there is something we don't know about
   local jsonData = fileUtils.readJsonFile(jsonPath)
@@ -651,7 +652,7 @@ function Theme.json_init(self)
 
   -- Then override with custom theme
   if self.name ~= consts.DEFAULT_THEME_DIRECTORY then
-    local customData = fileUtils.readJsonFile(Theme.themeDirectoryPath .. self.name .. "/config.json")
+    local customData = fileUtils.readJsonFile(self.path .. "/config.json")
     local version = self:versionForJSONVersion(customData.version)
     if version == self.VERSIONS.original then
       self:loadVersion1DefaultValues()
@@ -755,12 +756,17 @@ function theme_init()
   for _, dirName in ipairs(fileUtils.getFilteredDirectoryItems("themes", "directory")) do
     if tableUtils.contains(fileUtils.getFilteredDirectoryItems("themes/" .. dirName, "file"), "config.json") then
       themeIds[#themeIds + 1] = dirName
-      themes[dirName] = Theme(dirName)
-      if dirName == config.theme then
-        themes[dirName]:load()
-      end
+      themes[dirName] = Theme("themes/" .. dirName, dirName)
     end
   end
+
+  -- add the default theme
+  themeIds[#themeIds+1] = consts.DEFAULT_THEME_DIRECTORY
+  -- sort by name because the default name was added in only later
+  table.sort(themeIds)
+  themes[consts.DEFAULT_THEME_DIRECTORY] = Theme(Theme.defaultThemeDirectoryPath, consts.DEFAULT_THEME_DIRECTORY)
+
+  themes[config.theme]:load()
 end
 
 function Theme:playCancelSfx()

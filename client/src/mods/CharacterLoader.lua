@@ -85,8 +85,8 @@ function CharacterLoader.initCharacters()
     CharacterLoader.fillCharactersIds()
   end
 
-  if love.filesystem.getInfo(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") then
-    for line in love.filesystem.lines(Theme.themeDirectoryPath .. config.theme .. "/characters.txt") do
+  if love.filesystem.getInfo(themes[config.theme].path .. "/characters.txt") then
+    for line in love.filesystem.lines(themes[config.theme].path .. "/characters.txt") do
       line = trim(line) -- remove whitespace
       if characters[line] then
         -- found at least a valid character in a characters.txt file
