@@ -130,11 +130,11 @@ function Match:render()
 
     drawY = drawY + padding
     local totalTime = love.timer.getTime() - self.createTime
-    local timePercent = round(self.timeSpentRunning / totalTime, 5)
+    local timePercent = math.round(self.timeSpentRunning / totalTime, 5)
     GraphicsUtil.printf("Time Percent Running Match: " .. timePercent, drawX, drawY)
 
     drawY = drawY + padding
-    local maxTime = round(self.maxTimeSpentRunning, 5)
+    local maxTime = math.round(self.maxTimeSpentRunning, 5)
     GraphicsUtil.printf("Max Stack Update: " .. maxTime, drawX, drawY)
 
     drawY = drawY + padding

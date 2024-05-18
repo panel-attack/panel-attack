@@ -1,4 +1,5 @@
 local logger = require("common.lib.logger")
+require("common.lib.mathExtensions")
 local utf8 = require("common.lib.utf8Additions")
 local inputManager = require("common.lib.inputManager")
 require("client.src.globals")

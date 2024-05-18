@@ -51,7 +51,7 @@ function RunTimeGraph:updateWithMetrics(runMetrics)
   self.graphs[1]:updateGraph("FPS: " .. averageFPS .. " (" .. fps .. ")", dt, fps)
 
   local memoryCount = collectgarbage("count")
-  memoryCount = round(memoryCount / 1024, 1)
+  memoryCount = math.round(memoryCount / 1024, 1)
   self.graphs[2]:updateGraph("Memory: " .. memoryCount .. " Mb", dt, memoryCount)
 
   self.graphs[3]:updateGraph("leftover_time " .. leftover_time, dt, leftover_time)

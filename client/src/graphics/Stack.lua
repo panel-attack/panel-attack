@@ -783,7 +783,7 @@ function Stack:drawAnalyticData()
   if analytic.lastAPM == 0 or math.fmod(self.clock, 60) < self.max_runs_per_frame then
     if self.clock > 0 and (analytic.data.swap_count + analytic.data.move_count > 0) then
       local actionsPerMinute = (analytic.data.swap_count + analytic.data.move_count) / (self.clock / 60 / 60)
-      analytic.lastAPM = string.format("%0.0f", round(actionsPerMinute, 0))
+      analytic.lastAPM = string.format("%0.0f", math.round(actionsPerMinute, 0))
     end
   end
   if self.theme.images.IMG_apm then

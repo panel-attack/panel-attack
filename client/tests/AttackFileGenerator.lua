@@ -55,14 +55,14 @@ local function analyzeReplayPath(path)
 end
 
 local function analyzePathRecursive(path)
-  local pathContents = FileUtil.getFilteredDirectoryItems(path)
+  local pathContents = fileUtils.getFilteredDirectoryItems(path)
 
   for key, currentPath in pairs(pathContents) do
     local fullPath = path .. separator .. currentPath
     local file_info = love.filesystem.getInfo(fullPath)
     if file_info then
       if file_info.type == "file" then
-        local fileExtension = FileUtil.getFileExtension(currentPath)
+        local fileExtension = fileUtils.getFileExtension(currentPath)
         if fileExtension == ".json" or fileExtension == ".txt" then
           analyzeReplayPath(fullPath)
         end

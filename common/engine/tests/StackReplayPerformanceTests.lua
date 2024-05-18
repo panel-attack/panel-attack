@@ -12,7 +12,7 @@ local function testReplayPerformanceWithPath(path)
     logger.warn("Run " .. i .. " took " .. time)
   end
 
-  logger.warn("Total Time: " .. round(totalTime / runCount, 5))
+  logger.warn("Total Time: " .. math.round(totalTime / runCount, 5))
   StackReplayTestingUtils:cleanup(match)
 end
 

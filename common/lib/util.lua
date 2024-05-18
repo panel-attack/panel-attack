@@ -149,11 +149,6 @@ function table_to_string(tab)
   return ret
 end
 
--- DEPRECATED, use non global math.round
-function round(positive_decimal_number, number_of_decimal_places)
-  return math.round(positive_decimal_number, number_of_decimal_places)
-end
-
 -- Returns a time string for the number of frames
 function frames_to_time_string(frame_count, include_centiseconds)
   local min_sec_sep = ":"

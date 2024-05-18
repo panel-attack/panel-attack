@@ -160,7 +160,7 @@ function BattleRoom:updateWinrates()
   end
   for _, player in ipairs(self.players) do
     if gamesPlayed > 0 then
-      local winrate = 100 * round(player.wins / gamesPlayed, 2)
+      local winrate = 100 * math.round(player.wins / gamesPlayed, 2)
       player:setWinrate(winrate)
     else
       player:setWinrate(0)
@@ -174,8 +174,8 @@ function BattleRoom:updateExpectedWinrates()
     -- this isn't feasible to do for n-player matchups at this point
     local p1 = self.players[1]
     local p2 = self.players[2]
-    p1:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p2.rating - p1.rating) / RATING_SPREAD_MODIFIER)), 2)))
-    p2:setExpectedWinrate((100 * round(1 / (1 + 10 ^ ((p1.rating - p2.rating) / RATING_SPREAD_MODIFIER)), 2)))
+    p1:setExpectedWinrate((100 * math.round(1 / (1 + 10 ^ ((p2.rating - p1.rating) / RATING_SPREAD_MODIFIER)), 2)))
+    p2:setExpectedWinrate((100 * math.round(1 / (1 + 10 ^ ((p1.rating - p2.rating) / RATING_SPREAD_MODIFIER)), 2)))
   end
 end
 

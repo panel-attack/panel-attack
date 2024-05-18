@@ -1,6 +1,8 @@
 -- with love 12 you can pass the name of a lua file as an argument when starting love
 -- this will cause that file to be used in place of main.lua
 -- so by passing "./testLauncher.lua" as the first arg this becomes a testrunner that shares the game's conf.lua
+
+require("common.lib.mathExtensions")
 local util = require("common.lib.util")
 util.addToCPath("./common/lib/??")
 util.addToCPath("./server/lib/??")
@@ -38,8 +40,8 @@ local tests = {
   "common.engine.tests.PuzzleTests",
   "common.engine.tests.ReplayTests",
   "common.engine.tests.StackReplayTests",
-  --"common.engine.tests.StackRollbackReplayTests",
-  --"common.engine.tests.StackTouchReplayTests",
+  "common.engine.tests.StackRollbackReplayTests",
+  "common.engine.tests.StackTouchReplayTests",
 }
 
 local updateCount = 0
@@ -51,6 +53,7 @@ function love.update(dt)
   updateCount = updateCount + 1
 end
 
+-- the drawing somehow doesn't really work because the update does not wait for the require to finish?
 function love.draw()
   local width, height = love.window.getMode()
   if tests[updateCount + 1] then

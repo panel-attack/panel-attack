@@ -1,5 +1,11 @@
 local os = require("os")
-local socket = require("common.lib.socket")
+local socket
+if love then
+  -- love comes with luasocket
+  socket = require("socket")
+else
+  socket = require("common.lib.socket")
+end
 
 local logger = {
   messages = {}
