@@ -118,15 +118,14 @@ luajit serverLauncher.lua
 
 ### Windows versions of luasocket and luafilesystem
 
-For windows you either need to include the files in the repository or get the files yourself.
+For windows you need to make sure the following platform specific libraries are present and working
 
-look in the folders like "luapower lfs for win64 server"
-lfs.dll (on windows)
-lfs.so (on linux)
-lua51.dll (on windows)
-socket/core.so (on linux, make a folder for socket and put core.so in there)
+lua51.dll (may have to go into the root folder, not sure)
+server\lib\lfs.dll (included version should work)
+common\lib\sqlite\lsqlite3.dll (included version should work)
+common\lib\socket\core.dll 
 
-it may still complain about missing files.  Try to figure out from the error message what you are missing.
+Try to figure out from the error message what you are missing.
 
 ## Ranking
 
@@ -143,28 +142,3 @@ Change MainMenu.lua, around where it says something like
 {MenuItem.createButtonMenuItem("Beta Server", switchToScene(sceneManager:createScene("Lobby", {serverIp = "betaserver.panelattack.com", serverPort = 59569})},
 
 to something that makes sense for your server. Replace "Beta Server" the URL and the port number. The port number is optional, the game will try to connect to port 49569 if not supplied.
-
-
-## Outdated info on how to build a client
-
-Then build a windows binary for the client from source code.
-see this link for instructions:
-https://love2d.org/wiki/Game_Distribution
-
-Here's a windows script that does this:
-
-7z a -tzip ./output/panel.love ./panel-attack/*  -x!./panel-attack/.git
-mkdir .\output\panel-attack
-copy /b love.exe+.\output\panel.love .\output\panel-attack\panel.exe
-xcopy .\love-0.9.0-win32\*.* .\output\panel-attack
-
-instructions for the above script:
-This does assume you've installed 7zip and have added its installation folder to your PATH environmental variables
-place the source code you'd like to package into a folder called "panel-attack" in the same directory as the builder.bat file.
-also place the love.exe downloaded from the zip file for the version of love you'd like to use from https://bitbucket.org/rude/love/downloads/
-it will create a panel.love file, and a panel.exe from the source code.
-
-Note you can get love.exe and the love-0.9.0-win32 folder from here:
-https://bitbucket.org/rude/love/downloads/
-
-Note: you can supposedly run a built love windows executable on mac or linux by installing love2d (0.9.0), changing the extension from .exe to .love, and opening the file with love2d.  In pratice though, people have had more luck with WINE.
