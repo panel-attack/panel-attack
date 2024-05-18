@@ -2,23 +2,10 @@
 
 ## Installation
 
-
-### lua 5.1
-We target a version of lua 5.1 that has a couple fixes, namely the one that comes from luajit
-
-If you just try to run lua5.1 you will get an error about math.random interval
-
-linux / macos
-```
-brew install lua@5.1
-```
-
-windows
-
-The repository includes a lua binary for windows.
-
-
 ### luajit
+[LuaJIT](https://luajit.org/luajit.html) is a Just-In-Time compiler for Lua, based on Lua's 5.1 version.
+Running Lua code with the JIT compiler has significant performance gains and it also comes with some extra features.
+Both server and game use LuaJIT.
 
 linux
 ```
@@ -32,15 +19,41 @@ brew install luajit
 
 Windows
 
-I think you have to build the binary yourself.  Takes some googling and effort.
+You have to build the binary yourself or find a package manager that does it for you. 
+Refer to https://luajit.org/install.html for building yourself.
+
+### lua 5.1
+Specifically on the server you may need to install some libraries locally for the server.  
+Lua has a dedicated package manager called luarocks.
+To work with LuaJIT, Lua 5.1 is required to compile packages that will work with LuaJIT.
+
+linux / macos
+```
+brew install lua@5.1
+```
+
+Windows
+
+You can download the source code on the [Lua website](https://www.lua.org/ftp/).  
 
 ### luarocks
 
-Lua Rocks is a lua package manager on macOS and linux that will install what we need, if you are on windows see the end section.
+Lua Rocks is a lua package manager that will install what we need.
 
+#### brew
 ```
 brew install luarocks
 ```
+
+#### apt
+```
+apt install luarocks
+```
+
+#### Windows
+
+Precompiled binaries are available from http://luarocks.github.io/luarocks/releases/  
+Alternatively there are install instructions at https://github.com/luarocks/luarocks/wiki/Installation-instructions-for-Windows
 
 ### luasocket
 
