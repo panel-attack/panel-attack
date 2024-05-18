@@ -1,7 +1,9 @@
 require("client.src.save")
+local Match = require("common.engine.Match")
 local GameModes = require("common.engine.GameModes")
 local Player = require("client.src.Player")
-local LevelPresets = require("client.lib.LevelPresets")
+local LevelPresets = require("client.src.LevelPresets")
+local inputs = require("common.lib.inputManager")
 
 local GarbageQueueTestingUtils = {}
 
@@ -54,6 +56,7 @@ function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
   local levelData = LevelPresets.getModern(1)
   levelData.maxHealth = stackHealth or 100000
   player:setLevelData(levelData)
+  player:restrictInputs(inputs.inputConfigurations[1])
   local match = Match({player}, mode.doCountdown, mode.stackInteraction, mode.winConditions, mode.gameOverConditions, false)
   match:start()
   match.stacks[1].run = stackRunOverride

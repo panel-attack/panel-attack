@@ -1,6 +1,8 @@
 local logger = require("common.lib.logger")
 local GameModes = require("common.engine.GameModes")
 local Player = require("client.src.Player")
+local Match = require("common.engine.Match")
+local inputs = require("common.lib.inputManager")
 
 local StackReplayTestingUtils = {}
 
@@ -17,6 +19,7 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
   end
   for i = 1, playerCount do
     local player = Player.getLocalPlayer()
+    player.isLocal = false
     if speed then
       player:setSpeed(speed)
     end
@@ -29,6 +32,8 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
     else
       player:setStyle(GameModes.Styles.CLASSIC)
     end
+    player:restrictInputs(inputs.inputConfigurations[i])
+    players[#players+1] = player
   end
 
   local match = Match(players, endless.doCountdown, endless.stackInteraction, endless.winConditions, endless.gameOverConditions, false)
@@ -44,6 +49,23 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
   return match
 end
 
+function StackReplayTestingUtils.createSinglePlayerMatch(gameMode)
+  local players = { Player.getLocalPlayer() }
+  players[1].isLocal = false
+  players[1]:restrictInputs(inputs.inputConfigurations[1])
+
+  local match = Match(players, gameMode.doCountdown, gameMode.stackInteraction, gameMode.winConditions, gameMode.gameOverConditions, false)
+  match:setSeed(1)
+  match:start()
+  match:removeCanvases()
+
+  for i = 1, #match.players do
+    match.players[i].stack.max_runs_per_frame = 1
+  end
+
+  return match
+end
+
 function StackReplayTestingUtils:fullySimulateMatch(match)
   local startTime = love.timer.getTime()
 
@@ -51,8 +73,6 @@ function StackReplayTestingUtils:fullySimulateMatch(match)
     match:run()
   end
   local endTime = love.timer.getTime()
-
-  self:cleanup(match)
 
   return match, endTime - startTime
 end
@@ -98,10 +118,12 @@ function StackReplayTestingUtils:setupReplayWithPath(path)
 end
 
 function StackReplayTestingUtils:cleanup(match)
+  for _, player in ipairs(match.players) do
+    player:unrestrictInputs()
+  end
   if match then
     match:deinit()
   end
-  GAME:reset()
 end
 
 return StackReplayTestingUtils

@@ -1,17 +1,14 @@
-local consts = require("consts")
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local GameModes = require("GameModes")
+local consts = require("common.engine.consts")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local GameModes = require("common.engine.GameModes")
 local Puzzle = require("common.engine.Puzzle")
-local Player = require("Player")
+local Player = require("client.src.Player")
 
 local function puzzleTest()
   -- to stop rising
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+  local match = StackReplayTestingUtils.createSinglePlayerMatch(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
   local puzzle = Puzzle(nil, nil, 1, "011010")
-  battleRoom.players[1].settings.level = 5
-  local match = battleRoom:createMatch()
-  match:start()
-  local stack = battleRoom.players[1].stack
+  local stack = match.stacks[1]
   stack:set_puzzle_state(puzzle)
 
   assert(stack.panels[1][1].color == 0, "wrong color")
@@ -21,17 +18,15 @@ local function puzzleTest()
   match:run()
   match:run()
   assert(stack:canSwap(1, 4), "should be able to swap")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 puzzleTest()
 
 local function clearPuzzleTest()
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+  local match = StackReplayTestingUtils.createSinglePlayerMatch(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
   local puzzle = Puzzle("clear", false, 0, "[============================][====]246260[====]600016514213466313451511124242", 60, 0)
-  battleRoom.players[1].settings.level = 5
-  local match = battleRoom:createMatch()
-  match:start()
-  local stack = battleRoom.players[1].stack
+  local stack = match.stacks[1]
   stack:set_puzzle_state(puzzle)
 
   assert(stack.panels[1][1].color == 1, "wrong color")
@@ -41,6 +36,7 @@ local function clearPuzzleTest()
   match:run()
   match:run()
   assert(stack:canSwap(1, 4), "should be able to swap")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 clearPuzzleTest()
@@ -59,6 +55,7 @@ local function basicSwapTest()
   assert(stack.queuedSwapRow == 1)
   stack:new_row()
   assert(stack.queuedSwapRow == 2)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 basicSwapTest()
@@ -77,6 +74,7 @@ local function moveAfterCountdownV46Test()
 
   StackReplayTestingUtils:simulateMatchUntil(match, lastBlockedCursorMovementFrame + 1)
   assert(stack.cursorLock == nil, "Cursor should not be locked after countdown")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 moveAfterCountdownV46Test()
@@ -121,6 +119,7 @@ local function testShakeFrames()
   assert(stack:shakeFramesForGarbageSize(5, 5) == 76)
   assert(stack:shakeFramesForGarbageSize(6, 8) == 76)
   assert(stack:shakeFramesForGarbageSize(6, 1000) == 76)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 testShakeFrames()

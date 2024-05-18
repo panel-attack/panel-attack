@@ -690,27 +690,29 @@ function Character.playAttackSfx(self, attack)
     end
   end
 
-  stopAttackSounds()
+  if self.sounds.chain then
+    stopAttackSounds()
 
-  -- play combos or chains
-  if attack.type == consts.ATTACK_TYPE.combo then
-    self:playComboSfx(attack.size)
-  elseif attack.type == consts.ATTACK_TYPE.shock then
-    self:playShockSfx(attack.size)
-  else --elseif chain_combo.type == consts.ATTACK_TYPE.chain then
-    self:playChainSfx(attack.size)
+    -- play combos or chains
+    if attack.type == consts.ATTACK_TYPE.combo then
+      self:playComboSfx(attack.size)
+    elseif attack.type == consts.ATTACK_TYPE.shock then
+      self:playShockSfx(attack.size)
+    else --elseif chain_combo.type == consts.ATTACK_TYPE.chain then
+      self:playChainSfx(attack.size)
+    end
   end
 end
 
 function Character.playGarbageMatchSfx(self)
-  if #self.sounds.garbage_match ~= 0 then
+  if self.sounds.garbage_match and #self.sounds.garbage_match ~= 0 then
     SoundController:stopSfx(self.sounds.garbage_match)
     SoundController:playRandomSfx(self.sounds.garbage_match)
   end
 end
 
 function Character.playGarbageLandSfx(self)
-  if #self.sounds.garbage_land ~= 0 then
+  if self.sounds.garbage_land and #self.sounds.garbage_land ~= 0 then
     SoundController:stopSfx(self.sounds.garbage_land)
     SoundController:playRandomSfx(self.sounds.garbage_land)
   end
@@ -718,7 +720,7 @@ end
 
 -- tauntUp is rolled externally in order to send the exact same taunt index to the enemy as plays locally
 function Character.playTauntUpSfx(self, tauntUp)
-  if #self.sounds.taunt_up ~= 0 then
+  if self.sounds.taunt_up and #self.sounds.taunt_up ~= 0 then
     SoundController:stopSfx(self.sounds.taunt_up)
     -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_up[tauntUp] then
@@ -730,7 +732,7 @@ function Character.playTauntUpSfx(self, tauntUp)
 end
 
 function Character.playTauntDownSfx(self, tauntDown)
-  if #self.sounds.taunt_down ~= 0 then
+  if self.sounds.taunt_down and #self.sounds.taunt_down ~= 0 then
     SoundController:stopSfx(self.sounds.taunt_down)
     -- self might be a replacement character with less taunts than the selected one so confirm the index first
     if self.sounds.taunt_down[tauntDown] then

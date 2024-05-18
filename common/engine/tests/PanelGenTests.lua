@@ -1,6 +1,7 @@
-local PanelGenerator = require("gen_panels")
-require("engine")
-local GameModes = require("GameModes")
+local PanelGenerator = require("common.engine.PanelGenerator")
+local GameModes = require("common.engine.GameModes")
+local Match = require("common.engine.Match")
+local Player = require("client.src.Player")
 
 local function testPanelGenForGarbage1()
   PanelGenerator:setSeed(1)

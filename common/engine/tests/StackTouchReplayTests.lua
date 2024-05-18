@@ -1,9 +1,9 @@
-local consts = require("consts")
-local tableUtils = require("tableUtils")
-local GameModes = require("GameModes")
+local consts = require("common.engine.consts")
+local tableUtils = require("common.lib.tableUtils")
+local GameModes = require("common.engine.GameModes")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
 
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local testReplayFolder = "tests/replays/"
+local testReplayFolder = "common/engine/tests/replays/"
 
 -- Tests a replay doing the following use cases
 -- Note this doesn't test the TouchInputController currently because it just executes the already encoded inputs.
@@ -58,6 +58,7 @@ local function simpleTouchTest()
   assert(tableUtils.length(match.P1.chains) == 1)
   assert(tableUtils.length(match.P1.combos) == 3)
   assert(match.P1.analytic.data.destroyed_panels == 31)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 simpleTouchTest()

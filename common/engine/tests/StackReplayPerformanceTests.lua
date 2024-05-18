@@ -1,5 +1,5 @@
-local logger = require("logger")
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
+local logger = require("common.lib.logger")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
 
 local function testReplayPerformanceWithPath(path)
   local runCount = 3
@@ -13,6 +13,7 @@ local function testReplayPerformanceWithPath(path)
   end
 
   logger.warn("Total Time: " .. round(totalTime / runCount, 5))
+  StackReplayTestingUtils:cleanup(match)
 end
 
 testReplayPerformanceWithPath("tests/replays/v046-2022-06-04-19-06-21-Hekato-L8-vs-CoreyBLD-L8-Casual-draw.txt")

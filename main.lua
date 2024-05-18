@@ -37,8 +37,6 @@ function love.load(args)
   GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
 
   GAME:load(GAME_UPDATER)
-
-  GAME.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
 function love.focus(f)

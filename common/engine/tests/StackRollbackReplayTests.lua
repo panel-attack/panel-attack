@@ -1,9 +1,9 @@
-local tableUtils = require("tableUtils")
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local testReplayFolder = "tests/replays/"
-local GameModes = require("GameModes")
-local logger = require("logger")
+local tableUtils = require("common.lib.tableUtils")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local GameModes = require("common.engine.GameModes")
+local logger = require("common.lib.logger")
 
+local testReplayFolder = "common/engine/tests/replays/"
 
 -- Vs rollback one player way behind
 -- We need to make sure we remove garbage sent "in the future" so its not duplicated
@@ -43,6 +43,7 @@ local function rollbackPastAttackTest()
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 4)
   assert(tableUtils.length(match.P2.combos) == 4)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 logger.info("running rollbackPastAttackTest")
@@ -84,6 +85,7 @@ local function rollbackNotPastAttackTest()
   assert(match.P2.level == 10)
   assert(tableUtils.length(match.P2.chains) == 4)
   assert(tableUtils.length(match.P2.combos) == 4)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 logger.info("running rollbackNotPastAttackTest")
@@ -145,6 +147,7 @@ local function rollbackFullyPastAttack()
   assert(match.P1.level == 8)
   assert(tableUtils.length(match.P1.chains) == 1)
   assert(tableUtils.length(match.P1.combos) == 1)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 logger.info("running rollbackFullyPastAttack")

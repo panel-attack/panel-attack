@@ -1,8 +1,8 @@
-local tableUtils = require("tableUtils")
-local consts = require("consts")
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local Replay = require("replay")
-local GameModes = require("GameModes")
+local tableUtils = require("common.lib.tableUtils")
+local consts = require("common.engine.consts")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local Replay = require("common.engine.Replay")
+local GameModes = require("common.engine.GameModes")
 
 
 local function endlessSaveTest()
@@ -22,11 +22,12 @@ local function endlessSaveTest()
 
   Replay.finalizeReplay(match, replay)
   local replayJSON = json.encode(replay)
-  
+
   assert(replay ~= nil)
   assert(replay.players[1].settings.inputs == "A909")
   assert(replayJSON ~= nil)
   assert(type(replayJSON) == "string")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 endlessSaveTest()

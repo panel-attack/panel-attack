@@ -1,9 +1,10 @@
-local consts = require("consts")
-local tableUtils = require("tableUtils")
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local testReplayFolder = "tests/replays/"
-local GameModes = require("GameModes")
-local logger = require("logger")
+local consts = require("common.engine.consts")
+local tableUtils = require("common.lib.tableUtils")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local GameModes = require("common.engine.GameModes")
+local logger = require("common.lib.logger")
+
+local testReplayFolder = "common/engine/tests/replays/"
 
 local function test(func)
   func()
@@ -21,6 +22,7 @@ local function testChainingPropagationThroughSwap1()
   assert(not match.P2.panels[4][5].matchAnyway)
   assert(match.P2.panels[5][5].chaining == true)
   assert(match.P2.panels[5][5].matchAnyway == true)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function testHoverInheritanceOverSwapOverGarbageHover()
@@ -38,6 +40,7 @@ local function testHoverInheritanceOverSwapOverGarbageHover()
   assert(match.P2.panels[10][4].state == "hovering")
   -- 10 frames GPHover + 3 frames left from the swap
   assert(match.P2.panels[10][4].timer == 13)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function testFirstHoverFrameMatch()
@@ -53,6 +56,7 @@ local function testFirstHoverFrameMatch()
   assert(match.P1.panels[4][4].chaining ~= true)
   -- for this specific replay, the match combines with another one to form a +6
   assert(match.P1.combos[4269][1].width == 5)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function testHoverChainOverGarbageClear()
@@ -78,6 +82,7 @@ local function testHoverChainOverGarbageClear()
   assert(match.P1.combos[3080][1] ~= nil and match.P1.combos[3080][1].width == 3, "We should've gotten a +4 x3 on this frame")
   StackReplayTestingUtils:simulateMatchUntil(match, 3272)
   assert(match.P2:game_ended() == true, "P2 should have died here")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function horizontalSwapIntoHoverTest()
@@ -103,6 +108,7 @@ local function horizontalSwapIntoHoverTest()
   assert(match.P2.chain_counter == 2)
   StackReplayTestingUtils:simulateMatchUntil(match, 4228)
   assert(match.P2.chain_counter == 0, "chain counter should reset here as all other falling panels lost their chaining status by now")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function basicEndlessTest()
@@ -116,6 +122,7 @@ local function basicEndlessTest()
   assert(match.P1.levelData.maxHealth == 1)
   assert(match.P1.score == 37)
   assert(match.P1.difficulty == 3)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function basicTimeAttackTest()
@@ -132,6 +139,7 @@ local function basicTimeAttackTest()
   assert(match.P1.difficulty == 1)
   assert(tableUtils.length(match.P1.chains) == 8)
   assert(tableUtils.length(match.P1.combos) == 4)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function basicVsTest()
@@ -151,6 +159,7 @@ local function basicVsTest()
   local winners = match:getWinners()
   assert(#winners == 1)
   assert(winners[1].playerNumber == 2)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 --the above replay did not succeed in throwing errors for some of the bugs I coded in during the checkMatches refactor
@@ -172,6 +181,7 @@ local function basicVsTest2()
   local winners = match:getWinners()
   assert(#winners == 1)
   assert(winners[1].playerNumber == 2)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 local function noInputsInVsIsDrawTest()
@@ -190,6 +200,7 @@ local function noInputsInVsIsDrawTest()
   assert(tableUtils.length(match.P2.combos) == 0)
   local winners = match:getWinners()
   assert(#winners == 2)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 -- Tests a bunch of different frame specific tricks and makes sure we still end at the expected time.
@@ -206,6 +217,7 @@ local function frameTricksTest()
   assert(match.P1.difficulty == 3)
   assert(tableUtils.length(match.P1.chains) == 13)
   assert(tableUtils.length(match.P1.combos) == 7)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 -- Tests a catch that also did a "sync" (two separate matches on the same frame)
@@ -226,6 +238,7 @@ local function catchAndSyncTest()
   local winners = match:getWinners()
   assert(#winners == 1)
   assert(winners[1].playerNumber == 1)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 -- Moving the cursor before ready is done
@@ -269,6 +282,7 @@ local function movingBeforeInPositionDisallowedPriorToTouch()
   StackReplayTestingUtils:simulateMatchUntil(match, 60)
   assert(match.P1.cur_row == 6)
   assert(match.P1.cur_col == 3)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 -- Test that down stacking under garbage makes everything fall even if panels are sandwiched between.
@@ -297,6 +311,7 @@ local function downStackDropsSandwichedGarbageAllTogether()
   assert(match.P2.panels[5][4].isGarbage == false)
   assert(match.P2.panels[8][4].state == "falling")
   assert(match.P2.panels[8][4].isGarbage == true)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 -- Test that a match that touches metal and a garbage block that also matches the metal still clears the whole metal
@@ -327,6 +342,7 @@ local function matchMetalAndGarbageClearsAllMetalTest()
   assert(match.P1.panels[8][4].state == "matched")
   assert(match.P1.panels[8][5].state == "matched")
   assert(match.P1.panels[8][6].state == "matched")
+  StackReplayTestingUtils:cleanup(match)
 end
 
 -- Test that a panel that is still falling when it starts hovering doesn't get the chain flag.
@@ -356,6 +372,7 @@ local function fallingWhileHoverBeginsDoesNotChain()
   assert(match.P2.panels[7][3].state == "hovering")
   assert(match.P2.panels[7][3].isGarbage == false)
   assert(match.P2.panels[7][3].chaining == true)
+  StackReplayTestingUtils:cleanup(match)
 end
 
 logger.info("running basicTimeAttackTest")

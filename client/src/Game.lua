@@ -82,9 +82,6 @@ local Game = class(
     self.last_y = 0
     self.input_delta = 0.0
 
-    -- coroutines
-    self.setupCoroutineObject = coroutine.create(function() self:setupCoroutine() end)
-
     -- misc
     self.rich_presence = RichPresence()
     -- time in seconds, can be used by other elements to track the passing of time beyond dt
@@ -95,11 +92,6 @@ local Game = class(
 Game.newCanvasSnappedScale = newCanvasSnappedScale
 
 function Game:load(gameUpdater)
-  love.filesystem.mount("client/assets/characters", "characters")
-  love.filesystem.mount("client/assets/panels", "panels")
-  love.filesystem.mount("client/assets/stages", "stages")
-  love.filesystem.mount("client/assets/themes", "themes", true)
-  love.filesystem.mount("client/assets/default_data", "default_data")
   -- TODO: include this with save.lua?
   require("client.src.puzzles")
   -- move to constructor
@@ -108,8 +100,9 @@ function Game:load(gameUpdater)
   if user_input_conf then
     self.input:importConfigurations(user_input_conf)
   end
-  --self:createScenes()
+
   sceneManager.activeScene = StartUp({setupRoutine = self.setupRoutine})
+  self.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
 function Game:setupRoutine()
@@ -222,7 +215,7 @@ function Game:runUnitTests()
 
   logger.info("Running Unit Tests...")
   GAME.muteSound = true
-  require("tests.Tests")
+  --require("client.tests.Tests")
   SoundController:applyConfigVolumes()
 end
 
@@ -342,11 +335,6 @@ function Game:drawScaleInfo()
     end
     love.graphics.printf(scaleString, GraphicsUtil.getGlobalFontWithSize(30), 5, 5, 2000, "left")
   end
-end
-
-function Game:reset()
-  self.currently_paused_tracks = {}
-  self.muteSound = false
 end
 
 function Game.errorData(errorString, traceBack)
