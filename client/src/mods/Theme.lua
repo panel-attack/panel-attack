@@ -542,7 +542,7 @@ end
 
 -- initializes the theme sounds
 function Theme:sound_init(full)
-  self.zero_sound = fileUtils.loadSoundFromSupportExtensions("zero_music")
+  self.zero_sound = fileUtils.loadSoundFromSupportExtensions("client/assets/zero_music")
 
   self.sounds = {}
   self:loadSfx(full)
