@@ -96,7 +96,7 @@ local function selectMenuItem()
     if file_info then
       if file_info.type == "file" then
         filename = selection
-        local success, replay = Replay.loadFromPath(selection)
+        local success, replay = Replay.load(fileUtils.readJsonFile(selection))
         if success then
           selectedReplay = replay
         end

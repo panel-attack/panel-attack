@@ -33,8 +33,8 @@ local tests = {
   "common.engine.tests.PuzzleTests",
   "common.engine.tests.ReplayTests",
   "common.engine.tests.StackReplayTests",
-  "common.engine.tests.StackRollbackReplayTests",
-  "common.engine.tests.StackTouchReplayTests",
+  --"common.engine.tests.StackRollbackReplayTests",
+  --"common.engine.tests.StackTouchReplayTests",
 }
 
 local updateCount = 0

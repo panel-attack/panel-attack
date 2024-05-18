@@ -6,10 +6,6 @@ local ReplayV2 = require("common.engine.replayV2")
 local utf8 = require("common.lib.utf8Additions")
 require("common.lib.timezones")
 
--- TODO: cut down replay to the definition of the replay spec and the legacy loading
--- the legacy loaders should probably move to common
-local fileUtils = require("client.src.FileUtils")
-
 local REPLAY_VERSION = 2
 
 -- A replay is a particular recording of a play of the game. Temporarily this is just helper methods.
@@ -81,21 +77,20 @@ function Replay.replayCanBeViewed(replay)
   end
 end
 
-function Replay.loadFromPath(path)
-  local replay = fileUtils.readJsonFile(path)
-
-  if not replay then
+function Replay.load(jsonData)
+  local replay
+  if not jsonData then
     -- there was a problem reading the file
-    return false, replay
+    return false, nil
   else
-    if not replay.engineVersion then
+    if not jsonData.engineVersion then
       -- really really bold assumption; serverside replays haven't been tracking engineVersion ever
-      replay.engineVersion = "046"
+      jsonData.engineVersion = "046"
     end
-    if not replay.replayVersion then
-      replay = ReplayV1.transform(replay)
+    if not jsonData.replayVersion then
+      replay = ReplayV1.transform(jsonData)
     else
-      replay = ReplayV2.transform(replay)
+      replay = ReplayV2.transform(jsonData)
     end
     replay.loadedFromFile = true
   end

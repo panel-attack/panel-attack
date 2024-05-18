@@ -1,6 +1,6 @@
-local StackReplayTestingUtils = require("tests.StackReplayTestingUtils")
-local CustomRun = require("CustomRun")
-local input = require("inputManager")
+local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local CustomRun = require("client.src.CustomRun")
+local input = require("common.lib.inputManager")
 
 -- TODO: rewrite the test with sourcing the pressed keys from match.P1.player.inputConfiguration
 local function testSameFrameKeyPressRelease()
