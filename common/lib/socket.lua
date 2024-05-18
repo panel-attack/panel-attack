@@ -9,8 +9,6 @@
 local base = _G
 local string = require("string")
 local math = require("math")
-local util = require("common.lib.util")
-util.addToCPath("./common/lib/??")
 local socket = require("socket.core")
 
 local _M = socket
