@@ -1,6 +1,19 @@
 local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
-local CustomRun = require("client.src.CustomRun")
 local input = require("common.lib.inputManager")
+
+local processEvents = function()
+  if love.event then
+    love.event.pump()
+    for name, a, b, c, d, e, f in love.event.poll() do
+      if name == "quit" then
+        if not love.quit or not love.quit() then
+          return a or 0
+        end
+      end
+      love.handlers[name](a, b, c, d, e, f)
+    end
+  end
+end
 
 -- TODO: rewrite the test with sourcing the pressed keys from match.P1.player.inputConfiguration
 local function testSameFrameKeyPressRelease()
@@ -20,14 +33,14 @@ local function testSameFrameKeyPressRelease()
   assert(raiseKey ~= nil)
   love.event.push("keypressed", raiseKey, raiseKey, false)
   love.event.push("keyreleased", raiseKey, raiseKey, false)
-  CustomRun.processEvents()
+  processEvents()
   input:update(1/60)
   -- there is no way to directly control how many times match will run
   -- so instead emulate the parts match would run but only once
   match.P1:send_controls()
   match.P1:run()
   assert(match.P1.confirmedInput[201] == "g")
-  CustomRun.processEvents()
+  processEvents()
   input:update(1/60)
   match.P1:send_controls()
   match.P1:run()
