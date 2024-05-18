@@ -2,7 +2,7 @@
 
 ## Development Setup
 
-Install the **32-bit** version of love (http://love2d.org/)
+Install love (http://love2d.org/)
 
 Clone a copy of the repository  
 ```
@@ -36,23 +36,23 @@ Please check the [contribution guidelines](CONTRIBUTING.md) for further informat
 ## Release schedule
 
 ### Main releases
+Panel Attack currently has 3 release streams that see updates at varying rates.
 
-**Beginning of the month:**  
-beta feature development followed by a release
+#### canary release
+Cutting edge build, automatically generated with every push to beta.  
+Available via https://github.com/panel-attack/panel-attack/releases.
 
-**Mid month:**  
-Stop landing new features and only add bug fixes
-
-**After last tournament of the month:**  
-Merge beta into stable and release
-Hot fix stable as needed
+#### beta release
+beta release, a bit more tested than canary.
+Features are released on beta if there is some confidence that they're mostly working correctly.
 
 Release notes are posted in #panel-attack-updates on the discord when updates go out.
 
-### Canary releases
+#### stable release
+stable release, tested features that just work.  
+Stable releases take tournament dates into consideration so that any bugs that may still get caught don't interfere with them.  
 
-Canary releases are temporarily available via https://github.com/Endaris/panel-attack/releases, automatically generated with each push to the sceneRefactor development branch.  
-We may adopt this for future releases on the main repository.
+Release notes are posted in #panel-attack-updates on the discord when updates go out.
 
 ## Useful Lua Programming Tips
 
@@ -94,13 +94,3 @@ Secure copy the file to the server in correct folder on the server.
 Test that the game updates properly.  
 
 Post release notes in #panel-attack-updates on the discord.
-
-### Releasing a new full release with auto updating
-
-First make a love file, then copy that all into the auto updater folder and make that a love file.  
-Then copy the windows files in to your release folder.  
-Tack the autoupdater love file on the end of the exe.  
-Release a zip of the whole release directory.  
-
-More details and scripts to follow.
-
