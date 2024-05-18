@@ -1,4 +1,4 @@
-require("server_queue")
+require("client.src.server_queue")
 
 local queue = ServerQueue()
 

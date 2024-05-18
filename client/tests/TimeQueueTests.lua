@@ -1,4 +1,4 @@
-require("TimeQueue")
+require("client.src.TimeQueue")
 
 local function processAssertNotRun(result)
   assert(false)

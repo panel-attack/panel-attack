@@ -25,6 +25,11 @@ function love.load()
 end
 
 local tests = {
+  "client.tests.QueueTests",
+  "client.tests.ServerQueueTests",
+  --"client.tests.StackGraphicsTests",
+  "client.tests.TcpClientTests",
+  "client.tests.ThemeTests",
   "server.tests.ConnectionTests",
   "common.engine.tests.StackTests",
   "common.engine.tests.GarbageQueueTests",

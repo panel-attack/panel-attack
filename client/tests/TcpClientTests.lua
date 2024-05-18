@@ -1,8 +1,7 @@
-local TcpClient = require("network.TcpClient")
-local consts = require("consts")
-local ClientMessages = require("network.ClientProtocol")
-local Request = require("network.Request")
-local NetworkProtocol = require("network.NetworkProtocol")
+local TcpClient = require("client.src.network.TcpClient")
+local consts = require("common.engine.consts")
+local ClientMessages = require("common.network.ClientProtocol")
+local NetworkProtocol = require("common.network.NetworkProtocol")
 
 -- all of these tests assume that there is a socket listening on the respective port
 local testServerIp = consts.SERVER_LOCATION

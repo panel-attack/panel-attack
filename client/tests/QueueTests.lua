@@ -1,4 +1,4 @@
-require("queue")
+local Queue = require("client.src.queue")
 
 local queue = Queue()
 assert(queue:peek() == nil)
