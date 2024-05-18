@@ -1,5 +1,5 @@
-local GarbageQueueTestingUtils = require("tests.GarbageQueueTestingUtils")
-local tableUtils = require("tableUtils")
+local GarbageQueueTestingUtils = require("common.engine.tests.GarbageQueueTestingUtils")
+local tableUtils = require("common.lib.tableUtils")
 
 -- 150 frames
 local minTransferTime = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + GARBAGE_DELAY_LAND_TIME

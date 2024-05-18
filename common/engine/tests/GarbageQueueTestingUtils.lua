@@ -1,8 +1,9 @@
-require("save")
-local GameModes = require("GameModes")
+require("client.src.save")
+local GameModes = require("common.engine.GameModes")
+local Player = require("client.src.Player")
+local LevelPresets = require("client.lib.LevelPresets")
 
 local GarbageQueueTestingUtils = {}
-local LevelPresets = require("LevelPresets")
 
 -- a reduced version of stackRun that skips on stuff like raise, health sfx, etc. as it's only meant to be on the receiving end of garbage
 local function stackRunOverride(self)
@@ -40,31 +41,35 @@ local function stackShouldRunOverride(stack, runsSoFar)
 end
 
 function GarbageQueueTestingUtils.createMatch(stackHealth, attackFile)
-  local battleRoom
+  local player = Player.getLocalPlayer()
+  local mode
   if attackFile then
-    battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
-    battleRoom.trainingModeSettings = readAttackFile(attackFile)
+    mode = GameModes.getPreset("ONE_PLAYER_TRAINING")
+    player:setAttackEngineSettings(readAttackFile(attackFile))
   else
-    battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
+    mode = GameModes.getPreset("ONE_PLAYER_VS_SELF")
   end
-  battleRoom.players[1].settings.level = 1
-  battleRoom.players[1].settings.levelData.maxHealth = stackHealth or 100000
-  local match = battleRoom:createMatch()
+
+  player:setLevel(1)
+  local levelData = LevelPresets.getModern(1)
+  levelData.maxHealth = stackHealth or 100000
+  player:setLevelData(levelData)
+  local match = Match({player}, mode.doCountdown, mode.stackInteraction, mode.winConditions, mode.gameOverConditions, false)
   match:start()
-  match.P1.run = stackRunOverride
-  match.P1.shouldRun = stackShouldRunOverride
+  match.stacks[1].run = stackRunOverride
+  match.stacks[1].shouldRun = stackShouldRunOverride
 
   -- make some space for garbage to fall
-  GarbageQueueTestingUtils.reduceRowsTo(match.P1, 0)
+  GarbageQueueTestingUtils.reduceRowsTo(match.stacks[1], 0)
 
   return match
 end
 
 function GarbageQueueTestingUtils.runToFrame(match, frame)
-  while match.P1.clock < frame do
+  while match.stacks[1].clock < frame do
     match:run()
   end
-  assert(match.P1.clock == frame)
+  assert(match.stacks[1].clock == frame)
 end
 
 -- clears panels until only "count" rows are left

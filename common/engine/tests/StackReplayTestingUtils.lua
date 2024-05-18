@@ -1,7 +1,6 @@
-local logger = require("logger")
-local GameModes = require("GameModes")
-local Player = require("Player")
-local LevelPresets = require("LevelPresets")
+local logger = require("common.lib.logger")
+local GameModes = require("common.engine.GameModes")
+local Player = require("client.src.Player")
 
 local StackReplayTestingUtils = {}
 
@@ -11,14 +10,13 @@ function StackReplayTestingUtils:simulateReplayWithPath(path)
 end
 
 function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wantsCanvas, playerCount, theme)
-  local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
+  local endless = GameModes.getPreset("ONE_PLAYER_ENDLESS")
+  local players = {}
   if playerCount == nil then
     playerCount = 1
-  elseif playerCount == 2 then
-    local player = Player.getLocalPlayer()
-    battleRoom:addPlayer(player)
   end
-  for _, player in ipairs(battleRoom.players) do
+  for i = 1, playerCount do
+    local player = Player.getLocalPlayer()
     if speed then
       player:setSpeed(speed)
     end
@@ -27,16 +25,13 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
     end
     if level then
       player:setLevel(level)
+      player:setStyle(GameModes.Styles.MODERN)
+    else
+      player:setStyle(GameModes.Styles.CLASSIC)
     end
   end
 
-  if level then
-    battleRoom:setStyle(GameModes.Styles.MODERN)
-  else
-    battleRoom:setStyle(GameModes.Styles.CLASSIC)
-  end
-
-  local match = battleRoom:createMatch()
+  local match = Match(players, endless.doCountdown, endless.stackInteraction, endless.winConditions, endless.gameOverConditions, false)
   match:setSeed(1)
   match:start()
   if not wantsCanvas then
@@ -71,13 +66,13 @@ function StackReplayTestingUtils:simulateStack(stack, clockGoal)
 end
 
 function StackReplayTestingUtils:simulateMatchUntil(match, clockGoal)
-  assert(match.P1.is_local == false, "Don't use 'local' for tests, we might simulate the clock time too much if local")
-  while match.P1.clock < clockGoal do
+  assert(match.stacks[1].is_local == false, "Don't use 'local' for tests, we might simulate the clock time too much if local")
+  while match.stacks[1].clock < clockGoal do
     assert(not match:hasEnded(), "Game isn't expected to end yet")
-    assert(#match.P1.input_buffer > 0)
+    assert(#match.stacks[1].input_buffer > 0)
     match:run()
   end
-  assert(match.P1.clock == clockGoal)
+  assert(match.stacks[1].clock == clockGoal)
 end
 
 -- Runs the given clock time both with and without rollback
@@ -97,7 +92,7 @@ function StackReplayTestingUtils:setupReplayWithPath(path)
 
   assert(GAME ~= nil)
   assert(match ~= nil)
-  assert(match.P1)
+  assert(match.stacks[1])
 
   return match
 end
