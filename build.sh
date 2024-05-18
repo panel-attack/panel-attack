@@ -20,7 +20,7 @@ echo "Building... Results can be found at ${build_dir}"
 echo "Generating panel attack love file"
 
 # We are explicitly specifying which files are included. Make sure to add specific files in alphabetical order.
-zip -r --quiet "${build_dir}panel-attack.love" conf.lua main.lua docs client common -x ".*" \*__MACOSX* \*\.DS_Store
+zip -r --quiet "${build_dir}panel-attack.love" conf.lua main.lua COPYING THANKS.md docs client common -x ".*" \*__MACOSX* \*\.DS_Store \*tests
 
 if [ -n "$1" ] && [ $1 == "local" ]
 then
