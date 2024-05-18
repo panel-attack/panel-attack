@@ -55,7 +55,7 @@ function ReplayV1.transform(legacyReplay)
       -- not saved in v1
       panelId = config.panels,
       -- not saved for engine version v046
-      inputs = uncompress_input_string(v1r.in_buf),
+      inputs = Replay.decompressInputString(v1r.in_buf),
     }
   }
 
@@ -97,7 +97,7 @@ function ReplayV1.transform(legacyReplay)
         panelId = config.panels,
         -- not saved for engine version v046
         inputMethod = v1r.P2_inputMethod or "controller",
-        inputs = uncompress_input_string(v1r.I),
+        inputs = Replay.decompressInputString(v1r.I),
         level = v1r.P2_level,
         style = GameModes.Styles.MODERN,
         levelData = levelPresets.getModern(v1r.P2_level)

@@ -1,6 +1,9 @@
 -- with love 12 you can pass the name of a lua file as an argument when starting love
 -- this will cause that file to be used in place of main.lua
 -- so by passing "./testLauncher.lua" as the first arg this becomes a testrunner that shares the game's conf.lua
+local util = require("common.lib.util")
+util.addToCPath("./common/lib/??")
+util.addToCPath("./server/lib/??")
 local logger = require("common.lib.logger")
 require("client.src.globals")
 local Game = require("client.src.Game")

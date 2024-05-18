@@ -2,6 +2,7 @@
 local analytics = require("client.src.analytics")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 
+require("common.lib.stringExtensions")
 local TouchDataEncoding = require("common.engine.TouchDataEncoding")
 local TouchInputController = require("common.engine.TouchInputController")
 local consts = require("common.engine.consts")

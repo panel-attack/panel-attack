@@ -1,5 +1,6 @@
-require("class")
-local logger = require("logger")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local Replay = require("common.engine.Replay")
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
@@ -126,8 +127,8 @@ function Room:add_spectator(new_spectator_connection)
     msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[1])
     msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[2])
     if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
-      msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
-      msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+      msg.replay_of_match_so_far.vs.in_buf = Replay.compressInputString(msg.replay_of_match_so_far.vs.in_buf)
+      msg.replay_of_match_so_far.vs.I = Replay.compressInputString(msg.replay_of_match_so_far.vs.I)
     end
   end
   new_spectator_connection:send(msg)
@@ -263,8 +264,8 @@ function Room:resolve_game_outcome()
         self.replay.vs.in_buf = table.concat(self.inputs[1])
         self.replay.vs.I = table.concat(self.inputs[2])
         if COMPRESS_REPLAYS_ENABLED then
-          self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
-          self.replay.vs.I = compress_input_string(self.replay.vs.I)
+          self.replay.vs.in_buf = Replay.compressInputString(self.replay.vs.in_buf)
+          self.replay.vs.I = Replay.compressInputString(self.replay.vs.I)
           logger.debug("Compressed vs I/in_buf")
           logger.debug("saving compressed replay as " .. path .. sep .. filename)
         else

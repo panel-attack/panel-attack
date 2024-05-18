@@ -1,5 +1,4 @@
 local tableUtils = require("common.lib.tableUtils")
-local utf8 = require("common.lib.utf8Additions")
 local pairs, type, setmetatable, getmetatable = pairs, type, setmetatable, getmetatable
 
 local util = {}
@@ -150,33 +149,6 @@ function table_to_string(tab)
   return ret
 end
 
-function math.sign(v)
-	return (v >= 0 and 1) or -1
-end
-
-function math.round(number, numberOfDecimalPlaces)
-  if number == 0 then
-    return number
-  end
-  local multiplier = 10^(numberOfDecimalPlaces or 0)
-  if number > 0 then
-    return math.floor(number * multiplier + 0.5) / multiplier
-  else 
-    return math.ceil(number * multiplier - 0.5) / multiplier 
-  end
-end
-
-function math.integerAwayFromZero(number)
-  if number == 0 then
-    return number
-  end
-  if number > 0 then
-    return math.ceil(number)
-  else 
-    return math.floor(number)
-  end
-end
-
 -- DEPRECATED, use non global math.round
 function round(positive_decimal_number, number_of_decimal_places)
   return math.round(positive_decimal_number, number_of_decimal_places)
@@ -234,118 +206,6 @@ function trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
--- Returns if the unicode codepoint (representative number) is either the left or right parenthesis
-local function codePointIsParenthesis(codePoint)
-  if codePoint >= 40 and codePoint <= 41 then
-    return true
-  end
-  return false
-end
-
--- Returns if the unicode codepoint (representative number) is a digit from 0-9
-local function codePointIsDigit(codePoint)
-  if codePoint >= 48 and codePoint <= 57 then
-    return true
-  end
-  return false
-end
-
-function compress_input_string(inputs)
-  assert(inputs ~= nil, "string must be provided for compression")
-  assert(type(inputs) == "string", "input to be compressed must be a string")
-  if string.len(inputs) == 0 then
-    return inputs
-  end
-  
-  local compressedTable = {}
-  local function addToTable(codePoint, repeatCount)
-    local currentInput = utf8.char(codePoint)
-    -- write the input
-    if tonumber(currentInput) == nil then
-      compressedTable[#compressedTable+1] = currentInput .. repeatCount
-    else
-      local completeInput = "(" .. currentInput
-      for j = 2, repeatCount do
-        completeInput = completeInput .. currentInput
-      end
-      compressedTable[#compressedTable+1] = completeInput .. ")"
-    end
-  end
-
-  local previousCodePoint = nil
-  local repeatCount = 1
-  for p, codePoint in utf8.codes(inputs) do
-    if codePointIsDigit(codePoint) and codePointIsParenthesis(previousCodePoint) == true then
-      -- Detected a digit enclosed in parentheses in the inputs, the inputs are already compressed.
-      return inputs
-    end
-    if p > 1 then
-      if previousCodePoint ~= codePoint then
-        addToTable(previousCodePoint, repeatCount)
-        repeatCount = 1
-      else
-        repeatCount = repeatCount + 1
-      end
-    end
-    previousCodePoint = codePoint
-  end
-  -- add the final entry without having to check for table length in every iteration
-  addToTable(previousCodePoint, repeatCount)
-
-  return table.concat(compressedTable)
-end
-
-function uncompress_input_string(inputs)
-
-  local previousCodePoint = nil
-  local inputChunks = {}
-  local numberString = nil
-  local characterCodePoint = nil
-  -- Go through the characters one by one, saving character and then the number sequence and after passing it writing out that many characters
-  for p, codePoint in utf8.codes(inputs) do
-    if p > 1 then
-      if codePointIsDigit(codePoint) then 
-        local number = utf8.char(codePoint)
-        if numberString == nil then
-          characterCodePoint = previousCodePoint
-          numberString = ""
-        end
-        numberString = numberString .. number
-      else
-        if numberString ~= nil then
-          if codePointIsParenthesis(characterCodePoint) then
-            inputChunks[#inputChunks+1] = numberString
-          else
-            local character = utf8.char(characterCodePoint)
-            local repeatCount = tonumber(numberString)
-            inputChunks[#inputChunks+1] = string.rep(character, repeatCount)
-          end
-          numberString = nil
-        end
-        if previousCodePoint == codePoint then
-          -- Detected two consecutive letters or symbols in the inputs, the inputs are not compressed.
-          return inputs
-        else
-          -- Nothing to do yet
-        end
-      end
-    end
-    previousCodePoint = codePoint
-  end
-
-  local result
-  if numberString ~= nil then
-    local character = utf8.char(characterCodePoint)
-    local repeatCount = tonumber(numberString)
-    inputChunks[#inputChunks+1] = string.rep(character, repeatCount)
-    result = table.concat(inputChunks)
-  else
-    -- We never encountered a single number, this string wasn't compressed
-    result = inputs
-  end
-  return result
-end
-
 function dump(o, includeNewLines)
   includeNewLines = includeNewLines or false
   if type(o) == "table" then
@@ -363,84 +223,6 @@ function dump(o, includeNewLines)
   else
     return tostring(o)
   end
-end
-
-function json.isValid(str)
-  local content = trim(str)
-  local length = utf8.len(content)
-  local firstChar = utf8.sub(content, 1, 1)
-  local lastChar = utf8.sub(content, length, length)
-  -- early quit condition for clearly non-matching files
-  if not tableUtils.contains({"{", "["}, firstChar) or not tableUtils.contains({"}", "]"}, lastChar) then
-    return false
-  end
-
-  -- for every { there needs to be a }
-  -- for every [ there needs to be a ]
-  -- for every : there needs to be either , or a new line (cause we use a fake/old json spec that is somewhat akin to YAML)
-  -- all of these 3 character typs need to respect sequence
-  -- {{[:,:,[]:,]}} 
-  -- track the expected closure characters based on openers from front to back:
-  -- }}],],,
-
-  -- any content inside "" is excluded from search
-  content = string.gsub(content, "\".-\"", "")
-
-  -- any comments are excluded from search
-  content = string.gsub(content, "/%*.-%*/", "")
-  content = string.gsub(content, "//.-\n", "")
-
-  -- any other content aside from key characters is getting purged for better overview
-  content = string.gsub(content, "[^%{%}%[%]:,\n]", "")
-
-  -- \n and , are interchangeable but there may be more \n for formatting purposes
-  -- replace all occurences of , with \n
-  content = string.gsub(content, ",", "\n")
-
-  local searchBackLog = {}
-  
-  for match in string.gmatch(content, ".") do
-    -- for each find, put the inverse character at the end of the table
-    -- search the table from end to start later (better performance compared to table.insert(table, value, 1)
-    if match == "{" then
-      searchBackLog[#searchBackLog+1] = "}"
-    elseif match == "[" then
-      searchBackLog[#searchBackLog+1] = "]"
-    elseif match == ":" then
-      searchBackLog[#searchBackLog+1] = "\n"
-    else
-      if searchBackLog[#searchBackLog] == match then
-        searchBackLog[#searchBackLog] = nil
-      elseif match == "\n" then
-        -- could be extra whitespace, skip
-      elseif searchBackLog[#searchBackLog] == "\n" then
-        -- the final attribute of a level does not need to be closed with a , or new line
-        searchBackLog[#searchBackLog] = nil
-        -- confirm that the next expected character matches
-        if searchBackLog[#searchBackLog] == match then
-          searchBackLog[#searchBackLog] = nil
-        else
-          -- not a json if it doesn't
-          return false
-        end
-      else
-        -- mismatch
-        return false
-      end
-    end
-  end
-
-  -- if there is still backlog remaining, it means that some stuff didn't get closed
-  return #searchBackLog == 0
-end
-
-function string.toCharTable(self)
-  local t = {}
-  for _, codePoint in utf8.codes(self) do
-    local character = utf8.char(codePoint)
-    t[#t+1] = character
-  end
-  return t
 end
 
 local metaTableForWeakKeys = { __mode = "k"}

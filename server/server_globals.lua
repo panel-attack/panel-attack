@@ -23,3 +23,4 @@ ENGINE_VERSION = "047"
 MIN_LEVEL_FOR_RANKED = 1
 MAX_LEVEL_FOR_RANKED = 10
 SERVER_PORT = 49569 -- default: 49569
+SERVER_MODE = true -- global to know the server is running the process

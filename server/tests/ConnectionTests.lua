@@ -1,8 +1,6 @@
-local util = require("common.lib.util")
-util.addToCPath("./common/lib/sqlite/??")
+require("server.server_globals")
 require("server.Connection")
 require("server.PlayerBase")
-require("server.server_globals")
 
 local testServer = {}
 testServer.isPlayerBanned = function (ip)
