@@ -485,4 +485,33 @@ function assertEqual(a, b)
   assert(a == b, "Expected " .. a .. " to be equal to " .. b)
 end
 
+-- adds a path to lua's CPath for loading C libraries
+-- the ?? placeholder will get resolved to ?.so or ?.dll depending on what the first entry in the cPath uses
+function util.addToCPath(path)
+  assert(path:sub(1, 1) == ".", "extra CPaths should always be defined relative to the main directory")
+  -- why do we need to add things to the cpath?
+  -- c libraries for lua define an entry point function that is typically called
+  --  luaopen_libName
+  -- when requiring a file via a path such as require("pathA.pathB.libName") this translates to lua trying to open the library with
+  --  luaopen_pathA_pathB_libName
+  -- which is not the entry point function
+  -- by calling util.addToCPath("pathA/pathB/??") the path is searched directly
+  -- this means we can require the lib just via require("libName")
+  -- due to it being in the cpath it will get found while the entry point function is invoked as luaopen_libName
+  -- note that libraries don't have to adhere to that pattern and can also demand to be placed in subdirectory
+  -- Example: luasocket's dynamic core library's entry point is
+  --  luaopen_socket_core
+  -- meaning it has to be required as "socket.core", otherwise it cannot be opened
+  local cPathDirs = util.split(package.cpath, ";")
+  local fileExtension = string.sub(cPathDirs[1], -4)
+  if fileExtension == "?.so" then
+    path = path:gsub("%?%?", "?.so")
+  else
+    path = path:gsub("%?%?", "?.dll")
+  end
+  if not tableUtils.contains(cPathDirs, path) then
+    package.cpath = package.cpath .. ";" .. path
+  end
+end
+
 return util

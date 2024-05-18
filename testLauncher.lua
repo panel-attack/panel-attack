@@ -22,6 +22,7 @@ function love.load()
 end
 
 local tests = {
+  "server.tests.ConnectionTests",
   "common.engine.tests.StackTests",
   "common.engine.tests.GarbageQueueTests",
   "common.engine.tests.HealthTests",
@@ -31,7 +32,6 @@ local tests = {
   "common.engine.tests.StackReplayTests",
   "common.engine.tests.StackRollbackReplayTests",
   "common.engine.tests.StackTouchReplayTests",
-  "server.tests.ConnectionTests"
 }
 
 local updateCount = 0

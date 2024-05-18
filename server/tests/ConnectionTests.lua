@@ -1,3 +1,5 @@
+local util = require("common.lib.util")
+util.addToCPath("./common/lib/sqlite/??")
 require("server.Connection")
 require("server.PlayerBase")
 require("server.server_globals")

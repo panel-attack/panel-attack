@@ -1,5 +1,5 @@
 local os = require("os")
-local socket = require("socket")
+local socket = require("common.lib.socket")
 
 local logger = {
   messages = {}

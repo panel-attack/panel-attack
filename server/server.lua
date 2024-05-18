@@ -1,6 +1,6 @@
 SERVER_MODE = true -- global to know the server is running the process
 
-local socket = require("socket")
+local socket = require("common.lib.socket")
 local logger = require("common.lib.logger")
 local class = require("common.lib.class")
 local NetworkProtocol = require("common.network.NetworkProtocol")
