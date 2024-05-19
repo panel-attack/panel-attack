@@ -12,7 +12,6 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
 local logger = require("common.lib.logger")
 local analytics = require("client.src.analytics")
-local sceneManager = require("client.src.scenes.sceneManager")
 local input = require("common.lib.inputManager")
 local save = require("client.src.save")
 local fileUtils = require("client.src.FileUtils")
@@ -92,6 +91,7 @@ local Game = class(
 Game.newCanvasSnappedScale = newCanvasSnappedScale
 
 function Game:load(gameUpdater)
+  
   -- TODO: include this with save.lua?
   require("client.src.puzzles")
   -- move to constructor
@@ -100,8 +100,9 @@ function Game:load(gameUpdater)
   if user_input_conf then
     self.input:importConfigurations(user_input_conf)
   end
-
-  sceneManager.activeScene = StartUp({setupRoutine = self.setupRoutine})
+  
+  self.navigationStack = require("client.src.NavigationStack")
+  self.navigationStack:push(StartUp({setupRoutine = self.setupRoutine}))
   self.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
@@ -263,7 +264,7 @@ end
 -- dt is the amount of time in seconds that has passed.
 function Game:update(dt)
   self.timer = love.timer.getTime()
-  if sceneManager.activeScene == nil then
+  if GAME.navigationStack.transition then
     leftover_time = leftover_time + dt
   else
     leftover_time = 0
@@ -272,10 +273,10 @@ function Game:update(dt)
   if self.battleRoom then
     self.battleRoom:update(dt)
   end
-  
+
   handleShortcuts()
 
-  sceneManager:update(dt)
+  self.navigationStack:update(dt)
 
   if self.backgroundImage then
     self.backgroundImage:update(dt)
@@ -286,14 +287,6 @@ function Game:update(dt)
   self.rich_presence:runCallbacks()
 end
 
-function Game:switchToStartScene()
-  if themes[config.theme].images.bg_title then
-    sceneManager:switchToScene(sceneManager:createScene("TitleScreen"))
-  else
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
-  end
-end
-
 function Game:draw()
   -- Setting the canvas means everything we draw is drawn to the canvas instead of the screen
   love.graphics.setCanvas(self.globalCanvas)
@@ -301,7 +294,7 @@ function Game:draw()
   love.graphics.clear()
 
   -- With this, self.globalCanvas is clear and set as our active canvas everything is being drawn to
-  sceneManager:draw()
+  self.navigationStack:draw()
 
   self:drawFPS()
   self:drawScaleInfo()
@@ -366,8 +359,10 @@ function Game.errorData(errorString, traceBack)
   if GAME.battleRoom then
     errorData.battleRoomInfo = GAME.battleRoom:getInfo()
   end
-  if sceneManager and sceneManager.activeScene and sceneManager.activeScene.match then
-    errorData.matchInfo = sceneManager.activeScene.match:getInfo()
+  if GAME.navigationStack and GAME.navigationStack.scenes
+      and #GAME.navigationStack.scenes > 0
+      and GAME.navigationStack.scenes[#GAME.navigationStack.scenes].match then
+    errorData.matchInfo = GAME.navigationStack.scenes[#GAME.navigationStack.scenes].match:getInfo()
   end
 
   return errorData
@@ -389,7 +384,7 @@ function Game.detailedErrorLogString(errorData)
     "Love Version: " .. errorData.love_version .. newLine ..
     "Renderer Info: " .. errorData.rendererInfo .. newLine ..
     "UTC Time: " .. formattedTime .. newLine ..
-    "Scene: " .. sceneManager.activeScene.name .. newLine
+    "Scene: " .. (GAME.navigationStack.scenes[#GAME.navigationStack.scenes].name or "") .. newLine
 
     if errorData.matchInfo and not errorData.matchInfo.ended then
       detailedErrorLogString = detailedErrorLogString .. newLine ..

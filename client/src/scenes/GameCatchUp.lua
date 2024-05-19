@@ -1,47 +1,21 @@
 local class = require("common.lib.class")
-local consts = require("common.engine.consts")
+local Scene = require("client.src.scenes.Scene")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
-local ModController = require("client.src.mods.ModController")
+local consts = require("common.engine.consts")
 local ModLoader = require("client.src.mods.ModLoader")
-local logger = require("common.lib.logger")
 
 local states = { loadingMods = 1, catchingUp = 2 }
 
--- a transition that displays an intermediary loading screen while the match of the newScene is catching up
--- once the match caught up, the transition ends
-local CatchUpTransition = class(function(transition, oldScene, newScene)
-  assert(newScene.match)
-  transition.progress = 0
-  transition.timePassed = 0
-  transition.oldScene = oldScene
-  transition.newScene = newScene
-  transition.match = newScene.match
-  local state = states.catchingUp
+local GameCatchUp = class(function(self, sceneParams)
 
-  for _, player in ipairs(transition.match.players) do
-    local character = characters[player.settings.characterId]
-    if not character.fully_loaded then
-      state = states.loadingMods
-      logger.debug("triggering character load from catchup transition for mod " .. character.id)
-      ModController:loadModFor(character, player)
-    end
-  end
-
-  local stage = stages[transition.match.stageId]
-  if not stage.fully_loaded then
-    state = states.loadingMods
-    logger.debug("triggering stage load from catchup transition for mod " .. stage.id)
-    ModController:loadModFor(stage, match)
-  end
-
-  transition.state = state
-end)
+end,
+Scene)
 
 local function hasTimeLeft(t)
   return love.timer.getTime() < t + 0.9 * consts.FRAME_RATE
 end
 
-function CatchUpTransition:update(dt)
+function GameCatchUp:update(dt)
   self.timePassed = self.timePassed + dt
 
   if not self.match.P1.play_to_end then
@@ -65,11 +39,11 @@ function CatchUpTransition:update(dt)
   end
 end
 
-function CatchUpTransition:draw()
+function GameCatchUp:draw()
   GraphicsUtil.setColor(1, 1, 1, 1)
   GraphicsUtil.drawRectangle("line", consts.CANVAS_WIDTH / 4 - 5, consts.CANVAS_HEIGHT / 2 - 25, consts.CANVAS_WIDTH / 2 + 10, 50)
   GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 4, consts.CANVAS_HEIGHT / 2 - 20, consts.CANVAS_WIDTH / 2 * self.progress, 40)
   GraphicsUtil.printf("Catching up: " .. self.match.P1.clock .. " out of " .. #self.match.P1.confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
 end
 
-return CatchUpTransition
+return GameCatchUp

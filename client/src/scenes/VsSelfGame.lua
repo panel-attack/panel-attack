@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Replay = require("common.engine.Replay")
 local class = require("common.lib.class")
 
@@ -16,7 +15,6 @@ local VsSelfGame = class(
 )
 
 VsSelfGame.name = "VsSelfGame"
-sceneManager:addScene(VsSelfGame)
 
 function VsSelfGame:onMatchEnded(match)
   local P1 = match.players[1].stack

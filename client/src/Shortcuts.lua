@@ -1,5 +1,4 @@
 local input = require("common.lib.inputManager")
-local sceneManager = require("client.src.scenes.sceneManager")
 local tableUtils = require("common.lib.tableUtils")
 local inputFieldManager = require("client.src.ui.inputFieldManager")
 
@@ -34,17 +33,17 @@ local function takeScreenshot()
 end
 
 local function refreshDesignHelper()
-  if sceneManager.activeScene.name == "DesignHelper" then
+  if GAME.navigationStack:getActiveScene().name == "DesignHelper" then
     package.loaded["scenes.DesignHelper"] = nil
-    sceneManager.activeScene = require("scenes.DesignHelper")
-    sceneManager.activeScene:load()
+    GAME.navigationStack:replace(require("scenes.DesignHelper")())
   end
 end
 
 local function handleCopy()
-  if sceneManager.activeScene and sceneManager.activeScene.match and sceneManager.activeScene.match.P1 then
+  local activeScene = GAME.navigationStack:getActiveScene()
+  if activeScene and activeScene.match and activeScene.match.stacks[1] then
     local stacks = {}
-    local match = sceneManager.activeScene.match
+    local match = activeScene.match
 
     for i = 1, #match.players do
       local player = match.players[i]
@@ -62,8 +61,10 @@ local function handleCopy()
 end
 
 local function handleDumpAttackPattern(playerNumber)
-  if sceneManager.activeScene and sceneManager.activeScene.match then
-    local player = sceneManager.activeScene.match.players[playerNumber]
+  local activeScene = GAME.navigationStack:getActiveScene()
+
+  if activeScene and activeScene.match then
+    local player = activeScene.match.players[playerNumber]
 
     if player and player.stack then
       local data, state = player.stack:getAttackPatternData()

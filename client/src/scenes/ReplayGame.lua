@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local input = require("common.lib.inputManager")
 local consts = require("common.engine.consts")
 local util = require("common.lib.util")
@@ -19,7 +18,6 @@ local ReplayGame = class(
 )
 
 ReplayGame.name = "ReplayGame"
-sceneManager:addScene(ReplayGame)
 
 function ReplayGame:runGame()
   local playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
@@ -61,7 +59,7 @@ function ReplayGame:runGame()
       if self.match.isPaused then
         SoundController:pauseMusic()
       else
-        SoundController:playMusic()
+        SoundController:playMusic(self.musicSource.stageTrack)
       end
     end
   elseif input:isPressedWithRepeat("MenuRight") then
@@ -72,7 +70,7 @@ function ReplayGame:runGame()
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
   elseif input.isDown["Swap2"] then
     if self.match.isPaused then
-      sceneManager:switchToScene(sceneManager:createScene("ReplayBrowser"))
+      GAME.navigationStack:pop()
     end
   elseif input.isDown["MenuPause"] then
     self.match:togglePause()

@@ -2,7 +2,6 @@ local MessageListener = require("client.src.network.MessageListener")
 local ServerMessages = require("client.src.network.ServerMessages")
 local ClientMessages = require("common.network.ClientProtocol")
 local tableUtils = require("common.lib.tableUtils")
-local sceneManager = require("client.src.scenes.sceneManager")
 local NetworkProtocol = require("common.network.NetworkProtocol")
 local logger = require("common.lib.logger")
 
@@ -94,7 +93,7 @@ function BattleRoom:processLeaveRoomMessage(message)
   -- and then shutdown the room
   self.match = nil
   self:shutdown()
-  sceneManager:switchToScene(sceneManager:createScene("Lobby"))
+  GAME.navigationStack:popToName("Lobby")
 end
 
 function BattleRoom:processTauntMessage(message)

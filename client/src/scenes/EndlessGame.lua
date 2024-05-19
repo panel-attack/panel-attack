@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Replay = require("common.engine.Replay")
 local class = require("common.lib.class")
 local GameModes = require("common.engine.GameModes")
@@ -17,7 +16,6 @@ local EndlessGame = class(
 )
 
 EndlessGame.name = "EndlessGame"
-sceneManager:addScene(EndlessGame)
 
 function EndlessGame:onMatchEnded(match)
   local extraPath = "Endless"

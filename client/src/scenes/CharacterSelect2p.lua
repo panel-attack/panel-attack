@@ -1,4 +1,3 @@
-local sceneManager = require("client.src.scenes.sceneManager")
 local CharacterSelect = require("client.src.scenes.CharacterSelect")
 local class = require("common.lib.class")
 local Grid = require("client.src.ui.Grid")
@@ -15,7 +14,6 @@ local CharacterSelect2p = class(
 )
 
 CharacterSelect2p.name = "CharacterSelect2p"
-sceneManager:addScene(CharacterSelect2p)
 
 function CharacterSelect2p:customLoad(sceneParams)
   self:loadUserInterface()

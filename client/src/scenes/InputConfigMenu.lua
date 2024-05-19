@@ -1,7 +1,6 @@
 local Scene = require("client.src.scenes.Scene")
 local tableUtils = require("common.lib.tableUtils")
 local Slider = require("client.src.ui.Slider")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Menu = require("client.src.ui.Menu")
 local MenuItem = require("client.src.ui.MenuItem")
 local consts = require("common.engine.consts")
@@ -15,6 +14,7 @@ local class = require("common.lib.class")
 local InputConfigMenu = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_main
+    self.music = "main"
     self.settingKey = false
     self.menu = nil -- set in load
     
@@ -24,7 +24,6 @@ local InputConfigMenu = class(
 )
 
 InputConfigMenu.name = "InputConfigMenu"
-sceneManager:addScene(InputConfigMenu)
 
 -- Sometimes controllers register buttons as "pressed" even though they aren't. If they have been pressed longer than this they don't count.
 local MAX_PRESS_DURATION = 0.5
@@ -160,7 +159,7 @@ end
 
 local function exitMenu()
   GAME.theme:playValidationSfx()
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  GAME.navigationStack:pop()
 end
 
 function InputConfigMenu:load(sceneParams)
@@ -186,12 +185,10 @@ function InputConfigMenu:load(sceneParams)
   menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("Clear All Inputs", nil, false, function() self:clearAllInputs() end)
   menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("Reset Keys To Default", nil, false, function() self:resetToDefault(menuOptions) end)
   menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil, exitMenu)
-  
+
   self.menu = Menu.createCenteredMenu(menuOptions)
 
   self.uiRoot:addChild(self.menu)
-
-  SoundController:playMusic(themes[config.theme].stageTracks.main)
 end
 
 function InputConfigMenu:update(dt)

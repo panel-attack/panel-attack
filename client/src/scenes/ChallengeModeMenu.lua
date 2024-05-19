@@ -1,11 +1,11 @@
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local class = require("common.lib.class")
 local ChallengeMode = require("client.src.ChallengeMode")
 local Menu = require("client.src.ui.Menu")
 local MenuItem = require("client.src.ui.MenuItem")
 local Label = require("client.src.ui.Label")
 local Stepper = require("client.src.ui.Stepper")
+local CharacterSelectChallenge = require("client.src.scenes.CharacterSelectChallenge")
 
 --@module ChallengeModeMenu
 -- 
@@ -18,19 +18,17 @@ local ChallengeModeMenu = class(
 )
 
 ChallengeModeMenu.name = "ChallengeModeMenu"
-sceneManager:addScene(ChallengeModeMenu)
 
 local function exitMenu()
   GAME.theme:playCancelSfx()
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  GAME.navigationStack:pop()
 end
 
 function ChallengeModeMenu:goToCharacterSelect(difficulty)
   GAME.battleRoom = ChallengeMode(difficulty)
   GAME.theme:playValidationSfx()
 
-  local scene = sceneManager:createScene("CharacterSelectChallenge")
-  sceneManager:switchToScene(scene)
+  GAME.navigationStack:replace(CharacterSelectChallenge())
 end
 
 function ChallengeModeMenu:load(sceneParams)

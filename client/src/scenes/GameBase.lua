@@ -3,7 +3,6 @@ local Scene = require("client.src.scenes.Scene")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local logger = require("common.lib.logger")
 local analytics = require("client.src.analytics")
-local sceneManager = require("client.src.scenes.sceneManager")
 local input = require("common.lib.inputManager")
 local tableUtils = require("common.lib.tableUtils")
 local consts = require("common.engine.consts")
@@ -190,7 +189,7 @@ function GameBase:runGameOver()
   if ((displayTime >= self.maxDisplayTime and self.maxDisplayTime ~= -1) or (displayTime >= self.minDisplayTime and keyPressed)) then
     GAME.theme:playValidationSfx()
     SFX_GameOver_Play = 0
-    sceneManager:switchToScene(sceneManager:createScene(self.nextScene, self.nextSceneParams))
+    GAME.navigationStack:pop()
   end
 end
 
@@ -264,10 +263,8 @@ function GameBase:update(dt)
         self.match:abort()
         if GAME.tcpClient:isConnected() then
           GAME.battleRoom:shutdown()
-          sceneManager:switchToScene(sceneManager:createScene("Lobby"))
-        else
-          sceneManager:switchToScene(sceneManager:createScene("ReplayBrowser"))
         end
+        GAME.navigationStack:pop()
       end
     end
     self:runGame(dt)

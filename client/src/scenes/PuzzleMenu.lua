@@ -6,13 +6,14 @@ local MenuItem = require("client.src.ui.MenuItem")
 local ButtonGroup = require("client.src.ui.ButtonGroup")
 local LevelSlider = require("client.src.ui.LevelSlider")
 local Label = require("client.src.ui.Label")
-local sceneManager = require("client.src.scenes.sceneManager")
 local class = require("common.lib.class")
 
 --@module puzzleMenu
 -- Scene for the puzzle selection menu
 local PuzzleMenu = class(
   function (self, sceneParams)
+    self.music = "select_screen"
+    self.fallbackMusic = "main"
     -- set in load
     self.levelSlider = nil
     self.randomColorButtons = nil
@@ -25,7 +26,6 @@ local PuzzleMenu = class(
 )
 
 PuzzleMenu.name = "PuzzleMenu"
-sceneManager:addScene(PuzzleMenu)
 
 local BUTTON_WIDTH = 60
 local BUTTON_HEIGHT = 25
@@ -60,7 +60,7 @@ end
 function PuzzleMenu:exit()
   GAME.theme:playValidationSfx()
   GAME.battleRoom:shutdown()
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  GAME.navigationStack:pop()
 end
 
 function PuzzleMenu:load(sceneParams)
@@ -115,16 +115,14 @@ function PuzzleMenu:load(sceneParams)
     menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem(puzzleSetName, nil, false, function() self:startGame(puzzleSet) end)
   end
   menuOptions[#menuOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil, self.exit)
-  
+
   self.menu = Menu.createCenteredMenu(menuOptions)
 
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
   self.puzzleLabel = Label({text = "pz_puzzles", x = x - 10, y = y - 40})
-  
+
   self.uiRoot:addChild(self.menu)
   self.uiRoot:addChild(self.puzzleLabel)
-
-  SoundController:playMusic(themes[config.theme].stageTracks.main)
 end
 
 function PuzzleMenu:update(dt)

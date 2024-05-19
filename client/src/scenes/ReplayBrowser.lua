@@ -1,5 +1,4 @@
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local input = require("common.lib.inputManager")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local fileUtils = require("client.src.FileUtils")
@@ -17,7 +16,6 @@ local ReplayBrowser = class(
 )
 
 ReplayBrowser.name = "ReplayBrowser"
-sceneManager:addScene(ReplayBrowser)
 
 local selection = nil
 local base_path = "replays"
@@ -124,7 +122,7 @@ end
 function ReplayBrowser:update()
   if state == "browser" then
     if input.isDown["MenuEsc"] then
-      sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+      GAME.navigationStack:pop()
     end
     if input.isDown["MenuSelect"] then
       GAME.theme:playValidationSfx()
@@ -154,7 +152,7 @@ function ReplayBrowser:update()
       local match = Match.createFromReplay(selectedReplay, false)
       match.renderDuringPause = true
       match:start()
-      sceneManager:switchToScene(ReplayGame({match = match}))
+      GAME.navigationStack:push(ReplayGame({match = match}))
     end
   end
 end

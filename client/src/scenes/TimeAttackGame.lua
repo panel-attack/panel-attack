@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Replay = require("common.engine.Replay")
 local class = require("common.lib.class")
 local GameModes = require("common.engine.GameModes")
@@ -9,7 +8,7 @@ local GameModes = require("common.engine.GameModes")
 local TimeAttackGame = class(
   function (self, sceneParams)
     self.nextScene = "TimeAttackMenu"
-    
+
     self:load(sceneParams)
     self.match:connectSignal("matchEnded", self, self.onMatchEnded)
   end,
@@ -17,7 +16,6 @@ local TimeAttackGame = class(
 )
 
 TimeAttackGame.name = "TimeAttackGame"
-sceneManager:addScene(TimeAttackGame)
 
 function TimeAttackGame:onMatchEnded(match)
   local extraPath = "Time Attack"

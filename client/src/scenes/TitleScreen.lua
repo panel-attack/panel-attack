@@ -1,24 +1,22 @@
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local consts = require("common.engine.consts")
 local input = require("common.lib.inputManager")
 local tableUtils = require("common.lib.tableUtils")
 local class = require("common.lib.class")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
+local MainMenu = require("client.src.scenes.MainMenu")
 
 --@module titleScreen
 -- The title screen scene
 local TitleScreen = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_title
-    self:load(sceneParams)
+    self.music = "title_screen"
   end,
   Scene
 )
 
 TitleScreen.name = "TitleScreen"
-sceneManager:addScene(TitleScreen)
-
 
 local function titleDrawPressStart(percent)
   local textMaxWidth = consts.CANVAS_WIDTH - 40
@@ -33,17 +31,13 @@ function TitleScreen:update(dt)
   local keyPressed = tableUtils.trueForAny(input.isDown, function(key) return key end)
   if love.mouse.isDown(1, 2, 3) or #love.touch.getTouches() > 0 or keyPressed then
     GAME.theme:playValidationSfx()
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+    GAME.navigationStack:replace(MainMenu())
   end
 end
 
 function TitleScreen:draw()
   self.backgroundImg:draw()
   titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
-end
-
-function TitleScreen:load(sceneParams)
-  SoundController:playMusic(themes[config.theme].stageTracks.title_screen)
 end
 
 function TitleScreen:unload()

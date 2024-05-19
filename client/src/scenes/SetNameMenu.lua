@@ -1,7 +1,6 @@
 local Scene = require("client.src.scenes.Scene")
 local InputField = require("client.src.ui.InputField")
 local Label = require("client.src.ui.Label")
-local sceneManager = require("client.src.scenes.sceneManager")
 local input = require("common.lib.inputManager")
 local utf8 = require("common.lib.utf8Additions")
 local class = require("common.lib.class")
@@ -17,7 +16,6 @@ local SetNameMenu = class(
 )
 
 SetNameMenu.name = "SetNameMenu"
-sceneManager:addScene(SetNameMenu)
 
 function SetNameMenu:load()
   local x, y = unpack(themes[config.theme].main_menu_screen_pos)
@@ -83,7 +81,7 @@ function SetNameMenu:confirmName()
     config.name = self.nameField.value
     write_conf_file()
     self.nameField:unfocus()
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+    GAME.navigationStack:pop()
   end
 end
 
@@ -99,7 +97,7 @@ function SetNameMenu:update(dt)
   if input.allKeys.isDown["escape"] then
     GAME.theme:playCancelSfx()
     self.nameField:unfocus()
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+    GAME.navigationStack:pop()
   end
 
   if self.nameField.hasFocus then

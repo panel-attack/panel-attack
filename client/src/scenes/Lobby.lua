@@ -1,5 +1,4 @@
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Label = require("client.src.ui.Label")
 local Menu = require("client.src.ui.Menu")
 local MenuItem = require("client.src.ui.MenuItem")
@@ -11,7 +10,7 @@ local MessageListener = require("client.src.network.MessageListener")
 local ClientMessages = require("common.network.ClientProtocol")
 local Game2pVs = require("client.src.scenes.Game2pVs")
 local CharacterSelect2p = require("client.src.scenes.CharacterSelect2p")
-local CatchUpTransition = require("client.src.scenes.Transitions.CatchUpTransition")
+local GameCatchUp = require("client.src.scenes.GameCatchUp")
 local SoundController = require("client.src.music.SoundController")
 
 local STATES = {Login = 1, Lobby = 2}
@@ -19,6 +18,8 @@ local STATES = {Login = 1, Lobby = 2}
 -- @module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
 local Lobby = class(function(self, sceneParams)
+  self.music = "main"
+
   -- lobby data from the server
   self.playerData = nil
   self.unpairedPlayers = {} -- list
@@ -55,7 +56,6 @@ local Lobby = class(function(self, sceneParams)
 end, Scene)
 
 Lobby.name = "Lobby"
-sceneManager:addScene(Lobby)
 
 ----------
 -- exit --
@@ -64,7 +64,7 @@ sceneManager:addScene(Lobby)
 local function exitMenu()
   GAME.theme:playValidationSfx()
   GAME.tcpClient:resetNetwork()
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  GAME.navigationStack:pop()
 end
 
 -------------
@@ -84,8 +84,6 @@ function Lobby:load(sceneParams)
   self.messageListeners["players"]:subscribe(self, self.updateLobbyState)
   self.messageListeners["game_request"] = MessageListener("game_request")
   self.messageListeners["game_request"]:subscribe(self, self.processGameRequest)
-
-  SoundController:playMusic(themes[config.theme].stageTracks.main)
 
   self:initLobbyMenu()
 end
@@ -205,7 +203,7 @@ function Lobby:start2pVsOnlineMatch(createRoomMessage)
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   love.window.requestAttention()
   SoundController:playSfx(themes[config.theme].sounds.notification)
-  sceneManager:switchToScene(CharacterSelect2p())
+  GAME.navigationStack:push(CharacterSelect2p())
 end
 
 -- starts to spectate a 2p vs online match
@@ -214,10 +212,10 @@ function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
   GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
   if GAME.battleRoom.match then
     local vsScene = Game2pVs({match = GAME.battleRoom.match, nextScene = "CharacterSelect2p"})
-    local transition = CatchUpTransition(self, vsScene)
-    sceneManager:switchToScene(vsScene, transition)
+    local catchUp = GameCatchUp(self, vsScene)
+    GAME.navigationStack:push(catchUp)
   else
-    sceneManager:switchToScene(CharacterSelect2p())
+    GAME.navigationStack:push(CharacterSelect2p())
   end
 end
 
@@ -308,7 +306,7 @@ function Lobby:handleLogin()
       end
       if GAME.timer > self.loginScreenTimer then
         self.loginScreenTimer = nil
-        sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+        GAME.navigationStack:pop()
       end
     end
   end
@@ -357,7 +355,7 @@ function Lobby:update(dt)
   end
 
   if not GAME.tcpClient:processIncomingMessages() then
-    if not sceneManager.transition and not self.loginScreenTimer then
+    if not GAME.navigationStack.transition and not self.loginScreenTimer then
       -- automatic reconnect if we're not about to switch scene
       self.state = STATES.Login
       self.loginRoutine = LoginRoutine(GAME.tcpClient, GAME.connected_server_ip, GAME.connected_server_port)

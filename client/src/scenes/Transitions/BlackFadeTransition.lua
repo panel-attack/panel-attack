@@ -3,7 +3,7 @@ local Transition = require("client.src.scenes.Transitions.Transition")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 
-local BlackFadeTransition = class(function(transition, startTime, duration,  oldScene, newScene, easing)
+local BlackFadeTransition = class(function(transition, startTime, duration, easing)
   transition.easing = easing
 end,
 Transition)

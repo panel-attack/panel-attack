@@ -1,5 +1,5 @@
-local tableUtils = require("tableUtils") 
-local logger = require("logger") 
+local tableUtils = require("common.lib.tableUtils")
+local logger = require("common.lib.logger")
 
 local function getTestDataList()
   local testData = {

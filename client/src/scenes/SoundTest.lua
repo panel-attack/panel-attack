@@ -1,5 +1,4 @@
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Stepper = require("client.src.ui.Stepper")
 local Label = require("client.src.ui.Label")
 local TextButton = require("client.src.ui.TextButton")
@@ -20,7 +19,6 @@ local SoundTest = class(
 )
 
 SoundTest.name = "SoundTest"
-sceneManager:addScene(SoundTest)
 
 local BUTTON_WIDTH = 70
 local BUTTON_HEIGHT = 25
@@ -200,7 +198,7 @@ function SoundTest:load()
       love.audio.stop()
       SoundController:stopMusic()
       themes[config.theme].sounds.menu_validate = menuValidateSound
-      sceneManager:switchToScene(sceneManager:createScene("OptionsMenu"))
+      GAME.navigationStack:pop()
     end)
   }
   

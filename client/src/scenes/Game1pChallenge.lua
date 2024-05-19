@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Replay = require("common.engine.Replay")
 local class = require("common.lib.class")
 local consts = require("common.engine.consts")
@@ -18,7 +17,6 @@ local Game1pChallenge = class(function(self, sceneParams)
 end, GameBase)
 
 Game1pChallenge.name = "Game1pChallenge"
-sceneManager:addScene(Game1pChallenge)
 
 function Game1pChallenge:onMatchEnded(match)
   local extraFilename = "diff-" .. GAME.battleRoom.difficulty .. "-stage-" .. GAME.battleRoom.stageIndex

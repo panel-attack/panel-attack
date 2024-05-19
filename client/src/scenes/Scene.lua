@@ -10,6 +10,14 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local Scene = class(
   function (self, sceneParams)
     self.uiRoot = UiElement({x = 0, y = 0, width = consts.CANVAS_WIDTH, height = consts.CANVAS_HEIGHT})
+    -- scenes may specify theme music to use that is played once they are switched to
+    -- eligible labels:
+    -- main
+    -- select_screen
+    -- title_screen
+    -- any other labels will be synonymous to nil/none
+    self.music = "none"
+    self.fallbackMusic = "none"
   end
 )
 

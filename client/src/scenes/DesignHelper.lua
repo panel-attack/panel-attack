@@ -1,6 +1,5 @@
 local class = require("common.lib.class")
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Grid = require("client.src.ui.Grid")
 local StageCarousel = require("client.src.ui.StageCarousel")
 local input = require("common.lib.inputManager")
@@ -14,7 +13,6 @@ local DesignHelper = class(function(self, sceneParams)
 end, Scene)
 
 DesignHelper.name = "DesignHelper"
-sceneManager:addScene(DesignHelper)
 
 function DesignHelper:load()
   self:loadGrid()
@@ -44,7 +42,6 @@ function DesignHelper:loadGrid()
   -- self.uiRoot:addChild(self.cursor)
   -- self.cursor.escapeCallback = function()
   --   SoundController:playSfx(themes[config.theme].sounds.menu_cancel)
-  --   sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
   -- end
 end
 
@@ -66,7 +63,7 @@ end
 
 function DesignHelper:update()
   if input.allKeys.isDown["MenuEsc"] then
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+    GAME.navigationStack:pop()
   end
 end
 

@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local class = require("common.lib.class")
 local tableUtils = require("common.lib.tableUtils")
 local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
@@ -19,7 +18,6 @@ local PuzzleGame = class(
 )
 
 PuzzleGame.name = "PuzzleGame"
-sceneManager:addScene(PuzzleGame)
 
 function PuzzleGame:customLoad(sceneParams)
   self.inputConfiguration = self.match.players[1].inputConfiguration
@@ -33,8 +31,8 @@ function PuzzleGame:customLoad(sceneParams)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
                     .. validationError
-    local transition = MessageTransition(GAME.timer, 5, self, sceneManager:createScene("PuzzleMenu"), validationError)
-    sceneManager:switchToScene(nil, transition)
+    local transition = MessageTransition(GAME.timer, 5, validationError)
+    GAME.navigationStack:pop(transition)
   end
 end
 
@@ -61,7 +59,7 @@ function PuzzleGame:runGameOver()
     if self.match.players[1].settings.puzzleIndex <= #self.match.players[1].settings.puzzleSet.puzzles then
       self.match.players[1]:setWantsReady(true)
     else
-      sceneManager:switchToScene(sceneManager:createScene("PuzzleMenu"))
+      GAME.navigationStack:pop()
     end
   end
 end

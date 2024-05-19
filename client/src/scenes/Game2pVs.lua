@@ -1,5 +1,4 @@
 local GameBase = require("client.src.scenes.GameBase")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Replay = require("common.engine.Replay")
 local class = require("common.lib.class")
 
@@ -16,7 +15,6 @@ local Game2pVs = class(
 )
 
 Game2pVs.name = "Game2pVs"
-sceneManager:addScene(Game2pVs)
 
 function Game2pVs:onMatchEnded(match)
   local extraPath, extraFilename = "", ""

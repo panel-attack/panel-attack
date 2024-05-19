@@ -2,7 +2,6 @@ local logger = require("common.lib.logger")
 local tableUtils = require("common.lib.tableUtils")
 local fileUtils = require("client.src.FileUtils")
 local consts = require("common.engine.consts")
-local sceneManager = require("client.src.scenes.sceneManager")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local Music = require("client.src.music.Music")
 local StageTrack = require("client.src.music.StageTrack")
@@ -110,7 +109,7 @@ function stages_reload_graphics()
   end
 
   -- reload the current stage graphics immediately
-  local match = sceneManager.activeScene.match
+  local match = GAME.battleRoom and GAME.battleRoom.match
   if match and match.stageId then
     if stages[match.stageId] then
       stages[match.stageId]:graphics_init(true, false)

@@ -1,5 +1,4 @@
 local SimpleGameSetupMenu = require("client.src.scenes.SimpleGameSetupMenu")
-local sceneManager = require("client.src.scenes.sceneManager")
 local class = require("common.lib.class")
 local GameModes = require("common.engine.GameModes")
 
@@ -16,7 +15,6 @@ local EndlessMenu = class(
 )
 
 EndlessMenu.name = "EndlessMenu"
-sceneManager:addScene(EndlessMenu)
 
 function EndlessMenu:getScores(difficulty)
   return {tostring(GAME.scores:lastEndlessForLevel(difficulty)), tostring(GAME.scores:recordEndlessForLevel(difficulty))}

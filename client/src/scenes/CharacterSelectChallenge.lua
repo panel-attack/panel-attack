@@ -1,4 +1,3 @@
-local sceneManager = require("client.src.scenes.sceneManager")
 local CharacterSelect = require("client.src.scenes.CharacterSelect")
 local class = require("common.lib.class")
 local MultiPlayerSelectionWrapper = require("client.src.ui.MultiPlayerSelectionWrapper")
@@ -14,7 +13,6 @@ local CharacterSelectChallenge = class(
 )
 
 CharacterSelectChallenge.name = "CharacterSelectChallenge"
-sceneManager:addScene(CharacterSelectChallenge)
 
 function CharacterSelectChallenge:customLoad(sceneParams)
   self:loadUserInterface()

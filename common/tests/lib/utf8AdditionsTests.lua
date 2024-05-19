@@ -1,5 +1,5 @@
 
-local utf8 = require("utf8Additions")
+local utf8 = require("common.lib.utf8Additions")
 
 assert(utf8 ~= nil)
 

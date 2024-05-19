@@ -1,8 +1,9 @@
 local class = require("common.lib.class")
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
+local TitleScreen = require("client.src.scenes.TitleScreen")
+local MainMenu = require("client.src.scenes.MainMenu")
 
 local StartUp = class(function(scene, sceneParams)
   scene.setupRoutine = coroutine.create(sceneParams.setupRoutine)
@@ -10,7 +11,6 @@ local StartUp = class(function(scene, sceneParams)
 end, Scene)
 
 StartUp.name = "StartUp"
-sceneManager:addScene(StartUp)
 
 function StartUp:update(dt)
   local success, status = coroutine.resume(self.setupRoutine, GAME)
@@ -25,11 +25,9 @@ function StartUp:update(dt)
 
   if coroutine.status(self.setupRoutine) == "dead" then
     if themes[config.theme].images.bg_title then
-      local titleScreen = require("client.src.scenes.TitleScreen")()
-      sceneManager:switchToScene(titleScreen)
+      GAME.navigationStack:replace(TitleScreen())
     else
-      local mainMenu = require("client.src.scenes.MainMenu")()
-      sceneManager:switchToScene(mainMenu)
+      GAME.navigationStack:replace(MainMenu())
     end
   end
 end

@@ -1,7 +1,6 @@
 local logger = require("common.lib.logger")
 local Player = require("client.src.Player")
 local tableUtils = require("common.lib.tableUtils")
-local sceneManager = require("client.src.scenes.sceneManager")
 local GameModes = require("common.engine.GameModes")
 local class = require("common.lib.class")
 local ServerMessages = require("client.src.network.ServerMessages")
@@ -12,9 +11,10 @@ local ModController = require("client.src.mods.ModController")
 local ModLoader = require("client.src.mods.ModLoader")
 local Match = require("common.engine.Match")
 require("client.src.graphics.match_graphics")
+local Game2pVs = require("client.src.scenes.Game2pVs")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
-BattleRoom = class(function(self, mode)
+BattleRoom = class(function(self, mode, gameScene)
   assert(mode)
   self.mode = mode
   self.players = {}
@@ -24,6 +24,7 @@ BattleRoom = class(function(self, mode)
   self.ranked = false
   self.state = 1
   self.matchesPlayed = 0
+  self.gameScene = gameScene
   -- this is a bit naive but effective for now
   self.online = GAME.tcpClient:isConnected()
 
@@ -77,7 +78,7 @@ function BattleRoom.createFromServerMessage(message)
       battleRoom.mode.setupScene = gameMode.setupScene
       battleRoom.mode.richPresenceLabel = gameMode.richPresenceLabel
     else
-      battleRoom = BattleRoom(gameMode)
+      battleRoom = BattleRoom(gameMode, Game2pVs)
       for i = 1, #message.players do
         local player = Player(message.players[i].name, message.players[i].playerNumber, false)
         battleRoom:addPlayer(player)
@@ -93,7 +94,7 @@ function BattleRoom.createFromServerMessage(message)
     end
     battleRoom.spectating = true
   else
-    battleRoom = BattleRoom(gameMode)
+    battleRoom = BattleRoom(gameMode, Game2pVs)
     message = ServerMessages.sanitizeCreateRoom(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
@@ -115,8 +116,8 @@ function BattleRoom.createFromServerMessage(message)
   return battleRoom
 end
 
-function BattleRoom.createLocalFromGameMode(gameMode)
-  local battleRoom = BattleRoom(gameMode)
+function BattleRoom.createLocalFromGameMode(gameMode, gameScene)
+  local battleRoom = BattleRoom(gameMode, gameScene)
 
   if gameMode.playerCount == 1 then
     -- always use the game client's local player
@@ -330,8 +331,9 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
 
   match:start()
   self.state = BattleRoom.states.MatchInProgress
-  local scene = sceneManager:createScene(self.mode.gameScene, {match = self.match, nextScene = self.mode.setupScene})
-  sceneManager:switchToScene(scene)
+  if self.gameScene then
+    GAME.navigationStack:push(self.gameScene({match = self.match}))
+  end
 end
 
 -- sets the style of "level" presets the players select from
@@ -414,10 +416,8 @@ function BattleRoom:assignInputConfigurations()
   if validInputConfigurationCount < #localPlayers then
     local messageText = "There are more local players than input configurations configured." ..
     "\nPlease configure enough input configurations and try again"
-    local nextScene = sceneManager:createScene("MainMenu")
-    local transition = MessageTransition(GAME.timer, 5, sceneManager.activeScene, nextScene, messageText)
-    sceneManager:switchToScene(nextScene, transition)
-    self:shutdown()
+    local transition = MessageTransition(GAME.timer, 5, messageText)
+    GAME.navigationStack:popToTop(transition, function() self:shutdown() end)
   else
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
@@ -456,7 +456,7 @@ function BattleRoom:update(dt)
       -- oh no, we probably disconnected
       self:shutdown()
       -- let's try to log in back via lobby
-      sceneManager:switchToScene(sceneManager:createScene("Lobby"))
+      GAME.navigationStack:popToName("Lobby")
       return
     else
       GAME.tcpClient:updateNetwork(dt)
@@ -517,16 +517,16 @@ function BattleRoom:onMatchEnded(match)
     -- in the case of a network based abort, the network part of the battleRoom would unregister from the onMatchEnded signal
     -- and initialise the transition to wherever else before calling abort on the match to finalize it
     -- that means whenever we land here, it was a match-side local abort that leaves the room intact
-    local setupScene = sceneManager:createScene(self.mode.setupScene)
     if match.desyncError then
       -- match could have a desync error
       -- -> back to select screen, battleRoom stays intact
       -- ^ this behaviour is different to the past but until the server tells us the room is dead there is no reason to assume it to be dead
-      sceneManager:switchToScene(setupScene, MessageTransition(GAME.timer, 5, sceneManager.activeScene, setupScene, "ss_latency_error"))
+      local transition = MessageTransition(GAME.timer, 5, "ss_latency_error")
+      GAME.navigationStack:pop(transition)
     else
       -- local player could pause and leave
       -- -> back to select screen, battleRoom stays intact
-      sceneManager:switchToScene(setupScene)
+      GAME.navigationStack:pop()
     end
 
     -- other aborts come via network and are directly handled in response to the network message (or lack thereof)

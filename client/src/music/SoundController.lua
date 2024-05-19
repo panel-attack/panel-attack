@@ -110,7 +110,8 @@ function SoundController:updateFadeOut()
       self.fadeOutStartTime = nil
       self.fadeOutDuration = nil
       self.fadeOutStartVolume = nil
-      self.activeTrack:setVolume(0)
+      self.activeTrack:stop()
+      self.activeTrack:setVolume(config.music_volume / 100)
     else
       self.activeTrack:setVolume(self.fadeOutStartVolume * (1 - percentage))
     end
@@ -118,6 +119,9 @@ function SoundController:updateFadeOut()
 end
 
 function SoundController:cancelFadeOut()
+  if self.activeTrack then
+    self.activeTrack:setVolume(config.music_volume / 100)
+  end
   self.fadeOutStartTime = nil
   self.fadeOutDuration = nil
   self.fadeOutStartVolume = nil

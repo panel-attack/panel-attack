@@ -1,5 +1,4 @@
 local input = require("common.lib.inputManager")
-local sceneManager = require("client.src.scenes.sceneManager")
 -- handles all touch interactions
 -- all elements that implement touch interactions must register themselves with the touch handler on construction
 
@@ -11,11 +10,12 @@ local touchHandler = {
 
 function touchHandler:touch(x, y)
   local canvasX, canvasY = GAME:transform_coordinates(x, y)
+  local activeScene = GAME.navigationStack:getActiveScene()
   -- if there is no active scene that implies an on-going scene switch, no interactions should be possible
-  if sceneManager.activeScene then
+  if activeScene then
     -- prevent multitouch
     if not self.touchedElement then
-      self.touchedElement = sceneManager.activeScene.uiRoot:getTouchedElement(canvasX, canvasY)
+      self.touchedElement = activeScene.uiRoot:getTouchedElement(canvasX, canvasY)
       if self.touchedElement and self.touchedElement.onTouch then
         self.touchedElement:onTouch(canvasX, canvasY)
       end

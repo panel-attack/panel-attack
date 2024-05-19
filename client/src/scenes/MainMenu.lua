@@ -2,7 +2,6 @@ local Scene = require("client.src.scenes.Scene")
 local consts = require("common.engine.consts")
 local Menu = require("client.src.ui.Menu")
 local MenuItem = require("client.src.ui.MenuItem")
-local sceneManager = require("client.src.scenes.sceneManager")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
 local GameModes = require("common.engine.GameModes")
@@ -20,43 +19,51 @@ local SetNameMenu = require("client.src.scenes.SetNameMenu")
 local OptionsMenu = require("client.src.scenes.OptionsMenu")
 local DesignHelper = require("client.src.scenes.DesignHelper")
 
+local TimeAttackGame = require("client.src.scenes.TimeAttackGame")
+local EndlessGame = require("client.src.scenes.EndlessGame")
+local VsSelfGame = require("client.src.scenes.VsSelfGame")
+local Game2pVs = require("client.src.scenes.Game2pVs")
+local Game1pChallenge = require("client.src.scenes.Game1pChallenge")
+local Game1pTraining = require("client.src.scenes.Game1pTraining")
+local PuzzleGame = require("client.src.scenes.PuzzleGame")
+
 
 -- @module MainMenu
 -- Scene for the main menu
 local MainMenu = class(function(self, sceneParams)
-  self.menu = nil -- set in load
   self.backgroundImg = themes[config.theme].images.bg_main
-  self:load(sceneParams)
+  self.music = "main"
+  self.menu = self:createMainMenu()
+  self.uiRoot:addChild(self.menu)
 end, Scene)
 
 MainMenu.name = "MainMenu"
-sceneManager:addScene(MainMenu)
 
 local function switchToScene(sceneName, transition)
   GAME.theme:playValidationSfx()
-  sceneManager:switchToScene(sceneName, transition)
+  GAME.navigationStack:push(sceneName, transition)
 end
 
 function MainMenu:createMainMenu()
 
   local menuItems = {MenuItem.createButtonMenuItem("mm_1_endless", nil, nil, function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"))
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"), EndlessGame)
       switchToScene(EndlessMenu())
     end), 
     MenuItem.createButtonMenuItem("mm_1_puzzle", nil, nil, function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"))
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"), PuzzleGame)
       switchToScene(PuzzleMenu())
     end),
     MenuItem.createButtonMenuItem("mm_1_time", nil, nil, function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"))
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"), TimeAttackGame)
       switchToScene(TimeAttackMenu())
     end),
     MenuItem.createButtonMenuItem("mm_1_vs", nil, nil, function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"))
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"), VsSelfGame)
       switchToScene(CharacterSelectVsSelf())
     end),
     MenuItem.createButtonMenuItem("mm_1_training", nil, nil, function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"))
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"), Game1pTraining)
       switchToScene(TrainingMenu())
     end),
     MenuItem.createButtonMenuItem("mm_1_challenge_mode", nil, nil, function()
@@ -66,11 +73,8 @@ function MainMenu:createMainMenu()
       switchToScene(Lobby({serverIp = "panelattack.com"}))
     end),
     MenuItem.createButtonMenuItem("mm_2_vs_local", nil, nil, function()
-      local battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"))
-      if not battleRoom.hasShutdown then
-        GAME.battleRoom = battleRoom
-        switchToScene(CharacterSelect2p())
-      end
+      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"), Game2pVs)
+      switchToScene(CharacterSelect2p())
     end),
     MenuItem.createButtonMenuItem("mm_replay_browser", nil, nil, function()
       switchToScene(ReplayBrowser())
@@ -118,15 +122,6 @@ function MainMenu:createMainMenu()
 
   addDebugMenuItems()
   return menu
-end
-
-function MainMenu:load(sceneParams)
-  self.menu = self:createMainMenu()
-  self.uiRoot:addChild(self.menu)
-
-  SoundController:playMusic(themes[config.theme].stageTracks.main)
-  GAME.tcpClient:resetNetwork()
-  GAME.battleRoom = nil
 end
 
 function MainMenu:update(dt)

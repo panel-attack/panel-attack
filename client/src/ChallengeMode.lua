@@ -2,9 +2,11 @@ local logger = require("common.lib.logger")
 local class = require("common.lib.class")
 local ChallengeModePlayer = require("client.src.ChallengeModePlayer")
 local GameModes = require("common.engine.GameModes")
-local sceneManager = require("client.src.scenes.sceneManager")
 local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
 local levelPresets = require("client.src.LevelPresets")
+local Game1pChallenge = require("client.src.scenes.Game1pChallenge")
+require("client.src.BattleRoom")
+
 
 -- Challenge Mode is a particular play through of the challenge mode in the game, it contains all the settings for the mode.
 local ChallengeMode =
@@ -16,6 +18,7 @@ local ChallengeMode =
     self.difficultyName = loc("challenge_difficulty_" .. difficulty)
     self.continues = 0
     self.expendedTime = 0
+    self.gameScene = Game1pChallenge
 
     self:addPlayer(GAME.localPlayer)
     self.player = ChallengeModePlayer(#self.players + 1)
@@ -161,10 +164,9 @@ function ChallengeMode:recordStageResult(winners, gameLength)
         self:setStage(self.stageIndex + 1)
       else
         -- completed!
-        local scene = sceneManager:createScene("MainMenu")
         local message = "Congratulations!\n You cleared " .. self.difficultyName .. " in " .. frames_to_time_string(self.expendedTime, true)
-        local transition = MessageTransition(GAME.timer, 7, sceneManager.activeScene, scene, message)
-        sceneManager:switchToScene(scene, transition)
+        local transition = MessageTransition(GAME.timer, 7, message)
+        GAME.navigationStack:popToTop(transition)
       end
     end
   elseif #winners == 2 then
@@ -198,8 +200,7 @@ function ChallengeMode:onMatchEnded(match)
     match:deinit()
 
     -- in challenge mode, an abort is always a manual pause and leave by the local player
-    local setupScene = sceneManager:createScene(self.mode.setupScene)
-    sceneManager:switchToScene(setupScene)
+    GAME.navigationStack:pop()
 
     -- when challenge mode becomes spectatable, there needs to be a network abort that isn't leave_room for spectators
   end

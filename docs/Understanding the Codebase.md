@@ -84,8 +84,9 @@ Most users start the auto_updater which then checks if the local version in `upd
 Panel Attack has many files, maybe too many and not all of them are in an intuitive place.  
 At the core of Panel Attack lives the `Game` class defined in `Game.lua`.  
 `Game` is practically the big global game object that has everything, is accessible from everywhere and handles the actual game loop + drawing.  
-In the most recent version, Panel Attack uses a scene system governed by the `sceneManager` in `scenes/sceneManager.lua`.  
-This `sceneManager` holds onto its active scene which can be thought of as a page or a screen.  
+In the most recent version, Panel Attack uses a scene system governed by the `NavigationStack`.
+This `NavigationStack` holds onto a table of scenes with the latest scene being the active one.
+It provides various functions to alter that table to navigate between the scenes and add new ones.
 A scene must be able to deal with user inputs and control audio and visuals and can have any level of complexity.  
 In the current version of Panel Attack, the title screen is a single scene and so is the entire options menu (including sub menus). Character selection is also a single scene and so is ingame.  
 

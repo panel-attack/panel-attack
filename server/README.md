@@ -152,6 +152,8 @@ If you want to access your server from an IP you need to add your ip to the clie
 
 Change MainMenu.lua, around where it says something like
 
-{MenuItem.createButtonMenuItem("Beta Server", switchToScene(sceneManager:createScene("Lobby", {serverIp = "betaserver.panelattack.com", serverPort = 59569})},
+```Lua
+MenuItem.createButtonMenuItem("Beta Server", nil, nil, function() switchToScene(Lobby({serverIp = "betaserver.panelattack.com", serverPort = 59569})) end)
+```
 
 to something that makes sense for your server. Replace "Beta Server" the URL and the port number. The port number is optional, the game will try to connect to port 49569 if not supplied.

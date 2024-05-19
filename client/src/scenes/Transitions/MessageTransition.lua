@@ -3,7 +3,7 @@ local Transition = require("client.src.scenes.Transitions.Transition")
 local Label = require("client.src.ui.Label")
 local input = require("common.lib.inputManager")
 
-local MessageTransition = class(function(transition, startTime, duration, oldScene, newScene, message)
+local MessageTransition = class(function(transition, startTime, duration, message)
   transition.message = message
   transition.label = Label({text = message, hAlign = "center", vAlign = "center"})
   transition.uiRoot:addChild(transition.label)

@@ -4,7 +4,6 @@ local TextButton = require("client.src.ui.TextButton")
 local Slider = require("client.src.ui.Slider")
 local Label = require("client.src.ui.Label")
 local LevelSlider = require("client.src.ui.LevelSlider")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Menu = require("client.src.ui.Menu")
 local MenuItem = require("client.src.ui.MenuItem")
 local ButtonGroup = require("client.src.ui.ButtonGroup")
@@ -16,6 +15,8 @@ local GameModes = require("common.engine.GameModes")
 local SimpleGameSetupMenu = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_main
+    self.music = "select_screen"
+    self.fallbackMusic = "main"
 
     -- must be set in child classes
     self.gameMode = nil
@@ -37,7 +38,7 @@ local SimpleGameSetupMenu = class(
 -- begin abstract functions
 
 -- returns the scores for the current game mode in the form {last score, record score}
-function SimpleGameSetupMenu:getScores() return {"", ""} end
+function SimpleGameSetupMenu:getScores(difficulty) return {"", ""} end
 
 -- end abstract functions
 
@@ -52,7 +53,7 @@ end
 function SimpleGameSetupMenu:exit()
   GAME.theme:playCancelSfx()
   GAME.battleRoom:shutdown()
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  GAME.navigationStack:pop()
 end
 
 function SimpleGameSetupMenu:load(sceneParams)
@@ -157,8 +158,6 @@ function SimpleGameSetupMenu:load(sceneParams)
   else
     self.uiRoot:addChild(self.modernMenu)
   end
-  
-  SoundController:playMusic(themes[config.theme].stageTracks.main)
 end
 
 function SimpleGameSetupMenu:update(dt)

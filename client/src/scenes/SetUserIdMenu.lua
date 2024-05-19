@@ -1,6 +1,5 @@
 local Scene = require("client.src.scenes.Scene")
 local InputField = require("client.src.ui.InputField")
-local sceneManager = require("client.src.scenes.sceneManager")
 local input = require("common.lib.inputManager")
 local utf8 = require("common.lib.utf8Additions")
 local class = require("common.lib.class")
@@ -15,7 +14,6 @@ local SetUserIdMenu = class(function(self, sceneParams)
 end, Scene)
 
 SetUserIdMenu.name = "SetUserIdMenu"
-sceneManager:addScene(SetUserIdMenu)
 
 
 function SetUserIdMenu:load(sceneParams)
@@ -53,7 +51,7 @@ function SetUserIdMenu:confirmId()
     GAME.theme:playValidationSfx()
     write_user_id_file(self.idInputField.value, self.serverIp)
     -- this is dirty but with how stupid nested OptionsMenu is, there is no way to get back right to where we came from
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+    GAME.navigationStack:pop()
   else
     GAME.theme:playCancelSfx()
   end
@@ -63,7 +61,7 @@ function SetUserIdMenu:update(dt)
   if input.allKeys.isDown["return"] then
     self:confirmId()
   elseif input.allKeys.isDown["escape"] then
-    sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+    GAME.navigationStack:pop()
   end
 end
 

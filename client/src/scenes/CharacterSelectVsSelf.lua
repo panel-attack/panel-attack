@@ -1,5 +1,4 @@
 local CharacterSelect = require("client.src.scenes.CharacterSelect")
-local sceneManager = require("client.src.scenes.sceneManager")
 local class = require("common.lib.class")
 local Grid = require("client.src.ui.Grid")
 local MultiPlayerSelectionWrapper = require("client.src.ui.MultiPlayerSelectionWrapper")
@@ -16,7 +15,6 @@ local CharacterSelectVsSelf = class(
 )
 
 CharacterSelectVsSelf.name = "CharacterSelectVsSelf"
-sceneManager:addScene(CharacterSelectVsSelf)
 
 function CharacterSelectVsSelf:customLoad(sceneParams)
   self:loadUserInterface()

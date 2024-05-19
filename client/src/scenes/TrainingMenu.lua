@@ -1,5 +1,4 @@
 local Scene = require("client.src.scenes.Scene")
-local sceneManager = require("client.src.scenes.sceneManager")
 local Menu = require("client.src.ui.Menu")
 local MenuItem = require("client.src.ui.MenuItem")
 local Label = require("client.src.ui.Label")
@@ -21,11 +20,10 @@ local TrainingMenu = class(
 )
 
 TrainingMenu.name = "TrainingMenu"
-sceneManager:addScene(TrainingMenu)
 
 local function exitMenu()
   GAME.theme:playCancelSfx()
-  sceneManager:switchToScene(sceneManager:createScene("MainMenu"))
+  GAME.navigationStack:pop()
 end
 
 local function createBasicTrainingMode(name, width, height)
@@ -48,7 +46,7 @@ function TrainingMenu:goToCharacterSelect(value, width, height)
     value = createBasicTrainingMode("", width, height)
   end
   GAME.localPlayer:setAttackEngineSettings(value)
-  sceneManager:switchToScene(CharacterSelectVsSelf())
+  GAME.navigationStack:push(CharacterSelectVsSelf())
 end
 
 function TrainingMenu:load(sceneParams)
