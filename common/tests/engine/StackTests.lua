@@ -43,7 +43,7 @@ clearPuzzleTest()
 
 local function basicSwapTest()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
-  local stack = match.P1
+  local stack = match.stacks[1]
 
   stack.do_countdown = false
 
@@ -63,7 +63,7 @@ basicSwapTest()
 local function moveAfterCountdownV46Test()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
   match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
-  local stack = match.P1
+  local stack = match.stacks[1]
   stack.do_countdown = true
   assert(characters ~= nil, "no characters")
   local lastBlockedCursorMovementFrame = 33
@@ -83,7 +83,7 @@ local function testShakeFrames()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10)
   match.seed = 1 -- so we consistently have a panel to swap
   match.engineVersion = consts.ENGINE_VERSIONS.TELEGRAPH_COMPATIBLE
-  local stack = match.P1
+  local stack = match.stacks[1]
 
   -- imaginary garbage should crash
   assert(pcall(stack.shakeFrameForGarbageSize, 6, 0) == false)

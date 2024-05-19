@@ -31,7 +31,7 @@ assert(defaultTheme ~= nil)
 local function testOriginalThemeStackGraphics()
   setTheme(v1Theme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
-  local stack = match.P1
+  local stack = match.stacks[1]
 
   assert(match ~= nil)
   assert(stack.origin_x == 184)
@@ -46,7 +46,7 @@ end
 local function testOriginalThemeStackGraphicsPlayer2()
   setTheme(v1Theme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
-  local stack = match.P2
+  local stack = match.stacks[2]
 
   assert(match ~= nil)
   assert(stack.origin_x * GFX_SCALE == 728)
@@ -61,7 +61,7 @@ end
 local function testNewThemeStackGraphics()
   setTheme(defaultTheme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
-  local stack = match.P1
+  local stack = match.stacks[1]
 
   assert(match ~= nil)
   assert(stack.origin_x == 184)
@@ -76,7 +76,7 @@ test(testNewThemeStackGraphics)
 local function testNewThemeStackGraphicsPlayer2()
   setTheme(defaultTheme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
-  local stack = match.P2
+  local stack = match.stacks[2]
 
   assert(match ~= nil)
   assert(stack.origin_x * GFX_SCALE == 728)
@@ -93,7 +93,7 @@ test(testNewThemeStackGraphicsPlayer2)
 local function testOriginalThemeOffset()
   setTheme(v1Theme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
-  local stack = match.P1
+  local stack = match.stacks[1]
 
   assert(match ~= nil)
   -- non "score" based values WERE in GFX_SCALE coordinates
@@ -113,7 +113,7 @@ end
 local function testOriginalThemeOffsetPlayer2()
   setTheme(v1Theme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
-  local stack = match.P2
+  local stack = match.stacks[2]
 
   assert(match ~= nil)
   -- non "score" based values WERE in GFX_SCALE coordinates, and mirror
@@ -133,7 +133,7 @@ end
 local function testNewThemeOffset()
   setTheme(defaultTheme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 1)
-  local stack = match.P1
+  local stack = match.stacks[1]
 
   assert(match ~= nil)
   -- non "score" based values in new themes are in absolute coordinates
@@ -153,7 +153,7 @@ test(testNewThemeOffset)
 local function testNewThemeOffsetPlayer2()
   setTheme(defaultTheme)
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2)
-  local stack = match.P2
+  local stack = match.stacks[2]
 
   assert(match ~= nil)
   -- non "score" based values in new themes are in absolute coordinates
@@ -175,7 +175,7 @@ setTheme(currentTheme)
 local function testShakeOffsetLargeGarbage()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
   match.seed = 1
-  local stack = match.P2
+  local stack = match.stacks[2]
 
   -- for i = 76, 1, -1 do
   --   logger.info("assert(stack:shakeOffsetForShakeFrames(" .. i .. ", 0, 1) == " .. stack:shakeOffsetForShakeFrames(i, 0, 1) .. ")")
@@ -268,7 +268,7 @@ test(testShakeOffsetLargeGarbage)
 local function testShakeOffsetReduction()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
   match.seed = 1
-  local stack = match.P2
+  local stack = match.stacks[2]
   assert(stack:shakeOffsetForShakeFrames(76, 0, 0.5) == 1)
   assert(stack:shakeOffsetForShakeFrames(75, 0, 0.5) == 0)
   assert(stack:shakeOffsetForShakeFrames(74, 0, 0.5) == 2)
@@ -305,7 +305,7 @@ test(testShakeOffsetReduction)
 local function testShakeOffsetMassiveReduction()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
   match.seed = 1
-  local stack = match.P2
+  local stack = match.stacks[2]
   assert(stack:shakeOffsetForShakeFrames(76, 0, 0.25) == 1)
   assert(stack:shakeOffsetForShakeFrames(75, 0, 0.25) == 0)
   assert(stack:shakeOffsetForShakeFrames(74, 0, 0.25) == 1)
@@ -342,7 +342,7 @@ test(testShakeOffsetMassiveReduction)
 local function testShakeInterpolate()
   local match = StackReplayTestingUtils.createEndlessMatch(nil, nil, 10, true, 2, defaultTheme)
   match.seed = 1
-  local stack = match.P2
+  local stack = match.stacks[2]
   assert(stack:shakeOffsetForShakeFrames(70, 0, 1) == 30)
   assert(stack:shakeOffsetForShakeFrames(16, 0, 1) == 8)
   assert(stack:shakeOffsetForShakeFrames(70, 16, 1) == 19)
