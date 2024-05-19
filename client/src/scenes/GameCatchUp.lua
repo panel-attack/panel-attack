@@ -7,7 +7,11 @@ local ModLoader = require("client.src.mods.ModLoader")
 local states = { loadingMods = 1, catchingUp = 2 }
 
 local GameCatchUp = class(function(self, sceneParams)
-
+  self.vsScene = sceneParams
+  self.match = self.vsScene.match
+  self.timePassed = 0
+  self.progress = 0
+  self.state = states.loadingMods
 end,
 Scene)
 
@@ -20,7 +24,8 @@ function GameCatchUp:update(dt)
 
   if not self.match.stacks[1].play_to_end then
     self.progress = 1
-    self.newScene:onGameStart()
+    self.vsScene:onGameStart()
+    GAME.navigationStack:replace(self.vsScene)
   else
     self.progress = self.match.stacks[1].clock / #self.match.stacks[1].confirmedInput
   end
@@ -40,10 +45,11 @@ function GameCatchUp:update(dt)
 end
 
 function GameCatchUp:draw()
+  local match = self.match
   GraphicsUtil.setColor(1, 1, 1, 1)
   GraphicsUtil.drawRectangle("line", consts.CANVAS_WIDTH / 4 - 5, consts.CANVAS_HEIGHT / 2 - 25, consts.CANVAS_WIDTH / 2 + 10, 50)
   GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 4, consts.CANVAS_HEIGHT / 2 - 20, consts.CANVAS_WIDTH / 2 * self.progress, 40)
-  GraphicsUtil.printf("Catching up: " .. self.match.stacks[1].clock .. " out of " .. #self.match.stacks[1].confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
+  GraphicsUtil.printf("Catching up: " .. match.stacks[1].clock .. " out of " .. #match.stacks[1].confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
 end
 
 return GameCatchUp

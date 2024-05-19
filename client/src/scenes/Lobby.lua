@@ -212,7 +212,7 @@ function Lobby:spectate2pVsOnlineMatch(spectateRequestGrantedMessage)
   GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
   if GAME.battleRoom.match then
     local vsScene = Game2pVs({match = GAME.battleRoom.match, nextScene = "CharacterSelect2p"})
-    local catchUp = GameCatchUp(self, vsScene)
+    local catchUp = GameCatchUp(vsScene)
     GAME.navigationStack:push(catchUp)
   else
     GAME.navigationStack:push(CharacterSelect2p())
