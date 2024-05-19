@@ -147,10 +147,12 @@ function GameBase:handlePause()
     end
     self.match:togglePause()
 
-    if self.match.isPaused then
-      SoundController:pauseMusic()
-    elseif self.musicSource then
-      SoundController:playMusic(self.musicSource.stageTrack)
+    if self.musicSource then
+      if self.match.isPaused then
+        SoundController:pauseMusic()
+      else
+        SoundController:playMusic(self.musicSource.stageTrack)
+      end
     end
     GAME.theme:playValidationSfx()
   end

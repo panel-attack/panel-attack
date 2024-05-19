@@ -74,10 +74,12 @@ function ReplayGame:runGame()
     end
   elseif input.isDown["MenuPause"] then
     self.match:togglePause()
-    if self.match.isPaused then
-      SoundController:pauseMusic()
-    else
-      SoundController:playMusic(self.musicSource.stageTrack)
+    if self.musicSource then
+      if self.match.isPaused then
+        SoundController:pauseMusic()
+      else
+        SoundController:playMusic(self.musicSource.stageTrack)
+      end
     end
   end
 
