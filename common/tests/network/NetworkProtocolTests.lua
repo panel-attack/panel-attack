@@ -1,4 +1,4 @@
-local NetworkProtocol = require("network.NetworkProtocol")
+local NetworkProtocol = require("common.network.NetworkProtocol")
 
 local function testGetMessage(messageBuffer, expectedTypes, expectedMessages, isServerMessage)
   local buffer = messageBuffer

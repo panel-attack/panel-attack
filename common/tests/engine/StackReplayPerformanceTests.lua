@@ -1,5 +1,5 @@
 local logger = require("common.lib.logger")
-local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local StackReplayTestingUtils = require("common.tests.engine.StackReplayTestingUtils")
 
 local function testReplayPerformanceWithPath(path)
   local runCount = 3

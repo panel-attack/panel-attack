@@ -2,7 +2,7 @@ require("client.src.graphics.Stack")
 local consts = require("common.engine.consts")
 local logger = require("common.lib.logger")
 require("common.engine.Stack")
-local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local StackReplayTestingUtils = require("common.tests.engine.StackReplayTestingUtils")
 local GFX_SCALE = consts.GFX_SCALE
 
 local Theme = require("client.src.mods.Theme")

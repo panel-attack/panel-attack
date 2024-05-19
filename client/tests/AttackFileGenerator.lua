@@ -22,8 +22,8 @@ local function finishedMatchForPath(path)
 
   if #match.players > 1 then
     local lastClock = -1
-    while not match:hasEnded() and lastClock ~= match.P1.clock do
-      lastClock = match.P1.clock
+    while not match:hasEnded() and lastClock ~= match.stacks[1].clock do
+      lastClock = match.stacks[1].clock
       match:run()
     end
 
@@ -49,7 +49,7 @@ end
 local function analyzeReplayPath(path)
   local match = finishedMatchForPath(path)
   if match then
-    saveStack(match.P1, match)
+    saveStack(match.stacks[1], match)
     saveStack(match.P2, match)
   end
 end

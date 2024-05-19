@@ -1,5 +1,5 @@
 
-local TouchDataEncoding = require("engine.TouchDataEncoding")
+local TouchDataEncoding = require("common.engine.TouchDataEncoding")
 
 local function testWithBoardSize(width, height)
   for z = 0, 1 do

@@ -1,5 +1,5 @@
-local GarbageQueueTestingUtils = require("common.engine.tests.GarbageQueueTestingUtils")
-local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local GarbageQueueTestingUtils = require("common.tests.engine.GarbageQueueTestingUtils")
+local StackReplayTestingUtils = require("common.tests.engine.StackReplayTestingUtils")
 local tableUtils = require("common.lib.tableUtils")
 require("client.src.globals")
 

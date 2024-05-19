@@ -1,9 +1,9 @@
 local consts = require("common.engine.consts")
 local tableUtils = require("common.lib.tableUtils")
 local GameModes = require("common.engine.GameModes")
-local StackReplayTestingUtils = require("common.engine.tests.StackReplayTestingUtils")
+local StackReplayTestingUtils = require("common.tests.engine.StackReplayTestingUtils")
 
-local testReplayFolder = "common/engine/tests/replays/"
+local testReplayFolder = "common/tests/engine/replays/"
 
 -- Tests a replay doing the following use cases
 -- Note this doesn't test the TouchInputController currently because it just executes the already encoded inputs.
@@ -53,11 +53,11 @@ local function simpleTouchTest()
   assert(match.timeLimit == nil)
   assert(tableUtils.length(match.winConditions) == 0)
   assert(match.seed == 2521746)
-  assert(match.P1.game_over_clock == 4347)
-  assert(match.P1.difficulty == 1)
-  assert(tableUtils.length(match.P1.chains) == 1)
-  assert(tableUtils.length(match.P1.combos) == 3)
-  assert(match.P1.analytic.data.destroyed_panels == 31)
+  assert(match.stacks[1].game_over_clock == 4347)
+  assert(match.stacks[1].difficulty == 1)
+  assert(tableUtils.length(match.stacks[1].chains) == 1)
+  assert(tableUtils.length(match.stacks[1].combos) == 3)
+  assert(match.stacks[1].analytic.data.destroyed_panels == 31)
   StackReplayTestingUtils:cleanup(match)
 end
 
