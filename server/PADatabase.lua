@@ -1,7 +1,7 @@
-require("class")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
 local sqlite3 = require("lsqlite3")
 local db = sqlite3.open("PADatabase.sqlite3")
-local logger = require("logger")
 
 PADatabase =
   class(

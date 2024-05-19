@@ -1,7 +1,7 @@
 local lfs = require("lfs")
-local logger = require("logger")
-local csvfile = require("libraries.simplecsv")
-local tableUtils = require("tableUtils")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local csvfile = require("server.simplecsv")
 
 function makeDirectory(path) 
   local status, error = pcall(
