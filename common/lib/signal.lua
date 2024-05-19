@@ -1,5 +1,6 @@
 local util = require("common.lib.util")
 local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
 local Signal = {}
 
 function Signal.turnIntoEmitter(t)
@@ -54,8 +55,12 @@ end
 
 -- normally we don't need to actively disconnect from a signal as subscriptions automatically get removed when their subscriber is garbage collected
 -- but in some scenarios we may want to actively unsubscribe
- function Signal.disconnectSignal(emitter, signalName, subscriber)
-   emitter.signalSubscriptions[signalName][subscriber] = nil
- end
+function Signal.disconnectSignal(emitter, signalName, subscriber, callback)
+  if callback and emitter.signalSubscriptions[signalName][subscriber] then
+    local index = tableUtils.indexOf(emitter.signalSubscriptions[signalName][subscriber], callback)
+    table.remove(emitter.signalSubscriptions[signalName][subscriber], index)
+  end
+  emitter.signalSubscriptions[signalName][subscriber] = nil
+end
 
 return Signal

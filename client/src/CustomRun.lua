@@ -18,7 +18,8 @@ CustomRun.runMetrics.presentMemAlloc = 0
 
 CustomRun.runTimeGraph = nil
 
-leftover_time = 0
+local maxLeftOverTime = CustomRun.FRAME_RATE / 4
+leftover_time = maxLeftOverTime
 
 -- Sleeps just the right amount of time to make our next update step be one frame long.
 -- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
@@ -27,7 +28,6 @@ function CustomRun.sleep()
   local targetDelay = CustomRun.FRAME_RATE
   -- We want leftover time to be above 0 but less than a quarter frame.
   -- If it goes above that, only wait enough to get it down to that.
-  local maxLeftOverTime = CustomRun.FRAME_RATE / 4
   if leftover_time > maxLeftOverTime then
     targetDelay = targetDelay - (leftover_time - maxLeftOverTime)
     targetDelay = math.max(targetDelay, 0)
