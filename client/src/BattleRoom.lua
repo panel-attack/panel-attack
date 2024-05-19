@@ -334,7 +334,7 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:start()
   self.state = BattleRoom.states.MatchInProgress
   if self.gameScene then
-    local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn)
+    local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn())
     GAME.navigationStack:push(self.gameScene({match = self.match}), transition)
   end
 end
