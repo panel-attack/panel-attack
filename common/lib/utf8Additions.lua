@@ -1,8 +1,8 @@
 local utf8
-if SERVER_MODE then
-  utf8 = require("lua-utf8")
-else
+if love then
   utf8 = require("utf8")
+else
+  utf8 = require("lua-utf8")
 end
 
 
