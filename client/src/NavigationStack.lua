@@ -153,11 +153,11 @@ function NavigationStack:update(dt)
 
     if self.transition.progress >= 1 then
       self.transition = nil
+      applySceneMusic(self.scenes[#self.scenes])
       if self.callback then
         self.callback()
         self.callback = nil
       end
-      applySceneMusic(self.scenes[#self.scenes])
     end
   else
     if #self.scenes == 0 then

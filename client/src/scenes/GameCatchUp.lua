@@ -3,6 +3,7 @@ local Scene = require("client.src.scenes.Scene")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local consts = require("common.engine.consts")
 local ModLoader = require("client.src.mods.ModLoader")
+local SoundController = require("client.src.music.SoundController")
 
 local states = { loadingMods = 1, catchingUp = 2 }
 
@@ -20,12 +21,14 @@ local function hasTimeLeft(t)
 end
 
 function GameCatchUp:update(dt)
+  GAME.muteSound = true
+
   self.timePassed = self.timePassed + dt
 
   if not self.match.stacks[1].play_to_end then
     self.progress = 1
-    self.vsScene:onGameStart()
-    GAME.navigationStack:replace(self.vsScene)
+    SoundController:applyConfigVolumes()
+    GAME.navigationStack:replace(self.vsScene, nil, function() self.vsScene:onGameStart() end)
   else
     self.progress = self.match.stacks[1].clock / #self.match.stacks[1].confirmedInput
   end

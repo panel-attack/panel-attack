@@ -940,10 +940,8 @@ function Stack.run(self)
 
   if self.is_local == false then
     if self.play_to_end then
-      GAME.muteSound = true
       if #self.input_buffer < 4 then
         self.play_to_end = nil
-        GAME.muteSound = false
       end
     end
   end
