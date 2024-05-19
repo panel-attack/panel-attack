@@ -7,7 +7,9 @@ end,
 Transition)
 
 function DirectTransition:draw()
-  self.oldScene:draw()
+  if self.oldScene and self.oldScene.draw then
+    self.oldScene:draw()
+  end
 end
 
 return DirectTransition
