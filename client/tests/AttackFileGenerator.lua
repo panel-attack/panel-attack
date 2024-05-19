@@ -50,7 +50,7 @@ local function analyzeReplayPath(path)
   local match = finishedMatchForPath(path)
   if match then
     saveStack(match.stacks[1], match)
-    saveStack(match.P2, match)
+    saveStack(match.stacks[2], match)
   end
 end
 

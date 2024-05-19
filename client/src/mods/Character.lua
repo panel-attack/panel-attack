@@ -240,7 +240,7 @@ function characters_reload_graphics()
   for i = 1, #characterIds do
     local character = characterIds[i]
     local fullLoad = false
-    if character == config.character or GAME.battleRoom and GAME.battleRoom.match and ((GAME.battleRoom.match.P1 and character == GAME.battleRoom.match.P1.character) or (GAME.battleRoom.match.P2 and character == GAME.battleRoom.match.P2.character)) then
+    if character == config.character or GAME.battleRoom and GAME.battleRoom.match and ((GAME.battleRoom.match.stacks[1] and character == GAME.battleRoom.match.stacks[1].character) or (GAME.battleRoom.match.stacks[2] and character == GAME.battleRoom.match.stacks[2].character)) then
       fullLoad = true
     end
     characters[character]:graphics_init(fullLoad, false)

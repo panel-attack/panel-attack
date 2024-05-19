@@ -25,7 +25,7 @@ function Game2pVs:onMatchEnded(match)
     else
       extraPath = rep_a_name .. "-vs-" .. rep_b_name
     end
-    extraFilename = extraFilename .. rep_a_name .. "-L" .. match.P1.level .. "-vs-" .. rep_b_name .. "-L" .. match.P2.level
+    extraFilename = extraFilename .. rep_a_name .. "-L" .. match.stacks[1].level .. "-vs-" .. rep_b_name .. "-L" .. match.stacks[2].level
     if match.ranked then
       extraFilename = extraFilename .. "-" .. "Ranked"
     else

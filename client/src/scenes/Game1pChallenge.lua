@@ -104,7 +104,7 @@ function Game1pChallenge:drawTimeSplits(xPosition, yPosition)
     local currentStageTime = time
     local isCurrentStage = i == self.stageIndex
     if isCurrentStage and self.match:hasEnded() == false then
-      currentStageTime = currentStageTime + (self.match.P1.game_stopwatch or 0)
+      currentStageTime = currentStageTime + (self.match.stacks[1].game_stopwatch or 0)
     end
     totalTime = totalTime + currentStageTime
 

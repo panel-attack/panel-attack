@@ -18,14 +18,14 @@ end
 function GameCatchUp:update(dt)
   self.timePassed = self.timePassed + dt
 
-  if not self.match.P1.play_to_end then
+  if not self.match.stacks[1].play_to_end then
     self.progress = 1
     self.newScene:onGameStart()
   else
-    self.progress = self.match.P1.clock / #self.match.P1.confirmedInput
+    self.progress = self.match.stacks[1].clock / #self.match.stacks[1].confirmedInput
   end
   local t = love.timer.getTime()
-  local shouldCatchUp = ((self.match.P1 and self.match.P1.play_to_end) or (self.match.P2 and self.match.P2.play_to_end)) or ModLoader.loading_mod
+  local shouldCatchUp = ((self.match.stacks[1] and self.match.stacks[1].play_to_end) or (self.match.stacks[2] and self.match.stacks[2].play_to_end)) or ModLoader.loading_mod
   -- spend 90% of frame time on catchup
   -- since we're not drawing anything big that should be realistic for catching ASAP
   while shouldCatchUp and hasTimeLeft(t) do
@@ -43,7 +43,7 @@ function GameCatchUp:draw()
   GraphicsUtil.setColor(1, 1, 1, 1)
   GraphicsUtil.drawRectangle("line", consts.CANVAS_WIDTH / 4 - 5, consts.CANVAS_HEIGHT / 2 - 25, consts.CANVAS_WIDTH / 2 + 10, 50)
   GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 4, consts.CANVAS_HEIGHT / 2 - 20, consts.CANVAS_WIDTH / 2 * self.progress, 40)
-  GraphicsUtil.printf("Catching up: " .. self.match.P1.clock .. " out of " .. #self.match.P1.confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
+  GraphicsUtil.printf("Catching up: " .. self.match.stacks[1].clock .. " out of " .. #self.match.stacks[1].confirmedInput .. " frames", 0, 500, consts.CANVAS_WIDTH, "center")
 end
 
 return GameCatchUp

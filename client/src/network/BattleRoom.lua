@@ -252,9 +252,9 @@ function BattleRoom:processInputMessages()
     for type, data in pairs(msg) do
       logger.trace("Processing: " .. type .. " with data:" .. data)
       if type == NetworkProtocol.serverMessageTypes.secondOpponentInput.prefix then
-        self.match.P1:receiveConfirmedInput(data)
+        self.match.stacks[1]:receiveConfirmedInput(data)
       elseif type == NetworkProtocol.serverMessageTypes.opponentInput.prefix then
-        self.match.P2:receiveConfirmedInput(data)
+        self.match.stacks[2]:receiveConfirmedInput(data)
       end
     end
   end

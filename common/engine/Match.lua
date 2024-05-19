@@ -507,8 +507,6 @@ function Match:start()
   end
 
   for i, player in ipairs(self.players) do
-    local pString = "P" .. tostring(i)
-    self[pString] = player.stack
     if player.settings.puzzleSet then
       -- puzzles are currently set directly on the player's stack
     else

@@ -69,7 +69,7 @@ function PuzzleGame:customGameOverSetup()
   -- as the player releases their inputConfiguration on puzzle end, we need to reassign it asap
   -- otherwise the next puzzle match will crash due to the player not having an input configuration assigned
 
-  if self.match.P1.game_over_clock <= 0 and not self.match.aborted then -- puzzle has been solved successfully
+  if self.match.stacks[1].game_over_clock <= 0 and not self.match.aborted then -- puzzle has been solved successfully
     self.text = loc("pl_you_win")
     self.match.players[1]:setPuzzleIndex(self.puzzleIndex + 1)
   else -- puzzle failed or manually reset
