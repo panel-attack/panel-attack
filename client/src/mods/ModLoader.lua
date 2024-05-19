@@ -43,7 +43,7 @@ function ModLoader.update()
       coroutine.resume(ModLoader.loading_mod[2])
       return true
     elseif coroutine.status(ModLoader.loading_mod[2]) == "dead" then
-      logger.debug("finished loading mod " .. ModLoader.loading_mod.id)
+      logger.debug("finished loading mod " .. ModLoader.loading_mod[1].id)
       ModLoader.loading_mod = nil
       return ModLoader.loading_queue:len() > 0
     end
@@ -63,7 +63,7 @@ end
 function ModLoader.cancelLoad(mod)
   logger.debug("cancelling load for mod " .. mod.id)
   if ModLoader.loading_mod then
-    if ModLoader.loading_mod == mod then
+    if ModLoader.loading_mod[1] == mod then
       ModLoader.loading_mod = nil
       logger.debug("Mod was currently being loaded, directly cancelled")
     elseif ModLoader.loading_queue:peek() == mod then
