@@ -12,6 +12,8 @@ local ModLoader = require("client.src.mods.ModLoader")
 local Match = require("common.engine.Match")
 require("client.src.graphics.match_graphics")
 local Game2pVs = require("client.src.scenes.Game2pVs")
+local BlackFadeTransition = require("client.src.scenes.Transitions.BlackFadeTransition")
+local Easings = require("client.src.Easings")
 
 -- A Battle Room is a session of matches, keeping track of the room number, player settings, wins / losses etc
 BattleRoom = class(function(self, mode, gameScene)
@@ -47,7 +49,7 @@ function BattleRoom.createFromMatch(match)
   gameMode.gameOverConditions = deepcpy(match.gameOverConditions)
   gameMode.playerCount = #match.players
 
-  local battleRoom = BattleRoom(gameMode)
+  local battleRoom = BattleRoom(gameMode, Game2pVs)
 
   for i = 1, #match.players do
     battleRoom:addPlayer(match.players[i])
@@ -332,7 +334,8 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:start()
   self.state = BattleRoom.states.MatchInProgress
   if self.gameScene then
-    GAME.navigationStack:push(self.gameScene({match = self.match}))
+    local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn)
+    GAME.navigationStack:push(self.gameScene({match = self.match}), transition)
   end
 end
 

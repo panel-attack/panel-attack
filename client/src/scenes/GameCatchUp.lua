@@ -16,6 +16,8 @@ local GameCatchUp = class(function(self, sceneParams)
 end,
 Scene)
 
+GameCatchUp.name = "GameCatchUp"
+
 local function hasTimeLeft(t)
   return love.timer.getTime() < t + 0.9 * consts.FRAME_RATE
 end

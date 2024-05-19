@@ -1,6 +1,7 @@
 local DirectTransition = require("client.src.scenes.Transitions.DirectTransition")
 local SoundController = require("client.src.music.SoundController")
 local tableUtils = require("common.lib.tableUtils")
+local logger = require("common.lib.logger")
 
 local NavigationStack = {
   scenes = {},
@@ -42,8 +43,10 @@ function NavigationStack:push(newScene, transition)
     -- a bit of a crutch for puzzlemode:
     -- if the same scene is already on top of the stack
     -- replace the current one instead of pushing on top
+    logger.debug("Replacing scene " .. newScene.name .. " on top of stack (caused by push)")
     self.scenes[#self.scenes] = newScene
   else
+    logger.debug("Pushing scene " .. newScene.name .. " on top of stack")
     self.scenes[#self.scenes+1] = newScene
   end
 end
@@ -54,6 +57,8 @@ function NavigationStack:pop(transition, callback)
   if #self.scenes > 1 then
     local activeScene = self.scenes[#self.scenes]
     local previousScene = self.scenes[#self.scenes - 1]
+
+    logger.debug("Popping scene " .. activeScene.name .. ", new active scene is " .. previousScene.name)
 
     if not transition then
       transition = DirectTransition()
@@ -74,6 +79,9 @@ function NavigationStack:popToTop(transition, callback)
   if #self.scenes > 1 then
     local activeScene = self.scenes[#self.scenes]
     local top = self.scenes[1]
+
+    logger.debug("Popping from scene " .. activeScene.name .. "to top scene " .. top.name)
+
 
     if not transition then
       transition = DirectTransition()
@@ -107,6 +115,8 @@ function NavigationStack:popToName(name, transition, callback)
     self:popToTop(transition, callback)
   else
     local activeScene = self.scenes[#self.scenes]
+    logger.debug("Popping scene " .. activeScene.name .. ", down to " .. targetScene.name)
+
 
     if not transition then
       transition = DirectTransition()
@@ -127,6 +137,8 @@ end
 -- an optional callback may be passed that is called when the transition completed
 function NavigationStack:replace(newScene, transition, callback)
   local activeScene = self.scenes[#self.scenes]
+
+  logger.debug("Replacing scene " .. activeScene.name .. " with scene " .. newScene.name)
 
   if not transition then
     transition = DirectTransition()
