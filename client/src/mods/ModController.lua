@@ -65,11 +65,12 @@ end
 -- pass instantly = true to disregard responsiveness and finish loading all remaining mods on the same frame
 function ModController:loadModFor(mod, user, instantly)
   if not self.users[user] or self.users[user][mod.TYPE] ~= mod then
-    logger.debug("Loading mod " .. mod.id)
+    logger.debug("Registering mod " .. mod.id)
     clearModForUser(self, user, mod.TYPE)
     registerModForUser(self, user, mod)
     -- any mod getting loaded is immediately marked for unloading
     if not tableUtils.contains(self.toUnload, mod) then
+      logger.debug("Adding mod " .. mod.id .. " to unload list")
       self.toUnload[#self.toUnload+1] = mod
     end
 

@@ -4,6 +4,8 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local consts = require("common.engine.consts")
 local ModLoader = require("client.src.mods.ModLoader")
 local SoundController = require("client.src.music.SoundController")
+local logger = require("common.lib.logger")
+local ModController = require("client.src.mods.ModController")
 
 local states = { loadingMods = 1, catchingUp = 2 }
 
@@ -12,7 +14,26 @@ local GameCatchUp = class(function(self, sceneParams)
   self.match = self.vsScene.match
   self.timePassed = 0
   self.progress = 0
-  self.state = states.loadingMods
+
+  local state = states.catchingUp
+
+  for _, player in ipairs(self.match.players) do
+    local character = characters[player.settings.characterId]
+    if not character.fully_loaded then
+      state = states.loadingMods
+      logger.debug("triggering character load from catchup transition for mod " .. character.id)
+      ModController:loadModFor(character, player)
+    end
+  end
+
+  local stage = stages[self.match.stageId]
+  if not stage.fully_loaded then
+    state = states.loadingMods
+    logger.debug("triggering stage load from catchup transition for mod " .. stage.id)
+    ModController:loadModFor(stage, match)
+  end
+
+  self.state = state
 end,
 Scene)
 

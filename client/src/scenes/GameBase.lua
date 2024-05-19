@@ -266,7 +266,7 @@ function GameBase:update(dt)
         if GAME.tcpClient:isConnected() then
           GAME.battleRoom:shutdown()
         end
-        GAME.navigationStack:pop()
+        GAME.navigationStack:popToName("Lobby")
       end
     end
     self:runGame(dt)
