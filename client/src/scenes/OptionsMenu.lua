@@ -284,7 +284,7 @@ function OptionsMenu:loadGraphicsMenu()
   })
 
   local function scaleSettingsChanged()
-    GAME.showGameScaleUntil = GAME.timer + 1000
+    GAME.showGameScaleUntil = GAME.timer + 10
     local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
     local previousXScale = GAME.canvasXScale
     GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)

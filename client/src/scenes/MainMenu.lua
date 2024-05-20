@@ -150,7 +150,7 @@ function MainMenu:draw()
     GraphicsUtil.printf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, consts.CANVAS_WIDTH, "right")
     infoYPosition = infoYPosition - fontHeight
     if has_game_update then
-      GraphicsUtil.draw(panels[config.panels].images.classic[1][1], 1262, 685)
+      panels[config.panels]:drawPanelFrame(1, "normal", 1262, 685)
     end
   end
 end

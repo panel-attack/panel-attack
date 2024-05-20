@@ -5,26 +5,6 @@ local consts = require("common.engine.consts")
 
 local floor = math.floor
 
--- frames to use for bounce animation
-local BOUNCE_TABLE = {1, 1, 1, 1,
-                2, 2, 2,
-                3, 3, 3,
-                4, 4, 4}
-
--- frames to use for garbage bounce animation
-local GARBAGE_BOUNCE_TABLE = {2, 2, 2,
-                              3, 3, 3,
-                              4, 4, 4,
-                              1, 1}
-
--- frames to use for in danger animation
-local DANGER_BOUNCE_TABLE = {1, 1, 1,
-                              2, 2, 2,
-                              3, 3, 3,
-                              2, 2, 2,
-                              1, 1, 1,
-                              4, 4, 4}
-
 -- The popping particle animation. First number is how far the particles go, second is which frame to show from the spritesheet
 local POPFX_BURST_ANIMATION = {{1, 1}, {4, 1}, {7, 1}, {8, 1}, {9, 1}, {9, 1},
                                {10, 1}, {10, 2}, {10, 2}, {10, 3}, {10, 3}, {10, 4},
@@ -174,7 +154,7 @@ function Stack.update_popfxs(self)
   if self.canvas == nil then
     return
   end
-  
+
   for i = self.pop_q.first, self.pop_q.last do
     local popfx = self.pop_q[i]
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
@@ -212,7 +192,7 @@ function Stack.drawPopEffects(self)
     local drawY = (self.panelOriginY) + (self.height - 1 - popfx.y) * panelSize + self.displacement
 
     GraphicsUtil.setColor(1, 1, 1, self:opacityForFrame(popfx.frame, 1, 8))
-    
+
     if characters[self.character].popfx_style == "burst" or characters[self.character].popfx_style == "fadeburst" then
       if characters[self.character].images["burst"] then
         if POPFX_BURST_ANIMATION[popfx.frame] then
@@ -738,8 +718,7 @@ function Stack:drawAnalyticData()
   GraphicsUtil.drawRectangle("fill", x - backgroundPadding , y - backgroundPadding, width, height, 0, 0, 0, 0.5)
 
   -- Panels cleared
-  icon_width, icon_height = panels[self.panels_dir].images.classic[1][6]:getDimensions()
-  GraphicsUtil.draw(panels[self.panels_dir].images.classic[1][6], x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+  panels[self.panels_dir]:drawPanelFrame(1, "face", x, y, iconSize * GFX_SCALE)
   GraphicsUtil.printf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
 
   y = y + nextIconIncrement
@@ -881,6 +860,9 @@ local function shouldFlashForFrame(frame)
 end
 
 function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
+  local panelSet = panels[self.panels_dir]
+  panelSet:prepareDraw()
+
   local metal_w, metal_h = shockGarbageImages.mid:getDimensions()
   local metall_w, metall_h = shockGarbageImages.left:getDimensions()
   local metalr_w, metalr_h = shockGarbageImages.right:getDimensions()
@@ -892,7 +874,6 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
       local draw_x = 4 + (col - 1) * 16
       local draw_y = 4 + (11 - (row)) * 16 + self.displacement - shakeOffset
       if panel.color ~= 0 and panel.state ~= "popped" then
-        local draw_frame = 1
         if panel.isGarbage then
           local imgs = {flash = shockGarbageImages.flash}
           if not panel.metal then
@@ -955,8 +936,7 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
                   GraphicsUtil.drawGfxScaled(imgs.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
                 end
               elseif panel.y_offset == -1 then
-                local p_w, p_h = panels[self.panels_dir].images.classic[panel.color][1]:getDimensions()
-                GraphicsUtil.drawGfxScaled(panels[self.panels_dir].images.classic[panel.color][1], draw_x, draw_y, 0, 16 / p_w, 16 / p_h)
+                panelSet:addToDraw(panel, draw_x * GFX_SCALE, draw_y * GFX_SCALE)
               end
             elseif shouldFlashForFrame(flash_time) == false then
               if panel.metal then
@@ -972,40 +952,11 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
             end
           end
         else
-          if panel.state == "matched" then
-            local flash_time = self.levelData.frameConstants.FACE - panel.timer
-            if flash_time >= 0 then
-              draw_frame = 6
-            elseif shouldFlashForFrame(flash_time) == false then
-              draw_frame = 1
-            else
-              draw_frame = 5
-            end
-          elseif panel.state == "popping" then
-            draw_frame = 6
-          elseif panel.state == "landing" then
-            draw_frame = BOUNCE_TABLE[panel.timer + 1]
-          elseif panel.state == "swapping" then
-            if panel.isSwappingFromLeft then
-              draw_x = draw_x - panel.timer * 4
-            else
-              draw_x = draw_x + panel.timer * 4
-            end
-          elseif panel.state == "dead" then
-            draw_frame = 6
-          elseif panel.state == "dimmed" then
-            draw_frame = 7
-          elseif panel.fell_from_garbage then
-            draw_frame = GARBAGE_BOUNCE_TABLE[panel.fell_from_garbage] or 1
-          elseif self.danger_col[col] then
-            draw_frame = DANGER_BOUNCE_TABLE[wrap(1, self.danger_timer + 1 + floor((col - 1) / 2), #DANGER_BOUNCE_TABLE)]
-          else
-            draw_frame = 1
-          end
-          local panel_w, panel_h = panels[self.panels_dir].images.classic[panel.color][draw_frame]:getDimensions()
-          GraphicsUtil.drawGfxScaled(panels[self.panels_dir].images.classic[panel.color][draw_frame], draw_x, draw_y, 0, 16 / panel_w, 16 / panel_h)
+          panelSet:addToDraw(panel, draw_x * GFX_SCALE, draw_y * GFX_SCALE, self.danger_col, self.danger_timer)
         end
       end
     end
   end
+
+  panelSet:drawBatch()
 end

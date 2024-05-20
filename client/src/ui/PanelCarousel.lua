@@ -11,8 +11,8 @@ function PanelCarousel:createPassenger(id)
   local stackPanel = StackPanel({alignment = "left", height = 20, hAlign = "center", vAlign = "center"})
   local panelImages = {}
   -- outlineColor
-  for i = 1, #panels[id].images.classic do
-    panelImages[i] = ImageContainer({image = panels[id].images.classic[i][1], vAlign = "center", drawBorders = false, width = 20, height = 20})
+  for color = 1, #panels[id].displayIcons do
+    panelImages[color] = ImageContainer({image = panels[id].displayIcons[color], vAlign = "center", drawBorders = false, width = 20, height = 20})
   end
 
   for i = 1, self.colorCount do

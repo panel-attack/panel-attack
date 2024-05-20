@@ -131,4 +131,10 @@ function fileUtils.findSound(sound_name, dirs_to_check, streamed)
   return nil
 end
 
+function fileUtils.saveTextureToFile(texture, filePath, format)
+  local imageData = love.graphics.readbackTexture(texture)
+  local data = imageData:encode(format)
+  love.filesystem.write(filePath .. "." .. format, data)
+end
+
 return fileUtils
