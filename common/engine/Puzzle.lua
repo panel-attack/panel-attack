@@ -1,4 +1,5 @@
 local tableUtils = require("common.lib.tableUtils")
+local class = require("common.lib.class")
 
 -- A puzzle is a particular instance of the game, where there is a specific goal for clearing the panels
 Puzzle =

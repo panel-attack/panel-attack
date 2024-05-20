@@ -1,3 +1,5 @@
+local class = require("common.lib.class")
+
 -- clears information relating to state, matches and various stuff
 -- a true argument must be supplied to clear the chaining flag as well
 local function clear_flags(panel, clearChaining)

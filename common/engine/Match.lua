@@ -8,6 +8,7 @@ local SoundController = require("client.src.music.SoundController")
 local Player = require("client.src.Player")
 local ChallengeModePlayer = require("client.src.ChallengeModePlayer")
 
+local class = require("common.lib.class")
 local logger = require("common.lib.logger")
 local tableUtils = require("common.lib.tableUtils")
 local GameModes = require("common.engine.GameModes")

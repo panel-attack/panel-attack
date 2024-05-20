@@ -1,5 +1,6 @@
 local BarGraph = require("client.lib.BarGraph")
 local consts = require("common.engine.consts")
+local class = require("common.lib.class")
 
 local RunTimeGraph = class(function(self)
   local updateSpeed = consts.FRAME_RATE * 1

@@ -1,3 +1,4 @@
+local class = require("common.lib.class")
 local logger = require("common.lib.logger")
 local consts = require("common.engine.consts")
 -- TODO: move graphics related functionality to client

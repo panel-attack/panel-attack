@@ -2,6 +2,7 @@ local logger = require("common.lib.logger")
 local TouchDataEncoding = require("common.engine.TouchDataEncoding")
 local util = require("common.lib.util")
 local consts = require("common.engine.consts")
+local class = require("common.lib.class")
 
 -- TODO: Eliminate GFX_SCALE in favor of a scaling field that lives on stack
 local GFX_SCALE = consts.GFX_SCALE

@@ -1,4 +1,4 @@
-local Queue = require("client.src.queue")
+local Queue = require("common.lib.Queue")
 local tableUtils = require("common.lib.tableUtils")
 local logger = require("common.lib.logger")
 

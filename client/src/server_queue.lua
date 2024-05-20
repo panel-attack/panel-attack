@@ -1,5 +1,6 @@
 local NetworkProtocol = require("common.network.NetworkProtocol")
 local logger = require("common.lib.logger")
+local class = require("common.lib.class")
 
 -- Tracks a queue data structure.
 -- Values are tracked via incrementing ID keys, when something is nilled it is tracked as an "empty"

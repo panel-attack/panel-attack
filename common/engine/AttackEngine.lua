@@ -1,4 +1,5 @@
 local logger = require("common.lib.logger")
+local class = require("common.lib.class")
 
 -- A pattern for sending garbage
 AttackPattern =

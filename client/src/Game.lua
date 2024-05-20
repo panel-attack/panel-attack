@@ -1,5 +1,5 @@
 require("client.src.localization")
-require("client.src.queue")
+require("common.lib.Queue")
 require("client.src.server_queue")
 local CharacterLoader = require("client.src.mods.CharacterLoader")
 local StageLoader = require("client.src.mods.StageLoader")
@@ -7,6 +7,7 @@ local Panels = require("client.src.mods.Panels")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
+local class = require("common.lib.class")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
@@ -20,6 +21,7 @@ local Player = require("client.src.Player")
 local GameModes = require("common.engine.GameModes")
 local TcpClient = require("client.src.network.TcpClient")
 local StartUp = require("client.src.scenes.StartUp")
+local SoundController = require("client.src.music.SoundController")
 require("client.src.BattleRoom")
 require("client.src.network.BattleRoom")
 

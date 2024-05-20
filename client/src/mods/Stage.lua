@@ -10,6 +10,7 @@ local RelayStageTrack = require("client.src.music.RelayStageTrack")
 local class = require("common.lib.class")
 local Mod = require("client.src.mods.Mod")
 local UpdatingImage = require("client.src.graphics.UpdatingImage")
+local SoundController = require("client.music.SoundController")
 
 -- Stuff defined in this file:
 --  . the data structure that store a stage's data

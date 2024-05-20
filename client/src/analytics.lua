@@ -1,4 +1,5 @@
 local fileUtils = require("client.src.FileUtils")
+local class = require("common.lib.class")
 local analytics = {}
 
 local analytics_version = 3

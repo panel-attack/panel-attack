@@ -1,5 +1,6 @@
 --local logger = require("common.lib.logger")
 local database = require("server.PADatabase")
+local class = require("common.lib.class")
 Player =
   class(
   function(self, privatePlayerID)
