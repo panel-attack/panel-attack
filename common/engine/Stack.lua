@@ -979,7 +979,7 @@ end
 
 -- Enqueue a card animation
 function Stack.enqueue_card(self, chain, x, y, n)
-  if self.canvas == nil then
+  if self.canvas == nil or self.play_to_end then
     return
   end
 
@@ -997,7 +997,7 @@ end
 
 -- Enqueue a pop animation
 function Stack.enqueue_popfx(self, x, y, popsize)
-  if self.canvas == nil then
+  if self.canvas == nil or self.play_to_end then
     return
   end
 
