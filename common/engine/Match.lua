@@ -437,11 +437,8 @@ function Match:getInfo()
   info.stage = self.stageId or "no stage"
   info.ended = self.ended
   info.stacks = {}
-  if self.P1 then
-    info.stacks[1] = self.P1:getInfo()
-  end
-  if self.P2 then
-    info.stacks[2] = self.P2:getInfo()
+  for i, stack in ipairs(self.stacks) do
+    info.stacks[i] = stack:getInfo()
   end
 
   return info
