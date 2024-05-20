@@ -19,8 +19,8 @@ Every config.json should specify the panel set's id
 
 ## id
 
-The unique identifier of the stage. IF MISSING THE PANELS WILL BE IGNORED!  
-The id should be long and unique so that the game can properly distinguish between different panel mods.
+The unique identifier of the panels. IF MISSING THE PANELS WILL BE IGNORED!  
+The id should be long and unique so that the game can properly distinguish between different panel mods.  
 It is generally recommended to add your username to the id to ensure its uniqueness.  
 For example "panelhd_rings_mizunoketsuban" for a panel set featuring ring shapes by user Mizuno.
 
@@ -39,7 +39,8 @@ Supplying your panel images in single files, image by image, e.g.:
 - panel16.png
 - panel17.png
 
-would constitute 7 images for color 1
+would constitute 7 images for color 1.  
+The images for color 2 would be called panel21, panel22 and so on.
 
 ### sheet
 
