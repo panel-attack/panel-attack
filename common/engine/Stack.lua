@@ -951,10 +951,10 @@ function Stack.run(self)
 end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
-function Stack.setupInput(self) 
+function Stack.setupInput(self)
   self.input_state = nil
 
-  if self:game_ended() == false then 
+  if self:game_ended() == false then
     if self.input_buffer and #self.input_buffer > 0 then
       self.input_state = table.remove(self.input_buffer, 1)
     end
