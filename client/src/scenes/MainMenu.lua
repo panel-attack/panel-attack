@@ -23,8 +23,6 @@ local TimeAttackGame = require("client.src.scenes.TimeAttackGame")
 local EndlessGame = require("client.src.scenes.EndlessGame")
 local VsSelfGame = require("client.src.scenes.VsSelfGame")
 local Game2pVs = require("client.src.scenes.Game2pVs")
-local Game1pChallenge = require("client.src.scenes.Game1pChallenge")
-local Game1pTraining = require("client.src.scenes.Game1pTraining")
 local PuzzleGame = require("client.src.scenes.PuzzleGame")
 
 
@@ -63,7 +61,6 @@ function MainMenu:createMainMenu()
       switchToScene(CharacterSelectVsSelf())
     end),
     MenuItem.createButtonMenuItem("mm_1_training", nil, nil, function()
-      GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"), Game1pTraining)
       switchToScene(TrainingMenu())
     end),
     MenuItem.createButtonMenuItem("mm_1_challenge_mode", nil, nil, function()
