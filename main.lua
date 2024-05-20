@@ -175,7 +175,7 @@ function love.errorhandler(msg)
 
   local success, detailedErrorLogString = pcall(getGameErrorData, sanitizedMessage, sanitizedTrace)
   local errorLines = {}
-  table.insert(errorLines, "Error\n")
+  table.insert(errorLines, "Error: Please share your crash.log with the developers to get help with this!\n")
   if success then
     table.insert(errorLines, detailedErrorLogString)
     logger.info(detailedErrorLogString)
