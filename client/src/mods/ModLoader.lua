@@ -61,8 +61,8 @@ end
 
 -- cancels loading the mod if it is currently being loaded or queued for it
 function ModLoader.cancelLoad(mod)
-  logger.debug("cancelling load for mod " .. mod.id)
-  if ModLoader.loading_mod then
+  if ModLoader.loading_mod and not ModLoader.cancellationList[mod] then
+    logger.debug("cancelling load for mod " .. mod.id)
     if ModLoader.loading_mod[1] == mod then
       ModLoader.loading_mod = nil
       logger.debug("Mod was currently being loaded, directly cancelled")
@@ -76,6 +76,8 @@ function ModLoader.cancelLoad(mod)
       logger.debug("Mod is not in the process of being loaded")
       -- the mod is currently not even queued to be loaded so there should be no cancel
     end
+  else
+    logger.debug("ModLoader is either not busy or mod " .. mod.id .. " is already on the cancellationList")
   end
 end
 

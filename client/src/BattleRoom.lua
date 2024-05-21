@@ -47,7 +47,6 @@ function BattleRoom.createFromMatch(match)
   gameMode.stackInteraction = match.stackInteraction
   gameMode.winConditions = deepcpy(match.winConditions)
   gameMode.gameOverConditions = deepcpy(match.gameOverConditions)
-  gameMode.playerCount = #match.players
 
   local battleRoom = BattleRoom(gameMode, Game2pVs)
 
@@ -84,10 +83,10 @@ function BattleRoom.createFromServerMessage(message)
       for i = 1, #message.players do
         local player = Player(message.players[i].name, message.players[i].playerNumber, false)
         battleRoom:addPlayer(player)
+        player:updateWithMenuState(message.players[i])
       end
     end
     for i = 1, #battleRoom.players do
-      battleRoom.players[i]:updateWithMenuState(message.players[i])
       battleRoom.players[i]:setRating(message.players[i].ratingInfo.new)
       battleRoom.players[i]:setLeague(message.players[i].ratingInfo.league)
     end
@@ -342,7 +341,10 @@ end
 -- sets the style of "level" presets the players select from
 -- 1 = classic
 -- 2 = modern
--- in the future this may become a player only prop but for now it's battleRoom wide and players have to match
+-- longterm we want to abandon the concept of "style" on the player / battleRoom level
+-- just setting difficulty or level should set the levelData and done with it, style is a menu-only concept
+-- there is no technical reason why someone on level 10 shouldn't be able to play against someone on Hard
+-- for now it's a battleRoom wide setting and players have to match
 function BattleRoom:setStyle(styleChoice)
   -- style could be configurable per play instead but let's not for now
   if self.mode.style == GameModes.Styles.CHOOSE then

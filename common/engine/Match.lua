@@ -608,6 +608,11 @@ function Match.createFromReplay(replay, supportsPause)
     optionalArgs
   )
 
+  -- match.isFromReplay mostly treats the match as if it runs an already finished replay
+  -- this is slightly incorrect cause the replay could also be from the server for spectating
+  -- as a result it could mess with rollback during spectating
+  -- on the other hand, if you experience rollback as the spectator it's almost certain the game will desync for the players
+  -- so it probably doesn't matter
   match.isFromReplay = replay.loadedFromFile
   match:setSeed(replay.seed)
   match:setStage(replay.stageId)

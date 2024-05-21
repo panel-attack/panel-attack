@@ -5,6 +5,10 @@ local TIME_ATTACK_TIME = 120
 
 local GameModes = {}
 
+-- longterm we want to abandon the concept of "style" on the engine and room setup level
+-- the engine only cares about levelData, style is a menu-only concept
+-- there is no technical reason why someone on level 10 shouldn't be able to play against someone on Hard
+-- meaning the props which scene uses which style should live on the scenes, not here
 local Styles = { CHOOSE = 0, CLASSIC = 1, MODERN = 2}
 local StackInteractions = { NONE = 0, VERSUS = 1, SELF = 2, ATTACK_ENGINE = 3 }
 

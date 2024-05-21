@@ -133,7 +133,9 @@ end
 function Player:setDifficulty(difficulty)
   if difficulty ~= self.settings.difficulty then
     self.settings.difficulty = difficulty
-    self:setLevelData(LevelPresets.getClassic(difficulty))
+    if self.settings.style == GameModes.Styles.CLASSIC then
+      self:setLevelData(LevelPresets.getClassic(difficulty))
+    end
     self:emitSignal("difficultyChanged", difficulty)
   end
 end
@@ -164,7 +166,9 @@ end
 function Player:setLevel(level)
   if level ~= self.settings.level then
     self.settings.level = level
-    self:setLevelData(LevelPresets.getModern(level))
+    if self.settings.style == GameModes.Styles.MODERN then
+      self:setLevelData(LevelPresets.getModern(level))
+    end
     self:emitSignal("levelChanged", level)
   end
 end
@@ -179,6 +183,9 @@ end
 -- sets the style of "level" presets the player selects from
 -- 1 = classic
 -- 2 = modern
+-- longterm we want to abandon the concept of "style" on the player / battleRoom level
+-- just setting difficulty or level should set the levelData and done with it, style is a menu-only concept
+-- there is no technical reason why someone on level 10 shouldn't be able to play against someone on Hard
 function Player:setStyle(style)
   if style ~= self.settings.style then
     self.settings.style = style
@@ -271,18 +278,18 @@ function Player.createFromReplayPlayer(replayPlayer, playerNumber)
   local player = Player(replayPlayer.name, replayPlayer.publicId)
 
   player.playerNumber = playerNumber
-  player.wins = replayPlayer.wins
-  player.settings.panelId = replayPlayer.settings.panelId
-  player.settings.characterId = CharacterLoader.fullyResolveCharacterSelection(replayPlayer.settings.characterId)
-  player.settings.selectedCharacterId = player.settings.characterId
-  player.settings.inputMethod = replayPlayer.settings.inputMethod
+  player:setWinCount(replayPlayer.wins)
+  player:setPanels(replayPlayer.settings.panelId)
+  player:setCharacter(replayPlayer.settings.characterId)
+  player:setInputMethod(replayPlayer.settings.inputMethod)
   -- style will be obsolete for replays with style-independent levelData
-  player.settings.style = replayPlayer.settings.style
-  player.settings.level = replayPlayer.settings.level
-  player.settings.difficulty = replayPlayer.settings.difficulty
-  player.settings.levelData = replayPlayer.settings.levelData
+  player:setStyle(replayPlayer.settings.style)
+  player:setLevel(replayPlayer.settings.level)
+  player:setDifficulty(replayPlayer.settings.difficulty)
+  -- no matter what style / level / difficulty is actually selected, levelData should have gotten preloaded correctly
+  player:setLevelData(replayPlayer.settings.levelData)
   player.settings.allowAdjacentColors = replayPlayer.settings.allowAdjacentColors
-  player.settings.attackEngineSettings = replayPlayer.settings.attackEngineSettings
+  player:setAttackEngineSettings(replayPlayer.settings.attackEngineSettings)
 
   return player
 end
