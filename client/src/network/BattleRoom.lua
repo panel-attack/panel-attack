@@ -116,6 +116,10 @@ function BattleRoom:processMatchStartMessage(message)
         if playerSettings.level ~= player.settings.level then
           player:setLevel(playerSettings.level)
         end
+        if player.isLocal and not player.inputConfiguration then
+          -- fallback in case the player lost their input config while the server sent the message
+          player:restrictInputs(player.lastUsedInputConfiguration)
+        end
         -- generally I don't think it's a good idea to try and rematch the other diverging settings here
         -- everyone is loaded and ready which can only happen after character/panel data was already exchanged
         -- if they diverge it's because the chosen mod is missing on the other client

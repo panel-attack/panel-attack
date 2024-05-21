@@ -247,6 +247,11 @@ end
 
 function Player:unrestrictInputs()
   if self.inputConfiguration then
+    -- in the case of online play, it is possible that we ready up, causing the server to send out a match start message
+    -- and then before that arrives we unready, thus losing the input configuration which crashes the match
+    -- for this case, the last used input configuration is stored here
+    -- if a match start arrives while no input configuration is set, the player gets restricted to the last used one again
+    self.lastUsedInputConfiguration = self.inputConfiguration
     input:releaseConfiguration(self, self.inputConfiguration)
     self.inputConfiguration = nil
   end
