@@ -132,7 +132,7 @@ end
 local function load_panel_img(path, name)
   local img = GraphicsUtil.loadImageFromSupportedExtensions(path .. "/" .. name)
   if not img then
-    img = GraphicsUtil.loadImageFromSupportedExtensions("panels/__default/" .. name)
+    img = GraphicsUtil.loadImageFromSupportedExtensions("client/assets/panels/__default/" .. name)
 
     if not img then
       error("Could not find default panel image")
