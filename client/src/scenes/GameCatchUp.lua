@@ -39,6 +39,16 @@ Scene)
 
 GameCatchUp.name = "GameCatchUp"
 
+local function modLoadValidation(match)
+  logger.debug("Match has caught up, switching to gameScene")
+  for i, stack in ipairs(match.stacks) do
+    local character = characters[stack.character]
+    logger.debug("Stack " .. i .. " uses character " .. character.id)
+    logger.debug("Character " .. character.id .. " is fully loaded: " .. tostring(character.fully_loaded))
+    logger.debug("Character " .. character.id .. " has a portrait loaded: " .. tostring(character.images.portrait ~= nil))
+  end
+end
+
 local function hasTimeLeft(t)
   return love.timer.getTime() < t + 0.9 * consts.FRAME_RATE
 end
@@ -49,6 +59,7 @@ function GameCatchUp:update(dt)
   self.timePassed = self.timePassed + dt
 
   if not self.match.stacks[1].play_to_end then
+    modLoadValidation(self.match)
     self.progress = 1
     SoundController:applyConfigVolumes()
     GAME.navigationStack:replace(self.vsScene, nil, function() self.vsScene:onGameStart() end)
