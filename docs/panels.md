@@ -130,6 +130,12 @@ Panels converted from garbage will perform a garbageBounce animation for the com
 until they reach ground and start their landing animation instead.  
 This animation does not loop and lasts at the maximum for 12 frames.
 
+#### garbagePop
+
+When garbage is being cleared, the colors of the freed panels become visible one by one.  
+As long as the garbage pops and the panels are suspended, the garbage pop frame is being shown.  
+Currently a single frame and not animatable.
+
 ### Animation configuration with type "single"
 
 If using single images, you have to configure for each state which image index is supposed to be used.

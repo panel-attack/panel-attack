@@ -10,7 +10,8 @@ local ANIMATION_STATES = {
   "hovering", "falling",
   "dimmed", "dead",
   "danger",
-  "garbageBounce"
+  "garbageBounce",
+  "garbagePop"
 }
 local DEFAULT_PANEL_ANIM =
 {
@@ -40,6 +41,8 @@ local DEFAULT_PANEL_ANIM =
 	danger = {frames = {1, 2, 3, 2, 1, 4}, durationPerFrame = 3},
   -- doesn't loop; fixed to 12 frames
 	garbageBounce = {frames = {1, 4, 3, 2}, durationPerFrame = 3},
+  -- currently not animatable
+  garbagePop = {frames = {1}},
 }
 
 -- The class representing the panel image data
@@ -368,8 +371,8 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
     end
   elseif panel.state == "matched" then
     if panel.isGarbage then
-      animationName = "normal"
-      conf = self.sheetConfig.normal
+      animationName = "garbagePop"
+      conf = self.sheetConfig.garbagePop
       frame = 1
     else
       -- divide between flash and face
