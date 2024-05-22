@@ -177,6 +177,29 @@ function Panels:convertSinglesToSheetTexture(images)
   return canvas
 end
 
+local function validateSingleFilesAgainstConfig(imagesByColorAndIndex, animationConfig)
+  local configIndexes = {}
+  local problems = {}
+
+  for animationState, config in pairs(animationConfig) do
+    for i = 1, #config.frames do
+      -- the indexes of the images used for the config are saved here, mark as being in use
+      configIndexes[config.frames[i]] = true
+    end
+  end
+
+  for i = 1, 8 do
+    local imagesByIndex = imagesByColorAndIndex[i]
+    for index, _ in pairs(configIndexes) do
+      if not imagesByIndex[index] then
+        problems[#problems+1] = "Failed to find image with index " .. index .. " for color " .. i
+      end
+    end
+  end
+
+  return problems
+end
+
 function Panels:loadSingles()
   local panelFiles = fileUtils.getFilteredDirectoryItems(self.path, "file")
   panelFiles = tableUtils.filter(panelFiles, function(f)
@@ -198,6 +221,11 @@ function Panels:loadSingles()
     for i = 1, indexes[#indexes] do
       images[color][i] = load_panel_img(self.path, fileUtils.getFileNameWithoutExtension("panel" .. color .. i))
     end
+  end
+
+  local problems = validateSingleFilesAgainstConfig(images, self.animationConfig)
+  if #problems > 0 then
+    error("Error loading panel set " .. self.id .. ":\n\t" .. table.concat(problems, "\n\t"))
   end
 
   for color, panelImages in ipairs(images) do
