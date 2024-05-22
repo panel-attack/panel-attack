@@ -19,7 +19,7 @@ local function runSystemCommands()
   elseif input.allKeys.isDown["t"] then
     themes[config.theme]:deinitializeGraphics()
     themes[config.theme]:json_init()
-    themes[config.theme]:graphics_init()
+    themes[config.theme]:graphics_init(true)
     themes[config.theme]:final_init()
   end
 end
