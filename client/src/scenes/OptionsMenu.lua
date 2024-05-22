@@ -28,17 +28,6 @@ end, Scene)
 
 OptionsMenu.name = "OptionsMenu"
 
-local languageNumber
-local languageName = {}
-for k, v in ipairs(localization:get_list_codes()) do
-  languageName[#languageName + 1] = {v, localization.data[v]["LANG"]}
-  if localization:get_language() == v then
-    languageNumber = k
-  end
-end
-
-local MENU_WIDTH = 130
-local ITEM_HEIGHT = 30
 local SCROLL_STEP = 14
 
 function OptionsMenu:loadScreens()
@@ -171,6 +160,14 @@ function OptionsMenu:loadInfoScreen(text)
 end
 
 function OptionsMenu:loadBaseMenu()
+  local languageNumber
+  local languageName = {}
+  for k, v in ipairs(localization:get_list_codes()) do
+    languageName[#languageName + 1] = {v, localization.data[v]["LANG"]}
+    if localization:get_language() == v then
+      languageNumber = k
+    end
+  end
   local languageLabels = {}
   for k, v in ipairs(languageName) do
     local lang = config.language_code
