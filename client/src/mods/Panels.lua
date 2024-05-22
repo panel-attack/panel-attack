@@ -190,9 +190,13 @@ function Panels:loadSingles()
       return string.match(f, "panel" .. color .. "%d+%.")
     end)
 
-    for i, file in ipairs(files) do
-      local index = tonumber(string.match(files[i], tostring(color) .. "%d+", 6):sub(2))
-      images[color][index] = load_panel_img(self.path, fileUtils.getFileNameWithoutExtension(file))
+    local indexes = tableUtils.map(files, function(f)
+      f = fileUtils.getFileNameWithoutExtension(f)
+      return tonumber(f:sub(7))
+    end)
+
+    for i = 1, indexes[#indexes] do
+      images[color][i] = load_panel_img(self.path, fileUtils.getFileNameWithoutExtension("panel" .. color .. i))
     end
   end
 
