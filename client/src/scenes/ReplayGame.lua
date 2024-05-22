@@ -9,8 +9,8 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local ReplayGame = class(
   function (self, sceneParams)
     self.frameAdvance = false
-    self.playbackSpeeds = {-1, 0, 1, 2, 3, 4, 8, 16}
-    self.playbackSpeedIndex = 3
+    self.playbackSpeeds = {-1, 0, 0.5, 1, 2, 3, 4, 8, 16}
+    self.playbackSpeedIndex = 5
   
     self:load(sceneParams)
   end,
@@ -19,7 +19,9 @@ local ReplayGame = class(
 
 ReplayGame.name = "ReplayGame"
 
+local tick = 0
 function ReplayGame:runGame()
+  tick = tick + 1
   local playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
 
   if self.match:hasEnded() and playbackSpeed < 0 then
@@ -28,12 +30,17 @@ function ReplayGame:runGame()
   end
 
   if not self.match.isPaused then
-    if playbackSpeed > 0 then
+    if playbackSpeed >= 1 then
       for i = 1, playbackSpeed do
         self.match:run()
       end
     elseif playbackSpeed < 0 then
       self.match:rewindToFrame(self.match.clock + playbackSpeed)
+    elseif playbackSpeed < 1 then
+      local inverse = math.round(1 / playbackSpeed, 0)
+      if tick % inverse == 0 then
+        self.match:run()
+      end
     end
   else
     if self.frameAdvance then
