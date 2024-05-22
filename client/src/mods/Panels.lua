@@ -337,6 +337,7 @@ end
 
 local floor = math.floor
 local min = math.min
+local ceil = math.ceil
 
 local function getGarbageBounceProps(panelSet, panel)
   local conf = panelSet.sheetConfig.garbageBounce
@@ -351,7 +352,7 @@ end
 local function getDangerBounceProps(panelSet, panel, dangerTimer)
   local conf = panelSet.sheetConfig.danger
   -- danger_timer counts down from 18 or 15 to 0, depending on what triggered it and then wrapping back to 18
-  local frame = math.ceil(wrap(1, dangerTimer + 1 + math.floor((panel.column - 1) / 2), conf.durationPerFrame * conf.frames) / conf.durationPerFrame)
+  local frame = ceil(wrap(1, dangerTimer + 1 + floor((panel.column - 1) / 2), conf.durationPerFrame * conf.frames) / conf.durationPerFrame)
   return conf, frame
 end
 
@@ -481,8 +482,8 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
   -- with level 8 (FLASH % 4 == 0), this condition can removed and it all validates
   -- but with level 10 (FLASH % 4 == 2), it fails on every single flash
 
-    -- local oldFrame = oldDrawImplementation(self, panel, x, y, dangerCol, panel.column, dangerTimer)
-    -- assert(DEFAULT_PANEL_ANIM[animationName].frames[frame] == oldFrame)
+    local oldFrame = oldDrawImplementation(self, panel, x, y, dangerCol, panel.column, dangerTimer)
+    assert(DEFAULT_PANEL_ANIM[animationName].frames[frame] == oldFrame)
   end
 
   return conf, frame, x, y
