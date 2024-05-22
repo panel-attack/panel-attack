@@ -10,7 +10,7 @@ local ReplayGame = class(
   function (self, sceneParams)
     self.frameAdvance = false
     self.playbackSpeeds = {-1, 0, 0.5, 1, 2, 3, 4, 8, 16}
-    self.playbackSpeedIndex = 5
+    self.playbackSpeedIndex = 4
   
     self:load(sceneParams)
   end,
