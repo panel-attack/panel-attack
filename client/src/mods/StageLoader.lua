@@ -121,11 +121,19 @@ function StageLoader.initStages()
     stage:preload()
   end
 
-  -- bundles without stage thumbnail display up to 4 thumbnails of their substages
+  StageLoader.loadBundleThumbnails()
+end
+
+function StageLoader.loadBundleThumbnails()
+-- bundles without stage thumbnail display up to 4 thumbnails of their substages
   -- there is no guarantee the substages had been loaded previously so do it after everything got preloaded
   for _, stage in pairs(stages) do
-    if stage:is_bundle() and not stage.images.thumbnail then
-      stage.images.thumbnail = stage:createThumbnail()
+    if not stage.images.thumbnail then
+      if stage:is_bundle() then
+        stage.images.thumbnail = stage:createThumbnail()
+      else
+        error("Can't find a thumbnail for stage " .. stage.id)
+      end
     end
   end
 end

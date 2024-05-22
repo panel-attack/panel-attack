@@ -31,6 +31,9 @@ function StageCarousel:loadCurrentStages()
       stage = stages[stages_ids_for_current_theme[i]]
     end
 
+    if not stage.images.thumbnail then
+      error("Cannot load stage " .. stage.id .. " because no thumbnail was loaded")
+    end
     local passenger = StageCarousel:createPassenger(stage.id, stage.images.thumbnail, stage.display_name)
     self:addPassenger(passenger)
   end

@@ -108,6 +108,7 @@ function stages_reload_graphics()
   for _, stage in pairs(stages) do
     stage:graphics_init(false, false)
   end
+  require("client.src.mods.StageLoader").loadBundleThumbnails()
 
   -- reload the current stage graphics immediately
   local match = GAME.battleRoom and GAME.battleRoom.match
@@ -161,17 +162,19 @@ function Stage:createThumbnail()
   local canvas = love.graphics.newCanvas(2 * 80, 2 * 45)
   canvas:renderTo(function()
     for i, substageId in ipairs(self.sub_stages) do
-      local stage = stages[substageId]
-      local x = 0
-      local y = 0
-      if i % 2 == 0 then
-        x = 80
+      if i <= 4 then
+        local stage = stages[substageId]
+        local x = 0
+        local y = 0
+        if i % 2 == 0 then
+          x = 80
+        end
+        if i > 2 then
+          y = 45
+        end
+        local width, height = stage.images.thumbnail:getDimensions()
+        love.graphics.draw(stage.images.thumbnail, x, y, 0, 80 / width, 45 / height)
       end
-      if i > 2 then
-        y = 45
-      end
-      local width, height = stage.images.thumbnail:getDimensions()
-      love.graphics.draw(stage.images.thumbnail, x, y, 0, 80 / width, 45 / height)
     end
   end)
   return canvas
