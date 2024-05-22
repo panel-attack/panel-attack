@@ -148,6 +148,7 @@ end
 function Panels:loadSheets()
   for color = 1, 8 do
     self.sheets[color] = load_panel_img(self.path, "panel-" .. color)
+    assert(self.sheets[color], "Failed to load sheet for color " .. color .. " on panel set " .. self.id)
   end
   self.sheetConfig = self.animationConfig
   for i, animationState in ipairs(ANIMATION_STATES) do
