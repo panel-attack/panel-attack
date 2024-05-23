@@ -57,11 +57,11 @@ for i = 1, 72 do
   amount_of_garbages_lines_per_combo[i] = amount_of_garbages_lines_per_combo[i] or amount_of_garbages_lines_per_combo[i - 1]
 end
 
-local function compute_above_chain_card_limit(analytic)
+local function compute_above_chain_card_limit(analytic, chainLimit)
   --computing chain ? count
   local chain_above_limit = 0
   for k, v in pairs(analytic.reached_chains) do
-    if k > themes[config.theme].chainCardLimit then
+    if k > chainLimit then
       chain_above_limit = chain_above_limit + v
     end
   end
@@ -80,7 +80,7 @@ local function refresh_sent_garbage_lines(analytic)
       sent_garbage_lines_count = sent_garbage_lines_count + (i - 1) * analytic.reached_chains[i]
     end
   end
-  local chain_above_13 = compute_above_chain_card_limit(analytics.last_game)
+  local chain_above_13 = compute_above_chain_card_limit(analytics.last_game, 13)
   sent_garbage_lines_count = sent_garbage_lines_count + 13 * chain_above_13
   sent_garbage_lines_count = sent_garbage_lines_count + analytic.shockGarbageCount
   analytic.sent_garbage_lines = sent_garbage_lines_count
@@ -200,8 +200,8 @@ local function write_analytics_files()
   output_pretty_analytics()
 end
 
-function AnalyticsInstance.compute_above_chain_card_limit(self)
-  return compute_above_chain_card_limit(self.data)
+function AnalyticsInstance.compute_above_chain_card_limit(self, chainLimit)
+  return compute_above_chain_card_limit(self.data, chainLimit)
 end
 
 function AnalyticsInstance.data_update_list(self)

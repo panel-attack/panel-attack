@@ -525,7 +525,6 @@ function Stack.render(self)
 
   self:drawFrame()
   self:drawWall(shakeOffset, self.height)
-
   -- Draw the cursor
   if self:game_ended() == false then
     self:render_cursor(shakeOffset)
@@ -543,7 +542,6 @@ function Stack.render(self)
 
   self:drawDebugPanels(shakeOffset)
   self:drawDebug()
-
 end
 
 function Stack:drawRating()
@@ -710,23 +708,26 @@ function Stack:drawAnalyticData()
   local column2Distance = 70
 
   local fontIncrement = 8
-  local iconSize = 8
+  local iconSize = 24
   local icon_width
   local icon_height
 
+  local font = GraphicsUtil.getGlobalFontWithSize(GraphicsUtil.fontSize + fontIncrement)
+  GraphicsUtil.setFont(font)
   -- Background
   GraphicsUtil.drawRectangle("fill", x - backgroundPadding , y - backgroundPadding, width, height, 0, 0, 0, 0.5)
 
   -- Panels cleared
-  panels[self.panels_dir]:drawPanelFrame(1, "face", x, y, iconSize * GFX_SCALE)
-  GraphicsUtil.printf(analytic.data.destroyed_panels, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  panels[self.panels_dir]:drawPanelFrame(1, "face", x, y, iconSize)
+  GraphicsUtil.printf(analytic.data.destroyed_panels, x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
 
+
   -- Garbage sent
   icon_width, icon_height = characters[self.character].images.face:getDimensions()
-  GraphicsUtil.draw(characters[self.character].images.face, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  GraphicsUtil.printf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.draw(characters[self.character].images.face, x, y, 0, iconSize / icon_width, iconSize / icon_height)
+  GraphicsUtil.printf(analytic.data.sent_garbage_lines, x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
 
@@ -737,24 +738,24 @@ function Stack:drawAnalyticData()
     end
   end
   icon_width, icon_height = self.theme.images.IMG_gpm:getDimensions()
-  GraphicsUtil.draw(self.theme.images.IMG_gpm, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  GraphicsUtil.printf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)  
+  GraphicsUtil.draw(self.theme.images.IMG_gpm, x, y, 0, iconSize / icon_width, iconSize / icon_height)
+  GraphicsUtil.printf(analytic.lastGPM .. "/m", x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
 
   -- Moves
   icon_width, icon_height = self.theme.images.IMG_cursorCount:getDimensions()
-  GraphicsUtil.draw(self.theme.images.IMG_cursorCount, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-  GraphicsUtil.printf(analytic.data.move_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.draw(self.theme.images.IMG_cursorCount, x, y, 0, iconSize / icon_width, iconSize / icon_height)
+  GraphicsUtil.printf(analytic.data.move_count, x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
 
   -- Swaps
   if self.theme.images.IMG_swap then
     icon_width, icon_height = self.theme.images.IMG_swap:getDimensions()
-    GraphicsUtil.draw(self.theme.images.IMG_swap, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+    GraphicsUtil.draw(self.theme.images.IMG_swap, x, y, 0, iconSize / icon_width, iconSize / icon_height)
   end
-  GraphicsUtil.printf(analytic.data.swap_count, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.data.swap_count, x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
 
@@ -767,78 +768,53 @@ function Stack:drawAnalyticData()
   end
   if self.theme.images.IMG_apm then
     icon_width, icon_height = self.theme.images.IMG_apm:getDimensions()
-    GraphicsUtil.draw(self.theme.images.IMG_apm, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+    GraphicsUtil.draw(self.theme.images.IMG_apm, x, y, 0, iconSize / icon_width, iconSize / icon_height)
   end
-  GraphicsUtil.printf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+  GraphicsUtil.printf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
 
+
+  -- preserve the offset for combos as chains and combos are drawn in columns side by side
   local yCombo = y
 
-  -- Clean up the chain data so we only show chains up to the highest chain the user has done
-  local chainData = {}
-  local chain_above_limit = analytic:compute_above_chain_card_limit()
-
-  for i = 2, self.theme.chainCardLimit, 1 do
-    if not analytic.data.reached_chains[i] then
-      chainData[i] = 0
-    else
-      chainData[i] = analytic.data.reached_chains[i]
-    end
-  end
-  table.insert(chainData, chain_above_limit)
-  for i = #chainData, 0, -1 do
-    if chainData[i] and chainData[i] == 0 then
-      chainData[i] = nil
-    else
-      break
-    end
-  end
-
   -- Draw the chain images
-  for i = 2, self.theme.chainCardLimit + 1 do
-    local chain_amount = chainData[i]
-    if chain_amount and chain_amount > 0 then
+  local chainCountAboveLimit = analytic:compute_above_chain_card_limit(self.theme.chainCardLimit)
+
+  for i = 2, self.theme.chainCardLimit do
+    if analytic.data.reached_chains[i] and analytic.data.reached_chains[i] > 0 then
       local cardImage = self.theme:chainImage(i)
       if cardImage then
         icon_width, icon_height = cardImage:getDimensions()
-        GraphicsUtil.draw(cardImage, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-        GraphicsUtil.printf(chain_amount, x + iconToTextSpacing, y + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        GraphicsUtil.draw(cardImage, x, y, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.printf(analytic.data.reached_chains[i], x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
         y = y + nextIconIncrement
       end
     end
   end
 
-  -- Clean up the combo data so we only show combos up to the highest combo the user has done
-  local comboData = shallowcpy(analytic.data.used_combos)
-
-  for i = 4, 15, 1 do
-    if not comboData[i] then
-      comboData[i] = 0
-    end
-  end
-  local maxCombo = maxComboReached(analytic.data)
-  for i = maxCombo, 0, -1 do
-    if comboData[i] and comboData[i] == 0 then
-      comboData[i] = nil
-    else
-      break
-    end
+  if chainCountAboveLimit > 0 then
+    local cardImage = self.theme:chainImage(0)
+    GraphicsUtil.draw(cardImage, x, y, 0, iconSize / icon_width, iconSize / icon_height)
+    GraphicsUtil.printf(chainCountAboveLimit, x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
   end
 
   -- Draw the combo images
   local xCombo = x + column2Distance
-  for i, combo_amount in pairs(comboData) do
-    if combo_amount and combo_amount > 0 then
+
+  for i = 4, 72 do
+    if analytic.data.used_combos[i] and analytic.data.used_combos[i] > 0 then
       local cardImage = self.theme:comboImage(i)
       if cardImage then
         icon_width, icon_height = cardImage:getDimensions()
-        GraphicsUtil.draw(cardImage, xCombo, yCombo, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
-        GraphicsUtil.printf(combo_amount, xCombo + iconToTextSpacing, yCombo + 0, consts.CANVAS_WIDTH, "left", nil, 1, fontIncrement)
+        GraphicsUtil.draw(cardImage, xCombo, yCombo, 0, iconSize / icon_width, iconSize / icon_height)
+        GraphicsUtil.printf(analytic.data.used_combos[i], xCombo + iconToTextSpacing, yCombo - 2, consts.CANVAS_WIDTH, "left", nil, 1)
         yCombo = yCombo + nextIconIncrement
       end
     end
   end
+
+  GraphicsUtil.setFont(GraphicsUtil.getGlobalFont())
 end
 
 function Stack:drawMoveCount()
