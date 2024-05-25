@@ -171,6 +171,9 @@ function Panels:convertSinglesToSheetTexture(images)
       for frameNumber, imageIndex in ipairs(animationConfig.frames) do
         local widthScale = self.size / images[imageIndex]:getWidth()
         local heightScale = self.size / images[imageIndex]:getHeight()
+        if heightScale > 1 or widthScale > 1 then
+          images[imageIndex]:setFilter("nearest", "nearest")
+        end
         love.graphics.draw(images[imageIndex], self.size * (frameNumber - 1), self.size * (row - 1),nil, widthScale, heightScale)
       end
       row = row + 1
