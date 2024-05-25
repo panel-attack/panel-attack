@@ -169,7 +169,12 @@ function Panels:convertSinglesToSheetTexture(images)
     for _, animationState in ipairs(ANIMATION_STATES) do
       local animationConfig = self.animationConfig[animationState]
       for frameNumber, imageIndex in ipairs(animationConfig.frames) do
-        love.graphics.draw(images[imageIndex], self.size * (frameNumber - 1), self.size * (row - 1))
+        local widthScale = self.size / images[imageIndex]:getWidth()
+        local heightScale = self.size / images[imageIndex]:getHeight()
+        if heightScale > 1 or widthScale > 1 then
+          images[imageIndex]:setFilter("nearest", "nearest")
+        end
+        love.graphics.draw(images[imageIndex], self.size * (frameNumber - 1), self.size * (row - 1),nil, widthScale, heightScale)
       end
       row = row + 1
     end
@@ -219,8 +224,9 @@ function Panels:loadSingles()
       return tonumber(f:sub(7))
     end)
 
-    for i = 1, (indexes[#indexes] or 7) do
+    for i = 1, math.max(indexes[#indexes] or 7, 7) do
       images[color][i] = load_panel_img(self.path, fileUtils.getFileNameWithoutExtension("panel" .. color .. i))
+      self.size = math.max(images[color][i]:getWidth(), self.size) -- for scaling
     end
   end
 
@@ -250,7 +256,6 @@ function Panels:load()
 
   self.greyPanel = load_panel_img(self.path, "panel00")
   self.size = self.greyPanel:getWidth()
-  self.scale = 48 / self.size
 
   self.images.metals = {
     left = load_panel_img(self.path, "metalend0"),
@@ -259,11 +264,14 @@ function Panels:load()
     flash = load_panel_img(self.path, "garbageflash")
   }
 
+
   if self.type == "single" then
     self:loadSingles()
   else
     self:loadSheets()
   end
+
+  self.scale = 48 / self.size
 
   self.quad = love.graphics.newQuad(0, 0, self.size, self.size, self.sheets[1])
   self.displayIcons = {}
