@@ -224,7 +224,7 @@ function Panels:loadSingles()
       return tonumber(f:sub(7))
     end)
 
-    for i = 1, 7 do
+    for i = 1, math.max(indexes[#indexes] or 7, 7) do
       images[color][i] = load_panel_img(self.path, fileUtils.getFileNameWithoutExtension("panel" .. color .. i))
       self.size = math.max(images[color][i]:getWidth(), self.size) -- for scaling
     end
