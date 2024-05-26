@@ -45,7 +45,7 @@ function ReplayV1.transform(legacyReplay)
   r.players = {}
   r.players[1] = {
     human = true,
-    name = v1r.P1_name,
+    name = v1r.P1_name or "Player 1",
     -- win count only started to be saved sometime in v046
     wins = v1r.P1_win_count or 0,
     -- not saved in v1
