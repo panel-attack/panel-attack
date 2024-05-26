@@ -196,7 +196,7 @@ function Theme:loadVersion2DefaultValues()
   self.healthbar_frame_Pos = {-17, -4} -- the position of the healthbar frame
 end
 
-Theme.themeDirectoryPath = "themes/"
+Theme.themeDirectoryPath = THEME_DIRECTORY_PATH or "themes/"
 Theme.defaultThemeDirectoryPath = "client/assets/themes/" .. consts.DEFAULT_THEME_DIRECTORY .. "/"
 
 -- loads the image of the given name

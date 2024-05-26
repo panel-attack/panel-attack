@@ -1,4 +1,13 @@
 local class = require("common.lib.class")
+local musicThread = love.thread.newThread("client/src/music/PlayMusicThread.lua")
+
+local function playSource(source)
+  if musicThread:isRunning() then
+    musicThread:wait()
+  end
+  musicThread:start(source)
+end
+
 
 -- construct a music object with a looping `main` music and an optional `start` played as the intro
 local Music = class(function(music, main, start)
@@ -10,7 +19,6 @@ local Music = class(function(music, main, start)
   music.mainStartTime = nil
   music.paused = false
 end)
-
 
 function Music:play()
   if not self.currentSource then
@@ -27,7 +35,7 @@ function Music:play()
     self.mainStartTime = love.timer.getTime() + duration - position
   end
 
-  self.currentSource:play()
+  playSource(self.currentSource)
   self.paused = false
 end
 
@@ -80,7 +88,7 @@ function Music:update()
     if self.start and self.currentSource == self.start then
       if self.mainStartTime - love.timer.getTime() < 0.007 then
         self.currentSource = self.main
-        self.currentSource:play()
+        playSource(self.currentSource)
         self.mainStartTime = nil
       end
     end

@@ -4,6 +4,7 @@ require("client.src.server_queue")
 local CharacterLoader = require("client.src.mods.CharacterLoader")
 local StageLoader = require("client.src.mods.StageLoader")
 local Panels = require("client.src.mods.Panels")
+require("client.src.mods.Theme")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.

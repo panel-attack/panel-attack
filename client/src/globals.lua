@@ -28,3 +28,5 @@ panels_ids = {} -- initialized in panels.lua
 SFX_Fanfare_Play = 0
 SFX_GarbageThud_Play = 0
 SFX_GameOver_Play = 0
+
+THEME_DIRECTORY_PATH = "themes/"

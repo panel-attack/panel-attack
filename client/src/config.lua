@@ -2,7 +2,7 @@ json = require("common.lib.dkjson")
 local util = require("common.lib.util")
 local fileUtils = require("client.src.FileUtils")
 local consts = require("common.engine.consts")
-local Theme = require("client.src.mods.Theme") -- needed for directory location
+require("client.src.globals")
 
 -- Default configuration values
 config = {
@@ -117,7 +117,7 @@ config = {
         if read_data then
           -- do stuff using read_data.version for retrocompatibility here
 
-          if type(read_data.theme) == "string" and love.filesystem.getInfo(Theme.themeDirectoryPath .. read_data.theme .. "/config.json") then
+          if type(read_data.theme) == "string" and love.filesystem.getInfo(THEME_DIRECTORY_PATH .. read_data.theme .. "/config.json") then
             configTable.theme = read_data.theme
           end
 
