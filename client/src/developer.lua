@@ -27,12 +27,8 @@ for _, value in pairs(arg) do
     -- because the less memory is allocated, the less the garbage collector runs 
     -- the final goal would be to achieve near 0 memory allocation during games
     -- this would allow us to simply turn off the GC during matches and only collect afterwards
-    PROFILE_MEMORY = false
-    -- when explicitly profiling for frame times, it should be kept on though
-
-    if PROFILE_MEMORY then
-      collectgarbage("stop")
-    end
+    PROFILE_MEMORY = true
+    collectgarbage("stop")
   elseif value == "performanceTests" then
     PERFORMANCE_TESTS_ENABLED = 1
   else

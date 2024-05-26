@@ -205,7 +205,7 @@ function GameBase:runGame(dt)
   self.frameInfo.currentTime = love.timer.getTime()
   self.frameInfo.expectedFrameCount = math.ceil((self.frameInfo.currentTime - self.frameInfo.startTime) * 60)
   repeat
-    prof.push("Match:run")
+    prof.push("Match:run", self.match.clock)
     self.frameInfo.frameCount = self.frameInfo.frameCount + 1
     framesRun = framesRun + 1
     self.match:run()

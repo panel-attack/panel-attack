@@ -57,10 +57,11 @@ function CustomRun.sleep()
   end
 
   -- Sleep any remaining amount of time to fill up the frametime to 1/60 of a second
-  -- On most machines GC will have reduced the remaining idle time to near nothing
-  -- But strong machines may exit garbage collection early and need to sleep the remaining time
-  if idleTime > 0 then
-    local sleepTime = idleTime * 0.99
+  -- don't sleep the entire remaining idle time though:
+  -- calling sleep means to the OS "sleep for AT LEAST"
+  -- that means it is never shorter and usually slightly longer
+  if idleTime > 0.001 then
+    local sleepTime = idleTime - 0.0005
     prof.push("sleep", sleepTime * 1000 .. "ms")
     love.timer.sleep(sleepTime)
     prof.pop("sleep")
