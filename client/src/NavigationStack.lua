@@ -24,7 +24,9 @@ end
 local function applySceneMusic(scene)
   if not applyMusic(scene.music) then
     if not applyMusic(scene.fallbackMusic) then
-      SoundController:stopMusic()
+      if not scene.keepMusic then
+        SoundController:stopMusic()
+      end
     end
   end
 end

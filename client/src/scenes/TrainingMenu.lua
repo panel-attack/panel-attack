@@ -15,6 +15,7 @@ local Game1pTraining = require("client.src.scenes.Game1pTraining")
 local TrainingMenu = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_main
+    self.keepMusic = true
     self.menu = nil -- set in load
     self:load(sceneParams)
   end,

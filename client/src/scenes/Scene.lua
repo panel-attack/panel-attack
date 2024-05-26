@@ -18,6 +18,10 @@ local Scene = class(
     -- any other labels will be synonymous to nil/none
     self.music = "none"
     self.fallbackMusic = "none"
+    -- if no music/fallbackMusic is specified,
+    --  the scene can alternatively specify it wants to keep the music that is currently playing
+    --  if kept at false, the music will always change at scene switch
+    self.keepMusic = false
   end
 )
 

@@ -10,6 +10,7 @@ local TextButton = require("client.src.ui.TextButton")
 -- Scene for setting the username
 local SetNameMenu = class(
   function (self, sceneParams)
+    self.keepMusic = true
     self:load(sceneParams)
   end,
   Scene

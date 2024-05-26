@@ -12,6 +12,7 @@ local CharacterSelectChallenge = require("client.src.scenes.CharacterSelectChall
 local ChallengeModeMenu = class(
   function (self, sceneParams)
     self.backgroundImg = themes[config.theme].images.bg_main
+    self.keepMusic = true
     self:load(sceneParams)
   end,
   Scene

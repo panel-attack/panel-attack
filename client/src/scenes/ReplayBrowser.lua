@@ -10,6 +10,7 @@ local ReplayGame = require("client.src.scenes.ReplayGame")
 --@module replayBrowser
 local ReplayBrowser = class(
   function (self, sceneParams)
+    self.keepMusic = true
     self:load(sceneParams)
   end,
   Scene
