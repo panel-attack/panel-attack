@@ -1,4 +1,5 @@
 local manualGc = require("client.lib.batteries.manual_gc")
+local prof = require("common.lib.jprof.jprof")
 
 local CustomRun = {}
 CustomRun.FRAME_RATE = 1 / 60
@@ -24,7 +25,6 @@ leftover_time = maxLeftOverTime
 -- Sleeps just the right amount of time to make our next update step be one frame long.
 -- If we have leftover time that hasn't been run yet, it will sleep less to catchup.
 function CustomRun.sleep()
-
   local targetDelay = CustomRun.FRAME_RATE
   -- We want leftover time to be above 0 but less than a quarter frame.
   -- If it goes above that, only wait enough to get it down to that.
@@ -40,14 +40,18 @@ function CustomRun.sleep()
   local idleTime = targetTime - currentTime
   -- actively collecting garbage is very CPU intensive
   -- only do it while a match is on-going
-  if GAME and GAME.battleRoom and GAME.battleRoom.match and GAME.focused and not GAME.battleRoom.match.isPaused then
+  -- and only while not profiling for memory allocations
+  if not PROFILE_MEMORY and GAME and GAME.battleRoom and GAME.battleRoom.match and GAME.focused and not GAME.battleRoom.match.isPaused then
+    local manualGcTime = math.max(0.001, idleTime * config.activeGarbageCollectionPercent)
+    prof.push("manual gc", tostring(manualGcTime))
     -- Spend as much time as necessary collecting garbage, but at least 0.1ms
     -- manualGc itself has a ceiling at which it will stop
-    manualGc(math.max(0.001, idleTime * config.activeGarbageCollectionPercent))
+    manualGc(manualGcTime)
     currentTime = love.timer.getTime()
     CustomRun.runMetrics.gcDuration = currentTime - originalTime
     originalTime = currentTime
     idleTime = targetTime - currentTime
+    prof.pop("manual gc")
   else
     CustomRun.runMetrics.gcDuration = 0
   end
@@ -56,14 +60,18 @@ function CustomRun.sleep()
   -- On most machines GC will have reduced the remaining idle time to near nothing
   -- But strong machines may exit garbage collection early and need to sleep the remaining time
   if idleTime > 0 then
+    prof.push("sleep")
     love.timer.sleep(idleTime * 0.99)
+    prof.pop("sleep")
   end
   currentTime = love.timer.getTime()
 
   -- While loop the last little bit to be more accurate
+  prof.push("busy loop")
   while currentTime < targetTime do
     currentTime = love.timer.getTime()
   end
+  prof.pop("busy loop")
 
   CustomRun.runMetrics.previousSleepEnd = currentTime
   CustomRun.runMetrics.sleepDuration = currentTime - originalTime
@@ -93,6 +101,7 @@ function CustomRun.innerRun()
     return shouldQuit
   end
   mem = collectgarbage("count")
+  prof.push("frame")
 
   -- Update dt, as we'll be passing it to update
   if love.timer then
@@ -103,7 +112,9 @@ function CustomRun.innerRun()
   -- Call update and draw
   if love.update then
     local preUpdateTime = love.timer.getTime()
+    prof.push("update")
     love.update(dt) -- will pass 0 if love.timer is disabled
+    prof.pop("update")
     CustomRun.runMetrics.updateDuration = love.timer.getTime() - preUpdateTime
     prevMem = mem
     mem = collectgarbage("count")
@@ -117,7 +128,9 @@ function CustomRun.innerRun()
 
     if love.draw then
       local preDrawTime = love.timer.getTime()
+      prof.push("draw")
       love.draw()
+      prof.pop("draw")
       CustomRun.runMetrics.drawDuration = love.timer.getTime() - preDrawTime
       prevMem = mem
       mem = collectgarbage("count")
@@ -135,7 +148,9 @@ function CustomRun.innerRun()
     end
 
     local prePresentTime = love.timer.getTime()
+    prof.push("present")
     love.graphics.present()
+    prof.pop("present")
     CustomRun.runMetrics.presentDuration = love.timer.getTime() - prePresentTime
     prevMem = mem
     mem = collectgarbage("count")
@@ -143,7 +158,9 @@ function CustomRun.innerRun()
   end
 
   if love.timer then
+    prof.push("sleep")
     CustomRun.sleep()
+    prof.pop("sleep")
     mem = collectgarbage("count")
   end
 
@@ -155,6 +172,7 @@ function CustomRun.innerRun()
     mem = collectgarbage("count")
     CustomRun.runMetrics.graphMemAlloc = mem - prevMem
   end
+  prof.pop("frame")
 end
 
 -- This is a copy of the outer run loop that love uses.

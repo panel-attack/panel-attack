@@ -8,7 +8,22 @@ for _, value in pairs(arg) do
     require "lldebugger"
     lldebugger.start()
   elseif value == "profile" then
-    PROFILING_ENABLED = 1
+    PROF_CAPTURE = true
+    -- we want to optimize in a way that our weakest platforms benefit
+    -- on our weakest platform (android), jit is default disabled
+    jit.off()
+
+    -- the garbage collector is a primary source of frame spikes
+    -- thus one goal of profiling is to identify where memory is allocated
+    -- because the less memory is allocated, the less the garbage collector runs 
+    -- the final goal would be to achieve near 0 memory allocation during games
+    -- this would allow us to simply turn off the GC during matches and only collect afterwards
+    PROFILE_MEMORY = false
+    -- when explicitly profiling for frame times, it should be kept on though
+
+    if PROFILE_MEMORY then
+      collectgarbage("stop")
+    end
   elseif value == "performanceTests" then
     PERFORMANCE_TESTS_ENABLED = 1
   else

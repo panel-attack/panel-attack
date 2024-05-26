@@ -8,7 +8,6 @@ require("client.src.mods.Theme")
 
 -- The main game object for tracking everything in Panel Attack.
 -- Not to be confused with "Match" which is the current battle / instance of the game.
-local class = require("common.lib.class")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
@@ -25,6 +24,7 @@ local StartUp = require("client.src.scenes.StartUp")
 local SoundController = require("client.src.music.SoundController")
 require("client.src.BattleRoom")
 require("client.src.network.BattleRoom")
+local prof = require("common.lib.jprof.jprof")
 
 local RichPresence = require("client.lib.rich_presence.RichPresence")
 
@@ -54,10 +54,6 @@ local Game = class(
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = RichPresence()
     self.rich_presence:initialize("902897593049301004")
-    if PROFILING_ENABLED then
-      self.profiler = require("client.src.profiler")
-      self.profiler:start()
-    end
 
     self.muteSound = false
     self.canvasX = 0
@@ -94,7 +90,6 @@ local Game = class(
 Game.newCanvasSnappedScale = newCanvasSnappedScale
 
 function Game:load(gameUpdater)
-  
   -- TODO: include this with save.lua?
   require("client.src.puzzles")
   -- move to constructor
@@ -103,7 +98,7 @@ function Game:load(gameUpdater)
   if user_input_conf then
     self.input:importConfigurations(user_input_conf)
   end
-  
+
   self.navigationStack = require("client.src.NavigationStack")
   self.navigationStack:push(StartUp({setupRoutine = self.setupRoutine}))
   self.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=GAME:newCanvasSnappedScale()})
@@ -273,13 +268,17 @@ function Game:update(dt)
     leftover_time = 0
   end
 
+  prof.push("battleRoom update")
   if self.battleRoom then
     self.battleRoom:update(dt)
   end
+  prof.pop("battleRoom update")
 
   handleShortcuts()
 
+  prof.push("navigationStack update")
   self.navigationStack:update(dt)
+  prof.pop("navigationStack update")
 
   if self.backgroundImage then
     self.backgroundImage:update(dt)

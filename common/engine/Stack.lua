@@ -17,6 +17,7 @@ local class = require("common.lib.class")
 local Panel = require("common.engine.Panel")
 local GarbageQueue = require("common.engine.GarbageQueue")
 local Telegraph = require("common.engine.Telegraph")
+local prof = require("common.lib.jprof.jprof")
 
 -- Stuff defined in this file:
 --  . the data structures that store the configuration of
@@ -564,6 +565,7 @@ end
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the clock time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
+  prof.push("Stack:saveForRollback")
   local opponentStack = self.opponentStack
   local rollbackCopies = self.rollbackCopies
   local attackTarget = self.garbageTarget
@@ -577,6 +579,7 @@ function Stack.saveForRollback(self)
   self.garbageTarget = attackTarget
   local deleteFrame = self.clock - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
+  prof.pop("Stack:saveForRollback")
 end
 
 function Stack.deleteRollbackCopy(self, frame)
@@ -937,6 +940,7 @@ function Stack.run(self)
   if self.match.isPaused then
     return
   end
+  prof.push("Stack:run")
 
   if self.is_local == false then
     if self.play_to_end then
@@ -946,8 +950,13 @@ function Stack.run(self)
     end
   end
 
+  prof.push("Stack:setupInput")
   self:setupInput()
+  prof.pop("Stack:setupInput")
+  prof.push("Stack:simulate")
   self:simulate()
+  prof.pop("Stack:simulate")
+  prof.pop("Stack:run")
 end
 
 -- Grabs input from the buffer of inputs or from the controller and sends out to the network if needed.
@@ -1164,6 +1173,7 @@ end
 
 -- One run of the engine routine.
 function Stack.simulate(self)
+  prof.push("simulate 1")
   self:prep_first_row()
   local panels = self.panels
   local swapped_this_frame = nil
@@ -1175,18 +1185,24 @@ function Stack.simulate(self)
   elseif self.stop_time ~= 0 then
     self.stop_time = self.stop_time - 1
   end
+  prof.pop("simulate 1")
 
+  prof.push("simulate danger updates")
   self.panels_in_top_row = self:hasPanelsInTopRow()
   self:updateDangerBounce()
   self:updateDangerMusic()
+  prof.pop("simulate danger updates")
 
+  prof.push("new row stuff")
   if self.displacement == 0 and self.has_risen then
     self.top_cur_row = self.height
     self:new_row()
   end
 
   self:updateRiseLock()
+  prof.pop("new row stuff")
 
+  prof.push("speed increase")
   -- Increase the speed if applicable
   if self.levelData.speedIncreaseMode == 1 then
     -- increase per interval
@@ -1199,7 +1215,10 @@ function Stack.simulate(self)
     self.speed = min(self.speed + 1, 99)
     self.panels_to_speedup = self.panels_to_speedup + PANELS_TO_NEXT_SPEED[self.speed]
   end
+  prof.pop("speed increase")
 
+
+  prof.push("passive raise")
   -- Phase 0 //////////////////////////////////////////////////////////////
   -- Stack automatic rising
   if self.behaviours.passiveRaise then
@@ -1225,6 +1244,9 @@ function Stack.simulate(self)
     end
   end
 
+  prof.pop("passive raise")
+
+  prof.push("reset stuff")
   if not self.panels_in_top_row and not self:has_falling_garbage() then
     self.health = self.levelData.maxHealth
   end
@@ -1232,27 +1254,37 @@ function Stack.simulate(self)
   if self.displacement % 16 ~= 0 then
     self.top_cur_row = self.height - 1
   end
+  prof.pop("reset stuff")
 
+  prof.push("old swap")
   -- Begin the swap we input last frame.
   if self:swapQueued() then
     self:swap(self.queuedSwapRow, self.queuedSwapColumn)
     swapped_this_frame = true
     self:setQueuedSwapPosition(0, 0)
   end
+  prof.pop("old swap")
 
+  prof.push("Stack:checkMatches")
   self:checkMatches()
+  prof.pop("Stack:checkMatches")
+  prof.push("Stack:updatePanels")
   self:updatePanels()
+  prof.pop("Stack:updatePanels")
 
+  prof.push("shake time updates")
   self.prev_shake_time = self.shake_time
   self.shake_time = self.shake_time - 1
   self.shake_time = max(self.shake_time, self.shake_time_on_frame)
   if self.shake_time == 0 then
     self.peak_shake_time = 0
   end
+  prof.pop("shake time updates")
 
   -- Phase 3. /////////////////////////////////////////////////////////////
   -- Actions performed according to player input
 
+  prof.push("cursor movement")
   -- CURSOR MOVEMENT
   local playMoveSounds = true -- set this to false to disable move sounds for debugging
   if self.inputMethod == "touch" then
@@ -1278,6 +1310,9 @@ function Stack.simulate(self)
   if self.cur_timer ~= self.cur_wait_time then
     self.cur_timer = self.cur_timer + 1
   end
+  prof.pop("cursor movement")
+
+  prof.push("taunt")
   -- TAUNTING
   if self:canPlaySfx() then
     if self.taunt_up ~= nil then
@@ -1290,7 +1325,9 @@ function Stack.simulate(self)
       self.taunt_down = nil
     end
   end
+  prof.pop("taunt")
 
+  prof.push("new swap")
   -- Queue Swapping
   -- Note: Swapping is queued in Stack.controls for touch mode
   if self.inputMethod == "controller" then
@@ -1304,7 +1341,9 @@ function Stack.simulate(self)
       self.swap_2 = false
     end
   end
+  prof.pop("new swap")
 
+  prof.push("active raise")
   -- MANUAL STACK RAISING
   if self.behaviours.allowManualRaise then
     if self.manual_raise then
@@ -1334,7 +1373,9 @@ function Stack.simulate(self)
     -- the raising is cancelled
     end
   end
+  prof.pop("active raise")
 
+  prof.push("chain update")
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and not self:hasChainingPanels() then
     self.chains[self.currentChainStartFrame].finish = self.clock
@@ -1351,13 +1392,16 @@ function Stack.simulate(self)
       self.telegraph:chainingEnded(self.clock)
     end
   end
+  prof.pop("chain update")
 
   if (self.score > 99999) then
     self.score = 99999
   -- lol owned
   end
 
+  prof.push("updateActivePanels")
   self:updateActivePanels()
+  prof.pop("updateActivePanels")
 
   if self.puzzle and self.n_active_panels == 0 and self.n_prev_active_panels == 0 then
     if self:checkGameOver() then
@@ -1365,17 +1409,24 @@ function Stack.simulate(self)
     end
   end
 
+  prof.push("telegraph:popAllAndSendToTarget")
   if self.telegraph then
     self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
   end
+  prof.pop("telegraph:popAllAndSendToTarget")
 
+  prof.push("push into own garbage q")
   if self.later_garbage[self.clock] then
     self.garbage_q:push(self.later_garbage[self.clock])
     self.later_garbage[self.clock] = nil
   end
+  prof.pop("push into own garbage q")
 
+  prof.push("remove_extra_rows")
   self:remove_extra_rows()
+  prof.pop("remove_extra_rows")
 
+  prof.push("double-check panels_in_top_row")
   --double-check panels_in_top_row
 
   self.panels_in_top_row = false
@@ -1385,6 +1436,8 @@ function Stack.simulate(self)
       self.panels_in_top_row = true
     end
   end
+  prof.pop("double-check panels_in_top_row")
+
 
   -- local garbage_fits_in_populated_top_row 
   -- if self.garbage_q:len() > 0 then
@@ -1402,7 +1455,7 @@ function Stack.simulate(self)
   --     end
   --   end
   -- end
-  
+  prof.push("doublecheck panels above top row")
   -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
   for row_idx = self.height + 1, #self.panels do
     for col_idx = 1, self.width do
@@ -1411,7 +1464,10 @@ function Stack.simulate(self)
       end
     end
   end
+  prof.pop("doublecheck panels above top row")
 
+
+  prof.push("pop from own garbage q")
   if self.garbage_q:len() > 0 then
     if self:shouldDropGarbage() then
       if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
@@ -1419,7 +1475,9 @@ function Stack.simulate(self)
       end
     end
   end
+  prof.pop("pop from own garbage q")
 
+  prof.push("stack sfx")
   -- Update Sound FX
   if self:canPlaySfx() then
     if SFX_Swap_Play == 1 then
@@ -1496,7 +1554,9 @@ function Stack.simulate(self)
       SFX_Garbage_Pop_Play = nil
     end
   end
+  prof.pop("stack sfx")
 
+  prof.push("update times")
   self.clock = self.clock + 1
 
   if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
@@ -1506,9 +1566,15 @@ function Stack.simulate(self)
   if self.game_stopwatch_running and (not self.match.gameOverClock or self.clock <= self.match.gameOverClock) then
     self.game_stopwatch = (self.game_stopwatch or -1) + 1
   end
+  prof.pop("update times")
 
+  prof.push("update popfx")
   self:update_popfxs()
+  prof.pop("update popfx")
+  prof.push("update cards")
   self:update_cards()
+  prof.pop("update cards")
+
 end
 
 function Stack:runGameOver()
@@ -2238,7 +2304,7 @@ function Stack:checkGameWin()
         for col = 1, self.width do
           local color = panels[row][col].color
           if color ~= 0 and color ~= 9 then
-             matchablePanelFound = true
+            matchablePanelFound = true
           end
         end
       end

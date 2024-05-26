@@ -2,6 +2,7 @@ require("common.lib.util")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local TouchDataEncoding = require("common.engine.TouchDataEncoding")
 local consts = require("common.engine.consts")
+local prof = require("common.lib.jprof.jprof")
 
 local floor = math.floor
 
@@ -498,6 +499,7 @@ end
 
 -- Renders the player's stack on screen
 function Stack.render(self)
+  prof.push("Stack:render")
   if self.canvas == nil then
     return
   end
@@ -534,7 +536,9 @@ function Stack.render(self)
   self:drawCanvas()
 
   if self.telegraph then
+    prof.push("Telegraph:render")
     self.telegraph:render()
+    prof.pop("Telegraph:render")
   end
 
   self:drawPopEffects()
@@ -542,6 +546,7 @@ function Stack.render(self)
 
   self:drawDebugPanels(shakeOffset)
   self:drawDebug()
+  prof.pop("Stack:render")
 end
 
 function Stack:drawRating()
@@ -724,6 +729,7 @@ function Stack:drawAnalyticData()
   y = y + nextIconIncrement
 
 
+
   -- Garbage sent
   icon_width, icon_height = characters[self.character].images.face:getDimensions()
   GraphicsUtil.draw(characters[self.character].images.face, x, y, 0, iconSize / icon_width, iconSize / icon_height)
@@ -773,6 +779,7 @@ function Stack:drawAnalyticData()
   GraphicsUtil.printf(analytic.lastAPM .. "/m", x + iconToTextSpacing, y - 2, consts.CANVAS_WIDTH, "left", nil, 1)
 
   y = y + nextIconIncrement
+
 
 
   -- preserve the offset for combos as chains and combos are drawn in columns side by side
@@ -881,6 +888,7 @@ function Stack:drawGarbageBlock(bottomRightPanel, draw_x, draw_y, garbageImages)
 end
 
 function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
+  prof.push("Stack:drawPanels")
   local panelSet = panels[self.panels_dir]
   panelSet:prepareDraw()
 
@@ -957,4 +965,5 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
   end
 
   panelSet:drawBatch()
+  prof.pop("Stack:drawPanels")
 end

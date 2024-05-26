@@ -10,6 +10,7 @@ local ClientMessages = require("common.network.ClientProtocol")
 local RunTimeGraph = require("client.src.RunTimeGraph")
 local CustomRun = require("client.src.CustomRun")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
+local prof = require("common.lib.jprof.jprof")
 
 local Game = require("client.src.Game")
 -- move to load once global dependencies have been resolved
@@ -104,8 +105,8 @@ end
 
 -- quit handling
 function love.quit()
-  if PROFILING_ENABLED then
-    GAME.profiler.report("profiler.log")
+  if PROF_CAPTURE then
+    prof.write("prof.mpack")
   end
   if GAME.tcpClient and GAME.tcpClient:isConnected() then
     GAME.tcpClient:sendRequest(ClientMessages.logout())
