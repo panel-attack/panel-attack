@@ -235,6 +235,7 @@ function Lobby:requestGameFunction(opponentName)
   return function()
     self.sentRequests[opponentName] = true
     GAME.tcpClient:sendRequest(ClientMessages.challengePlayer(opponentName))
+    GAME.theme:playValidationSfx()
     self:onLobbyStateUpdate()
   end
 end
