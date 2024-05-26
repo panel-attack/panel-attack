@@ -107,9 +107,9 @@ end
 
 -- the parent makes sure this is only called while focused
 function Carousel:receiveInputs(inputs)
-  if inputs:isPressedWithRepeat("Left", 0.25, 0.25) then
+  if inputs:isPressedWithRepeat("Left", 0.25, 0.15) then
     self:moveToNextPassenger(-1)
-  elseif inputs:isPressedWithRepeat("Right", 0.25, 0.25) then
+  elseif inputs:isPressedWithRepeat("Right", 0.25, 0.15) then
     self:moveToNextPassenger(1)
   elseif inputs.isDown["Swap1"] or inputs.isDown["Start"] then
     GAME.theme:playValidationSfx()
