@@ -81,6 +81,7 @@ function SetNameMenu:confirmName()
     GAME.theme:playValidationSfx()
     config.name = self.nameField.value
     write_conf_file()
+    GAME.localPlayer.name = config.name
     self.nameField:unfocus()
     GAME.navigationStack:pop()
   end
