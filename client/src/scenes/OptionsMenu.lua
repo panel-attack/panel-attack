@@ -235,6 +235,12 @@ function OptionsMenu:loadGeneralMenu()
     end
   })
 
+  local performanceSlider = createConfigSlider("activeGarbageCollectionPercent", 20, 80)
+  performanceSlider.onValueChange = function(slider)
+    config.activeGarbageCollectionPercent = slider.value / 100
+    GAME.theme:playMoveSfx()
+  end
+
   local generalMenuOptions = {
     MenuItem.createToggleButtonGroupMenuItem("op_countdown", nil, nil, createToggleButtonGroup("ready_countdown_1P")),
     MenuItem.createToggleButtonGroupMenuItem("op_fps", nil, nil, createToggleButtonGroup("show_fps")),
@@ -244,7 +250,7 @@ function OptionsMenu:loadGeneralMenu()
     end)),
     MenuItem.createSliderMenuItem("op_input_delay", nil, nil, createConfigSlider("input_repeat_delay", 0, 50)),
     MenuItem.createToggleButtonGroupMenuItem("op_replay_public", nil, nil, publicReplayButtonGroup),
-    MenuItem.createSliderMenuItem("op_performance_drain", nil, nil, createConfigSlider("activeGarbageCollectionPercent", 20, 80)),
+    MenuItem.createSliderMenuItem("op_performance_drain", nil, nil, performanceSlider),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
           GAME.theme:playCancelSfx()
         self:switchToScreen("baseMenu")
