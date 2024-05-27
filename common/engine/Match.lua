@@ -447,7 +447,6 @@ function Match:getInfo()
 end
 
 function Match:start()
-  SoundController:stopMusic()
   -- battle room may add the players in any order
   -- match has to make sure the local player ends up as P1 (left side)
   -- if both are local or both are not, order by playerNumber

@@ -132,6 +132,7 @@ function GameBase:load(sceneParams)
   if self.musicSource and self.musicSource.stageTrack and not self.keepMusic then
     -- reset the track to make sure it starts from the default settings
     self.musicSource.stageTrack:stop()
+    SoundController:stopMusic()
   end
 
   self:customLoad(sceneParams)

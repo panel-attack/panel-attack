@@ -11,6 +11,7 @@ local PuzzleGame = class(
   function (self, sceneParams)
     -- we cache the player's input configuration here
     self.inputConfiguration = nil
+    self.keepMusic = true
 
     self:load(sceneParams)
   end,
@@ -75,7 +76,9 @@ function PuzzleGame:runGameOver()
   end
 end
 
-function PuzzleGame:customGameOverSetup()
+function PuzzleGame:setupGameOver()
+  self.minDisplayTime = 1 -- the minimum amount of seconds the game over screen will be displayed for
+  self.maxDisplayTime = -1
   -- currently puzzle game bypasses the match start mechanism of BattleRoom by not returning to a real ready screen
   -- as the player releases their inputConfiguration on puzzle end, we need to reassign it asap
   -- otherwise the next puzzle match will crash due to the player not having an input configuration assigned
