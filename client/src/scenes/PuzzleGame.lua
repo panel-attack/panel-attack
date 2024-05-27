@@ -28,6 +28,7 @@ function PuzzleGame:customLoad(sceneParams)
   local isValid, validationError = puzzle:validate()
   if isValid then
     self.match.players[1].stack:set_puzzle_state(puzzle)
+    self.match.players[1].stack.do_first_row = false
     self.match:setCountdown(puzzle.doCountdown)
   else
     validationError = "Validation error in puzzle set " .. self.puzzleSet.setName .. "\n"
