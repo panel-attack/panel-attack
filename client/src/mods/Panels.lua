@@ -162,7 +162,7 @@ end
 
 -- 
 function Panels:convertSinglesToSheetTexture(images)
-  local canvas = love.graphics.newCanvas(self.size * 10, self.size * #ANIMATION_STATES)
+  local canvas = love.graphics.newCanvas(self.size * 10, self.size * #ANIMATION_STATES,  {dpiscale = images[1]:getDPIScale()})
   canvas:renderTo(function()
     local row = 1
     -- ipairs over a static table so the ordering is definitely consistent
