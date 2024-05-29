@@ -1,4 +1,5 @@
 local class = require("common.lib.class")
+local Signal = require("common.lib.signal")
 
 -- clears information relating to state, matches and various stuff
 -- a true argument must be supplied to clear the chaining flag as well
@@ -115,6 +116,10 @@ class(
     p.row = row
     p.column = column
     p.frameTimes = frameTimes
+    Signal.turnIntoEmitter(p)
+    p:createSignal("pop")
+    p:createSignal("popped")
+    p:createSignal("land")
   end
 )
 
@@ -185,14 +190,10 @@ end
 
 -- makes the panel enter landing state and informs the stack about the event depending on whether it's garbage or not
 local function land(panel)
+  panel:emitSignal("land", panel)
   if panel.isGarbage then
     panel.state = "normal"
-    panel:onGarbageLand()
   else
-    if panel.state == "falling" then
-      -- don't alert the stack on 0 height falls
-      panel:onLand()
-    end
     if panel.fell_from_garbage then
     -- terminate falling animation related stuff
       panel.fell_from_garbage = nil
@@ -394,12 +395,14 @@ end
 
 matchedState.update = function(panel, panels)
   decrementTimer(panel)
-  if panel.timer == 0 then
-    matchedState.changeState(panel, panels)
-  elseif panel.isGarbage and panel.timer == panel.pop_time then
+
+  if panel.isGarbage and panel.timer == panel.pop_time then
     -- technically this is criminal and garbage panels should enter popping state too
     -- there is also little reason why garbage uses pop_time and normal panels timer
-    panel:onPop()
+    panel:emitSignal("pop", panel)
+  end
+  if panel.timer == 0 then
+    matchedState.changeState(panel, panels)
   end
 end
 
@@ -442,7 +445,7 @@ poppingState.update = function(panel, panels)
 end
 
 poppingState.changeState = function(panel, panels)
-  panel:onPop()
+  panel:emitSignal("pop", panel)
   -- If it is the last panel to pop, it has to skip popped state
   if panel.combo_size == panel.combo_index then
     poppedState.changeState(panel, panels)
@@ -463,7 +466,7 @@ end
 poppedState.changeState = function(panel, panels)
   -- It's time for this panel
   -- to be gone forever :'(
-  panel:onPopped()
+  panel:emitSignal("popped", panel)
   clear(panel, true, true)
   -- Flag so panels above can know whether they should be chaining or not
   panel.propagatesChaining = true

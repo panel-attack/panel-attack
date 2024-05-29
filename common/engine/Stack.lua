@@ -2052,18 +2052,9 @@ end
 function Stack.createPanelAt(self, row, column)
   self.panelsCreatedCount = self.panelsCreatedCount + 1
   local panel = Panel(self.panelsCreatedCount, row, column, self.levelData.frameConstants)
-  panel.onPop = function(panel)
-    self:onPop(panel)
-  end
-  panel.onPopped = function(panel)
-    self:onPopped(panel)
-  end
-  panel.onLand = function(panel)
-    self:onLand(panel)
-  end
-  panel.onGarbageLand = function(panel)
-    self:onGarbageLand(panel)
-  end
+  panel:connectSignal("pop", self, self.onPop)
+  panel:connectSignal("popped", self, self.onPopped)
+  panel:connectSignal("land", self, self.onLand)
   self.panels[row][column] = panel
   return panel
 end
@@ -2110,13 +2101,17 @@ function Stack.onPopped(self, panel)
 end
 
 function Stack.onLand(self, panel)
-  if self:canPlaySfx() then
-    self.sfx_land = true
+  if panel.isGarbage then
+    self:onGarbageLand(panel)
+  else
+    if panel.state == "falling" and self:canPlaySfx() then
+      self.sfx_land = true
+    end
   end
 end
 
 function Stack.onGarbageLand(self, panel)
-  if panel.shake_time and panel.state == "normal"
+  if panel.shake_time
     -- only parts of the garbage that are on the visible board can be considered for shake
     and panel.row <= self.height then
     --runtime optimization to not repeatedly update shaketime for the same piece of garbage
