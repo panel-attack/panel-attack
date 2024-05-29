@@ -505,9 +505,11 @@ function OptionsMenu:loadModifyUserIdMenu()
   local modifyUserIdOptions = {}
   local userIDDirectories = fileUtils.getFilteredDirectoryItems("servers")
   for i = 1, #userIDDirectories do
-    modifyUserIdOptions[#modifyUserIdOptions + 1] = MenuItem.createButtonMenuItem(userIDDirectories[i], nil, false, function()
-        GAME.navigationStack:push(SetUserIdMenu({serverIp = userIDDirectories[i]}))
-      end)
+    if love.filesystem.getInfo("servers/" .. userIDDirectories[i] .. "/user_id.txt", "file") then
+      modifyUserIdOptions[#modifyUserIdOptions + 1] = MenuItem.createButtonMenuItem(userIDDirectories[i], nil, false, function()
+          GAME.navigationStack:push(SetUserIdMenu({serverIp = userIDDirectories[i]}))
+        end)
+    end
   end
   modifyUserIdOptions[#modifyUserIdOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil, function()
         GAME.theme:playCancelSfx()
