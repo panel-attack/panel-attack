@@ -169,11 +169,11 @@ function Menu:removeMenuItem(menuItemId)
 
   local menuItem = table.remove(self.menuItems, menuItemIndex)
   menuItem:detach()
-  
+
   if needsDecreasedIndex then
     self:setSelectedIndex(self.selectedIndex - 1)
   end
-  
+
   self:layout()
   return menuItem
 end
