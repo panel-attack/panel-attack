@@ -253,9 +253,12 @@ function Lobby:onLobbyStateUpdate()
   local previousText = self.lobbyMenu.menuItems[self.lobbyMenu.selectedIndex].textButton.children[1].text
   local desiredIndex = self.lobbyMenu.selectedIndex
 
+  -- cleanup previous lobby menu
   while #self.lobbyMenu.menuItems > 2 do
     self.lobbyMenu:removeMenuItemAtIndex(1)
   end
+  self.lobbyMenu:setSelectedIndex(1)
+
   for _, v in ipairs(self.unpairedPlayers) do
     if v ~= config.name then
       local unmatchedPlayer = v .. self:playerRatingString(v)

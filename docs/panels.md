@@ -1,3 +1,5 @@
+You can also find this file with prettier formatting at https://github.com/panel-attack/panel-attack/blob/beta/docs/panels.md  
+
 Adding/modding panels: step by step instructions (Windows example):
 
 1. Press the Windows key then type "%appdata%" without quotes and hit enter.

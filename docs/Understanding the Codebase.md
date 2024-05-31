@@ -1,19 +1,21 @@
 # Understanding the Panel Attack Codebase (the short version)
-This version seeks to be more brief and on-point for people familiar with lua/love and the game itself (as a player).
+This version seeks to be more brief and on-point for people familiar with lua/love and the game itself (as a player).  
+
+The codebase combines code used for the client and the server. Code used by both or that is anticipated to be used by both is located in the `common` folder.  
+Although not yet a reality, the goal is for files in the common folder to have no references to files in the server/client folders respectively. The only exception to this should be test cases that may use client I/O to load replays, puzzles and configurations as test data.
+
+The server has a separate documentation so this document mainly deals with the client architecture.
 
 A `Scene` is the overarching concept of a thing that manages what you see on a screen, what you hear on a screen and how you can interact with that screen.  
-Whenever you see a transition you're switching between scenes (probably).  
+`Scene`s are managed by a `NavigationStack` via pop, push and pull operations with only the top-most `Scene` being active.
 
 To play games, a `BattleRoom` is created in which a bunch of `Player`s can modify their settings and eventually all ready up.
 Based on the settings of the `BattleRoom` itself, a `Match` is created which in turn creates `Stack`s based on the settings of the `Player`s, forming a hierarchic architecture in which the components further down the bottom ideally know nothing of the elements above.  
 `BattleRoom`, `Player`, `Match` and `Stack` are the key points with `Player` and `Stack` both having base classes `MatchPartipant` and `StackBase` that define the interface for `BattleRoom` and `Match` to use them.  
 This concept extends to replays where generally the settings of `Match` and `Player`s are saved on top of the inputs.
 
-Network stuff is in the `network` folder and generally all handled on the `BattleRoom` level.
-
 # Understanding the Panel Attack Codebase (the long version)
-(Endaris Version 2.1)
-For the new version being developed on the sceneRefactor branch
+This is a subjective and informal take by Endaris.
 
 ## Understanding Lua and Love
 In general following the sheepolution tutorial up to maybe chapter 12 is a decent idea:
@@ -64,7 +66,7 @@ In the case of Panel Attack, unlike in the default version, the loop is inherent
 If you looked at the gameloop, you should have noticed the somewhat cryptic seeming part with `love.handlers` and some `a, b, c, d, e, f` variables.  
 This is love pumping events to its callbacks.  
 Love provides a handful of useful callbacks, mostly related to user interaction such as `love.keypressed`, `love.joystickadded` or `love.resize` but also some related to things happening in the code, most prominently `love.errorhandler`.  
-These callbacks are collectively pumped at the start of the frame and executed before anything else on the frame so that all inputs during the last frame are available.  
+These callbacks are collectively executed at the start of the frame so that all inputs during the last frame are available.  
 For Panel Attack, all love callbacks should be implemented in `main.lua`.
 
 #### The modules
@@ -76,10 +78,11 @@ Overall it is relatively easy to guess what a love function does if you see it i
 
 ## Game start
 
-For the sake of development, you can MOSTLY ignore everything in `auto_updater`. As the name suggests, the primary use of the project is to download the latest version of the game and it holds no relevant game files.  
-Most users start the auto_updater which then checks if the local version in `updater/` is the most recent and then starts it inside of itself.
+Distribution and development setup differs a bit.  
+Panel Attack uses an auto updater that fetches updates from panelattack.com and then reinitializes itself by mounting the actual game in its place. It leaves behind a `GAME_UPDATER` global that offers functions to check for updates or restart with a different release stream.  
+You can find the current updater at https://github.com/Endaris/panel-attack-updater with documentation.
 
-## Broad Structure
+## Broad Client Structure 
 
 Panel Attack has many files, maybe too many and not all of them are in an intuitive place.  
 At the core of Panel Attack lives the `Game` class defined in `Game.lua`.  
@@ -129,34 +132,39 @@ All actual ingame happening are operated on a `Match` that runs a certain number
 
 ## The engine
 
-The engine is split over a variety of files, trying to bring some structure into the inner workings of the engine.  
-The bulk of the engine lives inside the `Stack` class which is mostly defined in `engine.lua` and derives from the conceptual minimum `StackBase` a table needs to implement to be run by a `Match`.  
+The engine is located in the `common/engine` directory.
+While currently only in use by the client, the goal is for the engine to become an independently versioned component that can be used by client and server alike, in the latter case for example to validate scores for online leaderboards.
+The bulk of the game physics lives inside the `Stack` class which is defined in `Stack.lua` and derives from the conceptual minimum `StackBase` a table needs to implement to be run by a `Match`.  
 
-### engine.lua
-`engine.lua` contains the code for construction of `Stack`s, running them, performing rollback, creating new rows, various puzzle stuff and most of the physics that is not directly related to the behaviour of an individual `Panel`.  
+The client extends engine classes like `Stack` and `Match` with graphics functions.  
+While the engine, in particular StackBase still holds some graphics functions, the eventual goal is for all graphics functions to move to client. This is so the server - that doesn't use love - can run the engine as well.
 
-### engine/panel.lua
-The behaviour of individual `Panel`s is recorded in `engine.panel.lua`. Each panel on its own represents somewhat of a finite state machine that changes state based on its own state and the state of the panel below.  
+### Stack.lua
+`Stack.lua` contains the code for construction of `Stack`s, running them, performing rollback, creating new rows, various puzzle stuff and most of the physics that is not directly related to the behaviour of an individual `Panel`.  
+
+### Panel.lua
+The behaviour of individual `Panel`s is recorded in `Panel.lua`. Each panel on its own represents somewhat of a finite state machine that changes state based on its own state and the state of the panel below.  
 However, the only state transformations for panels governed in this are those that happen passively and without player interaction.  
 Via player interaction there are 2 more transformations possible that are handled on the `Stack` level instead of the `Panel` level:
-- getting swapped (this is in `engine.lua` again)
+- getting swapped (this is in `Stack.lua` again)
 - getting matched
 
-### engine/checkMatches.lua
+### checkMatches.lua
 This file contains the entire routine for checking if there are any matches on the board.  
-As a natural extension of that, it is also responsible for transforming garbage panels into regular panels and fetch new colors for that purpose from the `PanelGenerator`.
+As a natural extension of that, it is also responsible for transforming garbage panels into regular panels and fetch new colors for that purpose from the `PanelGenerator`.  
+Effectively it is just a small collection of `Stack` functions, isolated for better orientation within the repository.
 
-### gen_panels.lua
+### PanelGenerator.lua
 In this file lives the Panel Generator which provides functions to generate panels for a certain seed via a pseudo random number generator and assign possible metal placements for these panels.
 
-### network/Stack.lua
+### client/src/network/Stack.lua
 This small bit covers functions of Stack that have network activity such as taunt or sending inputs to an opponent.  
-Ideally the network part of them will be performed by `BattleRoom` in the future so that `Stack` has no knowledge of network.
+Ideally the network part of them will be performed by a dedicated network client in the future so that `Stack` has no knowledge of network.
 
-### graphics.lua
-Despite having a rather generic name, this file contains entirely draw functions for the `Stack`.
+### client/src/graphics/Stack.lua
+This file contains entirely draw functions for the `Stack` besides the one defined in `common/engine/StackBase.lua`.
 
-### engine/telegraph.lua and engine/GarbageQueue.lua
+### Telegraph.lua and GarbageQueue.lua
 These are strongly coupled classes that act as an intermediary between `Stack`s to transmit attacks from one `Stack` to another.  
 They're currently performing much more calls to `deepcpy` than strictly necessary to do their job and a refactoring is in order once enough tests have been written to verify the behaviour of a new implementation.
 
@@ -165,14 +173,15 @@ They're currently performing much more calls to `deepcpy` than strictly necessar
 A fake stack based on `StackBase` that can sport an AttackEngine and/or a HealthEngine to mimic a player without actually dealing with any of the complexity a fully fledged CPU player would require.  
 Includes graphics functions.
 
-### match.lua
+### Match.lua
 A match creates and runs the stacks, holding and applying the concrete game settings that aren't on `Stack`.  
 As the controlling entity, the match is supposed to control all behaviours that involve more than one stack, such as changing music, playing countdown, determining whether a stack needs to save rollback copies or determining a winner.  
 There are still some interactions inside of `Stack` that I would rather see on `Match`, such as sending garbage from the telegraph to another stack, applying rollback or determining if shock panels should be in the game via a different avenue than levelData itself.
 The match will continue running stacks until either only one is left or until or done, depending on the given conditions for winning the match (see section about GameModes).
 
-### match_graphics.lua
-graphics for rendering the match duh
+### client/src/graphics/match_graphics.lua
+Graphics for rendering the match  
+Some parts of rendering are instead taken care of by the scene running the Match and in the future it should ideally be most or all of it.
 
 ### GameModes.lua
 
@@ -279,22 +288,52 @@ If there are placeholders in a localized string, the `replacements` field can be
 If you add new localization entries please make sure to **always** add them at the bottom. There is a google doc we pull from where non-developers can submit changes / new localizations and it spoils any syncing attempt if we get new entries in the middle of the file.
 
 ## Mods and Assets
-The default assets can be found in the folders `characters`, `default_data`, `panels`, `stages` and `themes` respectively.  
-Each graphic asset type has its own file for managing the loading process, `character.lua`, `panels.lua`, `stages.lua` and `Theme.lua` with characters and stages having a dedicated `CharacterLoader.lua` and `StageLoader.lua` to lazy load new assets on the fly. Panels and themes don't need this as panels always get loaded fully due to their small size and only a single theme can be loaded at a time.  
-For characters, panels and stages, a table with id by index and a table with the actual mod by id is created for global access.
+The default assets can be found in the `client/assets folder`.  
+`client/assets/default_data` contains mods that ship with the game while the other directories contain fallbacks for user mods that don't provide certain assets.
+Each graphic asset type has its own file for managing the loading process in `client/src/mods`:  
+`Character.lua`, `Panels.lua`, `Stages.lua` and `Theme.lua` with characters and stages having a dedicated `CharacterLoader.lua` and `StageLoader.lua` to lazy load new assets on the fly. Panels and themes don't need this as panels always get loaded fully due to their small size and only a single theme can be loaded at a time.  
+For characters, panels and stages, a table with id by index and a table with the actual mod by id is created for global access.  
+
+### Mod loading
+PA has a (still experimental) `ModController` component that tries to automatically load balance the loaded mods.  
+`ModController:loadModFor` is a function that lazy loads a mod for a certain user (this can be a player or match) and holds a table with mods that have been loaded.  
+Additionally each mod also holds by who it is loaded via weak tables.  
+The `ModController` tries to unload any mod not associated with a certain user during its updates, keeping asset use low.
 
 ## Utilities
 
 Panel Attack uses various more or less generic helpers to deal with things.  
 These are a bit strewn all over the code base so I'll summarize them here.
 
-### tableUtils.lua
+### client side
+
+Client side helpers are considered that because they innately rely on love functions and thus aren't usable by non-love components like the server.
+
+#### FileUtils.lua
+
+Provides various helper functions around I/O access using the love.filesystem module.
+
+
+#### BarGraph.lua
+
+Draws a bar graph used for per frame value display in debug mode with FPS counter activated (see RunTimeGraph.lua)
+
+### [batteries](https://github.com/1bardesign/batteries)
+
+A powerful library seeking to fill in the huge gaps in Lua's own standard library.  
+In Panel Attack we only use the standalone `manual_gc.lua` which offers some functionality for manually collecting garbage on the client.
+
+### common
+
+This includes some helpers written for Panel Attack but also third party libraries.
+
+#### tableUtils.lua
 A collection of functions specifically to work with Lua tables.
 
-### util.lua
+#### util.lua
 A rather random assortment of utility functions.
 
-### class.lua
+#### class.lua
 Allows us to pretend that tables are classes.  
 Defining a class such as
 ```Lua
@@ -316,7 +355,7 @@ Note that class functions innately cannot be local because they are defined on t
 
 Classes support inheritance for their constructor but child classes have no direct access to the functions of their parent classes if they overwrote their functions (e.g. no `super:print()`).
 
-### queue.lua and by extension server_queue.lua and TimeQueue.lua
+#### queue.lua and by extension server_queue.lua and TimeQueue.lua
 
 A queue is a numerically indexed table that works via the first-in-first-out principle.  
 Other than a regularly indexed table it cannot be iterated with ipairs as it does not shift queue entries down by an index after removing an element. This is mainly a performance concern as `table.remove(t, 1)` is quite expensive performancewise on bigger tables.  
@@ -326,28 +365,15 @@ On any persistent table within engine that has entries removed from the front, `
 
 `TimeQueue.lua` does not queue by index but instead by time. Its primary objective is to schedule or delay events pushed to it for later usage. At the moment it is only being used with its delay function for behaviour testing with delayed message processing of the `TcpClient`.
 
-### FileUtils.lua
-
-Provides various helper functions around I/O access and using the love.filesystem module.
-
 ## Libraries
 
 Panel Attack has picked up some libraries for various purposes, below a short summary what each can be used for and is being used for.
-
-### batteries
-
-A powerful library seeking to fill in the huge gaps in Lua's own standard library.  
-In Panel Attack we only use the standalone `manual_gc.lua` which offers some functionality for manually collecting garbage on the client.
 
 ### lsqlite
 
 This is currently only used on the server.  
 With the lsqlite library we can access a sqlite database to persist and query data relevant to the server.
 
-### BarGraph.lua
-
-Despite being in this folder, this was written for Panel Attack.  
-Draws a bar graph used for per frame value display in debug mode with FPS counter activated (see RunTimeGraph.lua)
 
 ### dkjson.lua
 
@@ -362,7 +388,7 @@ Avoid requiring this anywhere else, we'll only want .json or .sqlite as future f
 
 See README in server folder
 
-## network
+## client/src/network
 
 The network folder primarily hosts files that deal with network on the client side.  
 This may include network components of classes that are not primarily network oriented.  
