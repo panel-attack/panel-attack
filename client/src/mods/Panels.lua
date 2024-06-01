@@ -524,7 +524,12 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
   -- but with level 10 (FLASH % 4 == 2), it fails on every single flash
 
     local oldFrame = oldDrawImplementation(self, panel, x, y, dangerCol, panel.column, dangerTimer)
-    assert(DEFAULT_PANEL_ANIM[animationName].frames[frame] == oldFrame)
+    -- only assert if the default anim defines that frame
+    if DEFAULT_PANEL_ANIM[animationName].frames[frame] then
+      assert(DEFAULT_PANEL_ANIM[animationName].frames[frame] == oldFrame)
+    else
+      -- otherwise it's going to be a custom animation that wasn't possible before
+    end
   end
 
   return conf, frame, x, y
