@@ -221,14 +221,6 @@ function Stage.sound_init(self, full, yields)
 
   self:applyConfigVolume()
 
-  -- validate that the mod has both normal and danger music if it is dynamic
-  -- do this on initialization so modders get a crash on load and know immediately what to fix
-  if not full and self.music_style == "dynamic" then
-    local err = "Error loading stage " .. self.id .. " at " .. self.path .. ": Stages with dynamic music must have a normal_music and danger_music file"
-    assert(fileUtils.soundFileExists("normal_music", self.path), err)
-    assert(fileUtils.soundFileExists("danger_music", self.path), err)
-  end
-
   if full and self.musics.normal_music then
     local normalMusic = Music(self.musics.normal_music, self.musics.normal_music_start)
     local dangerMusic
@@ -238,7 +230,13 @@ function Stage.sound_init(self, full, yields)
     if self.music_style == "normal" then
       self.stageTrack = StageTrack(normalMusic, dangerMusic)
     elseif self.music_style == "dynamic" then
-      self.stageTrack = DynamicStageTrack(normalMusic, dangerMusic)
+      if dangerMusic then
+        self.stageTrack = DynamicStageTrack(normalMusic, dangerMusic)
+      else
+        -- DynamicStageTrack HAVE to have danger music
+        -- default back to a regular stage track if there is none
+        self.stageTrack = StageTrack(normalMusic)
+      end
     elseif self.music_style == "relay" then
       self.stageTrack = RelayStageTrack(normalMusic, dangerMusic)
     end
@@ -250,6 +248,19 @@ function Stage.sound_uninit(self)
   -- music
   for _, music in ipairs(other_musics) do
     self.musics[music] = nil
+  end
+end
+
+function Stage:validate()
+  -- validate that the mod has both normal and danger music if it is dynamic
+  -- do this on initialization so modders get a crash on load and know immediately what to fix
+  if self.music_style == "dynamic" then
+    if not fileUtils.soundFileExists("normal_music", self.path) or fileUtils.soundFileExists("danger_music", self.path) then
+      local err = "Error loading stage " .. self.id .. "\n at "
+                  .. self.path ..
+                  ":\n Stages with dynamic music must have a normal_music and danger_music file"
+      return false, err
+    end
   end
 end
 
