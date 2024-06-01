@@ -121,8 +121,7 @@ Currently a single frame and not animatable.
 #### danger
 
 Panels in the states "normal", "falling" and "hovering" in a column that is close to the top or even touching it, perform a danger animation.  
-This animation loops but is held on its last frame if the player is topped out and has no stop time left.  
-At the moment this animation *has* to be 18 frames long.
+This animation loops but is held on its first frame if the player is topped out and has no stop time left.
 
 #### garbageBounce
 

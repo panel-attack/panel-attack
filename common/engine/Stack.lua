@@ -1073,13 +1073,12 @@ function Stack.updateDangerBounce(self)
   if self.danger then
     if self.panels_in_top_row and self.speed ~= 0 and not self.puzzle then
       -- Player has topped out, panels hold the "flattened" frame
-      self.danger_timer = 15
+      self.danger_timer = 0
     elseif self.stop_time == 0 then
-      self.danger_timer = self.danger_timer - 1
+      self.danger_timer = self.danger_timer + 1
     end
-    if self.danger_timer < 0 then
-      self.danger_timer = 17
-    end
+  else
+    self.danger_timer = 0
   end
 end
 
