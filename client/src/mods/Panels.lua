@@ -38,7 +38,7 @@ local DEFAULT_PANEL_ANIM =
   -- loops; frames play back to front, fixed to 18 frames
   -- danger is special in that there is a frame offset depending on column offset
   -- col 1 and 2 start on frame 3, col 3 and 4 start on frame 4 and col 5 and 6 start on frame 5 of the animation
-	danger = {frames = {1, 2, 3, 2, 1, 4}, durationPerFrame = 3},
+	danger = {frames = {4, 1, 2, 3, 2, 1}, durationPerFrame = 3},
   -- doesn't loop; fixed to 12 frames
 	garbageBounce = {frames = {1, 4, 3, 2}, durationPerFrame = 3},
   -- currently not animatable
@@ -314,12 +314,12 @@ local GARBAGE_BOUNCE_TABLE = {2, 2, 2,
                               1, 1}
 
 -- frames to use for in danger animation
-local DANGER_BOUNCE_TABLE = {1, 1, 1,
+local DANGER_BOUNCE_TABLE = {4, 4, 4,
+                              1, 1, 1,
                               2, 2, 2,
                               3, 3, 3,
                               2, 2, 2,
-                              1, 1, 1,
-                              4, 4, 4}
+                              1, 1, 1}
 
 local oldDrawImplementation = function(panelSet, panel, x, y, danger_col, col, dangerTimer)
   local draw_frame = 1
