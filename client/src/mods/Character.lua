@@ -374,6 +374,14 @@ function Character.sound_init(self, full, yields)
 
   self:applyConfigVolume()
 
+  -- validate that the mod has both normal and danger music if it is dynamic
+  -- do this on initialization so modders get a crash on load and know immediately what to fix
+  if not full and self.music_style == "dynamic" then
+    local err = "Error loading character " .. self.id .. " at " .. self.path .. ": Characters with dynamic music must have a normal_music and danger_music file"
+    assert(fileUtils.soundFileExists("normal_music", self.path), err)
+    assert(fileUtils.soundFileExists("danger_music", self.path), err)
+  end
+
   if full and self.musics.normal_music then
     local normalMusic = Music(self.musics.normal_music, self.musics.normal_music_start)
     local dangerMusic

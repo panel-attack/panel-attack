@@ -131,6 +131,16 @@ function fileUtils.findSound(sound_name, dirs_to_check, streamed)
   return nil
 end
 
+function fileUtils.soundFileExists(soundName, path)
+  for _, extension in pairs(SUPPORTED_SOUND_FORMATS) do
+    if love.filesystem.exists(path .. "/" .. soundName .. extension) then
+      return true
+    end
+  end
+
+  return false
+end
+
 function fileUtils.saveTextureToFile(texture, filePath, format)
   local imageData = love.graphics.readbackTexture(texture)
   local data = imageData:encode(format)

@@ -31,16 +31,16 @@ config = {
     endless_speed                 = 1,
     endless_difficulty            = 1,
     endless_level                 = nil, -- nil indicates we want to use classic difficulty
-  
+
     -- Puzzle settings
     puzzle_level                  = 5,
     puzzle_randomColors           = false,
     puzzle_randomFlipped          = false,
 
     -- Player name
-    name                          = "defaultname",
+    name                          = "",
     -- Volume settings
-    master_volume                 = 100,
+    master_volume                 = 50,
     SFX_volume                    = 100,
     music_volume                  = 100,
     -- Debug mode flag
@@ -90,7 +90,6 @@ config = {
     display                       = 1,
     windowX                       = nil,
     windowY                       = nil,
-    -- inputMethod                 = "touch"
   }
 
   -- writes to the "conf.json" file
