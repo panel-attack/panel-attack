@@ -381,4 +381,14 @@ function Lobby:draw()
   end
 end
 
+function Lobby:refresh()
+  -- lobby data from the server
+  self.playerData = nil
+  self.unpairedPlayers = {} -- list
+  self.willingPlayers = {} -- set
+  self.spectatableRooms = {}
+  -- requests to play a match, not web requests
+  self.sentRequests = {}
+end
+
 return Lobby
