@@ -71,6 +71,7 @@ Match =
     self:createSignal("matchEnded")
     self:createSignal("dangerMusicChanged")
     self:createSignal("countdownEnded")
+    self:createSignal("winners")
   end
 )
 
@@ -173,6 +174,7 @@ function Match:getWinners()
   end
 
   self.winners = winners
+  self:emitSignal("winners", winners)
 
   return winners
 end
