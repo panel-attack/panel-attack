@@ -69,6 +69,9 @@ function OptionsMenu:updateMenuLanguage()
   for _, menu in pairs(self.menus) do
     menu:refreshLocalization()
   end
+  for _, scene in ipairs(GAME.navigationStack.scenes) do
+    scene:refreshLocalization()
+  end
 end
 
 function OptionsMenu:switchToScreen(screenName)

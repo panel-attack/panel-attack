@@ -172,6 +172,7 @@ function NavigationStack:update(dt)
         self.callback()
         self.callback = nil
       end
+      self.scenes[#self.scenes]:refresh()
     end
   else
     if #self.scenes == 0 then
