@@ -178,8 +178,8 @@ function Match:getWinners()
 end
 
 function Match:debugRollbackAndCaptureState(clockGoal)
-  local P1 = self.P1
-  local P2 = self.P2
+  local P1 = self.stacks[1]
+  local P2 = self.stacks[2]
 
   if P1.clock <= clockGoal then
     return

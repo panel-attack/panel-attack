@@ -91,7 +91,7 @@ function MatchParticipant:refreshStage()
 end
 
 function MatchParticipant:setCharacter(characterId)
-  if characterId ~= self.settings.selectedCharacterId then
+  if characterId ~= self.settings.selectedCharacterId or not self.settings.selectedCharacterId then
     self.settings.selectedCharacterId = CharacterLoader.resolveCharacterSelection(characterId)
     self:emitSignal("selectedCharacterIdChanged", self.settings.selectedCharacterId)
   end
