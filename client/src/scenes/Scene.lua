@@ -52,8 +52,9 @@ function Scene:drawCommunityMessage()
   end
 end
 
--- Ran every time the scene is ending
--- used to clean up resources/global state used within the scene (stopping audio, hiding menus, etc.)
-function Scene:unload() end
+function Scene.pop()
+  GAME.theme:playCancelSfx()
+  GAME.navigationStack:pop()
+end
 
 return Scene

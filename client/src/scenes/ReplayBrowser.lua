@@ -218,7 +218,4 @@ function ReplayBrowser:draw()
   end
 end
 
-function ReplayBrowser:unload()
-end
-
 return ReplayBrowser
