@@ -19,11 +19,10 @@ local fileUtils = require("client.src.FileUtils")
 local handleShortcuts = require("client.src.Shortcuts")
 local Player = require("client.src.Player")
 local GameModes = require("common.engine.GameModes")
-local TcpClient = require("client.src.network.TcpClient")
+local NetClient = require("client.src.network.NetClient")
 local StartUp = require("client.src.scenes.StartUp")
 local SoundController = require("client.src.music.SoundController")
 require("client.src.BattleRoom")
-require("client.src.network.BattleRoom")
 local prof = require("common.lib.jprof.jprof")
 
 local RichPresence = require("client.lib.rich_presence.RichPresence")
@@ -45,7 +44,7 @@ local Game = class(
     self.backgroundImage = nil -- the background image for the game, should always be set to something with the proper dimensions
     self.droppedFrames = 0
     self.puzzleSets = {} -- all the puzzles loaded into the game
-    self.tcpClient = TcpClient()
+    self.netClient = NetClient()
     self.server_queue = ServerQueue()
     self.main_menu_screen_pos = {consts.CANVAS_WIDTH / 2 - 108 + 50, consts.CANVAS_HEIGHT / 2 - 111}
     self.config = config
@@ -273,6 +272,7 @@ function Game:update(dt)
     self.battleRoom:update(dt)
   end
   prof.pop("battleRoom update")
+  self.netClient:update(dt)
 
   handleShortcuts()
 

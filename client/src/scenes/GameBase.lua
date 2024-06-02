@@ -267,7 +267,7 @@ function GameBase:update(dt)
       if input.isDown["MenuEsc"] then
         GAME.theme:playCancelSfx()
         self.match:abort()
-        if GAME.tcpClient:isConnected() then
+        if GAME.netClient:isConnected() then
           GAME.battleRoom:shutdown()
         end
         GAME.navigationStack:popToName("Lobby")

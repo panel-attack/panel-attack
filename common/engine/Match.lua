@@ -562,21 +562,6 @@ function Match:setSeed(seed)
   end
 end
 
-function Match:setSpectatorList(spectatorList)
-  self.spectators = spectatorList
-  local str = ""
-  for k, v in ipairs(spectatorList) do
-    str = str .. v
-    if k < #spectatorList then
-      str = str .. "\n"
-    end
-  end
-  if str ~= "" then
-    str = loc("pl_spectators") .. "\n" .. str
-  end
-  self.spectatorString = str
-end
-
 -- if there is no local player that means the client is either spectating (or watching a replay)
 function Match:hasLocalPlayer()
   return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
