@@ -82,7 +82,7 @@ function NavigationStack:popToTop(transition, callback)
     local activeScene = self.scenes[#self.scenes]
     local top = self.scenes[1]
 
-    logger.debug("Popping from scene " .. activeScene.name .. "to top scene " .. top.name)
+    logger.debug("Popping from scene " .. activeScene.name .. " to top scene " .. top.name)
 
 
     if not transition then
@@ -106,7 +106,8 @@ end
 function NavigationStack:popToName(name, transition, callback)
   local targetScene
   local targetIndex
-  for i = #self.scenes - 1, 1, -1 do
+  -- if we're already at the desired scene, we also just stay
+  for i = #self.scenes, 1, -1 do
     if self.scenes[i].name == name then
       targetIndex = i
       targetScene = self.scenes[i]

@@ -909,7 +909,7 @@ function Stack:shouldRun(runsSoFar)
     if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and self.which == 2 then
       -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
       if self.opponentStack and self.opponentStack:game_ended() == false then
-        if GAME.tcpClient:isConnected() then
+        if GAME.netClient:isConnected() then
           if self.clock + config.debug_vsFramesBehind >= self.opponentStack.clock then
             return false
           end

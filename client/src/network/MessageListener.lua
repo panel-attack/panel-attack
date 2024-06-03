@@ -12,7 +12,7 @@ end)
 -- listens for messages with the specified header
 -- passes any messages caught to the registered events
 function MessageListener:listen()
-  messages = GAME.server_queue:pop_all_with(self.messageHeader)
+  messages = GAME.netClient.tcpClient.receivedMessageQueue:pop_all_with(self.messageHeader)
   for i = 1, #messages do
     local message = messages[i]
     for subscriber, callback in pairs(self.subscriptionList) do

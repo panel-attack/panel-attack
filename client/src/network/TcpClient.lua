@@ -187,10 +187,6 @@ function TcpClient:dropOldInputMessages()
   end
 end
 
-function TcpClient:sendErrorReport(errorData)
-  self:sendRequest(ClientMessages.sendErrorReport(errorData))
-end
-
 -- Processes messages that came in from the server
 -- Returns false if the connection is broken.
 function TcpClient:processIncomingMessages()

@@ -108,8 +108,8 @@ function love.quit()
   if PROF_CAPTURE then
     prof.write("prof.mpack")
   end
-  if GAME.tcpClient and GAME.tcpClient:isConnected() then
-    GAME.tcpClient:sendRequest(ClientMessages.logout())
+  if GAME.netClient and GAME.netClient:isConnected() then
+    GAME.netClient:logout()
   end
   love.audio.stop()
   if love.window.getFullscreen() then
@@ -165,11 +165,7 @@ function love.errorhandler(msg)
     local detailedErrorLogString = Game.detailedErrorLogString(errorData)
     errorData.detailedErrorLogString = detailedErrorLogString
     if GAME_UPDATER_GAME_VERSION then
-      if not GAME.tcpClient:isConnected() then
-        GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
-      end
-      GAME.tcpClient:sendErrorReport(errorData)
-      GAME.tcpClient:resetNetwork()
+      GAME.netClient:sendErrorReport(errorData, consts.SERVER_LOCATION, 59569)
     end
     return detailedErrorLogString
   end

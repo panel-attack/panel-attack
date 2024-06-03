@@ -267,7 +267,7 @@ function GameBase:update(dt)
       if input.isDown["MenuEsc"] then
         GAME.theme:playCancelSfx()
         self.match:abort()
-        if GAME.tcpClient:isConnected() then
+        if GAME.netClient:isConnected() then
           GAME.battleRoom:shutdown()
         end
         GAME.navigationStack:popToName("Lobby")
@@ -339,6 +339,9 @@ function GameBase:drawHUD()
         stack:drawAnalyticData()
         prof.pop("Stack:drawAnalyticData")
       end
+    end
+    if not config.debug_mode and GAME.battleRoom.spectatorString then -- this is printed in the same space as the debug details
+      GraphicsUtil.print(GAME.battleRoom.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
     self:drawCommunityMessage()
   end
