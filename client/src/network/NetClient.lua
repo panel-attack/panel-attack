@@ -58,7 +58,6 @@ end
 -- starts a 2p vs online match
 local function start2pVsOnlineMatch(self, createRoomMessage)
   resetLobbyData(self)
-  self.tcpClient.receivedMessageQueue:pop_all_with("leave_room")
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   self.room = GAME.battleRoom
   love.window.requestAttention()
@@ -321,7 +320,8 @@ function NetClient:leaveRoom()
   if self:isConnected() then
     self.tcpClient:dropOldInputMessages()
     self.tcpClient:sendRequest(ClientMessages.leaveRoom())
-    self.state = states.ONLINE
+    -- the server sends us back the confirmation that we left the room
+    -- so we reenter ONLINE state via processLeaveRoomMessage, not here
   end
 end
 
