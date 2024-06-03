@@ -115,7 +115,7 @@ function BattleRoom.createFromServerMessage(message)
   end
 
   battleRoom:assignInputConfigurations()
-  battleRoom:registerNetworkCallbacks()
+  GAME.netClient:registerPlayerUpdates(battleRoom)
 
   return battleRoom
 end
@@ -228,8 +228,6 @@ function BattleRoom:createMatch()
   for _, player in ipairs(self.players) do
     self.match:connectSignal("matchEnded", player, player.onMatchEnded)
   end
-
-  self.match:setSpectatorList(self.spectators)
 
   return self.match
 end
@@ -565,27 +563,6 @@ function BattleRoom:setSpectatorList(spectatorList)
     str = loc("pl_spectators") .. "\n" .. str
   end
   self.spectatorString = str
-end
-
-function BattleRoom:registerPlayerUpdates()
-  for _, player in ipairs(self.room.players) do
-    if player.isLocal then
-      -- seems a bit silly to subscribe a player to itself but it works and the player doesn't have to become part of the closure
-      player:connectSignal("selectedCharacterIdChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("characterIdChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("selectedStageIdChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("stageIdChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("panelIdChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("wantsRankedChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("wantsReadyChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("difficultyChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("startingSpeedChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("levelChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("colorCountChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("inputMethodChanged", player, GAME.NetClient.sendMenuState)
-      player:connectSignal("hasLoadedChanged", player, GAME.NetClient.sendMenuState)
-    end
-  end
 end
 
 function BattleRoom:onDisconnect()

@@ -72,15 +72,15 @@ local function processCharacterSelectMessage(self, message)
   -- character_select and create_room are the same message
   -- except that character_select has an additional character_select = true flag
   message = ServerMessages.sanitizeCreateRoom(message)
-  for i = 1, #message.players do
-    for j = 1, #self.players do
-      if message.players[i].playerNumber == self.room.players[j].playerNumber then
-        if message.players[i].ratingInfo then
-          self.room.players[j]:setRating(message.players[i].ratingInfo.new)
-          self.room.players[j]:setLeague(message.players[i].ratingInfo.league)
+  for _, messagePlayer in ipairs(message.players) do
+    for _, roomPlayer in ipairs(self.room.players) do
+      if messagePlayer.playerNumber == roomPlayer.playerNumber then
+        if messagePlayer.ratingInfo then
+          roomPlayer:setRating(messagePlayer.ratingInfo.new)
+          roomPlayer:setLeague(messagePlayer.ratingInfo.league)
         end
-        if not self.room.players[j].isLocal then
-          self.room.players[j]:updateWithMenuState(message.players[i])
+        if not roomPlayer.isLocal then
+          roomPlayer:updateWithMenuState(messagePlayer)
         end
       end
     end
@@ -116,7 +116,7 @@ local function processMatchStartMessage(self, message)
 
   for _, playerSettings in ipairs(message.playerSettings) do
     -- contains level, characterId, panelId
-    for _, player in ipairs(self.players) do
+    for _, player in ipairs(self.room.players) do
       if playerSettings.playerNumber == player.playerNumber then
         -- verify that settings on server and local match to prevent desync / crash
         if playerSettings.level ~= player.settings.level then
@@ -200,11 +200,11 @@ end
 
 local function processGameRequest(self, gameRequestMessage)
   if gameRequestMessage.game_request then
-    self.lobbyState.willingPlayers[gameRequestMessage.game_request.sender] = true
+    self.lobbyData.willingPlayers[gameRequestMessage.game_request.sender] = true
     love.window.requestAttention()
     SoundController:playSfx(themes[config.theme].sounds.notification)
     -- this might be moot if the server sends a lobby update to everyone after receiving the challenge
-    self:emitSignal("lobbyStateUpdate")
+    self:emitSignal("lobbyStateUpdate", self.lobbyData)
   end
 end
 
@@ -212,6 +212,7 @@ end
 local function spectate2pVsOnlineMatch(self, spectateRequestGrantedMessage)
   -- Not yet implemented
   GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
+  self.room = GAME.battleRoom
   if GAME.battleRoom.match then
     self.state = states.INGAME
     local vsScene = Game2pVs({match = GAME.battleRoom.match})
@@ -251,13 +252,7 @@ local function createListeners(self)
   return messageListeners
 end
 
-
-local NetClient = class(function(self)
-  self.tcpClient = TcpClient()
-  self.leaderboard = nil
-  self.pendingResponses = {}
-  self.state = states.OFFLINE
-
+local function resetLobbyData(self)
   self.lobbyData = {
     players = {},
     unpairedPlayers = {},
@@ -265,6 +260,15 @@ local NetClient = class(function(self)
     spectatableRooms = {},
     sentRequests = {}
   }
+end
+
+local NetClient = class(function(self)
+  self.tcpClient = TcpClient()
+  self.leaderboard = nil
+  self.pendingResponses = {}
+  self.state = states.OFFLINE
+
+  resetLobbyData(self)
 
   local messageListeners = createListeners(self)
 
@@ -312,10 +316,6 @@ end)
 
 NetClient.STATES = states
 
-function NetClient:sendMenuState(player)
-  self.tcpClient:sendRequest(ClientMessages.sendMenuState(ServerMessages.toServerMenuState(player)))
-end
-
 function NetClient:leaveRoom()
   if self:isConnected() then
     self.tcpClient:dropOldInputMessages()
@@ -360,14 +360,42 @@ function NetClient:requestLeaderboard()
 end
 
 function NetClient:challengePlayer(name)
-  if not self.lobbyState.sentRequests[name] then
+  if not self.lobbyData.sentRequests[name] then
     self.tcpClient:sendRequest(ClientMessages.challengePlayer(name))
-    self.lobbyState.sentRequests[name] = true
+    self.lobbyData.sentRequests[name] = true
+    self:emitSignal("lobbyStateUpdate", self.lobbyData)
   end
 end
 
 function NetClient:requestSpectate(roomNumber)
-  return self.tcpClient:sendRequest(ClientMessages.requestSpectate(roomNumber))
+  if not self.pendingResponses.spectateResponse then
+    self.pendingResponses.spectateResponse = self.tcpClient:sendRequest(ClientMessages.requestSpectate(roomNumber))
+  end
+end
+
+local function sendMenuState(player)
+  GAME.netClient.tcpClient:sendRequest(ClientMessages.sendMenuState(ServerMessages.toServerMenuState(player)))
+end
+
+function NetClient:registerPlayerUpdates(room)
+  for _, player in ipairs(room.players) do
+    if player.isLocal then
+      -- seems a bit silly to subscribe a player to itself but it works and the player doesn't have to become part of the closure
+      player:connectSignal("selectedCharacterIdChanged", player, sendMenuState)
+      player:connectSignal("characterIdChanged", player, sendMenuState)
+      player:connectSignal("selectedStageIdChanged", player, sendMenuState)
+      player:connectSignal("stageIdChanged", player, sendMenuState)
+      player:connectSignal("panelIdChanged", player, sendMenuState)
+      player:connectSignal("wantsRankedChanged", player, sendMenuState)
+      player:connectSignal("wantsReadyChanged", player, sendMenuState)
+      player:connectSignal("difficultyChanged", player, sendMenuState)
+      player:connectSignal("startingSpeedChanged", player, sendMenuState)
+      player:connectSignal("levelChanged", player, sendMenuState)
+      player:connectSignal("colorCountChanged", player, sendMenuState)
+      player:connectSignal("inputMethodChanged", player, sendMenuState)
+      player:connectSignal("hasLoadedChanged", player, sendMenuState)
+    end
+  end
 end
 
 function NetClient:sendErrorReport(errorData, server, ip)
@@ -394,6 +422,7 @@ function NetClient:logout()
   self.tcpClient:sendRequest(ClientMessages.logout())
   self.tcpClient:resetNetwork()
   self.state = states.OFFLINE
+  resetLobbyData(self)
 end
 
 function NetClient:update()
@@ -419,6 +448,7 @@ function NetClient:update()
   if not self.tcpClient:processIncomingMessages() then
     self.state = states.OFFLINE
     self.tcpClient:resetNetwork()
+    resetLobbyData(self)
     self:emitSignal("disconnect")
     return
   end
@@ -438,13 +468,13 @@ function NetClient:update()
         self.pendingResponses.leaderboardUpdate = nil
       end
     end
-    if self.pendingResponses.spectateRequest then
-      local status, value = self.pendingResponses.spectateRequest:tryGetValue()
+    if self.pendingResponses.spectateResponse then
+      local status, value = self.pendingResponses.spectateResponse:tryGetValue()
       if status == "timeout" then
         GAME.theme:playCancelSfx()
-        self.pendingResponses.spectateRequest = nil
+        self.pendingResponses.spectateResponse = nil
       elseif status == "received" then
-        self.pendingResponses.spectateRequest = nil
+        self.pendingResponses.spectateResponse = nil
         spectate2pVsOnlineMatch(self, value)
       end
     end
@@ -456,7 +486,9 @@ function NetClient:update()
     for _, listener in pairs(self.matchListeners) do
       listener:listen()
     end
-    processInputMessages(self)
+    if self.room.match then
+      processInputMessages(self)
+    end
   end
 end
 

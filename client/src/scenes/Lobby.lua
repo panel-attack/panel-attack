@@ -219,21 +219,6 @@ function Lobby:onLobbyStateUpdate(lobbyState)
   end
 end
 
-----------------------
--- network handling --
-----------------------
-
-function Lobby:processServerMessages()
-  if self.spectateRequestResponse then
-    local status, value = self.spectateRequestResponse:tryGetValue()
-    if status == "timeout" then
-      self.spectateRequestResponse = GAME.netClient:requestSpectate(self.requestedSpectateRoom.roomNumber)
-    elseif status == "received" then
-      self:spectate2pVsOnlineMatch(value)
-    end
-  end
-end
-
 ------------------------------
 -- scene core functionality --
 ------------------------------
@@ -244,7 +229,6 @@ function Lobby:update(dt)
   if GAME.netClient.state == NetClient.STATES.LOGIN then
     loginStateLabel:setText(GAME.netClient.loginState or "")
   else
-    self:processServerMessages()
     self.lobbyMenu:update(dt)
   end
 end
