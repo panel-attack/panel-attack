@@ -271,6 +271,7 @@ function GameBase:update(dt)
           GAME.battleRoom:shutdown()
         end
         GAME.navigationStack:popToName("Lobby")
+        return
       end
     end
     self:runGame(dt)

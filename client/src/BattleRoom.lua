@@ -570,4 +570,8 @@ function BattleRoom:onDisconnect()
   GAME.navigationStack:popToName("Lobby")
 end
 
+function BattleRoom:hasLocalPlayer()
+  return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
+end
+
 return BattleRoom

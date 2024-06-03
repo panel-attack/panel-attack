@@ -108,8 +108,12 @@ local function processLeaveRoomMessage(self, message)
     self.room.match:abort()
     self.room.match:deinit()
   end
-  -- and then shutdown the room
-  self.room:shutdown()
+
+  if self.room then
+    -- and then shutdown the room
+    self.room:shutdown()
+    self.room = nil
+  end
   self.state = states.ONLINE
   GAME.navigationStack:popToName("Lobby")
 end
@@ -320,8 +324,15 @@ function NetClient:leaveRoom()
   if self:isConnected() then
     self.tcpClient:dropOldInputMessages()
     self.tcpClient:sendRequest(ClientMessages.leaveRoom())
-    -- the server sends us back the confirmation that we left the room
-    -- so we reenter ONLINE state via processLeaveRoomMessage, not here
+
+    if self.room:hasLocalPlayer() then
+      -- the server sends us back the confirmation that we left the room
+      -- so we reenter ONLINE state via processLeaveRoomMessage, not here
+    else
+      -- but as spectator there is no confirmation
+      -- meaning state needs to be reset immediately
+      self.state = states.ONLINE
+    end
   end
 end
 
@@ -458,6 +469,7 @@ function NetClient:update()
     for _, listener in pairs(self.lobbyListeners) do
       listener:listen()
     end
+    self.tcpClient:dropOldInputMessages()
     if self.pendingResponses.leaderboardUpdate then
       local status, value = self.pendingResponses.leaderboardUpdate:tryGetValue()
       if status == "timeout" then
