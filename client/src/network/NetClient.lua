@@ -11,37 +11,38 @@ local CharacterSelect2p = require("client.src.scenes.CharacterSelect2p")
 local SoundController = require("client.src.music.SoundController")
 local GameCatchUp = require("client.src.scenes.GameCatchUp")
 local Game2pVs = require("client.src.scenes.Game2pVs")
+local LoginRoutine = require("client.src.network.LoginRoutine")
 
 
-local states = { OFFLINE = 1, ONLINE = 2, ROOM = 3, INGAME = 4 }
+local states = { OFFLINE = 1, LOGIN = 2, ONLINE = 3, ROOM = 4, INGAME = 5 }
 
 -- Most functions of NetClient are private as they only should get triggered via incoming server messages
 --  that get automatically processed via NetClient:update
 
 local function updateLobbyState(self, lobbyState)
   if lobbyState.players then
-    self.lobbyState.players = lobbyState.players
+    self.lobbyData.players = lobbyState.players
   end
 
   if lobbyState.unpaired then
-    self.lobbyState.unpairedPlayers = lobbyState.unpaired
+    self.lobbyData.unpairedPlayers = lobbyState.unpaired
     -- players who leave the unpaired list no longer have standing invitations to us.\
     -- we also no longer have a standing invitation to them, so we'll remove them from sentRequests
     local newWillingPlayers = {}
     local newSentRequests = {}
-    for _, player in ipairs(self.unpairedPlayers) do
-      newWillingPlayers[player] = self.willingPlayers[player]
-      newSentRequests[player] = self.sentRequests[player]
+    for _, player in ipairs(self.lobbyData.unpairedPlayers) do
+      newWillingPlayers[player] = self.lobbyData.willingPlayers[player]
+      newSentRequests[player] = self.lobbyData.sentRequests[player]
     end
-    self.lobbyState.willingPlayers = newWillingPlayers
-    self.lobbyState.sentRequests = newSentRequests
+    self.lobbyData.willingPlayers = newWillingPlayers
+    self.lobbyData.sentRequests = newSentRequests
   end
 
   if lobbyState.spectatable then
-    self.lobbyState.spectatableRooms = lobbyState.spectatable
+    self.lobbyData.spectatableRooms = lobbyState.spectatable
   end
 
-  self:emitSignal("lobbyStateUpdate", self.lobbyState)
+  self:emitSignal("lobbyStateUpdate", self.lobbyData)
 end
 
 -- starts a 2p vs online match
@@ -304,8 +305,12 @@ local NetClient = class(function(self)
   Signal.turnIntoEmitter(self)
   self:createSignal("lobbyStateUpdate")
   self:createSignal("leaderboardUpdate")
+  -- only fires for unintended disconnects
   self:createSignal("disconnect")
+  self:createSignal("loginFailed")
 end)
+
+NetClient.STATES = states
 
 function NetClient:sendMenuState(player)
   self.tcpClient:sendRequest(ClientMessages.sendMenuState(ServerMessages.toServerMenuState(player)))
@@ -371,20 +376,44 @@ function NetClient:sendErrorReport(errorData, server, ip)
   end
   self.tcpClient:sendRequest(ClientMessages.sendErrorReport(errorData))
   self.tcpClient:resetNetwork()
+  self.state = states.OFFLINE
 end
 
 function NetClient:isConnected()
   return self.tcpClient:isConnected()
 end
 
+function NetClient:login(ip, port)
+  if not self:isConnected() then
+    self.loginRoutine = LoginRoutine(self.tcpClient, ip, port)
+    self.state = states.LOGIN
+  end
+end
+
 function NetClient:logout()
   self.tcpClient:sendRequest(ClientMessages.logout())
   self.tcpClient:resetNetwork()
+  self.state = states.OFFLINE
 end
 
 function NetClient:update()
   if self.state == states.OFFLINE then
     return
+  end
+
+  if self.state == states.LOGIN then
+    local done, result = self.loginRoutine:progress()
+    if not done then
+      self.loginState = result
+    else
+      if result.loggedIn then
+        self.state = states.ONLINE
+      else
+        self:emitSignal("loginFailed", result.message)
+        self.loginState = result.message
+        self.state = states.OFFLINE
+      end
+    end
   end
 
   if not self.tcpClient:processIncomingMessages() then

@@ -11,7 +11,7 @@ local function createResponseCoroutine(responseTypes)
 
       while not response and love.timer.getTime() < startTime + REQUEST_TIMEOUT do
         coroutine.yield()
-        response = GAME.server_queue:pop_next_with(unpack(responseTypes))
+        response = GAME.netClient.tcpClient.receivedMessageQueue:pop_next_with(unpack(responseTypes))
       end
 
       return response

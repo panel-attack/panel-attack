@@ -5,9 +5,8 @@ local MenuItem = require("client.src.ui.MenuItem")
 local class = require("common.lib.class")
 local logger = require("common.lib.logger")
 local util = require("common.lib.util")
-local LoginRoutine = require("client.src.network.LoginRoutine")
-
-local STATES = {Login = 1, Lobby = 2}
+local NetClient = require("client.src.network.NetClient")
+local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
 
 -- @module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
@@ -39,9 +38,6 @@ local Lobby = class(function(self, sceneParams)
   -- currently unused, need to find a new place to draw this later
   self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
 
-  -- state fields to manage Lobby's update cycle    
-  self.state = STATES.Login
-
   -- network features not yet implemented
   self.spectateRequestResponse = nil
   self.requestedSpectateRoom = nil
@@ -67,14 +63,13 @@ end
 
 function Lobby:load(sceneParams)
   if not GAME.netClient:isConnected() and sceneParams.serverIp then
-    self.loginRoutine = LoginRoutine(GAME.netClient, sceneParams.serverIp, sceneParams.serverPort)
-  else
-    self.state = STATES.Lobby
+    GAME.netClient:login(sceneParams.serverIp, sceneParams.serverPort)
   end
 
   GAME.netClient:connectSignal("lobbyStateUpdate", self, self.onLobbyStateUpdate)
   GAME.netClient:connectSignal("disconnect", self, self.onDisconnect)
   GAME.netClient:connectSignal("leaderboardUpdate", self, self.updateLeaderboard)
+  GAME.netClient:connectSignal("loginFailed", self, self.onLoginFailure)
 
   self:initLobbyMenu()
 end
@@ -228,27 +223,6 @@ end
 -- network handling --
 ----------------------
 
-local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
-function Lobby:handleLogin()
-  local done, result = self.loginRoutine:progress()
-  if not done then
-    loginStateLabel:setText(result)
-  else
-    if result.loggedIn then
-      self.state = STATES.Lobby
-    else
-      loginStateLabel:setText(result.message)
-      if not self.loginScreenTimer then
-        self.loginScreenTimer = GAME.timer + 5
-      end
-      if GAME.timer > self.loginScreenTimer then
-        self.loginScreenTimer = nil
-        GAME.navigationStack:pop()
-      end
-    end
-  end
-end
-
 function Lobby:processServerMessages()
   if self.spectateRequestResponse then
     local status, value = self.spectateRequestResponse:tryGetValue()
@@ -263,12 +237,12 @@ end
 ------------------------------
 -- scene core functionality --
 ------------------------------
-
+local loginStateLabel = Label({text = loc("lb_login"), translate = false, x = 500, y = 350})
 function Lobby:update(dt)
   self.backgroundImg:update(dt)
 
-  if self.state == STATES.Login then
-    self:handleLogin()
+  if GAME.netClient.state == NetClient.STATES.LOGIN then
+    loginStateLabel:setText(GAME.netClient.loginState or "")
   else
     self:processServerMessages()
     self.lobbyMenu:update(dt)
@@ -278,19 +252,23 @@ end
 function Lobby:draw()
   self.backgroundImg:draw()
   self:drawCommunityMessage()
-  if self.state == STATES.Lobby then
-    self.uiRoot:draw()
-  elseif self.state == STATES.Login then
+  if GAME.netClient.state == NetClient.STATES.LOGIN then
     loginStateLabel:draw()
+  else
+    self.uiRoot:draw()
   end
 end
 
 function Lobby:onDisconnect()
-  if not GAME.navigationStack.transition and not self.loginScreenTimer then
+  if not GAME.navigationStack.transition then
     -- automatic reconnect if we're not about to switch scene
-    self.state = STATES.Login
-    self.loginRoutine = LoginRoutine(GAME.netClient, GAME.connected_server_ip, GAME.connected_server_port)
+    GAME.netClient:login(GAME.connected_server_ip, GAME.connected_server_port)
   end
+end
+
+function Lobby:onLoginFailure(message)
+  local messageTransition = MessageTransition(love.timer.getTime(), 5, message)
+  GAME.navigationStack:pop(messageTransition)
 end
 
 return Lobby
