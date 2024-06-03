@@ -19,6 +19,16 @@ local states = { OFFLINE = 1, LOGIN = 2, ONLINE = 3, ROOM = 4, INGAME = 5 }
 -- Most functions of NetClient are private as they only should get triggered via incoming server messages
 --  that get automatically processed via NetClient:update
 
+local function resetLobbyData(self)
+  self.lobbyData = {
+    players = {},
+    unpairedPlayers = {},
+    willingPlayers = {},
+    spectatableRooms = {},
+    sentRequests = {}
+  }
+end
+
 local function updateLobbyState(self, lobbyState)
   if lobbyState.players then
     self.lobbyData.players = lobbyState.players
@@ -47,7 +57,8 @@ end
 
 -- starts a 2p vs online match
 local function start2pVsOnlineMatch(self, createRoomMessage)
-  -- Not yet implemented
+  resetLobbyData(self)
+  self.tcpClient.receivedMessageQueue:pop_all_with("leave_room")
   GAME.battleRoom = BattleRoom.createFromServerMessage(createRoomMessage)
   self.room = GAME.battleRoom
   love.window.requestAttention()
@@ -250,16 +261,6 @@ local function createListeners(self)
   messageListeners.spectators = createListener(self, "spectators", processSpectatorListMessage)
 
   return messageListeners
-end
-
-local function resetLobbyData(self)
-  self.lobbyData = {
-    players = {},
-    unpairedPlayers = {},
-    willingPlayers = {},
-    spectatableRooms = {},
-    sentRequests = {}
-  }
 end
 
 local NetClient = class(function(self)
