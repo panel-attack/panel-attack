@@ -340,6 +340,9 @@ function GameBase:drawHUD()
         prof.pop("Stack:drawAnalyticData")
       end
     end
+    if not config.debug_mode and GAME.battleRoom.spectatorString then -- this is printed in the same space as the debug details
+      GraphicsUtil.print(GAME.battleRoom.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
+    end
     self:drawCommunityMessage()
   end
 end

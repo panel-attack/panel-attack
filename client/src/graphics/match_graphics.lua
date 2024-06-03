@@ -162,10 +162,6 @@ function Match:render()
 
       -- Draw VS HUD
       if self.stackInteraction == GameModes.StackInteractions.VERSUS then
-        if not config.debug_mode then -- this is printed in the same space as the debug details
-          GraphicsUtil.print(self.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
-        end
-
         if tableUtils.trueForAll(self.players, function(p) return p.human end) or self.ranked then
           self:drawMatchType()
         end
