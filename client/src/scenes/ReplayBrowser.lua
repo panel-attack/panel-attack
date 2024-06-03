@@ -80,6 +80,9 @@ local function updateBrowsingPath(new_path)
     current_path = new_path
   end
   path_contents = fileUtils.getFilteredDirectoryItems(base_path .. current_path)
+  if not path_contents[cursor_pos] then
+    cursor_pos = replay_id_top
+  end
 end
   
 local function setPathToParentDir()
