@@ -38,10 +38,6 @@ local Lobby = class(function(self, sceneParams)
   -- currently unused, need to find a new place to draw this later
   self.notice = {[true] = loc("lb_select_player"), [false] = loc("lb_alone")}
 
-  -- network features not yet implemented
-  self.spectateRequestResponse = nil
-  self.requestedSpectateRoom = nil
-
   self:load(sceneParams)
 end, Scene)
 
@@ -168,8 +164,8 @@ end
 -- requests to spectate the specified room
 function Lobby:requestSpectateFunction(room)
   return function()
-    self.requestedSpectateRoom = room
-    self.spectateRequestResponse = GAME.netClient:requestSpectate(room.roomNumber)
+    GAME.netClient:requestSpectate(room.roomNumber)
+    GAME.theme:playValidationSfx()
   end
 end
 
