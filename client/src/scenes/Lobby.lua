@@ -147,8 +147,9 @@ end
 
 function Lobby:playerRatingString(playerName)
   local rating = ""
-  if self.playerData and self.playerData[playerName] and self.playerData[playerName].rating then
-    rating = " (" .. self.playerData[playerName].rating .. ")"
+  local playerData = GAME.netClient.lobbyData.players[playerName]
+  if playerData and playerData.rating then
+    rating = " (" .. playerData.rating .. ")"
   end
   return rating
 end
