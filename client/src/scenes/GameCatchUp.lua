@@ -17,7 +17,7 @@ local GameCatchUp = class(function(self, sceneParams)
   -- we need to make sure we start it afterwards
   self.match:connectSignal("countdownEnded", self, function()
     self.callback = function()
-      self.match:updateDangerMusic()
+      self.vsScene:changeMusic(self.match.currentMusicIsDanger)
       self.vsScene:onGameStart()
     end
   end)

@@ -247,7 +247,7 @@ function GameBase:musicCanChange()
   return true
 end
 
-function GameBase:onGameStart(match)
+function GameBase:onGameStart()
   if self.musicSource then
     SoundController:playMusic(self.musicSource.stageTrack)
   end
