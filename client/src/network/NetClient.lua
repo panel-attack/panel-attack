@@ -501,7 +501,9 @@ function NetClient:update()
     for _, listener in pairs(self.matchListeners) do
       listener:listen()
     end
-    if self.room.match then
+    -- we could receive a leaveRoom message and the room could get axed while processing listeners
+    -- so always need to check if the room is still there
+    if self.room and self.room.match then
       processInputMessages(self)
     end
   end
