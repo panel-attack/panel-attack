@@ -251,25 +251,65 @@ end
 
 function Menu:onTouch(x, y)
   self.swiping = true
+  self.initialTouchX = x
   self.initialTouchY = y
   self.originalY = self.yOffset
+  local realTouchedElement = UIElement.getTouchedElement(self, x, y)
+  if realTouchedElement and realTouchedElement ~= self then
+    self.touchedChild = realTouchedElement
+    self.touchedChild:onTouch(x, y)
+  end
 end
 
 function Menu:onDrag(x, y)
-  local yOffset = y - self.initialTouchY
-  if self.height < self.totalHeight then
-    if yOffset > 0 then
-      self.yOffset = math.max(self.originalY - yOffset, -50)-- - 2 * NAVIGATION_BUTTON_WIDTH)
-    else
-      self.yOffset = math.min(self.totalHeight - self.height + 50, self.originalY - yOffset)
+  if not self.touchedChild or not self.touchedChild.onDrag then
+    local yOffset = y - self.initialTouchY
+    if self.height < self.totalHeight then
+      if yOffset > 0 then
+        self.yOffset = math.max(self.originalY - yOffset, -50)-- - 2 * NAVIGATION_BUTTON_WIDTH)
+      else
+        self.yOffset = math.min(self.totalHeight - self.height + 50, self.originalY - yOffset)
+      end
+      self:layout()
     end
-    self:layout()
+  else
+    self.touchedChild:onDrag(x, y)
   end
 end
 
 function Menu:onRelease(x, y)
-  self:onDrag(x, y)
-  self.swiping = false
+  if not self.touchedChild or not self.touchedChild.onRelease then
+    self:onDrag(x, y)
+    self.swiping = false
+    self.touchedChild = nil
+  else
+    if self.touchedChild.onDrag then
+      -- if it implements an onDrag we can assume it has an idea what to do with the new coords
+      self.touchedChild:onRelease(x, y)
+    else
+      -- otherwise check if our original click is still inside the release window
+      -- to not accidently trigger the release
+      self.touchedChild:onRelease(self.initialTouchX, self.initialTouchY)
+    end
+  end
+end
+
+-- overwrite the default callback to always return itself
+-- while keeping a reference to the really touched element
+function Menu:getTouchedElement(x, y)
+  if self.isVisible and self.isEnabled and self:inBounds(x, y) then
+    if self.allContentShowing then
+      local touchedElement
+      for i = 1, #self.children do
+        touchedElement = self.children[i]:getTouchedElement(x, y)
+        if touchedElement then
+          return touchedElement
+        end
+      end
+    else
+      return self
+    end
+  end
 end
 
 return Menu
