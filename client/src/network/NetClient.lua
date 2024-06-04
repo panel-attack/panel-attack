@@ -182,19 +182,17 @@ local function processRankedStatusMessage(self, message)
   self.room:updateRankedStatus(rankedStatus, comments)
 end
 
-local function processMenuStateMessage(self, message)
+local function processMenuStateMessage(player, message)
   local menuState = ServerMessages.sanitizeMenuState(message.menu_state)
-  for _, player in ipairs(self.room.players) do
-    if message.player_number then
-      -- only update if playernumber matches the player's
-      if message.player_number == player.playerNumber then
-        player:updateWithMenuState(menuState)
-      else
-        -- this update is for someone else
-      end
-    else
+  if message.player_number then
+    -- only update if playernumber matches the player's
+    if message.player_number == player.playerNumber then
       player:updateWithMenuState(menuState)
+    else
+      -- this update is for someone else
     end
+  else
+    player:updateWithMenuState(menuState)
   end
 end
 
@@ -285,7 +283,6 @@ local NetClient = class(function(self)
 
   -- all listeners running while in a room but not in a match
   self.roomListeners = {
-    menu_state = messageListeners.menu_state,
     win_counts = messageListeners.win_counts,
     ranked_match_approved = messageListeners.ranked_match_approved,
     ranked_match_denied = messageListeners.ranked_match_denied,
@@ -390,6 +387,7 @@ local function sendMenuState(player)
 end
 
 function NetClient:registerPlayerUpdates(room)
+  local listener = MessageListener("menu_state")
   for _, player in ipairs(room.players) do
     if player.isLocal then
       -- seems a bit silly to subscribe a player to itself but it works and the player doesn't have to become part of the closure
@@ -406,8 +404,12 @@ function NetClient:registerPlayerUpdates(room)
       player:connectSignal("colorCountChanged", player, sendMenuState)
       player:connectSignal("inputMethodChanged", player, sendMenuState)
       player:connectSignal("hasLoadedChanged", player, sendMenuState)
+    else
+      listener:subscribe(player, processMenuStateMessage)
     end
   end
+  self.messageListeners.menu_state = listener
+  self.roomListeners.menu_state = listener
 end
 
 function NetClient:sendErrorReport(errorData, server, ip)
