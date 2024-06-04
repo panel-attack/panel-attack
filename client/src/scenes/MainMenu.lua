@@ -29,7 +29,6 @@ local PuzzleGame = require("client.src.scenes.PuzzleGame")
 -- @module MainMenu
 -- Scene for the main menu
 local MainMenu = class(function(self, sceneParams)
-  self.backgroundImg = themes[config.theme].images.bg_main
   self.music = "main"
   self.menu = self:createMainMenu()
   self.uiRoot:addChild(self.menu)
@@ -130,12 +129,12 @@ function MainMenu:update(dt)
     end
   end
 
-  self.backgroundImg:update(dt)
+  GAME.theme.images.bg_main:update(dt)
   self.menu:update(dt)
 end
 
 function MainMenu:draw()
-  self.backgroundImg:draw()
+  GAME.theme.images.bg_main:draw()
   self.uiRoot:draw()
   local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight / 2
