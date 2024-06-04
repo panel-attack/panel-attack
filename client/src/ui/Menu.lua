@@ -2,8 +2,6 @@ local table = table
 
 local class = require("common.lib.class")
 local UIElement = require("client.src.ui.UIElement")
-local TextButton = require("client.src.ui.TextButton")
-local Label = require("client.src.ui.Label")
 local input = require("common.lib.inputManager")
 
 local NAVIGATION_BUTTON_WIDTH = 30
@@ -17,17 +15,12 @@ local Menu = class(
 
     self.selectedIndex = 1
     self.yMin = self.y
+    self.totalHeight = 0
     self.menuItemYOffsets = {}
     self.allContentShowing = true
 
     -- bogus this should be passed in?
-    self.centerVertically = themes[config.theme].centerMenusVertically 
-
-    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollUp() end})
-    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollDown() end})
-    
-    self:addChild(self.upButton)
-    self:addChild(self.downButton)
+    self.centerVertically = themes[config.theme].centerMenusVertically
 
     self.yOffset = 0
     self.firstActiveIndex = 1
@@ -81,7 +74,8 @@ function Menu:layout()
   self.firstActiveIndex = nil
   self.lastActiveIndex = nil
   self.width = 0
-  
+  self.totalHeight = 0
+
   if #self.menuItems == 0 then
     return
   end
@@ -112,9 +106,8 @@ function Menu:layout()
       totalMenuHeight = realY + menuItem.height
     end
     self.width = math.max(self.width, menuItem.width)
+    self.totalHeight = self.totalHeight + menuItem.height + Menu.BUTTON_VERTICAL_PADDING
   end
-  
-  self:updateNavButtonPos()
 
   if self.centerVertically then
     self.y = self.yMin + (self.height / 2) - (totalMenuHeight / 2)
@@ -208,27 +201,6 @@ function Menu:setSelectedIndex(index)
   self:layout()
 end
 
-function Menu:updateNavButtonPos()
-  self.upButton:setVisibility(false)
-  self.downButton:setVisibility(false)
-  if self.allContentShowing then
-    return
-  end
-  
-  if self.selectedIndex > 1 then
-    self.upButton:setVisibility(true)
-  end
-  if self.selectedIndex < #self.menuItems then
-    self.downButton:setVisibility(true)
-  end
-
-  self.upButton.x = 0
-  self.upButton.y = self.menuItems[self.firstActiveIndex].y - (self.downButton.height + Menu.BUTTON_VERTICAL_PADDING)
-  
-  self.downButton.x = 0
-  self.downButton.y = self.menuItems[self.lastActiveIndex].y + self.menuItems[self.lastActiveIndex].height + Menu.BUTTON_VERTICAL_PADDING
-end
-
 function Menu:scrollUp()
   if self.selectedIndex > 1 then
     self:setSelectedIndex(self.selectedIndex - 1)
@@ -275,6 +247,29 @@ end
 
 function Menu:drawSelf()
 
+end
+
+function Menu:onTouch(x, y)
+  self.swiping = true
+  self.initialTouchY = y
+  self.originalY = self.yOffset
+end
+
+function Menu:onDrag(x, y)
+  local yOffset = y - self.initialTouchY
+  if self.height < self.totalHeight then
+    if yOffset > 0 then
+      self.yOffset = math.max(self.originalY - yOffset, -50)-- - 2 * NAVIGATION_BUTTON_WIDTH)
+    else
+      self.yOffset = math.min(self.totalHeight - self.height + 50, self.originalY - yOffset)
+    end
+    self:layout()
+  end
+end
+
+function Menu:onRelease(x, y)
+  self:onDrag(x, y)
+  self.swiping = false
 end
 
 return Menu
