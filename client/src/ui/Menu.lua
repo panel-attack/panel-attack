@@ -3,6 +3,7 @@ local table = table
 local class = require("common.lib.class")
 local UIElement = require("client.src.ui.UIElement")
 local input = require("common.lib.inputManager")
+local Label = require("client.src.ui.Label")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 
@@ -18,6 +19,11 @@ local Menu = class(
     self.totalHeight = 0
     self.menuItemYOffsets = {}
     self.allContentShowing = true
+
+    self.upIndicator = Label({text = "^", translate = false, isVisible = false, vAlign = "top", hAlign = "center", y = -14})
+    self.downIndicator = Label({text = "v", translate = false, isVisible = false, vAlign = "bottom", hAlign = "center"})
+    self:addChild(self.upIndicator)
+    self:addChild(self.downIndicator)
 
     -- bogus this should be passed in?
     self.centerVertically = themes[config.theme].centerMenusVertically
@@ -69,7 +75,8 @@ function Menu:setMenuItems(menuItems)
 end
 
 function Menu:layout()
-
+  self.upIndicator:setVisibility(false)
+  self.downIndicator:setVisibility(false)
   self.allContentShowing = self.yOffset == 0
   self.firstActiveIndex = nil
   self.lastActiveIndex = nil
@@ -87,6 +94,9 @@ function Menu:layout()
     self.menuItemYOffsets[i] = currentY
     menuItem:setVisibility(false)
     local realY = currentY - self.yOffset
+    if realY < 0 then
+      self.upIndicator:setVisibility(true)
+    end
     if menuFull == false and realY >= 0 then
       if realY + menuItem.height < self.height then
         if self.firstActiveIndex == nil then
@@ -97,6 +107,7 @@ function Menu:layout()
         menuItem:setVisibility(true)
       else
         self.allContentShowing = false
+        self.downIndicator:setVisibility(true)
         menuFull = true
       end
     end
