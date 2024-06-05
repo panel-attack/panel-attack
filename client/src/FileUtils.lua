@@ -147,14 +147,6 @@ function fileUtils.saveTextureToFile(texture, filePath, format)
   love.filesystem.write(filePath .. "." .. format, data)
 end
 
-function fileUtils.getSubDirectories(path)
-  local files = lfs.getDirectoryItems(path)
-  files = tableUtils.filter(files, function(file)
-    return lfs.getInfo(path .. "/" .. file, "directory")
-  end)
-  return files
-end
-
 function fileUtils.getDirectoryName(directoryPath)
   local len = string.len(directoryPath)
   local reversed = string.reverse(directoryPath)
