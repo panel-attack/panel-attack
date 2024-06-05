@@ -13,15 +13,18 @@ stringmt.__index = function(t, k)
   return stringmt_idx[k]
 end
 
--- splits a string into a table using the given seperator
-function string:split(sep)
-  local sep, fields = sep or " ", {}
-  local pattern = string.format("([^%s]+)", sep)
-  self:gsub(
-    pattern,
-    function(c)
-      fields[#fields + 1] = c
-    end
-  )
-  return fields
-end
+-- competed with the split function of simplecsv
+-- as simplecsv was loaded later, this is assumed to have been unused and commented out to prevent confusion
+--
+-- -- splits a string into a table using the given seperator
+-- function string:split(sep)
+--   local sep, fields = sep or " ", {}
+--   local pattern = string.format("([^%s]+)", sep)
+--   self:gsub(
+--     pattern,
+--     function(c)
+--       fields[#fields + 1] = c
+--     end
+--   )
+--   return fields
+-- end

@@ -1,0 +1,104 @@
+{
+  "extraInfo": {
+    "playerName": "39",
+    "gpm": "22.1",
+    "matchLength": "0:37",
+    "dateGenerated": "2023-12-27-20-53-32"
+  }, 
+  "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 423,
+        "metal": false
+      },
+      {
+        "chainEndTime": 784,
+        "chain": [
+          500,
+          583,
+          650,
+          717
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 500,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 707,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 906,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1290,
+        "chain": [
+          1210
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1210,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1587,
+        "chain": [
+          1453,
+          1520
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1638,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 1900,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 2014,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 2103,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2252,
+        "chain": [
+          2185
+        ]
+      }
+    ]
+  }

@@ -1,6 +1,7 @@
 local lfs = require("lfs")
-local logger = require("logger")
-local csvfile = require("libraries.simplecsv")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local csvfile = require("server.simplecsv")
 
 function makeDirectory(path) 
   local status, error = pcall(
@@ -21,10 +22,24 @@ function makeDirectoryRecursive(path)
   end
 end
 
+function fileExists(name)
+  local f=io.open(name,"r")
+  if f ~= nil then
+    io.close(f)
+    return true
+  else
+    return false
+  end
+end
+
 function write_players_file(playerbase)
+  if playerbase.filename == nil then
+    return
+  end
+
   local status, error = pcall(
     function()
-      local f = assert(io.open("players.txt", "w"))
+      local f = assert(io.open(playerbase.filename, "w"))
       io.output(f)
       io.write(json.encode(playerbase.players))
       io.close(f)
@@ -36,12 +51,20 @@ function write_players_file(playerbase)
 end
 
 function read_players_file(playerbase)
+  if playerbase.filename == nil then
+    return
+  end
+  
   pcall(
     function()
-      local f = assert(io.open("players.txt", "r"))
-      io.input(f)
-      playerbase.players = json.decode(io.read("*all"))
-      io.close(f)
+      local f = io.open(playerbase.filename, "r")
+      if f then
+        io.input(f)
+        local data = io.read("*all")
+        playerbase.players = json.decode(data)
+        logger.info(table.length(playerbase.players) .. " players loaded")
+        io.close(f)
+      end
     end
   )
 end
@@ -62,10 +85,13 @@ function logGameResult(player1ID, player2ID, player1Won, rankedValue)
 end
 
 function readGameResults()
-  local gameResults
+
+  local filename = "GameResults.csv"
+
+  local gameResults = nil
   pcall(
     function()
-      gameResults = csvfile.read("GameResults.csv")
+      gameResults = csvfile.read(filename)
     end
   )
   return gameResults
@@ -118,15 +144,16 @@ function write_leaderboard_file()
 end
 
 function read_leaderboard_file()
+  local filename = "./leaderboard.csv"
+
   local csv_table = {}
   local status, error = pcall(
     function()
-      csv_table = csvfile.read("./leaderboard.csv")
+      csv_table = csvfile.read(filename)
     end
   )
   if not status then
-    logger.error("Failed to read leaderboard file with error: " .. error)
-  elseif csv_table[2] then
+  elseif csv_table ~= nil and csv_table[2] then
     logger.debug("loading leaderboard.csv")
     for row = 2, #csv_table do
       csv_table[row][1] = tostring(csv_table[row][1])
@@ -158,11 +185,11 @@ function read_user_placement_match_file(user_id)
       local sep = package.config:sub(1, 1)
       local csv_table = csvfile.read("./placement_matches/incomplete/" .. user_id .. ".csv")
       if not csv_table or #csv_table < 2 then
-        logger.warn("csv_table from read_user_placement_match_file was nil or <2 length")
+        logger.debug("csv_table from read_user_placement_match_file was nil or <2 length")
         return nil
       else
-        logger.warn("csv_table from read_user_placement_match_file :")
-        logger.warn(json.encode(csv_table))
+        logger.debug("csv_table from read_user_placement_match_file :")
+        logger.debug(json.encode(csv_table))
       end
       local ret = {}
       for row = 2, #csv_table do
@@ -188,9 +215,9 @@ function read_user_placement_match_file(user_id)
           end
         end
       end
-      logger.warn("read_user_placement_match_file ret: ")
-      logger.warn(tostring(ret))
-      logger.warn(json.encode(ret))
+      logger.debug("read_user_placement_match_file ret: ")
+      logger.debug(tostring(ret))
+      logger.debug(json.encode(ret))
       return ret
     end
   )
@@ -253,21 +280,20 @@ function read_csprng_seed_file()
         csprng_seed = io.read("*all")
         io.close(f)
       else
-        print("csprng_seed.txt could not be read.  Writing a new default (2000) csprng_seed.txt")
+        csprng_seed = math.random(1,99999)
+        print("csprng_seed.txt could not be read.  Writing a new csprng_seed.txt")
         local new_file = io.open("csprng_seed.txt", "w")
         if new_file then
           io.output(new_file)
-          io.write("2000")
+          io.write(csprng_seed)
           io.close(new_file)
         end
-        csprng_seed = "2000"
       end
       if tonumber(csprng_seed) then
         local tempvar = tonumber(csprng_seed)
         csprng_seed = tempvar
       else
-        print("ERROR: csprng_seed.txt content is not numeric.  Using default (2000) as csprng_seed")
-        csprng_seed = 2000
+        error("ERROR: csprng_seed.txt content is not numeric.")
       end
     end
   )

@@ -1,0 +1,68 @@
+{
+  "extraInfo": {
+    "playerName": "JamBox",
+    "gpm": "16.6",
+    "matchLength": "0:32",
+    "dateGenerated": "2023-12-27-20-54-44"
+  }, 
+  "mergeComboMetalQueue": false,
+  "delayBeforeStart": 0,
+  "delayBeforeRepeat": 91,
+  "attackPatterns": [
+    {
+      "chainEndTime": 461,
+      "chain": [
+        395
+      ]
+    },
+    {
+      "width": 3,
+      "height": 1,
+      "chain": false,
+      "startTime": 395,
+      "metal": false
+    },
+    {
+      "chainEndTime": 855,
+      "chain": [
+        652,
+        721,
+        788
+      ]
+    },
+    {
+      "width": 6,
+      "height": 1,
+      "chain": false,
+      "startTime": 1166,
+      "metal": false
+    },
+    {
+      "chainEndTime": 1454,
+      "chain": [
+        1387
+      ]
+    },
+    {
+      "width": 5,
+      "height": 1,
+      "chain": false,
+      "startTime": 1604,
+      "metal": false
+    },
+    {
+      "chainEndTime": 1841,
+      "chain": [
+        1694,
+        1767
+      ]
+    },
+    {
+      "width": 3,
+      "height": 1,
+      "chain": false,
+      "startTime": 1767,
+      "metal": false
+    }
+  ]
+}

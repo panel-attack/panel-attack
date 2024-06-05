@@ -1,0 +1,188 @@
+{
+  "extraInfo": {
+    "playerName": "Musichael",
+    "gpm": "28.7",
+    "matchLength": "0:56",
+    "dateGenerated": "2023-12-27-20-53-32"
+  }, 
+  "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 303,
+        "metal": false
+      },
+      {
+        "chainEndTime": 706,
+        "chain": [
+          393,
+          460,
+          564,
+          647
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 460,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 460,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 564,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 762,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 762,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1007,
+        "chain": [
+          867,
+          948
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 867,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1443,
+        "chain": [
+          1208
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1350,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1655,
+        "chain": [
+          1499,
+          1566
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1566,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1882,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 1882,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2449,
+        "chain": [
+          2298
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 2447,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2895,
+        "chain": [
+          2687,
+          2761,
+          2828
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 3026,
+        "metal": false
+      },
+      {
+        "chainEndTime": 3422,
+        "chain": [
+          3271
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 3271,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 3271,
+        "metal": false
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 3370,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 3501,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 3501,
+        "metal": false
+      }
+    ]
+  }

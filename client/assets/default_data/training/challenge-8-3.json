@@ -1,0 +1,145 @@
+{
+  "extraInfo": {
+    "playerName": "39",
+    "gpm": "23.0",
+    "matchLength": "0:59",
+    "dateGenerated": "2023-12-27-20-52-28"
+  }, 
+  "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 297,
+        "metal": false
+      },
+      {
+        "chainEndTime": 585,
+        "chain": [
+          382,
+          449,
+          516
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 594,
+        "metal": false
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 594,
+        "metal": false
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1066,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1410,
+        "chain": [
+          1296,
+          1297,
+          1318
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 1318,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1588,
+        "chain": [
+          1519
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 1589,
+        "metal": false
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1743,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2196,
+        "chain": [
+          2067,
+          2068,
+          2137
+        ]
+      },
+      {
+        "width": 3,
+        "height": 1,
+        "chain": false,
+        "startTime": 2165,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2514,
+        "chain": [
+          2363,
+          2364
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 2447,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2884,
+        "chain": [
+          2817
+        ]
+      },
+      {
+        "chainEndTime": 3280,
+        "chain": [
+          3153,
+          3221
+        ]
+      },
+      {
+        "chainEndTime": 3446,
+        "chain": [
+          3387
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 3505,
+        "metal": false
+      },
+      {
+        "chainEndTime": 3775,
+        "chain": [
+          3705
+        ]
+      }
+    ]
+  }

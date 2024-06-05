@@ -1,22 +1,19 @@
-SERVER_MODE = true -- global to know the server is running the process
-
-local socket = require("socket")
-local logger = require("logger")
-require("class")
-json = require("libraries.dkjson")
+local socket = require("common.lib.socket")
+local logger = require("common.lib.logger")
+local class = require("common.lib.class")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+json = require("common.lib.dkjson")
+require("common.lib.mathExtensions")
+require("common.lib.util")
+require("common.lib.timezones")
+require("common.lib.csprng")
 require("server.stridx")
-require("gen_panels")
-require("csprng")
-local NetworkProtocol = require("NetworkProtocol")
 require("server.server_globals")
 require("server.server_file_io")
 require("server.Connection")
 require("server.Leaderboard")
 require("server.PlayerBase")
 require("server.Room")
-require("util")
-require("timezones")
-local database = require("server.PADatabase")
 
 local pairs = pairs
 local ipairs = ipairs
@@ -34,6 +31,7 @@ Server =
     self.connections = {} -- mapping of connection number to connection
     self.nameToConnectionIndex = {} -- mapping of player names to their unique connectionNumberIndex
     self.socketToConnectionIndex = {} -- mapping of sockets to their unique connectionNumberIndex
+    assert(databaseParam ~= nil)
     self.database = databaseParam -- the database object
     self.loaded_placement_matches = {
       incomplete = {},
@@ -43,14 +41,14 @@ Server =
     self.lastFlushTime = self.lastProcessTime
     self.lobbyChanged = false
 
-    logger.info("Starting up server  with port: " .. (SERVER_PORT or 49569))
+    logger.info("Starting up server with port: " .. (SERVER_PORT or 49569))
     self.socket = socket.bind("*", SERVER_PORT or 49569)
     self.socket:settimeout(0)
     if TCP_NODELAY_ENABLED then
       self.socket:setoption("tcp-nodelay", true)
     end
 
-    self.playerbase = Playerbase("playerbase")
+    self.playerbase = Playerbase("playerbase", "players.txt")
     read_players_file(self.playerbase)
     leaderboard = Leaderboard("leaderboard", self)
     read_leaderboard_file()
@@ -71,9 +69,6 @@ Server =
     logger.debug("playerbase: " .. json.encode(self.playerbase.players))
     logger.debug("leaderboard report: " .. json.encode(leaderboard:get_report()))
     read_csprng_seed_file()
-    if csprng_seed == 2000 then
-      logger.warn("ALERT! YOU SHOULD CHANGE YOUR CSPRNG_SEED.TXT FILE TO MAKE YOUR USER_IDS MORE SECURE!")
-    end
     initialize_mt_generator(csprng_seed)
     seed_from_mt(extract_mt())
     --timezone testing
@@ -151,7 +146,7 @@ local function addPublicPlayerData(players, playerName, player)
   end
 
   if player.rating then
-    players[playerName].rating = round(player.rating)
+    players[playerName].rating = math.round(player.rating)
   end
 
   if player.ranked_games_played then
@@ -182,6 +177,7 @@ function Server:lobby_state()
 end
 
 function Server:propose_game(senderName, receiverName, message)
+  logger.debug("propose game: " .. senderName .. " " .. receiverName)
   local senderConnection, receiverConnection = self.nameToConnectionIndex[senderName], self.nameToConnectionIndex[receiverName]
   if senderConnection then
     senderConnection = self.connections[senderConnection]
@@ -219,6 +215,18 @@ function Server:clear_proposals(name)
   end
 end
 
+function Server:playerSettingFromTable(data)
+  local playerSettings = {
+    character = data.character,
+    character_display_name = data.character_display_name,
+    level = data.level,
+    panels_dir = data.panels_dir,
+    player_number = data.player_number,
+    inputMethod = data.inputMethod
+  }
+  return playerSettings
+end
+
 -- a and be are connection objects
 function Server:create_room(a, b)
   self:setLobbyChanged()
@@ -228,6 +236,8 @@ function Server:create_room(a, b)
   self.roomNumberIndex = self.roomNumberIndex + 1
   self.rooms[new_room.roomNumber] = new_room
   local a_msg, b_msg = {create_room = true}, {create_room = true}
+  a_msg.room_number = new_room.roomNumber
+  b_msg.room_number = new_room.roomNumber
   a_msg.your_player_number = 1
   a_msg.op_player_number = 2
   a_msg.opponent = new_room.b.name
@@ -265,24 +275,26 @@ function Server:start_match(a, b)
   end
 
   a.room.stage = math.random(1, 2) == 1 and a.stage or b.stage
+  local playerSettings = self:playerSettingFromTable(a)
+  local opponentSettings = self:playerSettingFromTable(b)
   local msg = {
     match_start = true,
     ranked = false,
     stage = a.room.stage,
-    player_settings = {character = a.character, character_display_name = a.character_display_name, level = a.level, panels_dir = a.panels_dir, player_number = a.player_number, inputMethod = a.inputMethod},
-    opponent_settings = {character = b.character, character_display_name = b.character_display_name, level = b.level, panels_dir = b.panels_dir, player_number = b.player_number, inputMethod = b.inputMethod}
+    player_settings = playerSettings,
+    opponent_settings = opponentSettings
   }
   local room_is_ranked, reasons = a.room:rating_adjustment_approved()
   if room_is_ranked then
     a.room.replay.vs.ranked = true
     msg.ranked = true
     if leaderboard.players[a.user_id] then
-      msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
+      msg.player_settings.rating = math.round(leaderboard.players[a.user_id].rating)
     else
       msg.player_settings.rating = DEFAULT_RATING
     end
     if leaderboard.players[b.user_id] then
-      msg.opponent_settings.rating = round(leaderboard.players[b.user_id].rating)
+      msg.opponent_settings.rating = math.round(leaderboard.players[b.user_id].rating)
     else
       msg.opponent_settings.rating = DEFAULT_RATING
     end
@@ -316,14 +328,42 @@ function Server:roomNumberToRoom(roomNr)
   end
 end
 
+function Server:createNewUser(name)
+  local user_id = nil
+  while not user_id or self.playerbase.players[user_id] do
+    user_id = self:generate_new_user_id()
+  end
+  self.playerbase:updatePlayer(user_id, name)
+  self.database:insertNewPlayer(user_id, name)
+  self.database:insertPlayerELOChange(user_id, 0, 0)
+  return user_id
+end
+
+function Server:changeUsername(privateUserID, username)
+  self.playerbase:updatePlayer(privateUserID, username)
+  if leaderboard.players[privateUserID] then
+    leaderboard.players[privateUserID].user_name = username
+  end
+  self.database:updatePlayerUsername(privateUserID, username)
+end
+
 function Server:generate_new_user_id()
   local new_user_id = cs_random()
-  logger.debug("new_user_id: " .. new_user_id)
   return tostring(new_user_id)
 end
 
---TODO: revisit this to determine whether it is good.
-function Server:deny_login(connection, reason, ban)
+-- Checks if a logging in player is banned based off their IP.
+function Server:isPlayerBanned(ip)
+  return self.database:isPlayerBanned(ip)
+end
+
+function Server:insertBan(ip, reason, completionTime)
+  return self.database:insertBan(ip, reason, completionTime)
+end
+
+function Server:denyLogin(connection, reason, ban)
+  assert(ban == nil or reason == nil)
+  local message = {login_denied = true, reason = reason }
   if ban then
     local banRemainingString = "Ban Remaining: "
     local secondsRemaining = (ban.completionTime - os.time())
@@ -349,24 +389,14 @@ function Server:deny_login(connection, reason, ban)
     if detailCount < 2 then
       banRemainingString = banRemainingString .. math.floor(secondsRemaining) .. " seconds "
     end
+    message.reason = ban.reason
+    message.ban_duration = banRemainingString
 
-    connection:send(
-      {
-        login_denied = true,
-        reason = ban.reason,
-        ban_duration = banRemainingString,
-      }
-    )
     self.database:playerBanSeen(ban.banID)
-  else
-    connection:send(
-      {
-        login_denied = true,
-        reason = reason,
-      }
-    )
+    logger.warn("Login denied because of ban: " .. ban.reason)
   end
-  logger.warn("login denied.  Reason:  " .. (reason or ban.reason))
+
+  connection:send(message)
 end
 
 function Server:closeRoom(room)
@@ -456,8 +486,8 @@ function Server:adjust_ratings(room, winning_player_number, gameID)
       else
         logger.debug("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
         room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
-        room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
-        room.ratings[player_number].old = round(leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].new = math.round(leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].old = math.round(leaderboard.players[players[player_number].user_id].rating)
         room.ratings[player_number].difference = 0
       end
     else -- this player has not finished placement
@@ -496,17 +526,17 @@ function Server:adjust_ratings(room, winning_player_number, gameID)
           if not room.ratings[op_player_number] then
             room.ratings[op_player_number] = {}
           end
-          room.ratings[op_player_number].old = round(leaderboard.players[players[op_player_number].user_id].rating)
+          room.ratings[op_player_number].old = math.round(leaderboard.players[players[op_player_number].user_id].rating)
           self:process_placement_matches(players[player_number].user_id)
 
-          room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
+          room.ratings[player_number].new = math.round(leaderboard.players[players[player_number].user_id].rating)
 
-          room.ratings[player_number].difference = round(room.ratings[player_number].new - room.ratings[player_number].old)
+          room.ratings[player_number].difference = math.round(room.ratings[player_number].new - room.ratings[player_number].old)
           room.ratings[player_number].league = self:get_league(room.ratings[player_number].new)
 
-          room.ratings[op_player_number].new = round(leaderboard.players[players[op_player_number].user_id].rating)
+          room.ratings[op_player_number].new = math.round(leaderboard.players[players[op_player_number].user_id].rating)
 
-          room.ratings[op_player_number].difference = round(room.ratings[op_player_number].new - room.ratings[op_player_number].old)
+          room.ratings[op_player_number].difference = math.round(room.ratings[op_player_number].new - room.ratings[op_player_number].old)
           room.ratings[op_player_number].league = self:get_league(room.ratings[player_number].new)
           return
         else
@@ -543,8 +573,8 @@ function Server:adjust_ratings(room, winning_player_number, gameID)
     for player_number = 1, 2 do
       --round and calculate rating gain or loss (difference) to send to the clients
       if placement_done[players[player_number].user_id] then
-        room.ratings[player_number].old = round(room.ratings[player_number].old or leaderboard.players[players[player_number].user_id].rating)
-        room.ratings[player_number].new = round(room.ratings[player_number].new or leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].old = math.round(room.ratings[player_number].old or leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].new = math.round(room.ratings[player_number].new or leaderboard.players[players[player_number].user_id].rating)
         room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
       else
         room.ratings[player_number].old = 0
@@ -595,7 +625,7 @@ function Server:qualifies_for_placement(user_id)
   -- end
   -- win_ratio = win_count / placement_matches_played
   -- if win_ratio < placement_match_win_ratio_requirement then
-  -- return false, "placement win ratio is currently "..round(win_ratio*100).."%.  "..round(placement_match_win_ratio_requirement*100).."% is required for placement."
+  -- return false, "placement win ratio is currently "..math.round(win_ratio*100).."%.  "..math.round(placement_match_win_ratio_requirement*100).."% is required for placement."
   -- end
   end
   return true
@@ -644,13 +674,7 @@ function Server:get_league(rating)
   return "LeagueNotFound"
 end
 
-local server = Server(database)
-
 function Server:update()
-  self.socket:settimeout(0)
-  if TCP_NODELAY_ENABLED then
-    self.socket:setoption("tcp-nodelay", true)
-  end
 
   self:acceptNewConnections()
 
@@ -687,6 +711,7 @@ function Server:acceptNewConnections()
   end
 end
 
+-- Process any data on all active connections
 function Server:readSockets()
   -- Make a list of all the sockets to listen to
   local socketsToCheck = {self.socket}
@@ -699,7 +724,8 @@ function Server:readSockets()
   assert(type(socketsWithData) == "table")
   for _, currentSocket in ipairs(socketsWithData) do
     if self.socketToConnectionIndex[currentSocket] then
-      self.connections[self.socketToConnectionIndex[currentSocket]]:read()
+      local connectionIndex = self.socketToConnectionIndex[currentSocket]
+      self.connections[connectionIndex]:read()
     end
   end
 end
@@ -739,4 +765,4 @@ function Server:broadCastLobbyIfChanged()
   end
 end
 
-return server
+return Server

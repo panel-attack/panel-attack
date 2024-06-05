@@ -1,6 +1,7 @@
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
 local sqlite3 = require("lsqlite3")
 local db = sqlite3.open("PADatabase.sqlite3")
-local logger = require("logger")
 
 PADatabase =
   class(
@@ -68,17 +69,6 @@ CREATE TABLE IF NOT EXISTS PlayerBanList(
 );
 ]]
 
-local selectPlayerRecordValuesStatement = assert(db:prepare("SELECT * FROM Player where privatePlayerID = ?"))
-local function getPlayerValues(privatePlayerID)
-  selectPlayerRecordValuesStatement:bind_values(privatePlayerID)
-  selectPlayerRecordValuesStatement:step()
-  local playerValues = selectPlayerRecordValuesStatement:get_named_values()
-  if selectPlayerRecordValuesStatement:reset() ~= sqlite3.OK then
-    logger.error(db:errmsg())
-  end
-  return playerValues
-end
-
 local insertPlayerStatement = assert(db:prepare("INSERT OR IGNORE INTO Player(privatePlayerID, username) VALUES (?, ?)"))
 -- Inserts a new player into the database, ignores the statement if the ID is already used.
 function PADatabase.insertNewPlayer(self, privatePlayerID, username)
@@ -91,17 +81,21 @@ function PADatabase.insertNewPlayer(self, privatePlayerID, username)
   return true
 end
 
-local selectPublicPlayerIDStatement = assert(db:prepare("SELECT publicPlayerID FROM Player WHERE privatePlayerID = ?"))
--- Retrieves the publicPlayerID from the privatePlayerID
-function PADatabase.getPublicPlayerID(self, privatePlayerID)
-  selectPublicPlayerIDStatement:bind_values(privatePlayerID)
-  selectPublicPlayerIDStatement:step() 
-  local publicPlayerID = selectPublicPlayerIDStatement:get_value(0) -- this is the row count.
-  if selectPublicPlayerIDStatement:reset() ~= sqlite3.OK then
+local selectPlayerStatement = assert(db:prepare("SELECT * FROM Player WHERE privatePlayerID = ?"))
+-- Retrieves the player from the privatePlayerID
+function PADatabase.getPlayerFromPrivateID(self, privatePlayerID)
+  assert(privatePlayerID ~= nil)
+  selectPlayerStatement:bind_values(privatePlayerID)
+  local player = nil
+  for row in selectPlayerStatement:nrows() do
+    player = row
+    break
+  end
+  if selectPlayerStatement:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return nil
   end
-  return publicPlayerID 
+  return player 
 end
 
 local updatePlayerUsernameStatement = assert(db:prepare("UPDATE Player SET username = ? WHERE privatePlayerID = ?"))
@@ -131,13 +125,16 @@ end
 local selectPlayerRecordCount = assert(db:prepare("SELECT COUNT(*) FROM Player"))
 -- Returns the amount of players in the Player database.
 function PADatabase.getPlayerRecordCount()
-  selectPlayerRecordCount:step()
-  local recordCount = selectPlayerRecordCount:get_value(0) -- this is the row count.
+  local result = nil
+  for row in selectPlayerRecordCount:rows() do
+    result = row[1]
+    break
+  end
   if selectPlayerRecordCount:reset() ~= sqlite3.OK then
     logger.error(db:errmsg())
     return nil
   end
-  return recordCount
+  return result
 end
 
 local insertGameStatement = assert(db:prepare("INSERT INTO Game(ranked) VALUES (?)"))
@@ -260,15 +257,12 @@ function PADatabase.getIDBans(self, publicPlayerID)
   return bans
 end
 
--- Checks if a logging in player is banned based off their IP or publicPlayerID.
-function PADatabase.isPlayerBanned(self, ip, publicPlayerID)
+-- Checks if a logging in player is banned based off their IP.
+function PADatabase.isPlayerBanned(self, ip)
   -- all ids associated with the information given
   local publicPlayerIDs = {}
   if ip then
     publicPlayerIDs = self:getIPIDS(ip)
-  end
-  if publicPlayerID then
-    publicPlayerIDs[#publicPlayerIDs+1] = publicPlayerID
   end
 
   local bans = {}
