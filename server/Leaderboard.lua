@@ -1,5 +1,5 @@
-require("class")
-local logger = require("logger")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
 
 -- Object that represents players rankings and placement matches, along with login times
 Leaderboard =
@@ -64,7 +64,7 @@ function Leaderboard.get_report(self, user_id_of_requester)
     end
   end
   for k, v in pairs(report) do
-    v.rating = round(v.rating)
+    v.rating = math.round(v.rating)
   end
   return report
 end
