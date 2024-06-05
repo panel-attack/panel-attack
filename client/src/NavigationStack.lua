@@ -141,17 +141,21 @@ end
 function NavigationStack:replace(newScene, transition, callback)
   local activeScene = self.scenes[#self.scenes]
 
-  logger.debug("Replacing scene " .. activeScene.name .. " with scene " .. newScene.name)
+  if activeScene then
+    logger.debug("Replacing scene " .. activeScene.name .. " with scene " .. newScene.name)
 
-  if not transition then
-    transition = DirectTransition()
+    if not transition then
+      transition = DirectTransition()
+    end
+    transition.oldScene = activeScene
+    transition.newScene = newScene
+
+    self.transition = transition
+    self.callback = callback
+    self.scenes[#self.scenes] = newScene
+  else
+    self:push(newScene, transition)
   end
-  transition.oldScene = activeScene
-  transition.newScene = newScene
-
-  self.transition = transition
-  self.callback = callback
-  self.scenes[#self.scenes] = newScene
 end
 
 function NavigationStack:getActiveScene()
