@@ -1,6 +1,6 @@
-local tableUtils = require("table_util")
-local fileUtils = require("FileUtil")
-local logger = require("logger")
+local tableUtils = require("common.lib.tableUtils")
+local fileUtils = require("client.src.FileUtils")
+local logger = require("common.lib.logger")
 require("common.lib.timezones")
 
 local lfs = love.filesystem
