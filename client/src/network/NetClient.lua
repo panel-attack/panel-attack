@@ -478,8 +478,8 @@ function NetClient:update()
         GAME.theme:playCancelSfx()
         self.pendingResponses.leaderboardUpdate = nil
       elseif status == "received" then
-        self.leaderboard = value
-        self:emitSignal("leaderboardUpdate", value)
+        self.leaderboard = value.leaderboard_report
+        self:emitSignal("leaderboardUpdate", self.leaderboard)
         self.pendingResponses.leaderboardUpdate = nil
       end
     end

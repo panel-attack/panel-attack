@@ -4,6 +4,7 @@ local class = require("common.lib.class")
 local UIElement = require("client.src.ui.UIElement")
 local input = require("common.lib.inputManager")
 local Label = require("client.src.ui.Label")
+local directsFocus = require("client.src.ui.FocusDirector")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 
@@ -32,6 +33,7 @@ local Menu = class(
     self.firstActiveIndex = 1
     self.lastActiveIndex = 1
     self:setMenuItems(options.menuItems)
+    directsFocus(self)
   end,
   UIElement
 )
@@ -226,34 +228,42 @@ function Menu:scrollDown()
   end
 end
 
-function Menu:update(dt)
+function Menu:receiveInputs(inputs, dt)
   if not self.isEnabled then
     return
   end
 
-  if input:isPressedWithRepeat("MenuUp") then
-    self:scrollUp()
-  end
-
-  if input:isPressedWithRepeat("MenuDown") then
-    self:scrollDown()
+  if not inputs then
+    -- if we don't get inputs passed, use the global input table
+    inputs = input
   end
 
   local selectedElement = self.menuItems[self.selectedIndex]
 
-  if selectedElement then
-    -- Right now back on a button is only allowed on the last item. Later we should make it more explicit.
-    if not input.isDown["MenuEsc"] or self.selectedIndex == #self.menuItems then
-      selectedElement:receiveInputs(input, dt)
-    end
-  end
-
-  if input.isDown["MenuEsc"] then
+  if self.focused then
+    self.focused:receiveInputs(inputs, dt)
+  elseif inputs.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
       self:setSelectedIndex(#self.menuItems)
       GAME.theme:playCancelSfx()
+    else
+      selectedElement:receiveInputs(inputs, dt)
+    end
+  elseif inputs:isPressedWithRepeat("MenuUp") then
+    self:scrollUp()
+  elseif inputs:isPressedWithRepeat("MenuDown") then
+    self:scrollDown()
+  else
+    if inputs.isDown["MenuSelect"] and selectedElement.isFocusable then
+      self:setFocus(selectedElement)
+    else
+      selectedElement:receiveInputs(inputs, dt)
     end
   end
+end
+
+function Menu:update(dt)
+
 end
 
 function Menu:drawSelf()

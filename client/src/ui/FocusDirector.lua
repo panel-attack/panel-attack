@@ -2,7 +2,7 @@
 
 local function directsFocus(uiElement)
     uiElement.focused = nil
-    uiElement.setFocus = function(table, focusable)
+    uiElement.setFocus = function(table, focusable, callback)
       if table.focused then
         table.focused.hasFocus = false
       end
@@ -12,9 +12,12 @@ local function directsFocus(uiElement)
         focusable.yieldFocus = function()
           focusable.hasFocus = false
           table.focused = nil
+          if callback then
+            callback()
+          end
         end
       end
     end
   end
-  
+
   return directsFocus

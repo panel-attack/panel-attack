@@ -115,7 +115,7 @@ end
 
 function TrainingMenu:update(dt)
   self.backgroundImg:update(dt)
-  self.menu:update(dt)
+  self.menu:receiveInputs()
 end
 
 function TrainingMenu:draw()

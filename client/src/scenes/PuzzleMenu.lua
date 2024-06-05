@@ -126,7 +126,7 @@ function PuzzleMenu:load(sceneParams)
 end
 
 function PuzzleMenu:update(dt)
-  self.menu:update(dt)
+  self.menu:receiveInputs()
 end
 
 function PuzzleMenu:draw()

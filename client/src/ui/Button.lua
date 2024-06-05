@@ -34,6 +34,7 @@ end
 function Button:receiveInputs(input)
   if input.isDown["MenuSelect"] then
     self:onClick(input)
+    -- this is a really stupid way to make sure you can activate back buttons with escape
   elseif input.isDown["MenuEsc"] then
     self:onClick(input)
   end

@@ -7,6 +7,7 @@ local logger = require("common.lib.logger")
 local util = require("common.lib.util")
 local NetClient = require("client.src.network.NetClient")
 local MessageTransition = require("client.src.scenes.Transitions.MessageTransition")
+local Leaderboard = require("client.src.ui.Leaderboard")
 
 -- @module Lobby
 -- expects a serverIp and serverPort as a param (unless already set in GAME.connected_server_ip & GAME.connected_server_port respectively)
@@ -21,14 +22,9 @@ local Lobby = class(function(self, sceneParams)
   -- requests to play a match, not web requests
   self.sentRequests = {}
 
-  -- leaderboard data
-  self.myRank = nil
-  self.leaderboardString = ""
-  self.leaderboardResponse = nil
-
   -- ui
+  self.leaderboard = Leaderboard({isVisible = false, x = 200, hAlign = "center", vAlign = "center"})
   self.backgroundImg = themes[config.theme].images.bg_main
-  self.leaderboardLabel = nil
   self.lobbyMenu = nil
   self.lobbyMenuXoffsetMap = {
     [true] = -200,
@@ -64,14 +60,14 @@ function Lobby:load(sceneParams)
 
   GAME.netClient:connectSignal("lobbyStateUpdate", self, self.onLobbyStateUpdate)
   GAME.netClient:connectSignal("disconnect", self, self.onDisconnect)
-  GAME.netClient:connectSignal("leaderboardUpdate", self, self.updateLeaderboard)
+  GAME.netClient:connectSignal("leaderboardUpdate", self.leaderboard, self.leaderboard.updateData)
   GAME.netClient:connectSignal("loginFailed", self, self.onLoginFailure)
 
   self:initLobbyMenu()
+  self.uiRoot:addChild(self.leaderboard)
 end
 
 function Lobby:initLobbyMenu()
-  self.leaderboardLabel = Label({text = "", translate = false, hAlign = "center", vAlign = "center", x = 200, isVisible = false})
   local menuItems = {
     MenuItem.createButtonMenuItem("lb_show_board", nil, nil, function()
       self:toggleLeaderboard()
@@ -85,7 +81,6 @@ function Lobby:initLobbyMenu()
   self.lobbyMenu.x = self.lobbyMenuXoffsetMap[false]
 
   self.uiRoot:addChild(self.lobbyMenu)
-  self.uiRoot:addChild(self.leaderboardLabel)
 end
 
 -----------------
@@ -94,51 +89,15 @@ end
 
 function Lobby:toggleLeaderboard()
   GAME.theme:playMoveSfx()
-  if not self.leaderboardLabel.isVisible then
+  if not self.leaderboard.isVisible then
     self.leaderboardToggleLabel:setText("lb_hide_board")
     GAME.netClient:requestLeaderboard()
+    self.lobbyMenu:setFocus(self.leaderboard, function() self:toggleLeaderboard() end)
   else
     self.leaderboardToggleLabel:setText("lb_show_board")
   end
-  self.leaderboardLabel:setVisibility(not self.leaderboardLabel.isVisible)
-  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.leaderboardLabel.isVisible]
-end
-
-local function build_viewable_leaderboard_string(report, firstVisibleIndex, lastVisibleIndex)
-  str = loc("lb_header_board") .. "\n"
-  firstVisibleIndex = math.max(firstVisibleIndex, 1)
-  lastVisibleIndex = math.min(lastVisibleIndex, #report)
-
-  for i = firstVisibleIndex, lastVisibleIndex do
-    ratingSpacing = "     " .. string.rep("  ", (3 - string.len(i)))
-    nameSpacing = "     " .. string.rep("  ", (4 - string.len(report[i].rating)))
-    if report[i].is_you then
-      str = str .. loc("lb_you") .. "-> "
-    else
-      str = str .. "      "
-    end
-    str = str .. i .. ratingSpacing .. report[i].rating .. nameSpacing .. report[i].user_name
-    if i < #report then
-      str = str .. "\n"
-    end
-  end
-  return str
-end
-
-function Lobby:updateLeaderboard(leaderboardReportMessage)
-  if leaderboardReportMessage.leaderboard_report then
-    local leaderboardReport = leaderboardReportMessage.leaderboard_report
-    for rank = #leaderboardReport, 1, -1 do
-      local user = leaderboardReport[rank]
-      if user.user_name == config.name then
-        self.myRank = rank
-      end
-    end
-    local firstVisibleIndex = math.max((self.myRank or 1) - 8, 1)
-    local lastVisibleIndex = math.min(firstVisibleIndex + 20, #leaderboardReport)
-    self.leaderboardString = build_viewable_leaderboard_string(leaderboardReport, firstVisibleIndex, lastVisibleIndex)
-    self.leaderboardLabel:setText(self.leaderboardString)
-  end
+  self.leaderboard:setVisibility(not self.leaderboard.isVisible)
+  self.lobbyMenu.x = self.lobbyMenuXoffsetMap[self.leaderboard.isVisible]
 end
 
 --------------------------------
@@ -226,7 +185,7 @@ function Lobby:update(dt)
   if GAME.netClient.state == NetClient.STATES.LOGIN then
     loginStateLabel:setText(GAME.netClient.loginState or "")
   else
-    self.lobbyMenu:update(dt)
+    self.lobbyMenu:receiveInputs()
   end
 end
 

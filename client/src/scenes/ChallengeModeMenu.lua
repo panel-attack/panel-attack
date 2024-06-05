@@ -66,7 +66,7 @@ end
 
 function ChallengeModeMenu:update(dt)
   self.backgroundImg:update(dt)
-  self.menu:update(dt)
+  self.menu:receiveInputs()
 end
 
 function ChallengeModeMenu:draw()

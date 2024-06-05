@@ -219,7 +219,7 @@ function SoundTest:load()
 end
 
 function SoundTest:update(dt)
-  soundTestMenu:update(dt)
+  soundTestMenu:receiveInputs()
   self.backgroundImg:update(dt)
 end
 

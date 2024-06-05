@@ -130,7 +130,7 @@ function MainMenu:update(dt)
   end
 
   GAME.theme.images.bg_main:update(dt)
-  self.menu:update(dt)
+  self.menu:receiveInputs()
 end
 
 function MainMenu:draw()

@@ -144,9 +144,6 @@ function OptionsMenu:loadInfoScreen(text)
     self.backgroundImage = themes[config.theme].images.bg_main
     self:switchToScreen("aboutMenu")
   end
-  infoScreen.update = function(self)
-    self:receiveInputs(inputManager)
-  end
   infoScreen.yieldFocus = function() end
 
   return infoScreen
@@ -521,7 +518,7 @@ end
 
 function OptionsMenu:update(dt)
   self.backgroundImage:update(dt)
-  self.menus[self.activeMenuName]:update()
+  self.menus[self.activeMenuName]:receiveInputs()
 end
 
 function OptionsMenu:draw()

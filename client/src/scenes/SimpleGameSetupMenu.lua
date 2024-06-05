@@ -164,9 +164,9 @@ function SimpleGameSetupMenu:update(dt)
   self.backgroundImg:update(dt)
 
   if self.typeButtons.value == "Classic" then
-    self.classicMenu:update(dt)
+    self.classicMenu:receiveInputs()
   else
-    self.modernMenu:update(dt)
+    self.modernMenu:receiveInputs()
   end
 end
 
