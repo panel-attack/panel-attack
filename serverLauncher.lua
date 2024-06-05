@@ -1,5 +1,16 @@
 -- We must launch the server from the root directory so all the requires are the right path relatively.
-local server = require("server.server")
+require("client.src.developer") -- Require developer here so we can debug if the debug flag is set
+require("server.server_globals")
+local util = require("common.lib.util")
+util.addToCPath("./common/lib/??")
+util.addToCPath("./server/lib/??")
+require("server.tests.ConnectionTests")
+
+local database = require("server.PADatabase")
+local Server = require("server.server")
+
+
+local currentServer = Server(database)
 while true do
-  server:update()
+  currentServer:update()
 end

@@ -1,0 +1,83 @@
+{
+  "extraInfo": {
+    "playerName": "39",
+    "gpm": "20.4",
+    "matchLength": "0:46",
+    "dateGenerated": "2023-12-27-20-53-18"
+  }, 
+  "mergeComboMetalQueue": false,
+    "delayBeforeStart": 0,
+    "delayBeforeRepeat": 91,
+    "attackPatterns": [
+      {
+        "chainEndTime": 724,
+        "chain": [
+          529,
+          596,
+          665
+        ]
+      },
+      {
+        "chainEndTime": 943,
+        "chain": [
+          800,
+          876
+        ]
+      },
+      {
+        "width": 4,
+        "height": 1,
+        "chain": false,
+        "startTime": 1097,
+        "metal": false
+      },
+      {
+        "chainEndTime": 1647,
+        "chain": [
+          1475
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1475,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2088,
+        "chain": [
+          1932,
+          1999
+        ]
+      },
+      {
+        "width": 5,
+        "height": 1,
+        "chain": false,
+        "startTime": 1999,
+        "metal": false
+      },
+      {
+        "chainEndTime": 2523,
+        "chain": [
+          2357,
+          2464
+        ]
+      },
+      {
+        "chainEndTime": 2727,
+        "chain": [
+          2593,
+          2660
+        ]
+      },
+      {
+        "chainEndTime": 2946,
+        "chain": [
+          2812,
+          2879
+        ]
+      }
+    ]
+  }

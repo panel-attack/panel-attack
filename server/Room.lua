@@ -1,5 +1,6 @@
-require("class")
-local logger = require("logger")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local Replay = require("common.engine.Replay")
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
@@ -7,17 +8,18 @@ local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "
 -- Players alternate between the character select state and playing, and spectators can join and leave
 Room =
 class(
-function(self, a, b, roomNumber, leaderboard)
+function(self, a, b, roomNumber, leaderboard, server)
   --TODO: it would be nice to call players a and b something more like self.players[1] and self.players[2]
   self.a = a --player a as a connection object
   self.b = b --player b as a connection object
-  self.stage = nil
+  self.server = server
+  self.stage = nil -- stage for the game, randomly picked from both players
   self.name = a.name .. " vs " .. b.name
   self.roomNumber = roomNumber
   self.a.room = self
   self.b.room = self
-  self.spectators = {}
-  self.win_counts = {}
+  self.spectators = {} -- array of spectator connection objects
+  self.win_counts = {} -- win counts by player number
   self.win_counts[1] = 0
   self.win_counts[2] = 0
   local a_rating, b_rating
@@ -25,9 +27,9 @@ function(self, a, b, roomNumber, leaderboard)
 
   if a.user_id then
     if leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
-      a_rating = round(leaderboard.players[a.user_id].rating)
+      a_rating = math.round(leaderboard.players[a.user_id].rating)
     end
-    local a_qualifies, a_progress = qualifies_for_placement(a.user_id)
+    local a_qualifies, a_progress = self.server:qualifies_for_placement(a.user_id)
     if not (leaderboard.players[a.user_id] and leaderboard.players[a.user_id].placement_done) and not a_qualifies then
       a_placement_match_progress = a_progress
     end
@@ -35,29 +37,36 @@ function(self, a, b, roomNumber, leaderboard)
 
   if b.user_id then
     if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
-      b_rating = round(leaderboard.players[b.user_id].rating or 0)
+      b_rating = math.round(leaderboard.players[b.user_id].rating or 0)
     end
-    local b_qualifies, b_progress = qualifies_for_placement(b.user_id)
+    local b_qualifies, b_progress = self.server:qualifies_for_placement(b.user_id)
     if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
       b_placement_match_progress = b_progress
     end
   end
 
   self.ratings = {
-    {old = a_rating or 0, new = a_rating or 0, difference = 0, league = get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
-    {old = b_rating or 0, new = b_rating or 0, difference = 0, league = get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
+    {old = a_rating or 0, new = a_rating or 0, difference = 0, league = self.server:get_league(a_rating or 0), placement_match_progress = a_placement_match_progress},
+    {old = b_rating or 0, new = b_rating or 0, difference = 0, league = self.server:get_league(b_rating or 0), placement_match_progress = b_placement_match_progress}
   }
 
-  self.game_outcome_reports = {}
+  self.game_outcome_reports = {} -- mapping of what each player reports the outcome of the game
 end
 )
 
-function Room.character_select(self)
+function Room:character_select()
   self:prepare_character_select()
-  self:send({character_select = true, create_room = true, rating_updates = true, ratings = self.ratings, a_menu_state = self.a:menu_state(), b_menu_state = self.b:menu_state()})
+  self:send({
+    character_select = true,
+    create_room = true,
+    rating_updates = true,
+    ratings = self.ratings,
+    a_menu_state = self.a:menu_state(),
+    b_menu_state = self.b:menu_state()
+  })
 end
 
-function Room.prepare_character_select(self)
+function Room:prepare_character_select()
   logger.debug("Called Server.lua Room.character_select")
   self.a.state = "character select"
   self.b.state = "character select"
@@ -77,49 +86,50 @@ function Room.prepare_character_select(self)
   self.b.cursor = "__Ready"
   self.a.ready = false
   self.b.ready = false
-  -- local msg = {spectate_request_granted = true, spectate_request_rejected = false, rating_updates=true, ratings=self.ratings, a_menu_state=self.a:menu_state(), b_menu_state=self.b:menu_state()}
-  -- for k,v in ipairs(self.spectators) do
-  -- self.spectators[k]:send(msg)
-  -- end
 end
 
-function Room.state(self)
-if self.a.state == "character select" then
-  return "character select"
-elseif self.a.state == "playing" then
-  return "playing"
-else
-  return self.a.state
-end
-end
-
-function Room.is_spectatable(self)
-return self.a.state == "character select"
+function Room:state()
+  if self.a.state == "character select" then
+    return "character select"
+  elseif self.a.state == "playing" then
+    return "playing"
+  else
+    return self.a.state
+  end
 end
 
-function Room.add_spectator(self, new_spectator_connection)
+function Room:add_spectator(new_spectator_connection)
   new_spectator_connection.state = "spectating"
   new_spectator_connection.room = self
   self.spectators[#self.spectators + 1] = new_spectator_connection
   logger.debug(new_spectator_connection.name .. " joined " .. self.name .. " as a spectator")
+  local playerSettings = self.server:playerSettingFromTable(self.a)
+  local opponentSettings = self.server:playerSettingFromTable(self.b)
   local msg = {
     spectate_request_granted = true,
     spectate_request_rejected = false,
+    room_number = self.roomNumber,
     rating_updates = true,
     ratings = self.ratings,
     a_menu_state = self.a:menu_state(),
     b_menu_state = self.b:menu_state(),
+    a_name = self.a.name,
+    b_name = self.b.name,
     win_counts = self.win_counts,
     match_start = replay_of_match_so_far ~= nil,
     stage = self.stage,
     replay_of_match_so_far = self.replay,
     ranked = self:rating_adjustment_approved(),
-    player_settings = {character = self.a.character, character_display_name = self.a.character_display_name, level = self.a.level, player_number = self.a.player_number, inputMethod = self.a.inputMethod},
-    opponent_settings = {character = self.b.character, character_display_name = self.b.character_display_name, level = self.b.level, player_number = self.b.player_number, inputMethod = self.b.inputMethod}
+    player_settings = playerSettings,
+    opponent_settings = opponentSettings
   }
-  if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
-    msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
-    msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+  if msg.replay_of_match_so_far ~= nil then
+    msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[1])
+    msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[2])
+    if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
+      msg.replay_of_match_so_far.vs.in_buf = Replay.compressInputString(msg.replay_of_match_so_far.vs.in_buf)
+      msg.replay_of_match_so_far.vs.I = Replay.compressInputString(msg.replay_of_match_so_far.vs.I)
+    end
   end
   new_spectator_connection:send(msg)
   msg = {spectators = self:spectator_names()}
@@ -127,7 +137,7 @@ function Room.add_spectator(self, new_spectator_connection)
   self:send(msg)
 end
 
-function Room.spectator_names(self)
+function Room:spectator_names()
   local list = {}
   for k, v in pairs(self.spectators) do
     list[#list + 1] = v.name
@@ -135,7 +145,7 @@ function Room.spectator_names(self)
   return list
 end
 
-function Room.remove_spectator(self, connection)
+function Room:remove_spectator(connection)
   local lobbyChanged = false
   for k, v in pairs(self.spectators) do
     if v.name == connection.name then
@@ -152,7 +162,7 @@ function Room.remove_spectator(self, connection)
   return lobbyChanged
 end
 
-function Room.close(self)
+function Room:close()
   if self.a then
     self.a.player_number = 0
     self.a.state = "lobby"
@@ -172,8 +182,7 @@ function Room.close(self)
   self:send_to_spectators({leave_room = true})
 end
 
-function Room.send_to_spectators(self, message)
-  --TODO: maybe try to do this in a different thread?
+function Room:send_to_spectators(message)
   for k, v in pairs(self.spectators) do
     if v then
       v:send(message)
@@ -181,7 +190,7 @@ function Room.send_to_spectators(self, message)
   end
 end
 
-function Room.send(self, message)
+function Room:send(message)
   if self.a then
     self.a:send(message)
   end
@@ -191,7 +200,7 @@ function Room.send(self, message)
   self:send_to_spectators(message)
 end
 
-function Room.resolve_game_outcome(self, database)
+function Room:resolve_game_outcome()
   --Note: return value is whether the outcome could be resolved
   if not self.game_outcome_reports[1] or not self.game_outcome_reports[2] then
     return false
@@ -205,22 +214,24 @@ function Room.resolve_game_outcome(self, database)
     else
       outcome = self.game_outcome_reports[1]
     end
-    local gameID = database:insertGame(self.replay.vs.ranked)
+    local gameID = self.server.database:insertGame(self.replay.vs.ranked)
     self.replay.vs.gameID = gameID
     if outcome ~= 0 then
-      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
-      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
+      self.server.database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, (self.a.player_number == outcome) and 1 or 2)
+      self.server.database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, (self.b.player_number == outcome) and 1 or 2)
     else
-      database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, 0)
-      database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, 0)
+      self.server.database:insertPlayerGameResult(self.a.user_id, gameID, self.replay.vs.P1_level, 0)
+      self.server.database:insertPlayerGameResult(self.b.user_id, gameID, self.replay.vs.P2_level, 0)
     end
 
     logger.debug("resolve_game_outcome says: " .. outcome)
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --use UTC time for dates on replays
-      local now = os.date("*t", to_UTC(os.time()))
-      local path = "ftp" .. sep .. "replays" .. sep .. "v" .. VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
+      self.replay.timestamp = to_UTC(os.time())
+      self.replay.engineVersion = ENGINE_VERSION
+      local now = os.date("*t", self.replay.timestamp)
+      local path = "ftp" .. sep .. "replays" .. sep .. "v" .. ENGINE_VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
       local rep_a_name, rep_b_name = self.a.name, self.b.name
       if self.a.save_replays_publicly == "anonymously" then
         rep_a_name = "anonymous"
@@ -237,7 +248,7 @@ function Room.resolve_game_outcome(self, database)
       else
         path = path .. sep .. rep_a_name .. "-vs-" .. rep_b_name
       end
-      local filename = "v" .. VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. rep_a_name .. "-L" .. self.replay.vs.P1_level .. "-vs-" .. rep_b_name .. "-L" .. self.replay.vs.P2_level
+      local filename = "v" .. ENGINE_VERSION .. "-" .. string.format("%04d-%02d-%02d-%02d-%02d-%02d", now.year, now.month, now.day, now.hour, now.min, now.sec) .. "-" .. rep_a_name .. "-L" .. self.replay.vs.P1_level .. "-vs-" .. rep_b_name .. "-L" .. self.replay.vs.P2_level
       if self.replay.vs.ranked then
         filename = filename .. "-Ranked"
       else
@@ -248,14 +259,18 @@ function Room.resolve_game_outcome(self, database)
       elseif outcome == 0 then
         filename = filename .. "-draw"
       end
-      filename = filename .. ".txt"
-      if self.replay.vs and COMPRESS_REPLAYS_ENABLED then
-        self.replay.vs.I = compress_input_string(self.replay.vs.I)
-        self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
-        logger.debug("Compressed vs I/in_buf")
-        logger.debug("saving compressed replay as " .. path .. sep .. filename)
-      else
-        logger.debug("saving replay as " .. path .. sep .. filename)
+      filename = filename .. ".json"
+      if self.replay.vs then
+        self.replay.vs.in_buf = table.concat(self.inputs[1])
+        self.replay.vs.I = table.concat(self.inputs[2])
+        if COMPRESS_REPLAYS_ENABLED then
+          self.replay.vs.in_buf = Replay.compressInputString(self.replay.vs.in_buf)
+          self.replay.vs.I = Replay.compressInputString(self.replay.vs.I)
+          logger.debug("Compressed vs I/in_buf")
+          logger.debug("saving compressed replay as " .. path .. sep .. filename)
+        else
+          logger.debug("saving replay as " .. path .. sep .. filename)
+        end
       end
       write_replay_file(self.replay, path, filename)
     else
@@ -293,7 +308,7 @@ function Room.resolve_game_outcome(self, database)
           logger.trace("Player " .. i .. " scored")
           self.win_counts[i] = self.win_counts[i] + 1
           if shouldAdjustRatings then
-            adjust_ratings(self, i, gameID)
+            self.server:adjust_ratings(self, i, gameID)
           else
             logger.debug("Not adjusting ratings because: " .. reasons[1])
           end
@@ -312,12 +327,11 @@ function Room.resolve_game_outcome(self, database)
   end
 end
 
-function Room.rating_adjustment_approved(self)
+function Room:rating_adjustment_approved()
   --returns whether both players in the room have game states such that rating adjustment should be approved
   local players = {self.a, self.b}
   local reasons = {}
   local caveats = {}
-  local prev_player_level = players[1].level
   local both_players_are_placed = nil
 
   if PLACEMENT_MATCHES_ENABLED then
@@ -370,9 +384,6 @@ function Room.rating_adjustment_approved(self)
     reasons[#reasons + 1] = "Touch input is not currently allowed in ranked matches."
   end
   for player_number = 1, 2 do
-    if not playerbase.players[players[player_number].user_id] or not players[player_number].logged_in or playerbase.deleted_players[players[player_number].user_id] then
-      reasons[#reasons + 1] = players[player_number].name .. " didn't log in"
-    end
     if not players[player_number].wants_ranked_match then
       reasons[#reasons + 1] = players[player_number].name .. " doesn't want ranked"
     end

@@ -1,11 +1,12 @@
-require("class")
-local logger = require("logger")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
 
 -- Object that represents players rankings and placement matches, along with login times
 Leaderboard =
   class(
-  function(s, name)
+  function(s, name, server)
     s.name = name
+    s.server = server
     s.players = {} -- user_id -> user_id,user_name,rating,placement_done,placement_rating,ranked_games_played,ranked_games_won,last_login_time
   end
 )
@@ -44,17 +45,17 @@ function Leaderboard.get_report(self, user_id_of_requester)
   for k, v in pairs(self.players) do
     for insert_index = 1, leaderboard_player_count do
       local player_is_leaderboard_requester = nil
-      if playerbase.players[k] then --only include in the report players who are still listed in the playerbase
+      if self.server.playerbase.players[k] then --only include in the report players who are still listed in the playerbase
         if v.placement_done then --don't include players who haven't finished placement
           if v.rating then -- don't include entries who's rating is nil (which shouldn't happen anyway)
             if k == user_id_of_requester then
               player_is_leaderboard_requester = true
             end
             if report[insert_index] and report[insert_index].rating and v.rating >= report[insert_index].rating then
-              table.insert(report, insert_index, {user_name = playerbase.players[k], rating = v.rating, is_you = player_is_leaderboard_requester})
+              table.insert(report, insert_index, {user_name = self.server.playerbase.players[k], rating = v.rating, is_you = player_is_leaderboard_requester})
               break
             elseif insert_index == leaderboard_player_count or #report == 0 then
-              table.insert(report, {user_name = playerbase.players[k], rating = v.rating, is_you = player_is_leaderboard_requester}) -- at the end of the table.
+              table.insert(report, {user_name = self.server.playerbase.players[k], rating = v.rating, is_you = player_is_leaderboard_requester}) -- at the end of the table.
               break
             end
           end
@@ -63,7 +64,7 @@ function Leaderboard.get_report(self, user_id_of_requester)
     end
   end
   for k, v in pairs(report) do
-    v.rating = round(v.rating)
+    v.rating = math.round(v.rating)
   end
   return report
 end
