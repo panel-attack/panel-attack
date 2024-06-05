@@ -11,6 +11,12 @@ local RunTimeGraph = require("client.src.RunTimeGraph")
 local CustomRun = require("client.src.CustomRun")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local prof = require("common.lib.jprof.jprof")
+local fileUtils = require("client.src.FileUtils")
+local tableUtils = require("common.lib.tableUtils")
+local ModImport = require("client.src.mods.ModImport")
+local StageLoader = require("client.src.mods.StageLoader")
+local CharacterLoader = require("client.src.mods.CharacterLoader")
+require("client.src.mods.Panels")
 
 local Game = require("client.src.Game")
 -- move to load once global dependencies have been resolved
@@ -305,4 +311,84 @@ end
 
 function love.keyreleased(key, unicode)
   inputManager:keyReleased(key, unicode)
+end
+
+function love.filedropped(file)
+  if GAME.match == nil then
+    local mountPath = "dropped"
+    love.filesystem.mount(file:getFilename(), mountPath)
+    -- if a file is a directory, that means it's a zip archive
+    if love.filesystem.getInfo(mountPath, "directory") then
+      local path = mountPath
+      local subDirectories = fileUtils.getFilteredDirectoryItems(path, "directory")
+      -- the mod folders need to be either directly at the top level or one below
+      if #subDirectories == 1 then
+        -- verify it's not a single asset type drop
+        if subDirectories[1] ~= "characters" and subDirectories[1] ~= "panels" and subDirectories[1] ~= "stages"
+            and subDirectories[1] ~= "themes" then
+          path = "dropped/" .. subDirectories[1]
+          subDirectories = fileUtils.getFilteredDirectoryItems(path, "directory")
+        end
+      end
+      if tableUtils.contains(subDirectories, "characters") then
+        local characterDirs = fileUtils.getFilteredDirectoryItems(path .. "/characters", "directory")
+        for i = 1, #characterDirs do
+          if ModImport.importCharacter(path .. "/characters/" .. characterDirs[i]) then
+            logger.info("imported character " .. characterDirs[i])
+          else
+            logger.warn("failed to import character " .. characterDirs[i])
+          end
+        end
+
+        CharacterLoader.initCharacters()
+      end
+
+      if tableUtils.contains(subDirectories, "stages") then
+        local stageDirs = fileUtils.getFilteredDirectoryItems(path .."/stages", "directory")
+        for i = 1, #stageDirs do
+          if ModImport.importStage(path .. "/stages/" .. stageDirs[i]) then
+            logger.info("imported stage " .. stageDirs[i])
+          else
+            logger.warn("failed to import stage " .. stageDirs[i])
+          end
+        end
+
+        StageLoader.initStages()
+      end
+
+      if tableUtils.contains(subDirectories, "panels") then
+        local panelDirs = fileUtils.getFilteredDirectoryItems(path .. "/panels", "directory")
+        for i = 1, #panelDirs do
+          if ModImport.importPanelSet(path .. "/panels/" .. panelDirs[i]) then
+            logger.info("imported panels " .. panelDirs[i])
+          else
+            logger.warn("failed to import panels " .. panelDirs[i])
+          end
+        end
+
+        panels_init()
+      end
+
+      if tableUtils.contains(subDirectories, "themes") then
+        local themeDirs = fileUtils.getFilteredDirectoryItems(path .. "/themes", "directory")
+        for i = 1, #themeDirs do
+          if ModImport.importTheme(path .. "/themes/" .. themeDirs[i]) then
+            logger.info("imported themes " .. themeDirs[i])
+          else
+            logger.warn("failed to import themes " .. themeDirs[i])
+          end
+        end
+
+        -- themes never get initialized until selected
+      end
+
+      -- TODO
+      -- puzzles
+      -- training files
+      -- challengemode files
+      -- replays
+    end
+
+    love.filesystem.unmount(file:getFilename())
+  end
 end
