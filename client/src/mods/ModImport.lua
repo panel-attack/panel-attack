@@ -1,7 +1,7 @@
-require("class")
-require("table_util")
-require("FileUtil")
+local tableUtils = require("table_util")
+local fileUtils = require("FileUtil")
 local logger = require("logger")
+require("common.lib.timezones")
 
 local lfs = love.filesystem
 
@@ -17,7 +17,7 @@ function ModImport.importCharacter(path)
       error("Error trying to import character " .. path .. "\nCouldn't read config.json\n" .. err)
     else
       local modConfig = json.decode(configData)
-      if table.contains(characters_ids, modConfig["id"]) then
+      if tableUtils.contains(characters_ids, modConfig["id"]) then
         local existingPath = characters[modConfig["id"]].path
         local backUpPath = ModImport.createBackupDirectory(existingPath)
         -- next is just a slightly scuffed way to access the only top level element in the table
@@ -27,9 +27,9 @@ function ModImport.importCharacter(path)
         ModImport.recursiveCompareBackupAndCopy(importFiles.files, backUpPath, currentFiles.files)
       else
         if not lfs.getInfo("characters/" .. modConfig["name"]) then
-          recursive_copy(path, "characters/" .. modConfig["name"])
+          fileUtils.recursiveCopy(path, "characters/" .. modConfig["name"])
         else
-          recursive_copy(path, "characters/" .. modConfig["id"])
+          fileUtils.recursiveCopy(path, "characters/" .. modConfig["id"])
         end
       end
 
@@ -48,7 +48,7 @@ function ModImport.importStage(path)
       error("Error trying to import stage " .. path .. "\nCouldn't read config.json\n" .. err)
     else
       local modConfig = json.decode(configData)
-      if table.contains(stages_ids, modConfig["id"]) then
+      if tableUtils.contains(stages_ids, modConfig["id"]) then
         local existingPath = stages[modConfig["id"]].path
         local backUpPath = ModImport.createBackupDirectory(existingPath)
         -- next is just a slightly scuffed way to access the only top level element in the table
@@ -58,9 +58,9 @@ function ModImport.importStage(path)
         ModImport.recursiveCompareBackupAndCopy(importFiles.files, backUpPath, currentFiles.files)
       else
         if not lfs.getInfo("stages/" .. modConfig["name"]) then
-          recursive_copy(path, "stages/" .. modConfig["name"])
+          fileUtils.recursiveCopy(path, "stages/" .. modConfig["name"])
         else
-          recursive_copy(path, "stages/" .. modConfig["id"])
+          fileUtils.recursiveCopy(path, "stages/" .. modConfig["id"])
         end
       end
 
@@ -79,7 +79,7 @@ function ModImport.importPanelSet(path)
       error("Error trying to import panels " .. path .. "\nCouldn't read config.json\n" .. err)
     else
       local modConfig = json.decode(configData)
-      if table.contains(panels_ids, modConfig["id"]) then
+      if tableUtils.contains(panels_ids, modConfig["id"]) then
         local existingPath = panels[modConfig["id"]].path
         local backUpPath = ModImport.createBackupDirectory(existingPath)
         -- next is just a slightly scuffed way to access the only top level element in the table
@@ -88,10 +88,10 @@ function ModImport.importPanelSet(path)
         local _, currentFiles = next(ModImport.recursiveRead(existingPath))
         ModImport.recursiveCompareBackupAndCopy(importFiles.files, backUpPath, currentFiles.files)
       else
-        if not lfs.getInfo("panels/" .. FileUtil.getDirectoryName(path)) then
-          recursive_copy(path, "panels/" .. FileUtil.getDirectoryName(path))
+        if not lfs.getInfo("panels/" .. fileUtils.getDirectoryName(path)) then
+          fileUtils.recursiveCopy(path, "panels/" .. fileUtils.getDirectoryName(path))
         else
-          recursive_copy(path, "panels/" .. modConfig["id"])
+          fileUtils.recursiveCopy(path, "panels/" .. modConfig["id"])
         end
       end
 
@@ -109,7 +109,7 @@ function ModImport.importTheme(path)
     if not configData then
       error("Error trying to import theme " .. path .. "\nCouldn't read config.json\n" .. err)
     else
-      local themeName = FileUtil.getDirectoryName(path)
+      local themeName = fileUtils.getDirectoryName(path)
       if lfs.getInfo("themes/" .. themeName, "directory") then
         local existingPath = "themes/" .. themeName
         local backUpPath = ModImport.createBackupDirectory(existingPath)
@@ -119,7 +119,7 @@ function ModImport.importTheme(path)
         -- so we can keep the top level element in (if it wasn't the same, we'd have landed in the else branch)
         ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, currentFiles)
       else
-        recursive_copy(path, "themes/" .. themeName)
+        fileUtils.recursiveCopy(path, "themes/" .. themeName)
       end
 
       return true
@@ -146,8 +146,8 @@ function ModImport.recursiveRead(folder, fileTree)
     fileTree = {}
   end
 
-  local filesTable = FileUtil.getFilteredDirectoryItems(folder)
-  local folderName = FileUtil.getDirectoryName(folder)
+  local filesTable = fileUtils.getFilteredDirectoryItems(folder)
+  local folderName = fileUtils.getDirectoryName(folder)
   fileTree[folderName] = {type = "directory", files = {}, path = folder}
   logger.debug("Reading folder " .. folder .. " into memory")
   for _, v in ipairs(filesTable) do
@@ -174,13 +174,13 @@ function ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, curren
     if value.type == "file" then
       if not currentFiles[key] then
         -- the file doesn't exist, we can just copy over
-        copy_file(importFiles[key].path, currentFiles.path .. "/" .. key)
+        fileUtils.copyFile(importFiles[key].path, currentFiles.path .. "/" .. key)
       elseif value.content.size == currentFiles[key].content.size and value.content.content == currentFiles[key].content.content then
         -- files are identical, no need to do anything
       else
         -- files are not identical, copy the old one to backup before copying the new one over
-        copy_file(currentFiles[key].path, backUpPath .. "/" .. key)
-        copy_file(importFiles[key].path, currentFiles[key].path)
+        fileUtils.copyFile(currentFiles[key].path, backUpPath .. "/" .. key)
+        fileUtils.copyFile(importFiles[key].path, currentFiles[key].path)
       end
     else
       if currentFiles[key] then
@@ -190,7 +190,7 @@ function ModImport.recursiveCompareBackupAndCopy(importFiles, backUpPath, curren
         return ModImport.recursiveCompareBackupAndCopy(value.files, nextBackUpPath, currentFiles[key].files)
       else
         -- the subfolder doesn't exist, we can just copy over
-        recursive_copy(importFiles[key].path, currentFiles.path .. "/" .. key)
+        fileUtils.recursiveCopy(importFiles[key].path, currentFiles.path .. "/" .. key)
       end
     end
   end

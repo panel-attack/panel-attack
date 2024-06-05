@@ -1,4 +1,6 @@
 local logger = require("common.lib.logger")
+local lfs = love.filesystem
+local tableUtils = require("common.lib.tableUtils")
 
 local PREFIX_OF_IGNORED_DIRECTORIES = "__"
 
@@ -33,7 +35,7 @@ end
 
 -- copies a file from the given source to the given destination
 function fileUtils.copyFile(source, destination)
-  local sucess
+  local success
   local source_file, err = love.filesystem.read(source)
   success, err = love.filesystem.write(destination, source_file)
   return success, err
@@ -41,7 +43,6 @@ end
 
 -- copies a file from the given source to the given destination
 function fileUtils.recursiveCopy(source, destination)
-  local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
   local temp
   for i, name in ipairs(names) do
@@ -69,7 +70,6 @@ end
 
 -- Deletes any file matching the target name from the file tree recursively
 function fileUtils.recursiveRemoveFiles(folder, targetName)
-  local lfs = love.filesystem
   local filesTable = lfs.getDirectoryItems(folder)
   for _, fileName in ipairs(filesTable) do
     local file = folder .. "/" .. fileName
@@ -145,6 +145,25 @@ function fileUtils.saveTextureToFile(texture, filePath, format)
   local imageData = love.graphics.readbackTexture(texture)
   local data = imageData:encode(format)
   love.filesystem.write(filePath .. "." .. format, data)
+end
+
+function fileUtils.getSubDirectories(path)
+  local files = lfs.getDirectoryItems(path)
+  files = tableUtils.filter(files, function(file)
+    return lfs.getInfo(path .. "/" .. file, "directory")
+  end)
+  return files
+end
+
+function fileUtils.getDirectoryName(directoryPath)
+  local len = string.len(directoryPath)
+  local reversed = string.reverse(directoryPath)
+  local index, stop, _ = string.find(reversed, "/")
+  if index then
+    return string.sub(directoryPath, len - index + 1, len)
+  else
+    return directoryPath
+  end
 end
 
 return fileUtils
