@@ -113,7 +113,6 @@ local function createConfigSlider(configField, min, max, onValueChangeFn, precis
 end
 
 function OptionsMenu:getSystemInfo()
-  GAME.theme:playValidationSfx()
   self.backgroundImage = themes[config.theme].images.bg_readme
   local rendererName, rendererVersion, graphicsCardVendor, graphicsCardName = love.graphics.getRendererInfo()
   local sysInfo = {}
@@ -518,7 +517,7 @@ end
 
 function OptionsMenu:update(dt)
   self.backgroundImage:update(dt)
-  self.menus[self.activeMenuName]:receiveInputs()
+  self.menus[self.activeMenuName]:receiveInputs(inputManager)
 end
 
 function OptionsMenu:draw()
