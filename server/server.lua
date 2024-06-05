@@ -1,22 +1,19 @@
-SERVER_MODE = true -- global to know the server is running the process
-
-local socket = require("socket")
-local logger = require("logger")
-require("class")
-json = require("libraries.dkjson")
+local socket = require("common.lib.socket")
+local logger = require("common.lib.logger")
+local class = require("common.lib.class")
+local NetworkProtocol = require("common.network.NetworkProtocol")
+json = require("common.lib.dkjson")
+require("common.lib.mathExtensions")
+require("common.lib.util")
+require("common.lib.timezones")
+require("common.lib.csprng")
 require("server.stridx")
-require("gen_panels")
-require("csprng")
-local NetworkProtocol = require("NetworkProtocol")
 require("server.server_globals")
 require("server.server_file_io")
 require("server.Connection")
 require("server.Leaderboard")
 require("server.PlayerBase")
 require("server.Room")
-require("util")
-require("timezones")
-local database = require("server.PADatabase")
 
 local pairs = pairs
 local ipairs = ipairs
@@ -149,7 +146,7 @@ local function addPublicPlayerData(players, playerName, player)
   end
 
   if player.rating then
-    players[playerName].rating = round(player.rating)
+    players[playerName].rating = math.round(player.rating)
   end
 
   if player.ranked_games_played then
@@ -292,12 +289,12 @@ function Server:start_match(a, b)
     a.room.replay.vs.ranked = true
     msg.ranked = true
     if leaderboard.players[a.user_id] then
-      msg.player_settings.rating = round(leaderboard.players[a.user_id].rating)
+      msg.player_settings.rating = math.round(leaderboard.players[a.user_id].rating)
     else
       msg.player_settings.rating = DEFAULT_RATING
     end
     if leaderboard.players[b.user_id] then
-      msg.opponent_settings.rating = round(leaderboard.players[b.user_id].rating)
+      msg.opponent_settings.rating = math.round(leaderboard.players[b.user_id].rating)
     else
       msg.opponent_settings.rating = DEFAULT_RATING
     end
@@ -489,8 +486,8 @@ function Server:adjust_ratings(room, winning_player_number, gameID)
       else
         logger.debug("Player " .. player_number .. " played ranked against an unranked opponent.  We'll process this match when his opponent has finished placement")
         room.ratings[player_number].placement_matches_played = leaderboard.players[players[player_number].user_id].ranked_games_played
-        room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
-        room.ratings[player_number].old = round(leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].new = math.round(leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].old = math.round(leaderboard.players[players[player_number].user_id].rating)
         room.ratings[player_number].difference = 0
       end
     else -- this player has not finished placement
@@ -529,17 +526,17 @@ function Server:adjust_ratings(room, winning_player_number, gameID)
           if not room.ratings[op_player_number] then
             room.ratings[op_player_number] = {}
           end
-          room.ratings[op_player_number].old = round(leaderboard.players[players[op_player_number].user_id].rating)
+          room.ratings[op_player_number].old = math.round(leaderboard.players[players[op_player_number].user_id].rating)
           self:process_placement_matches(players[player_number].user_id)
 
-          room.ratings[player_number].new = round(leaderboard.players[players[player_number].user_id].rating)
+          room.ratings[player_number].new = math.round(leaderboard.players[players[player_number].user_id].rating)
 
-          room.ratings[player_number].difference = round(room.ratings[player_number].new - room.ratings[player_number].old)
+          room.ratings[player_number].difference = math.round(room.ratings[player_number].new - room.ratings[player_number].old)
           room.ratings[player_number].league = self:get_league(room.ratings[player_number].new)
 
-          room.ratings[op_player_number].new = round(leaderboard.players[players[op_player_number].user_id].rating)
+          room.ratings[op_player_number].new = math.round(leaderboard.players[players[op_player_number].user_id].rating)
 
-          room.ratings[op_player_number].difference = round(room.ratings[op_player_number].new - room.ratings[op_player_number].old)
+          room.ratings[op_player_number].difference = math.round(room.ratings[op_player_number].new - room.ratings[op_player_number].old)
           room.ratings[op_player_number].league = self:get_league(room.ratings[player_number].new)
           return
         else
@@ -576,8 +573,8 @@ function Server:adjust_ratings(room, winning_player_number, gameID)
     for player_number = 1, 2 do
       --round and calculate rating gain or loss (difference) to send to the clients
       if placement_done[players[player_number].user_id] then
-        room.ratings[player_number].old = round(room.ratings[player_number].old or leaderboard.players[players[player_number].user_id].rating)
-        room.ratings[player_number].new = round(room.ratings[player_number].new or leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].old = math.round(room.ratings[player_number].old or leaderboard.players[players[player_number].user_id].rating)
+        room.ratings[player_number].new = math.round(room.ratings[player_number].new or leaderboard.players[players[player_number].user_id].rating)
         room.ratings[player_number].difference = room.ratings[player_number].new - room.ratings[player_number].old
       else
         room.ratings[player_number].old = 0
@@ -628,7 +625,7 @@ function Server:qualifies_for_placement(user_id)
   -- end
   -- win_ratio = win_count / placement_matches_played
   -- if win_ratio < placement_match_win_ratio_requirement then
-  -- return false, "placement win ratio is currently "..round(win_ratio*100).."%.  "..round(placement_match_win_ratio_requirement*100).."% is required for placement."
+  -- return false, "placement win ratio is currently "..math.round(win_ratio*100).."%.  "..math.round(placement_match_win_ratio_requirement*100).."% is required for placement."
   -- end
   end
   return true

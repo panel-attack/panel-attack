@@ -1,0 +1,38 @@
+This file attempts to summarize design differences between this game and similar games like Tetris Attack.
+
+In Tetris Attack, it seems like a panel cannot match in the same frame
+that it does some other state transition.  This is implemented in Panel
+Attack by performing the matches check before the other state transitions.
+The result is very dirty...
+
+In Tetris Attack, the rising of the stack is not smooth around displacement=0.
+This part of the animation takes just as long regardless of speed.
+This is most noticeable if you use L or R, the stack will sort of jitter on its way up.
+There are no plans to implement this.
+
+In Tetris Attack, only one pair of panels can be swapping at any time, and
+the new swap can only be created in some frames of the old swap.  In
+Panel Attack, the timing is unrestricted.
+
+In Tetris Attack, chains past 13 do not generate bigger chain blocks.  
+Panel Attack's chain blocks are always (chain length - 1) high.
+
+The procedures for generating initial configurations of panels and clusters
+of [!] blocks bear only a superficial resemblance to the ones employed in
+Tetris Attack.
+Many more initial configurations are possible in Panel Attack.
+
+In Tetris Attack, a stack of garbage that should all begin falling at the same
+time will occasionally separate.
+Panel Attack will not implement this behaviour.
+
+In Panel de Pon (but not in Tetris Attack), a manual rise that is interrupted
+by a match will finish after the match and rise lock end.
+Panel Attack will not implement this behaviour.
+
+In Tetris Attack, when you are topped out and have run out of stop and shake time, you can be granted a "grace period".
+This grace period comes in the form of literal stop time, and it will not be granted again until you are no longer topped out.
+Panel Attack instead implements this in the form of health.
+Health only drains when the player is topped out and has run out of stop/shake time.
+Health is separate from stop/shake time.
+Health is restored when you are no longer topped out.

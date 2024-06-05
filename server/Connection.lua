@@ -1,10 +1,9 @@
-require("class")
-local logger = require("logger")
-local tableUtils = require("tableUtils")
-local NetworkProtocol = require("NetworkProtocol")
-
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local tableUtils = require("common.lib.tableUtils")
+local NetworkProtocol = require("common.network.NetworkProtocol")
 local time = os.time
-local utf8 = require("utf8Additions")
+local utf8 = require("common.lib.utf8Additions")
 local Player = require("server.Player")
 
 -- Represents a connection to a specific player. Responsible for sending and receiving messages

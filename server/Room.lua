@@ -1,5 +1,6 @@
-require("class")
-local logger = require("logger")
+local class = require("common.lib.class")
+local logger = require("common.lib.logger")
+local Replay = require("common.engine.Replay")
 
 local sep = package.config:sub(1, 1) --determines os directory separator (i.e. "/" or "\")
 
@@ -26,7 +27,7 @@ function(self, a, b, roomNumber, leaderboard, server)
 
   if a.user_id then
     if leaderboard.players[a.user_id] and leaderboard.players[a.user_id].rating then
-      a_rating = round(leaderboard.players[a.user_id].rating)
+      a_rating = math.round(leaderboard.players[a.user_id].rating)
     end
     local a_qualifies, a_progress = self.server:qualifies_for_placement(a.user_id)
     if not (leaderboard.players[a.user_id] and leaderboard.players[a.user_id].placement_done) and not a_qualifies then
@@ -36,7 +37,7 @@ function(self, a, b, roomNumber, leaderboard, server)
 
   if b.user_id then
     if leaderboard.players[b.user_id] and leaderboard.players[b.user_id].rating then
-      b_rating = round(leaderboard.players[b.user_id].rating or 0)
+      b_rating = math.round(leaderboard.players[b.user_id].rating or 0)
     end
     local b_qualifies, b_progress = self.server:qualifies_for_placement(b.user_id)
     if not (leaderboard.players[b.user_id] and leaderboard.players[b.user_id].placement_done) and not b_qualifies then
@@ -126,8 +127,8 @@ function Room:add_spectator(new_spectator_connection)
     msg.replay_of_match_so_far.vs.in_buf = table.concat(self.inputs[1])
     msg.replay_of_match_so_far.vs.I = table.concat(self.inputs[2])
     if COMPRESS_SPECTATOR_REPLAYS_ENABLED then
-      msg.replay_of_match_so_far.vs.in_buf = compress_input_string(msg.replay_of_match_so_far.vs.in_buf)
-      msg.replay_of_match_so_far.vs.I = compress_input_string(msg.replay_of_match_so_far.vs.I)
+      msg.replay_of_match_so_far.vs.in_buf = Replay.compressInputString(msg.replay_of_match_so_far.vs.in_buf)
+      msg.replay_of_match_so_far.vs.I = Replay.compressInputString(msg.replay_of_match_so_far.vs.I)
     end
   end
   new_spectator_connection:send(msg)
@@ -227,7 +228,9 @@ function Room:resolve_game_outcome()
     --outcome is the player number of the winner, or 0 for a tie
     if self.a.save_replays_publicly ~= "not at all" and self.b.save_replays_publicly ~= "not at all" then
       --use UTC time for dates on replays
-      local now = os.date("*t", to_UTC(os.time()))
+      self.replay.timestamp = to_UTC(os.time())
+      self.replay.engineVersion = ENGINE_VERSION
+      local now = os.date("*t", self.replay.timestamp)
       local path = "ftp" .. sep .. "replays" .. sep .. "v" .. ENGINE_VERSION .. sep .. string.format("%04d" .. sep .. "%02d" .. sep .. "%02d", now.year, now.month, now.day)
       local rep_a_name, rep_b_name = self.a.name, self.b.name
       if self.a.save_replays_publicly == "anonymously" then
@@ -261,8 +264,8 @@ function Room:resolve_game_outcome()
         self.replay.vs.in_buf = table.concat(self.inputs[1])
         self.replay.vs.I = table.concat(self.inputs[2])
         if COMPRESS_REPLAYS_ENABLED then
-          self.replay.vs.in_buf = compress_input_string(self.replay.vs.in_buf)
-          self.replay.vs.I = compress_input_string(self.replay.vs.I)
+          self.replay.vs.in_buf = Replay.compressInputString(self.replay.vs.in_buf)
+          self.replay.vs.I = Replay.compressInputString(self.replay.vs.I)
           logger.debug("Compressed vs I/in_buf")
           logger.debug("saving compressed replay as " .. path .. sep .. filename)
         else
