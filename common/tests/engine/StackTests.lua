@@ -56,7 +56,9 @@ local function basicSwapTest()
   stack:receiveConfirmedInput("AA") -- can't swap on first two frames
   StackReplayTestingUtils:simulateMatchUntil(match, 2)
 
-  assert(stack:canSwap(1, 1), "should be able to swap")
+  local leftPanel = stack.panels[1][1]
+  local rightPanel = stack.panels[1][2]
+  assert(stack:canSwap(leftPanel, rightPanel), "should be able to swap")
   stack:setQueuedSwapPosition(1, 1)
   assert(stack.queuedSwapRow == 1)
   stack:new_row()
