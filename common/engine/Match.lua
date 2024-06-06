@@ -259,7 +259,6 @@ function Match:run()
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
         stack:run()
-        stack.outgoingGarbage:processStagedGarbageForClock(stack.clock)
         if self.attackEngines[stack] then
           self.attackEngines[stack]:run()
         end
