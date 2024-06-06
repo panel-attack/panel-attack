@@ -21,15 +21,10 @@ local function stackRunOverride(self)
     end
   end
 
-  if self.inTransitGarbage[self.clock] then
-    self.garbage_q:push(self.inTransitGarbage[self.clock])
-    self.inTransitGarbage[self.clock] = nil
-  end
-
-  if self.garbage_q:len() > 0 then
+  if self.incomingGarbage:len() > 0 then
     if self:shouldDropGarbage() then
-      if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
-        self.garbage_q:pop()
+      if self:tryDropGarbage(self.incomingGarbage:peek()) then
+        self.incomingGarbage:pop()
       end
     end
   end

@@ -28,7 +28,10 @@ local AttackEngine =
     self.disableQueueLimit = attackSettings.disableQueueLimit or false
 
     -- whether the metal garbage is treated the same as combo garbage (aka they can mix)
-    self.mergeComboMetalQueue = attackSettings.mergeComboMetalQueue or false
+    -- mergeComboMetalQueue is a reference to an old implementation in which different garbage types
+    --  were organised in different queues
+    --  we're stuck with the name because it is found in config data
+    self.treatMetalAsCombo = attackSettings.mergeComboMetalQueue or false
 
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
@@ -40,7 +43,7 @@ local AttackEngine =
 
     -- the telegraph the attack engine sends its garbage to
     self.telegraph = telegraph
-    self.outgoingGarbage = GarbageQueue(true, self.mergeComboMetalQueue)
+    self.outgoingGarbage = GarbageQueue(true, self.treatMetalAsCombo)
 
     -- a character table (not id) to send sfx, should be nil if no sfx should play
     self.character = character
@@ -74,12 +77,11 @@ function AttackEngine:setGarbageTarget(garbageTarget)
   assert(garbageTarget.mirror_x ~= nil)
   assert(garbageTarget.panelOriginX ~= nil)
   assert(garbageTarget.panelOriginY ~= nil)
-  assert(garbageTarget.garbage_q ~= nil)
-  assert(garbageTarget.receiveGarbage ~= nil)
+  assert(garbageTarget.incomingGarbage ~= nil)
 
   self.garbageTarget = garbageTarget
-  self.garbageTarget.garbage_q.illegalStuffIsAllowed = true
-  self.garbageTarget.garbage_q.mergeComboMetalQueue = self.mergeComboMetalQueue
+  self.garbageTarget.incomingGarbage.illegalStuffIsAllowed = true
+  self.garbageTarget.incomingGarbage.treatMetalAsCombo = self.treatMetalAsCombo
   self.telegraph:updatePositionForGarbageTarget(garbageTarget)
 end
 
@@ -115,7 +117,7 @@ function AttackEngine.run(self)
   local maxCombo = 0
   local hasMetal = false
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  if self.disableQueueLimit or self.garbageTarget.garbage_q:len() <= 72 then
+  if self.disableQueueLimit or self.garbageTarget.incomingGarbage:len() <= 72 then
     for i = 1, #self.attackPatterns do
       if self.clock >= self.attackPatterns[i].startTime then
         local difference = self.clock - self.attackPatterns[i].startTime
