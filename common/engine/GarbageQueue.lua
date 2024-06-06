@@ -3,7 +3,11 @@ local class = require("common.lib.class")
 local tableUtils = require("common.lib.tableUtils")
 local Queue = require("common.lib.Queue")
 
-local STAGING_DURATION = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME
+-- +1 to compensate for a compensation someone made
+-- the original thought was probably that the attack animation should only start on the frame AFTER the garbage gets queued
+-- so all garbage got queued for a clock time 1 frame later than  the actual frame it was earned
+-- now we don't do this anymore and the draw code has to be wary of that on his own so that the engine numbers are consistent at least
+local STAGING_DURATION = GARBAGE_TRANSIT_TIME + GARBAGE_TELEGRAPH_TIME + 1
 
 local function orderChainGarbage(a, b)
   if a.finalized == b.finalized then
