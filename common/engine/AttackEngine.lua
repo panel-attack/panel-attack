@@ -40,12 +40,7 @@ local AttackEngine =
 
     -- the telegraph the attack engine sends its garbage to
     self.telegraph = telegraph
-
-    -- using an attackengine means we're cheating and breaking some rules that regular stacks have to adhere to
-    -- modify the telegraph and the attached garbage queue accordingly so it knows
-    self.telegraph.mergeComboMetalQueue = self.mergeComboMetalQueue
-    self.telegraph.garbage_queue.mergeComboMetalQueue = self.mergeComboMetalQueue
-    self.telegraph.garbage_queue.illegalStuffIsAllowed = true
+    self.outgoingGarbage = GarbageQueue(true, self.mergeComboMetalQueue)
 
     -- a character table (not id) to send sfx, should be nil if no sfx should play
     self.character = character
@@ -127,7 +122,7 @@ function AttackEngine.run(self)
         local remainder = difference % totalAttackTimeBeforeRepeat
         if remainder == 0 then
           if self.attackPatterns[i].endsChain then
-            self.telegraph:chainingEnded(self.clock)
+            self.outgoingGarbage:finalizeCurrentChain(self.clock)
           else
             local garbage = self.attackPatterns[i].garbage
             if garbage.isChain then
@@ -137,6 +132,7 @@ function AttackEngine.run(self)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
             end
             hasMetal = garbage.isMetal or hasMetal
+            self.outgoingGarbage:push(garbage)
             self.telegraph:push(garbage, math.random(1, 6), math.random(1, 11), self.clock)
           end
         end
@@ -144,13 +140,11 @@ function AttackEngine.run(self)
     end
   end
 
-  self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
-
   local metalCount = 0
   if hasMetal then
     metalCount = 3
   end
-  local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)    
+  local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)
   if newComboChainInfo and self.character then
     self.character:playAttackSfx(newComboChainInfo)
   end

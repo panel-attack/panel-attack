@@ -131,7 +131,10 @@ Stack =
     -- This increases by 1 wrapping every time garbage drops.
     s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
-    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
+    -- the stack pushes the garbage it produces into this queue
+    s.outgoingGarbage = GarbageQueue()
+    -- after completing the inTransit delay garbage sits in this queue ready to be popped as soon as the stack allows it
+    s.incomingGarbage = GarbageQueue()
     s.garbage_q = GarbageQueue() -- Queue of garbage that is about to be dropped
     
     s.inputMethod = inputMethod
@@ -345,8 +348,7 @@ function Stack.divergenceString(stackToTest)
     result = result .. "telegraph.attacks " .. tableUtils.length(stackToTest.telegraph.attacks) .. "\n"
   end
   
-  result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
-  result = result .. "later_garbage " .. tableUtils.length(stackToTest.later_garbage) .. "\n"
+  result = result .. "garbage_q " .. stackToTest.garbage_q:toString().. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
@@ -382,8 +384,7 @@ function Stack.rollbackCopy(source, other)
   for garbageWidth = 1, #source.currentGarbageDropColumnIndexes do
     other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
   end
-  
-  other.later_garbage = deepcpy(source.later_garbage)
+
   other.garbage_q = source.garbage_q:makeCopy()
   if source.telegraph then
     other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
@@ -514,18 +515,23 @@ function Stack.rollbackToFrame(self, frame)
       self:deleteRollbackCopy(f)
     end
 
-    if self.opponentStack and self.opponentStack.later_garbage then
-      -- The garbage that we send this time might (rarely) not be the same
-      -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
-      for k, _ in pairs(self.opponentStack.later_garbage) do
-        -- The time we actually affected the target was garbage delay away,
-        -- so we only need to remove it if its at least that far away
-        if k >= targetFrame then
-          self.opponentStack.later_garbage[k] = nil
-        end
-      end
-    end
+    -- leaving this in commented out as it would spark worry:
+    -- we don't need this anymore because the inTransitGarbage now lives on the sender's garbage queue
+    -- no longer on the receivers
+    -- that means just by fetching the copy of the garbage queue, we should have a perfectly functional copy
+
+    -- if self.opponentStack and self.opponentStack.inTransitGarbage then
+    --   -- The garbage that we send this time might (rarely) not be the same
+    --   -- as the garbage we sent before.  Wipe out the garbage we sent before...
+    --   local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
+    --   for k, _ in pairs(self.opponentStack.inTransitGarbage) do
+    --     -- The time we actually affected the target was garbage delay away,
+    --     -- so we only need to remove it if its at least that far away
+    --     if k >= targetFrame then
+    --       self.opponentStack.inTransitGarbage[k] = nil
+    --     end
+    --   end
+    -- end
 
     for chainFrame, _ in pairs(self.chains) do
       if chainFrame >= frame then
@@ -607,7 +613,7 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
     assert(newGarbageTarget.frameOriginY ~= nil)
     assert(newGarbageTarget.mirror_x ~= nil)
     assert(newGarbageTarget.stackCanvasWidth ~= nil)
-    assert(newGarbageTarget.receiveGarbage ~= nil)
+    assert(newGarbageTarget.incomingGarbage ~= nil)
   end
   self.garbageTarget = newGarbageTarget
   if self.telegraph then
@@ -1386,9 +1392,9 @@ function Stack.simulate(self)
     self.analytic:register_chain(self.chain_counter)
     self.chain_counter = 0
 
-    if self.telegraph then
+    if self.outgoingGarbage then
       logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
-      self.telegraph:chainingEnded(self.clock)
+      self.outgoingGarbage:finalizeCurrentChain(self.clock)
     end
   end
   prof.pop("chain update")
@@ -1408,16 +1414,9 @@ function Stack.simulate(self)
     end
   end
 
-  prof.push("telegraph:popAllAndSendToTarget")
-  if self.telegraph then
-    self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
-  end
-  prof.pop("telegraph:popAllAndSendToTarget")
-
   prof.push("push into own garbage q")
-  if self.later_garbage[self.clock] then
-    self.garbage_q:push(self.later_garbage[self.clock])
-    self.later_garbage[self.clock] = nil
+  if self.opponentStack and self.opponentStack.outgoingGarbage and self.opponentStack.outgoingGarbage.garbageInTransit[self.clock] then
+    self.incomingGarbage:push(self.opponentStack.outgoingGarbage.garbageInTransit[self.clock])
   end
   prof.pop("push into own garbage q")
 
@@ -1637,21 +1636,6 @@ function Stack:moveCursorInDirection(directionString)
   assert(directionString ~= nil and type(directionString) == "string")
   self.cur_row = util.bound(1, self.cur_row + d_row[directionString], self.top_cur_row)
   self.cur_col = util.bound(1, self.cur_col + d_col[directionString], self.width - 1)
-end
-
--- Called on a stack by the attacker with the time to start processing the garbage drop
-function Stack:receiveGarbage(frameToReceive, garbageList)
-
-  -- If we are past the frame the attack would be processed we need to rollback
-  if self.clock > frameToReceive then
-    self:rollbackToFrame(frameToReceive)
-  end
-
-  local garbage = self.later_garbage[frameToReceive] or {}
-  for i = 1, #garbageList do
-    garbage[#garbage + 1] = garbageList[i]
-  end
-  self.later_garbage[frameToReceive] = garbage
 end
 
 function Stack.behindRollback(self)

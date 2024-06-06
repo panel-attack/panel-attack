@@ -14,6 +14,8 @@ SimulatedStack = class(function(self, arguments)
   self.max_runs_per_frame = 1
   self.multiBarFrameCount = 240
 
+  self.incomingGarbage = GarbageQueue()
+
   self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getHeight(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),

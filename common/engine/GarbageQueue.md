@@ -6,7 +6,7 @@ The way garbage is delivered in this game is quite non-intuitive so this documen
 
 Generally garbage delivery is divided into 3 phase:  
 1. Staging (the confusing part)
-2. Delivery
+2. Transit
 3. Delay
 
 ### Staging
@@ -20,24 +20,24 @@ The staging area is the area in which garbage, specifically chain garbage, may s
 The cardinal rules are the following:  
 1. When a piece of garbage enters staging, it is scheduled to stay inside of staging for a minimum of 90 frames.
 2. Combo garbage cannot leave the staging phase while chain garbage remains in it.
-3. Metal garbage cannot leave the staging phase while combo garbage remains in it.
+3. Metal garbage cannot leave the staging phase while chain or combo garbage remains in it.
 
 The other rules differ depending on chain or combo garbage.  
 
 ##### Chain garbage
 
 1. Chain garbage will stay in staging while the corresponding chain is still on-going.  
-2. The scheduled stay for a chain starts with the time of its last chain link.
+2. The scheduled stay for a chain starts with the time of its final chain link.
 
 ##### Combo garbage 
 
 1. Combo garbage cannot leave the staging phase while smaller combo garbage remains in it.  
 2. Combo garbage entering the staging phase extends the stay of all combo garbage of the same size to the new garbage's scheduled stay.
 
-### Delivery
+### Transit
 
 On every frame, the sending stack checks whether there is any garbage ready for delivery in the staging area.  
-If so, the garbage is released from the staging phase and enters delivery which is a static 60 frame delay before the garbage can be dropped on its target.  
+If so, the garbage is released from the staging phase and enters transit which is a static 60 frame delay before the garbage becomes eligible for being dropped on its target.  
 After the delay has passed, the garbage is added to the receiver's own garbage queue which is equivalent to entering the final Delay phase.
 
 ### Delay
