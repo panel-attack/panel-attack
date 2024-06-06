@@ -1407,6 +1407,10 @@ function Stack.simulate(self)
     end
   end
 
+  prof.push("process staged garbage")
+  self.outgoingGarbage:processStagedGarbageForClock(self.clock)
+  prof.pop("process staged garbage")
+
   prof.push("remove_extra_rows")
   self:remove_extra_rows()
   prof.pop("remove_extra_rows")
@@ -1807,7 +1811,7 @@ function Stack:tryDropGarbage()
   end
 
   local garbage = self.incomingGarbage:pop()
-  logger.debug(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
+  logger.debug(string.format("%d Dropping garbage on player %d - height %d  width %d  %s", self.clock, self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
 
   self:dropGarbage(garbage.width, garbage.height, garbage.isMetal)
 

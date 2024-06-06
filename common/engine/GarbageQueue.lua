@@ -160,6 +160,7 @@ function GarbageQueue:push(garbage)
   self.stagedGarbage[#self.stagedGarbage+1] = garbage
 
   orderGarbage(self.stagedGarbage, self.treatMetalAsCombo)
+  logger.debug(self:toString())
   --updateReleaseTimes(self.stagedGarbage)
 end
 
@@ -172,26 +173,26 @@ end
 --  frameEarned
 --  finalized (optional)
 function GarbageQueue:pushTable(garbageArray)
+  logger.debug("pushing garbage table with " .. #garbageArray .. " entries")
   if garbageArray then
-    for _, garbage in pairs(garbageArray) do
-      if garbage.width and garbage.height then
-        correctChainingFlag(self, garbage)
-        self.stagedGarbage[#self.stagedGarbage+1] = garbage
-      end
+    for _, garbage in ipairs(garbageArray) do
+      self:push(garbage)
     end
-    orderGarbage(self.stagedGarbage, self.treatMetalAsCombo)
+    --orderGarbage(self.stagedGarbage, self.treatMetalAsCombo)
     --updateReleaseTimes(self.stagedGarbage)
   end
 end
 
 function GarbageQueue:peek()
-  logger.debug("garbage queue has " .. #self.stagedGarbage .. " pieces of garbage in staging")
   return self.stagedGarbage[#self.stagedGarbage]
 end
 
 function GarbageQueue:pop()
   -- default value for table.remove is the length, so the last index
-  return table.remove(self.stagedGarbage)
+  local garbage = table.remove(self.stagedGarbage)
+  logger.debug("popping garbage piece " .. table_to_string(garbage))
+  logger.debug("remaining staged garbage " .. self:toString())
+  return garbage
 end
 
 function GarbageQueue:getOldestFinishedTransitTime()
