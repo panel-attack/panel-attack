@@ -135,7 +135,6 @@ Stack =
     s.outgoingGarbage = GarbageQueue()
     -- after completing the inTransit delay garbage sits in this queue ready to be popped as soon as the stack allows it
     s.incomingGarbage = GarbageQueue()
-    s.garbage_q = GarbageQueue() -- Queue of garbage that is about to be dropped
     
     s.inputMethod = inputMethod
     if s.inputMethod == "touch" then
@@ -342,13 +341,7 @@ function Stack.divergenceString(stackToTest)
       end
   end
 
-  if stackToTest.telegraph then
-    result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
-    result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
-    result = result .. "telegraph.attacks " .. tableUtils.length(stackToTest.telegraph.attacks) .. "\n"
-  end
-  
-  result = result .. "garbage_q " .. stackToTest.garbage_q:toString().. "\n"
+  result = result ..  stackToTest.incomingGarbage:toString().. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
@@ -385,7 +378,7 @@ function Stack.rollbackCopy(source, other)
     other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
   end
 
-  other.garbage_q = source.garbage_q:makeCopy()
+  other.incomingGarbage = source.incomingGarbage:makeCopy()
   if source.telegraph then
     other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
   end
@@ -660,7 +653,7 @@ function Stack.set_puzzle_state(self, puzzle)
                             --  width        height, metal, from chain
       table.insert(comboStorm, {self.width - 1,   1, false, false})
     end
-    self.garbage_q:push(comboStorm)
+    self.incomingGarbage:pushTable(comboStorm)
   elseif puzzle.puzzleType == "chain" then
     tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.CHAIN_DROPPED)
     tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_PANELS)
@@ -1156,22 +1149,22 @@ end
 function Stack.shouldDropGarbage(self)
   -- this is legit ugly, these should rather be returned in a parameter table
   -- or even better in a dedicated garbage class table
-  local _, next_garbage_block_height, _, from_chain = unpack(self.garbage_q:peek())
+  local garbage = self.incomingGarbage:peek()
 
   -- new garbage can't drop if the stack is full
   -- new garbage always drops one by one
   if not self.panels_in_top_row and not self:has_falling_garbage() then
     if not self:hasActivePanels() then
       return true
-    elseif from_chain then
+    elseif garbage.isChain then
       -- drop chain garbage higher than 1 row immediately
-      return next_garbage_block_height > 1
+      return garbage.height > 1
     else
       -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
       -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
       -- and because of that hack, we need to do another hack here and allow n-height combo garbage
       -- but only if the player is targetted by a detached attackengine
-      return next_garbage_block_height > 1 and self.match.attackEngines[self.player] ~= nil
+      return garbage.height > 1 and self.match.attackEngines[self.player] ~= nil
     end
   end
 end
@@ -1414,12 +1407,6 @@ function Stack.simulate(self)
     end
   end
 
-  prof.push("push into own garbage q")
-  if self.opponentStack and self.opponentStack.outgoingGarbage and self.opponentStack.outgoingGarbage.garbageInTransit[self.clock] then
-    self.incomingGarbage:push(self.opponentStack.outgoingGarbage.garbageInTransit[self.clock])
-  end
-  prof.pop("push into own garbage q")
-
   prof.push("remove_extra_rows")
   self:remove_extra_rows()
   prof.pop("remove_extra_rows")
@@ -1436,23 +1423,6 @@ function Stack.simulate(self)
   end
   prof.pop("double-check panels_in_top_row")
 
-
-  -- local garbage_fits_in_populated_top_row 
-  -- if self.garbage_q:len() > 0 then
-  --   --even if there are some panels in the top row,
-  --   --check if the next block in the garbage_q would fit anyway
-  --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-  --   garbage_fits_in_populated_top_row = true
-  --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-  --   local cols = self.garbage_cols[next_garbage_block_width]
-  --   local spawn_col = cols[cols.idx]
-  --   local spawn_row = #self.panels
-  --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-  --     if panelRow[idx]:dangerous() then 
-  --       garbage_fits_in_populated_top_row = nil
-  --     end
-  --   end
-  -- end
   prof.push("doublecheck panels above top row")
   -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
   for row_idx = self.height + 1, #self.panels do
@@ -1466,11 +1436,9 @@ function Stack.simulate(self)
 
 
   prof.push("pop from own garbage q")
-  if self.garbage_q:len() > 0 then
+  if self.incomingGarbage:len() > 0 then
     if self:shouldDropGarbage() then
-      if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
-        self.garbage_q:pop()
-      end
+      self:tryDropGarbage()
     end
   end
   prof.pop("pop from own garbage q")
@@ -1821,8 +1789,7 @@ end
 
 -- tries to drop a width x height garbage.
 -- returns true if garbage was dropped, false otherwise
-function Stack.tryDropGarbage(self, width, height, metal)
-
+function Stack:tryDropGarbage()
   logger.debug("trying to drop garbage at frame "..self.clock)
 
   -- Do one last check for panels in the way.
@@ -1832,18 +1799,17 @@ function Stack.tryDropGarbage(self, width, height, metal)
         if self.panels[i][j] then
           if self.panels[i][j].color ~= 0 then
             logger.trace("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
-            return false
+            return
           end
         end
       end
     end
   end
 
-  if self.canvas ~= nil then
-    logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
-  end
+  local garbage = self.incomingGarbage:pop()
+  logger.debug(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
 
-  self:dropGarbage(width, height, metal)
+  self:dropGarbage(garbage.width, garbage.height, garbage.isMetal)
 
   return true
 end

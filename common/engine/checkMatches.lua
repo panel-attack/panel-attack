@@ -433,6 +433,7 @@ function Stack:getGarbagePanelRow()
 end
 
 function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
+  logger.debug("pushing garbage for " .. (isChain and "chain" or "combo") .. " with " .. comboSize .. " panels")
   for i = 3, metalCount do
     if self.garbageTarget and self.telegraph then
       self.outgoingGarbage:push({width = 6, height = 1, isMetal = true, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)

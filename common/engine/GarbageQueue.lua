@@ -116,7 +116,7 @@ function GarbageQueue:makeCopy()
       other.garbage[i] = other.currentChain
     else
       -- all other garbage is already immutable and can be copied by reference
-      other.garbage[i] = self.stagedGarbage[i]
+      other.stagedGarbage[i] = self.stagedGarbage[i]
     end
   end
 
@@ -155,6 +155,7 @@ end
 -- for regular chaining you're NOT supposed to use this
 -- use GarbageQueue:addChainLink and GarbageQueue:finalizeCurrentChain instead
 function GarbageQueue:push(garbage)
+  logger.debug("pushing garbage " .. table_to_string(garbage))
   correctChainingFlag(self, garbage)
   self.stagedGarbage[#self.stagedGarbage+1] = garbage
 
@@ -184,6 +185,7 @@ function GarbageQueue:pushTable(garbageArray)
 end
 
 function GarbageQueue:peek()
+  logger.debug("garbage queue has " .. #self.stagedGarbage .. " pieces of garbage in staging")
   return self.stagedGarbage[#self.stagedGarbage]
 end
 
@@ -288,6 +290,7 @@ function GarbageQueue:getGarbageIndex(garbage)
 end
 
 function GarbageQueue:finalizeCurrentChain(clock)
+  logger.debug("Finalizing chain at " .. clock)
   self.currentChain.finalized = true
   self.currentChain = nil
 end

@@ -438,7 +438,7 @@ function Stack:drawDebug()
     -- GraphicsUtil.printf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.incomingGarbage:len(), drawX, drawY)
 
     -- if stack.telegraph then
     --   drawY = drawY + padding

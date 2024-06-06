@@ -259,6 +259,7 @@ function Match:run()
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
         stack:run()
+        stack.outgoingGarbage:processStagedGarbageForClock(stack.clock)
         if self.attackEngines[stack] then
           self.attackEngines[stack]:run()
         end
@@ -266,11 +267,16 @@ function Match:run()
         for _, st in ipairs(self.stacks) do
           if st.garbageTarget == stack then
             local oldestTransitTime = st.outgoingGarbage:getOldestFinishedTransitTime()
-            if stack.clock > oldestTransitTime then
-              stack:rollbackToFrame(oldestTransitTime)
+            if oldestTransitTime then
+              if stack.clock > oldestTransitTime then
+                stack:rollbackToFrame(oldestTransitTime)
+              end
+              local garbageDelivery = st.outgoingGarbage:popFinishedTransitsAt(stack.clock)
+              if garbageDelivery then
+                logger.debug("Pushing garbage delivery to incoming garbage queue: " .. table_to_string(garbageDelivery))
+                stack.incomingGarbage:pushTable(garbageDelivery)
+              end
             end
-            local garbageDelivery = st.outgoingGarbage:popFinishedTransitsAt(stack.clock)
-            stack.incomingGarbage:pushTable(garbageDelivery)
           end
         end
         -- TODO: attackengines have to push as well
