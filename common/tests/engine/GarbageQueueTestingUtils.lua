@@ -21,9 +21,9 @@ local function stackRunOverride(self)
     end
   end
 
-  if self.later_garbage[self.clock] then
-    self.garbage_q:push(self.later_garbage[self.clock])
-    self.later_garbage[self.clock] = nil
+  if self.inTransitGarbage[self.clock] then
+    self.garbage_q:push(self.inTransitGarbage[self.clock])
+    self.inTransitGarbage[self.clock] = nil
   end
 
   if self.garbage_q:len() > 0 then

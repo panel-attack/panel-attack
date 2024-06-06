@@ -435,7 +435,7 @@ end
 function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   for i = 3, metalCount do
     if self.garbageTarget and self.telegraph then
-      self.telegraph:push({width = 6, height = 1, isMetal = true, isChain = false}, coordinate.column, coordinate.row, self.clock)
+      self.outgoingGarbage:push({width = 6, height = 1, isMetal = true, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
     end
     self:recordComboHistory(self.clock, 6, 1, true)
     self.analytic:registerShock()
@@ -445,8 +445,7 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   for i = 1, #combo_pieces do
     if self.garbageTarget and self.telegraph then
       -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
-      self.telegraph:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false}, coordinate.column, coordinate.row,
-                          self.clock)
+      self.outgoingGarbage:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
     end
     self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
   end
@@ -458,8 +457,7 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
         -- If we did a combo also, we need to enqueue the attack graphic one row higher cause thats where the chain card will be.
         rowOffset = 1
       end
-      self.telegraph:push({width = 6, height = self.chain_counter - 1, isMetal = false, isChain = true}, coordinate.column, coordinate.row +  rowOffset,
-                          self.clock)
+      self.outgoingGarbage:addChainLink(self.clock, coordinate.column, coordinate.row +  rowOffset)
     end
     self:recordChainHistory()
   end

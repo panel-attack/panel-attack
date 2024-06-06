@@ -17,18 +17,18 @@ local function rollbackPastAttackTest()
   StackReplayTestingUtils:simulateStack(match.stacks[1], aheadTime)
 
   -- Simulate to a point P1 has sent an attack to P2
-  assert(#match.stacks[2].later_garbage[523] == 1)
+  assert(#match.stacks[2].outgoingGarbage.garbageInTransit[523] == 1)
 
   -- Rollback P1 past the time the attack popped off telegraph
   match:debugRollbackAndCaptureState(rollbackTime)
 
   -- This should cause the attack to be undone
-  assert(match.stacks[2].later_garbage[523] == nil)
+  assert(match.stacks[2].outgoingGarbage.garbageInTransit[523] == nil)
 
   -- Simulate again, attack shoudld pop off again
   StackReplayTestingUtils:simulateMatchUntil(match, aheadTime)
 
-  assert(match.stacks[2].later_garbage[523] ~= nil and #match.stacks[2].later_garbage[523] == 1)
+  assert(match.stacks[2].outgoingGarbage.garbageInTransit[523] ~= nil and #match.stacks[2].outgoingGarbage.garbageInTransit[523] == 1)
 
   StackReplayTestingUtils:fullySimulateMatch(match)
 
@@ -61,16 +61,16 @@ local function rollbackNotPastAttackTest()
   StackReplayTestingUtils:simulateStack(match.stacks[1], aheadTime)
 
   -- Simulate to a point P1 has sent an attack to P2
-  assert(#match.stacks[2].later_garbage[523] == 1)
+  assert(#match.stacks[2].outgoingGarbage.garbageInTransit[523] == 1)
 
   -- Rollback P1 but not past the time the attack popped off telegraph
   match:debugRollbackAndCaptureState(rollbackTime)
-  assert(match.stacks[2].later_garbage[523] ~= nil and #match.stacks[2].later_garbage[523] == 1)
+  assert(match.stacks[2].outgoingGarbage.garbageInTransit[523] ~= nil and #match.stacks[2].outgoingGarbage.garbageInTransit[523] == 1)
 
   -- Simulate again, attack shouldn't pop off again
   StackReplayTestingUtils:simulateMatchUntil(match, aheadTime)
 
-  assert(match.stacks[2].later_garbage[523] ~= nil and #match.stacks[2].later_garbage[523] == 1)
+  assert(match.stacks[2].outgoingGarbage.garbageInTransit[523] ~= nil and #match.stacks[2].outgoingGarbage.garbageInTransit[523] == 1)
 
   StackReplayTestingUtils:fullySimulateMatch(match)
 
