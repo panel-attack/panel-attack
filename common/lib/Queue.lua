@@ -48,4 +48,13 @@ function Queue.clear(self)
   self.last = -1
 end
 
+function Queue:contains(element)
+  for i = self.first, self.last do
+    if self[i] == element then
+      return true
+    end
+  end
+  return false
+end
+
 return Queue

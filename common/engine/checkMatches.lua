@@ -435,31 +435,25 @@ end
 function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   logger.debug("pushing garbage for " .. (isChain and "chain" or "combo") .. " with " .. comboSize .. " panels")
   for i = 3, metalCount do
-    if self.garbageTarget and self.telegraph then
-      self.outgoingGarbage:push({width = 6, height = 1, isMetal = true, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
-    end
+    self.outgoingGarbage:push({width = 6, height = 1, isMetal = true, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
     self:recordComboHistory(self.clock, 6, 1, true)
     self.analytic:registerShock()
   end
 
   local combo_pieces = COMBO_GARBAGE[comboSize]
   for i = 1, #combo_pieces do
-    if self.garbageTarget and self.telegraph then
-      -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
-      self.outgoingGarbage:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
-    end
+    -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
+    self.outgoingGarbage:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
     self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
   end
 
   if isChain then
-    if self.garbageTarget and self.telegraph then
-      local rowOffset = 0
-      if #combo_pieces > 0 then
-        -- If we did a combo also, we need to enqueue the attack graphic one row higher cause thats where the chain card will be.
-        rowOffset = 1
-      end
-      self.outgoingGarbage:addChainLink(self.clock, coordinate.column, coordinate.row +  rowOffset)
+    local rowOffset = 0
+    if #combo_pieces > 0 then
+      -- If we did a combo also, we need to enqueue the attack graphic one row higher cause thats where the chain card will be.
+      rowOffset = 1
     end
+    self.outgoingGarbage:addChainLink(self.clock, coordinate.column, coordinate.row +  rowOffset)
     self:recordChainHistory()
   end
 end
