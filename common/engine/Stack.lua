@@ -378,10 +378,6 @@ function Stack.rollbackCopy(source, other)
     other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
   end
 
-  other.incomingGarbage = source.incomingGarbage:makeCopy()
-  if source.telegraph then
-    other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
-  end
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
@@ -466,19 +462,6 @@ function Stack.rollbackCopy(source, other)
   return other
 end
 
-function Stack.restoreFromRollbackCopy(self, other)
-  Stack.rollbackCopy(other, self)
-  if self.telegraph then
-    self.telegraph.sender = self
-  end
-  -- The remaining inputs is the confirmed inputs not processed yet for this clock time
-  -- We have processed clock time number of inputs when we are at clock, so we only want to process the clock+1 input on
-  self.input_buffer = {}
-  for i = self.clock + 1, #self.confirmedInput do
-    self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
-  end
-end
-
 function Stack.rollbackToFrame(self, frame)
   local currentFrame = self.clock
   local difference = currentFrame - frame
@@ -493,7 +476,13 @@ function Stack.rollbackToFrame(self, frame)
   if frame < currentFrame then
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(self.rollbackCopies[frame])
-    self:restoreFromRollbackCopy(self.rollbackCopies[frame])
+    Stack.rollbackCopy(self.rollbackCopies[frame], self)
+    -- The remaining inputs is the confirmed inputs not processed yet for this clock time
+    -- We have processed clock time number of inputs when we are at clock, so we only want to process the clock+1 input on
+    self.input_buffer = {}
+    for i = self.clock + 1, #self.confirmedInput do
+      self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
+    end
     -- this is for the interpolation of the shake animation only (not a physics relevant field)
     if self.rollbackCopies[frame - 1] then
       self.prev_shake_time = self.rollbackCopies[frame - 1].shake_time
@@ -506,6 +495,14 @@ function Stack.rollbackToFrame(self, frame)
 
     for f = frame, currentFrame do
       self:deleteRollbackCopy(f)
+    end
+
+    if self.incomingGarbage then
+      self.incomingGarbage:rollbackToFrame(frame)
+    end
+
+    if self.outgoingGarbage then
+      self.outgoingGarbage:rollbackToFrame(frame)
     end
 
     -- leaving this in commented out as it would spark worry:
@@ -547,7 +544,7 @@ function Stack.rollbackToFrame(self, frame)
       currentChain.finish = nil
       currentChain.size = size + 1
     end
-    
+
     for comboFrame, _ in pairs(self.combos) do
       if comboFrame >= frame then
         self.combos[comboFrame] = nil
@@ -573,6 +570,10 @@ function Stack.saveForRollback(self)
   self.rollbackCopies = nil
   self:remove_extra_rows()
   rollbackCopies[self.clock] = Stack.rollbackCopy(self)
+  self.incomingGarbage:rollbackCopy(self.clock)
+  if self.outgoingGarbage then
+    self.outgoingGarbage:rollbackCopy(self.clock)
+  end
   self.rollbackCopies = rollbackCopies
   self.opponentStack = opponentStack
   self.garbageTarget = attackTarget
