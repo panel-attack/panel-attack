@@ -651,7 +651,7 @@ function Stack.set_puzzle_state(self, puzzle)
     local comboStorm = {}
     for i = 1, self.height do
                             --  width        height, metal, from chain
-      table.insert(comboStorm, {self.width - 1,   1, false, false})
+      table.insert(comboStorm, {width = self.width - 1,  height = 1, isChain = false, isMetal = false, frameEarned = 0})
     end
     self.incomingGarbage:pushTable(comboStorm)
   elseif puzzle.puzzleType == "chain" then
