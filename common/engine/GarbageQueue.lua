@@ -2,6 +2,7 @@ local logger = require("common.lib.logger")
 local class = require("common.lib.class")
 local tableUtils = require("common.lib.tableUtils")
 local Queue = require("common.lib.Queue")
+require("table.clear")
 
 -- +1 to compensate for a compensation someone made
 -- the original thought was probably that the attack animation should only start on the frame AFTER the garbage gets queued
@@ -111,30 +112,71 @@ GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
   self.treatMetalAsCombo = treatMetalAsCombo
 end)
 
-function GarbageQueue:makeCopy()
-  local other = GarbageQueue()
+function GarbageQueue:rollbackCopy(frame)
+  if not self.rollbackCopies then
+    self.rollbackCopies = {}
+    self.copyPool = {}
+  end
+
+  local copy
+  if #self.copyPool > 0 then
+    copy = self.copyPool[#self.copyPool]
+    self.copyPool[#self.copyPool] = nil
+    table.clear(copy.stagedGarbage)
+    table.clear(copy.garbageInTransit)
+    copy.transitTimers:clear()
+  else
+    copy = GarbageQueue()
+  end
+
   for i = 1, #self.stagedGarbage do
     if self.stagedGarbage[i] == self.currentChain then
       -- the current chain can actually still get modified so we need to deepcopy it
-      other.currentChain = deepcpy(self.currentChain)
-      other.garbage[i] = other.currentChain
+      copy.currentChain = deepcpy(self.currentChain)
+      copy.stagedGarbage[i] = copy.currentChain
     else
       -- all other garbage is already immutable and can be copied by reference
-      other.stagedGarbage[i] = self.stagedGarbage[i]
+      copy.stagedGarbage[i] = self.stagedGarbage[i]
     end
   end
 
   for clock, garbageTable in pairs(self.garbageInTransit) do
     -- all in-transit garbage is already immutable and can be copied by reference
-    other.garbageInTransit[clock] = garbageTable
+    copy.garbageInTransit[clock] = garbageTable
   end
   -- shallow copy should be enough as it only holds numbers
-  other.transitTimers = shallowcpy(self.transitTimers)
+  for i = self.transitTimers.first, self.transitTimers.last do
+    copy.transitTimers:push(self.transitTimers[i])
+  end
 
-  other.illegalStuffIsAllowed = self.illegalStuffIsAllowed
-  other.treatMetalAsCombo = self.treatMetalAsCombo
-  other.ghostChain = self.ghostChain
-  return other
+  -- these two should never change during the life time of a garbage queue
+  -- copy.illegalStuffIsAllowed = self.illegalStuffIsAllowed
+  -- copy.treatMetalAsCombo = self.treatMetalAsCombo
+
+  -- ghostChain can get removed from the GarbageQueue later as it is a draw-only prop, completely irrelevant for physics
+  copy.ghostChain = self.ghostChain
+
+  self.rollbackCopies[frame] = copy
+end
+
+function GarbageQueue:rollbackToFrame(frame)
+  if not self.rollbackCopies[frame] then
+    error("Attempted to rollback garbage queue to frame " .. frame .. " but no rollback copy was available")
+  end
+
+  local copy = self.rollbackCopies[frame]
+  self.stagedGarbage = copy.stagedGarbage
+  self.garbageInTransit = copy.garbageInTransit
+  self.transitTimers = copy.transitTimers
+  self.currentChain = copy.currentChain
+  self.ghostChain = copy.ghostChain
+
+  for clock, rollbackCopy in pairs(self.rollbackCopies) do
+    if clock > frame then
+      self.copyPool[#self.copyPool+1] = rollbackCopy
+      self.rollbackCopies[clock] = nil
+    end
+  end
 end
 
 -- corrects garbage pushed as combo to be flagged as a finalized chain if it is higher than 1 row
