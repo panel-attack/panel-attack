@@ -245,6 +245,7 @@ function characters_reload_graphics()
     end
     characters[character]:graphics_init(fullLoad, false)
   end
+  require("client.src.mods.CharacterLoader").loadBundleIcons()
 end
 
 function Character.graphics_init(self, full, yields)
@@ -305,6 +306,29 @@ function Character.graphics_init(self, full, yields)
       logger.info("FAILED TO LOAD: telegraph/attack")
     end
   end
+end
+
+-- bundles without stage icon display up to 4 icons of their substages
+function Character:createIcon()
+  local canvas = love.graphics.newCanvas(2 * 168, 2 * 168)
+  canvas:renderTo(function()
+    for i, subcharacterId in ipairs(self.sub_characters) do
+      if i <= 4 then
+        local character = characters[subcharacterId]
+        local x = 0
+        local y = 0
+        if i % 2 == 0 then
+          x = 168
+        end
+        if i > 2 then
+          y = 168
+        end
+        local width, height = character.images.icon:getDimensions()
+        love.graphics.draw(character.images.icon, x, y, 0, 168 / width, 168 / height)
+      end
+    end
+  end)
+  return canvas
 end
 
 function Character.graphics_uninit(self)

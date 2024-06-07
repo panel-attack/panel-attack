@@ -127,6 +127,22 @@ function CharacterLoader.initCharacters()
       characters_ids_by_display_names[character.display_name] = {character.id}
     end
   end
+
+  CharacterLoader.loadBundleIcons()
+end
+
+function CharacterLoader.loadBundleIcons()
+  -- bundles without character icon display up to 4 icons of their subcharacters
+  -- there is no guarantee the subcharacters had been loaded previously so do it after everything got preloaded
+  for _, character in pairs(characters) do
+    if not character.images.icon then
+      if character:is_bundle() then
+        character.images.icon = character:createIcon()
+      else
+        error("Can't find a icon for character " .. character.id)
+      end
+    end
+  end
 end
 
 function CharacterLoader.resolveCharacterSelection(characterId)
