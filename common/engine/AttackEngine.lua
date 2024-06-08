@@ -82,7 +82,7 @@ function AttackEngine:setGarbageTarget(garbageTarget)
   self.garbageTarget = garbageTarget
   self.garbageTarget.incomingGarbage.illegalStuffIsAllowed = true
   self.garbageTarget.incomingGarbage.treatMetalAsCombo = self.treatMetalAsCombo
-  self.telegraph:updatePositionForGarbageTarget(garbageTarget)
+  --self.telegraph:updatePositionForGarbageTarget(garbageTarget)
 end
 
 -- Adds an attack pattern that happens repeatedly on a timer.
@@ -166,6 +166,15 @@ function AttackEngine.render(self)
 
   self.telegraph:render()
 
+end
+
+function AttackEngine:rollbackCopy(frame)
+  self.outgoingGarbage:rollbackCopy(frame)
+end
+
+function AttackEngine:rollbackToFrame(frame)
+  self.outgoingGarbage:rollbackToFrame(frame)
+  self.clock = frame
 end
 
 return AttackEngine

@@ -26,8 +26,6 @@ Match =
     self.spectatorString = ""
     self.players = {}
     self.stacks = {}
-    -- holds detached attackEngines, meaning attack engines that only deal; indexed via the player they're targeting
-    self.attackEngines = {}
     self.engineVersion = consts.ENGINE_VERSION
 
     assert(doCountdown ~= nil)
@@ -258,9 +256,6 @@ function Match:run()
   while tableUtils.trueForAny(checkRun, function(b) return b end) do
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
-        if self.attackEngines[stack] then
-          self.attackEngines[stack]:run()
-        end
         stack:run()
         -- check if anyone wants to push garbage into the stack's queue
         for _, st in ipairs(self.stacks) do
@@ -278,7 +273,6 @@ function Match:run()
             end
           end
         end
-        -- TODO: attackengines have to push as well
 
         checkRun[i] = true
       else
@@ -294,9 +288,6 @@ function Match:run()
         self:updateFramesBehind(stack)
         if self:shouldSaveRollback(stack) then
           stack:saveForRollback()
-          if self.attackEngines[stack] then
-            self.attackEngines[stack]:saveForRollback()
-          end
         end
       end
     end
@@ -363,12 +354,6 @@ function Match:rollbackToFrame(stack, frame)
     if self.isFromReplay then
       stack.lastRollbackFrame = -1
     end
-    if self.attackEngines[stack] then
-      self.attackEngines[stack].rollbackToFrame(frame)
-      if self.isFromReplay then
-        self.attackEngines[stack].lastRollbackFrame = -1
-      end
-    end
   end
 end
 
@@ -379,10 +364,6 @@ function Match:rewindToFrame(frame)
     if stack.rollbackCopies[frame] then
       stack:rollbackToFrame(frame)
       stack.lastRollbackFrame = -1
-      if self.attackEngines[stack] then
-        self.attackEngines[stack]:rollbackToFrame(frame)
-        self.attackEngines[stack].lastRollbackFrame = -1
-      end
     end
   end
   self.clock = frame
@@ -498,12 +479,11 @@ function Match:start()
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
       -- not really elegant but before deciding where the attacks are supposed to come from with more than 1 real player which = 2 works
-      local attackEngineHost = SimulatedStack({which = 2, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
+      local attackEngineHost = SimulatedStack({which = #self.stacks + 1, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
       local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
       attackEngine:setGarbageTarget(stack)
-      self.attackEngines[stack] = attackEngineHost
+      self.stacks[#self.stacks+1] = attackEngineHost
     end
-
   end
 
   if self.stackInteraction == GameModes.StackInteractions.SELF then

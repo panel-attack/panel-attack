@@ -27,7 +27,7 @@ end, StackBase)
 
 -- adds an attack engine to the simulated opponent
 function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
-  self.telegraph = Telegraph(self)
+  --self.telegraph = Telegraph(self)
 
   if shouldPlayAttackSfx then
     self.attackEngine = AttackEngine(attackSettings, self.telegraph, characters[self.character])
@@ -169,10 +169,8 @@ function SimulatedStack:saveForRollback()
     self.healthEngine:saveRollbackCopy()
   end
 
-  if self.telegraph then
-    -- this is pretty stupid, telegraph should just save its own rollback on itself
-    -- so that when rollback happens we just telegraph:rollbackToFrame
-    copy.telegraph = self.telegraph:rollbackCopy()
+  if self.attackEngine then
+    self.attackEngine:rollbackCopy(self.clock)
   end
 
   copy.health = self.health
@@ -194,13 +192,9 @@ function SimulatedStack:rollbackToFrame(frame)
     self.rollbackCopies[i] = nil
   end
 
-  if copy then
-    if self.telegraph then
-      copy.telegraph:rollbackCopy(self.telegraph)
-      self.telegraph.sender = self
-    end
+  if self.attackEngine then
+    self.attackEngine:rollbackToFrame(frame)
   end
-  self.attackEngine.clock = frame
 
   if self.healthEngine then
     self.healthEngine:rollbackToFrame(frame)
