@@ -128,18 +128,25 @@ function AttackEngine.run(self)
           else
             local garbage = self.attackPatterns[i].garbage
             if garbage.isChain then
+              self.outgoingGarbage:addChainLink(self.clock)
               local chainCounter = garbage.height + 1
               maxChain = math.max(chainCounter, maxChain)
             else
+              garbage.frameEarned = self.clock
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
+              self.outgoingGarbage:push(garbage)
             end
             hasMetal = garbage.isMetal or hasMetal
-            self.outgoingGarbage:push(garbage)
-            self.telegraph:push(garbage, math.random(1, 6), math.random(1, 11), self.clock)
           end
         end
       end
     end
+  end
+
+  local garbageDelivery = self.outgoingGarbage:popFinishedTransitsAt(self.clock)
+  if garbageDelivery then
+    logger.debug("Pushing garbage delivery to incoming garbage queue: " .. table_to_string(garbageDelivery))
+    self.garbageTarget.incomingGarbage:pushTable(garbageDelivery)
   end
 
   local metalCount = 0

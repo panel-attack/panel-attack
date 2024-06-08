@@ -258,10 +258,10 @@ function Match:run()
   while tableUtils.trueForAny(checkRun, function(b) return b end) do
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
-        stack:run()
         if self.attackEngines[stack] then
           self.attackEngines[stack]:run()
         end
+        stack:run()
         -- check if anyone wants to push garbage into the stack's queue
         for _, st in ipairs(self.stacks) do
           if st.garbageTarget == stack then
