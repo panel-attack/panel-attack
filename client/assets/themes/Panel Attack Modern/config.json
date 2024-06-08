@@ -41,7 +41,7 @@
 "healthbar_Rotate": 0,
 "multibar_Pos": [-12, 589], // edit to [-39, 288] for relative multibar
 "multibar_Scale": 1,
-"multibar_LeftoverTime_Pos": [-19, 5],
+"multibar_LeftoverTime_Pos": [-13, 5],
 "multibar_is_absolute": true,
 "bg_title_is_tiled": false,
 "bg_title_speed_x": 0,
