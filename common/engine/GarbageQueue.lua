@@ -246,6 +246,9 @@ function GarbageQueue:getOldestFinishedTransitTime()
 end
 
 function GarbageQueue:popFinishedTransitsAt(clock)
+  if clock == 250 then
+    local phi = 5
+  end
   if self.transitTimers:peek() == clock then
     self.transitTimers:pop()
     return self.garbageInTransit[clock]
