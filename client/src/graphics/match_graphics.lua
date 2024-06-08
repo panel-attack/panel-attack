@@ -155,9 +155,11 @@ function Match:render()
     local renderingAllowed = tableUtils.trueForAll(self.stacks, function(s) return not s.play_to_end end)
 
     if renderingAllowed then
-      for i = 1, #self.stacks do
-        local stack = self.stacks[i]
-        stack:render()
+      for _, stack in ipairs(self.stacks) do
+        -- don't render stacks that only have an attack engine
+        if stack.player or stack.healthEngine then
+          stack:render()
+        end
       end
 
       -- Draw VS HUD

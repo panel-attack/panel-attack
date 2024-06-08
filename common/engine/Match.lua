@@ -478,7 +478,6 @@ function Match:start()
     end
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
-      -- not really elegant but before deciding where the attacks are supposed to come from with more than 1 real player which = 2 works
       local attackEngineHost = SimulatedStack({which = #self.stacks + 1, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
       local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
       attackEngine:setGarbageTarget(stack)
