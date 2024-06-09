@@ -140,7 +140,7 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
 
   -- at the start of an attack, the attack sprite makes a small half loop around its origin
   --  that is mostly independent of where the attack goes after (except for choosing the side around which to loop)
-  if attackFrame < #telegraph_attack_animation_speed then
+  if attackFrame <= #telegraph_attack_animation_speed + self:attackAnimationStartFrame() then
     -- if we aren't past the loopy part yet, draw directly
     GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], attackX, attackY, 0, attackScale, attackScale)
   else
@@ -157,7 +157,7 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
     -- fixed y location
     local destinationY = self.originY - TELEGRAPH_PADDING
     local garbageBlockX = attackX + percent * (destinationX - attackX)
-    local garbageBlockY = attackX + percent * (destinationY - attackY)
+    local garbageBlockY = attackY + percent * (destinationY - attackY)
 
     GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
   end
