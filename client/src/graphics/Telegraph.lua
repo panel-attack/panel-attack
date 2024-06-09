@@ -196,7 +196,7 @@ function Telegraph:renderStagedGarbageIcons()
     local x = self:telegraphRenderXPosition(math.abs(i - #self.sender.outgoingGarbage.stagedGarbage))
     local image
     if garbage.isChain then
-      image = character.telegraph_garbage_images[garbage.height - 1][6]
+      image = character.telegraph_garbage_images[garbage.height][6]
     elseif garbage.isMetal then
       image = character.telegraph_garbage_images["metal"]
     else
