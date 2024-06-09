@@ -127,152 +127,98 @@ function Telegraph:telegraphLoopAttackPosition(attack, garbage_block, frames_sin
   return resultX, resultY
 end
 
-function Telegraph:render()
+function Telegraph:renderAttacks()
+  local character = characters[self.sender.character]
+  local orig_atk_w, orig_atk_h = character.telegraph_garbage_images["attack"]:getDimensions()
+  local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
 
-  local telegraph_to_render = self
-  local senderCharacter = telegraph_to_render.sender.character
+  for timeAttackInteracts, attacks_this_frame in pairs(self.attacks) do
+    local frames_since_earned = self.sender.clock - timeAttackInteracts
+    if frames_since_earned < self:attackAnimationStartFrame() then
+      --don't draw anything yet, card animation is still in progress.
+    elseif frames_since_earned >= self:attackAnimationEndFrame() then
+      --Attack is done, remove.
+      self.attacks[timeAttackInteracts] = nil
+    else
+      for _, attack in ipairs(attacks_this_frame) do
+        for _k, garbage_block in ipairs(attack.stuff_to_send) do
+          garbage_block.destination_x = self:telegraphRenderXPosition(self.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
+          garbage_block.destination_y = garbage_block.destination_y or (self.originY - TELEGRAPH_PADDING)
 
-  if config.renderAttacks then
-
-    local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
-    local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
-
-    for timeAttackInteracts, attacks_this_frame in pairs(telegraph_to_render.attacks) do
-      local frames_since_earned = telegraph_to_render.sender.clock - timeAttackInteracts
-      if frames_since_earned < self:attackAnimationStartFrame() then
-        --don't draw anything yet, card animation is still in progress.
-      elseif frames_since_earned >= self:attackAnimationEndFrame() then
-        --Attack is done, remove.
-        telegraph_to_render.attacks[timeAttackInteracts] = nil
-      else
-        for _, attack in ipairs(attacks_this_frame) do
-          for _k, garbage_block in ipairs(attack.stuff_to_send) do
-            garbage_block.destination_x = self:telegraphRenderXPosition(telegraph_to_render.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
-            garbage_block.destination_y = garbage_block.destination_y or (telegraph_to_render.originY - TELEGRAPH_PADDING)
-
-            if not attack.origin_x or not attack.origin_y then
-              attack.origin_x = (attack.attackDrawColumn-1) * 16 + telegraph_to_render.sender.panelOriginX
-              attack.origin_y = (11-attack.attackDrawRow) * 16 + telegraph_to_render.sender.panelOriginY + (telegraph_to_render.sender.displacement or 0) - (consts.CARD_ANIMATION[frames_since_earned] or 0)
-              attack.direction = math.sign(garbage_block.destination_x - attack.origin_x) --should give -1 for left, or 1 for right
-            end
-
-            if self.sender.opacityForFrame then
-              GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(frames_since_earned, 1, 8))
-            end
-
-            if frames_since_earned <= self:attackAnimationStartFrame() + #telegraph_attack_animation_speed then
-              --draw telegraph attack animation, little loop down and to the side of origin.
-
-              -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
-              -- TODO make this more performant?
-              local garbageBlockX, garbageBlockY = telegraph_to_render:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
-
-              GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
-            else
-              --move toward destination
-
-              local loopX, loopY = telegraph_to_render:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
-              local framesHappened = frames_since_earned - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
-              local totalFrames = self:attackAnimationEndFrame() - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
-              local percent =  framesHappened / totalFrames
-
-              local garbageBlockX = loopX + percent * (garbage_block.destination_x - loopX)
-              local garbageBlockY = loopY + percent * (garbage_block.destination_y - loopY)
-
-              GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
-            end
-
-            GraphicsUtil.setColor(1, 1, 1, 1)
+          if not attack.origin_x or not attack.origin_y then
+            attack.origin_x = (attack.attackDrawColumn-1) * 16 + self.sender.panelOriginX
+            attack.origin_y = (11-attack.attackDrawRow) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[frames_since_earned] or 0)
+            attack.direction = math.sign(garbage_block.destination_x - attack.origin_x) --should give -1 for left, or 1 for right
           end
+
+          if self.sender.opacityForFrame then
+            GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(frames_since_earned, 1, 8))
+          end
+
+          if frames_since_earned <= self:attackAnimationStartFrame() + #telegraph_attack_animation_speed then
+            --draw telegraph attack animation, little loop down and to the side of origin.
+
+            -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+            -- TODO make this more performant?
+            local garbageBlockX, garbageBlockY = self:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
+
+            GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
+          else
+            --move toward destination
+
+            local loopX, loopY = self:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
+            local framesHappened = frames_since_earned - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
+            local totalFrames = self:attackAnimationEndFrame() - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
+            local percent =  framesHappened / totalFrames
+
+            local garbageBlockX = loopX + percent * (garbage_block.destination_x - loopX)
+            local garbageBlockY = loopY + percent * (garbage_block.destination_y - loopY)
+
+            GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
+          end
+
+          GraphicsUtil.setColor(1, 1, 1, 1)
         end
       end
     end
+  end
+end
+
+local iconHeight = 16
+local iconWidth = 24
+
+function Telegraph:renderStagedGarbageIcons()
+  local character = characters[self.sender.character]
+  local y = self.originY
+
+  for i = #self.sender.outgoingGarbage.stagedGarbage, 1, -1 do
+    local garbage = self.sender.outgoingGarbage.stagedGarbage[i]
+    local x = self:telegraphRenderXPosition(math.abs(i - #self.sender.outgoingGarbage.stagedGarbage))
+    local image
+    if garbage.isChain then
+      image = character.telegraph_garbage_images[garbage.height - 1][6]
+    elseif garbage.isMetal then
+      image = character.telegraph_garbage_images["metal"]
+    else
+      image = character.telegraph_garbage_images[1][garbage.width]
+    end
+
+    local width, height = image:getDimensions()
+    local xScale = iconWidth / width
+    local yScale = iconHeight / height
+
+    GraphicsUtil.drawGfxScaled(image, x, y, 0, xScale, yScale)
+  end
+end
+
+function Telegraph:render()
+  if false then--config.renderAttacks then
+    self:renderAttacks()
   end
 
   if config.renderTelegraph then
-    -- Render if we are "currently chaining" for debug purposes
-    if config.debug_mode and telegraph_to_render.senderCurrentlyChaining then
-      local orig_atk_w, orig_atk_h = characters[senderCharacter].telegraph_garbage_images["attack"]:getDimensions()
-      local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
-  
-      GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["attack"], telegraph_to_render:telegraphRenderXPosition(-1), telegraph_to_render.originY, 0, atk_scale, atk_scale)
-    end
-
-    --then draw the telegraph's garbage queue, leaving an empty space until such a time as the attack arrives
-    local g_queue_to_draw = telegraph_to_render.garbage_queue:makeCopy()
-    local current_block = g_queue_to_draw:pop()
-    local draw_y = telegraph_to_render.originY
-    local drewChain = false
-    local attackAnimationLength = self:attackAnimationEndFrame()
-    if not config.renderAttacks then
-      attackAnimationLength = 0
-    end
-
-    local currentIndex = 0
-    while current_block do
-      if telegraph_to_render.sender.clock - current_block.timeAttackInteracts >= attackAnimationLength then
-        local draw_x = self:telegraphRenderXPosition(currentIndex)
-        if not current_block[3]--[[is_metal]] then
-          local height = math.min(current_block[2], 14)
-          if height > 1 then -- For illegal chain garbage, default to using the chain size graphics
-            current_block[1] = 6
-          end
-          local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][current_block[1]]:getDimensions()
-          local grb_scale_x = 24 / orig_grb_w
-          local grb_scale_y = 16 / orig_grb_h
-          GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images[height--[[height]]][current_block[1]--[[width]]], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
-        else
-          local orig_mtl_w, orig_mtl_h = characters[senderCharacter].telegraph_garbage_images["metal"]:getDimensions()
-          local mtl_scale_x = 24 / orig_mtl_w
-          local mtl_scale_y = 16 / orig_mtl_h
-          GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images["metal"], draw_x, draw_y, 0, mtl_scale_x, mtl_scale_y)
-        end
-        drewChain = drewChain or current_block[4]
-
-        -- Render the stop times above blocks for debug purposes
-        if config.debug_mode then
-          local stopperTime = nil
-
-          if current_block[4]--[[chain]] then
-            stopperTime = telegraph_to_render.stoppers.chain[telegraph_to_render.garbage_queue.chain_garbage.first]
-            if stopperTime and current_block.finalized then
-              stopperTime = stopperTime .. " F"
-            end
-          else
-            if current_block[3]--[[is_metal]] then
-              stopperTime = telegraph_to_render.stoppers.metal
-            else
-              stopperTime = telegraph_to_render.stoppers.combo[current_block[1]]
-            end
-          end
-
-          if stopperTime then
-            GraphicsUtil.printf(stopperTime, draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, 10)
-          end
-        end
-
-      end
-      current_block = g_queue_to_draw:pop()
-      currentIndex = currentIndex + 1
-    end
-    
-    if not drewChain and telegraph_to_render.garbage_queue.ghost_chain then
-      local draw_x = self:telegraphRenderXPosition(0)
-      local draw_y = telegraph_to_render.originY
-      local height = math.min(telegraph_to_render.garbage_queue.ghost_chain, 14)
-      local orig_grb_w, orig_grb_h = characters[senderCharacter].telegraph_garbage_images[height][6]:getDimensions()
-      local grb_scale_x = 24 / orig_grb_w
-      local grb_scale_y = 16 / orig_grb_h
-      GraphicsUtil.drawGfxScaled(characters[senderCharacter].telegraph_garbage_images[height][6], draw_x, draw_y, 0, grb_scale_x, grb_scale_y)
-
-      -- Render a "G" for ghost
-      if config.debug_mode then
-        GraphicsUtil.printf("G", draw_x*GFX_SCALE, (draw_y-8)*GFX_SCALE, 70, "center", nil, 1, 10)
-      end
-    end
-
+    self:renderStagedGarbageIcons()
   end
-
 end
 
 return Telegraph

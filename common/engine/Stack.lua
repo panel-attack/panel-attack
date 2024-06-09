@@ -16,7 +16,7 @@ local StackBase = require("common.engine.StackBase")
 local class = require("common.lib.class")
 local Panel = require("common.engine.Panel")
 local GarbageQueue = require("common.engine.GarbageQueue")
-local Telegraph = require("common.engine.Telegraph")
+local Telegraph = require("client.src.graphics.Telegraph")
 local prof = require("common.lib.jprof.jprof")
 
 -- Stuff defined in this file:
@@ -584,11 +584,6 @@ end
 
 function Stack.deleteRollbackCopy(self, frame)
   if self.rollbackCopies[frame] then
-    Telegraph.saveClone(self.rollbackCopies[frame].telegraph)
-
-     -- Has a reference to stacks we don't want kept around
-    self.rollbackCopies[frame].telegraph = nil
-
     self.rollbackCopyPool[#self.rollbackCopyPool + 1] = self.rollbackCopies[frame]
     self.rollbackCopies[frame] = nil
   end
