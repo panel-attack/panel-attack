@@ -9,8 +9,6 @@ local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
 local TELEGRAPH_BLOCK_WIDTH = 26
 
-local clone_pool = {}
-
 -- Sender is the sender of these attacks, must implement clock, frameOriginX, frameOriginY, and character
 Telegraph = class(function(self, sender)
 
@@ -109,20 +107,6 @@ function Telegraph:attackAnimationEndFrame()
   return GARBAGE_TRANSIT_TIME
 end
 
-function Telegraph:telegraphLoopAttackPosition(attack, frames_since_earned)
-
-  local resultX, resultY = attack.origin_x, attack.origin_y
-
-  -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
-  -- TODO make this more performant?
-  for frame = 1, frames_since_earned - self:attackAnimationStartFrame() do
-    resultX = resultX + telegraph_attack_animation[attack.direction][frame].dx
-    resultY = resultY + telegraph_attack_animation[attack.direction][frame].dy
-  end
-
-  return resultX, resultY
-end
-
 Telegraph.totalTimeAfterLoopToDestination = (Telegraph:attackAnimationEndFrame() - (Telegraph:attackAnimationStartFrame() + #telegraph_attack_animation_speed))
 -- this function serves that purpose in particular
 function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, colOrigin)
@@ -167,15 +151,15 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
     -- Note that the destination can change after the attack animation started:
     -- According to my insight the destination only ever move FURTHER AWAY
     -- in that event, the attack animation would skip slightly ahead in that moment; we don't do interpolation for that so far
-    attackFrame = attackFrame - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
-    local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
+    -- attackFrame = attackFrame - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
+    -- local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
 
-    -- fixed y location
-    local destinationY = self.originY - TELEGRAPH_PADDING
-    local garbageBlockX = attackX + percent * (destinationX - attackX)
-    local garbageBlockY = attackX + percent * (destinationY - attackY)
+    -- -- fixed y location
+    -- local destinationY = self.originY - TELEGRAPH_PADDING
+    -- local garbageBlockX = attackX + percent * (destinationX - attackX)
+    -- local garbageBlockY = attackX + percent * (destinationY - attackY)
 
-    GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
+    -- GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
   end
 
   GraphicsUtil.setColor(1, 1, 1, 1)
