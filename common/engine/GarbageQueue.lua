@@ -105,8 +105,6 @@ GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
   -- for easier access and order sensitive iteration
   self.transitTimers = Queue()
   self.currentChain = nil
-  -- a ghost chain keeps the smaller version of a chain thats growing showing in the telegraph while the new chain's attack animation is still animating to the telegraph.
-  self.ghostChain = nil
   -- illegal stuff means that chains are queued as combos instead
   self.illegalStuffIsAllowed = allowIllegalStuff
   self.treatMetalAsCombo = treatMetalAsCombo
@@ -153,9 +151,6 @@ function GarbageQueue:rollbackCopy(frame)
   -- copy.illegalStuffIsAllowed = self.illegalStuffIsAllowed
   -- copy.treatMetalAsCombo = self.treatMetalAsCombo
 
-  -- ghostChain can get removed from the GarbageQueue later as it is a draw-only prop, completely irrelevant for physics
-  copy.ghostChain = self.ghostChain
-
   self.rollbackCopies[frame] = copy
 end
 
@@ -169,7 +164,6 @@ function GarbageQueue:rollbackToFrame(frame)
   self.garbageInTransit = copy.garbageInTransit
   self.transitTimers = copy.transitTimers
   self.currentChain = copy.currentChain
-  self.ghostChain = copy.ghostChain
 
   for clock, rollbackCopy in pairs(self.rollbackCopies) do
     if clock > frame then
@@ -314,7 +308,6 @@ function GarbageQueue:addChainLink(frameEarned, row, column)
     self.currentChain = {width = 6, height = 1, isMetal = false, isChain = true, frameEarned = frameEarned, finalized = false}
     self:push(self.currentChain)
   else
-    self.ghostChain = self.currentChain.height
     -- currentChain is always part of the queue already (see push in branch above)
     self.currentChain.height = self.currentChain.height + 1
     self.currentChain.frameEarned = frameEarned
