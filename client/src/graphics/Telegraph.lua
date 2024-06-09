@@ -129,7 +129,7 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
   -- We can't guarantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
   -- it should be very possible to just precalculate the values although I think performance here isn't truly problematic either way
-  for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation) do
+  for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation[horizontalDirection]) do
     attackX = attackX + telegraph_attack_animation[horizontalDirection][frame].dx
     attackY = attackY + telegraph_attack_animation[horizontalDirection][frame].dy
   end
@@ -151,15 +151,15 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
     -- Note that the destination can change after the attack animation started:
     -- According to my insight the destination only ever move FURTHER AWAY
     -- in that event, the attack animation would skip slightly ahead in that moment; we don't do interpolation for that so far
-    -- attackFrame = attackFrame - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
-    -- local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
+    attackFrame = attackFrame - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
+    local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
 
-    -- -- fixed y location
-    -- local destinationY = self.originY - TELEGRAPH_PADDING
-    -- local garbageBlockX = attackX + percent * (destinationX - attackX)
-    -- local garbageBlockY = attackX + percent * (destinationY - attackY)
+    -- fixed y location
+    local destinationY = self.originY - TELEGRAPH_PADDING
+    local garbageBlockX = attackX + percent * (destinationX - attackX)
+    local garbageBlockY = attackX + percent * (destinationY - attackY)
 
-    -- GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
+    GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
   end
 
   GraphicsUtil.setColor(1, 1, 1, 1)
