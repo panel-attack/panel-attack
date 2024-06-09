@@ -305,12 +305,29 @@ end
 -- or add a 6-wide if there is not chain garbage yet in the queue
 function GarbageQueue:addChainLink(frameEarned, row, column)
   if self.currentChain == nil then
-    self.currentChain = {width = 6, height = 1, isMetal = false, isChain = true, frameEarned = frameEarned, finalized = false}
+    self.currentChain = {
+      width = 6,
+      height = 1,
+      isMetal = false,
+      isChain = true,
+      frameEarned = frameEarned,
+      finalized = false,
+      links = {
+        [frameEarned] = {
+          rowEarned = row,
+          colEarned = column,
+        }
+      },
+    }
     self:push(self.currentChain)
   else
     -- currentChain is always part of the queue already (see push in branch above)
     self.currentChain.height = self.currentChain.height + 1
     self.currentChain.frameEarned = frameEarned
+    self.currentChain.links[frameEarned] = {
+      rowEarned = row,
+      colEarned = column,
+    }
   end
   --updateReleaseTimes(self.stagedGarbage)
 end

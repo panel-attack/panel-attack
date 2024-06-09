@@ -435,7 +435,15 @@ end
 function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   logger.debug("pushing garbage for " .. (isChain and "chain" or "combo") .. " with " .. comboSize .. " panels")
   for i = 3, metalCount do
-    self.outgoingGarbage:push({width = 6, height = 1, isMetal = true, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
+    self.outgoingGarbage:push({
+      width = 6,
+      height = 1,
+      isMetal = true,
+      isChain = false,
+      frameEarned = self.clock,
+      rowEarned = coordinate.row,
+      colEarned = coordinate.column
+    })
     self:recordComboHistory(self.clock, 6, 1, true)
     self.analytic:registerShock()
   end
@@ -443,7 +451,15 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
   local combo_pieces = COMBO_GARBAGE[comboSize]
   for i = 1, #combo_pieces do
     -- Give out combo garbage based on the lookup table, even if we already made shock garbage,
-    self.outgoingGarbage:push({width = combo_pieces[i], height = 1, isMetal = false, isChain = false, frameEarned = self.clock}, coordinate.column, coordinate.row)
+    self.outgoingGarbage:push({
+      width = combo_pieces[i],
+      height = 1,
+      isMetal = false,
+      isChain = false,
+      frameEarned = self.clock,
+      rowEarned = coordinate.row,
+      colEarned = coordinate.column
+    })
     self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
   end
 

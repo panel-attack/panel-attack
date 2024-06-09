@@ -109,17 +109,13 @@ function Telegraph:attackAnimationEndFrame()
   return GARBAGE_TRANSIT_TIME
 end
 
-function Telegraph:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
+function Telegraph:telegraphLoopAttackPosition(attack, frames_since_earned)
 
   local resultX, resultY = attack.origin_x, attack.origin_y
 
-  if frames_since_earned > self:attackAnimationStartFrame() + #telegraph_attack_animation_speed then
-    frames_since_earned = self:attackAnimationStartFrame() + #telegraph_attack_animation_speed
-  end
-
   -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
-  for frame=1, frames_since_earned - self:attackAnimationStartFrame() do
+  for frame = 1, frames_since_earned - self:attackAnimationStartFrame() do
     resultX = resultX + telegraph_attack_animation[attack.direction][frame].dx
     resultY = resultY + telegraph_attack_animation[attack.direction][frame].dy
   end
@@ -127,59 +123,74 @@ function Telegraph:telegraphLoopAttackPosition(attack, garbage_block, frames_sin
   return resultX, resultY
 end
 
-function Telegraph:renderAttacks()
+Telegraph.totalTimeAfterLoopToDestination = (Telegraph:attackAnimationEndFrame() - (Telegraph:attackAnimationStartFrame() + #telegraph_attack_animation_speed))
+-- this function serves that purpose in particular
+function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, colOrigin)
+  local attackFrame = self.sender.clock - frameEarned
+  if attackFrame < self:attackAnimationStartFrame() or attackFrame >= self:attackAnimationEndFrame() then
+    return
+  end
+
+  if self.sender.opacityForFrame then
+    GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(attackFrame, 1, 8))
+  end
+
+  local destinationX = self:telegraphRenderXPosition(telegraphIndex)
+
+  local attackX = (colOrigin - 1) * 16 + self.sender.panelOriginX
+  local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[attackFrame] or 0)
+  -- -1 for left, 1 for right
+  local horizontalDirection = math.sign(destinationX - attackX)
+
+  -- We can't guarantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
+  -- TODO make this more performant?
+  -- it should be very possible to just precalculate the values although I think performance here isn't truly problematic either way
+  for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation) do
+    attackX = attackX + telegraph_attack_animation[horizontalDirection][frame].dx
+    attackY = attackY + telegraph_attack_animation[horizontalDirection][frame].dy
+  end
+
   local character = characters[self.sender.character]
-  local orig_atk_w, orig_atk_h = character.telegraph_garbage_images["attack"]:getDimensions()
-  local atk_scale = 16 / math.max(orig_atk_w, orig_atk_h) -- keep image ratio
+  local width, height = character.telegraph_garbage_images["attack"]:getDimensions()
+  local attackScale = 16 / math.max(width, height) -- keep image ratio
 
-  for timeAttackInteracts, attacks_this_frame in pairs(self.attacks) do
-    local frames_since_earned = self.sender.clock - timeAttackInteracts
-    if frames_since_earned < self:attackAnimationStartFrame() then
-      --don't draw anything yet, card animation is still in progress.
-    elseif frames_since_earned >= self:attackAnimationEndFrame() then
-      --Attack is done, remove.
-      self.attacks[timeAttackInteracts] = nil
-    else
-      for _, attack in ipairs(attacks_this_frame) do
-        for _k, garbage_block in ipairs(attack.stuff_to_send) do
-          garbage_block.destination_x = self:telegraphRenderXPosition(self.garbage_queue:get_idx_of_garbage(unpack(garbage_block))) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / orig_atk_w) / 2)
-          garbage_block.destination_y = garbage_block.destination_y or (self.originY - TELEGRAPH_PADDING)
+  -- at the start of an attack, the attack sprite makes a small half loop around its origin
+  --  that is mostly independent of where the attack goes after (except for choosing the side around which to loop)
+  if attackFrame < #telegraph_attack_animation_speed then
+    -- if we aren't past the loopy part yet, draw directly
+    GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], attackX, attackY, 0, attackScale, attackScale)
+  else
+    -- if we are, attackOriginX and attackOriginY are set to the end of the loopy animation now
+    -- that means we have to calculate the distance to the desired garbage
+    -- and then split up the remaining distance in equal steps across frames
+    --
+    -- Note that the destination can change after the attack animation started:
+    -- According to my insight the destination only ever move FURTHER AWAY
+    -- in that event, the attack animation would skip slightly ahead in that moment; we don't do interpolation for that so far
+    attackFrame = attackFrame - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
+    local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
 
-          if not attack.origin_x or not attack.origin_y then
-            attack.origin_x = (attack.attackDrawColumn-1) * 16 + self.sender.panelOriginX
-            attack.origin_y = (11-attack.attackDrawRow) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[frames_since_earned] or 0)
-            attack.direction = math.sign(garbage_block.destination_x - attack.origin_x) --should give -1 for left, or 1 for right
-          end
+    -- fixed y location
+    local destinationY = self.originY - TELEGRAPH_PADDING
+    local garbageBlockX = attackX + percent * (destinationX - attackX)
+    local garbageBlockY = attackX + percent * (destinationY - attackY)
 
-          if self.sender.opacityForFrame then
-            GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(frames_since_earned, 1, 8))
-          end
+    GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
+  end
 
-          if frames_since_earned <= self:attackAnimationStartFrame() + #telegraph_attack_animation_speed then
-            --draw telegraph attack animation, little loop down and to the side of origin.
+  GraphicsUtil.setColor(1, 1, 1, 1)
+end
 
-            -- We can't gaurantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
-            -- TODO make this more performant?
-            local garbageBlockX, garbageBlockY = self:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
-
-            GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
-          else
-            --move toward destination
-
-            local loopX, loopY = self:telegraphLoopAttackPosition(attack, garbage_block, frames_since_earned)
-            local framesHappened = frames_since_earned - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
-            local totalFrames = self:attackAnimationEndFrame() - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
-            local percent =  framesHappened / totalFrames
-
-            local garbageBlockX = loopX + percent * (garbage_block.destination_x - loopX)
-            local garbageBlockY = loopY + percent * (garbage_block.destination_y - loopY)
-
-            GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, atk_scale, atk_scale)
-          end
-
-          GraphicsUtil.setColor(1, 1, 1, 1)
-        end
+function Telegraph:renderAttacks()
+  for i = #self.sender.outgoingGarbage.stagedGarbage, 1, -1 do
+    local garbage = self.sender.outgoingGarbage.stagedGarbage[i]
+    local drawIndex = math.abs(i - #self.sender.outgoingGarbage.stagedGarbage)
+    if garbage.isChain then
+      for frameEarned, location in pairs(garbage.links) do
+        self:renderAttackMovement(frameEarned, drawIndex, location.rowEarned, location.colEarned)
       end
+    else
+      self:renderAttackMovement(garbage.frameEarned, drawIndex, garbage.rowEarned, garbage.colEarned)
     end
   end
 end
@@ -212,7 +223,7 @@ function Telegraph:renderStagedGarbageIcons()
 end
 
 function Telegraph:render()
-  if false then--config.renderAttacks then
+  if config.renderAttacks then
     self:renderAttacks()
   end
 
