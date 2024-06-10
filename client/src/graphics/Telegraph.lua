@@ -116,11 +116,15 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
     return
   end
 
+  local character = characters[self.sender.character]
+  local width, height = character.telegraph_garbage_images["attack"]:getDimensions()
+  local attackScale = 16 / math.max(width, height) -- keep image ratio
+
   if self.sender.opacityForFrame then
     GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(attackFrame, 1, 8))
   end
 
-  local destinationX = self:telegraphRenderXPosition(telegraphIndex)
+  local destinationX = self:telegraphRenderXPosition(telegraphIndex) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / 16) / 2)
 
   local attackX = (colOrigin - 1) * 16 + self.sender.panelOriginX
   local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0)
@@ -134,10 +138,6 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
     attackX = attackX + telegraph_attack_animation[horizontalDirection][frame].dx
     attackY = attackY + telegraph_attack_animation[horizontalDirection][frame].dy
   end
-
-  local character = characters[self.sender.character]
-  local width, height = character.telegraph_garbage_images["attack"]:getDimensions()
-  local attackScale = 16 / math.max(width, height) -- keep image ratio
 
   -- at the start of an attack, the attack sprite makes a small half loop around its origin
   --  that is mostly independent of where the attack goes after (except for choosing the side around which to loop)
