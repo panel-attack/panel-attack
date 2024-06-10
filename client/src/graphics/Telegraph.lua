@@ -123,18 +123,16 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
   local destinationX = self:telegraphRenderXPosition(telegraphIndex)
 
   local attackX = (colOrigin - 1) * 16 + self.sender.panelOriginX
-  local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[attackFrame - 1] or 0)
+  local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[1] or 0)
   -- -1 for left, 1 for right
   local horizontalDirection = math.sign(destinationX - attackX)
 
-  logger.debug("Starting y for the attack is " .. attackY)
   -- We can't guarantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
   -- it should be very possible to just precalculate the values although I think performance here isn't truly problematic either way
   for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation_speed) do
     attackX = attackX + telegraph_attack_animation[horizontalDirection][frame].dx
     attackY = attackY + telegraph_attack_animation[horizontalDirection][frame].dy
-    logger.debug("Added " .. telegraph_attack_animation[horizontalDirection][frame].dy .. " for a total of " .. attackY)
   end
 
   local character = characters[self.sender.character]
@@ -145,7 +143,6 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
   --  that is mostly independent of where the attack goes after (except for choosing the side around which to loop)
   if attackFrame <= #telegraph_attack_animation_speed + self:attackAnimationStartFrame() then
     -- if we aren't past the loopy part yet, draw directly
-    logger.debug("drawing loopy part at " .. attackX .. "|" .. attackY)
     GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], attackX, attackY, 0, attackScale, attackScale)
   else
     -- if we are, attackOriginX and attackOriginY are set to the end of the loopy animation now
