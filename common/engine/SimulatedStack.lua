@@ -56,6 +56,12 @@ function SimulatedStack:run()
     end
   else
     if self.healthEngine then
+      -- perform the equivalent of queued garbage being dropped
+      -- except a little quicker than on real stacks
+      for i = #self.incomingGarbage.stagedGarbage, 1, -1 do
+        self.healthEngine:receiveGarbage(self.clock, self.incomingGarbage:pop())
+      end
+
       self.health = self.healthEngine:run()
       if self.health <= 0 then
         self:setGameOver()
@@ -146,16 +152,6 @@ function SimulatedStack:renderStackHeight()
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
-function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
-  if not self:game_ended() then
-    if self.healthEngine then
-      self.healthEngine:receiveGarbage(frameToReceive, garbageList)
-    else
-      error("Trying to send garbage to a simulated stack without a consumer for the garbage")
-    end
-  end
-end
-
 function SimulatedStack:saveForRollback()
   local copy
 
@@ -164,6 +160,8 @@ function SimulatedStack:saveForRollback()
   else
     copy = {}
   end
+
+  self.incomingGarbage:rollbackCopy(self.clock)
 
   if self.healthEngine then
     self.healthEngine:saveRollbackCopy()
@@ -191,6 +189,8 @@ function SimulatedStack:rollbackToFrame(frame)
     self.rollbackCopyPool:push(self.rollbackCopies[i])
     self.rollbackCopies[i] = nil
   end
+
+  self.incomingGarbage:rollbackToFrame(frame)
 
   if self.attackEngine then
     self.attackEngine:rollbackToFrame(frame)

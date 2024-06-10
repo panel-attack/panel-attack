@@ -108,7 +108,8 @@ function Telegraph:attackAnimationEndFrame()
 end
 
 Telegraph.totalTimeAfterLoopToDestination = (Telegraph:attackAnimationEndFrame() - (Telegraph:attackAnimationStartFrame() + #telegraph_attack_animation_speed))
--- this function serves that purpose in particular
+-- TODO:
+-- animation seems to start 1 frame early and the loopy part does not spin quite as far outwards it seems
 function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, colOrigin)
   local attackFrame = self.sender.clock - frameEarned
   if attackFrame < self:attackAnimationStartFrame() or attackFrame >= self:attackAnimationEndFrame() then
@@ -129,7 +130,7 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
   -- We can't guarantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
   -- it should be very possible to just precalculate the values although I think performance here isn't truly problematic either way
-  for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation[horizontalDirection]) do
+  for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation_speed) do
     attackX = attackX + telegraph_attack_animation[horizontalDirection][frame].dx
     attackY = attackY + telegraph_attack_animation[horizontalDirection][frame].dy
   end
