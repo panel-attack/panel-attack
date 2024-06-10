@@ -100,7 +100,7 @@ function Telegraph:attackAnimationStartFrame()
   -- In PA garbage is removed from telegraph early in order to afford the 1 second desync tolerance for online play
   -- to compensate, both attacks and telegraph are shown earlier so they are shown long enough and early enough
   -- their attacks being rendered immediately produces a decent compromise on visuals
-  return 1
+  return 2
 end
 
 function Telegraph:attackAnimationEndFrame()
