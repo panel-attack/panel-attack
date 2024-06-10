@@ -143,6 +143,7 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
   --  that is mostly independent of where the attack goes after (except for choosing the side around which to loop)
   if attackFrame <= #telegraph_attack_animation_speed + self:attackAnimationStartFrame() then
     -- if we aren't past the loopy part yet, draw directly
+    logger.debug("drawing loopy part at " .. attackX .. "|" .. attackY)
     GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], attackX, attackY, 0, attackScale, attackScale)
   else
     -- if we are, attackOriginX and attackOriginY are set to the end of the loopy animation now
@@ -150,7 +151,7 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
     -- and then split up the remaining distance in equal steps across frames
     --
     -- Note that the destination can change after the attack animation started:
-    -- According to my insight the destination only ever move FURTHER AWAY
+    -- According to my insight the destination only ever moves FURTHER AWAY
     -- in that event, the attack animation would skip slightly ahead in that moment; we don't do interpolation for that so far
     attackFrame = attackFrame - (self:attackAnimationStartFrame() + #telegraph_attack_animation_speed)
     local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
