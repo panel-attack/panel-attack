@@ -52,28 +52,25 @@ function Health:damageForHeight(height)
   return height
 end
 
-function Health:receiveGarbage(frameToReceive, garbageList)
-  for k,v in pairs(garbageList) do
-    local width, height, metal, from_chain, finalized = unpack(v)
-    if width and height then
-      local countGarbage = true
-      if not metal and not from_chain and width == 3 then
-        if self.lastWasFourCombo then
-          -- Two four combos in a row, don't count an extra line
-          self.lastWasFourCombo = false
-          countGarbage = false
-        else
-          -- First four combo
-          self.lastWasFourCombo = true
-        end
-      else
-        -- non four combo
+function Health:receiveGarbage(frameToReceive, garbage)
+  if garbage.width and garbage.height then
+    local countGarbage = true
+    if not garbage.isMetal and not garbage.isChain and garbage.width == 3 then
+      if self.lastWasFourCombo then
+        -- Two four combos in a row, don't count an extra line
         self.lastWasFourCombo = false
+        countGarbage = false
+      else
+        -- First four combo
+        self.lastWasFourCombo = true
       end
+    else
+      -- non four combo
+      self.lastWasFourCombo = false
+    end
 
-      if countGarbage then
-        self.currentLines = self.currentLines + self:damageForHeight(height)
-      end
+    if countGarbage then
+      self.currentLines = self.currentLines + self:damageForHeight(garbage.height)
     end
   end
 end

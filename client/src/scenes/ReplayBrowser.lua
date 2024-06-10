@@ -197,7 +197,7 @@ function ReplayBrowser:draw()
     for i = 1, #selectedReplay.players do
       GraphicsUtil.print(loc("rp_browser_info_" .. i .. "p"), menu_x + offsetX, menu_y + 50)
       GraphicsUtil.print(loc("rp_browser_info_name", selectedReplay.players[i].name or ("Player " .. i)), menu_x + offsetX, menu_y + 65)
-      GraphicsUtil.print(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId), menu_x + offsetX, menu_y + 80)
+      GraphicsUtil.print(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId or ""), menu_x + offsetX, menu_y + 80)
       if selectedReplay.players[i].human then
         if selectedReplay.players[i].settings.level then
           GraphicsUtil.print(loc("rp_browser_info_level", selectedReplay.players[i].settings.level), menu_x + offsetX, menu_y + 95)
