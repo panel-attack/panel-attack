@@ -74,13 +74,6 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
-for direction, frames in pairs(telegraph_attack_animation) do
-  logger.debug("offsets for direction " .. direction)
-  for frame, offsets in ipairs(frames) do
-    logger.debug("frame " .. frame ..": dx=" .. offsets.dx .. "; dy=" .. offsets.dy)
-  end
-end
-
 function Telegraph:updatePositionForGarbageTarget(newGarbageTarget)
   self.stackCanvasWidth = newGarbageTarget:stackCanvasWidth()
   self.mirror_x = newGarbageTarget.mirror_x
@@ -111,7 +104,7 @@ function Telegraph:attackAnimationStartFrame()
 end
 
 function Telegraph:attackAnimationEndFrame()
-  return GARBAGE_TRANSIT_TIME
+  return GARBAGE_TRANSIT_TIME + 1
 end
 
 Telegraph.totalTimeAfterLoopToDestination = (Telegraph:attackAnimationEndFrame() - (Telegraph:attackAnimationStartFrame() + #telegraph_attack_animation_speed))
@@ -130,16 +123,18 @@ function Telegraph:renderAttackMovement(frameEarned, telegraphIndex, rowOrigin, 
   local destinationX = self:telegraphRenderXPosition(telegraphIndex)
 
   local attackX = (colOrigin - 1) * 16 + self.sender.panelOriginX
-  local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[attackFrame] or 0)
+  local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0) - (consts.CARD_ANIMATION[attackFrame - 1] or 0)
   -- -1 for left, 1 for right
   local horizontalDirection = math.sign(destinationX - attackX)
 
+  logger.debug("Starting y for the attack is " .. attackY)
   -- We can't guarantee every frame was rendered, so we must calculate the exact location regardless of how many frames happened.
   -- TODO make this more performant?
   -- it should be very possible to just precalculate the values although I think performance here isn't truly problematic either way
   for frame = 1, math.min(attackFrame - self:attackAnimationStartFrame(), #telegraph_attack_animation_speed) do
     attackX = attackX + telegraph_attack_animation[horizontalDirection][frame].dx
     attackY = attackY + telegraph_attack_animation[horizontalDirection][frame].dy
+    logger.debug("Added " .. telegraph_attack_animation[horizontalDirection][frame].dy .. " for a total of " .. attackY)
   end
 
   local character = characters[self.sender.character]
