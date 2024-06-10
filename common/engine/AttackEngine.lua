@@ -41,7 +41,6 @@ local AttackEngine =
     -- the clock to control the continuity of the sending process
     self.clock = 0
 
-    -- the telegraph the attack engine sends its garbage to
     self.telegraph = telegraph
     self.outgoingGarbage = GarbageQueue(true, self.treatMetalAsCombo)
 

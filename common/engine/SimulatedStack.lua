@@ -35,6 +35,8 @@ function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
     self.attackEngine = AttackEngine(attackSettings, self.telegraph)
   end
 
+  self.outgoingGarbage = self.attackEngine.outgoingGarbage
+
   return self.attackEngine
 end
 
@@ -218,11 +220,13 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
     assert(garbageTarget.frameOriginY ~= nil)
     assert(garbageTarget.mirror_x ~= nil)
     assert(garbageTarget.stackCanvasWidth ~= nil)
-    assert(garbageTarget.receiveGarbage ~= nil)
+    assert(garbageTarget.incomingGarbage ~= nil)
   end
   self.garbageTarget = garbageTarget
-  if self.telegraph then
+  if self.attackEngine then
     self.attackEngine:setGarbageTarget(garbageTarget)
+  end
+  if self.telegraph then
     self.telegraph:updatePositionForGarbageTarget(garbageTarget)
   end
 end
