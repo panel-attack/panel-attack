@@ -60,17 +60,24 @@ for k, animation in ipairs(leftward_or_rightward) do
   for frame=1,#telegraph_attack_animation_speed do
     local distance = telegraph_attack_animation_speed[frame]
     local angle = telegraph_attack_animation_angles[animation][frame]/64
-    
+
                 --[[ use trigonometry to find the change in x and the change in y, given the hypotenuse (telegraph_attack_animation_speed) and the angle we should be traveling (2*math.pi*telegraph_attack_animation_angles[left_or_right][frame]/64)
                 
                 I think:              
                 change in y will be hypotenuse*sin angle
                 change in x will be hypotenuse*cos angle
                 --]]
-    
+
     telegraph_attack_animation[animation][frame] = {}
     telegraph_attack_animation[animation][frame].dx = distance * math.cos(angle*2*math.pi)
     telegraph_attack_animation[animation][frame].dy = distance * math.sin(angle*2*math.pi)
+  end
+end
+
+for direction, frames in pairs(telegraph_attack_animation) do
+  logger.debug("offsets for direction " .. direction)
+  for frame, offsets in ipairs(frames) do
+    logger.debug("frame " .. frame ..": dx=" .. offsets.dx .. "; dy=" .. offsets.dy)
   end
 end
 
