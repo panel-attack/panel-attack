@@ -27,8 +27,6 @@ end, StackBase)
 
 -- adds an attack engine to the simulated opponent
 function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
-  --self.telegraph = Telegraph(self)
-
   if shouldPlayAttackSfx then
     self.attackEngine = AttackEngine(attackSettings, self.telegraph, characters[self.character])
   else
@@ -36,9 +34,7 @@ function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
   end
 
   self.outgoingGarbage = self.attackEngine.outgoingGarbage
-  if config.renderTelegraph then
-    self.telegraph = Telegraph(self)
-  end
+  self.telegraph = Telegraph(self)
 
   return self.attackEngine
 end
