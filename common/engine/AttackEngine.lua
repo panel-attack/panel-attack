@@ -127,11 +127,14 @@ function AttackEngine.run(self)
           else
             local garbage = self.attackPatterns[i].garbage
             if garbage.isChain then
-              self.outgoingGarbage:addChainLink(self.clock)
+              self.outgoingGarbage:addChainLink(self.clock, math.random(1, 11), math.random(1, 6))
               local chainCounter = garbage.height + 1
               maxChain = math.max(chainCounter, maxChain)
             else
               garbage.frameEarned = self.clock
+              -- courtesy of telegraph attack animation
+              garbage.rowEarned = math.random(1, 11)
+              garbage.colEarned = math.random(1, 6)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
               self.outgoingGarbage:push(garbage)
             end

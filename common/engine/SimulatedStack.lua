@@ -36,6 +36,9 @@ function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
   end
 
   self.outgoingGarbage = self.attackEngine.outgoingGarbage
+  if config.renderTelegraph then
+    self.telegraph = Telegraph(self)
+  end
 
   return self.attackEngine
 end
