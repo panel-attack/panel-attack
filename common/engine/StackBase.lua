@@ -37,7 +37,7 @@ local StackBase = class(function(self, args)
 
   -- graphics
   -- also relevant for the touch input controller method besides general drawing
-  self.gfxScale = 2
+  self.gfxScale = 3
   self.canvas = love.graphics.newCanvas(104 * self.gfxScale, 204 * self.gfxScale, {dpiscale = GAME:newCanvasSnappedScale()})
   self.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
