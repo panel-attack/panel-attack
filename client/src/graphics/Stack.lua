@@ -951,7 +951,7 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
                   drawGfxScaled(self, garbageImages.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
                 end
               elseif panel.y_offset == -1 then
-                panelSet:addToDraw(panel, draw_x * self.gfxScale, draw_y * self.gfxScale)
+                panelSet:addToDraw(panel, draw_x, draw_y, self.gfxScale)
               end
             else
               if shouldFlashForFrame(flash_time) == false then
@@ -975,7 +975,7 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
             end
           end
         else
-          panelSet:addToDraw(panel, draw_x * self.gfxScale, draw_y * self.gfxScale, self.danger_col, self.danger_timer)
+          panelSet:addToDraw(panel, draw_x, draw_y, self.gfxScale, self.danger_col, self.danger_timer)
         end
       end
     end

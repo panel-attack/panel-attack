@@ -276,7 +276,7 @@ function Panels:load()
     self:loadSheets()
   end
 
-  self.scale = 48 / self.size
+  self.scale = 16 / self.size
 
   self.quad = love.graphics.newQuad(0, 0, self.size, self.size, self.sheets[1])
   self.displayIcons = {}
@@ -451,9 +451,9 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
     conf = self.sheetConfig.swapping
     frame = 1
     if panel.isSwappingFromLeft then
-      x = x - panel.timer * 12
+      x = x - panel.timer * 4
     else
-      x = x + panel.timer * 12
+      x = x + panel.timer * 4
     end
   elseif panel.state == "popped" then
     -- draw nothing
@@ -545,16 +545,17 @@ end
 -- clock: Stack.clock to calculate animation frames
 -- danger: nil - no danger, false - regular danger, true - panic
 -- dangerTimer: remaining time for which the danger animation continues 
-function Panels:addToDraw(panel, x, y, danger, dangerTimer)
+function Panels:addToDraw(panel, x, y, stackScale, danger, dangerTimer)
   if panel.color == 9 then
-    love.graphics.draw(self.greyPanel, x, y, 0, self.scale)
+    love.graphics.draw(self.greyPanel, x, y, 0, self.scale * stackScale)
   else
     local batch = self.batches[panel.color]
     local conf, frame
     conf, frame, x, y = self:getDrawProps(panel, x, y, danger, dangerTimer)
 
     self.quad:setViewport((frame - 1) * self.size, (conf.row - 1) * self.size, self.size, self.size)
-    batch:add(self.quad, x, y, 0, self.scale)
+    -- scale / 3 because for the current standard size of 16
+    batch:add(self.quad, x * stackScale, y * stackScale, 0, self.scale * stackScale)
   end
 end
 
