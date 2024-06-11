@@ -2,7 +2,6 @@ local GameModes = require("common.engine.GameModes")
 local tableUtils = require("common.lib.tableUtils")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
-local GFX_SCALE = consts.GFX_SCALE
 
 function Match:matchelementOriginX()
   local x = 375 + (464) / 2
@@ -98,20 +97,20 @@ function Match:render()
     if self:hasLocalPlayer() then
       if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > GARBAGE_DELAY_LAND_TIME end) then
         -- let the player know that rollback is active
-        local iconSize = 20
+        local iconSize = 60
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
         local x = 5
         local y = 30
-        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width, iconSize / icon_height)
       end
     else
       if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > MAX_LAG * 0.75 end) then
         -- let the spectator know the game is about to die
-        local iconSize = 20
+        local iconSize = 60
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
         local x = (consts.CANVAS_WIDTH / 2) - (iconSize / 2)
         local y = (consts.CANVAS_HEIGHT / 2) - (iconSize / 2)
-        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width * GFX_SCALE, iconSize / icon_height * GFX_SCALE)
+        GraphicsUtil.draw(themes[config.theme].images.IMG_bug, x, y, 0, iconSize / icon_width, iconSize / icon_height)
       end
     end
   end

@@ -1,9 +1,7 @@
 local class = require("common.lib.class")
 local logger = require("common.lib.logger")
-local consts = require("common.engine.consts")
 -- TODO: move graphics related functionality to client
 local GraphicsUtil = require("client.src.graphics.graphics_util")
-local GFX_SCALE = consts.GFX_SCALE
 
 local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
@@ -79,6 +77,7 @@ function Telegraph:updatePositionForGarbageTarget(newGarbageTarget)
   self.mirror_x = newGarbageTarget.mirror_x
   self.originX = newGarbageTarget.frameOriginX
   self.originY = newGarbageTarget.frameOriginY - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
+  self.receiverGfxScale = newGarbageTarget.gfxScale
 end
 
 function Telegraph:telegraphRenderXPosition(index)
@@ -87,7 +86,7 @@ function Telegraph:telegraphRenderXPosition(index)
 
   local result = self.originX
   if self.mirror_x == 1 then
-    result = result + self.stackCanvasWidth / GFX_SCALE + increment
+    result = result + self.stackCanvasWidth / self.receiverGfxScale + increment
   end
 
   result = result + (increment * index)

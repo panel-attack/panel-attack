@@ -3,7 +3,6 @@ local consts = require("common.engine.consts")
 local Signal = require("common.lib.signal")
 -- TODO: move graphics related functionality to client
 local GraphicsUtil = require("client.src.graphics.graphics_util")
-local GFX_SCALE = consts.GFX_SCALE
 
 local StackBase = class(function(self, args)
   assert(args.which)
@@ -33,6 +32,8 @@ local StackBase = class(function(self, args)
   self.canvas = love.graphics.newCanvas(312, 612, {dpiscale = GAME:newCanvasSnappedScale()})
   self.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
+  -- also relevant for the touch input controller method besides general drawing
+  self.gfxScale = 3
 end)
 
 -- Provides the X origin to draw an element of the stack
@@ -47,7 +48,7 @@ function StackBase:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlrea
   if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
     x = self.origin_x
     if legacyOffsetIsAlreadyScaled == false or themes[config.theme]:offsetsAreFixed() then
-      x = x * GFX_SCALE
+      x = x * self.gfxScale
     end
   end
   return x
@@ -62,7 +63,7 @@ function StackBase:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlrea
   if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
     y = self.panelOriginY
     if legacyOffsetIsAlreadyScaled == false or themes[config.theme]:offsetsAreFixed() then
-      y = y * GFX_SCALE
+      y = y * self.gfxScale
     end
   end
   return y
@@ -81,7 +82,7 @@ function StackBase:elementOriginXWithOffset(themePositionOffset, cameFromLegacyS
     xOffset = xOffset * self.mirror_x
   end
   if cameFromLegacyScoreOffset == false and themes[config.theme]:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
-    xOffset = xOffset * GFX_SCALE
+    xOffset = xOffset * self.gfxScale
   end
   local x = self:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + xOffset
   return x
@@ -96,7 +97,7 @@ function StackBase:elementOriginYWithOffset(themePositionOffset, cameFromLegacyS
   end
   local yOffset = themePositionOffset[2]
   if cameFromLegacyScoreOffset == false and themes[config.theme]:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
-    yOffset = yOffset * GFX_SCALE
+    yOffset = yOffset * self.gfxScale
   end
   local y = self:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + yOffset
   return y
@@ -202,14 +203,14 @@ function StackBase:moveForRenderIndex(renderIndex)
     self.panelOriginYOffset = 4
 
     local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
-    self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+    self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / self.gfxScale) -- The outer X value of the frame
 
     local frameOriginNonScaled = outerNonScaled
     if self.mirror_x == -1 then
       frameOriginNonScaled = outerNonScaled - stackWidth
     end
-    self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
-    self.frameOriginY = 108 / GFX_SCALE
+    self.frameOriginX = frameOriginNonScaled / self.gfxScale -- The left X value where the frame is drawn
+    self.frameOriginY = 108 / self.gfxScale
 
     self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
     self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
@@ -255,7 +256,7 @@ function StackBase:drawWall(displacement, rowCount)
   local wallImage = themes[config.theme].images.walls[self.which]
 
   if wallImage then
-    local y = (4 - displacement + rowCount * 16) * GFX_SCALE
+    local y = (4 - displacement + rowCount * 16) * self.gfxScale
     local width = 288
     local scaleX = width / wallImage:getWidth()
     GraphicsUtil.draw(wallImage, 12, y, 0, scaleX, scaleX)
@@ -295,7 +296,7 @@ end
 function StackBase:drawCanvas()
   love.graphics.setCanvas(GAME.globalCanvas)
   love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.canvas, self.frameOriginX * GFX_SCALE, self.frameOriginY * GFX_SCALE)
+  love.graphics.draw(self.canvas, self.frameOriginX * self.gfxScale, self.frameOriginY * self.gfxScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
 end
 

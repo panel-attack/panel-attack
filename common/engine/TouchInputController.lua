@@ -4,9 +4,6 @@ local util = require("common.lib.util")
 local consts = require("common.engine.consts")
 local class = require("common.lib.class")
 
--- TODO: Eliminate GFX_SCALE in favor of a scaling field that lives on stack
-local GFX_SCALE = consts.GFX_SCALE
-
 local TOUCH_SWAP_COOLDOWN = 5  -- default number of cooldown frames between touch-input swaps, applied after the first 2 swaps after a touch is initiated, to prevent excessive or accidental stealths
 
 -- An object that manages touches on the screen and translates them to swaps on a stack
@@ -89,17 +86,17 @@ end
 
 function TouchInputController:isMouseOverStack(mouseX, mouseY)
   return 
-    mouseX >= self.stack.panelOriginX * GFX_SCALE and mouseX <= (self.stack.panelOriginX * GFX_SCALE) + (self.stack.width * 16) * GFX_SCALE and
-    mouseY >= self.stack.panelOriginY * GFX_SCALE and mouseY <= (self.stack.panelOriginY * GFX_SCALE) + (self.stack.height* 16) * GFX_SCALE
+    mouseX >= self.stack.panelOriginX * self.stack.gfxScale and mouseX <= (self.stack.panelOriginX + (self.stack.width * 16)) * self.stack.gfxScale and
+    mouseY >= self.stack.panelOriginY * self.stack.gfxScale and mouseY <= (self.stack.panelOriginY + (self.stack.height* 16)) * self.stack.gfxScale
 end
 
 -- Returns the touched panel coordinate or nil if the stack isn't currently touched
 function TouchInputController:touchedPanelCoordinate(mouseX, mouseY)
   local stackHeight = self.stack.height
   local stackWidth = self.stack.width
-  local stackLeft = (self.stack.panelOriginX * GFX_SCALE)
-  local stackTop = (self.stack.panelOriginY * GFX_SCALE)
-  local panelSize = 16 * GFX_SCALE
+  local stackLeft = (self.stack.panelOriginX * self.stack.gfxScale)
+  local stackTop = (self.stack.panelOriginY * self.stack.gfxScale)
+  local panelSize = 16 * self.stack.gfxScale
   local stackRight = stackLeft + stackWidth * panelSize
   local stackBottom = stackTop + stackHeight * panelSize
 
@@ -116,7 +113,7 @@ function TouchInputController:touchedPanelCoordinate(mouseX, mouseY)
     return 0, 0
   end
 
-  local displacement =  self.stack.displacement * GFX_SCALE
+  local displacement =  self.stack.displacement * self.stack.gfxScale
   local row = math.floor((stackBottom - mouseY + displacement) / panelSize)
   local column = math.floor((mouseX - stackLeft) / panelSize) + 1
 
