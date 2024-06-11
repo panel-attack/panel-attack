@@ -14,16 +14,9 @@ local Leaderboard = require("client.src.ui.Leaderboard")
 local Lobby = class(function(self, sceneParams)
   self.music = "main"
 
-  -- lobby data from the server
-  self.playerData = nil
-  self.unpairedPlayers = {} -- list
-  self.willingPlayers = {} -- set
-  self.spectatableRooms = {}
-  -- requests to play a match, not web requests
-  self.sentRequests = {}
-
   -- ui
   self.leaderboard = Leaderboard({isVisible = false, x = 200, hAlign = "center", vAlign = "center"})
+  self.lobbyMessage = Label({text = "lb_select_player"})
   self.backgroundImg = themes[config.theme].images.bg_main
   self.lobbyMenu = nil
   self.lobbyMenuXoffsetMap = {
@@ -61,7 +54,7 @@ function Lobby:load(sceneParams)
   GAME.netClient:connectSignal("lobbyStateUpdate", self, self.onLobbyStateUpdate)
   GAME.netClient:connectSignal("disconnect", self, self.onDisconnect)
   GAME.netClient:connectSignal("leaderboardUpdate", self.leaderboard, self.leaderboard.updateData)
-  GAME.netClient:connectSignal("loginFailed", self, self.onLoginFailure)
+  GAME.netClient:connectSignal("loginFinished", self, self.onLoginFinish)
 
   self:initLobbyMenu()
   self.uiRoot:addChild(self.leaderboard)
@@ -69,12 +62,13 @@ end
 
 function Lobby:initLobbyMenu()
   local menuItems = {
+    MenuItem.createMenuItem(self.lobbyMessage),
     MenuItem.createButtonMenuItem("lb_show_board", nil, nil, function()
       self:toggleLeaderboard()
     end),
     MenuItem.createButtonMenuItem("lb_back", nil, nil, exitMenu)
   }
-  self.leaderboardToggleLabel = menuItems[1].textButton.children[1]
+  self.leaderboardToggleLabel = menuItems[2].textButton.children[1]
 
   self.lobbyMenuStartingUp = true
   self.lobbyMenu = Menu.createCenteredMenu(menuItems)
@@ -131,12 +125,15 @@ end
 
 -- rebuilds the UI based on the new lobby information
 function Lobby:onLobbyStateUpdate(lobbyState)
-  local previousText = self.lobbyMenu.menuItems[self.lobbyMenu.selectedIndex].textButton.children[1].text
+  local previousText
+  if self.lobbyMenu.menuItems[self.lobbyMenu.selectedIndex].textButton then
+    previousText = self.lobbyMenu.menuItems[self.lobbyMenu.selectedIndex].textButton.children[1].text
+  end
   local desiredIndex = self.lobbyMenu.selectedIndex
 
   -- cleanup previous lobby menu
-  while #self.lobbyMenu.menuItems > 2 do
-    self.lobbyMenu:removeMenuItemAtIndex(1)
+  while #self.lobbyMenu.menuItems > 3 do
+    self.lobbyMenu:removeMenuItemAtIndex(2)
   end
   self.lobbyMenu:setSelectedIndex(1)
 
@@ -149,7 +146,7 @@ function Lobby:onLobbyStateUpdate(lobbyState)
       if lobbyState.willingPlayers[v] then
         unmatchedPlayer = unmatchedPlayer .. " " .. loc("lb_received")
       end
-      self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(unmatchedPlayer, nil, false, self:requestGameFunction(v)))
+      self.lobbyMenu:addMenuItem(2, MenuItem.createButtonMenuItem(unmatchedPlayer, nil, false, self:requestGameFunction(v)))
     end
   end
   for _, room in ipairs(lobbyState.spectatableRooms) do
@@ -157,21 +154,21 @@ function Lobby:onLobbyStateUpdate(lobbyState)
       local playerA = room.a .. self:playerRatingString(room.a)
       local playerB = room.b .. self:playerRatingString(room.b)
       local roomName = loc("lb_spectate") .. " " .. playerA .. " vs " .. playerB .. " (" .. room.state .. ")"
-      self.lobbyMenu:addMenuItem(1, MenuItem.createButtonMenuItem(roomName, nil, false, self:requestSpectateFunction(room)))
+      self.lobbyMenu:addMenuItem(2, MenuItem.createButtonMenuItem(roomName, nil, false, self:requestSpectateFunction(room)))
     end
   end
 
   if self.lobbyMenuStartingUp then
-    self.lobbyMenu:setSelectedIndex(1)
+    self.lobbyMenu:setSelectedIndex(2)
     self.lobbyMenuStartingUp = false
   else
     for i = 1, #self.lobbyMenu.menuItems do
-      if self.lobbyMenu.menuItems[i].textButton.children[1].text == previousText then
+      if self.lobbyMenu.menuItems[i].textButton and self.lobbyMenu.menuItems[i].textButton.children[1].text == previousText then
         desiredIndex = i
         break
       end
     end
-    self.lobbyMenu:setSelectedIndex(util.bound(1, desiredIndex, #self.lobbyMenu.menuItems))
+    self.lobbyMenu:setSelectedIndex(util.bound(2, desiredIndex, #self.lobbyMenu.menuItems))
   end
 end
 
@@ -185,6 +182,13 @@ function Lobby:update(dt)
   if GAME.netClient.state == NetClient.STATES.LOGIN then
     loginStateLabel:setText(GAME.netClient.loginState or "")
   else
+    if GAME.timer > GAME.netClient.loginTime + 5 then
+      if #GAME.netClient.lobbyData.players == 1 then
+        self.lobbyMessage:setText("lb_alone", nil, true)
+      else
+        self.lobbyMessage:setText("lb_select_player", nil, true)
+      end
+    end
     self.lobbyMenu:receiveInputs()
   end
 end
@@ -206,9 +210,13 @@ function Lobby:onDisconnect()
   end
 end
 
-function Lobby:onLoginFailure(message)
-  local messageTransition = MessageTransition(love.timer.getTime(), 5, message)
-  GAME.navigationStack:pop(messageTransition)
+function Lobby:onLoginFinish(result)
+  if result.loggedIn then
+    self.lobbyMessage:setText(result.message, nil, false)
+  else
+    local messageTransition = MessageTransition(love.timer.getTime(), 5, result.message)
+    GAME.navigationStack:pop(messageTransition)
+  end
 end
 
 return Lobby

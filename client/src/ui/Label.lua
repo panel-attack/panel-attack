@@ -16,6 +16,10 @@ local Label = class(
 )
 
 function Label:setText(text, replacementTable, translate)
+  if text == self.text and replacementTable == self.replacementTable and self.translate == translate then
+    return
+  end
+
   -- whether we should translate the label or not
   if translate ~= nil then
     self.translate = translate
