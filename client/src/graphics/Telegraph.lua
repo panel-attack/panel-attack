@@ -117,7 +117,7 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
 
   local character = characters[self.sender.character]
   local width, height = character.telegraph_garbage_images["attack"]:getDimensions()
-  local attackScale = 16 / math.max(width, height) -- keep image ratio
+  local attackScale = self.receiverGfxScale * 16 / math.max(width, height) -- keep image ratio
 
   if self.sender.opacityForFrame then
     GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(attackFrame, 1, 8))
@@ -142,7 +142,8 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
   --  that is mostly independent of where the attack goes after (except for choosing the side around which to loop)
   if attackFrame <= #telegraph_attack_animation_speed + self:attackAnimationStartFrame() then
     -- if we aren't past the loopy part yet, draw directly
-    GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], attackX, attackY, 0, attackScale, attackScale)
+    -- TODO: tween the scale between sender and receiver scale
+    GraphicsUtil.draw(character.telegraph_garbage_images["attack"], attackX * self.receiverGfxScale, attackY * self.receiverGfxScale, 0, attackScale, attackScale)
   else
     -- if we are, attackOriginX and attackOriginY are set to the end of the loopy animation now
     -- that means we have to calculate the distance to the desired garbage
@@ -156,10 +157,10 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
 
     -- fixed y location
     local destinationY = self.originY - TELEGRAPH_PADDING
-    local garbageBlockX = attackX + percent * (destinationX - attackX)
-    local garbageBlockY = attackY + percent * (destinationY - attackY)
+    attackX = attackX + percent * (destinationX - attackX)
+    attackY = attackY + percent * (destinationY - attackY)
 
-    GraphicsUtil.drawGfxScaled(character.telegraph_garbage_images["attack"], garbageBlockX, garbageBlockY, 0, attackScale, attackScale)
+    GraphicsUtil.draw(character.telegraph_garbage_images["attack"], attackX * self.receiverGfxScale, attackY * self.receiverGfxScale, 0, attackScale, attackScale)
   end
 
   GraphicsUtil.setColor(1, 1, 1, 1)
@@ -184,8 +185,8 @@ local iconWidth = 24
 
 function Telegraph:renderStageGarbageIcon(garbage, telegraphIndex)
   local character = characters[self.sender.character]
-  local y = self.originY
-  local x = self:telegraphRenderXPosition(telegraphIndex)
+  local y = self.originY * self.receiverGfxScale
+  local x = self:telegraphRenderXPosition(telegraphIndex) * self.receiverGfxScale
   local image
   if garbage.isChain then
     if config.renderAttacks then
@@ -220,10 +221,10 @@ function Telegraph:renderStageGarbageIcon(garbage, telegraphIndex)
   end
 
   local width, height = image:getDimensions()
-  local xScale = iconWidth / width
-  local yScale = iconHeight / height
+  local xScale = iconWidth / width * self.receiverGfxScale
+  local yScale = iconHeight / height * self.receiverGfxScale
 
-  GraphicsUtil.drawGfxScaled(image, x, y, 0, xScale, yScale)
+  GraphicsUtil.draw(image, x, y, 0, xScale, yScale)
 end
 
 function Telegraph:renderStagedGarbageIcons()

@@ -4,6 +4,13 @@ local Signal = require("common.lib.signal")
 -- TODO: move graphics related functionality to client
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 
+-- Draws an image at the given spot while scaling all coordinate and scale values with stack.gfxScale
+local function drawGfxScaled(stack, img, x, y, rot, xScale, yScale)
+  xScale = xScale or 1
+  yScale = yScale or 1
+  GraphicsUtil.draw(img, x * stack.gfxScale, y * stack.gfxScale, rot, xScale * stack.gfxScale, yScale * stack.gfxScale)
+end
+
 local StackBase = class(function(self, args)
   assert(args.which)
   assert(args.is_local ~= nil)
@@ -239,7 +246,7 @@ function StackBase:drawCharacter()
     end
   end
 
-  characters[self.character]:drawPortrait(self.which, self.panelOriginXOffset, self.panelOriginYOffset, self.portraitFade)
+  characters[self.character]:drawPortrait(self.which, self.panelOriginXOffset, self.panelOriginYOffset, self.portraitFade, self.gfxScale)
 end
 
 function StackBase:drawFrame()
@@ -272,14 +279,14 @@ function StackBase:drawCountdown()
     local countdown_x = 44
     local countdown_y = 68
     if self.clock <= 8 then
-      GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+      drawGfxScaled(self, themes[config.theme].images.IMG_ready, ready_x, ready_y)
     elseif self.clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+        drawGfxScaled(self, themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end
       local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
-        GraphicsUtil.drawGfxScaled(IMG_number_to_draw, countdown_x, countdown_y)
+        drawGfxScaled(self, IMG_number_to_draw, countdown_x, countdown_y)
       end
     end
   end

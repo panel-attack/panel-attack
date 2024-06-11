@@ -34,8 +34,6 @@ local function drawQuadGfxScaled(stack, image, quad, x, y, rotation, xScale, ySc
   GraphicsUtil.drawQuad(image, quad, x * stack.gfxScale, y * stack.gfxScale, rotation, xScale * stack.gfxScale, yScale * stack.gfxScale, xOffset, yOffset)
 end
 
-local GFX_SCALE = 3
-
 -- there were some experiments for different shake animation
 -- their stale code was removed with commit 4104c86b3005f8d8c2931767d3d2df5618f2ac15
 
@@ -60,8 +58,7 @@ local function calculateShakeData(maxShakeFrames, maxAmplitude)
   local shakeStep = 1 / (#shakeData - 1)
   local shakeMultiplier = 1
   for i = 1, #shakeData do
-    -- TODO: this is all multiplicative, the gfx scale can be factored in after the data is pulled
-    shakeData[i] = shakeData[i] * shakeMultiplier * GFX_SCALE * 13
+    shakeData[i] = shakeData[i] * shakeMultiplier * 13
     -- print(shakeData[i])
     shakeMultiplier = shakeMultiplier - shakeStep
   end
@@ -75,7 +72,7 @@ function Stack:currentShakeOffset()
   return self:shakeOffsetForShakeFrames(self.shake_time, self.prev_shake_time)
 end
 
-local function privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+local function privateShakeOffsetForShakeFrames(frames, shakeIntensity, gfxScale)
   if frames <= 0 then
     return 0
   end
@@ -83,7 +80,7 @@ local function privateShakeOffsetForShakeFrames(frames, shakeIntensity)
   local lookupIndex = #shakeOffsetData - frames
   local result = shakeOffsetData[lookupIndex] or 0
   if result ~= 0 then
-    result = math.integerAwayFromZero(result * shakeIntensity)
+    result = math.integerAwayFromZero(result * shakeIntensity * gfxScale)
   end
   return result
 end
@@ -94,11 +91,11 @@ function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeIntensi
     shakeIntensity = config.shakeIntensity
   end
 
-  local result = privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+  local result = privateShakeOffsetForShakeFrames(frames, shakeIntensity, self.gfxScale)
   -- If we increased shake time we don't want to hard jump to the new value as its jarring.
   -- Interpolate on the first frame to smooth it out a little bit.
   if previousShakeTime > 0 and previousShakeTime < frames then
-    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeIntensity)
+    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeIntensity, self.gfxScale)
     result = math.integerAwayFromZero((result + previousOffset) / 2)
   end
   return result
