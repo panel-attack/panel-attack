@@ -253,8 +253,8 @@ function StackBase:drawFrame()
   local frameImage = themes[config.theme].images.frames[self.which]
 
   if frameImage then
-    local scaleX = 312 / frameImage:getWidth()
-    local scaleY = 612 / frameImage:getHeight()
+    local scaleX = self.canvas:getWidth() / frameImage:getWidth()
+    local scaleY = self.canvas:getHeight() / frameImage:getHeight()
     GraphicsUtil.draw(frameImage, 0, 0, 0, scaleX, scaleY)
   end
 end
@@ -264,8 +264,8 @@ function StackBase:drawWall(displacement, rowCount)
 
   if wallImage then
     local y = (4 - displacement + rowCount * 16) * self.gfxScale
-    local width = 288
-    local scaleX = width / wallImage:getWidth()
+    local width = 92
+    local scaleX = width * self.gfxScale / wallImage:getWidth()
     GraphicsUtil.draw(wallImage, 12, y, 0, scaleX, scaleX)
   end
 end
