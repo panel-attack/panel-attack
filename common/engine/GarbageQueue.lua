@@ -230,8 +230,8 @@ end
 function GarbageQueue:pop()
   -- default value for table.remove is the length, so the last index
   local garbage = table.remove(self.stagedGarbage)
-  logger.debug("popping garbage piece " .. table_to_string(garbage))
-  logger.debug("remaining staged garbage " .. self:toString())
+  logger.debug("popping garbage piece\n" .. table_to_string(garbage))
+  logger.debug("remaining staged garbage\n" .. self:toString())
   return garbage
 end
 
@@ -240,9 +240,6 @@ function GarbageQueue:getOldestFinishedTransitTime()
 end
 
 function GarbageQueue:popFinishedTransitsAt(clock)
-  if clock == 250 then
-    local phi = 5
-  end
   if self.transitTimers:peek() == clock then
     self.transitTimers:pop()
     return self.garbageInTransit[clock]
