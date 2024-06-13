@@ -201,6 +201,8 @@ function Telegraph:renderStageGarbageIcon(garbage, telegraphIndex)
         -- don't display anything if the attack for the first chain link is still underway
         return
       else
+        -- 14 is the maximum we have default data for
+        displayHeight = math.min(displayHeight, 14)
         image = character.telegraph_garbage_images[displayHeight][6]
       end
     else
