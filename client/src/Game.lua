@@ -342,7 +342,7 @@ function Game.errorData(errorString, traceBack)
   else
     buildVersion = "Unknown"
   end
-   
+
   local name, version, vendor, device = love.graphics.getRendererInfo()
   local rendererInfo = name .. ";" .. version .. ";" .. vendor .. ";" .. device
 
