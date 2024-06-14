@@ -1362,6 +1362,8 @@ function Stack.simulate(self)
         end
       elseif not self.manual_raise_yet then
         self.manual_raise = false
+      elseif self:has_falling_garbage() then
+        self.manual_raise = false
       end
     -- if the stack is rise locked when you press the raise button,
     -- the raising is cancelled
