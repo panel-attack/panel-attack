@@ -578,9 +578,10 @@ deadState.update = function(panel, panels)
   -- dead is dead
 end
 
--- returns false if this panel can be swapped
--- true if it can not be swapped
-function Panel.canSwap(self)
+-- returns true if this panel is allowed to be swapped based on its color, state and dont_swap flag
+-- false if it can not be swapped
+-- a panel that is allowed to swap may still not be swappable for other reasons (see Stack.canSwap)
+function Panel.allowsSwap(self)
   -- the panel was flagged as unswappable inside of the swap function
   -- this flag should honestly go die and the connected checks should be part of the canSwap func if possible
   if self.dont_swap then

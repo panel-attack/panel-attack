@@ -257,33 +257,26 @@ end
 function TouchInputController:tryPerformTouchSwap(targetColumn)
   if self.touchSwapCooldownTimer == 0
   and self.stack.cur_col ~= 0 and targetColumn ~= self.stack.cur_col then
-    local swapSuccessful = false
     -- +1 for swapping to the right, -1 for swapping to the left
     local swapDirection = math.sign(targetColumn - self.stack.cur_col)
-    local swapOrigin = {row = self.stack.cur_row, col = self.stack.cur_col}
-    local swapDestination = {row = self.stack.cur_row, col = self.stack.cur_col + swapDirection}
+    local originPanel = self.stack.panels[self.stack.cur_row][self.stack.cur_col]
+    local destinationPanel = self.stack.panels[self.stack.cur_row][self.stack.cur_col + swapDirection]
 
-    if swapDirection == 1 then
-      swapSuccessful = self.stack:canSwap(swapOrigin.row, swapOrigin.col)
-    else
-      swapSuccessful = self.stack:canSwap(swapDestination.row, swapDestination.col)
-    end
-
-    if swapSuccessful then
+    if self.stack:canSwap(originPanel, destinationPanel) then
       self.swapsThisTouch = self.swapsThisTouch + 1
       --third swap onward is slowed down to prevent excessive or accidental stealths
       if self.swapsThisTouch >= 2 then
         self.touchSwapCooldownTimer = TOUCH_SWAP_COOLDOWN
       end
-      return self.stack.cur_row, swapDestination.col
+      return self.stack.cur_row, destinationPanel.column
     else
       --we failed to swap toward the target
       --if both origin and destination are blank panels
-      if (self.stack.panels[swapOrigin.row][swapOrigin.col].color == 0
-        and self.stack.panels[swapDestination.row][swapDestination.col].color == 0) then
+      if (self.stack.panels[originPanel.row][originPanel.column].color == 0
+        and self.stack.panels[destinationPanel.row][destinationPanel.column].color == 0) then
         --we tried to swap two empty panels.  Let's put the cursor on swap_destination
-        return swapDestination.row, swapDestination.col
-      elseif not self.stack.panels[swapDestination.row][swapDestination.col]:canSwap() then
+        return destinationPanel.row, destinationPanel.column
+      elseif not self.stack.panels[destinationPanel.row][destinationPanel.column]:allowsSwap() then
         -- there are unswappable (likely clearing) panels in the way of the swap 
         -- let's set lingeringTouchCursor to the origin of the failed swap
         logger.trace("lingeringTouchCursor was set because destination panel was not swappable")
