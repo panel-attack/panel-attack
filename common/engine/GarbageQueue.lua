@@ -72,27 +72,6 @@ local function orderGarbage(garbageQueue, treatMetalAsCombo)
   return garbageQueue
 end
 
-
--- tracking a release time actually seems unnecessary as timers don't matter as long as sorting happens correctly
--- meaning later attack times go higher in priority so they automatically stall the pop of any later ones
-
--- -- updates the releaseTime of the piece of garbage and all garbage after it
--- -- the idea is that no garbage can have a releaseTime smaller than garbage with higher priority
--- -- priority increases with index
--- local function updateReleaseTimes(garbageQueue)
---   local releaseTime = 0
---   for i = #garbageQueue, 1, -1 do
---     if garbageQueue[i].releaseTime == releaseTime then
---     elseif garbageQueue[i].releaseTime > releaseTime then
---       -- so if as expected, releaseTime is higher, refresh releaseTime to check for the next element
---       releaseTime = garbageQueue[i].releaseTime
---     else
---       -- if releaseTime is lower, the element inherits the releaseTime
---       garbageQueue[i].releaseTime = releaseTime
---     end
---   end
--- end
-
 -- Holds garbage in a queue and follows a specific order for which types should be popped out first.
 GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
   -- holds all garbage in the staging phase in a continously integer indexed array
@@ -101,6 +80,10 @@ GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
   -- holds all garbage that left staging phase in a non-continously integer indexed hash
   -- the clock time for delivery is used as the index, meaning it has a lot of gaps
   self.garbageInTransit = {}
+  -- the garbage history contains references to all garbage that got pushed into this queue
+  -- in the order it got pushed
+  -- only exists for easier evaluation / testcases
+  self.history = {}
   -- holds the clock times for which garbageInTransit has garbage in a continuously integer indexed ordered array
   -- for easier access and order sensitive iteration
   self.transitTimers = Queue()
@@ -147,6 +130,16 @@ function GarbageQueue:rollbackCopy(frame)
     copy.transitTimers:push(self.transitTimers[i])
   end
 
+  -- by-reference copy works fine for the history
+  for i = 1, #self.history do
+    if self.history[i] == self.currentChain then
+      -- only need to make sure to use the deepcopied variant of the current chain
+      copy.history[i] = copy.currentChain
+    else
+      copy.history[i] = self.history[i]
+    end
+  end
+
   -- these two should never change during the life time of a garbage queue
   -- copy.illegalStuffIsAllowed = self.illegalStuffIsAllowed
   -- copy.treatMetalAsCombo = self.treatMetalAsCombo
@@ -162,6 +155,7 @@ function GarbageQueue:rollbackToFrame(frame)
   local copy = self.rollbackCopies[frame]
   self.stagedGarbage = copy.stagedGarbage
   self.garbageInTransit = copy.garbageInTransit
+  self.history = copy.history
   self.transitTimers = copy.transitTimers
   self.currentChain = copy.currentChain
 
@@ -191,17 +185,17 @@ end
 --  isMetal
 --  isChain
 --  frameEarned
---  finalized (optional)
--- for regular chaining you're NOT supposed to use this
--- use GarbageQueue:addChainLink and GarbageQueue:finalizeCurrentChain instead
+--  finalized (only if pushing chains)
+--   for regular chaining you're NOT supposed to use this function
+--   use GarbageQueue:addChainLink and GarbageQueue:finalizeCurrentChain instead
 function GarbageQueue:push(garbage)
   logger.debug("pushing garbage " .. table_to_string(garbage))
   correctChainingFlag(self, garbage)
   self.stagedGarbage[#self.stagedGarbage+1] = garbage
+  self.history[#self.history+1] = garbage
 
   orderGarbage(self.stagedGarbage, self.treatMetalAsCombo)
   logger.debug(self:toString())
-  --updateReleaseTimes(self.stagedGarbage)
 end
 
 -- accepts multiple pieces of garbage in an array
@@ -211,15 +205,15 @@ end
 --  isMetal
 --  isChain
 --  frameEarned
---  finalized (optional)
+--  finalized (only if pushing chains)
+--   for regular chaining you're NOT supposed to use this function
+--   use GarbageQueue:addChainLink and GarbageQueue:finalizeCurrentChain instead
 function GarbageQueue:pushTable(garbageArray)
   logger.debug("pushing garbage table with " .. #garbageArray .. " entries")
   if garbageArray then
     for _, garbage in ipairs(garbageArray) do
       self:push(garbage)
     end
-    --orderGarbage(self.stagedGarbage, self.treatMetalAsCombo)
-    --updateReleaseTimes(self.stagedGarbage)
   end
 end
 
@@ -315,6 +309,7 @@ function GarbageQueue:addChainLink(frameEarned, row, column)
           colEarned = column,
         }
       },
+      linkTimes = {frameEarned}
     }
     self:push(self.currentChain)
   else
@@ -325,8 +320,8 @@ function GarbageQueue:addChainLink(frameEarned, row, column)
       rowEarned = row,
       colEarned = column,
     }
+    self.currentChain.linkTimes[#self.currentChain.linkTimes+1] = frameEarned
   end
-  --updateReleaseTimes(self.stagedGarbage)
 end
 
 -- returns the index of the first garbage block matching the requested type and size, or where it would go if it was in the Garbage_Queue.
@@ -349,6 +344,7 @@ end
 function GarbageQueue:finalizeCurrentChain(clock)
   logger.debug("Finalizing chain at " .. clock)
   self.currentChain.finalized = true
+  self.currentChain.finalizedClock = clock
   self.currentChain = nil
 end
 

@@ -444,7 +444,6 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
       rowEarned = coordinate.row,
       colEarned = coordinate.column
     })
-    self:recordComboHistory(self.clock, 6, 1, true)
     self.analytic:registerShock()
   end
 
@@ -460,7 +459,6 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
       rowEarned = coordinate.row,
       colEarned = coordinate.column
     })
-    self:recordComboHistory(self.clock, combo_pieces[i], 1, false)
   end
 
   if isChain then
@@ -470,26 +468,7 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
       rowOffset = 1
     end
     self.outgoingGarbage:addChainLink(self.clock, coordinate.column, coordinate.row +  rowOffset)
-    self:recordChainHistory()
   end
-end
-
-function Stack:recordComboHistory(time, width, height, metal)
-  if self.combos[time] == nil then
-    self.combos[time] = {}
-  end
-
-  self.combos[time][#self.combos[time] + 1] = {width = width, height = height, metal = metal}
-end
-
-function Stack:recordChainHistory()
-  if self.chain_counter == 2 then
-    self.currentChainStartFrame = self.clock
-    self.chains[self.currentChainStartFrame] = {starts = {}}
-  end
-  local currentChainData = self.chains[self.currentChainStartFrame]
-  currentChainData.size = self.chain_counter
-  currentChainData.starts[#currentChainData.starts + 1] = self.clock
 end
 
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings

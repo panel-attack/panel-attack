@@ -37,12 +37,12 @@ local function rollbackPastAttackTest()
   assert(match.seed == 2992240)
   assert(match.stacks[1].game_over_clock == 2039)
   assert(match.stacks[1].level == 10)
-  assert(tableUtils.length(match.stacks[1].chains) == 4)
-  assert(tableUtils.length(match.stacks[1].combos) == 4)
+  assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return g.isChain end) == 4)
+  assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return not g.isChain end) == 4)
   assert(match.stacks[2].game_over_clock <= 0)
   assert(match.stacks[2].level == 10)
-  assert(tableUtils.length(match.stacks[2].chains) == 4)
-  assert(tableUtils.length(match.stacks[2].combos) == 4)
+  assert(tableUtils.count(match.stacks[2].outgoingGarbage.history, function(g) return g.isChain end) == 4)
+  assert(tableUtils.count(match.stacks[2].outgoingGarbage.history, function(g) return not g.isChain end) == 4)
   StackReplayTestingUtils:cleanup(match)
 end
 
@@ -79,12 +79,12 @@ local function rollbackNotPastAttackTest()
   assert(match.seed == 2992240)
   assert(match.stacks[1].game_over_clock == 2039)
   assert(match.stacks[1].level == 10)
-  assert(tableUtils.length(match.stacks[1].chains) == 4)
-  assert(tableUtils.length(match.stacks[1].combos) == 4)
+  assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return g.isChain end) == 4)
+  assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return not g.isChain end) == 4)
   assert(match.stacks[2].game_over_clock <= 0)
   assert(match.stacks[2].level == 10)
-  assert(tableUtils.length(match.stacks[2].chains) == 4)
-  assert(tableUtils.length(match.stacks[2].combos) == 4)
+  assert(tableUtils.count(match.stacks[2].outgoingGarbage.history, function(g) return g.isChain end) == 4)
+  assert(tableUtils.count(match.stacks[2].outgoingGarbage.history, function(g) return not g.isChain end) == 4)
   StackReplayTestingUtils:cleanup(match)
 end
 
@@ -95,58 +95,78 @@ rollbackNotPastAttackTest()
 -- Make sure the attack only happens once and only once if we rollback before it happened
 local function rollbackFullyPastAttack()
   local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "v046-2023-02-01-05-38-16-vsSelf-L8.txt")
+  local outgoingGarbage = match.stacks[1].outgoingGarbage
 
   StackReplayTestingUtils:simulateMatchUntil(match, 360)
-  assert(match.stacks[1].combos[344] ~= nil and match.stacks[1].combos[344][1].width == 3)
+  -- combo got queued
+  assert(not outgoingGarbage.stagedGarbage[1].isChain and outgoingGarbage.stagedGarbage[1].width == 3
+      and outgoingGarbage.stagedGarbage[1].frameEarned == 344)
 
   match:debugRollbackAndCaptureState(344)
-  assert(match.stacks[1].combos[344] == nil)
+  -- combo disappeared after rollback (344 means frame 343 has just completed and 344 has yet to run; combo is earned on 344 so shouldn't be in yet)
+  assert(outgoingGarbage.stagedGarbage[1] == nil)
 
   StackReplayTestingUtils:simulateMatchUntil(match, 480)
 
-  assert(match.stacks[1].chains[428] ~= nil and match.stacks[1].chains[428].size == 2)
-  assert(match.stacks[1].combos[344] ~= nil and match.stacks[1].combos[344][1].width == 3)
+  -- first chain link is queued
+  assert(outgoingGarbage.stagedGarbage[2] ~= nil and outgoingGarbage.stagedGarbage[2].isChain
+     and outgoingGarbage.stagedGarbage[2].frameEarned == 428 and outgoingGarbage.stagedGarbage[2].height == 1)
+  -- combo is queued
+  assert(not outgoingGarbage.stagedGarbage[1].isChain and outgoingGarbage.stagedGarbage[1].width == 3
+      and outgoingGarbage.stagedGarbage[1].frameEarned == 344)
 
   match:debugRollbackAndCaptureState(420)
-  assert(match.stacks[1].chains[428] == nil)
-  assert(match.stacks[1].combos[344] ~= nil and match.stacks[1].combos[344][1].width == 3)
+  -- first chain link got removed by rollback (only earned 8 frames later)
+  assert(outgoingGarbage.stagedGarbage[2] == nil)
+  -- combo is still queued
+  assert(not outgoingGarbage.stagedGarbage[1].isChain and outgoingGarbage.stagedGarbage[1].width == 3
+      and outgoingGarbage.stagedGarbage[1].frameEarned == 344)
 
   StackReplayTestingUtils:simulateMatchUntil(match, 480)
-  assert(match.stacks[1].chains[428] ~= nil and match.stacks[1].chains[428].size == 2)
-  assert(match.stacks[1].combos[344] ~= nil and match.stacks[1].combos[344][1].width == 3)
+  -- first chain link is queued
+  assert(outgoingGarbage.stagedGarbage[2] ~= nil and outgoingGarbage.stagedGarbage[2].isChain
+     and outgoingGarbage.stagedGarbage[2].frameEarned == 428 and outgoingGarbage.stagedGarbage[2].height == 1)
+  -- combo is queued
+  assert(not outgoingGarbage.stagedGarbage[1].isChain and outgoingGarbage.stagedGarbage[1].width == 3
+      and outgoingGarbage.stagedGarbage[1].frameEarned == 344)
+      -- no other garbage in here either
+  assert(#outgoingGarbage.stagedGarbage == 2)
 
   StackReplayTestingUtils:simulateMatchUntil(match, 637)
-  assert(match.stacks[1].chains[428] ~= nil)
-  assert(match.stacks[1].chains[428].size == 4)
-  assert(match.stacks[1].chains[428].starts[1] == 428)
-  assert(match.stacks[1].chains[428].starts[2] == 499)
-  assert(match.stacks[1].chains[428].starts[3] == 571)
-  assert(match.stacks[1].chains[428].finish == 636)
+  local chainGarbage = outgoingGarbage.stagedGarbage[2]
+  assert(chainGarbage ~= nil)
+  assert(chainGarbage.height == 3)
+  assert(chainGarbage.linkTimes[1] == 428)
+  assert(chainGarbage.linkTimes[2] == 499)
+  assert(chainGarbage.linkTimes[3] == 571)
+  assert(chainGarbage.finalizedClock == 636)
 
   match:debugRollbackAndCaptureState(570)
-  assert(match.stacks[1].currentChainStartFrame == 428)
-  assert(match.stacks[1].chains[428] ~= nil)
-  assert(match.stacks[1].chains[428].size == 3)
-  assert(match.stacks[1].chains[428].starts[1] == 428)
-  assert(match.stacks[1].chains[428].starts[2] == 499)
-  assert(match.stacks[1].chains[428].starts[3] == nil)
-  assert(match.stacks[1].chains[428].finish == nil)
+  chainGarbage = outgoingGarbage.stagedGarbage[2]
+  assert(chainGarbage ~= nil)
+  assert(chainGarbage.height == 2)
+  assert(chainGarbage.linkTimes[1] == 428)
+  assert(chainGarbage.linkTimes[2] == 499)
+  assert(chainGarbage.linkTimes[3] == nil)
+  assert(chainGarbage.finalizedClock == nil)
 
   StackReplayTestingUtils:fullySimulateMatch(match)
-  assert(match.stacks[1].chains[428] ~= nil)
-  assert(match.stacks[1].chains[428].size == 4)
-  assert(match.stacks[1].chains[428].starts[1] == 428)
-  assert(match.stacks[1].chains[428].starts[2] == 499)
-  assert(match.stacks[1].chains[428].starts[3] == 571)
-  assert(match.stacks[1].chains[428].finish == 636)
-  assert(match.stacks[1].combos[344] ~= nil and match.stacks[1].combos[344][1].width == 3)
+  local t = outgoingGarbage.garbageInTransit[722]
+  assert(t[1] ~= nil)
+  assert(t[1].isChain)
+  assert(t[1].height == 3)
+  assert(t[1].linkTimes[1] == 428)
+  assert(t[1].linkTimes[2] == 499)
+  assert(t[1].linkTimes[3] == 571)
+  assert(t[1].finalizedClock == 636)
+  assert(not t[2].isChain and t[2].width == 3 and t[2].frameEarned == 344)
   assert(match ~= nil)
   assert(match.stackInteraction == GameModes.StackInteractions.SELF)
   assert(match.seed == 3917661)
   assert(match.stacks[1].game_over_clock == 797)
   assert(match.stacks[1].level == 8)
-  assert(tableUtils.length(match.stacks[1].chains) == 1)
-  assert(tableUtils.length(match.stacks[1].combos) == 1)
+  assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return g.isChain end) == 1)
+  assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return not g.isChain end) == 1)
   StackReplayTestingUtils:cleanup(match)
 end
 

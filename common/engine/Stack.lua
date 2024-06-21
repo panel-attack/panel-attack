@@ -258,17 +258,6 @@ Stack =
       -- .sender = us
     end
 
-    s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
-    s.chains = {} -- Tracks the chains made throughout the whole game
-    --[[
-        Key - clock time the chain started
-        Value -
-	        starts - array of clock times for the start of each match in the chain
-	        finish - clock time the chain finished
-	        size - the chain size 2, 3, etc
-    ]]
-    s.currentChainStartFrame = nil -- The start frame of the current active chain or nil if no chain is active
-
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
@@ -457,8 +446,7 @@ function Stack.rollbackCopy(source, other)
   other.danger_timer = source.danger_timer
   other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
-  other.currentChainStartFrame = source.currentChainStartFrame
-    
+
   return other
 end
 
@@ -522,34 +510,6 @@ function Stack.rollbackToFrame(self, frame)
     --     end
     --   end
     -- end
-
-    for chainFrame, _ in pairs(self.chains) do
-      if chainFrame >= frame then
-        self.chains[chainFrame] = nil
-      end
-    end
-
-    -- This variable has already been restored above, if its set, that means a chain is in progress
-    -- and we may not have removed the entries that happened before the rollback
-    if self.currentChainStartFrame then
-      local currentChain = self.chains[self.currentChainStartFrame]
-      local size = 0
-      for index, chainFrame in ipairs(currentChain.starts) do
-        if chainFrame >= frame then
-          currentChain.starts[index] = nil
-        else
-          size = size + 1
-        end
-      end
-      currentChain.finish = nil
-      currentChain.size = size + 1
-    end
-
-    for comboFrame, _ in pairs(self.combos) do
-      if comboFrame >= frame then
-        self.combos[comboFrame] = nil
-      end
-    end
 
     self.rollbackCount = self.rollbackCount + 1
     self.lastRollbackFrame = currentFrame
@@ -1372,9 +1332,6 @@ function Stack.simulate(self)
   prof.push("chain update")
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and not self:hasChainingPanels() then
-    self.chains[self.currentChainStartFrame].finish = self.clock
-    self.chains[self.currentChainStartFrame].size = self.chain_counter
-    self.currentChainStartFrame = nil
     if self:canPlaySfx() then
       SFX_Fanfare_Play = self.chain_counter
     end
@@ -1944,8 +1901,8 @@ function Stack.new_row(self)
 end
 
 function Stack:getAttackPatternData()
-
   local data = {}
+  data.attackPatterns = {}
   data.extraInfo = {}
   data.extraInfo.playerName = self.player.name
   data.extraInfo.gpm = self.analytic:getRoundedGPM(self.clock) or 0
@@ -1959,36 +1916,18 @@ function Stack:getAttackPatternData()
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
-  self.currentChainStartFrame = nil
   local defaultEndTime = 70
-  local sortedAttackPatterns = {}
 
-  -- Add in all the chains by time
-  for time, currentChain in pairsSortedByKeys(self.chains) do
-    local endTime = currentChain.finish or currentChain.starts[#currentChain.starts] + defaultEndTime
-    if sortedAttackPatterns[time] == nil then
-      sortedAttackPatterns[time] = {}
-    end
-    local attackPatternBucket = sortedAttackPatterns[time]
-    attackPatternBucket[#attackPatternBucket+1] = {chain = currentChain.starts, chainEndTime = endTime}
-  end
-
-  -- Add in all the combos by time
-  for time, combos in pairsSortedByKeys(self.combos) do
-    for index, garbage in ipairs(combos) do
-      if sortedAttackPatterns[time] == nil then
-        sortedAttackPatterns[time] = {}
+  for _, garbage in ipairs(self.outgoingGarbage.history) do
+    if garbage.isChain then
+      if garbage.finalized then
+        data.attackPatterns[#data.attackPatterns+1] = {chain = garbage.linkTimes, chainEndTime = garbage.finalizedClock}
+      else
+        -- chain garbage may not be finalized yet so fake an end time
+        data.attackPatterns[#data.attackPatterns+1] = {chain = garbage.linkTimes, chainEndTime = garbage.linkTimes[#garbage.linkTimes] + defaultEndTime}
       end
-      local attackPatternBucket = sortedAttackPatterns[time]
-      attackPatternBucket[#attackPatternBucket+1] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
-    end
-  end
-
-  -- Save the final attack patterns in sorted order without the times since the file format doesn't want that (duplicate data)
-  data.attackPatterns = {}
-  for _, attackPatterns in pairsSortedByKeys(sortedAttackPatterns) do
-    for _, attackPattern in ipairs(attackPatterns) do
-      data.attackPatterns[#data.attackPatterns+1] = attackPattern
+    else
+      data.attackPatterns[#data.attackPatterns+1] = {width = garbage.width, height = garbage.height, startTime = garbage.frameEarned, chain = false, metal = garbage.isMetal}
     end
   end
 

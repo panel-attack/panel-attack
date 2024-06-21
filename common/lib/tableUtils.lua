@@ -155,5 +155,26 @@ function tableUtils.toContinuouslyIndexedTable(tab)
   end
   return continuouslyIndexedTable
 end
- 
+
+-- returns how many elements return true for the passed filter condition
+-- more efficient than filter -> length as it does not create a new table
+-- will iterate with ipairs if possible
+function tableUtils.count(tab, func)
+  local count = 0
+  if #tab > 0 then
+    for _, value in ipairs(tab) do
+      if func(value) then
+        count = count + 1
+      end
+    end
+  else
+    for _, value in pairs(tab) do
+      if func(value) then
+        count = count + 1
+      end
+    end
+  end
+  return count
+end
+
 return tableUtils
