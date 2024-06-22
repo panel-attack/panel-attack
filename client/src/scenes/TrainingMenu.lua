@@ -49,8 +49,10 @@ function TrainingMenu:goToCharacterSelect(value, width, height)
     value = createBasicTrainingMode("", width, height)
   end
   GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TRAINING"), Game1pTraining)
-  GAME.localPlayer:setAttackEngineSettings(value)
-  GAME.navigationStack:push(CharacterSelectVsSelf())
+  if GAME.battleRoom then
+    GAME.localPlayer:setAttackEngineSettings(value)
+    GAME.navigationStack:push(CharacterSelectVsSelf())
+  end
 end
 
 function TrainingMenu:load(sceneParams)

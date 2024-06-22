@@ -78,7 +78,7 @@ end
 -- usually this will be MainMenu
 -- an optional callback may be passed that is called when the transition completed
 function NavigationStack:popToTop(transition, callback)
-  if #self.scenes > 1 then
+  if #self.scenes > 1 or transition then
     local activeScene = self.scenes[#self.scenes]
     local top = self.scenes[1]
 

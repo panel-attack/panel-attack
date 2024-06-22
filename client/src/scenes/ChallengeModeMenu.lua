@@ -26,10 +26,11 @@ local function exitMenu()
 end
 
 function ChallengeModeMenu:goToCharacterSelect(difficulty)
-  GAME.battleRoom = ChallengeMode(difficulty)
   GAME.theme:playValidationSfx()
-
-  GAME.navigationStack:replace(CharacterSelectChallenge())
+  GAME.battleRoom = ChallengeMode(difficulty)
+  if GAME.battleRoom then
+    GAME.navigationStack:replace(CharacterSelectChallenge())
+  end
 end
 
 function ChallengeModeMenu:load(sceneParams)
