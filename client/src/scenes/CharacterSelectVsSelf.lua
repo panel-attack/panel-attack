@@ -9,7 +9,6 @@ local CharacterSelectVsSelf = class(
   function (self, sceneParams)
     self.lastScore = nil
     self.record = nil
-    self:load()
   end,
   CharacterSelect
 )

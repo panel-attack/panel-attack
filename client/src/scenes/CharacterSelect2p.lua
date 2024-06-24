@@ -8,7 +8,6 @@ local Label = require("client.src.ui.Label")
 -- 
 local CharacterSelect2p = class(
   function (self, sceneParams)
-    self:load(sceneParams)
   end,
   CharacterSelect
 )
