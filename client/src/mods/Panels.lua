@@ -547,7 +547,7 @@ end
 -- dangerTimer: remaining time for which the danger animation continues 
 function Panels:addToDraw(panel, x, y, stackScale, danger, dangerTimer)
   if panel.color == 9 then
-    love.graphics.draw(self.greyPanel, x, y, 0, self.scale * stackScale)
+    love.graphics.draw(self.greyPanel, x * stackScale, y * stackScale, 0, self.scale * stackScale)
   else
     local batch = self.batches[panel.color]
     local conf, frame
