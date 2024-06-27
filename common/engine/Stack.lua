@@ -874,18 +874,6 @@ function Stack:shouldRun(runsSoFar)
   if self.is_local then
     return buffer_len > 0
   else
-    -- In debug mode allow non-local player 2 to fall a certain number of frames behind
-    if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and self.which == 2 then
-      -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
-      if self.opponentStack and self.opponentStack:game_ended() == false then
-        if GAME.netClient:isConnected() then
-          if self.clock + config.debug_vsFramesBehind >= self.opponentStack.clock then
-            return false
-          end
-        end
-      end
-    end
-
     -- If we are not local, we want to run faster to catch up.
     if buffer_len >= 15 - runsSoFar then
       -- way behind, run at max speed.

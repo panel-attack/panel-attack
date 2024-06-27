@@ -257,23 +257,8 @@ function Match:run()
   while tableUtils.contains(checkRun, true) do
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
+        self:pushGarbageTo(stack)
         stack:run()
-        -- check if anyone wants to push garbage into the stack's queue
-        for _, st in ipairs(self.stacks) do
-          if st.garbageTarget == stack then
-            local oldestTransitTime = st.outgoingGarbage:getOldestFinishedTransitTime()
-            if oldestTransitTime then
-              if stack.clock > oldestTransitTime then
-                stack:rollbackToFrame(oldestTransitTime)
-              end
-              local garbageDelivery = st.outgoingGarbage:popFinishedTransitsAt(stack.clock)
-              if garbageDelivery then
-                logger.debug("Pushing garbage delivery to incoming garbage queue: " .. table_to_string(garbageDelivery))
-                stack.incomingGarbage:pushTable(garbageDelivery)
-              end
-            end
-          end
-        end
 
         checkRun[i] = true
       else
@@ -318,6 +303,29 @@ function Match:run()
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
 end
 
+function Match:pushGarbageTo(stack)
+  -- check if anyone wants to push garbage into the stack's queue
+  for _, st in ipairs(self.stacks) do
+    if st.garbageTarget == stack then
+      local oldestTransitTime = st.outgoingGarbage:getOldestFinishedTransitTime()
+      if oldestTransitTime then
+        if stack.clock > oldestTransitTime then
+          -- recipient went past the frame it was supposed to receive the garbage -> rollback to that frame
+          -- hypothetically, IF the receiving stack's garbage target was different than the sender forcing the rollback here
+          --  it may be necessary to perform extra steps to ensure the recipient of the stack getting rolled back is getting correct garbage
+          --  which may even include another rollback
+          self:rollbackToFrame(stack, oldestTransitTime)
+        end
+        local garbageDelivery = st.outgoingGarbage:popFinishedTransitsAt(stack.clock)
+        if garbageDelivery then
+          logger.debug("Pushing garbage delivery to incoming garbage queue: " .. table_to_string(garbageDelivery))
+          stack.incomingGarbage:pushTable(garbageDelivery)
+        end
+      end
+    end
+  end
+end
+
 function Match:runGameOver()
   for _, stack in ipairs(self.stacks) do
     stack:runGameOver()
@@ -351,9 +359,12 @@ end
 
 function Match:rollbackToFrame(stack, frame)
   if stack.rollbackCopies[frame] then
-    stack:rollbackToFrame(frame)
-    if self.isFromReplay then
-      stack.lastRollbackFrame = -1
+    if stack:rollbackToFrame(frame) then
+      if self.isFromReplay then
+        stack.lastRollbackFrame = -1
+      end
+    else
+      self:abort()
     end
   end
 end
@@ -763,6 +774,16 @@ function Match:shouldRun(stack, runsSoFar)
     else
       -- gameOverClock is set in Match:hasEnded when there is only 1 alive in LAST_ALIVE modes
       if self.gameOverClock and self.gameOverClock < stack.clock then
+        return false
+      end
+    end
+  end
+
+  -- In debug mode allow non-local player 2 to fall a certain number of frames behind
+  if config.debug_mode and not stack.is_local and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and stack.which == 2 then
+    -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
+    if stack.garbageTarget and stack.garbageTarget.game_ended and stack.garbageTarget:game_ended() == false then
+      if stack.clock + config.debug_vsFramesBehind >= stack.garbageTarget.clock then
         return false
       end
     end

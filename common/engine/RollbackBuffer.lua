@@ -37,7 +37,7 @@ function RollbackBuffer:rollbackToFrame(frame)
     return nil
   elseif frame < self.frames[self.currentIndex] then
     -- target frame is too far in the past
-    return nil
+      return nil
   end
 
   for i = 1, self.size do
@@ -54,6 +54,7 @@ function RollbackBuffer:rollbackToFrame(frame)
       -- we need to remove the reference because it is to be expected the entity using the buffer will literally keep most references
       -- so if it was kept in the buffer, the live copy would get overwritten later on
       self.buffer[self.currentIndex] = nil
+      self.frames[self.currentIndex] = -1
       return value
     end
   end

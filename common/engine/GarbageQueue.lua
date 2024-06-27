@@ -92,20 +92,23 @@ GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
   -- illegal stuff means that chains are queued as combos instead
   self.illegalStuffIsAllowed = allowIllegalStuff
   self.treatMetalAsCombo = treatMetalAsCombo
+
+  -- seems like the rollback method of Stack counts differently
+  -- so keep one extra copy to not run out of copies when rewinding stacks in replays
+  self.rollbackBuffer = RollbackBuffer(MAX_LAG + 1)
 end)
 
 function GarbageQueue:rollbackCopy(frame)
-  if not self.rollbackBuffer then
-    self.rollbackBuffer = RollbackBuffer(MAX_LAG)
-  end
-
   local copy = self.rollbackBuffer:getOldest()
   if copy then
     table.clear(copy.stagedGarbage)
-    table.clear(copy.garbageInTransit)
-    copy.transitTimers:clear()
+    copy.currentChain = nil
   else
-    copy = GarbageQueue()
+    copy =
+    {
+      stagedGarbage = table.new(#self.stagedGarbage, 0),
+      history = table.new(#self.history, 0),
+    }
   end
 
   for i = 1, #self.stagedGarbage do
@@ -117,15 +120,6 @@ function GarbageQueue:rollbackCopy(frame)
       -- all other garbage is already immutable and can be copied by reference
       copy.stagedGarbage[i] = self.stagedGarbage[i]
     end
-  end
-
-  for clock, garbageTable in pairs(self.garbageInTransit) do
-    -- all in-transit garbage is already immutable and can be copied by reference
-    copy.garbageInTransit[clock] = garbageTable
-  end
-  -- shallow copy should be enough as it only holds numbers
-  for i = self.transitTimers.first, self.transitTimers.last do
-    copy.transitTimers:push(self.transitTimers[i])
   end
 
   -- by-reference copy works fine for the history
@@ -153,10 +147,21 @@ function GarbageQueue:rollbackToFrame(frame)
   assert(copy, "Attempted to rollback garbage queue to frame " .. frame .. " but no rollback copy was available")
 
   self.stagedGarbage = copy.stagedGarbage
-  self.garbageInTransit = copy.garbageInTransit
-  self.history = copy.history
-  self.transitTimers = copy.transitTimers
   self.currentChain = copy.currentChain
+  self.history = copy.history
+
+  -- the transit tables interact with the outside world and are consumed elsewhere
+  -- so we cannot roll them back completely as that may lead to duplicate consumption
+  -- only eliminate transits that are going to be readded with further pushes and processing
+  -- this is somewhat based on the assumption that whenever we rollback surely our consumer must be behind in time
+  -- this may not universally work for multiplayer with more than 2 players
+  for i = self.transitTimers.last, self.transitTimers.first, -1 do
+    local transitFrame = self.transitTimers[i]
+    if transitFrame >= frame + GARBAGE_DELAY_LAND_TIME then
+      self.garbageInTransit[transitFrame] = nil
+      self.transitTimers.last = self.transitTimers.last - 1
+    end
+  end
 end
 
 -- corrects garbage pushed as combo to be flagged as a finalized chain if it is higher than 1 row
