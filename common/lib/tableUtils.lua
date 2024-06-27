@@ -86,12 +86,13 @@ end
 -- returns true if the table contains the given element or an identical copy of it, otherwise false 
 -- may result in a deathloop if there are recursive references
 function tableUtils.contains(tab, element)
-  return tableUtils.trueForAny(
-    tab,
-    function(tabElement)
-      return deep_content_equal(tabElement, element)
+  for _, value in pairs(tab) do
+    if deep_content_equal(value, element) then
+      return true
     end
-  )
+  end
+
+  return false
 end
  
 -- appends an element to a table only if it does not contain the element yet 

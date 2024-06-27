@@ -578,7 +578,13 @@ function BattleRoom:onDisconnect()
 end
 
 function BattleRoom:hasLocalPlayer()
-  return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
+  for _, player in ipairs(self.players) do
+    if player.isLocal then
+      return true
+    end
+  end
+
+  return false
 end
 
 return BattleRoom

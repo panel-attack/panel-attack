@@ -3,6 +3,7 @@ local class = require("common.lib.class")
 local tableUtils = require("common.lib.tableUtils")
 local Queue = require("common.lib.Queue")
 require("table.clear")
+local RollbackBuffer = require("common.engine.RollbackBuffer")
 
 -- +1 to compensate for a compensation someone made
 -- the original thought was probably that the attack animation should only start on the frame AFTER the garbage gets queued
@@ -94,15 +95,12 @@ GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
 end)
 
 function GarbageQueue:rollbackCopy(frame)
-  if not self.rollbackCopies then
-    self.rollbackCopies = {}
-    self.copyPool = {}
+  if not self.rollbackBuffer then
+    self.rollbackBuffer = RollbackBuffer(MAX_LAG)
   end
 
-  local copy
-  if #self.copyPool > 0 then
-    copy = self.copyPool[#self.copyPool]
-    self.copyPool[#self.copyPool] = nil
+  local copy = self.rollbackBuffer:getOldest()
+  if copy then
     table.clear(copy.stagedGarbage)
     table.clear(copy.garbageInTransit)
     copy.transitTimers:clear()
@@ -144,27 +142,21 @@ function GarbageQueue:rollbackCopy(frame)
   -- copy.illegalStuffIsAllowed = self.illegalStuffIsAllowed
   -- copy.treatMetalAsCombo = self.treatMetalAsCombo
 
-  self.rollbackCopies[frame] = copy
+  self.rollbackBuffer:saveCopy(frame, copy)
 end
 
 function GarbageQueue:rollbackToFrame(frame)
-  if not self.rollbackCopies[frame] then
-    error("Attempted to rollback garbage queue to frame " .. frame .. " but no rollback copy was available")
-  end
+  assert(self.rollbackBuffer, "Attempted to rollback garbage queue to frame " .. frame .. " but no rollback buffer has been kept")
 
-  local copy = self.rollbackCopies[frame]
+  local copy = self.rollbackBuffer:rollbackToFrame(frame)
+
+  assert(copy, "Attempted to rollback garbage queue to frame " .. frame .. " but no rollback copy was available")
+
   self.stagedGarbage = copy.stagedGarbage
   self.garbageInTransit = copy.garbageInTransit
   self.history = copy.history
   self.transitTimers = copy.transitTimers
   self.currentChain = copy.currentChain
-
-  for clock, rollbackCopy in pairs(self.rollbackCopies) do
-    if clock > frame then
-      self.copyPool[#self.copyPool+1] = rollbackCopy
-      self.rollbackCopies[clock] = nil
-    end
-  end
 end
 
 -- corrects garbage pushed as combo to be flagged as a finalized chain if it is higher than 1 row

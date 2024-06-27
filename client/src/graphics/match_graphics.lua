@@ -2,6 +2,8 @@ local GameModes = require("common.engine.GameModes")
 local tableUtils = require("common.lib.tableUtils")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
+local prof = require("common.lib.jprof.jprof")
+local MatchParticipant = require("client.src.MatchParticipant")
 
 function Match:matchelementOriginX()
   local x = 375 + (464) / 2
@@ -81,6 +83,10 @@ function Match:drawCommunityMessage()
   end
 end
 
+local function isRollbackActive(stack)
+  return stack.framesBehind > GARBAGE_DELAY_LAND_TIME
+end
+
 function Match:render()
   if config.show_fps then
     GraphicsUtil.print("Dropped Frames: " .. GAME.droppedFrames, 1, 12)
@@ -95,7 +101,7 @@ function Match:render()
     end
 
     if self:hasLocalPlayer() then
-      if tableUtils.trueForAny(self.stacks, function(s) return s.framesBehind > GARBAGE_DELAY_LAND_TIME end) then
+      if tableUtils.trueForAny(self.stacks, isRollbackActive) then
         -- let the player know that rollback is active
         local iconSize = 60
         local icon_width, icon_height = themes[config.theme].images.IMG_bug:getDimensions()
@@ -149,27 +155,22 @@ function Match:render()
     self:draw_pause()
   end
 
-  if self.isPaused == false or self.renderDuringPause then
-    -- Don't allow rendering if either player is loading for spectating
-    local renderingAllowed = tableUtils.trueForAll(self.stacks, function(s) return not s.play_to_end end)
-
-    if renderingAllowed then
-      for _, stack in ipairs(self.stacks) do
-        -- don't render stacks that only have an attack engine
-        if stack.player or stack.healthEngine then
-          stack:render()
-        end
+  if not self.isPaused or self.renderDuringPause then
+    for _, stack in ipairs(self.stacks) do
+      -- don't render stacks that only have an attack engine
+      if stack.player or stack.healthEngine then
+        stack:render()
       end
-
-      -- Draw VS HUD
-      if self.stackInteraction == GameModes.StackInteractions.VERSUS then
-        if tableUtils.trueForAll(self.players, function(p) return p.human end) or self.ranked then
-          self:drawMatchType()
-        end
-      end
-
-      self:drawTimer()
     end
+
+    -- Draw VS HUD
+    if self.stackInteraction == GameModes.StackInteractions.VERSUS then
+      if tableUtils.trueForAll(self.players, MatchParticipant.isHuman) or self.ranked then
+        self:drawMatchType()
+      end
+    end
+
+    self:drawTimer()
   end
 end
 

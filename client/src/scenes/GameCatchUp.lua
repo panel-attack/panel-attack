@@ -77,7 +77,16 @@ function GameCatchUp:update(dt)
     self.progress = self.match.stacks[1].clock / #self.match.stacks[1].confirmedInput
   end
   local t = love.timer.getTime()
-  local shouldCatchUp = ((self.match.stacks[1] and self.match.stacks[1].play_to_end) or (self.match.stacks[2] and self.match.stacks[2].play_to_end)) or ModLoader.loading_mod
+  -- convert the nil check into a bool
+  local shouldCatchUp = not not ModLoader.loading_mod
+  for _, stack in ipairs(self.match.stacks) do
+    if shouldCatchUp then
+      break
+    elseif stack.play_to_end then
+      shouldCatchUp = true
+    end
+  end
+
   -- spend 90% of frame time on catchup
   -- since we're not drawing anything big that should be realistic for catching ASAP
   while shouldCatchUp and hasTimeLeft(t) do

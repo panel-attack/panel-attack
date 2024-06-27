@@ -330,7 +330,6 @@ function Stack.divergenceString(stackToTest)
       end
   end
 
-  result = result ..  stackToTest.incomingGarbage:toString().. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
@@ -367,6 +366,7 @@ function Stack.rollbackCopy(source, other)
     other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
   end
 
+  prof.push("rollback copy panels")
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
@@ -407,7 +407,9 @@ function Stack.rollbackCopy(source, other)
   for i = height_to_cpy + 1, #other.panels do
     other.panels[i] = nil
   end
+  prof.pop("rollback copy panels")
 
+  prof.push("rollback copy the rest")
   other.countdown_timer = source.countdown_timer
   other.clock = source.clock
   other.game_stopwatch = source.game_stopwatch
@@ -444,8 +446,11 @@ function Stack.rollbackCopy(source, other)
   other.metal_panels_queued = source.metal_panels_queued
   other.panels_cleared = source.panels_cleared
   other.danger_timer = source.danger_timer
-  other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
+  prof.pop("rollback copy the rest")
+  prof.push("rollback copy analytics")
+  other.analytic = deepcpy(source.analytic)
+  prof.pop("rollback copy analytics")
 
   return other
 end
@@ -529,16 +534,25 @@ function Stack.saveForRollback(self)
   self.garbageTarget = nil
   self.rollbackCopies = nil
   self:remove_extra_rows()
+  prof.push("Stack.rollbackCopy")
   rollbackCopies[self.clock] = Stack.rollbackCopy(self)
+  prof.pop("Stack.rollbackCopy")
+  prof.push("incomingGarbage:rollbackCopy")
   self.incomingGarbage:rollbackCopy(self.clock)
+  prof.pop("incomingGarbage:rollbackCopy")
+  prof.push("outgoingGarbage:rollbackCopy")
   if self.outgoingGarbage then
     self.outgoingGarbage:rollbackCopy(self.clock)
   end
+  prof.pop("outgoingGarbage:rollbackCopy")
+
   self.rollbackCopies = rollbackCopies
   self.opponentStack = opponentStack
   self.garbageTarget = attackTarget
+  prof.push("delete rollback copy")
   local deleteFrame = self.clock - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
+  prof.pop("delete rollback copy")
   prof.pop("Stack:saveForRollback")
 end
 
@@ -1091,7 +1105,7 @@ function Stack.updatePanels(self)
   if self.do_countdown then
     return
   end
-  
+
   self.shake_time_on_frame = 0
   self.popSizeThisFrame = "small"
   for row = 1, #self.panels do
@@ -1131,7 +1145,7 @@ function Stack.simulate(self)
   self:prep_first_row()
   local panels = self.panels
   local swapped_this_frame = nil
-  self.garbageLandedThisFrame = {}
+  table.clear(self.garbageLandedThisFrame)
   self:runCountDownIfNeeded()
 
   if self.pre_stop_time ~= 0 then
@@ -1392,13 +1406,13 @@ function Stack.simulate(self)
   prof.pop("doublecheck panels above top row")
 
 
-  prof.push("pop from own garbage q")
+  prof.push("pop from incoming garbage q")
   if self.incomingGarbage:len() > 0 then
     if self:shouldDropGarbage() then
       self:tryDropGarbage()
     end
   end
-  prof.pop("pop from own garbage q")
+  prof.pop("pop from incoming garbage q")
 
   prof.push("stack sfx")
   -- Update Sound FX
@@ -2041,31 +2055,31 @@ end
 
 function Stack.updateActivePanels(self)
   self.n_prev_active_panels = self.n_active_panels
-  self.n_active_panels = #self:getActivePanels()
+  self.n_active_panels = self:getActivePanelCount()
 end
 
-function Stack.getActivePanels(self)
-  local activePanels = {}
+function Stack.getActivePanelCount(self)
+  local count = 0
 
   for row = 1, self.height do
     for col = 1, self.width do
       local panel = self.panels[row][col]
       if panel.isGarbage then
         if panel.state ~= "normal" then
-          activePanels[#activePanels+1] = panel
+          count = count + 1
         end
       else
         if panel.color ~= 0
         -- dimmed is implicitly filtered by only checking in row 1 and up
         and panel.state ~= "normal"
         and panel.state ~= "landing" then
-          activePanels[#activePanels+1] = panel
+          count = count + 1
         end
       end
     end
   end
 
-  return activePanels
+  return count
 end
 
 function Stack.updateRiseLock(self)
@@ -2223,6 +2237,10 @@ function Stack:shakeFramesForGarbageSize(width, height)
   else
     error("Trying to determine shake time of a garbage block with width " .. width .. " and height " .. height)
   end
+end
+
+function Stack:isCatchingUp()
+  return self.play_to_end
 end
 
 -- other parts of stack

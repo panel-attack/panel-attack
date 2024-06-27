@@ -23,9 +23,9 @@ local function rollbackPastAttackTest()
   match:debugRollbackAndCaptureState(rollbackTime)
 
   -- This should cause the attack to be undone
-  assert(match.stacks[2].outgoingGarbage.garbageInTransit[523] == nil)
+  assert(match.stacks[1].outgoingGarbage.garbageInTransit[523] == nil)
 
-  -- Simulate again, attack shoudld pop off again
+  -- Simulate again, attack should pop off again
   StackReplayTestingUtils:simulateMatchUntil(match, aheadTime)
 
   assert(match.stacks[1].outgoingGarbage.garbageInTransit[523] ~= nil and #match.stacks[1].outgoingGarbage.garbageInTransit[523] == 1)

@@ -231,7 +231,7 @@ function GameBase:musicCanChange()
   end
 
   -- someone is still catching up
-  if tableUtils.trueForAny(self.match.players, function(p) return p.stack.play_to_end end) then
+  if tableUtils.trueForAny(self.match.stacks, Stack.isCatchingUp) then
     return false
   end
 

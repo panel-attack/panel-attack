@@ -15,6 +15,7 @@ local GameModes = require("common.engine.GameModes")
 local Replay = require("common.engine.Replay")
 local Signal = require("common.lib.signal")
 local SimulatedStack = require("common.engine.SimulatedStack")
+local Stack = require("common.engine.Stack")
 local consts = require("common.engine.consts")
 local prof = require("common.lib.jprof.jprof")
 
@@ -216,17 +217,17 @@ function Match:debugAssertDivergence(stack, savedStack)
 end
 
 function Match:debugCheckDivergence()
-  if not self.savedStackP1 or self.savedStackP1.clock ~= self.P1.clock then
+  if not self.savedStackP1 or self.savedStackP1.clock ~= self.stacks[1].clock then
     return
   end
-  self:debugAssertDivergence(self.P1, self.savedStackP1)
+  self:debugAssertDivergence(self.stacks[1], self.savedStackP1)
   self.savedStackP1 = nil
 
-  if not self.savedStackP2 or self.savedStackP2.clock ~= self.P2.clock then
+  if not self.savedStackP2 or self.savedStackP2.clock ~= self.stacks[2].clock then
     return
   end
 
-  self:debugAssertDivergence(self.P2, self.savedStackP2)
+  self:debugAssertDivergence(self.stacks[2], self.savedStackP2)
   self.savedStackP2 = nil
 end
 
@@ -253,7 +254,7 @@ function Match:run()
   end
 
   local runsSoFar = 0
-  while tableUtils.trueForAny(checkRun, function(b) return b end) do
+  while tableUtils.contains(checkRun, true) do
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
         stack:run()
@@ -292,7 +293,7 @@ function Match:run()
       end
     end
 
-    --self:debugCheckDivergence()
+    self:debugCheckDivergence()
 
     runsSoFar = runsSoFar + 1
   end
@@ -561,7 +562,13 @@ end
 
 -- if there is no local player that means the client is either spectating (or watching a replay)
 function Match:hasLocalPlayer()
-  return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
+  for _, player in ipairs(self.players) do
+    if player.isLocal then
+      return true
+    end
+  end
+
+  return false
 end
 
 function Match.createFromReplay(replay, supportsPause)
@@ -661,7 +668,7 @@ function Match:hasEnded()
     end
   end
 
-  if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+  if self:isIrrecoverablyDesynced() then
     self.ended = true
     self.aborted = true
     self.desyncError = true
@@ -695,11 +702,21 @@ function Match:handleMatchEnd()
   self:emitSignal("matchEnded", self)
 end
 
+function Match:isIrrecoverablyDesynced()
+  for _, stack in ipairs(self.stacks) do
+    if stack.tooFarBehindError then
+      return true
+    end
+  end
+
+  return false
+end
+
 function Match:checkAborted()
   -- the aborted flag may get set if the game is aborted through outside causes (usually network)
   -- this function checks if the match got aborted through inside causes (local player abort or local desync)
   if not self.aborted then
-    if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+    if self:isIrrecoverablyDesynced() then
       -- someone got a desync error, this definitely died
       self.aborted = true
       self.winners = {}
@@ -718,7 +735,7 @@ function Match:checkAborted()
       end
     else
       -- if this is not last alive and no desync that means we expect EVERY stack to be game over
-      if tableUtils.trueForAny(self.players, function(p) return not p.stack:game_ended() end) then
+      if not tableUtils.trueForAll(self.stacks, Stack.game_ended) then
         -- someone didn't lose so this got aborted (e.g. through a pause -> leave)
         self.aborted = true
         self.winners = {}
