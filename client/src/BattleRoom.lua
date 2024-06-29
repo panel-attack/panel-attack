@@ -103,6 +103,7 @@ function BattleRoom.createFromServerMessage(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
     GAME.localPlayer.playerNumber = message.players[1].playerNumber
+    GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
     GAME.localPlayer:setRating(message.players[1].ratingInfo.new)
     GAME.localPlayer:setLeague(message.players[1].ratingInfo.league)
 
