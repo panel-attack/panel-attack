@@ -430,6 +430,10 @@ matchedState.enterHoverState = function(panel)
   clear(panel, false, false)
   panel.chaining = true
   panel.propagatesChaining = true
+  if not panel.frameTimes.GARBAGE_HOVER then
+    logger.info("Trying to set garbage hover on a panel not having garbage hover"
+      .. "\n" .. table_to_string(panel))
+  end
   panel.timer = panel.frameTimes.GARBAGE_HOVER
   panel.fell_from_garbage = 12
   panel.state = "hovering"

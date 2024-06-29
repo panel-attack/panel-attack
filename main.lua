@@ -192,6 +192,7 @@ function love.errorhandler(msg)
     logger.info(sanitizedMessage)
   end
   if logger.messages then
+    logger.info("config during crash: " .. table_to_string(config))
     pcall(love.filesystem.write, "crash.log", table.concat(logger.messages, "\n"))
   end
   if #sanitizedMessage ~= #msg then

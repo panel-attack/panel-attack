@@ -2,7 +2,6 @@ local logger = require("common.lib.logger")
 local tableUtils = require("common.lib.tableUtils")
 local PanelGenerator = require("common.engine.PanelGenerator")
 local consts = require("common.engine.consts")
-local Panel = require("common.engine.Panel")
 require("table.clear")
 
 -- score lookup tables
@@ -125,6 +124,7 @@ function Stack:checkMatches()
 
     local attackGfxOrigin = self:applyMatchToPanels(matchingPanels, isChainLink, comboSize)
     local garbagePanels = self:getConnectedGarbagePanels(matchingPanels)
+    logger.debug("Matched " .. comboSize .. " panels, clearing " .. #garbagePanels .. " panels of garbage")
     local garbagePanelCountOnScreen = 0
     if #garbagePanels > 0 then
       garbagePanelCountOnScreen = getOnScreenCount(self.height, garbagePanels)
