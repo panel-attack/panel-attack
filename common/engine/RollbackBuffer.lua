@@ -35,9 +35,10 @@ function RollbackBuffer:rollbackToFrame(frame)
   elseif frame > self.frames[wrap(1, self.currentIndex - 1, self.size)] then
     -- target frame is greater than our most recent non-stale frame
     return nil
-  elseif frame < self.frames[self.currentIndex] then
-    -- target frame is too far in the past
-      return nil
+  elseif self.frames[self.currentIndex] and frame < self.frames[self.currentIndex] then
+    -- self.frames[self.currentIndex] is verifiable the oldest copy we have (if we have one)
+    -- so if it's greater than the request frame then the request frame is certainly too far in the past
+    return nil
   end
 
   for i = 1, self.size do
@@ -56,6 +57,12 @@ function RollbackBuffer:rollbackToFrame(frame)
       self.buffer[self.currentIndex] = nil
       self.frames[self.currentIndex] = -1
       return value
+    elseif self.frames[self.currentIndex] < frame then
+      -- we did not hit an early exit because we have copies older than the one requested
+      -- but in fact we do not have the requested one
+      -- e.g. when rollback goes on and off due to rubberbanding there will be gaps
+      -- although realistically we always should have rollback copies whenever rollback could occur
+      return nil
     end
   end
 end
