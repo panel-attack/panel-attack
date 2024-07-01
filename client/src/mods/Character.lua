@@ -14,6 +14,7 @@ local StageTrack = require("client.src.music.StageTrack")
 local DynamicStageTrack = require("client.src.music.DynamicStageTrack")
 local RelayStageTrack = require("client.src.music.RelayStageTrack")
 local Mod = require("client.src.mods.Mod")
+local ModApi = require("client.src.mods.ModApi")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -31,6 +32,7 @@ local Character =
     self.panels = nil -- string | panels that get selected upon doing the super selection of that character
     self.sub_characters = {} -- stringS | either empty or with two elements at least; holds the sub characters IDs for bundle characters
     self.images = {}
+    self.battleSprite = nil -- AnimatedSprite | will be skipped if there is no sprite provided (Wouls like to get default sprites in the future)
     self.sounds = {}
     self.musics = {}
     self.flag = nil -- string | flag to be displayed in the select screen
@@ -207,7 +209,8 @@ local all_images = {
   "portrait",
   "portrait2",
   "burst",
-  "fade"
+  "fade",
+  "battle"
 }
 local defaulted_images = {
   icon = true,
@@ -251,6 +254,13 @@ function Character.graphics_init(self, full, yields)
   local character_images = full and all_images or basic_images
   for _, image_name in ipairs(character_images) do
     self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
+    if (image_name == "battle" and not self.battleSprite) then
+      local result, anims = ModApi.runFromFile(self.path .. "/" .. "battle_anim.lua")
+      if result then
+        self.battleSprite = AnimatedSprite(self.images["battle"], anims)
+        --assert(not anims)
+      end
+    end
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       if image_name == "burst" or image_name == "fade" then
         self.images[image_name] = themes[config.theme].images[image_name]
@@ -336,6 +346,7 @@ function Character.graphics_uninit(self)
       self.images[imageName] = nil
     end
   end
+  self.battleSprite = nil
   self.telegraph_garbage_images = {}
 end
 
@@ -483,6 +494,19 @@ function Character:drawPortrait(stackNumber, x, y, fade, scale)
   if fade > 0 then
     GraphicsUtil.drawRectangle("fill", x * scale, y * scale, portraitWidth * scale, portraitHeight * scale, 0, 0, 0, fade)
   end
+end
+
+function Character:drawBattleSprite(stackNumber, x, y, scale)
+  local portraitMirror = 1
+  if self:portraitIsReversed(stackNumber) then
+    portraitMirror = -1
+  end
+  if not self.battleSprite.playing then
+    self.battleSprite:play()
+    self.battleSprite:switchAnimation("normal")
+  end
+  self.battleSprite:update()
+  self.battleSprite:qdraw(x, y, 0, scale*portraitMirror, scale)
 end
 
 function Character.reassignLegacySfx(self)

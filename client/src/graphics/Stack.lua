@@ -1,4 +1,5 @@
 require("common.lib.util")
+require("client.src.graphics.animated_sprite")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local TouchDataEncoding = require("common.engine.TouchDataEncoding")
 local consts = require("common.engine.consts")
@@ -706,6 +707,15 @@ function Stack:drawLevel()
     local y = self:elementOriginYWithOffset(self.theme.level_Pos, false)
     local levelAtlas = self.theme.images.levelNumberAtlas[self.which]
     GraphicsUtil.drawQuad(levelAtlas.image, levelAtlas.quads[self.level], x, y, 0, 28 / levelAtlas.charWidth * self.theme.level_Scale, 26 / levelAtlas.charHeight * self.theme.level_Scale, 0, 0, self.multiplication)
+  end
+end
+
+function Stack:drawBattleSprites()
+  if characters[self.character].battleSprite then
+    characters[self.character]:drawBattleSprite(self.which, themes[config.theme].speed_Pos[1], themes[config.theme].speed_Pos[2], self.gfxScale)
+  end
+  if (self.garbageTarget and characters[self.garbageTarget.character].battleSprite) then
+    characters[self.garbageTarget.character]:drawBattleSprite(self.which, themes[config.theme].speed_Pos[1], themes[config.theme].speed_Pos[2], self.gfxScale)
   end
 end
 
