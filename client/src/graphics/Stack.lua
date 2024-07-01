@@ -1,5 +1,4 @@
 require("common.lib.util")
-require("client.src.graphics.animated_sprite")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local TouchDataEncoding = require("common.engine.TouchDataEncoding")
 local consts = require("common.engine.consts")
