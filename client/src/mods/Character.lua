@@ -8,7 +8,6 @@ local logger = require("common.lib.logger")
 local tableUtils = require("common.lib.tableUtils")
 local fileUtils = require("client.src.FileUtils")
 local consts = require("common.engine.consts")
-local GFX_SCALE = consts.GFX_SCALE
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local Music = require("client.src.music.Music")
 local StageTrack = require("client.src.music.StageTrack")
@@ -245,6 +244,7 @@ function characters_reload_graphics()
     end
     characters[character]:graphics_init(fullLoad, false)
   end
+  require("client.src.mods.CharacterLoader").loadBundleIcons()
 end
 
 function Character.graphics_init(self, full, yields)
@@ -305,6 +305,29 @@ function Character.graphics_init(self, full, yields)
       logger.info("FAILED TO LOAD: telegraph/attack")
     end
   end
+end
+
+-- bundles without stage icon display up to 4 icons of their substages
+function Character:createIcon()
+  local canvas = love.graphics.newCanvas(2 * 168, 2 * 168)
+  canvas:renderTo(function()
+    for i, subcharacterId in ipairs(self.sub_characters) do
+      if i <= 4 then
+        local character = characters[subcharacterId]
+        local x = 0
+        local y = 0
+        if i % 2 == 0 then
+          x = 168
+        end
+        if i > 2 then
+          y = 168
+        end
+        local width, height = character.images.icon:getDimensions()
+        love.graphics.draw(character.images.icon, x, y, 0, 168 / width, 168 / height)
+      end
+    end
+  end)
+  return canvas
 end
 
 function Character.graphics_uninit(self)
@@ -444,7 +467,7 @@ function Character:portraitIsReversed(stackNumber)
   return false
 end
 
-function Character:drawPortrait(stackNumber, x, y, fade)
+function Character:drawPortrait(stackNumber, x, y, fade, scale)
   local portraitImage = self:portraitImage(stackNumber)
   local portraitImageWidth, portraitImageHeight = portraitImage:getDimensions()
 
@@ -456,9 +479,9 @@ function Character:drawPortrait(stackNumber, x, y, fade)
     portraitImageX = portraitImageX + portraitWidth
     portraitMirror = -1
   end
-  GraphicsUtil.drawGfxScaled(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
+  GraphicsUtil.draw(portraitImage, portraitImageX * scale, y * scale, 0, (portraitWidth / portraitImageWidth) * portraitMirror * scale, portraitHeight / portraitImageHeight * scale)
   if fade > 0 then
-    GraphicsUtil.drawRectangle("fill", x * GFX_SCALE, y * GFX_SCALE, portraitWidth * GFX_SCALE, portraitHeight * GFX_SCALE, 0, 0, 0, fade)
+    GraphicsUtil.drawRectangle("fill", x * scale, y * scale, portraitWidth * scale, portraitHeight * scale, 0, 0, 0, fade)
   end
 end
 

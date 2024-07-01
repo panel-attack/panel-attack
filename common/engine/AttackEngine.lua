@@ -28,7 +28,10 @@ local AttackEngine =
     self.disableQueueLimit = attackSettings.disableQueueLimit or false
 
     -- whether the metal garbage is treated the same as combo garbage (aka they can mix)
-    self.mergeComboMetalQueue = attackSettings.mergeComboMetalQueue or false
+    -- mergeComboMetalQueue is a reference to an old implementation in which different garbage types
+    --  were organised in different queues
+    --  we're stuck with the name because it is found in config data
+    self.treatMetalAsCombo = attackSettings.mergeComboMetalQueue or false
 
     -- The table of AttackPattern objects this engine will run through.
     self.attackPatterns = {}
@@ -38,14 +41,8 @@ local AttackEngine =
     -- the clock to control the continuity of the sending process
     self.clock = 0
 
-    -- the telegraph the attack engine sends its garbage to
     self.telegraph = telegraph
-
-    -- using an attackengine means we're cheating and breaking some rules that regular stacks have to adhere to
-    -- modify the telegraph and the attached garbage queue accordingly so it knows
-    self.telegraph.mergeComboMetalQueue = self.mergeComboMetalQueue
-    self.telegraph.garbage_queue.mergeComboMetalQueue = self.mergeComboMetalQueue
-    self.telegraph.garbage_queue.illegalStuffIsAllowed = true
+    self.outgoingGarbage = GarbageQueue(true, self.treatMetalAsCombo)
 
     -- a character table (not id) to send sfx, should be nil if no sfx should play
     self.character = character
@@ -79,13 +76,12 @@ function AttackEngine:setGarbageTarget(garbageTarget)
   assert(garbageTarget.mirror_x ~= nil)
   assert(garbageTarget.panelOriginX ~= nil)
   assert(garbageTarget.panelOriginY ~= nil)
-  assert(garbageTarget.garbage_q ~= nil)
-  assert(garbageTarget.receiveGarbage ~= nil)
+  assert(garbageTarget.incomingGarbage ~= nil)
 
   self.garbageTarget = garbageTarget
-  self.garbageTarget.garbage_q.illegalStuffIsAllowed = true
-  self.garbageTarget.garbage_q.mergeComboMetalQueue = self.mergeComboMetalQueue
-  self.telegraph:updatePositionForGarbageTarget(garbageTarget)
+  self.garbageTarget.incomingGarbage.illegalStuffIsAllowed = true
+  self.garbageTarget.incomingGarbage.treatMetalAsCombo = self.treatMetalAsCombo
+  --self.telegraph:updatePositionForGarbageTarget(garbageTarget)
 end
 
 -- Adds an attack pattern that happens repeatedly on a timer.
@@ -120,37 +116,47 @@ function AttackEngine.run(self)
   local maxCombo = 0
   local hasMetal = false
   local totalAttackTimeBeforeRepeat = self.delayBeforeRepeat + highestStartTime - self.delayBeforeStart
-  if self.disableQueueLimit or self.garbageTarget.garbage_q:len() <= 72 then
+  if self.disableQueueLimit or self.garbageTarget.incomingGarbage:len() <= 72 then
     for i = 1, #self.attackPatterns do
       if self.clock >= self.attackPatterns[i].startTime then
         local difference = self.clock - self.attackPatterns[i].startTime
         local remainder = difference % totalAttackTimeBeforeRepeat
         if remainder == 0 then
           if self.attackPatterns[i].endsChain then
-            self.telegraph:chainingEnded(self.clock)
+            self.outgoingGarbage:finalizeCurrentChain(self.clock)
           else
             local garbage = self.attackPatterns[i].garbage
             if garbage.isChain then
+              self.outgoingGarbage:addChainLink(self.clock, math.random(1, 11), math.random(1, 6))
               local chainCounter = garbage.height + 1
               maxChain = math.max(chainCounter, maxChain)
             else
+              garbage.frameEarned = self.clock
+              -- courtesy of telegraph attack animation
+              garbage.rowEarned = math.random(1, 11)
+              garbage.colEarned = math.random(1, 6)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
+              self.outgoingGarbage:push(garbage)
             end
             hasMetal = garbage.isMetal or hasMetal
-            self.telegraph:push(garbage, math.random(1, 6), math.random(1, 11), self.clock)
           end
         end
       end
     end
   end
 
-  self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
+  self.outgoingGarbage:processStagedGarbageForClock(self.clock)
+  local garbageDelivery = self.outgoingGarbage:popFinishedTransitsAt(self.clock)
+  if garbageDelivery then
+    logger.debug("Pushing garbage delivery to incoming garbage queue: " .. table_to_string(garbageDelivery))
+    self.garbageTarget.incomingGarbage:pushTable(garbageDelivery)
+  end
 
   local metalCount = 0
   if hasMetal then
     metalCount = 3
   end
-  local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)    
+  local newComboChainInfo = Stack.attackSoundInfoForMatch(maxChain > 0, maxChain, maxCombo, metalCount)
   if newComboChainInfo and self.character then
     self.character:playAttackSfx(newComboChainInfo)
   end
@@ -162,6 +168,15 @@ function AttackEngine.render(self)
 
   self.telegraph:render()
 
+end
+
+function AttackEngine:rollbackCopy(frame)
+  self.outgoingGarbage:rollbackCopy(frame)
+end
+
+function AttackEngine:rollbackToFrame(frame)
+  self.outgoingGarbage:rollbackToFrame(frame)
+  self.clock = frame
 end
 
 return AttackEngine

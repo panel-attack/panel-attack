@@ -9,7 +9,6 @@ local CharacterSelectVsSelf = class(
   function (self, sceneParams)
     self.lastScore = nil
     self.record = nil
-    self:load()
   end,
   CharacterSelect
 )
@@ -29,10 +28,8 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.characterIcons[1] = self:createPlayerIcon(player)
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.characterIcons[1])
 
-  local level = GAME.battleRoom.players[1].settings.level
-  self.lastScore = GAME.scores:lastVsScoreForLevel(level)
-  self.record = GAME.scores:recordVsScoreForLevel(level)
   self.ui.recordBox = self:createRecordsBox()
+  self:refresh()
   self.ui.grid:createElementAt(2, 1, 2, 1, "recordBox", self.ui.recordBox)
 
   self.ui.panelSelection = MultiPlayerSelectionWrapper({hFill = true, alignment = "top", hAlign = "center", vAlign = "top"})
@@ -84,6 +81,14 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.cursors[1].raise2Callback = function()
     self.ui.characterGrid:turnPage(1)
   end
+end
+
+function CharacterSelectVsSelf:refresh()
+  local level = GAME.battleRoom.players[1].settings.level
+  self.lastScore = GAME.scores:lastVsScoreForLevel(level)
+  self.record = GAME.scores:recordVsScoreForLevel(level)
+  self.ui.recordBox:setLastLines(self.lastScore)
+  self.ui.recordBox:setRecord(self.record)
 end
 
 return CharacterSelectVsSelf

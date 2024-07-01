@@ -17,6 +17,7 @@ local SoundTest = require("client.src.scenes.SoundTest")
 local SetUserIdMenu = require("client.src.scenes.SetUserIdMenu")
 local UiElement = require("client.src.ui.UIElement")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
+local ScrollText = require("client.src.ui.ScrollText")
 
 -- @module optionsMenu
 -- Scene for the options menu
@@ -69,6 +70,9 @@ function OptionsMenu:updateMenuLanguage()
   for _, menu in pairs(self.menus) do
     menu:refreshLocalization()
   end
+  for _, scene in ipairs(GAME.navigationStack.scenes) do
+    scene:refreshLocalization()
+  end
 end
 
 function OptionsMenu:switchToScreen(screenName)
@@ -109,7 +113,6 @@ local function createConfigSlider(configField, min, max, onValueChangeFn, precis
 end
 
 function OptionsMenu:getSystemInfo()
-  GAME.theme:playValidationSfx()
   self.backgroundImage = themes[config.theme].images.bg_readme
   local rendererName, rendererVersion, graphicsCardVendor, graphicsCardName = love.graphics.getRendererInfo()
   local sysInfo = {}
@@ -133,29 +136,15 @@ function OptionsMenu:getSystemInfo()
 end
 
 function OptionsMenu:loadInfoScreen(text)
-  local infoScreen = UiElement({hFill = true, vFill = true})
   local label = Label({text = text, translate = false, vAlign = "top", x = 6, y = 6})
-  infoScreen.update = function()
-    if inputManager.isDown["MenuEsc"] then
-      GAME.theme:playCancelSfx()
-      self.backgroundImage = themes[config.theme].images.bg_main
-      self:switchToScreen("aboutMenu")
-    end
-    if inputManager:isPressedWithRepeat("Up", .25, 30 / 1000.0) then
-      GAME.theme:playMoveSfx()
-      if label.height > consts.CANVAS_HEIGHT - 15 then
-        label.y = math.max(0, label.y + SCROLL_STEP)
-      end
-    end
-    if inputManager:isPressedWithRepeat("Down", .25, 30 / 1000.0) then
-      GAME.theme:playMoveSfx()
-      if label.height > consts.CANVAS_HEIGHT - 15 then
-        label.y = math.min(label.y - SCROLL_STEP, label.height - (consts.CANVAS_HEIGHT - 15))
-      end
-    end
+  local infoScreen = ScrollText({hFill = true, vFill = true, label = label})
+  infoScreen.onBackCallback = function()
+    GAME.theme:playCancelSfx()
+    self.backgroundImage = themes[config.theme].images.bg_main
+    self:switchToScreen("aboutMenu")
   end
+  infoScreen.yieldFocus = function() end
 
-  infoScreen:addChild(label)
   return infoScreen
 end
 
@@ -528,7 +517,7 @@ end
 
 function OptionsMenu:update(dt)
   self.backgroundImage:update(dt)
-  self.menus[self.activeMenuName]:update()
+  self.menus[self.activeMenuName]:receiveInputs(inputManager)
 end
 
 function OptionsMenu:draw()

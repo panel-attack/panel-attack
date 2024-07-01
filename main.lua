@@ -108,8 +108,8 @@ function love.quit()
   if PROF_CAPTURE then
     prof.write("prof.mpack")
   end
-  if GAME.tcpClient and GAME.tcpClient:isConnected() then
-    GAME.tcpClient:sendRequest(ClientMessages.logout())
+  if GAME.netClient and GAME.netClient:isConnected() then
+    GAME.netClient:logout()
   end
   love.audio.stop()
   if love.window.getFullscreen() then
@@ -144,6 +144,17 @@ function love.errorhandler(msg)
     end
   end
 
+  -- if we crashed during a match that is likely cause of the issue
+  -- we want it logged in a digestable form
+  if GAME.battleRoom and GAME.battleRoom.match then
+    pcall(function()
+      local match = GAME.battleRoom.match
+      match.aborted = true
+      Replay.finalizeReplay(match, match.replay)
+      logger.info("Replay of match during crash:\n" .. json.encode(match.replay))
+    end)
+  end
+
   msg = tostring(msg)
   local sanitizedMessageLines = {}
   for char in msg:gmatch(utf8.charpattern) do
@@ -165,11 +176,7 @@ function love.errorhandler(msg)
     local detailedErrorLogString = Game.detailedErrorLogString(errorData)
     errorData.detailedErrorLogString = detailedErrorLogString
     if GAME_UPDATER_GAME_VERSION then
-      if not GAME.tcpClient:isConnected() then
-        GAME.tcpClient:connectToServer(consts.SERVER_LOCATION, 59569)
-      end
-      GAME.tcpClient:sendErrorReport(errorData)
-      GAME.tcpClient:resetNetwork()
+      GAME.netClient:sendErrorReport(errorData, consts.SERVER_LOCATION, 59569)
     end
     return detailedErrorLogString
   end
@@ -185,6 +192,7 @@ function love.errorhandler(msg)
     logger.info(sanitizedMessage)
   end
   if logger.messages then
+    logger.info("config during crash: " .. table_to_string(config))
     pcall(love.filesystem.write, "crash.log", table.concat(logger.messages, "\n"))
   end
   if #sanitizedMessage ~= #msg then

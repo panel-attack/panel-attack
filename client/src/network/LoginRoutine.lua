@@ -15,8 +15,6 @@ local function login(tcpClient, ip, port)
     -- this should also probably be elsewhere
     GAME.connected_server_ip = ip
     GAME.connected_server_port = port
-    -- genuinely, this is sneaky as fuck, not sure if a good idea
-    GAME.server_queue = tcpClient.receivedMessageQueue
 
     local response = tcpClient:sendRequest(ClientMessages.requestVersionCompatibilityCheck())
     local status, value = response:tryGetValue()

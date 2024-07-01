@@ -10,9 +10,13 @@ local ANIMATION_STATES = {
   "hovering", "falling",
   "dimmed", "dead",
   "danger",
-  "garbageBounce",
   "garbagePop"
 }
+
+local OPTIONAL_ANIMATION_STATES = {
+  "garbageBounce",
+}
+
 local DEFAULT_PANEL_ANIM =
 {
   -- currently not animatable
@@ -39,10 +43,10 @@ local DEFAULT_PANEL_ANIM =
   -- danger is special in that there is a frame offset depending on column offset
   -- col 1 and 2 start on frame 3, col 3 and 4 start on frame 4 and col 5 and 6 start on frame 5 of the animation
 	danger = {frames = {4, 1, 2, 3, 2, 1}, durationPerFrame = 3},
-  -- doesn't loop; fixed to 12 frames
-	garbageBounce = {frames = {1, 4, 3, 2}, durationPerFrame = 3},
   -- currently not animatable
   garbagePop = {frames = {1}},
+  -- doesn't loop; fixed to 12 frames
+	garbageBounce = {frames = {1, 4, 3, 2}, durationPerFrame = 3},
 }
 
 -- The class representing the panel image data
@@ -151,22 +155,22 @@ function Panels:loadSheets()
     assert(self.sheets[color], "Failed to load sheet for color " .. color .. " on panel set " .. self.id)
   end
   self.sheetConfig = self.animationConfig
-  for i, animationState in ipairs(ANIMATION_STATES) do
-    if not self.sheetConfig[animationState].durationPerFrame then
-      self.sheetConfig[animationState].durationPerFrame = 2
+  for animationState, config in pairs(self.sheetConfig) do
+    if not config.durationPerFrame then
+      config.durationPerFrame = 2
     end
-    self.sheetConfig[animationState].totalFrames =
-        self.sheetConfig[animationState].frames * self.sheetConfig[animationState].durationPerFrame
+    config.totalFrames =
+        config.frames * config.durationPerFrame
   end
 end
 
 -- 
-function Panels:convertSinglesToSheetTexture(images)
-  local canvas = love.graphics.newCanvas(self.size * 10, self.size * #ANIMATION_STATES,  {dpiscale = images[1]:getDPIScale()})
+function Panels:convertSinglesToSheetTexture(images, animationStates)
+  local canvas = love.graphics.newCanvas(self.size * 10, self.size * #animationStates,  {dpiscale = images[1]:getDPIScale()})
   canvas:renderTo(function()
     local row = 1
     -- ipairs over a static table so the ordering is definitely consistent
-    for _, animationState in ipairs(ANIMATION_STATES) do
+    for _, animationState in ipairs(animationStates) do
       local animationConfig = self.animationConfig[animationState]
       for frameNumber, imageIndex in ipairs(animationConfig.frames) do
         local widthScale = self.size / images[imageIndex]:getWidth()
@@ -224,6 +228,11 @@ function Panels:loadSingles()
       return tonumber(f:sub(7))
     end)
 
+    -- default sort for indexes will be based on the original return value of the directory scan
+    -- and that will order by string, not by number so we need to resort first
+    -- to assure that indexes[#indexes] is really the highest index
+    table.sort(indexes)
+
     for i = 1, math.max(indexes[#indexes] or 7, 7) do
       images[color][i] = load_panel_img(self.path, fileUtils.getFileNameWithoutExtension("panel" .. color .. i))
       self.size = math.max(images[color][i]:getWidth(), self.size) -- for scaling
@@ -232,14 +241,24 @@ function Panels:loadSingles()
 
   local problems = validateSingleFilesAgainstConfig(images, self.animationConfig)
   if #problems > 0 then
-    error("Error loading panel set " .. self.id .. ":\n\t" .. table.concat(problems, "\n\t"))
+    error("Error loading panel set " .. self.id ..  " at path " .. love.filesystem.getRealDirectory(self.path)
+          .. ":\n\t" .. table.concat(problems, "\n\t"))
+  end
+
+  -- because config is shared between all colors, we need to establish a fixed order of the configured states
+  -- so that row assignments will be consistent across all colors
+  local animationStates = shallowcpy(ANIMATION_STATES)
+  for _, optionalAnimationState in ipairs(OPTIONAL_ANIMATION_STATES) do
+    if self.animationConfig[optionalAnimationState] then
+      animationStates[#animationStates+1] = optionalAnimationState
+    end
   end
 
   for color, panelImages in ipairs(images) do
-    self.sheets[color] = self:convertSinglesToSheetTexture(panelImages)
+    self.sheets[color] = self:convertSinglesToSheetTexture(panelImages, animationStates)
   end
 
-  for i, animationState in ipairs(ANIMATION_STATES) do
+  for i, animationState in ipairs(animationStates) do
     self.sheetConfig[animationState] =
     {
       row = i,
@@ -251,8 +270,18 @@ function Panels:loadSingles()
   end
 end
 
+function Panels:validateConfig()
+  for _, animationState in ipairs(ANIMATION_STATES) do
+    assert(self.animationConfig[animationState],
+      "Panel set " .. self.id .. " at path " .. love.filesystem.getRealDirectory(self.path) ..
+     " has to define a frame for animation state " .. animationState)
+  end
+end
+
 function Panels:load()
   logger.debug("loading panels " .. self.id)
+
+  self:validateConfig()
 
   self.greyPanel = load_panel_img(self.path, "panel00")
   self.size = self.greyPanel:getWidth()
@@ -271,7 +300,7 @@ function Panels:load()
     self:loadSheets()
   end
 
-  self.scale = 48 / self.size
+  self.scale = 16 / self.size
 
   self.quad = love.graphics.newQuad(0, 0, self.size, self.size, self.sheets[1])
   self.displayIcons = {}
@@ -446,9 +475,9 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
     conf = self.sheetConfig.swapping
     frame = 1
     if panel.isSwappingFromLeft then
-      x = x - panel.timer * 12
+      x = x - panel.timer * 4
     else
-      x = x + panel.timer * 12
+      x = x + panel.timer * 4
     end
   elseif panel.state == "popped" then
     -- draw nothing
@@ -459,10 +488,10 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
     -- landing always counts down from 12, ending at 0
     frame = min(floor((12 - panel.timer) / conf.durationPerFrame) + 1, conf.frames)
   elseif panel.state == "hovering" then
-    if panel.fell_from_garbage then
+    if panel.fell_from_garbage and self.sheetConfig.garbageBounce then
       animationName = "garbageBounce"
       conf, frame = getGarbageBounceProps(self, panel)
-    elseif dangerCol[panel.column] then
+    elseif dangerCol[panel.column] and self.sheetConfig.garbageBounce then
       animationName = "danger"
       conf, frame = getDangerBounceProps(self, panel, dangerTimer)
     else
@@ -480,7 +509,7 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
     --   frame = math.abs(frame - conf.frames) + 1
     -- end
   elseif panel.state == "falling" then
-    if panel.fell_from_garbage then
+    if panel.fell_from_garbage and self.sheetConfig.garbageBounce then
       animationName = "garbageBounce"
       conf, frame = getGarbageBounceProps(self, panel)
     elseif dangerCol[panel.column] then
@@ -515,7 +544,7 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
   end
 
   -- verify that the default frame we get from the new config and the old frame are the same
-  if conf ~= self.sheetConfig.flash then
+  if self.animationConfig == DEFAULT_PANEL_ANIM and conf ~= self.sheetConfig.flash then
   -- flash in particular started on a different frame depending on level
   -- on levels with FLASH % 4 == 0 it would start with frame 5
   -- on levels with FLASH % 4 == 2 it would start with frame 1
@@ -524,7 +553,12 @@ function Panels:getDrawProps(panel, x, y, dangerCol, dangerTimer)
   -- but with level 10 (FLASH % 4 == 2), it fails on every single flash
 
     local oldFrame = oldDrawImplementation(self, panel, x, y, dangerCol, panel.column, dangerTimer)
-    assert(DEFAULT_PANEL_ANIM[animationName].frames[frame] == oldFrame)
+    -- only assert if the default anim defines that frame
+    if DEFAULT_PANEL_ANIM[animationName].frames[frame] then
+      assert(DEFAULT_PANEL_ANIM[animationName].frames[frame] == oldFrame)
+    else
+      -- otherwise it's going to be a custom animation that wasn't possible before
+    end
   end
 
   return conf, frame, x, y
@@ -535,16 +569,17 @@ end
 -- clock: Stack.clock to calculate animation frames
 -- danger: nil - no danger, false - regular danger, true - panic
 -- dangerTimer: remaining time for which the danger animation continues 
-function Panels:addToDraw(panel, x, y, danger, dangerTimer)
+function Panels:addToDraw(panel, x, y, stackScale, danger, dangerTimer)
   if panel.color == 9 then
-    love.graphics.draw(self.greyPanel, x, y, 0, self.scale)
+    love.graphics.draw(self.greyPanel, x * stackScale, y * stackScale, 0, self.scale * stackScale)
   else
     local batch = self.batches[panel.color]
     local conf, frame
     conf, frame, x, y = self:getDrawProps(panel, x, y, danger, dangerTimer)
 
     self.quad:setViewport((frame - 1) * self.size, (conf.row - 1) * self.size, self.size, self.size)
-    batch:add(self.quad, x, y, 0, self.scale)
+    -- scale / 3 because for the current standard size of 16
+    batch:add(self.quad, x * stackScale, y * stackScale, 0, self.scale * stackScale)
   end
 end
 

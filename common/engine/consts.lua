@@ -52,8 +52,6 @@ consts.DEFAULT_THEME_DIRECTORY = "Panel Attack Modern"
 consts.SCOREMODE_TA    = 1
 consts.SCOREMODE_PDP64 = 2 -- currently not used
 
-consts.GFX_SCALE = 3
-
 -- frames to use for the card animation
 consts.CARD_ANIMATION = {false,
    -1, 0, 1, 2, 3, 4, 4, 5, 5, 6,

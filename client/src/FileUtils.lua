@@ -40,7 +40,7 @@ function fileUtils.copyFile(source, destination)
 end
 
 -- copies a file from the given source to the given destination
-function fileUtils.recursiveCopy(source, destination)
+function fileUtils.recursiveCopy(source, destination, yields)
   local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
   local temp
@@ -48,7 +48,7 @@ function fileUtils.recursiveCopy(source, destination)
     local info = lfs.getInfo(source .. "/" .. name)
     if info and info.type == "directory" then
       logger.trace("calling recursive_copy(source" .. "/" .. name .. ", " .. destination .. "/" .. name .. ")")
-      fileUtils.recursiveCopy(source .. "/" .. name, destination .. "/" .. name)
+      fileUtils.recursiveCopy(source .. "/" .. name, destination .. "/" .. name, yields)
     elseif info and info.type == "file" then
       local destination_info = lfs.getInfo(destination)
       if not destination_info or destination_info.type ~= "directory" then
@@ -64,6 +64,10 @@ function fileUtils.recursiveCopy(source, destination)
     else
       logger.warn("name:  " .. name .. " isn't a directory or file?")
     end
+  end
+
+  if yields then
+    coroutine.yield("Copied\n" .. source .. "\nto\n" .. destination)
   end
 end
 

@@ -2,7 +2,14 @@
 
 ## Development Setup
 
-Install love (http://love2d.org/)
+### Installing love
+
+The current stable version uses love 11.5. Simply install from http://love2d.org/.  
+The beta version is the main development version and uses love 12.0.  
+Love 12 is still in development. You can find love 12.0 CI builds in the [love repository](https://github.com/love2d/love/actions/workflows/main.yml).
+Simply pick the newest workflow run, scroll down and select the artifact suitable for your machine.
+
+### Setting up the Panel Attack repository
 
 Clone a copy of the repository  
 ```

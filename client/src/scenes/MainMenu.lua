@@ -29,7 +29,6 @@ local PuzzleGame = require("client.src.scenes.PuzzleGame")
 -- @module MainMenu
 -- Scene for the main menu
 local MainMenu = class(function(self, sceneParams)
-  self.backgroundImg = themes[config.theme].images.bg_main
   self.music = "main"
   self.menu = self:createMainMenu()
   self.uiRoot:addChild(self.menu)
@@ -46,19 +45,27 @@ function MainMenu:createMainMenu()
 
   local menuItems = {MenuItem.createButtonMenuItem("mm_1_endless", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_ENDLESS"), EndlessGame)
-      switchToScene(EndlessMenu())
-    end), 
+      if GAME.battleRoom then
+        switchToScene(EndlessMenu())
+      end
+    end),
     MenuItem.createButtonMenuItem("mm_1_puzzle", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_PUZZLE"), PuzzleGame)
-      switchToScene(PuzzleMenu())
+      if GAME.battleRoom then
+        switchToScene(PuzzleMenu())
+      end
     end),
     MenuItem.createButtonMenuItem("mm_1_time", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_TIME_ATTACK"), TimeAttackGame)
-      switchToScene(TimeAttackMenu())
+      if GAME.battleRoom then
+        switchToScene(TimeAttackMenu())
+      end
     end),
     MenuItem.createButtonMenuItem("mm_1_vs", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("ONE_PLAYER_VS_SELF"), VsSelfGame)
-      switchToScene(CharacterSelectVsSelf())
+      if GAME.battleRoom then
+        switchToScene(CharacterSelectVsSelf())
+      end
     end),
     MenuItem.createButtonMenuItem("mm_1_training", nil, nil, function()
       switchToScene(TrainingMenu())
@@ -71,7 +78,9 @@ function MainMenu:createMainMenu()
     end),
     MenuItem.createButtonMenuItem("mm_2_vs_local", nil, nil, function()
       GAME.battleRoom = BattleRoom.createLocalFromGameMode(GameModes.getPreset("TWO_PLAYER_VS"), Game2pVs)
-      switchToScene(CharacterSelect2p())
+      if GAME.battleRoom then
+        switchToScene(CharacterSelect2p())
+      end
     end),
     MenuItem.createButtonMenuItem("mm_replay_browser", nil, nil, function()
       switchToScene(ReplayBrowser())
@@ -130,12 +139,12 @@ function MainMenu:update(dt)
     end
   end
 
-  self.backgroundImg:update(dt)
-  self.menu:update(dt)
+  GAME.theme.images.bg_main:update(dt)
+  self.menu:receiveInputs()
 end
 
 function MainMenu:draw()
-  self.backgroundImg:draw()
+  GAME.theme.images.bg_main:draw()
   self.uiRoot:draw()
   local fontHeight = GraphicsUtil.getGlobalFont():getHeight()
   local infoYPosition = 705 - fontHeight / 2

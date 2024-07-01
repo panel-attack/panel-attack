@@ -3,7 +3,13 @@ local consts = require("common.engine.consts")
 local Signal = require("common.lib.signal")
 -- TODO: move graphics related functionality to client
 local GraphicsUtil = require("client.src.graphics.graphics_util")
-local GFX_SCALE = consts.GFX_SCALE
+
+-- Draws an image at the given spot while scaling all coordinate and scale values with stack.gfxScale
+local function drawGfxScaled(stack, img, x, y, rot, xScale, yScale)
+  xScale = xScale or 1
+  yScale = yScale or 1
+  GraphicsUtil.draw(img, x * stack.gfxScale, y * stack.gfxScale, rot, xScale * stack.gfxScale, yScale * stack.gfxScale)
+end
 
 local StackBase = class(function(self, args)
   assert(args.which)
@@ -32,7 +38,9 @@ local StackBase = class(function(self, args)
   self.lastRollbackFrame = -1 -- the last frame we had to rollback from
 
   -- graphics
-  self.canvas = love.graphics.newCanvas(312, 612, {dpiscale = GAME:newCanvasSnappedScale()})
+  -- also relevant for the touch input controller method besides general drawing
+  self.gfxScale = 3
+  self.canvas = love.graphics.newCanvas(104 * self.gfxScale, 204 * self.gfxScale, {dpiscale = GAME:newCanvasSnappedScale()})
   self.portraitFade = config.portrait_darkness / 100 -- will be set back to 0 if count down happens
   self.healthQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight(), themes[config.theme].images.IMG_healthbar:getWidth(), themes[config.theme].images.IMG_healthbar:getHeight())
 end)
@@ -49,7 +57,7 @@ function StackBase:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlrea
   if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
     x = self.origin_x
     if legacyOffsetIsAlreadyScaled == false or themes[config.theme]:offsetsAreFixed() then
-      x = x * GFX_SCALE
+      x = x * self.gfxScale
     end
   end
   return x
@@ -64,7 +72,7 @@ function StackBase:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlrea
   if cameFromLegacyScoreOffset == false or themes[config.theme]:offsetsAreFixed() then
     y = self.panelOriginY
     if legacyOffsetIsAlreadyScaled == false or themes[config.theme]:offsetsAreFixed() then
-      y = y * GFX_SCALE
+      y = y * self.gfxScale
     end
   end
   return y
@@ -83,7 +91,7 @@ function StackBase:elementOriginXWithOffset(themePositionOffset, cameFromLegacyS
     xOffset = xOffset * self.mirror_x
   end
   if cameFromLegacyScoreOffset == false and themes[config.theme]:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
-    xOffset = xOffset * GFX_SCALE
+    xOffset = xOffset * self.gfxScale
   end
   local x = self:elementOriginX(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + xOffset
   return x
@@ -98,7 +106,7 @@ function StackBase:elementOriginYWithOffset(themePositionOffset, cameFromLegacyS
   end
   local yOffset = themePositionOffset[2]
   if cameFromLegacyScoreOffset == false and themes[config.theme]:offsetsAreFixed() == false and legacyOffsetIsAlreadyScaled == false then
-    yOffset = yOffset * GFX_SCALE
+    yOffset = yOffset * self.gfxScale
   end
   local y = self:elementOriginY(cameFromLegacyScoreOffset, legacyOffsetIsAlreadyScaled) + yOffset
   return y
@@ -204,14 +212,14 @@ function StackBase:moveForRenderIndex(renderIndex)
     self.panelOriginYOffset = 4
 
     local outerNonScaled = centerX - (outerStackXMovement * self.mirror_x)
-    self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / GFX_SCALE) -- The outer X value of the frame
+    self.origin_x = (self.panelOriginXOffset * self.mirror_x) + (outerNonScaled / self.gfxScale) -- The outer X value of the frame
 
     local frameOriginNonScaled = outerNonScaled
     if self.mirror_x == -1 then
       frameOriginNonScaled = outerNonScaled - stackWidth
     end
-    self.frameOriginX = frameOriginNonScaled / GFX_SCALE -- The left X value where the frame is drawn
-    self.frameOriginY = 108 / GFX_SCALE
+    self.frameOriginX = frameOriginNonScaled / self.gfxScale -- The left X value where the frame is drawn
+    self.frameOriginY = 108 / self.gfxScale
 
     self.panelOriginX = self.frameOriginX + self.panelOriginXOffset
     self.panelOriginY = self.frameOriginY + self.panelOriginYOffset
@@ -240,15 +248,15 @@ function StackBase:drawCharacter()
     end
   end
 
-  characters[self.character]:drawPortrait(self.which, self.panelOriginXOffset, self.panelOriginYOffset, self.portraitFade)
+  characters[self.character]:drawPortrait(self.which, self.panelOriginXOffset, self.panelOriginYOffset, self.portraitFade, self.gfxScale)
 end
 
 function StackBase:drawFrame()
   local frameImage = themes[config.theme].images.frames[self.which]
 
   if frameImage then
-    local scaleX = 312 / frameImage:getWidth()
-    local scaleY = 612 / frameImage:getHeight()
+    local scaleX = self.canvas:getWidth() / frameImage:getWidth()
+    local scaleY = self.canvas:getHeight() / frameImage:getHeight()
     GraphicsUtil.draw(frameImage, 0, 0, 0, scaleX, scaleY)
   end
 end
@@ -257,9 +265,9 @@ function StackBase:drawWall(displacement, rowCount)
   local wallImage = themes[config.theme].images.walls[self.which]
 
   if wallImage then
-    local y = (4 - displacement + rowCount * 16) * GFX_SCALE
-    local width = 288
-    local scaleX = width / wallImage:getWidth()
+    local y = (4 - displacement + rowCount * 16) * self.gfxScale
+    local width = 92
+    local scaleX = width * self.gfxScale / wallImage:getWidth()
     GraphicsUtil.draw(wallImage, 12, y, 0, scaleX, scaleX)
   end
 end
@@ -273,14 +281,14 @@ function StackBase:drawCountdown()
     local countdown_x = 44
     local countdown_y = 68
     if self.clock <= 8 then
-      GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+      drawGfxScaled(self, themes[config.theme].images.IMG_ready, ready_x, ready_y)
     elseif self.clock >= 9 and self.countdown_timer and self.countdown_timer > 0 then
       if self.countdown_timer >= 100 then
-        GraphicsUtil.drawGfxScaled(themes[config.theme].images.IMG_ready, ready_x, ready_y)
+        drawGfxScaled(self, themes[config.theme].images.IMG_ready, ready_x, ready_y)
       end
       local IMG_number_to_draw = themes[config.theme].images.IMG_numbers[math.ceil(self.countdown_timer / 60)]
       if IMG_number_to_draw then
-        GraphicsUtil.drawGfxScaled(IMG_number_to_draw, countdown_x, countdown_y)
+        drawGfxScaled(self, IMG_number_to_draw, countdown_x, countdown_y)
       end
     end
   end
@@ -297,7 +305,7 @@ end
 function StackBase:drawCanvas()
   love.graphics.setCanvas(GAME.globalCanvas)
   love.graphics.setBlendMode("alpha", "premultiplied")
-  love.graphics.draw(self.canvas, self.frameOriginX * GFX_SCALE, self.frameOriginY * GFX_SCALE)
+  love.graphics.draw(self.canvas, self.frameOriginX * self.gfxScale, self.frameOriginY * self.gfxScale)
   love.graphics.setBlendMode("alpha", "alphamultiply")
 end
 

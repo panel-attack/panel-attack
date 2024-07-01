@@ -1,4 +1,5 @@
-require("common.engine.Puzzle")
+local Puzzle = require("common.engine.Puzzle")
+local class = require("common.lib.class")
 
 local PuzzleTests = class(function() end)
 

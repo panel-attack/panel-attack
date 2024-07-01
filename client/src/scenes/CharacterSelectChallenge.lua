@@ -7,7 +7,6 @@ local Grid = require("client.src.ui.Grid")
 -- 
 local CharacterSelectChallenge = class(
   function (self, sceneParams)
-    self:load(sceneParams)
   end,
   CharacterSelect
 )

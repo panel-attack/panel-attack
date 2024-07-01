@@ -111,12 +111,12 @@ function SimpleGameSetupMenu:load(sceneParams)
       selectedIndex = config.endless_level and 2 or 1,
       onChange = function(value)
         GAME.theme:playMoveSfx()
-        if value == 1 then
+        if value == "Classic" then
           GAME.localPlayer:setStyle(GameModes.Styles.CLASSIC)
           GAME.localPlayer:setDifficulty(self.difficultyButtons.value)
           GAME.localPlayer:setSpeed(config.endless_speed)
           config.endless_level = nil
-        elseif value == 2 then
+        elseif value == "Modern" then
           GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
           GAME.localPlayer:setLevel(self.levelSlider.value)
           config.endless_level = self.levelSlider.value
@@ -164,9 +164,9 @@ function SimpleGameSetupMenu:update(dt)
   self.backgroundImg:update(dt)
 
   if self.typeButtons.value == "Classic" then
-    self.classicMenu:update(dt)
+    self.classicMenu:receiveInputs()
   else
-    self.modernMenu:update(dt)
+    self.modernMenu:receiveInputs()
   end
 end
 

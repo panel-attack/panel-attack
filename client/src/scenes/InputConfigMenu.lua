@@ -193,7 +193,7 @@ end
 
 function InputConfigMenu:update(dt)
   self.backgroundImg:update(dt)
-  self.menu:update(dt)
+  self.menu:receiveInputs()
 
   local noKeysHeld = (tableUtils.first(input.allKeys.isPressed, function (value)
     return value < MAX_PRESS_DURATION

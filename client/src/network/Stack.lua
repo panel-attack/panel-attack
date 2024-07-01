@@ -7,14 +7,10 @@ function Stack.handle_input_taunt(self)
     local input = self.player.inputConfiguration
     if input.isDown["TauntUp"] and self:can_taunt() and #characters[self.character].sounds.taunt_up > 0 then
       self.taunt_up = math.random(#characters[self.character].sounds.taunt_up)
-      if GAME.tcpClient:isConnected() then
-        GAME.tcpClient:sendRequest(ClientMessages.sendTaunt("up", self.taunt_up))
-      end
+      GAME.netClient:sendTauntUp(self.taunt_up)
     elseif input.isDown["TauntDown"] and self:can_taunt() and #characters[self.character].sounds.taunt_down > 0 then
       self.taunt_down = math.random(#characters[self.character].sounds.taunt_down)
-      if GAME.tcpClient:isConnected() then
-        GAME.tcpClient:sendRequest(ClientMessages.sendTaunt("down", self.taunt_down))
-      end
+      GAME.netClient:sendTauntDown(self.taunt_down)
     end
   end
 end
@@ -25,7 +21,7 @@ function Stack.idleInput(self)
 end
 
 function Stack.send_controls(self)
-  if self.is_local and GAME.tcpClient:isConnected() and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
+  if self.is_local and GAME.netClient:isConnected() and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
     -- Send 1 frame at clock time 0 then wait till we get our first input from the other player.
     -- This will cause a player that got the start message earlier than the other player to wait for the other player just once.
     -- print("self.confirmedInput="..(self.confirmedInput or "nil"))
@@ -48,10 +44,7 @@ function Stack.send_controls(self)
   elseif self.inputMethod == "touch" then
     to_send = self.touchInputController:encodedCharacterForCurrentTouchInput()
   end
-  if GAME.tcpClient:isConnected() then
-    local message = NetworkProtocol.markedMessageForTypeAndBody(NetworkProtocol.clientMessageTypes.playerInput.prefix, to_send)
-    GAME.tcpClient:send(message)
-  end
+  GAME.netClient:sendInput(to_send)
 
   self:handle_input_taunt()
 

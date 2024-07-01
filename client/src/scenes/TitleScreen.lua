@@ -40,7 +40,4 @@ function TitleScreen:draw()
   titleDrawPressStart(((math.sin(5 * love.timer.getTime()) / 2 + .5) ^ .5) / 2 + .5)
 end
 
-function TitleScreen:unload()
-end
-
 return TitleScreen

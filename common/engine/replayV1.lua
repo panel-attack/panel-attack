@@ -1,8 +1,6 @@
 local GameModes = require("common.engine.GameModes")
 local levelPresets = require("client.src.LevelPresets")
 local consts = require("common.engine.consts")
-local CharacterLoader = require("client.src.mods.CharacterLoader")
-
 
 local ReplayV1 = {}
 
@@ -51,7 +49,7 @@ function ReplayV1.transform(legacyReplay)
     -- not saved in v1
     publicId = 1,
     settings = {
-      characterId = CharacterLoader.fullyResolveCharacterSelection(v1r.P1_char),
+      characterId = v1r.P1_char,
       -- not saved in v1
       panelId = config.panels,
       -- not saved for engine version v046
@@ -92,7 +90,7 @@ function ReplayV1.transform(legacyReplay)
       -- not saved in v1
       publicId = 2,
       settings = {
-        characterId = CharacterLoader.fullyResolveCharacterSelection(v1r.P2_char),
+        characterId = v1r.P2_char,
         -- not saved in v1
         panelId = config.panels,
         -- not saved for engine version v046

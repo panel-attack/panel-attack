@@ -1,6 +1,5 @@
 local consts = require("common.engine.consts")
 local logger = require("common.lib.logger")
-local GFX_SCALE = consts.GFX_SCALE
 
 -- Utility methods for drawing
 local GraphicsUtil = {
@@ -88,13 +87,6 @@ function GraphicsUtil.loadImageFromSupportedExtensions(pathAndName)
   return nil
 end
 
--- Draws an image at the given spot while scaling all coordinate and scale values with GFX_SCALE
-function GraphicsUtil.drawGfxScaled(img, x, y, rot, xScale, yScale)
-  xScale = xScale or 1
-  yScale = yScale or 1
-  GraphicsUtil.draw(img, x * GFX_SCALE, y * GFX_SCALE, rot, xScale * GFX_SCALE, yScale * GFX_SCALE)
-end
-
 -- Draws an image, texture or canvas at the given spot
 function GraphicsUtil.draw(img, x, y, rot, xScale, yScale, offsetX, offsetY)
   love.graphics.draw(img, x, y, rot, xScale, yScale, offsetX, offsetY)
@@ -168,19 +160,6 @@ function GraphicsUtil:releaseQuad(quad)
   else
     self.quadPool[#self.quadPool+1] = quad
   end
-end
-
--- Draws an image at the given position, using the quad for the viewport, scaling all coordinate values and scales by GFX_SCALE
-function GraphicsUtil.drawQuadGfxScaled(image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset, mirror)
-  xScale = xScale or 1
-  yScale = yScale or 1
-
-  if mirror and mirror == 1 then
-    local qX, qY, qW, qH = quad:getViewport()
-    x = x - (qW*xScale)
-  end
-
-  GraphicsUtil.drawQuad(image, quad, x * GFX_SCALE, y * GFX_SCALE, rotation, xScale * GFX_SCALE, yScale * GFX_SCALE, xOffset, yOffset)
 end
 
 -- Draws an image at the given position, using the quad for the viewport

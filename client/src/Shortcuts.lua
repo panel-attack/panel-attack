@@ -34,8 +34,8 @@ end
 
 local function refreshDesignHelper()
   if GAME.navigationStack:getActiveScene().name == "DesignHelper" then
-    package.loaded["scenes.DesignHelper"] = nil
-    GAME.navigationStack:replace(require("scenes.DesignHelper")())
+    package.loaded["client.src.scenes.DesignHelper"] = nil
+    GAME.navigationStack:replace(require("client.src.scenes.DesignHelper")())
   end
 end
 

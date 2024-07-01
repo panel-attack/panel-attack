@@ -192,7 +192,7 @@ function ChallengeMode:onMatchEnded(match)
   self:recordStageResult(winners, gameTime)
 
   if self.online and match:hasLocalPlayer() then
-    self:reportLocalGameResult(winners)
+    GAME.netClient:reportLocalGameResult(winners)
   end
 
   if match.aborted then

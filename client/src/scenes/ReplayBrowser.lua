@@ -80,6 +80,9 @@ local function updateBrowsingPath(new_path)
     current_path = new_path
   end
   path_contents = fileUtils.getFilteredDirectoryItems(base_path .. current_path)
+  if not path_contents[cursor_pos] then
+    cursor_pos = replay_id_top
+  end
 end
   
 local function setPathToParentDir()
@@ -194,7 +197,7 @@ function ReplayBrowser:draw()
     for i = 1, #selectedReplay.players do
       GraphicsUtil.print(loc("rp_browser_info_" .. i .. "p"), menu_x + offsetX, menu_y + 50)
       GraphicsUtil.print(loc("rp_browser_info_name", selectedReplay.players[i].name or ("Player " .. i)), menu_x + offsetX, menu_y + 65)
-      GraphicsUtil.print(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId), menu_x + offsetX, menu_y + 80)
+      GraphicsUtil.print(loc("rp_browser_info_character", selectedReplay.players[i].settings.characterId or ""), menu_x + offsetX, menu_y + 80)
       if selectedReplay.players[i].human then
         if selectedReplay.players[i].settings.level then
           GraphicsUtil.print(loc("rp_browser_info_level", selectedReplay.players[i].settings.level), menu_x + offsetX, menu_y + 95)
@@ -216,9 +219,6 @@ function ReplayBrowser:draw()
       GraphicsUtil.print(loc("rp_browser_watch"), menu_x + 75, menu_y + 150)
     end
   end
-end
-
-function ReplayBrowser:unload()
 end
 
 return ReplayBrowser

@@ -78,11 +78,11 @@ end
 -- usually this will be MainMenu
 -- an optional callback may be passed that is called when the transition completed
 function NavigationStack:popToTop(transition, callback)
-  if #self.scenes > 1 then
+  if #self.scenes > 1 or transition then
     local activeScene = self.scenes[#self.scenes]
     local top = self.scenes[1]
 
-    logger.debug("Popping from scene " .. activeScene.name .. "to top scene " .. top.name)
+    logger.debug("Popping from scene " .. activeScene.name .. " to top scene " .. top.name)
 
 
     if not transition then
@@ -106,7 +106,8 @@ end
 function NavigationStack:popToName(name, transition, callback)
   local targetScene
   local targetIndex
-  for i = #self.scenes - 1, 1, -1 do
+  -- if we're already at the desired scene, we also just stay
+  for i = #self.scenes, 1, -1 do
     if self.scenes[i].name == name then
       targetIndex = i
       targetScene = self.scenes[i]
@@ -140,17 +141,21 @@ end
 function NavigationStack:replace(newScene, transition, callback)
   local activeScene = self.scenes[#self.scenes]
 
-  logger.debug("Replacing scene " .. activeScene.name .. " with scene " .. newScene.name)
+  if activeScene then
+    logger.debug("Replacing scene " .. activeScene.name .. " with scene " .. newScene.name)
 
-  if not transition then
-    transition = DirectTransition()
+    if not transition then
+      transition = DirectTransition()
+    end
+    transition.oldScene = activeScene
+    transition.newScene = newScene
+
+    self.transition = transition
+    self.callback = callback
+    self.scenes[#self.scenes] = newScene
+  else
+    self:push(newScene, transition)
   end
-  transition.oldScene = activeScene
-  transition.newScene = newScene
-
-  self.transition = transition
-  self.callback = callback
-  self.scenes[#self.scenes] = newScene
 end
 
 function NavigationStack:getActiveScene()
@@ -172,6 +177,7 @@ function NavigationStack:update(dt)
         self.callback()
         self.callback = nil
       end
+      self.scenes[#self.scenes]:refresh()
     end
   else
     if #self.scenes == 0 then

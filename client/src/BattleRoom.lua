@@ -28,7 +28,10 @@ BattleRoom = class(function(self, mode, gameScene)
   self.matchesPlayed = 0
   self.gameScene = gameScene
   -- this is a bit naive but effective for now
-  self.online = GAME.tcpClient:isConnected()
+  self.online = GAME.netClient:isConnected()
+  if self.online then
+    GAME.netClient:connectSignal("disconnect", self, self.onDisconnect)
+  end
 
   Signal.turnIntoEmitter(self)
   self:createSignal("rankedStatusChanged")
@@ -100,6 +103,7 @@ function BattleRoom.createFromServerMessage(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
     GAME.localPlayer.playerNumber = message.players[1].playerNumber
+    GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
     GAME.localPlayer:setRating(message.players[1].ratingInfo.new)
     GAME.localPlayer:setLeague(message.players[1].ratingInfo.league)
 
@@ -112,7 +116,7 @@ function BattleRoom.createFromServerMessage(message)
   end
 
   battleRoom:assignInputConfigurations()
-  battleRoom:registerNetworkCallbacks()
+  GAME.netClient:registerPlayerUpdates(battleRoom)
 
   return battleRoom
 end
@@ -139,9 +143,11 @@ function BattleRoom.createLocalFromGameMode(gameMode, gameScene)
     end
   end
 
-  battleRoom:assignInputConfigurations()
-
-  return battleRoom
+  if battleRoom:assignInputConfigurations() then
+    return battleRoom
+  else
+    return nil
+  end
 end
 
 function BattleRoom.setWinCounts(self, winCounts)
@@ -225,8 +231,6 @@ function BattleRoom:createMatch()
   for _, player in ipairs(self.players) do
     self.match:connectSignal("matchEnded", player, player.onMatchEnded)
   end
-
-  self.match:setSpectatorList(self.spectators)
 
   return self.match
 end
@@ -402,6 +406,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
 end
 
 -- sets up the process to get an input configuration assigned for every local player
+-- returns false if there are more players than input configurations
 function BattleRoom:assignInputConfigurations()
   local localPlayers = {}
   for i = 1, #self.players do
@@ -411,7 +416,8 @@ function BattleRoom:assignInputConfigurations()
   end
 
   -- assert that there are enough valid input configurations actually configured
-  local validInputConfigurationCount = 0
+  -- 1 is the baseline because you can always use touch without configuration
+  local validInputConfigurationCount = 1
   for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
     if inputConfiguration["Swap1"] then
       validInputConfigurationCount = validInputConfigurationCount + 1
@@ -423,6 +429,7 @@ function BattleRoom:assignInputConfigurations()
     "\nPlease configure enough input configurations and try again"
     local transition = MessageTransition(GAME.timer, 5, messageText)
     GAME.navigationStack:popToTop(transition, function() self:shutdown() end)
+    return false
   else
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
@@ -434,6 +441,8 @@ function BattleRoom:assignInputConfigurations()
       self.tryLockInputs = true
     end
   end
+
+  return true
 end
 
 -- tries to assign unclaimed input configurations for all local players based on currently used inputs
@@ -454,20 +463,6 @@ end
 function BattleRoom:update(dt)
   -- if there are still unloaded assets, we can load them 1 asset a frame in the background
   ModController:update()
-
-  if self.online then
-    -- here we fetch network updates and update the battleroom / match
-    if not GAME.tcpClient:processIncomingMessages() then
-      -- oh no, we probably disconnected
-      self:shutdown()
-      -- let's try to log in back via lobby
-      GAME.navigationStack:popToName("Lobby")
-      return
-    else
-      GAME.tcpClient:updateNetwork(dt)
-      self:runNetworkTasks()
-    end
-  end
 
   if self.state == BattleRoom.states.Setup then
     -- the setup phase of the room
@@ -494,7 +489,9 @@ function BattleRoom:shutdown()
     self.match:deinit()
     self.match = nil
   end
-  self:shutdownNetwork()
+  if self.online then
+    GAME.netClient:leaveRoom()
+  end
   self.hasShutdown = true
   GAME:initializeLocalPlayer()
   GAME.battleRoom = nil
@@ -514,7 +511,7 @@ function BattleRoom:onMatchEnded(match)
       winners[1]:incrementWinCount()
     end
     if self.online and match:hasLocalPlayer() then
-      self:reportLocalGameResult(winners)
+      GAME.netClient:reportLocalGameResult(winners)
     end
   else
     -- match:deinit is the responsibility of the one switching out of the game scene
@@ -559,6 +556,36 @@ function BattleRoom:getInfo()
   info.state = self.state
 
   return info
+end
+
+function BattleRoom:setSpectatorList(spectatorList)
+  self.spectators = spectatorList
+  local str = ""
+  for k, v in ipairs(spectatorList) do
+    str = str .. v
+    if k < #spectatorList then
+      str = str .. "\n"
+    end
+  end
+  if str ~= "" then
+    str = loc("pl_spectators") .. "\n" .. str
+  end
+  self.spectatorString = str
+end
+
+function BattleRoom:onDisconnect()
+  self:shutdown()
+  GAME.navigationStack:popToName("Lobby")
+end
+
+function BattleRoom:hasLocalPlayer()
+  for _, player in ipairs(self.players) do
+    if player.isLocal then
+      return true
+    end
+  end
+
+  return false
 end
 
 return BattleRoom

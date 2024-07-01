@@ -762,7 +762,11 @@ end
 function CharacterSelect:update(dt)
   for _, cursor in ipairs(self.ui.cursors) do
     if cursor.player.isLocal and cursor.player.human then
-      cursor:receiveInputs(cursor.player.inputConfiguration or input, dt)
+      if not cursor.player.inputConfiguration then
+        cursor:receiveInputs(input, dt)
+      elseif cursor.player.settings.inputMethod == "controller" then
+        cursor:receiveInputs(cursor.player.inputConfiguration, dt)
+      end
     end
   end
   if GAME.battleRoom and GAME.battleRoom.spectating then

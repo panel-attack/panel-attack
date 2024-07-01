@@ -27,10 +27,6 @@ local Scene = class(
 
 -- abstract functions to be implemented per scene
 
--- Ran every time the scene is started
--- used to setup the state of the scene before running
-function Scene:load(sceneParams) end
-
 -- Ran every frame while the scene is active
 function Scene:update(dt)
   error("every scene MUST implement an update function, even " .. self.name)
@@ -52,8 +48,16 @@ function Scene:drawCommunityMessage()
   end
 end
 
--- Ran every time the scene is ending
--- used to clean up resources/global state used within the scene (stopping audio, hiding menus, etc.)
-function Scene:unload() end
+function Scene.pop()
+  GAME.theme:playCancelSfx()
+  GAME.navigationStack:pop()
+end
+
+-- if a scene displays information within UI elements it will often not directly bind to the fields
+-- refresh should update all UI elements with potentially updatable information with their most recent values
+-- refresh is customarily called whenever a scene becomes the active scene
+function Scene:refresh()
+
+end
 
 return Scene

@@ -16,7 +16,7 @@ local StackBase = require("common.engine.StackBase")
 local class = require("common.lib.class")
 local Panel = require("common.engine.Panel")
 local GarbageQueue = require("common.engine.GarbageQueue")
-local Telegraph = require("common.engine.Telegraph")
+local Telegraph = require("client.src.graphics.Telegraph")
 local prof = require("common.lib.jprof.jprof")
 
 -- Stuff defined in this file:
@@ -131,8 +131,10 @@ Stack =
     -- This increases by 1 wrapping every time garbage drops.
     s.currentGarbageDropColumnIndexes = {1, 1, 1, 1, 1, 1}
 
-    s.later_garbage = {} -- Queue of garbage that is done waiting in telegraph, and been popped out, and will be sent to our stack next frame
-    s.garbage_q = GarbageQueue() -- Queue of garbage that is about to be dropped
+    -- the stack pushes the garbage it produces into this queue
+    s.outgoingGarbage = GarbageQueue()
+    -- after completing the inTransit delay garbage sits in this queue ready to be popped as soon as the stack allows it
+    s.incomingGarbage = GarbageQueue()
     
     s.inputMethod = inputMethod
     if s.inputMethod == "touch" then
@@ -256,17 +258,6 @@ Stack =
       -- .sender = us
     end
 
-    s.combos = {} -- Tracks the combos made throughout the whole game. Key is the clock time, value is the combo size
-    s.chains = {} -- Tracks the chains made throughout the whole game
-    --[[
-        Key - clock time the chain started
-        Value -
-	        starts - array of clock times for the start of each match in the chain
-	        finish - clock time the chain finished
-	        size - the chain size 2, 3, etc
-    ]]
-    s.currentChainStartFrame = nil -- The start frame of the current active chain or nil if no chain is active
-
     s.panelGenCount = 0
     s.garbageGenCount = 0
 
@@ -339,14 +330,6 @@ function Stack.divergenceString(stackToTest)
       end
   end
 
-  if stackToTest.telegraph then
-    result = result .. "telegraph.chain count " .. stackToTest.telegraph.garbage_queue.chain_garbage:len() .. "\n"
-    result = result .. "telegraph.senderCurrentlyChaining " .. tostring(stackToTest.telegraph.senderCurrentlyChaining) .. "\n"
-    result = result .. "telegraph.attacks " .. tableUtils.length(stackToTest.telegraph.attacks) .. "\n"
-  end
-  
-  result = result .. "garbage_q " .. stackToTest.garbage_q:len() .. "\n"
-  result = result .. "later_garbage " .. tableUtils.length(stackToTest.later_garbage) .. "\n"
   result = result .. "Stop " .. stackToTest.stop_time .. "\n"
   result = result .. "Pre Stop " .. stackToTest.pre_stop_time .. "\n"
   result = result .. "Shake " .. stackToTest.shake_time .. "\n"
@@ -382,12 +365,8 @@ function Stack.rollbackCopy(source, other)
   for garbageWidth = 1, #source.currentGarbageDropColumnIndexes do
     other.currentGarbageDropColumnIndexes[garbageWidth] = source.currentGarbageDropColumnIndexes[garbageWidth]
   end
-  
-  other.later_garbage = deepcpy(source.later_garbage)
-  other.garbage_q = source.garbage_q:makeCopy()
-  if source.telegraph then
-    other.telegraph = Telegraph.rollbackCopy(source.telegraph, other.telegraph)
-  end
+
+  prof.push("rollback copy panels")
   local width = source.width or other.width
   local height_to_cpy = #source.panels
   other.panels = other.panels or {}
@@ -428,7 +407,9 @@ function Stack.rollbackCopy(source, other)
   for i = height_to_cpy + 1, #other.panels do
     other.panels[i] = nil
   end
+  prof.pop("rollback copy panels")
 
+  prof.push("rollback copy the rest")
   other.countdown_timer = source.countdown_timer
   other.clock = source.clock
   other.game_stopwatch = source.game_stopwatch
@@ -465,24 +446,13 @@ function Stack.rollbackCopy(source, other)
   other.metal_panels_queued = source.metal_panels_queued
   other.panels_cleared = source.panels_cleared
   other.danger_timer = source.danger_timer
-  other.analytic = deepcpy(source.analytic)
   other.game_over_clock = source.game_over_clock
-  other.currentChainStartFrame = source.currentChainStartFrame
-    
-  return other
-end
+  prof.pop("rollback copy the rest")
+  prof.push("rollback copy analytics")
+  other.analytic = deepcpy(source.analytic)
+  prof.pop("rollback copy analytics")
 
-function Stack.restoreFromRollbackCopy(self, other)
-  Stack.rollbackCopy(other, self)
-  if self.telegraph then
-    self.telegraph.sender = self
-  end
-  -- The remaining inputs is the confirmed inputs not processed yet for this clock time
-  -- We have processed clock time number of inputs when we are at clock, so we only want to process the clock+1 input on
-  self.input_buffer = {}
-  for i = self.clock + 1, #self.confirmedInput do
-    self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
-  end
+  return other
 end
 
 function Stack.rollbackToFrame(self, frame)
@@ -499,7 +469,13 @@ function Stack.rollbackToFrame(self, frame)
   if frame < currentFrame then
     logger.debug("Rolling back " .. self.which .. " to " .. frame)
     assert(self.rollbackCopies[frame])
-    self:restoreFromRollbackCopy(self.rollbackCopies[frame])
+    Stack.rollbackCopy(self.rollbackCopies[frame], self)
+    -- The remaining inputs is the confirmed inputs not processed yet for this clock time
+    -- We have processed clock time number of inputs when we are at clock, so we only want to process the clock+1 input on
+    self.input_buffer = {}
+    for i = self.clock + 1, #self.confirmedInput do
+      self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
+    end
     -- this is for the interpolation of the shake animation only (not a physics relevant field)
     if self.rollbackCopies[frame - 1] then
       self.prev_shake_time = self.rollbackCopies[frame - 1].shake_time
@@ -514,46 +490,31 @@ function Stack.rollbackToFrame(self, frame)
       self:deleteRollbackCopy(f)
     end
 
-    if self.opponentStack and self.opponentStack.later_garbage then
-      -- The garbage that we send this time might (rarely) not be the same
-      -- as the garbage we sent before.  Wipe out the garbage we sent before...
-      local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
-      for k, _ in pairs(self.opponentStack.later_garbage) do
-        -- The time we actually affected the target was garbage delay away,
-        -- so we only need to remove it if its at least that far away
-        if k >= targetFrame then
-          self.opponentStack.later_garbage[k] = nil
-        end
-      end
+    if self.incomingGarbage then
+      self.incomingGarbage:rollbackToFrame(frame)
     end
 
-    for chainFrame, _ in pairs(self.chains) do
-      if chainFrame >= frame then
-        self.chains[chainFrame] = nil
-      end
+    if self.outgoingGarbage then
+      self.outgoingGarbage:rollbackToFrame(frame)
     end
 
-    -- This variable has already been restored above, if its set, that means a chain is in progress
-    -- and we may not have removed the entries that happened before the rollback
-    if self.currentChainStartFrame then
-      local currentChain = self.chains[self.currentChainStartFrame]
-      local size = 0
-      for index, chainFrame in ipairs(currentChain.starts) do
-        if chainFrame >= frame then
-          currentChain.starts[index] = nil
-        else
-          size = size + 1
-        end
-      end
-      currentChain.finish = nil
-      currentChain.size = size + 1
-    end
-    
-    for comboFrame, _ in pairs(self.combos) do
-      if comboFrame >= frame then
-        self.combos[comboFrame] = nil
-      end
-    end
+    -- leaving this in commented out as it would spark worry:
+    -- we don't need this anymore because the inTransitGarbage now lives on the sender's garbage queue
+    -- no longer on the receivers
+    -- that means just by fetching the copy of the garbage queue, we should have a perfectly functional copy
+
+    -- if self.opponentStack and self.opponentStack.inTransitGarbage then
+    --   -- The garbage that we send this time might (rarely) not be the same
+    --   -- as the garbage we sent before.  Wipe out the garbage we sent before...
+    --   local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
+    --   for k, _ in pairs(self.opponentStack.inTransitGarbage) do
+    --     -- The time we actually affected the target was garbage delay away,
+    --     -- so we only need to remove it if its at least that far away
+    --     if k >= targetFrame then
+    --       self.opponentStack.inTransitGarbage[k] = nil
+    --     end
+    --   end
+    -- end
 
     self.rollbackCount = self.rollbackCount + 1
     self.lastRollbackFrame = currentFrame
@@ -573,22 +534,30 @@ function Stack.saveForRollback(self)
   self.garbageTarget = nil
   self.rollbackCopies = nil
   self:remove_extra_rows()
+  prof.push("Stack.rollbackCopy")
   rollbackCopies[self.clock] = Stack.rollbackCopy(self)
+  prof.pop("Stack.rollbackCopy")
+  prof.push("incomingGarbage:rollbackCopy")
+  self.incomingGarbage:rollbackCopy(self.clock)
+  prof.pop("incomingGarbage:rollbackCopy")
+  prof.push("outgoingGarbage:rollbackCopy")
+  if self.outgoingGarbage then
+    self.outgoingGarbage:rollbackCopy(self.clock)
+  end
+  prof.pop("outgoingGarbage:rollbackCopy")
+
   self.rollbackCopies = rollbackCopies
   self.opponentStack = opponentStack
   self.garbageTarget = attackTarget
+  prof.push("delete rollback copy")
   local deleteFrame = self.clock - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
+  prof.pop("delete rollback copy")
   prof.pop("Stack:saveForRollback")
 end
 
 function Stack.deleteRollbackCopy(self, frame)
   if self.rollbackCopies[frame] then
-    Telegraph.saveClone(self.rollbackCopies[frame].telegraph)
-
-     -- Has a reference to stacks we don't want kept around
-    self.rollbackCopies[frame].telegraph = nil
-
     self.rollbackCopyPool[#self.rollbackCopyPool + 1] = self.rollbackCopies[frame]
     self.rollbackCopies[frame] = nil
   end
@@ -607,7 +576,7 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
     assert(newGarbageTarget.frameOriginY ~= nil)
     assert(newGarbageTarget.mirror_x ~= nil)
     assert(newGarbageTarget.stackCanvasWidth ~= nil)
-    assert(newGarbageTarget.receiveGarbage ~= nil)
+    assert(newGarbageTarget.incomingGarbage ~= nil)
   end
   self.garbageTarget = newGarbageTarget
   if self.telegraph then
@@ -652,9 +621,9 @@ function Stack.set_puzzle_state(self, puzzle)
     local comboStorm = {}
     for i = 1, self.height do
                             --  width        height, metal, from chain
-      table.insert(comboStorm, {self.width - 1,   1, false, false})
+      table.insert(comboStorm, {width = self.width - 1,  height = 1, isChain = false, isMetal = false, frameEarned = 0})
     end
-    self.garbage_q:push(comboStorm)
+    self.incomingGarbage:pushTable(comboStorm)
   elseif puzzle.puzzleType == "chain" then
     tableUtils.appendIfNotExists(self.gameOverConditions, GameModes.GameOverConditions.CHAIN_DROPPED)
     tableUtils.appendIfNotExists(self.gameWinConditions, GameModes.GameWinConditions.NO_MATCHABLE_PANELS)
@@ -905,18 +874,6 @@ function Stack:shouldRun(runsSoFar)
   if self.is_local then
     return buffer_len > 0
   else
-    -- In debug mode allow non-local player 2 to fall a certain number of frames behind
-    if config.debug_mode and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and self.which == 2 then
-      -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
-      if self.opponentStack and self.opponentStack:game_ended() == false then
-        if GAME.tcpClient:isConnected() then
-          if self.clock + config.debug_vsFramesBehind >= self.opponentStack.clock then
-            return false
-          end
-        end
-      end
-    end
-
     -- If we are not local, we want to run faster to catch up.
     if buffer_len >= 15 - runsSoFar then
       -- way behind, run at max speed.
@@ -1136,7 +1093,7 @@ function Stack.updatePanels(self)
   if self.do_countdown then
     return
   end
-  
+
   self.shake_time_on_frame = 0
   self.popSizeThisFrame = "small"
   for row = 1, #self.panels do
@@ -1150,22 +1107,22 @@ end
 function Stack.shouldDropGarbage(self)
   -- this is legit ugly, these should rather be returned in a parameter table
   -- or even better in a dedicated garbage class table
-  local _, next_garbage_block_height, _, from_chain = unpack(self.garbage_q:peek())
+  local garbage = self.incomingGarbage:peek()
 
   -- new garbage can't drop if the stack is full
   -- new garbage always drops one by one
   if not self.panels_in_top_row and not self:has_falling_garbage() then
     if not self:hasActivePanels() then
       return true
-    elseif from_chain then
+    elseif garbage.isChain then
       -- drop chain garbage higher than 1 row immediately
-      return next_garbage_block_height > 1
+      return garbage.height > 1
     else
       -- attackengine garbage higher than 1 (aka chain garbage) is treated as combo garbage
       -- that is to circumvent the garbage queue not allowing to send multiple chains simultaneously
       -- and because of that hack, we need to do another hack here and allow n-height combo garbage
       -- but only if the player is targetted by a detached attackengine
-      return next_garbage_block_height > 1 and self.match.attackEngines[self.player] ~= nil
+      return garbage.height > 1 and self.match.attackEngines[self.player] ~= nil
     end
   end
 end
@@ -1176,7 +1133,7 @@ function Stack.simulate(self)
   self:prep_first_row()
   local panels = self.panels
   local swapped_this_frame = nil
-  self.garbageLandedThisFrame = {}
+  table.clear(self.garbageLandedThisFrame)
   self:runCountDownIfNeeded()
 
   if self.pre_stop_time ~= 0 then
@@ -1377,18 +1334,15 @@ function Stack.simulate(self)
   prof.push("chain update")
   -- if at the end of the routine there are no chain panels, the chain ends.
   if self.chain_counter ~= 0 and not self:hasChainingPanels() then
-    self.chains[self.currentChainStartFrame].finish = self.clock
-    self.chains[self.currentChainStartFrame].size = self.chain_counter
-    self.currentChainStartFrame = nil
     if self:canPlaySfx() then
       SFX_Fanfare_Play = self.chain_counter
     end
     self.analytic:register_chain(self.chain_counter)
     self.chain_counter = 0
 
-    if self.telegraph then
+    if self.outgoingGarbage then
       logger.debug("Player " .. self.which .. " chain ended at " .. self.clock)
-      self.telegraph:chainingEnded(self.clock)
+      self.outgoingGarbage:finalizeCurrentChain(self.clock)
     end
   end
   prof.pop("chain update")
@@ -1408,18 +1362,9 @@ function Stack.simulate(self)
     end
   end
 
-  prof.push("telegraph:popAllAndSendToTarget")
-  if self.telegraph then
-    self.telegraph:popAllAndSendToTarget(self.clock, self.garbageTarget)
-  end
-  prof.pop("telegraph:popAllAndSendToTarget")
-
-  prof.push("push into own garbage q")
-  if self.later_garbage[self.clock] then
-    self.garbage_q:push(self.later_garbage[self.clock])
-    self.later_garbage[self.clock] = nil
-  end
-  prof.pop("push into own garbage q")
+  prof.push("process staged garbage")
+  self.outgoingGarbage:processStagedGarbageForClock(self.clock)
+  prof.pop("process staged garbage")
 
   prof.push("remove_extra_rows")
   self:remove_extra_rows()
@@ -1437,23 +1382,6 @@ function Stack.simulate(self)
   end
   prof.pop("double-check panels_in_top_row")
 
-
-  -- local garbage_fits_in_populated_top_row 
-  -- if self.garbage_q:len() > 0 then
-  --   --even if there are some panels in the top row,
-  --   --check if the next block in the garbage_q would fit anyway
-  --   --ie. 3-wide garbage might fit if there are three empty spaces where it would spawn
-  --   garbage_fits_in_populated_top_row = true
-  --   local next_garbage_block_width, next_garbage_block_height, _metal, from_chain = unpack(self.garbage_q:peek())
-  --   local cols = self.garbage_cols[next_garbage_block_width]
-  --   local spawn_col = cols[cols.idx]
-  --   local spawn_row = #self.panels
-  --   for idx=spawn_col, spawn_col+next_garbage_block_width-1 do
-  --     if panelRow[idx]:dangerous() then 
-  --       garbage_fits_in_populated_top_row = nil
-  --     end
-  --   end
-  -- end
   prof.push("doublecheck panels above top row")
   -- If any panels (dangerous or not) are in rows above the top row, garbage should not fall.
   for row_idx = self.height + 1, #self.panels do
@@ -1466,15 +1394,13 @@ function Stack.simulate(self)
   prof.pop("doublecheck panels above top row")
 
 
-  prof.push("pop from own garbage q")
-  if self.garbage_q:len() > 0 then
+  prof.push("pop from incoming garbage q")
+  if self.incomingGarbage:len() > 0 then
     if self:shouldDropGarbage() then
-      if self:tryDropGarbage(unpack(self.garbage_q:peek())) then
-        self.garbage_q:pop()
-      end
+      self:tryDropGarbage()
     end
   end
-  prof.pop("pop from own garbage q")
+  prof.pop("pop from incoming garbage q")
 
   prof.push("stack sfx")
   -- Update Sound FX
@@ -1637,21 +1563,6 @@ function Stack:moveCursorInDirection(directionString)
   assert(directionString ~= nil and type(directionString) == "string")
   self.cur_row = util.bound(1, self.cur_row + d_row[directionString], self.top_cur_row)
   self.cur_col = util.bound(1, self.cur_col + d_col[directionString], self.width - 1)
-end
-
--- Called on a stack by the attacker with the time to start processing the garbage drop
-function Stack:receiveGarbage(frameToReceive, garbageList)
-
-  -- If we are past the frame the attack would be processed we need to rollback
-  if self.clock > frameToReceive then
-    self:rollbackToFrame(frameToReceive)
-  end
-
-  local garbage = self.later_garbage[frameToReceive] or {}
-  for i = 1, #garbageList do
-    garbage[#garbage + 1] = garbageList[i]
-  end
-  self.later_garbage[frameToReceive] = garbage
 end
 
 function Stack.behindRollback(self)
@@ -1837,8 +1748,7 @@ end
 
 -- tries to drop a width x height garbage.
 -- returns true if garbage was dropped, false otherwise
-function Stack.tryDropGarbage(self, width, height, metal)
-
+function Stack:tryDropGarbage()
   logger.debug("trying to drop garbage at frame "..self.clock)
 
   -- Do one last check for panels in the way.
@@ -1848,18 +1758,17 @@ function Stack.tryDropGarbage(self, width, height, metal)
         if self.panels[i][j] then
           if self.panels[i][j].color ~= 0 then
             logger.trace("Aborting garbage drop: panel found at row " .. tostring(i) .. " column " .. tostring(j))
-            return false
+            return
           end
         end
       end
     end
   end
 
-  if self.canvas ~= nil then
-    logger.trace(string.format("Dropping garbage on player %d - height %d  width %d  %s", self.player_number, height, width, metal and "Metal" or ""))
-  end
+  local garbage = self.incomingGarbage:pop()
+  logger.debug(string.format("%d Dropping garbage on player %d - height %d  width %d  %s", self.clock, self.player_number, garbage.height, garbage.width, garbage.isMetal and "Metal" or ""))
 
-  self:dropGarbage(width, height, metal)
+  self:dropGarbage(garbage.width, garbage.height, garbage.isMetal)
 
   return true
 end
@@ -1994,8 +1903,8 @@ function Stack.new_row(self)
 end
 
 function Stack:getAttackPatternData()
-
   local data = {}
+  data.attackPatterns = {}
   data.extraInfo = {}
   data.extraInfo.playerName = self.player.name
   data.extraInfo.gpm = self.analytic:getRoundedGPM(self.clock) or 0
@@ -2009,36 +1918,18 @@ function Stack:getAttackPatternData()
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
-  self.currentChainStartFrame = nil
   local defaultEndTime = 70
-  local sortedAttackPatterns = {}
 
-  -- Add in all the chains by time
-  for time, currentChain in pairsSortedByKeys(self.chains) do
-    local endTime = currentChain.finish or currentChain.starts[#currentChain.starts] + defaultEndTime
-    if sortedAttackPatterns[time] == nil then
-      sortedAttackPatterns[time] = {}
-    end
-    local attackPatternBucket = sortedAttackPatterns[time]
-    attackPatternBucket[#attackPatternBucket+1] = {chain = currentChain.starts, chainEndTime = endTime}
-  end
-
-  -- Add in all the combos by time
-  for time, combos in pairsSortedByKeys(self.combos) do
-    for index, garbage in ipairs(combos) do
-      if sortedAttackPatterns[time] == nil then
-        sortedAttackPatterns[time] = {}
+  for _, garbage in ipairs(self.outgoingGarbage.history) do
+    if garbage.isChain then
+      if garbage.finalized then
+        data.attackPatterns[#data.attackPatterns+1] = {chain = garbage.linkTimes, chainEndTime = garbage.finalizedClock}
+      else
+        -- chain garbage may not be finalized yet so fake an end time
+        data.attackPatterns[#data.attackPatterns+1] = {chain = garbage.linkTimes, chainEndTime = garbage.linkTimes[#garbage.linkTimes] + defaultEndTime}
       end
-      local attackPatternBucket = sortedAttackPatterns[time]
-      attackPatternBucket[#attackPatternBucket+1] = {width = garbage.width, height = garbage.height, startTime = time, chain = false, metal = garbage.metal}
-    end
-  end
-
-  -- Save the final attack patterns in sorted order without the times since the file format doesn't want that (duplicate data)
-  data.attackPatterns = {}
-  for _, attackPatterns in pairsSortedByKeys(sortedAttackPatterns) do
-    for _, attackPattern in ipairs(attackPatterns) do
-      data.attackPatterns[#data.attackPatterns+1] = attackPattern
+    else
+      data.attackPatterns[#data.attackPatterns+1] = {width = garbage.width, height = garbage.height, startTime = garbage.frameEarned, chain = false, metal = garbage.isMetal}
     end
   end
 
@@ -2152,31 +2043,31 @@ end
 
 function Stack.updateActivePanels(self)
   self.n_prev_active_panels = self.n_active_panels
-  self.n_active_panels = #self:getActivePanels()
+  self.n_active_panels = self:getActivePanelCount()
 end
 
-function Stack.getActivePanels(self)
-  local activePanels = {}
+function Stack.getActivePanelCount(self)
+  local count = 0
 
   for row = 1, self.height do
     for col = 1, self.width do
       local panel = self.panels[row][col]
       if panel.isGarbage then
         if panel.state ~= "normal" then
-          activePanels[#activePanels+1] = panel
+          count = count + 1
         end
       else
         if panel.color ~= 0
         -- dimmed is implicitly filtered by only checking in row 1 and up
         and panel.state ~= "normal"
         and panel.state ~= "landing" then
-          activePanels[#activePanels+1] = panel
+          count = count + 1
         end
       end
     end
   end
 
-  return activePanels
+  return count
 end
 
 function Stack.updateRiseLock(self)
@@ -2334,6 +2225,10 @@ function Stack:shakeFramesForGarbageSize(width, height)
   else
     error("Trying to determine shake time of a garbage block with width " .. width .. " and height " .. height)
   end
+end
+
+function Stack:isCatchingUp()
+  return self.play_to_end
 end
 
 -- other parts of stack

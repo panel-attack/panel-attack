@@ -14,6 +14,8 @@ SimulatedStack = class(function(self, arguments)
   self.max_runs_per_frame = 1
   self.multiBarFrameCount = 240
 
+  self.incomingGarbage = GarbageQueue()
+
   self.stackHeightQuad = GraphicsUtil:newRecycledQuad(0, 0, themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getHeight(),
                                                       themes[config.theme].images.IMG_multibar_shake_bar:getWidth(),
@@ -25,13 +27,14 @@ end, StackBase)
 
 -- adds an attack engine to the simulated opponent
 function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
-  self.telegraph = Telegraph(self)
-
   if shouldPlayAttackSfx then
     self.attackEngine = AttackEngine(attackSettings, self.telegraph, characters[self.character])
   else
     self.attackEngine = AttackEngine(attackSettings, self.telegraph)
   end
+
+  self.outgoingGarbage = self.attackEngine.outgoingGarbage
+  self.telegraph = Telegraph(self)
 
   return self.attackEngine
 end
@@ -54,6 +57,12 @@ function SimulatedStack:run()
     end
   else
     if self.healthEngine then
+      -- perform the equivalent of queued garbage being dropped
+      -- except a little quicker than on real stacks
+      for i = #self.incomingGarbage.stagedGarbage, 1, -1 do
+        self.healthEngine:receiveGarbage(self.clock, self.incomingGarbage:pop())
+      end
+
       self.health = self.healthEngine:run()
       if self.health <= 0 then
         self:setGameOver()
@@ -144,16 +153,6 @@ function SimulatedStack:renderStackHeight()
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
-function SimulatedStack:receiveGarbage(frameToReceive, garbageList)
-  if not self:game_ended() then
-    if self.healthEngine then
-      self.healthEngine:receiveGarbage(frameToReceive, garbageList)
-    else
-      error("Trying to send garbage to a simulated stack without a consumer for the garbage")
-    end
-  end
-end
-
 function SimulatedStack:saveForRollback()
   local copy
 
@@ -163,14 +162,14 @@ function SimulatedStack:saveForRollback()
     copy = {}
   end
 
+  self.incomingGarbage:rollbackCopy(self.clock)
+
   if self.healthEngine then
     self.healthEngine:saveRollbackCopy()
   end
 
-  if self.telegraph then
-    -- this is pretty stupid, telegraph should just save its own rollback on itself
-    -- so that when rollback happens we just telegraph:rollbackToFrame
-    copy.telegraph = self.telegraph:rollbackCopy()
+  if self.attackEngine then
+    self.attackEngine:rollbackCopy(self.clock)
   end
 
   copy.health = self.health
@@ -192,13 +191,11 @@ function SimulatedStack:rollbackToFrame(frame)
     self.rollbackCopies[i] = nil
   end
 
-  if copy then
-    if self.telegraph then
-      copy.telegraph:rollbackCopy(self.telegraph)
-      self.telegraph.sender = self
-    end
+  self.incomingGarbage:rollbackToFrame(frame)
+
+  if self.attackEngine then
+    self.attackEngine:rollbackToFrame(frame)
   end
-  self.attackEngine.clock = frame
 
   if self.healthEngine then
     self.healthEngine:rollbackToFrame(frame)
@@ -222,11 +219,13 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
     assert(garbageTarget.frameOriginY ~= nil)
     assert(garbageTarget.mirror_x ~= nil)
     assert(garbageTarget.stackCanvasWidth ~= nil)
-    assert(garbageTarget.receiveGarbage ~= nil)
+    assert(garbageTarget.incomingGarbage ~= nil)
   end
   self.garbageTarget = garbageTarget
-  if self.telegraph then
+  if self.attackEngine then
     self.attackEngine:setGarbageTarget(garbageTarget)
+  end
+  if self.telegraph then
     self.telegraph:updatePositionForGarbageTarget(garbageTarget)
   end
 end

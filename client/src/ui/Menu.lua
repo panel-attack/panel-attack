@@ -2,9 +2,9 @@ local table = table
 
 local class = require("common.lib.class")
 local UIElement = require("client.src.ui.UIElement")
-local TextButton = require("client.src.ui.TextButton")
-local Label = require("client.src.ui.Label")
 local input = require("common.lib.inputManager")
+local Label = require("client.src.ui.Label")
+local directsFocus = require("client.src.ui.FocusDirector")
 
 local NAVIGATION_BUTTON_WIDTH = 30
 
@@ -17,22 +17,23 @@ local Menu = class(
 
     self.selectedIndex = 1
     self.yMin = self.y
+    self.totalHeight = 0
     self.menuItemYOffsets = {}
     self.allContentShowing = true
 
-    -- bogus this should be passed in?
-    self.centerVertically = themes[config.theme].centerMenusVertically 
+    self.upIndicator = Label({text = "^", translate = false, isVisible = false, vAlign = "top", hAlign = "center", y = -14})
+    self.downIndicator = Label({text = "v", translate = false, isVisible = false, vAlign = "bottom", hAlign = "center"})
+    self:addChild(self.upIndicator)
+    self:addChild(self.downIndicator)
 
-    self.upButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "/\\", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollUp() end})
-    self.downButton = TextButton({width = NAVIGATION_BUTTON_WIDTH, label = Label({text = "\\/", translate = false}), onClick = function(selfElement, inputSource, holdTime) self:scrollDown() end})
-    
-    self:addChild(self.upButton)
-    self:addChild(self.downButton)
+    -- bogus this should be passed in?
+    self.centerVertically = themes[config.theme].centerMenusVertically
 
     self.yOffset = 0
     self.firstActiveIndex = 1
     self.lastActiveIndex = 1
     self:setMenuItems(options.menuItems)
+    directsFocus(self)
   end,
   UIElement
 )
@@ -76,12 +77,14 @@ function Menu:setMenuItems(menuItems)
 end
 
 function Menu:layout()
-
+  self.upIndicator:setVisibility(false)
+  self.downIndicator:setVisibility(false)
   self.allContentShowing = self.yOffset == 0
   self.firstActiveIndex = nil
   self.lastActiveIndex = nil
   self.width = 0
-  
+  self.totalHeight = 0
+
   if #self.menuItems == 0 then
     return
   end
@@ -93,6 +96,9 @@ function Menu:layout()
     self.menuItemYOffsets[i] = currentY
     menuItem:setVisibility(false)
     local realY = currentY - self.yOffset
+    if realY < 0 then
+      self.upIndicator:setVisibility(true)
+    end
     if menuFull == false and realY >= 0 then
       if realY + menuItem.height < self.height then
         if self.firstActiveIndex == nil then
@@ -103,6 +109,7 @@ function Menu:layout()
         menuItem:setVisibility(true)
       else
         self.allContentShowing = false
+        self.downIndicator:setVisibility(true)
         menuFull = true
       end
     end
@@ -112,9 +119,8 @@ function Menu:layout()
       totalMenuHeight = realY + menuItem.height
     end
     self.width = math.max(self.width, menuItem.width)
+    self.totalHeight = self.totalHeight + menuItem.height + Menu.BUTTON_VERTICAL_PADDING
   end
-  
-  self:updateNavButtonPos()
 
   if self.centerVertically then
     self.y = self.yMin + (self.height / 2) - (totalMenuHeight / 2)
@@ -208,73 +214,119 @@ function Menu:setSelectedIndex(index)
   self:layout()
 end
 
-function Menu:updateNavButtonPos()
-  self.upButton:setVisibility(false)
-  self.downButton:setVisibility(false)
-  if self.allContentShowing then
-    return
-  end
-  
-  if self.selectedIndex > 1 then
-    self.upButton:setVisibility(true)
-  end
-  if self.selectedIndex < #self.menuItems then
-    self.downButton:setVisibility(true)
-  end
-
-  self.upButton.x = 0
-  self.upButton.y = self.menuItems[self.firstActiveIndex].y - (self.downButton.height + Menu.BUTTON_VERTICAL_PADDING)
-  
-  self.downButton.x = 0
-  self.downButton.y = self.menuItems[self.lastActiveIndex].y + self.menuItems[self.lastActiveIndex].height + Menu.BUTTON_VERTICAL_PADDING
-end
-
 function Menu:scrollUp()
-  if self.selectedIndex > 1 then
-    self:setSelectedIndex(self.selectedIndex - 1)
-    GAME.theme:playMoveSfx()
-  end
+  self:setSelectedIndex(wrap(1, self.selectedIndex - 1, #self.menuItems))
+  GAME.theme:playMoveSfx()
 end
 
 function Menu:scrollDown()
-  if self.selectedIndex < #self.menuItems then
-    self:setSelectedIndex(self.selectedIndex + 1)
-    GAME.theme:playMoveSfx()
-  end
+  self:setSelectedIndex(wrap(1, self.selectedIndex + 1, #self.menuItems))
+  GAME.theme:playMoveSfx()
 end
 
-function Menu:update(dt)
+function Menu:receiveInputs(inputs, dt)
   if not self.isEnabled then
     return
   end
 
-  if input:isPressedWithRepeat("MenuUp") then
-    self:scrollUp()
-  end
-
-  if input:isPressedWithRepeat("MenuDown") then
-    self:scrollDown()
+  if not inputs then
+    -- if we don't get inputs passed, use the global input table
+    inputs = input
   end
 
   local selectedElement = self.menuItems[self.selectedIndex]
 
-  if selectedElement then
-    -- Right now back on a button is only allowed on the last item. Later we should make it more explicit.
-    if not input.isDown["MenuEsc"] or self.selectedIndex == #self.menuItems then
-      selectedElement:receiveInputs(input, dt)
-    end
-  end
-
-  if input.isDown["MenuEsc"] then
+  if self.focused then
+    self.focused:receiveInputs(inputs, dt)
+  elseif inputs.isDown["MenuEsc"] then
     if self.selectedIndex ~= #self.menuItems then
       self:setSelectedIndex(#self.menuItems)
       GAME.theme:playCancelSfx()
+    else
+      selectedElement:receiveInputs(inputs, dt)
+    end
+  elseif inputs:isPressedWithRepeat("MenuUp") then
+    self:scrollUp()
+  elseif inputs:isPressedWithRepeat("MenuDown") then
+    self:scrollDown()
+  else
+    if inputs.isDown["MenuSelect"] and selectedElement.isFocusable then
+      self:setFocus(selectedElement)
+    else
+      selectedElement:receiveInputs(inputs, dt)
     end
   end
 end
 
+function Menu:update(dt)
+
+end
+
 function Menu:drawSelf()
 
+end
+
+function Menu:onTouch(x, y)
+  self.swiping = true
+  self.initialTouchX = x
+  self.initialTouchY = y
+  self.originalY = self.yOffset
+  local realTouchedElement = UIElement.getTouchedElement(self, x, y)
+  if realTouchedElement and realTouchedElement ~= self then
+    self.touchedChild = realTouchedElement
+    self.touchedChild:onTouch(x, y)
+  end
+end
+
+function Menu:onDrag(x, y)
+  if not self.touchedChild or not self.touchedChild.onDrag then
+    local yOffset = y - self.initialTouchY
+    if self.height < self.totalHeight then
+      if yOffset > 0 then
+        self.yOffset = math.max(self.originalY - yOffset, -50)-- - 2 * NAVIGATION_BUTTON_WIDTH)
+      else
+        self.yOffset = math.min(self.totalHeight - self.height + 50, self.originalY - yOffset)
+      end
+      self:layout()
+    end
+  else
+    self.touchedChild:onDrag(x, y)
+  end
+end
+
+function Menu:onRelease(x, y)
+  if not self.touchedChild or not self.touchedChild.onRelease then
+    self:onDrag(x, y)
+    self.swiping = false
+    self.touchedChild = nil
+  else
+    if self.touchedChild.onDrag then
+      -- if it implements an onDrag we can assume it has an idea what to do with the new coords
+      self.touchedChild:onRelease(x, y)
+    else
+      -- otherwise check if our original click is still inside the release window
+      -- to not accidently trigger the release
+      self.touchedChild:onRelease(self.initialTouchX, self.initialTouchY)
+    end
+  end
+end
+
+-- overwrite the default callback to always return itself
+-- while keeping a reference to the really touched element
+function Menu:getTouchedElement(x, y)
+  if self.isVisible and self.isEnabled and self:inBounds(x, y) then
+    if self.allContentShowing then
+      local touchedElement
+      for i = 1, #self.children do
+        touchedElement = self.children[i]:getTouchedElement(x, y)
+        if touchedElement then
+          return touchedElement
+        end
+      end
+    else
+      return self
+    end
+  end
 end
 
 return Menu
