@@ -1,0 +1,44 @@
+frameSize: (20, 40)
+
+[normal] 
+    beginLoop
+    addFrame(1, 33)
+    addFrame(2, 1)
+    addFrame(3, 2)
+    addFrame(2, 1)
+    addFrame(1, 2)
+    addFrame(2, 1)
+    addFrame(3, 2)
+    addFrame(2, 1)
+    addFrame(1, 13)
+    addFrame(2, 1)
+    addFrame(3, 2)
+    addFrame(2, 1)
+end
+
+[attack]
+    addFrame(3, 2)
+    addFrame(4, 1)
+    addFrame(5, 1)
+    addFrame(6, 1)
+    addFrame(5, 2)
+    addFrame(4, 2)
+end
+
+[win]
+    beginLoop
+    addFrame(7, 13)
+    addFrame(8, 14)
+end
+
+[lose]
+    beginLoop
+    addFrame(9, 13)
+    addFrame(10, 14)
+end
+
+[hurt, 4]
+    beginLoop
+    addFrame(11)
+    addFrame(12)
+end

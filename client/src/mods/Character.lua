@@ -14,7 +14,7 @@ local StageTrack = require("client.src.music.StageTrack")
 local DynamicStageTrack = require("client.src.music.DynamicStageTrack")
 local RelayStageTrack = require("client.src.music.RelayStageTrack")
 local Mod = require("client.src.mods.Mod")
-local ModApi = require("client.src.mods.ModApi")
+require("client.src.graphics.animated_sprite")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -255,11 +255,7 @@ function Character.graphics_init(self, full, yields)
   for _, image_name in ipairs(character_images) do
     self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
     if (image_name == "battle" and not self.battleSprite) then
-      local result, anims = ModApi.runFromFile(self.path .. "/" .. "battle_anim.lua")
-      if result then
-        self.battleSprite = AnimatedSprite(self.images["battle"], anims)
-        --assert(not anims)
-      end
+      self.battleSprite = AnimatedSprite.loadSpriteFromConfig(self.path .. "/battle_anim.txt", self.images[image_name])
     end
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       if image_name == "burst" or image_name == "fade" then

@@ -10,46 +10,22 @@ local floor = math.floor
 
 Animation =
 class(
-  function (self, width, height, imgW, imgH, dur)
+  function (self, dur)
     self.frames = {}
-    self.frameSize = {width = width, height = height}
-    self.imageSize = {width = imgW, height = imgH}
     self.frameDuration = dur or 2
     self.loop = false
     self.loopStartFrame = 1
-    self.addFrame = function(frame, duration)
-      local imW = self.imageSize.width
-      local imH = self.imageSize.height
-      local w = self.frameSize.width
-      local h = self.frameSize.height
-      local x = w*(frame-1)%imW
-      local y = h*floor(w*(frame-1)/imW)
-      tableInsert(self.frames, {quad(x, y, w, h, imW, imH), duration})
-    end
-    
-    self.setLoopStart = function()
-      self.loop = true;
-      self.loopStartFrame = #self.frames
-    end
-    self.setLoopEnd = function()
-      self.loop = true;
-    end
-    self.createAnimation = function(code)
-      local env = {
-        addFrame = self.addFrame,
-        setLoopStart = self.setLoopStart,
-        setLoopEnd = self.setLoopEnd,
-      }
-      local untrusted_function, message = load(code, nil, 't', env)
-      if not untrusted_function then return nil, message end
-        pcall(untrusted_function)
-    end
   end
 )
 
+function Animation:beginLoop()
+  self.loop = true
+  self.loopStartFrame = #self.frames+1
+end
+
 AnimatedSprite =
 class(
-  function(self, image, animations)
+  function(self, image, width, height, animations)
     --Signal.turnIntoEmitter(self)
     --self:createSignal("animSwitched")
     --self:createSignal("animEnded")
@@ -58,6 +34,7 @@ class(
 
     self.image = image
     self.spriteSheet = love.graphics.newSpriteBatch(image)
+    self.frameSize = {width = width, height = height}
     self.frameTime = 0
     self.currentFrame = 1
     self.loopCount = 0
@@ -68,6 +45,15 @@ class(
     self.switchFunction = function() end
   end
 )
+function AnimatedSprite:addFrame(name, frame, duration)
+  local imgW, imgH = self.image:getDimensions()
+  local w = self.frameSize.width
+  local h = self.frameSize.height
+  local x = w*(frame-1)%imgW
+  local y = h*floor(w*(frame-1)/imgW)
+  tableInsert(self.animations[name].frames, {quad(x, y, w, h, imgW, imgH), duration})
+end
+
 function AnimatedSprite:setSwitchFunction(func)
   self.switchFunction = func
 end
@@ -97,23 +83,20 @@ end
 function AnimatedSprite:update()
   self.switchFunction()
   local anim = self.animations[self.currentAnim]
+  if anim.loop and self.finished then
+    self.frameTime = 0
+    self.currentFrame = anim.loopStartFrame
+    self.loopCount = self.loopCount + 1
+    self.finished = false
+  end
   if (self.playing and not self.finished) then
-    self.frameTime = self.frameTime + 1/anim.frameDuration
-
-    if (self.frameTime > anim.frames[self.currentFrame][2]) then
+    if (self.frameTime <= anim.frames[self.currentFrame][2]) then
+      self.frameTime = self.frameTime + 1/anim.frameDuration
+    elseif (self.currentFrame < #anim.frames) then
       self.frameTime = 0
       self.currentFrame = self.currentFrame + 1
-    end
-    if (self.currentFrame > #anim.frames)  then
-      if anim.loop then
-        self.currentFrame = anim.loopStartFrame
-        self.loopCount = self.loopCount + 1
-        --self:emitSignal("animLooped", anim.loopCount)
-      else
-        self.finished = true
-        self.currentFrame = #anim.frames
-        --self:emitSignal("animEnded", self.finished)
-      end
+    else
+      self.finished = true
     end
   end
 end
@@ -138,3 +121,23 @@ end
     end
     --self:emitSignal("animSwitched", self.currentAnim)
   end
+
+function AnimatedSprite.loadSpriteFromConfig(path, image)
+  local config, msg = love.filesystem.read(path)
+  if not config then return nil, msg end
+
+  local width, height = string.match(config, "frameSize: %((%d+), (%d+)%)")
+  local sprite = AnimatedSprite(image, tonumber(width), tonumber(height))
+  for anim, name, duration in string.gmatch(config, "(%[(%a+)%,? ?(%d*)%].-end)") do
+    sprite.animations[name] = Animation(tonumber(duration) or 2)
+    for func, frame, dur in string.gmatch(anim, "(%a+)%(?(%d*),? ?(%d*)%)?") do
+      if (func == "beginLoop") then
+        sprite.animations[name]:beginLoop()
+      end
+      if (func == "addFrame") then
+        sprite:addFrame(name, tonumber(frame), tonumber(dur) or 1)
+      end
+    end
+  end
+  return sprite
+end
