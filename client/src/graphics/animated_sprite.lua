@@ -45,13 +45,13 @@ class(
     self.switchFunction = function() end
   end
 )
-function AnimatedSprite:addFrame(name, frame, duration)
+function AnimatedSprite:addFrame(name, frame, length)
   local imgW, imgH = self.image:getDimensions()
   local w = self.frameSize.width
   local h = self.frameSize.height
   local x = w*(frame-1)%imgW
   local y = h*floor(w*(frame-1)/imgW)
-  tableInsert(self.animations[name].frames, {quad(x, y, w, h, imgW, imgH), duration})
+  tableInsert(self.animations[name].frames, {quad(x, y, w, h, imgW, imgH), length})
 end
 
 function AnimatedSprite:setSwitchFunction(func)
@@ -81,7 +81,7 @@ function AnimatedSprite:addAnimationPlayer(obj)
 end
 
 function AnimatedSprite:update()
-  self.switchFunction()
+  self:switchFunction()
   local anim = self.animations[self.currentAnim]
   if anim.loop and self.finished then
     self.frameTime = 0
@@ -122,20 +122,21 @@ end
     --self:emitSignal("animSwitched", self.currentAnim)
   end
 
-function AnimatedSprite.loadSpriteFromConfig(path, image)
-  local config, msg = love.filesystem.read(path)
+function AnimatedSprite.loadSpriteFromConfig(file)
+  local config, msg = love.filesystem.read(file)
   if not config then return nil, msg end
-
-  local width, height = string.match(config, "frameSize: %((%d+), (%d+)%)")
+  local dir = love.filesystem.getInfo(file)
+  local image = GraphicsUtil.loadImageFromSupportedExtensions(dir.."/"..string.match(config, "spritePath: ?(.-).png"))
+  local width, height = string.match(config, "frameSize: ?%((%d+), (%d+)%)")
   local sprite = AnimatedSprite(image, tonumber(width), tonumber(height))
   for anim, name, duration in string.gmatch(config, "(%[(%a+)%,? ?(%d*)%].-end)") do
     sprite.animations[name] = Animation(tonumber(duration) or 2)
-    for func, frame, dur in string.gmatch(anim, "(%a+)%(?(%d*),? ?(%d*)%)?") do
+    for func, frame, length in string.gmatch(anim, "(%a+)%(?(%d*),? ?(%d*)%)?") do
       if (func == "beginLoop") then
         sprite.animations[name]:beginLoop()
       end
       if (func == "addFrame") then
-        sprite:addFrame(name, tonumber(frame), tonumber(dur) or 1)
+        sprite:addFrame(name, tonumber(frame), tonumber(length) or 1)
       end
     end
   end

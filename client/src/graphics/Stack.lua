@@ -709,6 +709,7 @@ function Stack:drawLevel()
   end
 end
 
+--TODO: add players' battle sprite positions to theme config
 function Stack:drawBattleSprites()
   if characters[self.character].battleSprite then
     characters[self.character]:drawBattleSprite(self.which, themes[config.theme].speed_Pos[1], themes[config.theme].speed_Pos[2], self.gfxScale)

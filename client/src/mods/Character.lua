@@ -254,8 +254,8 @@ function Character.graphics_init(self, full, yields)
   local character_images = full and all_images or basic_images
   for _, image_name in ipairs(character_images) do
     self.images[image_name] = GraphicsUtil.loadImageFromSupportedExtensions(self.path .. "/" .. image_name)
-    if (image_name == "battle" and not self.battleSprite) then
-      self.battleSprite = AnimatedSprite.loadSpriteFromConfig(self.path .. "/battle_anim.txt", self.images[image_name])
+    if (not self.battleSprite) then
+      self.battleSprite = AnimatedSprite.loadSpriteFromConfig(self.path.."/".."battle_anim.txt")
     end
     if not self.images[image_name] and defaulted_images[image_name] and not self:is_bundle() then
       if image_name == "burst" or image_name == "fade" then

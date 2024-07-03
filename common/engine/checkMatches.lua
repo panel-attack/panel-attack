@@ -472,6 +472,8 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
     end
     self.outgoingGarbage:addChainLink(self.clock, coordinate.column, coordinate.row +  rowOffset)
   end
+
+  self:emitSignal("attackSent")
 end
 
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings

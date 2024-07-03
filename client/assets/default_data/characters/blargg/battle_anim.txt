@@ -1,3 +1,4 @@
+spritePath: battle.png
 frameSize: (20, 40)
 
 [normal] 

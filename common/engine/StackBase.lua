@@ -28,8 +28,7 @@ local StackBase = class(function(self, args)
   Signal.turnIntoEmitter(self)
   self:createSignal("dangerMusicChanged")
   self:createSignal("shaking")
-  self:createSignal("attacking")
-
+  self:createSignal("attackSent")
 
   -- rollback
   self.rollbackCopies = {}

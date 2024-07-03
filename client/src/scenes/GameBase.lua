@@ -335,7 +335,7 @@ function GameBase:drawHUD()
       end
 
       stack:drawLevel()
-      stack:drawBattleSprites()
+      --stack:drawBattleSprites() Still need position settings in theme config
       if stack.analytic then
         prof.push("Stack:drawAnalyticData")
         stack:drawAnalyticData()

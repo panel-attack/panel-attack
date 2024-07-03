@@ -1235,6 +1235,12 @@ function Stack.simulate(self)
   if self.shake_time == 0 then
     self.peak_shake_time = 0
   end
+
+  if (self.prev_shake_time ~= 0 and self.shake_time == 0) or
+    (self.prev_shake_time == 0 and self.shake_time ~= 0) then
+    self:emitSignal("shaking", self.shake_time)
+  end
+
   prof.pop("shake time updates")
 
   -- Phase 3. /////////////////////////////////////////////////////////////
