@@ -349,7 +349,7 @@ function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
       self:drawBar(themes[config.theme].images.IMG_multibar_prestop_bar, self.multi_prestopQuad, themes[config.theme].multibar_Pos, preStopHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
 
       if remainingSeconds > 0 then
-        self:drawString(string.format("%.1f", remainingSeconds), themes[config.theme].multibar_LeftoverTime_Pos, false, 20)
+        self:drawString(string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds), themes[config.theme].multibar_LeftoverTime_Pos, false, 20)
       end
     end
   end
