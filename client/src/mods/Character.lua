@@ -8,7 +8,6 @@ local logger = require("common.lib.logger")
 local tableUtils = require("common.lib.tableUtils")
 local fileUtils = require("client.src.FileUtils")
 local consts = require("common.engine.consts")
-local GFX_SCALE = consts.GFX_SCALE
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local Music = require("client.src.music.Music")
 local StageTrack = require("client.src.music.StageTrack")
@@ -468,7 +467,7 @@ function Character:portraitIsReversed(stackNumber)
   return false
 end
 
-function Character:drawPortrait(stackNumber, x, y, fade)
+function Character:drawPortrait(stackNumber, x, y, fade, scale)
   local portraitImage = self:portraitImage(stackNumber)
   local portraitImageWidth, portraitImageHeight = portraitImage:getDimensions()
 
@@ -480,9 +479,9 @@ function Character:drawPortrait(stackNumber, x, y, fade)
     portraitImageX = portraitImageX + portraitWidth
     portraitMirror = -1
   end
-  GraphicsUtil.drawGfxScaled(portraitImage, portraitImageX, y, 0, (portraitWidth / portraitImageWidth) * portraitMirror, portraitHeight / portraitImageHeight)
+  GraphicsUtil.draw(portraitImage, portraitImageX * scale, y * scale, 0, (portraitWidth / portraitImageWidth) * portraitMirror * scale, portraitHeight / portraitImageHeight * scale)
   if fade > 0 then
-    GraphicsUtil.drawRectangle("fill", x * GFX_SCALE, y * GFX_SCALE, portraitWidth * GFX_SCALE, portraitHeight * GFX_SCALE, 0, 0, 0, fade)
+    GraphicsUtil.drawRectangle("fill", x * scale, y * scale, portraitWidth * scale, portraitHeight * scale, 0, 0, 0, fade)
   end
 end
 

@@ -15,6 +15,7 @@ local GameModes = require("common.engine.GameModes")
 local Replay = require("common.engine.Replay")
 local Signal = require("common.lib.signal")
 local SimulatedStack = require("common.engine.SimulatedStack")
+local Stack = require("common.engine.Stack")
 local consts = require("common.engine.consts")
 local prof = require("common.lib.jprof.jprof")
 
@@ -26,8 +27,6 @@ Match =
     self.spectatorString = ""
     self.players = {}
     self.stacks = {}
-    -- holds detached attackEngines, meaning attack engines that only deal; indexed via the player they're targeting
-    self.attackEngines = {}
     self.engineVersion = consts.ENGINE_VERSION
 
     assert(doCountdown ~= nil)
@@ -218,17 +217,17 @@ function Match:debugAssertDivergence(stack, savedStack)
 end
 
 function Match:debugCheckDivergence()
-  if not self.savedStackP1 or self.savedStackP1.clock ~= self.P1.clock then
+  if not self.savedStackP1 or self.savedStackP1.clock ~= self.stacks[1].clock then
     return
   end
-  self:debugAssertDivergence(self.P1, self.savedStackP1)
+  self:debugAssertDivergence(self.stacks[1], self.savedStackP1)
   self.savedStackP1 = nil
 
-  if not self.savedStackP2 or self.savedStackP2.clock ~= self.P2.clock then
+  if not self.savedStackP2 or self.savedStackP2.clock ~= self.stacks[2].clock then
     return
   end
 
-  self:debugAssertDivergence(self.P2, self.savedStackP2)
+  self:debugAssertDivergence(self.stacks[2], self.savedStackP2)
   self.savedStackP2 = nil
 end
 
@@ -255,13 +254,12 @@ function Match:run()
   end
 
   local runsSoFar = 0
-  while tableUtils.trueForAny(checkRun, function(b) return b end) do
+  while tableUtils.contains(checkRun, true) do
     for i, stack in ipairs(self.stacks) do
       if stack and self:shouldRun(stack, runsSoFar) then
+        self:pushGarbageTo(stack)
         stack:run()
-        if self.attackEngines[stack] then
-          self.attackEngines[stack]:run()
-        end
+
         checkRun[i] = true
       else
         checkRun[i] = false
@@ -276,14 +274,11 @@ function Match:run()
         self:updateFramesBehind(stack)
         if self:shouldSaveRollback(stack) then
           stack:saveForRollback()
-          if self.attackEngines[stack] then
-            self.attackEngines[stack]:saveForRollback()
-          end
         end
       end
     end
 
-    --self:debugCheckDivergence()
+    self:debugCheckDivergence()
 
     runsSoFar = runsSoFar + 1
   end
@@ -306,6 +301,29 @@ function Match:run()
   local timeDifference = endTime - startTime
   self.timeSpentRunning = self.timeSpentRunning + timeDifference
   self.maxTimeSpentRunning = math.max(self.maxTimeSpentRunning, timeDifference)
+end
+
+function Match:pushGarbageTo(stack)
+  -- check if anyone wants to push garbage into the stack's queue
+  for _, st in ipairs(self.stacks) do
+    if st.garbageTarget == stack then
+      local oldestTransitTime = st.outgoingGarbage:getOldestFinishedTransitTime()
+      if oldestTransitTime then
+        if stack.clock > oldestTransitTime then
+          -- recipient went past the frame it was supposed to receive the garbage -> rollback to that frame
+          -- hypothetically, IF the receiving stack's garbage target was different than the sender forcing the rollback here
+          --  it may be necessary to perform extra steps to ensure the recipient of the stack getting rolled back is getting correct garbage
+          --  which may even include another rollback
+          self:rollbackToFrame(stack, oldestTransitTime)
+        end
+        local garbageDelivery = st.outgoingGarbage:popFinishedTransitsAt(stack.clock)
+        if garbageDelivery then
+          logger.debug("Pushing garbage delivery to incoming garbage queue: " .. table_to_string(garbageDelivery))
+          stack.incomingGarbage:pushTable(garbageDelivery)
+        end
+      end
+    end
+  end
 end
 
 function Match:runGameOver()
@@ -341,15 +359,12 @@ end
 
 function Match:rollbackToFrame(stack, frame)
   if stack.rollbackCopies[frame] then
-    stack:rollbackToFrame(frame)
-    if self.isFromReplay then
-      stack.lastRollbackFrame = -1
-    end
-    if self.attackEngines[stack] then
-      self.attackEngines[stack].rollbackToFrame(frame)
+    if stack:rollbackToFrame(frame) then
       if self.isFromReplay then
-        self.attackEngines[stack].lastRollbackFrame = -1
+        stack.lastRollbackFrame = -1
       end
+    else
+      self:abort()
     end
   end
 end
@@ -361,10 +376,6 @@ function Match:rewindToFrame(frame)
     if stack.rollbackCopies[frame] then
       stack:rollbackToFrame(frame)
       stack.lastRollbackFrame = -1
-      if self.attackEngines[stack] then
-        self.attackEngines[stack]:rollbackToFrame(frame)
-        self.attackEngines[stack].lastRollbackFrame = -1
-      end
     end
   end
   self.clock = frame
@@ -479,13 +490,11 @@ function Match:start()
     end
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
-      -- not really elegant but before deciding where the attacks are supposed to come from with more than 1 real player which = 2 works
-      local attackEngineHost = SimulatedStack({which = 2, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
+      local attackEngineHost = SimulatedStack({which = #self.stacks + 1, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
       local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
       attackEngine:setGarbageTarget(stack)
-      self.attackEngines[stack] = attackEngineHost
+      self.stacks[#self.stacks+1] = attackEngineHost
     end
-
   end
 
   if self.stackInteraction == GameModes.StackInteractions.SELF then
@@ -564,7 +573,13 @@ end
 
 -- if there is no local player that means the client is either spectating (or watching a replay)
 function Match:hasLocalPlayer()
-  return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
+  for _, player in ipairs(self.players) do
+    if player.isLocal then
+      return true
+    end
+  end
+
+  return false
 end
 
 function Match.createFromReplay(replay, supportsPause)
@@ -664,7 +679,7 @@ function Match:hasEnded()
     end
   end
 
-  if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+  if self:isIrrecoverablyDesynced() then
     self.ended = true
     self.aborted = true
     self.desyncError = true
@@ -698,11 +713,21 @@ function Match:handleMatchEnd()
   self:emitSignal("matchEnded", self)
 end
 
+function Match:isIrrecoverablyDesynced()
+  for _, stack in ipairs(self.stacks) do
+    if stack.tooFarBehindError then
+      return true
+    end
+  end
+
+  return false
+end
+
 function Match:checkAborted()
   -- the aborted flag may get set if the game is aborted through outside causes (usually network)
   -- this function checks if the match got aborted through inside causes (local player abort or local desync)
   if not self.aborted then
-    if tableUtils.trueForAny(self.players, function(p) return p.stack.tooFarBehindError end) then
+    if self:isIrrecoverablyDesynced() then
       -- someone got a desync error, this definitely died
       self.aborted = true
       self.winners = {}
@@ -721,7 +746,7 @@ function Match:checkAborted()
       end
     else
       -- if this is not last alive and no desync that means we expect EVERY stack to be game over
-      if tableUtils.trueForAny(self.players, function(p) return not p.stack:game_ended() end) then
+      if not tableUtils.trueForAll(self.stacks, Stack.game_ended) then
         -- someone didn't lose so this got aborted (e.g. through a pause -> leave)
         self.aborted = true
         self.winners = {}
@@ -749,6 +774,16 @@ function Match:shouldRun(stack, runsSoFar)
     else
       -- gameOverClock is set in Match:hasEnded when there is only 1 alive in LAST_ALIVE modes
       if self.gameOverClock and self.gameOverClock < stack.clock then
+        return false
+      end
+    end
+  end
+
+  -- In debug mode allow non-local player 2 to fall a certain number of frames behind
+  if config.debug_mode and not stack.is_local and config.debug_vsFramesBehind and config.debug_vsFramesBehind > 0 and stack.which == 2 then
+    -- Only stay behind if the game isn't over for the local player (=opponentStack) yet
+    if stack.garbageTarget and stack.garbageTarget.game_ended and stack.garbageTarget:game_ended() == false then
+      if stack.clock + config.debug_vsFramesBehind >= stack.garbageTarget.clock then
         return false
       end
     end

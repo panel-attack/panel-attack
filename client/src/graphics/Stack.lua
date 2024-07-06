@@ -14,8 +14,25 @@ local POPFX_BURST_ANIMATION = {{1, 1}, {4, 1}, {7, 1}, {8, 1}, {9, 1}, {9, 1},
 
 local POPFX_FADE_ANIMATION = {1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8}
 
-local GFX_SCALE = consts.GFX_SCALE
+-- Draws an image at the given spot while scaling all coordinate and scale values with stack.gfxScale
+local function drawGfxScaled(stack, img, x, y, rot, xScale, yScale)
+  xScale = xScale or 1
+  yScale = yScale or 1
+  GraphicsUtil.draw(img, x * stack.gfxScale, y * stack.gfxScale, rot, xScale * stack.gfxScale, yScale * stack.gfxScale)
+end
 
+-- Draws an image at the given position, using the quad for the viewport, scaling all coordinate values and scales by stack.gfxScale
+local function drawQuadGfxScaled(stack, image, quad, x, y, rotation, xScale, yScale, xOffset, yOffset, mirror)
+  xScale = xScale or 1
+  yScale = yScale or 1
+
+  if mirror and mirror == 1 then
+    local qX, qY, qW, qH = quad:getViewport()
+    x = x - (qW*xScale)
+  end
+
+  GraphicsUtil.drawQuad(image, quad, x * stack.gfxScale, y * stack.gfxScale, rotation, xScale * stack.gfxScale, yScale * stack.gfxScale, xOffset, yOffset)
+end
 
 -- there were some experiments for different shake animation
 -- their stale code was removed with commit 4104c86b3005f8d8c2931767d3d2df5618f2ac15
@@ -41,7 +58,7 @@ local function calculateShakeData(maxShakeFrames, maxAmplitude)
   local shakeStep = 1 / (#shakeData - 1)
   local shakeMultiplier = 1
   for i = 1, #shakeData do
-    shakeData[i] = shakeData[i] * shakeMultiplier * GFX_SCALE * 13
+    shakeData[i] = shakeData[i] * shakeMultiplier * 13
     -- print(shakeData[i])
     shakeMultiplier = shakeMultiplier - shakeStep
   end
@@ -55,7 +72,7 @@ function Stack:currentShakeOffset()
   return self:shakeOffsetForShakeFrames(self.shake_time, self.prev_shake_time)
 end
 
-local function privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+local function privateShakeOffsetForShakeFrames(frames, shakeIntensity, gfxScale)
   if frames <= 0 then
     return 0
   end
@@ -63,7 +80,7 @@ local function privateShakeOffsetForShakeFrames(frames, shakeIntensity)
   local lookupIndex = #shakeOffsetData - frames
   local result = shakeOffsetData[lookupIndex] or 0
   if result ~= 0 then
-    result = math.integerAwayFromZero(result * shakeIntensity)
+    result = math.integerAwayFromZero(result * shakeIntensity * gfxScale)
   end
   return result
 end
@@ -74,11 +91,11 @@ function Stack:shakeOffsetForShakeFrames(frames, previousShakeTime, shakeIntensi
     shakeIntensity = config.shakeIntensity
   end
 
-  local result = privateShakeOffsetForShakeFrames(frames, shakeIntensity)
+  local result = privateShakeOffsetForShakeFrames(frames, shakeIntensity, self.gfxScale)
   -- If we increased shake time we don't want to hard jump to the new value as its jarring.
   -- Interpolate on the first frame to smooth it out a little bit.
   if previousShakeTime > 0 and previousShakeTime < frames then
-    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeIntensity)
+    local previousOffset = privateShakeOffsetForShakeFrames(previousShakeTime, shakeIntensity, self.gfxScale)
     result = math.integerAwayFromZero((result + previousOffset) / 2)
   end
   return result
@@ -116,12 +133,12 @@ function Stack.drawCards(self)
       -- Draw burst around card
       if card.burstAtlas and card.frame then
         GraphicsUtil.setColor(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
-        --GraphicsUtil.drawQuadGfxScaled(card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
+        --drawQuadGfxScaled(self, card.burstAtlas, card.burstParticle, cardfx_x, cardfx_y, 0, 16 / burstFrameDimension, 16 / burstFrameDimension)
         self:drawRotatingCardBurstEffectGroup(card, draw_x, draw_y)
         GraphicsUtil.setColor(1, 1, 1, 1)
       end
       -- draw card
-      local iconSize = 48 / GFX_SCALE
+      local iconSize = 48 / self.gfxScale
       local cardImage = nil
       if card.chain then
         cardImage = self.theme:chainImage(card.n)
@@ -131,7 +148,7 @@ function Stack.drawCards(self)
       if cardImage then
         local icon_width, icon_height = cardImage:getDimensions()
         GraphicsUtil.setColor(1, 1, 1, self:opacityForFrame(card.frame, 1, 22))
-        GraphicsUtil.drawGfxScaled(cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
+        drawGfxScaled(self, cardImage, draw_x, draw_y, 0, iconSize / icon_width, iconSize / icon_height)
         GraphicsUtil.setColor(1, 1, 1, 1)
       end
     end
@@ -212,7 +229,7 @@ function Stack.drawPopEffects(self)
           local fadeParticle = popfx.fadeParticle
           local fadeFrameDimension = popfx.fadeFrameDimension
           fadeParticle:setViewport(fadeFrame * fadeFrameDimension, 0, fadeFrameDimension, fadeFrameDimension, fadeParticle_atlas:getDimensions())
-          GraphicsUtil.drawQuadGfxScaled(fadeParticle_atlas, fadeParticle, drawX + panelSize / 2, drawY + panelSize / 2, 0, (fadeSize / fadeFrameDimension) * fadeScale, (fadeSize / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
+          drawQuadGfxScaled(self, fadeParticle_atlas, fadeParticle, drawX + panelSize / 2, drawY + panelSize / 2, 0, (fadeSize / fadeFrameDimension) * fadeScale, (fadeSize / fadeFrameDimension) * fadeScale, fadeFrameDimension / 2, fadeFrameDimension / 2)
         end
       end
     end
@@ -342,7 +359,7 @@ function Stack:drawPopBurstParticle(atlas, quad, frameIndex, atlasDimension, dra
 
   quad:setViewport(frameIndex * atlasDimension, 0, atlasDimension, atlasDimension, atlas:getDimensions())
 
-  GraphicsUtil.drawQuadGfxScaled(atlas, quad, drawX, drawY, rotation, burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
+  drawQuadGfxScaled(self, atlas, quad, drawX, drawY, rotation, burstFrameScale, burstFrameScale, burstOrigin, burstOrigin)
 end
 
 function Stack:drawDebug()
@@ -438,7 +455,7 @@ function Stack:drawDebug()
     -- GraphicsUtil.printf("P" .. stack.which .." attacks: " .. #stack.telegraph.attacks, drawX, drawY)
 
     -- drawY = drawY + padding
-    -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.garbage_q:len(), drawX, drawY)
+    -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.incomingGarbage:len(), drawX, drawY)
 
     -- if stack.telegraph then
     --   drawY = drawY + padding
@@ -462,11 +479,11 @@ function Stack:drawDebugPanels(shakeOffset)
     for row = 0, math.min(self.height + 1, #self.panels) do
       for col = 1, self.width do
         local panel = self.panels[row][col]
-        local draw_x = (self.panelOriginX + (col - 1) * 16) * GFX_SCALE
-        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shakeOffset) * GFX_SCALE
+        local draw_x = (self.panelOriginX + (col - 1) * 16) * self.gfxScale
+        local draw_y = (self.panelOriginY + (11 - (row)) * 16 + self.displacement - shakeOffset) * self.gfxScale
 
         -- Require hovering over a stack to show details
-        if mouseX >= self.panelOriginX * GFX_SCALE and mouseX <= (self.panelOriginX + self.width * 16) * GFX_SCALE then
+        if mouseX >= self.panelOriginX * self.gfxScale and mouseX <= (self.panelOriginX + self.width * 16) * self.gfxScale then
           if not (panel.color == 0 and panel.state == "normal") then
             GraphicsUtil.print(panel.state, draw_x, draw_y)
             if panel.matchAnyway then
@@ -481,7 +498,7 @@ function Stack:drawDebugPanels(shakeOffset)
           end
         end
 
-        if mouseX >= draw_x and mouseX < draw_x + 16 * GFX_SCALE and mouseY >= draw_y and mouseY < draw_y + 16 * GFX_SCALE then
+        if mouseX >= draw_x and mouseX < draw_x + 16 * self.gfxScale and mouseY >= draw_y and mouseY < draw_y + 16 * self.gfxScale then
           local str = loc("pl_panel_info", row, col)
           for k, v in pairsSortedByKeys(panel) do
             str = str .. "\n" .. k .. ": " .. tostring(v)
@@ -521,7 +538,7 @@ function Stack.render(self)
     shockGarbageImages = panels[self.panels_dir].images.metals
   end
 
-  local shakeOffset = self:currentShakeOffset() / GFX_SCALE
+  local shakeOffset = self:currentShakeOffset() / self.gfxScale
 
   self:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
 
@@ -587,10 +604,10 @@ function Stack:render_cursor(shake)
   local xPosition = (self.cur_col - 1) * panelWidth
 
   if self.inputMethod == "touch" then
-    GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
-    GraphicsUtil.drawQuadGfxScaled(cursor.image, cursor.touchQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    drawQuadGfxScaled(self, cursor.image, cursor.touchQuads[1], xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    drawQuadGfxScaled(self, cursor.image, cursor.touchQuads[2], xPosition + 12, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
   else
-    GraphicsUtil.drawGfxScaled(cursor.image, xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
+    drawGfxScaled(self, cursor.image, xPosition, (11 - (self.cur_row)) * panelWidth + self.displacement - shake, 0, scale_x, scale_y)
   end
 end
 
@@ -619,9 +636,9 @@ function Stack:drawRelativeMultibar(stop_time, shake_time)
   -- Healthbar
   local healthbar = self.health * (self.theme.images.IMG_healthbar:getHeight() / self.levelData.maxHealth)
   self.healthQuad:setViewport(0, self.theme.images.IMG_healthbar:getHeight() - healthbar, self.theme.images.IMG_healthbar:getWidth(), healthbar)
-  local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / GFX_SCALE
-  local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / GFX_SCALE
-  GraphicsUtil.drawQuadGfxScaled(self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
+  local x = self:elementOriginXWithOffset(self.theme.healthbar_Pos, false) / self.gfxScale
+  local y = self:elementOriginYWithOffset(self.theme.healthbar_Pos, false) + (self.theme.images.IMG_healthbar:getHeight() - healthbar) / self.gfxScale
+  drawQuadGfxScaled(self, self.theme.images.IMG_healthbar, self.healthQuad, x, y, self.theme.healthbar_Rotate, self.theme.healthbar_Scale, self.theme.healthbar_Scale, 0, 0, self.multiplication)
 
   -- Prestop bar
   if self.pre_stop_time == 0 or self.maxPrestop == nil then
@@ -706,7 +723,7 @@ function Stack:drawAnalyticData()
   if self.which == 2 then
     x = consts.CANVAS_WIDTH - paddingToAnalytics - width + backgroundPadding
   end
-  local y = self.frameOriginY * GFX_SCALE + backgroundPadding
+  local y = self.frameOriginY * self.gfxScale + backgroundPadding
 
   local iconToTextSpacing = 30
   local nextIconIncrement = 30
@@ -857,7 +874,7 @@ function Stack:drawGarbageBlock(bottomRightPanel, draw_x, draw_y, garbageImages)
       else
         filler = imgs.filler2
       end
-      GraphicsUtil.drawGfxScaled(filler, draw_x - 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
+      drawGfxScaled(self, filler, draw_x - 16 * j - 8, top_y + 16 * i, 0, 16 / filler_w, 16 / filler_h)
       use_1 = not use_1
     end
   end
@@ -869,22 +886,22 @@ function Stack:drawGarbageBlock(bottomRightPanel, draw_x, draw_y, garbageImages)
       face = imgs.face
     end
     local face_w, face_h = face:getDimensions()
-    GraphicsUtil.drawGfxScaled(face, draw_x - 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
+    drawGfxScaled(self, face, draw_x - 8 * (width - 1), top_y + 16 * ((height - 1) / 2), 0, 16 / face_w, 16 / face_h)
   else
     local face_w, face_h = imgs.doubleface:getDimensions()
-    GraphicsUtil.drawGfxScaled(imgs.doubleface, draw_x - 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
+    drawGfxScaled(self, imgs.doubleface, draw_x - 8 * (width - 1), top_y + 16 * ((height - 2) / 2), 0, 16 / face_w, 32 / face_h)
   end
   local corner_w, corner_h = imgs.topleft:getDimensions()
   local lr_w, lr_h = imgs.left:getDimensions()
   local topbottom_w, topbottom_h = imgs.top:getDimensions()
-  GraphicsUtil.drawGfxScaled(imgs.left, draw_x - 16 * (width - 1), top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-  GraphicsUtil.drawGfxScaled(imgs.right, draw_x + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
-  GraphicsUtil.drawGfxScaled(imgs.top, draw_x - 16 * (width - 1), top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-  GraphicsUtil.drawGfxScaled(imgs.bot, draw_x - 16 * (width - 1), draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
-  GraphicsUtil.drawGfxScaled(imgs.topleft, draw_x - 16 * (width - 1), top_y, 0, 8 / corner_w, 3 / corner_h)
-  GraphicsUtil.drawGfxScaled(imgs.topright, draw_x + 8, top_y, 0, 8 / corner_w, 3 / corner_h)
-  GraphicsUtil.drawGfxScaled(imgs.botleft, draw_x - 16 * (width - 1), draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
-  GraphicsUtil.drawGfxScaled(imgs.botright, draw_x + 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+  drawGfxScaled(self, imgs.left, draw_x - 16 * (width - 1), top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+  drawGfxScaled(self, imgs.right, draw_x + 8, top_y, 0, 8 / lr_w, (1 / lr_h) * height * 16)
+  drawGfxScaled(self, imgs.top, draw_x - 16 * (width - 1), top_y, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+  drawGfxScaled(self, imgs.bot, draw_x - 16 * (width - 1), draw_y + 14, 0, (1 / topbottom_w) * width * 16, 2 / topbottom_h)
+  drawGfxScaled(self, imgs.topleft, draw_x - 16 * (width - 1), top_y, 0, 8 / corner_w, 3 / corner_h)
+  drawGfxScaled(self, imgs.topright, draw_x + 8, top_y, 0, 8 / corner_w, 3 / corner_h)
+  drawGfxScaled(self, imgs.botleft, draw_x - 16 * (width - 1), draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
+  drawGfxScaled(self, imgs.botright, draw_x + 8, draw_y + 13, 0, 8 / corner_w, 3 / corner_h)
 end
 
 function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
@@ -911,10 +928,10 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
             -- or if the bottom right panel already started popping
             if panel.state ~= "matched" or panel.timer <= panel.pop_time then
               if panel.metal then
-                GraphicsUtil.drawGfxScaled(shockGarbageImages.left, draw_x - (16 * (panel.width - 1)), draw_y, 0, 8 / metall_w, 16 / metall_h)
-                GraphicsUtil.drawGfxScaled(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+                drawGfxScaled(self, shockGarbageImages.left, draw_x - (16 * (panel.width - 1)), draw_y, 0, 8 / metall_w, 16 / metall_h)
+                drawGfxScaled(self, shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
                 for i = 0, 2 * (panel.width - 1) - 1 do
-                  GraphicsUtil.drawGfxScaled(shockGarbageImages.mid, draw_x - 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
+                  drawGfxScaled(self, shockGarbageImages.mid, draw_x - 8 * i, draw_y, 0, 8 / metal_w, 16 / metal_h)
                 end
               else
                 self:drawGarbageBlock(panel, draw_x, draw_y, garbageImages)
@@ -927,23 +944,23 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
             if flash_time >= self.levelData.frameConstants.FLASH then
               if panel.timer > panel.pop_time then
                 if panel.metal then
-                  GraphicsUtil.drawGfxScaled(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                  GraphicsUtil.drawGfxScaled(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+                  drawGfxScaled(self, shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+                  drawGfxScaled(self, shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
                 else
                   local popped_w, popped_h = garbageImages.pop:getDimensions()
-                  GraphicsUtil.drawGfxScaled(garbageImages.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+                  drawGfxScaled(self, garbageImages.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
                 end
               elseif panel.y_offset == -1 then
-                panelSet:addToDraw(panel, draw_x * GFX_SCALE, draw_y * GFX_SCALE)
+                panelSet:addToDraw(panel, draw_x, draw_y, self.gfxScale)
               end
             else
               if shouldFlashForFrame(flash_time) == false then
                 if panel.metal then
-                  GraphicsUtil.drawGfxScaled(shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
-                  GraphicsUtil.drawGfxScaled(shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
+                  drawGfxScaled(self, shockGarbageImages.left, draw_x, draw_y, 0, 8 / metall_w, 16 / metall_h)
+                  drawGfxScaled(self, shockGarbageImages.right, draw_x + 8, draw_y, 0, 8 / metalr_w, 16 / metalr_h)
                 else
                   local popped_w, popped_h = garbageImages.pop:getDimensions()
-                  GraphicsUtil.drawGfxScaled(garbageImages.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
+                  drawGfxScaled(self, garbageImages.pop, draw_x, draw_y, 0, 16 / popped_w, 16 / popped_h)
                 end
               else
                 local flashImage
@@ -953,12 +970,12 @@ function Stack:drawPanels(garbageImages, shockGarbageImages, shakeOffset)
                   flashImage = garbageImages.flash
                 end
                 local flashed_w, flashed_h = flashImage:getDimensions()
-                GraphicsUtil.drawGfxScaled(flashImage, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
+                drawGfxScaled(self, flashImage, draw_x, draw_y, 0, 16 / flashed_w, 16 / flashed_h)
               end
             end
           end
         else
-          panelSet:addToDraw(panel, draw_x * GFX_SCALE, draw_y * GFX_SCALE, self.danger_col, self.danger_timer)
+          panelSet:addToDraw(panel, draw_x, draw_y, self.gfxScale, self.danger_col, self.danger_timer)
         end
       end
     end

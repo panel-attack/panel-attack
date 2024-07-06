@@ -144,6 +144,17 @@ function love.errorhandler(msg)
     end
   end
 
+  -- if we crashed during a match that is likely cause of the issue
+  -- we want it logged in a digestable form
+  if GAME.battleRoom and GAME.battleRoom.match then
+    pcall(function()
+      local match = GAME.battleRoom.match
+      match.aborted = true
+      Replay.finalizeReplay(match, match.replay)
+      logger.info("Replay of match during crash:\n" .. json.encode(match.replay))
+    end)
+  end
+
   msg = tostring(msg)
   local sanitizedMessageLines = {}
   for char in msg:gmatch(utf8.charpattern) do
@@ -181,6 +192,7 @@ function love.errorhandler(msg)
     logger.info(sanitizedMessage)
   end
   if logger.messages then
+    logger.info("config during crash: " .. table_to_string(config))
     pcall(love.filesystem.write, "crash.log", table.concat(logger.messages, "\n"))
   end
   if #sanitizedMessage ~= #msg then

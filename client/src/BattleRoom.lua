@@ -103,6 +103,7 @@ function BattleRoom.createFromServerMessage(message)
     -- player 1 is always the local player so that data can be ignored in favor of local data
     battleRoom:addPlayer(GAME.localPlayer)
     GAME.localPlayer.playerNumber = message.players[1].playerNumber
+    GAME.localPlayer:setStyle(GameModes.Styles.MODERN)
     GAME.localPlayer:setRating(message.players[1].ratingInfo.new)
     GAME.localPlayer:setLeague(message.players[1].ratingInfo.league)
 
@@ -142,9 +143,11 @@ function BattleRoom.createLocalFromGameMode(gameMode, gameScene)
     end
   end
 
-  battleRoom:assignInputConfigurations()
-
-  return battleRoom
+  if battleRoom:assignInputConfigurations() then
+    return battleRoom
+  else
+    return nil
+  end
 end
 
 function BattleRoom.setWinCounts(self, winCounts)
@@ -403,6 +406,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
 end
 
 -- sets up the process to get an input configuration assigned for every local player
+-- returns false if there are more players than input configurations
 function BattleRoom:assignInputConfigurations()
   local localPlayers = {}
   for i = 1, #self.players do
@@ -412,7 +416,8 @@ function BattleRoom:assignInputConfigurations()
   end
 
   -- assert that there are enough valid input configurations actually configured
-  local validInputConfigurationCount = 0
+  -- 1 is the baseline because you can always use touch without configuration
+  local validInputConfigurationCount = 1
   for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
     if inputConfiguration["Swap1"] then
       validInputConfigurationCount = validInputConfigurationCount + 1
@@ -424,6 +429,7 @@ function BattleRoom:assignInputConfigurations()
     "\nPlease configure enough input configurations and try again"
     local transition = MessageTransition(GAME.timer, 5, messageText)
     GAME.navigationStack:popToTop(transition, function() self:shutdown() end)
+    return false
   else
     if #localPlayers == 1 then
       -- lock the inputConfiguration whenever the player readies up (and release it when they unready)
@@ -435,6 +441,8 @@ function BattleRoom:assignInputConfigurations()
       self.tryLockInputs = true
     end
   end
+
+  return true
 end
 
 -- tries to assign unclaimed input configurations for all local players based on currently used inputs
@@ -571,7 +579,13 @@ function BattleRoom:onDisconnect()
 end
 
 function BattleRoom:hasLocalPlayer()
-  return tableUtils.trueForAny(self.players, function(player) return player.isLocal end)
+  for _, player in ipairs(self.players) do
+    if player.isLocal then
+      return true
+    end
+  end
+
+  return false
 end
 
 return BattleRoom

@@ -231,7 +231,7 @@ function GameBase:musicCanChange()
   end
 
   -- someone is still catching up
-  if tableUtils.trueForAny(self.match.players, function(p) return p.stack.play_to_end end) then
+  if tableUtils.trueForAny(self.match.stacks, Stack.isCatchingUp) then
     return false
   end
 
@@ -344,7 +344,20 @@ function GameBase:drawHUD()
     if not config.debug_mode and GAME.battleRoom and GAME.battleRoom.spectatorString then -- this is printed in the same space as the debug details
       GraphicsUtil.print(GAME.battleRoom.spectatorString, themes[config.theme].spectators_Pos[1], themes[config.theme].spectators_Pos[2])
     end
+
     self:drawCommunityMessage()
+
+    if self.match.ended then
+      local winners = self.match:getWinners()
+      local pos = themes[config.theme].gameover_text_Pos
+      local message
+      if #winners == 1 then
+        message = loc("ss_p_wins", winners[1].name)
+      else
+        message = loc("ss_draw")
+      end
+      GraphicsUtil.printf(message, pos.x, pos.y, consts.CANVAS_WIDTH, "center")
+    end
   end
 end
 

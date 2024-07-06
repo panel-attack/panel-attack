@@ -312,7 +312,7 @@ local NetClient = class(function(self)
   self:createSignal("leaderboardUpdate")
   -- only fires for unintended disconnects
   self:createSignal("disconnect")
-  self:createSignal("loginFailed")
+  self:createSignal("loginFinished")
 end)
 
 NetClient.STATES = states
@@ -451,11 +451,13 @@ function NetClient:update()
     else
       if result.loggedIn then
         self.state = states.ONLINE
+        self.loginState = result.message
+        self.loginTime = love.timer.getTime()
       else
-        self:emitSignal("loginFailed", result.message)
         self.loginState = result.message
         self.state = states.OFFLINE
-      end
+        end
+      self:emitSignal("loginFinished", result)
     end
   end
 

@@ -3,7 +3,6 @@ local consts = require("common.engine.consts")
 local logger = require("common.lib.logger")
 require("common.engine.Stack")
 local StackReplayTestingUtils = require("common.tests.engine.StackReplayTestingUtils")
-local GFX_SCALE = consts.GFX_SCALE
 
 local Theme = require("client.src.mods.Theme")
 
@@ -35,8 +34,8 @@ local function testOriginalThemeStackGraphics()
 
   assert(match ~= nil)
   assert(stack.origin_x == 184)
-  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * stack.gfxScale)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * stack.gfxScale)
   assert(stack:elementOriginX(true, false) == legacyScoreX)
   assert(stack:elementOriginY(true, false) == legacyScoreY)
 end
@@ -49,9 +48,9 @@ local function testOriginalThemeStackGraphicsPlayer2()
   local stack = match.stacks[2]
 
   assert(match ~= nil)
-  assert(stack.origin_x * GFX_SCALE == 728)
-  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack.origin_x * stack.gfxScale == 728)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * stack.gfxScale)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * stack.gfxScale)
   assert(stack:elementOriginX(true, false) == legacyScoreXP2)
   assert(stack:elementOriginY(true, false) == legacyScoreY)
 end
@@ -65,10 +64,10 @@ local function testNewThemeStackGraphics()
 
   assert(match ~= nil)
   assert(stack.origin_x == 184)
-  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
-  assert(stack:elementOriginX(true, false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(true, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * stack.gfxScale)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * stack.gfxScale)
+  assert(stack:elementOriginX(true, false) == stack.origin_x * stack.gfxScale)
+  assert(stack:elementOriginY(true, false) == stack.panelOriginY * stack.gfxScale)
 end
 
 test(testNewThemeStackGraphics)
@@ -79,11 +78,11 @@ local function testNewThemeStackGraphicsPlayer2()
   local stack = match.stacks[2]
 
   assert(match ~= nil)
-  assert(stack.origin_x * GFX_SCALE == 728)
-  assert(stack:elementOriginX(false, false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(false, false) == stack.panelOriginY * GFX_SCALE)
-  assert(stack:elementOriginX(true, false) == stack.origin_x * GFX_SCALE)
-  assert(stack:elementOriginY(true, false) == stack.panelOriginY * GFX_SCALE)
+  assert(stack.origin_x * stack.gfxScale == 728)
+  assert(stack:elementOriginX(false, false) == stack.origin_x * stack.gfxScale)
+  assert(stack:elementOriginY(false, false) == stack.panelOriginY * stack.gfxScale)
+  assert(stack:elementOriginX(true, false) == stack.origin_x * stack.gfxScale)
+  assert(stack:elementOriginY(true, false) == stack.panelOriginY * stack.gfxScale)
 end
 
 test(testNewThemeStackGraphicsPlayer2)
@@ -96,15 +95,15 @@ local function testOriginalThemeOffset()
   local stack = match.stacks[1]
 
   assert(match ~= nil)
-  -- non "score" based values WERE in GFX_SCALE coordinates
-  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * GFX_SCALE + 100 * GFX_SCALE)
-  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * GFX_SCALE + 100 * GFX_SCALE)
+  -- non "score" based values WERE in stack.gfxScale coordinates
+  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * stack.gfxScale + 100 * stack.gfxScale)
+  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * stack.gfxScale + 100 * stack.gfxScale)
   -- legacy score offsets were in absolute coordinates
   assert(stack:elementOriginXWithOffset({100, 100}, true) == legacyScoreX + 100)
   assert(stack:elementOriginYWithOffset({100, 100}, true) == legacyScoreY + 100)
 
   -- player 1 doesn't offset by width
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 0) == stack.origin_x * GFX_SCALE + 100 * GFX_SCALE - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 0) == stack.origin_x * stack.gfxScale + 100 * stack.gfxScale - 0)
   assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 0) == legacyScoreX + 100 - 0)
 end
 
@@ -116,15 +115,15 @@ local function testOriginalThemeOffsetPlayer2()
   local stack = match.stacks[2]
 
   assert(match ~= nil)
-  -- non "score" based values WERE in GFX_SCALE coordinates, and mirror
-  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * GFX_SCALE - 100 * GFX_SCALE)
-  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * GFX_SCALE + 100 * GFX_SCALE)
+  -- non "score" based values WERE in stack.gfxScale coordinates, and mirror
+  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * stack.gfxScale - 100 * stack.gfxScale)
+  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * stack.gfxScale + 100 * stack.gfxScale)
   -- legacy score offsets were in absolute coordinates, and did NOT mirror
   assert(stack:elementOriginXWithOffset({100, 100}, true) == legacyScoreXP2 + 100)
   assert(stack:elementOriginYWithOffset({100, 100}, true) == legacyScoreY + 100)
 
   -- player 2 offsets by width in absolute coordinates
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 1) == stack.origin_x * GFX_SCALE - 100 * GFX_SCALE - 100)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 1) == stack.origin_x * stack.gfxScale - 100 * stack.gfxScale - 100)
   assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 1) == legacyScoreXP2 + 100 - 100)
 end
 
@@ -137,15 +136,15 @@ local function testNewThemeOffset()
 
   assert(match ~= nil)
   -- non "score" based values in new themes are in absolute coordinates
-  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * GFX_SCALE + 100)
-  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * GFX_SCALE + 100)
+  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * stack.gfxScale + 100)
+  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * stack.gfxScale + 100)
   -- legacy score offsets in the new themes are the same as above, absolute coordinates from the origin_x / panelOriginY
-  assert(stack:elementOriginXWithOffset({100, 100}, true) == stack.origin_x * GFX_SCALE + 100)
-  assert(stack:elementOriginYWithOffset({100, 100}, true) == stack.panelOriginY * GFX_SCALE + 100)
+  assert(stack:elementOriginXWithOffset({100, 100}, true) == stack.origin_x * stack.gfxScale + 100)
+  assert(stack:elementOriginYWithOffset({100, 100}, true) == stack.panelOriginY * stack.gfxScale + 100)
 
   -- player 1 doesn't offset by width
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 0) == stack.origin_x * GFX_SCALE + 100 - 0)
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 0) == stack.origin_x * GFX_SCALE + 100 - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 0) == stack.origin_x * stack.gfxScale + 100 - 0)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 0) == stack.origin_x * stack.gfxScale + 100 - 0)
 end
 
 test(testNewThemeOffset)
@@ -157,15 +156,15 @@ local function testNewThemeOffsetPlayer2()
 
   assert(match ~= nil)
   -- non "score" based values in new themes are in absolute coordinates
-  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * GFX_SCALE - 100)
-  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * GFX_SCALE + 100)
+  assert(stack:elementOriginXWithOffset({100, 100}, false) == stack.origin_x * stack.gfxScale - 100)
+  assert(stack:elementOriginYWithOffset({100, 100}, false) == stack.panelOriginY * stack.gfxScale + 100)
   -- legacy score offsets in the new themes are the same as above, absolute coordinates from the origin_x / panelOriginY
-  assert(stack:elementOriginXWithOffset({100, 100}, true) == stack.origin_x * GFX_SCALE - 100)
-  assert(stack:elementOriginYWithOffset({100, 100}, true) == stack.panelOriginY * GFX_SCALE + 100)
+  assert(stack:elementOriginXWithOffset({100, 100}, true) == stack.origin_x * stack.gfxScale - 100)
+  assert(stack:elementOriginYWithOffset({100, 100}, true) == stack.panelOriginY * stack.gfxScale + 100)
 
   -- player 2 offsets by width in absolute coordinates
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 1) == stack.origin_x * GFX_SCALE - 100 - 100)
-  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 1) == stack.origin_x * GFX_SCALE - 100 - 100)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, false, 100, 1) == stack.origin_x * stack.gfxScale - 100 - 100)
+  assert(stack:labelOriginXWithOffset({100, 100}, 1, true, 100, 1) == stack.origin_x * stack.gfxScale - 100 - 100)
 end
 
 test(testNewThemeOffsetPlayer2)

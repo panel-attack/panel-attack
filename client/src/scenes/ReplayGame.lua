@@ -20,6 +20,25 @@ local ReplayGame = class(
 
 ReplayGame.name = "ReplayGame"
 
+function ReplayGame:togglePause()
+  self.match:togglePause()
+  if self.musicSource then
+    if self.match.isPaused then
+      SoundController:pauseMusic()
+    else
+      SoundController:playMusic(self.musicSource.stageTrack)
+    end
+  end
+end
+
+function ReplayGame:update(dt)
+  if self.match.ended then
+    self:runGameOver()
+  else
+    self:runGame()
+  end
+end
+
 local tick = 0
 function ReplayGame:runGame()
   tick = tick + 1
@@ -78,22 +97,13 @@ function ReplayGame:runGame()
     playbackSpeed = self.playbackSpeeds[self.playbackSpeedIndex]
   elseif input.isDown["Swap2"] then
     if self.match.isPaused then
+      self.match:abort()
       GAME.navigationStack:pop()
+    else
+      self:togglePause()
     end
   elseif input.isDown["MenuPause"] then
-    self.match:togglePause()
-    if self.musicSource then
-      if self.match.isPaused then
-        SoundController:pauseMusic()
-      else
-        SoundController:playMusic(self.musicSource.stageTrack)
-      end
-    end
-  end
-
-  if self.match.isPaused and input.isDown["MenuEsc"] then
-    self.match:abort()
-    return
+    self:togglePause()
   end
 end
 

@@ -148,4 +148,8 @@ function MatchParticipant:onMatchEnded()
    end
 end
 
+function MatchParticipant:isHuman()
+  return self.human
+end
+
 return MatchParticipant

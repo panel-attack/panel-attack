@@ -215,17 +215,13 @@ function Menu:setSelectedIndex(index)
 end
 
 function Menu:scrollUp()
-  if self.selectedIndex > 1 then
-    self:setSelectedIndex(self.selectedIndex - 1)
-    GAME.theme:playMoveSfx()
-  end
+  self:setSelectedIndex(wrap(1, self.selectedIndex - 1, #self.menuItems))
+  GAME.theme:playMoveSfx()
 end
 
 function Menu:scrollDown()
-  if self.selectedIndex < #self.menuItems then
-    self:setSelectedIndex(self.selectedIndex + 1)
-    GAME.theme:playMoveSfx()
-  end
+  self:setSelectedIndex(wrap(1, self.selectedIndex + 1, #self.menuItems))
+  GAME.theme:playMoveSfx()
 end
 
 function Menu:receiveInputs(inputs, dt)

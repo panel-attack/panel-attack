@@ -123,19 +123,30 @@ Currently a single frame and not animatable.
 Panels in the states "normal", "falling" and "hovering" in a column that is close to the top or even touching it, perform a danger animation.  
 This animation loops but is held on its first frame if the player is topped out and has no stop time left.
 
-#### garbageBounce
-
-Panels converted from garbage will perform a garbageBounce animation for the combined duration of the time they are
-- hovering
-- falling
-until they reach ground and start their landing animation instead.  
-This animation does not loop and lasts at the maximum for 12 frames.
-
 #### garbagePop
 
 When garbage is being cleared, the colors of the freed panels become visible one by one.  
 As long as the garbage pops and the panels are suspended, the garbage pop frame is being shown.  
 Currently a single frame and not animatable.
+
+#### garbageBounce
+
+This is an OPTIONAL animation, only intended to mimic the TA animation.  
+Using it is not recommended as obscuring the hovering state makes it unclear to players which panels are currently not swappable due to hovering panels above them.
+
+
+Panels converted from garbage will perform a garbageBounce animation for the combined duration of the time they are
+- hovering
+- falling
+
+until they reach ground instead of using the regular configuration for hovering / falling.  
+This animation does not loop and lasts at the maximum for 12 frames.
+
+Additionally (not) specifying this animation modifies the display of hovering panels that are inside an endangered column:
+- with garbageBounce configured, they will display the danger animation instead of the hovering frame.  
+- with garbageBounce not configured, they will display the hovering frame
+
+Due to the fixed animation time this animation only looks good on the middle range of levels.
 
 ### Animation configuration with type "single"
 
@@ -156,6 +167,7 @@ If no animation configuration is set, the following is used:
    "dimmed": {"frames":[7]},
    "dead": {"frames":[6]},
    "danger": {"durationPerFrame": 3, "frames":[1, 2, 3, 2, 1, 4]},
+   "garbagePop": {"frames": [1]},
    "garbageBounce": {"durationPerFrame": 3, "frames": [1, 4, 3, 2]}
 }
 ```
