@@ -24,7 +24,6 @@ local StackBase = class(function(self, args)
   self.framesBehind = 0
   self.clock = 0
   self.game_over_clock = -1 -- the exact clock frame the player lost, -1 while alive
-  self.health = 1
   Signal.turnIntoEmitter(self)
   self:createSignal("dangerMusicChanged")
 
