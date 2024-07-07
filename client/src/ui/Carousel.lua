@@ -17,12 +17,20 @@ local Carousel = class(function(carousel, options)
     carousel.passengers = {}
   else
     carousel.passengers = options.passengers
+    for i, passenger in ipairs(carousel.passengers) do
+      carousel:addChild(passenger.uiElement)
+      passenger.uiElement:setVisibility(false)
+    end
   end
   carousel.selectedId = nil
   if options.selectedId then
     carousel.selectedId = options.selectedId
   else
     carousel.selectedId = 1
+  end
+
+  if carousel.passengers[carousel.selectedId] then
+    carousel.passengers[carousel.selectedId].uiElement:setVisibility(true)
   end
 
   carousel.initialTouchX = 0
@@ -56,7 +64,7 @@ function Carousel.moveToNextPassenger(self, directionSign)
   self.passengers[self.selectedId].uiElement:setVisibility(false)
   self.selectedId = wrap(1, self.selectedId + directionSign, #self.passengers)
   self.passengers[self.selectedId].uiElement:setVisibility(true)
-  self:onPassengerUpdate()
+  self:onPassengerUpdate(self.passengers[self.selectedId])
 end
 
 function Carousel.getSelectedPassenger(self)
@@ -74,7 +82,7 @@ function Carousel.setPassengerByIndex(self, index)
   self.passengers[self.selectedId].uiElement:setVisibility(false)
   self.selectedId = index
   self.passengers[index].uiElement:setVisibility(true)
-  self:onPassengerUpdate()
+  self:onPassengerUpdate(self.passengers[self.selectedId])
 end
 
 function Carousel:drawSelf()
@@ -83,9 +91,9 @@ function Carousel:drawSelf()
   end
 end
 
-function Carousel:onPassengerUpdate()
+function Carousel:onPassengerUpdate(selectedPassenger)
   if self.onPassengerUpdateCallback then
-    self:onPassengerUpdateCallback()
+    self:onPassengerUpdateCallback(selectedPassenger)
   end
 end
 

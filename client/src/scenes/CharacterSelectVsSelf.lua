@@ -28,7 +28,7 @@ function CharacterSelectVsSelf:loadUserInterface()
   self.ui.characterIcons[1] = self:createPlayerIcon(player)
   self.ui.grid:createElementAt(1, 1, 1, 1, "selectedCharacter", self.ui.characterIcons[1])
 
-  self.ui.recordBox = self:createRecordsBox()
+  self.ui.recordBox = self:createRecordsBox("last lines")
   self:refresh()
   self.ui.grid:createElementAt(2, 1, 2, 1, "recordBox", self.ui.recordBox)
 
@@ -52,7 +52,7 @@ function CharacterSelectVsSelf:loadUserInterface()
     oldOnValueChange(ls)
     self.lastScore = GAME.scores:lastVsScoreForLevel(ls.value)
     self.record = GAME.scores:recordVsScoreForLevel(ls.value)
-    self.ui.recordBox:setLastLines(self.lastScore)
+    self.ui.recordBox:setLastResult(self.lastScore)
     self.ui.recordBox:setRecord(self.record)
   end
   self.ui.levelSelection:addElement(levelSlider, player)
@@ -87,7 +87,7 @@ function CharacterSelectVsSelf:refresh()
   local level = GAME.battleRoom.players[1].settings.level
   self.lastScore = GAME.scores:lastVsScoreForLevel(level)
   self.record = GAME.scores:recordVsScoreForLevel(level)
-  self.ui.recordBox:setLastLines(self.lastScore)
+  self.ui.recordBox:setLastResult(self.lastScore)
   self.ui.recordBox:setRecord(self.record)
 end
 

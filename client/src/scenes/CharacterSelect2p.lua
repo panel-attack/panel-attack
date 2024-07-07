@@ -53,7 +53,7 @@ function CharacterSelect2p:loadUserInterface()
 
   if GAME.battleRoom.online then
     self.ui.grid:createElementAt(1, 2, 2, 1, "panelSelection", self.ui.panelSelection)
-    self.ui.grid:createElementAt(3, 2, 2, 1, "rankedSelection", self.ui.rankedSelection)
+    self.ui.grid:createElementAt(3, 2, 2, 1, "rankedSelection", self.ui.rankedSelection, nil, true)
     self.ui.grid:createElementAt(5, 2, 2, 1, "stageSelection", self.ui.stageSelection)
     self.ui.grid:createElementAt(7, 2, 2, 1, "levelSelection", self.ui.levelSelection)
 

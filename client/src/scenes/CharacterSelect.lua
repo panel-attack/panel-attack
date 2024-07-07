@@ -21,6 +21,8 @@ local PixelFontLabel = require("client.src.ui.PixelFontLabel")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local SoundController = require("client.src.music.SoundController")
 local Character = require("client.src.mods.Character")
+local Slider = require("client.src.ui.Slider")
+local Carousel = require("client.src.ui.Carousel")
 
 -- @module CharacterSelect
 -- The character select screen scene
@@ -460,8 +462,8 @@ function CharacterSelect:createPanelCarousel(player, height)
     panelCarousel:setPassengerById(player.settings.panelId)
   end
 
-  panelCarousel.onPassengerUpdateCallback = function ()
-    player:setPanels(panelCarousel:getSelectedPassenger().id)
+  panelCarousel.onPassengerUpdateCallback = function(carousel, selectedPassenger)
+    player:setPanels(selectedPassenger.id)
   end
 
   panelCarousel:setPassengerById(player.settings.panelId)
@@ -584,7 +586,7 @@ function CharacterSelect:createRankedSelection(player, width)
       self:setValue(true)
     elseif inputs.isDown["Down"] then
       self:setValue(false)
-    elseif inputs.isDown["Swap2"] then
+    elseif inputs.isDown["Swap2"] or inputs.isDown["Swap1"] then
       self:yieldFocus()
     end
   end
@@ -606,11 +608,59 @@ function CharacterSelect:createRankedSelection(player, width)
   return rankedSelector
 end
 
-function CharacterSelect:createRecordsBox()
+function CharacterSelect:createStyleSelection(player, width)
+  local styleSelector = BoolSelector({
+    startValue = (player.settings.style == GameModes.Styles.MODERN),
+    vFill = true,
+    width = width,
+    vAlign = "center",
+    hAlign = "center",
+  })
+
+  -- onValueChange should get implemented by the caller
+  -- as likely the UI needs to be altered to accomodate the style choice
+
+  Focusable(styleSelector)
+
+  styleSelector.receiveInputs = function(self, inputs)
+    if inputs.isDown["Up"] then
+      self:setValue(true)
+    elseif inputs.isDown["Down"] then
+      self:setValue(false)
+    elseif inputs.isDown["Swap2"] or inputs.isDown["Swap1"] then
+      self:yieldFocus()
+    end
+  end
+
+  player:connectSignal("styleChanged", styleSelector, function(p, style)
+      if style == GameModes.Styles.MODERN then
+        styleSelector:setValue(true)
+      else
+        styleSelector:setValue(false)
+      end
+    end
+  )
+
+  -- player number icon
+  local playerIndex = tableUtils.indexOf(GAME.battleRoom.players, player)
+  local playerNumberIcon = ImageContainer({
+    image = themes[config.theme].images.IMG_players[playerIndex],
+    hAlign = "left",
+    vAlign = "center",
+    x = 4,
+    scale = 2,
+  })
+  styleSelector.playerNumberIcon = playerNumberIcon
+  styleSelector:addChild(styleSelector.playerNumberIcon)
+
+  return styleSelector
+end
+
+function CharacterSelect:createRecordsBox(lastText)
   local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "center"})
 
   local lastLines = UiElement({hFill = true})
-  local lastLinesLabel = PixelFontLabel({ text = "last lines", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
+  local lastLinesLabel = PixelFontLabel({ text = lastText, xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
   local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
   lastLines.height = lastLinesLabel.height + 4
   lastLines.label = lastLinesLabel
@@ -631,7 +681,7 @@ function CharacterSelect:createRecordsBox()
   stackPanel.record = record
   stackPanel:addElement(record)
 
-  stackPanel.setLastLines = function(stackPanel, value)
+  stackPanel.setLastResult = function(stackPanel, value)
     stackPanel.lastLines.value:setText(value)
   end
 
@@ -757,6 +807,60 @@ function CharacterSelect:createRankedStatusPanel()
   GAME.battleRoom:connectSignal("rankedStatusChanged", rankedStatus, rankedStatus.update)
 
   return rankedStatus
+end
+
+function CharacterSelect:createSpeedSlider(player, height)
+  local speedSlider = Slider({
+    min = 1,
+    max = 99,
+    value = player.settings.speed,
+    onValueChange = function(slider)
+      player:setSpeed(slider.value)
+    end,
+    hAlign = "center",
+    vAlign = "center",
+  })
+  Focusable(speedSlider)
+
+  player:connectSignal("startingSpeedChanged", speedSlider, speedSlider.setValue)
+
+  -- wrap in an extra element so we can offset properly as speedSlider is fixed height + width
+  local uiElement = UiElement({height = height, hFill = true})
+  Focusable(uiElement)
+  uiElement.speedSlider = speedSlider
+  uiElement.speedSlider.yieldFocus = function()
+    uiElement:yieldFocus()
+  end
+  uiElement:addChild(speedSlider)
+  uiElement.receiveInputs = function(self, inputs)
+    self.speedSlider:receiveInputs(inputs)
+  end
+
+  return uiElement
+end
+
+function CharacterSelect:createDifficultyCarousel(player, height)
+  local passengers = {
+    { id = 1, uiElement = Label({text = "easy", vAlign = "center", hAlign = "center"})},
+    { id = 2, uiElement = Label({text = "normal", vAlign = "center", hAlign = "center"})},
+    { id = 3, uiElement = Label({text = "hard", vAlign = "center", hAlign = "center"})},
+    { id = 4, uiElement = Label({text = "ss_ex_mode", vAlign = "center", hAlign = "center"})},
+  }
+  local difficultyCarousel = Carousel({
+    hAlign = "center",
+    vAlign = "top",
+    hFill = true,
+    height = height,
+    passengers = passengers,
+    selectedId = player.settings.difficulty
+  })
+
+  difficultyCarousel.onPassengerUpdateCallback = function(carousel, selectedPassenger)
+    player:setDifficulty(selectedPassenger.id)
+    self:refresh()
+  end
+
+  return difficultyCarousel
 end
 
 function CharacterSelect:update(dt)

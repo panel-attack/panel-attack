@@ -87,6 +87,8 @@ function Stepper:receiveInputs(input)
     self:setState(self.selectedIndex - 1)
   elseif input:isPressedWithRepeat("Right") then
     self:setState(self.selectedIndex + 1)
+  elseif input.isDown["Swap2"] and self.isFocusable then
+    self:yieldFocus()
   end
 end
 
