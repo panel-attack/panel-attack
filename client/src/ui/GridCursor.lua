@@ -22,8 +22,8 @@ local GridCursor = class(function(self, options)
   self.frameImages = options.frameImages or themes[config.theme].images.IMG_char_sel_cursors[self.player.playerNumber]
   self.imageWidth, self.imageHeight = self.frameImages[1]:getDimensions()
   self.quads = {}
-  self.quads.left = GraphicsUtil:newRecycledQuad(0, 0, self.imageWidth / 2, self.imageHeight, self.imageWidth, self.imageHeight)
-  self.quads.right = GraphicsUtil:newRecycledQuad(self.imageWidth / 2, 0, self.imageWidth / 2, self.imageHeight, self.imageWidth, self.imageHeight)
+  self.quads.left = love.graphics.newQuad(0, 0, self.imageWidth / 2, self.imageHeight, self.imageWidth, self.imageHeight)
+  self.quads.right = love.graphics.newQuad(self.imageWidth / 2, 0, self.imageWidth / 2, self.imageHeight, self.imageWidth, self.imageHeight)
 
   self.imageScale = self.target.unitSize / self.imageHeight
 
