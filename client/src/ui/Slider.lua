@@ -49,7 +49,7 @@ function Slider:receiveInputs(input)
     self:setValue(self.value - 1 / math.pow(10, self.precision))
   elseif input:isPressedWithRepeat("Right") then
     self:setValue(self.value + 1 / math.pow(10, self.precision))
-  elseif input.isDown["Swap2"] and self.isFocusable then
+  elseif self.isFocusable and (input.isDown["Swap2"] or input.isDown["Swap1"]) then
     self:yieldFocus()
   end
 end
