@@ -466,6 +466,7 @@ function NetClient:update()
 
   if not self.tcpClient:processIncomingMessages() then
     self.state = states.OFFLINE
+    self.room = nil
     self.tcpClient:resetNetwork()
     resetLobbyData(self)
     self:emitSignal("disconnect")
