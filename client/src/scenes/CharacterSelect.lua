@@ -809,9 +809,9 @@ function CharacterSelect:createRankedStatusPanel()
   return rankedStatus
 end
 
-function CharacterSelect:createSpeedSlider(player, height)
+function CharacterSelect:createSpeedSlider(player, height, min)
   local speedSlider = Slider({
-    min = 1,
+    min = min or 1,
     max = 99,
     value = player.settings.speed,
     onValueChange = function(slider)
