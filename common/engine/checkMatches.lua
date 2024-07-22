@@ -139,6 +139,7 @@ function Stack:checkMatches()
     if isChainLink or comboSize > 3 or metalCount > 0 then
       self:pushGarbage(attackGfxOrigin, isChainLink, comboSize, metalCount)
       self:queueAttackSoundEffect(isChainLink, self.chain_counter, comboSize, metalCount)
+      self:emitSignal("attackSent", "attack")
     end
 
     self.analytic:register_destroyed_panels(comboSize)
@@ -472,8 +473,6 @@ function Stack:pushGarbage(coordinate, isChain, comboSize, metalCount)
     end
     self.outgoingGarbage:addChainLink(self.clock, coordinate.column, coordinate.row +  rowOffset)
   end
-
-  self:emitSignal("attackSent")
 end
 
 -- calculates the stoptime that would be awarded for a certain chain/combo based on the stack's settings

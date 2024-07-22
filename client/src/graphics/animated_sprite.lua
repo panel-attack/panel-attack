@@ -10,7 +10,10 @@ local floor = math.floor
 
 Animation =
 class(
-  function (self, dur)
+  function (self, image, width, height, dur)
+    self.image = image
+    self.frameSize = {width = width, height = height}
+    self.spriteSheet = love.graphics.newSpriteBatch(image)
     self.frames = {}
     self.frameDuration = dur or 2
     self.loop = false
@@ -18,6 +21,14 @@ class(
   end
 )
 
+function Animation.addFrame(self, frame, length)
+  local imgW, imgH = self.image:getDimensions()
+  local w = self.frameSize.width
+  local h = self.frameSize.height
+  local x = w*(frame-1)%imgW
+  local y = h*floor(w*(frame-1)/imgW)
+  tableInsert(self.frames, {quad(x, y, w, h, imgW, imgH), length})
+end
 function Animation:beginLoop()
   self.loop = true
   self.loopStartFrame = #self.frames+1
@@ -25,16 +36,13 @@ end
 
 AnimatedSprite =
 class(
-  function(self, image, width, height, animations)
+  function(self, animations, switchFunc)
     --Signal.turnIntoEmitter(self)
     --self:createSignal("animSwitched")
     --self:createSignal("animEnded")
     --self:createSignal("animLooped")
     --self:createSignal("animStarted")
 
-    self.image = image
-    self.spriteSheet = love.graphics.newSpriteBatch(image)
-    self.frameSize = {width = width, height = height}
     self.frameTime = 0
     self.currentFrame = 1
     self.loopCount = 0
@@ -42,17 +50,9 @@ class(
     self.finished = false
     self.animations = animations or {}
     self.currentAnim = nil
-    self.switchFunction = function() end
+    self.switchFunction = switchFunc or function() end
   end
 )
-function AnimatedSprite:addFrame(name, frame, length)
-  local imgW, imgH = self.image:getDimensions()
-  local w = self.frameSize.width
-  local h = self.frameSize.height
-  local x = w*(frame-1)%imgW
-  local y = h*floor(w*(frame-1)/imgW)
-  tableInsert(self.animations[name].frames, {quad(x, y, w, h, imgW, imgH), length})
-end
 
 function AnimatedSprite:setSwitchFunction(func)
   self.switchFunction = func
@@ -76,13 +76,13 @@ function AnimatedSprite:goToFrame(frame)
   self.loopCount = 0;
 end
 
-function AnimatedSprite:addAnimationPlayer(obj)
-  obj.animation = self:clone()
+function AnimatedSprite:clone()
+  return AnimatedSprite(self.animations, self.switchFunction)
 end
 
 function AnimatedSprite:update()
-  self:switchFunction()
   local anim = self.animations[self.currentAnim]
+  if not anim then return end;
   if anim.loop and self.finished then
     self.frameTime = 0
     self.currentFrame = anim.loopStartFrame
@@ -102,11 +102,11 @@ function AnimatedSprite:update()
 end
 
   function AnimatedSprite:draw(x, y, rot, x_scale, y_scale)
-    GraphicsUtil.drawBatch(self.spriteSheet, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
+    GraphicsUtil.drawBatch(self.animations[self.currentAnim].spriteSheet, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
   end
   
   function AnimatedSprite:qdraw(x, y, rot, x_scale, y_scale)
-    GraphicsUtil.drawQuad(self.image, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
+    GraphicsUtil.drawQuad(self.animations[self.currentAnim].image, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
   end
   
   function AnimatedSprite:switchAnimation(selected, finish, frame)
@@ -125,18 +125,38 @@ end
 function AnimatedSprite.loadSpriteFromConfig(file)
   local config, msg = love.filesystem.read(file)
   if not config then return nil, msg end
-  local dir = love.filesystem.getInfo(file)
-  local image = GraphicsUtil.loadImageFromSupportedExtensions(dir.."/"..string.match(config, "spritePath: ?(.-).png"))
-  local width, height = string.match(config, "frameSize: ?%((%d+), (%d+)%)")
-  local sprite = AnimatedSprite(image, tonumber(width), tonumber(height))
-  for anim, name, duration in string.gmatch(config, "(%[(%a+)%,? ?(%d*)%].-end)") do
-    sprite.animations[name] = Animation(tonumber(duration) or 2)
-    for func, frame, length in string.gmatch(anim, "(%a+)%(?(%d*),? ?(%d*)%)?") do
-      if (func == "beginLoop") then
-        sprite.animations[name]:beginLoop()
-      end
-      if (func == "addFrame") then
-        sprite:addFrame(name, tonumber(frame), tonumber(length) or 1)
+  local dir = file:gsub("(.+)/.-$", "%1")
+  local sprite = AnimatedSprite()
+  local repeatHold = {}
+  local repeatCount = nil
+  for set, path, width, height in config:gmatch("(spritePath: *(%w+)%..-frameSize: *%((%d+), *(%d+)%).-})") do
+    local image = GraphicsUtil.loadImageFromSupportedExtensions(dir.."/"..path)
+    for anim, name, duration in set:gmatch("(%[(%a+),? *(%d*)%].-end)") do
+      sprite.animations[name] = Animation(image, tonumber(width), tonumber(height), tonumber(duration) or 2)
+      for func, frame, length in anim:gmatch("(%a+)%(?(%d*),? *(%d*)%)?") do
+        if (func == "beginLoop") then
+          sprite.animations[name]:beginLoop()
+        end
+        if (func == "addFrame") then
+          if repeatCount then
+            repeatHold[#repeatHold+1] = {tonumber(frame), tonumber(length) or 1}
+          else
+            sprite.animations[name]:addFrame(tonumber(frame), tonumber(length) or 1)
+          end
+        end
+        if (func == "repeat") then
+          repeatCount = tonumber(frame)
+          repeatHold = {}
+        end
+        if (func == "closeRepeat") then
+          for i = 1, repeatCount, 1 do
+            for _, args in ipairs(repeatHold) do
+              sprite.animations[name]:addFrame(args[1], args[2])
+            end
+          end
+          repeatCount = nil
+          repeatHold = {}
+        end
       end
     end
   end

@@ -67,7 +67,6 @@ Match =
     self.clock = 0
 
     Signal.turnIntoEmitter(self)
-    self:createSignal("matchStarted")
     self:createSignal("matchEnded")
     self:createSignal("dangerMusicChanged")
     self:createSignal("countdownEnded")
@@ -537,8 +536,6 @@ function Match:start()
   end
 
   self.replay = Replay.createNewReplay(self)
-  
-  self:emitSignal("matchStarted")
 end
 
 function Match:setStage(stageId)

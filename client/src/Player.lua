@@ -97,7 +97,30 @@ function Player:createStackFromSettings(match, which)
   self.stack = Stack(args)
   -- so the stack can draw player information
   self.stack.player = self
-
+  self.stack.battleAnimations = {}
+  for name, set in pairs(characters[self.stack.character].battleAnimations) do
+    local anim = set:clone()
+    anim:stop()
+    anim:setSwitchFunction(
+      function (s, state)
+        local switch = "normal"
+        local finish = false
+        if self.stack.match.ended then
+          switch = (self.stack.game_over_clock <= 0 and "win") or "lose"
+        elseif state == "hurt" or self.stack.shake_time > 0 then
+          switch = "hurt"
+        elseif state == "attack" then
+          switch = "attack"
+        else
+          finish = true
+        end
+        s:switchAnimation(switch, finish)
+      end
+    )
+    self.stack.battleAnimations[name] = anim
+    self.stack:connectSignal("hurt", self.stack.battleAnimations[name], self.stack.battleAnimations[name].switchFunction)
+    self.stack:connectSignal("attackSent", self.stack.battleAnimations[name], self.stack.battleAnimations[name].switchFunction)
+  end
   return self.stack
 end
 

@@ -708,14 +708,33 @@ function Stack:drawLevel()
     GraphicsUtil.drawQuad(levelAtlas.image, levelAtlas.quads[self.level], x, y, 0, 28 / levelAtlas.charWidth * self.theme.level_Scale, 26 / levelAtlas.charHeight * self.theme.level_Scale, 0, 0, self.multiplication)
   end
 end
-
 --TODO: add players' battle sprite positions to theme config
-function Stack:drawBattleSprites()
-  if characters[self.character].battleSprite then
-    characters[self.character]:drawBattleSprite(self.which, themes[config.theme].speed_Pos[1], themes[config.theme].speed_Pos[2], self.gfxScale)
-  end
-  if (self.garbageTarget and characters[self.garbageTarget.character].battleSprite) then
-    characters[self.garbageTarget.character]:drawBattleSprite(self.which, themes[config.theme].speed_Pos[1], themes[config.theme].speed_Pos[2], self.gfxScale)
+function Stack:drawBattleAnimations()
+  for name, anim in pairs(self.battleAnimations) do
+    if not anim then break end
+    if not anim.playing then
+      anim:play()
+      anim:switchAnimation("intro")
+    end
+
+    local x = self:elementOriginX(false, false)
+    local y = self:elementOriginY(false, false)
+    if (not name:find("frame$")) then
+      x = self:elementOriginXWithOffset(themes[config.theme].battleAnimation_Pos, false)
+      y = self:elementOriginYWithOffset(themes[config.theme].battleAnimation_Pos, false)
+    end
+
+    local portraitMirror = 1
+    if self.which == 2 or not self.opponentStack then
+      portraitMirror = -1
+      if not self.opponentStack then
+        x = x + anim.animations[anim.currentAnim].frameSize.width * self.gfxScale
+      end
+    end
+    
+    anim:switchFunction()
+    anim:update()
+    anim:qdraw(x, y, 0, self.gfxScale*portraitMirror, self.gfxScale)
   end
 end
 
