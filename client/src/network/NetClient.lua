@@ -101,21 +101,23 @@ local function processCharacterSelectMessage(self, message)
 end
 
 local function processLeaveRoomMessage(self, message)
-  if self.room.match then
-    -- we're ending the game via an abort so we don't want to enter the standard onMatchEnd callback
-    self.room.match:disconnectSignal("matchEnded", self.room)
-    -- instead we actively abort the match ourselves
-    self.room.match:abort()
-    self.room.match:deinit()
-  end
-
   if self.room then
-    -- and then shutdown the room
-    self.room:shutdown()
-    self.room = nil
+    if self.room.match then
+      -- we're ending the game via an abort so we don't want to enter the standard onMatchEnd callback
+      self.room.match:disconnectSignal("matchEnded", self.room)
+      -- instead we actively abort the match ourselves
+      self.room.match:abort()
+      self.room.match:deinit()
+    end
+
+    if self.room then
+      -- and then shutdown the room
+      self.room:shutdown()
+      self.room = nil
+    end
+    self.state = states.ONLINE
+    GAME.navigationStack:popToName("Lobby")
   end
-  self.state = states.ONLINE
-  GAME.navigationStack:popToName("Lobby")
 end
 
 local function processTauntMessage(self, message)
@@ -318,7 +320,7 @@ end)
 NetClient.STATES = states
 
 function NetClient:leaveRoom()
-  if self:isConnected() then
+  if self:isConnected() and self.room then
     self.tcpClient:dropOldInputMessages()
     self.tcpClient:sendRequest(ClientMessages.leaveRoom())
 
@@ -328,6 +330,7 @@ function NetClient:leaveRoom()
     else
       -- but as spectator there is no confirmation
       -- meaning state needs to be reset immediately
+      self.room = nil
       self.state = states.ONLINE
     end
   end
@@ -463,6 +466,7 @@ function NetClient:update()
 
   if not self.tcpClient:processIncomingMessages() then
     self.state = states.OFFLINE
+    self.room = nil
     self.tcpClient:resetNetwork()
     resetLobbyData(self)
     self:emitSignal("disconnect")

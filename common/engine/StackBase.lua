@@ -24,7 +24,6 @@ local StackBase = class(function(self, args)
   self.framesBehind = 0
   self.clock = 0
   self.game_over_clock = -1 -- the exact clock frame the player lost, -1 while alive
-  self.health = 1
   Signal.turnIntoEmitter(self)
   self:createSignal("dangerMusicChanged")
   self:createSignal("hurt")
@@ -350,7 +349,7 @@ function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
       self:drawBar(themes[config.theme].images.IMG_multibar_prestop_bar, self.multi_prestopQuad, themes[config.theme].multibar_Pos, preStopHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
 
       if remainingSeconds > 0 then
-        self:drawString(tostring(math.floor(remainingSeconds)), themes[config.theme].multibar_LeftoverTime_Pos, false, 20)
+        self:drawString(string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds), themes[config.theme].multibar_LeftoverTime_Pos, false, 20)
       end
     end
   end

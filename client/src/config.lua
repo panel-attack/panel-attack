@@ -53,8 +53,6 @@ config = {
     activeGarbageCollectionPercent = 0.2,
     -- Show ingame infos while playing the game
     show_ingame_infos             = true,
-    -- Enable ready countdown flag
-    ready_countdown_1P            = true,
     -- Change danger music back later flag
     danger_music_changeback_delay = false,
     input_repeat_delay            = consts.DEFAULT_INPUT_REPEAT_DELAY,
@@ -198,9 +196,6 @@ config = {
           end
           if type(read_data.show_ingame_infos) == "boolean" then
             configTable.show_ingame_infos = read_data.show_ingame_infos
-          end
-          if type(read_data.ready_countdown_1P) == "boolean" then
-            configTable.ready_countdown_1P = read_data.ready_countdown_1P
           end
           if type(read_data.danger_music_changeback_delay) == "boolean" then
             configTable.danger_music_changeback_delay = read_data.danger_music_changeback_delay

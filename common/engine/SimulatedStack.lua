@@ -101,8 +101,10 @@ function SimulatedStack:shouldRun(runsSoFar)
 end
 
 function SimulatedStack:game_ended()
-  if self.health <= 0 and self.game_over_clock < 0 then
-    self.game_over_clock = self.clock
+  if self.healthEngine then
+    if self.health <= 0 and self.game_over_clock < 0 then
+      self.game_over_clock = self.clock
+    end
   end
 
   if self.game_over_clock > 0 then
@@ -267,7 +269,9 @@ function SimulatedStack:drawLevel()
 end
 
 function SimulatedStack:drawMultibar()
-  self:drawAbsoluteMultibar(0, 0)
+  if self.health then
+    self:drawAbsoluteMultibar(0, 0)
+  end
 end
 
 -- in the long run we should have all quads organized in a Stack.quads table

@@ -62,6 +62,7 @@ function Game1pChallenge:drawHUD()
       for i, stack in ipairs(self.match.stacks) do
         if stack.player and stack.player.human then
           stack:drawMultibar()
+          stack:drawAnalyticData()
         end
       end
     end

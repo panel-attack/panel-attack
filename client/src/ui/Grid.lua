@@ -23,7 +23,7 @@ end, UiElement)
 -- width and height are sizes relative to the unitSize of the grid
 -- id is a string identificator to indiate what kind of uiElement resides here
 -- uiElement is the actual element on display that will perform user interaction when selected
-function Grid:createElementAt(x, y, width, height, description, uiElement, noPadding)
+function Grid:createElementAt(x, y, width, height, description, uiElement, noPadding, drawBorders)
   local unitMargin = self.unitMargin
   if noPadding then
     unitMargin = 0
@@ -38,7 +38,8 @@ function Grid:createElementAt(x, y, width, height, description, uiElement, noPad
     gridWidth = width,
     gridHeight = height,
     description = description,
-    content = uiElement
+    content = uiElement,
+    drawBorders = drawBorders,
   })
   self:addChild(gridElement)
 
@@ -83,6 +84,26 @@ function Grid:drawSelf()
     for i = 1, self.gridWidth - 1 do
       local x = self.x + self.unitSize * i
       GraphicsUtil.drawStraightLine(x, self.y, x, bottom, 1, 1, 1, 0.5)
+    end
+  end
+end
+
+-- removes all gridElements overlapping with the specified box
+-- the box is top left anchored
+function Grid:removeElementsIn(x, y, width, height)
+  height = height or 1
+  width = width or 1
+  for r = y, y + height - 1 do
+    for c = x, x + width - 1 do
+      local gridElement = self.grid[r][c]
+      if gridElement then
+        gridElement:detach()
+        for col = gridElement.gridOriginX, gridElement.gridOriginX + gridElement.gridWidth - 1 do
+          for row = gridElement.gridOriginY, gridElement.gridOriginY + gridElement.gridHeight - 1 do
+            self.grid[row][col] = nil
+          end
+        end
+      end
     end
   end
 end

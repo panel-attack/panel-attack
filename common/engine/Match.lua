@@ -640,8 +640,8 @@ function Match:hasEnded()
 
   local aliveCount = 0
   local deadCount = 0
-  for i = 1, #self.players do
-    if self.players[i].stack:game_ended() then
+  for i = 1, #self.stacks do
+    if self.stacks[i]:game_ended() then
       deadCount = deadCount + 1
     else
       aliveCount = aliveCount + 1
@@ -651,29 +651,29 @@ function Match:hasEnded()
   if tableUtils.contains(self.winConditions, GameModes.WinConditions.LAST_ALIVE) then
     if aliveCount == 1 then
       local gameOverClock = 0
-      for i = 1, #self.players do
-        if self.players[i].stack.game_over_clock > gameOverClock then
-          gameOverClock = self.players[i].stack.game_over_clock
+      for i = 1, #self.stacks do
+        if self.stacks[i].game_over_clock > gameOverClock then
+          gameOverClock = self.stacks[i].game_over_clock
         end
       end
       self.gameOverClock = gameOverClock
       -- make sure everyone has run to the currently known game over clock
       -- because if they haven't they might still go gameover before that time
-      if tableUtils.trueForAll(self.players, function(p) return p.stack.clock and p.stack.clock >= gameOverClock end) then
+      if tableUtils.trueForAll(self.stacks, function(stack) return stack.clock and stack.clock >= gameOverClock end) then
         self.ended = true
         return true
       end
     end
   end
 
-  if deadCount == #self.players then
+  if deadCount == #self.stacks then
     -- everyone died, match is over!
     self.ended = true
     return true
   end
 
   if self.timeLimit then
-    if tableUtils.trueForAll(self.players, function(p) return p.stack.game_stopwatch and p.stack.game_stopwatch >= self.timeLimit * 60 end) then
+    if tableUtils.trueForAll(self.stacks, function(stack) return stack.game_stopwatch and stack.game_stopwatch >= self.timeLimit * 60 end) then
       self.ended = true
       return true
     end
@@ -723,6 +723,11 @@ function Match:isIrrecoverablyDesynced()
   return false
 end
 
+-- a local function to avoid creating a closure every frame
+local checkGameEnded = function(stack)
+  return stack:game_ended()
+end
+
 function Match:checkAborted()
   -- the aborted flag may get set if the game is aborted through outside causes (usually network)
   -- this function checks if the match got aborted through inside causes (local player abort or local desync)
@@ -746,7 +751,7 @@ function Match:checkAborted()
       end
     else
       -- if this is not last alive and no desync that means we expect EVERY stack to be game over
-      if not tableUtils.trueForAll(self.stacks, Stack.game_ended) then
+      if not tableUtils.trueForAll(self.stacks, checkGameEnded) then
         -- someone didn't lose so this got aborted (e.g. through a pause -> leave)
         self.aborted = true
         self.winners = {}

@@ -13,16 +13,19 @@ local GridElement = class(function(gridElement, options)
   gridElement.gridOriginY = options.gridOriginY
   gridElement.gridWidth = options.gridWidth
   gridElement.gridHeight = options.gridHeight
+  if options.drawBorders ~= nil then
+    gridElement.drawBorders = options.drawBorders
+  elseif DEBUG_ENABLED then
+    gridElement.drawBorders = true
+  else
+    gridElement.drawBorders = false
+  end
   gridElement.TYPE = "GridElement"
 end, UiElement)
 
-function GridElement:drawBorders()
-  GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
-end
-
 function GridElement:drawSelf()
-  if DEBUG_ENABLED or ((self.gridWidth ~= 1 or self.gridHeight ~= 1) and (self.x % self.parent.unitSize > 0 or self.y % self.parent.unitSize > 0)) then
-    self:drawBorders()
+  if self.drawBorders then
+    GraphicsUtil.drawRectangle("line", self.x, self.y, self.width, self.height)
   end
 end
 

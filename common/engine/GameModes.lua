@@ -71,7 +71,7 @@ local OnePlayerTraining = {
   -- already known match properties
   playerCount = 1,
   stackInteraction = StackInteractions.ATTACK_ENGINE,
-  winConditions = { },
+  winConditions = { MatchWinConditions.LAST_ALIVE },
   gameOverConditions = { GameOverConditions.NEGATIVE_HEALTH },
   doCountdown = true,
 }

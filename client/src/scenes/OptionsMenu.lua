@@ -231,7 +231,6 @@ function OptionsMenu:loadGeneralMenu()
   end
 
   local generalMenuOptions = {
-    MenuItem.createToggleButtonGroupMenuItem("op_countdown", nil, nil, createToggleButtonGroup("ready_countdown_1P")),
     MenuItem.createToggleButtonGroupMenuItem("op_fps", nil, nil, createToggleButtonGroup("show_fps")),
     MenuItem.createToggleButtonGroupMenuItem("op_ingame_infos", nil, nil, createToggleButtonGroup("show_ingame_infos")),
     MenuItem.createToggleButtonGroupMenuItem("op_analytics", nil, nil, createToggleButtonGroup("enable_analytics", function()

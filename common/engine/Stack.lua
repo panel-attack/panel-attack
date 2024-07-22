@@ -2233,6 +2233,10 @@ function Stack:isCatchingUp()
   return self.play_to_end
 end
 
+function Stack:disablePassiveRaise()
+  self.behaviours.passiveRaise = false
+end
+
 -- other parts of stack
 require("common.engine.checkMatches")
 -- TODO: does this stay on client or not?

@@ -13,10 +13,11 @@ function BoolSelector:onRelease(x, y)
 end
 
 function BoolSelector:setValue(value)
-  if self.value ~= value and self.onValueChange then
-    self:onValueChange(not self.value)
-  end
+  local old = self.value
   self.value = value
+  if old ~= value and self.onValueChange then
+    self:onValueChange(self.value)
+  end
 end
 
 -- other code may implement a callback here

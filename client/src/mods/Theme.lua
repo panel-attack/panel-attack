@@ -95,6 +95,7 @@ function Theme:configurableKeys()
   result["multibar_Scale"] = "number"
   result["multibar_is_absolute"] = "boolean"
   result["multibar_LeftoverTime_Pos"] = "table"
+  result["multibar_LeftoverTime_Decimals"] = "number"
   result["font_size"] = "number"
   result["bg_title_speed_x"] = "number"
   result["bg_title_speed_y"] = "number"
@@ -197,6 +198,70 @@ function Theme:loadVersion2DefaultValues()
   self.move_Scale = 1 -- the scale size of the move
   self.move_Pos = {40, 34} -- the position of the move
   self.healthbar_frame_Pos = {-17, -4} -- the position of the healthbar frame
+end
+
+function Theme:loadVersion3DefaultValues()
+    self.version = 3
+    self.matchtypeLabel_Scale = 1
+    self.matchtypeLabel_Pos = {640, 60}
+    self.timeLabel_Scale = 1
+    self.timeLabel_Pos = {640, -126}
+    self.time_Scale = 0.70
+    self.time_Pos = {640, 8}
+    self.spectators_Pos = {546, 460}
+    self.name_Pos = {184, -108}
+    self.name_Font_Size = 20
+    self.levelLabel_Scale = 1
+    self.levelLabel_Pos = {318, 0}
+    self.level_Scale = 1
+    self.level_Pos = {340, 24}
+    self.moveLabel_Scale = 1
+    self.moveLabel_Pos = {312, 60}
+    self.move_Scale = 1
+    self.move_Pos = {354, 86}
+    self.scoreLabel_Scale = 1
+    self.scoreLabel_Pos = {316, 64}
+    self.score_Scale = 0.5
+    self.score_Pos = {352, 88}
+    self.speedLabel_Scale = 1
+    self.speedLabel_Pos = {316, 122}
+    self.speed_Scale = 0.5
+    self.speed_Pos = {352, 146}
+    self.ratingLabel_Scale = 1
+    self.ratingLabel_Pos = {310, 180}
+    self.rating_Scale = 0.5
+    self.rating_Pos = {354, 206}
+    self.winLabel_Scale = 1
+    self.winLabel_Pos = {318, -246}
+    self.win_Scale = 0.75
+    self.win_Pos = {260, -112}
+    self.gameover_text_Pos = {640, 620}
+    self.healthbar_frame_Pos = {-51, -12}
+    self.healthbar_frame_Scale = 1
+    self.healthbar_Pos = {-39, 68}
+    self.healthbar_Scale = 0.33
+    self.healthbar_Rotate = 0
+    self.multibar_Pos = {-12, 589} -- edit to {-39, 288} for relative multibar
+    self.multibar_Scale = 1
+    self.multibar_LeftoverTime_Pos = {-19, 5}
+    self.multibar_LeftoverTime_Decimals = 0
+    self.multibar_is_absolute = true
+    self.bg_title_is_tiled = false
+    self.bg_title_speed_x = 0
+    self.bg_title_speed_y = 0
+    self.bg_main_is_tiled = false
+    self.bg_main_speed_x = 0
+    self.bg_main_speed_y = 0
+    self.bg_select_screen_is_tiled = false
+    self.bg_select_screen_speed_x = 0
+    self.bg_select_screen_speed_y = 0
+    self.bg_readme_is_tiled = false
+    self.bg_readme_speed_x = 0
+    self.bg_readme_speed_y = 0
+end
+
+function Theme:loadDefaultConfig()
+  self:loadVersion3DefaultValues()
 end
 
 Theme.themeDirectoryPath = THEME_DIRECTORY_PATH or "themes/"
@@ -649,23 +714,19 @@ end
 
 -- initializes theme using the json settings
 function Theme.json_init(self)
-  -- Start with the default theme
-  local defaultData = fileUtils.readJsonFile(Theme.defaultThemeDirectoryPath .. "config.json")
-  self:applyJSONData(defaultData)
+  self:loadDefaultConfig()
 
   -- Then override with custom theme
-  if self.name ~= consts.DEFAULT_THEME_DIRECTORY then
-    local customData = fileUtils.readJsonFile(self.path .. "/config.json")
-    local version = self:versionForJSONVersion(customData.version)
-    if version == self.VERSIONS.original then
-      self:loadVersion1DefaultValues()
-    elseif version == self.VERSIONS.two then
-      self:loadVersion2DefaultValues()
-    end
-    self:applyJSONData(customData)
-
-    self:upgradeAndSaveVerboseConfig()
+  local customData = fileUtils.readJsonFile(self.path .. "/config.json")
+  local version = self:versionForJSONVersion(customData.version)
+  if version == self.VERSIONS.original then
+    self:loadVersion1DefaultValues()
+  elseif version == self.VERSIONS.two then
+    self:loadVersion2DefaultValues()
   end
+  self:applyJSONData(customData)
+
+  self:upgradeAndSaveVerboseConfig()
 end
 
 function Theme:versionForJSONVersion(jsonVersion)
