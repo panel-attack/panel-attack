@@ -231,6 +231,9 @@ function Theme:loadVersion3DefaultValues()
     self.ratingLabel_Pos = {310, 180}
     self.rating_Scale = 0.5
     self.rating_Pos = {354, 206}
+    self.battleAnimation_Show = true
+    self.battleAnimation_Scale = 1
+    self.battleAnimation_Pos = {310, 280}
     self.winLabel_Scale = 1
     self.winLabel_Pos = {318, -246}
     self.win_Scale = 0.75
