@@ -115,6 +115,8 @@ function BattleRoom.createFromServerMessage(message)
     battleRoom:addPlayer(player2)
   end
 
+  battleRoom:updateRankedStatus(message.ranked)
+
   battleRoom:assignInputConfigurations()
   GAME.netClient:registerPlayerUpdates(battleRoom)
 
@@ -308,7 +310,7 @@ end
 function BattleRoom:updateRankedStatus(rankedStatus, comments)
   if self.online then
     self.ranked = rankedStatus
-    self.rankedComments = comments
+    self.rankedComments = comments or ""
     self:emitSignal("rankedStatusChanged", rankedStatus, comments)
   else
     error("Trying to apply ranked state to the room even though it is either not online or does not support ranked")
