@@ -456,16 +456,6 @@ function Stack:drawDebug()
 
     -- drawY = drawY + padding
     -- GraphicsUtil.printf("P" .. stack.which .." Garbage Q: " .. stack.incomingGarbage:len(), drawX, drawY)
-
-    -- if stack.telegraph then
-    --   drawY = drawY + padding
-    --   GraphicsUtil.printf("incoming chains " .. stack.telegraph.garbage_queue.chain_garbage:len(), drawX, drawY)
-
-    --   for combo_garbage_width=3,6 do
-    --     drawY = drawY + padding
-    --     GraphicsUtil.printf("incoming combos " .. stack.telegraph.garbage_queue.combo_garbage[combo_garbage_width]:len(), drawX, drawY)
-    --   end
-    -- end
   end
 end
 
@@ -551,12 +541,6 @@ function Stack.render(self)
 
   self:drawCountdown()
   self:drawCanvas()
-
-  if self.telegraph then
-    prof.push("Telegraph:render")
-    self.telegraph:render()
-    prof.pop("Telegraph:render")
-  end
 
   self:drawPopEffects()
   self:drawCards()

@@ -490,9 +490,9 @@ function Match:start()
     end
 
     if self.stackInteraction == GameModes.StackInteractions.ATTACK_ENGINE then
-      local attackEngineHost = SimulatedStack({which = #self.stacks + 1, is_local = true, character = CharacterLoader.resolveCharacterSelection()})
-      local attackEngine = attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
-      attackEngine:setGarbageTarget(stack)
+      local attackEngineHost = SimulatedStack({which = #self.stacks + 1, is_local = true, character = CharacterLoader.fullyResolveCharacterSelection()})
+      attackEngineHost:addAttackEngine(player.settings.attackEngineSettings)
+      attackEngineHost:setGarbageTarget(stack)
       self.stacks[#self.stacks+1] = attackEngineHost
     end
   end

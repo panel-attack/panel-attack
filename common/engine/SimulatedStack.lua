@@ -28,13 +28,12 @@ end, StackBase)
 -- adds an attack engine to the simulated opponent
 function SimulatedStack:addAttackEngine(attackSettings, shouldPlayAttackSfx)
   if shouldPlayAttackSfx then
-    self.attackEngine = AttackEngine(attackSettings, self.telegraph, characters[self.character])
+    self.attackEngine = AttackEngine(attackSettings, characters[self.character])
   else
-    self.attackEngine = AttackEngine(attackSettings, self.telegraph)
+    self.attackEngine = AttackEngine(attackSettings)
   end
 
   self.outgoingGarbage = self.attackEngine.outgoingGarbage
-  self.telegraph = Telegraph(self)
 
   return self.attackEngine
 end
@@ -137,10 +136,6 @@ function SimulatedStack:render()
   self:drawCanvas()
   self:drawAbsoluteMultibar(0, 0)
 
-  if self.telegraph then
-    self.telegraph:render()
-  end
-
   self:drawDebug()
 end
 
@@ -226,9 +221,6 @@ function SimulatedStack:setGarbageTarget(garbageTarget)
   self.garbageTarget = garbageTarget
   if self.attackEngine then
     self.attackEngine:setGarbageTarget(garbageTarget)
-  end
-  if self.telegraph then
-    self.telegraph:updatePositionForGarbageTarget(garbageTarget)
   end
 end
 
