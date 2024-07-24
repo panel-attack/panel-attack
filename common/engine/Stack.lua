@@ -1907,6 +1907,7 @@ function Stack:getAttackPatternData()
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
+  data.disableQueueLimit = self.player.human
   local defaultEndTime = 70
 
   for _, garbage in ipairs(self.outgoingGarbage.history) do
