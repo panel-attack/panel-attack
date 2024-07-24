@@ -120,7 +120,7 @@ function AttackEngine.run(self)
         local difference = self.clock - self.attackPatterns[i].startTime
         local remainder = difference % totalAttackTimeBeforeRepeat
         if remainder == 0 then
-          if self.attackPatterns[i].endsChain then
+          if self.attackPatterns[i].endsChain and self.outgoingGarbage.currentChain then
             self.outgoingGarbage:finalizeCurrentChain(self.clock)
           else
             local garbage = self.attackPatterns[i].garbage
