@@ -151,7 +151,7 @@ function Telegraph:renderAttacks(sender, receiver)
   for i = #sender.outgoingGarbage.stagedGarbage, 1, -1 do
     local garbage = sender.outgoingGarbage.stagedGarbage[i]
     local drawIndex = math.abs(i - #sender.outgoingGarbage.stagedGarbage)
-    if garbage.isChain then
+    if garbage.isChain and garbage.links then
       for frameEarned, location in pairs(garbage.links) do
         self:renderAttack(sender, receiver, frameEarned, drawIndex, location.rowEarned, location.colEarned)
       end
@@ -169,7 +169,7 @@ function Telegraph:renderStageGarbageIcon(sender, receiver, garbage, telegraphIn
   local y = (receiver.frameOriginY - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING) * receiver.gfxScale
   local x = self:telegraphRenderXPosition(receiver, telegraphIndex) * receiver.gfxScale
   local image
-  if garbage.isChain then
+  if garbage.isChain and garbage.links then
     if config.renderAttacks then
       -- only display the icon for how many chain links the attack already finished
       local displayHeight = 0
