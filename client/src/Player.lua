@@ -103,7 +103,7 @@ function Player:createStackFromSettings(match, which)
     anim:stop()
     anim:setSwitchFunction(
       function (s, state)
-        local switch = "normal"
+        local switch
         local finish = false
         if self.stack.match.ended then
           switch = (self.stack.game_over_clock <= 0 and "win") or "lose"
@@ -111,7 +111,11 @@ function Player:createStackFromSettings(match, which)
           switch = "hurt"
         elseif state == "attack" then
           switch = "attack"
+        elseif (self.stack.danger and anim.animations["danger"] ~= nil)then
+          switch = "danger"
+          finish = anim.currentAnim ~= "normal"
         else
+          switch = "normal"
           finish = true
         end
         s:switchAnimation(switch, finish)
