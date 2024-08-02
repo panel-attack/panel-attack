@@ -16,7 +16,7 @@ AttackPattern =
 -- An attack engine sends attacks based on a set of rules.
 local AttackEngine =
   class(
-  function(self, attackSettings, telegraph, character)
+  function(self, attackSettings, character)
     -- The number of frames before the first attack starts. Note if this is changed after attack patterns are added their times won't be updated.
     self.delayBeforeStart = attackSettings.delayBeforeStart or 0
 
@@ -41,7 +41,6 @@ local AttackEngine =
     -- the clock to control the continuity of the sending process
     self.clock = 0
 
-    self.telegraph = telegraph
     self.outgoingGarbage = GarbageQueue(true, self.treatMetalAsCombo)
 
     -- a character table (not id) to send sfx, should be nil if no sfx should play
@@ -81,7 +80,6 @@ function AttackEngine:setGarbageTarget(garbageTarget)
   self.garbageTarget = garbageTarget
   self.garbageTarget.incomingGarbage.illegalStuffIsAllowed = true
   self.garbageTarget.incomingGarbage.treatMetalAsCombo = self.treatMetalAsCombo
-  --self.telegraph:updatePositionForGarbageTarget(garbageTarget)
 end
 
 -- Adds an attack pattern that happens repeatedly on a timer.
@@ -123,6 +121,9 @@ function AttackEngine.run(self)
         local remainder = difference % totalAttackTimeBeforeRepeat
         if remainder == 0 then
           if self.attackPatterns[i].endsChain then
+            if not self.outgoingGarbage.currentChain then
+              break
+            end
             self.outgoingGarbage:finalizeCurrentChain(self.clock)
           else
             local garbage = self.attackPatterns[i].garbage
@@ -132,7 +133,7 @@ function AttackEngine.run(self)
               maxChain = math.max(chainCounter, maxChain)
             else
               garbage.frameEarned = self.clock
-              -- courtesy of telegraph attack animation
+              -- we need a coordinate for the origin of the attack animation
               garbage.rowEarned = math.random(1, 11)
               garbage.colEarned = math.random(1, 6)
               maxCombo = garbage.width + 1 -- TODO: Handle combos SFX greather than 7
@@ -162,12 +163,6 @@ function AttackEngine.run(self)
   end
 
   self.clock = self.clock + 1
-end
-
-function AttackEngine.render(self)
-
-  self.telegraph:render()
-
 end
 
 function AttackEngine:rollbackCopy(frame)

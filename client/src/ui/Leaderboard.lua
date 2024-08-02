@@ -66,26 +66,28 @@ function Leaderboard:refreshView()
 end
 
 function Leaderboard:receiveInputs(inputs)
-  if inputs:isPressedWithRepeat("MenuUp", .25, 0.03) then
-    GAME.theme:playMoveSfx()
-    self.firstVisibleIndex = util.bound(1, self.firstVisibleIndex - 1, #self.data)
-    self.lastVisibleIndex = util.bound(1, self.firstVisibleIndex + self.visibleEntries, #self.data)
-    self:refreshView()
-  elseif inputs:isPressedWithRepeat("MenuDown", .25, 0.03) then
-    GAME.theme:playMoveSfx()
-    self.lastVisibleIndex = util.bound(1, self.lastVisibleIndex + 1, #self.data)
-    self.firstVisibleIndex = util.bound(1, self.lastVisibleIndex - self.visibleEntries, #self.data)
-    self:refreshView()
-  elseif inputs.isDown["MenuLeft"] then
-    GAME.theme:playMoveSfx()
-    self.firstVisibleIndex = util.bound(1, self.firstVisibleIndex - self.visibleEntries, #self.data)
-    self.lastVisibleIndex = util.bound(1, self.firstVisibleIndex + self.visibleEntries, #self.data)
-    self:refreshView()
-  elseif inputs.isDown["MenuRight"] then
-    GAME.theme:playMoveSfx()
-    self.lastVisibleIndex = util.bound(1, self.lastVisibleIndex + self.visibleEntries, #self.data)
-    self.firstVisibleIndex = util.bound(1, self.lastVisibleIndex - self.visibleEntries, #self.data)
-    self:refreshView()
+  if self.data then
+    if inputs:isPressedWithRepeat("MenuUp", .25, 0.03) then
+      GAME.theme:playMoveSfx()
+      self.firstVisibleIndex = util.bound(1, self.firstVisibleIndex - 1, #self.data)
+      self.lastVisibleIndex = util.bound(1, self.firstVisibleIndex + self.visibleEntries, #self.data)
+      self:refreshView()
+    elseif inputs:isPressedWithRepeat("MenuDown", .25, 0.03) then
+      GAME.theme:playMoveSfx()
+      self.lastVisibleIndex = util.bound(1, self.lastVisibleIndex + 1, #self.data)
+      self.firstVisibleIndex = util.bound(1, self.lastVisibleIndex - self.visibleEntries, #self.data)
+      self:refreshView()
+    elseif inputs.isDown["MenuLeft"] then
+      GAME.theme:playMoveSfx()
+      self.firstVisibleIndex = util.bound(1, self.firstVisibleIndex - self.visibleEntries, #self.data)
+      self.lastVisibleIndex = util.bound(1, self.firstVisibleIndex + self.visibleEntries, #self.data)
+      self:refreshView()
+    elseif inputs.isDown["MenuRight"] then
+      GAME.theme:playMoveSfx()
+      self.lastVisibleIndex = util.bound(1, self.lastVisibleIndex + self.visibleEntries, #self.data)
+      self.firstVisibleIndex = util.bound(1, self.lastVisibleIndex - self.visibleEntries, #self.data)
+      self:refreshView()
+    end
   end
 
   if inputs.isDown["MenuEsc"] then
@@ -103,17 +105,19 @@ function Leaderboard:onTouch(x, y)
 end
 
 function Leaderboard:onDrag(x, y)
-  local indexOffset = math.round((y - self.initialTouchY) / 15)
-  if indexOffset ~= 0 then
-    local direction = math.sign(indexOffset)
-    if direction == -1 then
-      self.firstVisibleIndex = util.bound(1, self.initialFirstVisible - indexOffset, #self.data - self.visibleEntries)
-      self.lastVisibleIndex = util.bound(self.visibleEntries, self.firstVisibleIndex + self.visibleEntries - 1, #self.data)
-    else
-      self.lastVisibleIndex = util.bound(self.visibleEntries, self.initialLastVisible - indexOffset, #self.data)
-      self.firstVisibleIndex = util.bound(1, self.lastVisibleIndex - self.visibleEntries + 1, #self.data - self.visibleEntries)
+  if self.data then
+    local indexOffset = math.round((y - self.initialTouchY) / 15)
+    if indexOffset ~= 0 then
+      local direction = math.sign(indexOffset)
+      if direction == -1 then
+        self.firstVisibleIndex = util.bound(1, self.initialFirstVisible - indexOffset, #self.data - self.visibleEntries)
+        self.lastVisibleIndex = util.bound(self.visibleEntries, self.firstVisibleIndex + self.visibleEntries - 1, #self.data)
+      else
+        self.lastVisibleIndex = util.bound(self.visibleEntries, self.initialLastVisible - indexOffset, #self.data)
+        self.firstVisibleIndex = util.bound(1, self.lastVisibleIndex - self.visibleEntries + 1, #self.data - self.visibleEntries)
+      end
+      self:refreshView()
     end
-    self:refreshView()
   end
 end
 

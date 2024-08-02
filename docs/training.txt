@@ -5,6 +5,7 @@ Adding/modding Attack Files: step by step instructions (Windows example):
 An attack file looks something like this:
 {
   "name": "Attack File Example",
+  "disableQueueLimit": true,
   "mergeComboMetalQueue": false,
   "delayBeforeStart": 150,
   "delayBeforeRepeat": 91,
@@ -48,3 +49,13 @@ The second method:
 - "chainEndTime": The amount of frames to wait after the chain has fully grown in order to commit it to the garbage queue. This is relative to the beginning of the attack pattern instead of the chain itself.
 See the "ChainTableExample.json" file for reference.
 General note to keep in mind for all garbage: Your "delayBeforeRepeat" plus the largest "startTime" you have needs to equal at least 91 in order for your garbage to send, or else it will queue indefinitely. 
+
+
+There are some known problems in regards to attack files that go to extremes:
+For attack files with extreme (impossible) garbage outputs there exists a queue limit to prevent flooding the game with infinite amounts of garbage that eat up all of a computer's RAM.
+This queue limit can be set via "disableQueueLimit": true
+
+With the queue limit enabled, once more than 72 pieces of garbage are queued to fall on the recipient's side, the attack engine will skip patterns until enough garbage fell.
+Instead it will keep its clock synchronized with its target and send the next thing according to the clock once there is space on the recipient's side again.
+This may lead to unexpected and inconsistent results.
+For humanly achievable garbage outputs it is generally advised to keep the queue limit off.

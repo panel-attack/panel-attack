@@ -16,7 +16,6 @@ local StackBase = require("common.engine.StackBase")
 local class = require("common.lib.class")
 local Panel = require("common.engine.Panel")
 local GarbageQueue = require("common.engine.GarbageQueue")
-local Telegraph = require("client.src.graphics.Telegraph")
 local prof = require("common.lib.jprof.jprof")
 
 -- Stuff defined in this file:
@@ -250,13 +249,6 @@ Stack =
 
     s.opponentStack = nil -- the other stack you are playing against
     s.garbageTarget = nil -- the target you are sending attacks to
-
-    if s.match.stackInteraction == GameModes.StackInteractions.VERSUS or s.match.stackInteraction == GameModes.StackInteractions.SELF then
-      s.telegraph = Telegraph(s)
-      -- Telegraph holds the garbage that hasn't been committed yet and also tracks the attack animations
-      -- NOTE: this is the telegraph our stack is adding into that is shown over the other player
-      -- .sender = us
-    end
 
     s.panelGenCount = 0
     s.garbageGenCount = 0
@@ -579,9 +571,6 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
     assert(newGarbageTarget.incomingGarbage ~= nil)
   end
   self.garbageTarget = newGarbageTarget
-  if self.telegraph then
-    self.telegraph:updatePositionForGarbageTarget(newGarbageTarget)
-  end
 
   -- in the longrun, opponentStack should not be known to the stack
   self.opponentStack = newGarbageTarget
@@ -1919,6 +1908,7 @@ function Stack:getAttackPatternData()
   data.mergeComboMetalQueue = false
   data.delayBeforeStart = 0
   data.delayBeforeRepeat = 91
+  data.disableQueueLimit = self.player.human
   local defaultEndTime = 70
 
   for _, garbage in ipairs(self.outgoingGarbage.history) do

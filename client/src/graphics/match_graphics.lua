@@ -4,6 +4,7 @@ local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local prof = require("common.lib.jprof.jprof")
 local MatchParticipant = require("client.src.MatchParticipant")
+local Telegraph = require("client.src.graphics.Telegraph")
 
 function Match:matchelementOriginX()
   local x = 375 + (464) / 2
@@ -160,6 +161,10 @@ function Match:render()
       -- don't render stacks that only have an attack engine
       if stack.player or stack.healthEngine then
         stack:render()
+      end
+
+      if stack.garbageTarget then
+        Telegraph:render(stack, stack.garbageTarget)
       end
     end
 

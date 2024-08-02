@@ -19,7 +19,7 @@ local function rollbackPastAttackTest()
   -- Simulate to a point P1 has sent an attack to P2
   assert(#match.stacks[1].outgoingGarbage.garbageInTransit[523] == 1)
 
-  -- Rollback P1 past the time the attack popped off telegraph
+  -- Rollback P1 past the time the attack popped off the garbage queue
   match:debugRollbackAndCaptureState(rollbackTime)
 
   -- This should cause the attack to be undone
@@ -63,7 +63,7 @@ local function rollbackNotPastAttackTest()
   -- Simulate to a point P1 has sent an attack to P2
   assert(#match.stacks[1].outgoingGarbage.garbageInTransit[523] == 1)
 
-  -- Rollback P1 but not past the time the attack popped off telegraph
+  -- Rollback P1 but not past the time the attack popped off the garbage queue
   match:debugRollbackAndCaptureState(rollbackTime)
   assert(match.stacks[1].outgoingGarbage.garbageInTransit[523] ~= nil and #match.stacks[1].outgoingGarbage.garbageInTransit[523] == 1)
 

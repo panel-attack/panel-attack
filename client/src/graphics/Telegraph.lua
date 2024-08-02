@@ -6,24 +6,10 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local TELEGRAPH_HEIGHT = 16
 local TELEGRAPH_PADDING = 2 --vertical space between telegraph and stack
 local TELEGRAPH_BLOCK_WIDTH = 26
+local MAX_DISPLAY_ITEMS = 7
 
 -- Sender is the sender of these attacks, must implement clock, frameOriginX, frameOriginY, and character
-Telegraph = class(function(self, sender)
-
-  -- A sender can be anything that
-  self.sender = sender
-  -- has some coordinates to originate the attack animation from
-  assert(sender.frameOriginX ~= nil, "telegraph sender invalid")
-  assert(sender.frameOriginY ~= nil, "telegraph sender invalid")
-  -- has a clock to figure out how far the attacks should have animated relative to when it was sent
-  -- (and also that non-cheating senders can only send attacks on the frame they're on)
-  assert(sender.clock ~= nil, "telegraph sender invalid")
-  -- has a character to source the telegraph images above the stack from
-  assert(sender.character ~= nil, "telegraph sender invalid")
-  -- has a panel origin to realistically offset coordinates
-  assert(sender.panelOriginX ~= nil, "telegraph sender invalid")
-  assert(sender.panelOriginY ~= nil, "telegraph sender invalid")
-end)
+local Telegraph = {}
 
 --The telegraph_attack_animation below refers the little loop shape attacks make before they start traveling toward the target.
 local telegraph_attack_animation_speed = {
@@ -72,21 +58,16 @@ for k, animation in ipairs(leftward_or_rightward) do
   end
 end
 
-function Telegraph:updatePositionForGarbageTarget(newGarbageTarget)
-  self.stackCanvasWidth = newGarbageTarget:stackCanvasWidth()
-  self.mirror_x = newGarbageTarget.mirror_x
-  self.originX = newGarbageTarget.frameOriginX
-  self.originY = newGarbageTarget.frameOriginY - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING
-  self.receiverGfxScale = newGarbageTarget.gfxScale
-end
+function Telegraph:telegraphRenderXPosition(receiver, index)
+  local increment = -TELEGRAPH_BLOCK_WIDTH * receiver.mirror_x
 
-function Telegraph:telegraphRenderXPosition(index)
+  local result = receiver.frameOriginX
+  if receiver.mirror_x == 1 then
+    result = result + receiver:stackCanvasWidth() / receiver.gfxScale + increment
+  end
 
-  local increment = -TELEGRAPH_BLOCK_WIDTH * self.mirror_x
-
-  local result = self.originX
-  if self.mirror_x == 1 then
-    result = result + self.stackCanvasWidth / self.receiverGfxScale + increment
+  if index > MAX_DISPLAY_ITEMS then
+    index = -1
   end
 
   result = result + (increment * index)
@@ -109,24 +90,24 @@ end
 Telegraph.totalTimeAfterLoopToDestination = (Telegraph:attackAnimationEndFrame() - (Telegraph:attackAnimationStartFrame() + #telegraph_attack_animation_speed))
 -- TODO:
 -- animation seems to start 1 frame early and the loopy part does not spin quite as far outwards it seems
-function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigin)
-  local attackFrame = self.sender.clock - frameEarned
+function Telegraph:renderAttack(sender, receiver, frameEarned, telegraphIndex, rowOrigin, colOrigin)
+  local attackFrame = sender.clock - frameEarned
   if attackFrame < self:attackAnimationStartFrame() or attackFrame >= self:attackAnimationEndFrame() then
     return
   end
 
-  local character = characters[self.sender.character]
+  local character = characters[sender.character]
   local width, height = character.telegraph_garbage_images["attack"]:getDimensions()
-  local attackScale = self.receiverGfxScale * 16 / math.max(width, height) -- keep image ratio
+  local attackScale = receiver.gfxScale * 16 / math.max(width, height) -- keep image ratio
 
-  if self.sender.opacityForFrame then
-    GraphicsUtil.setColor(1, 1, 1, self.sender:opacityForFrame(attackFrame, 1, 8))
+  if sender.opacityForFrame then
+    GraphicsUtil.setColor(1, 1, 1, sender:opacityForFrame(attackFrame, 1, 8))
   end
 
-  local destinationX = self:telegraphRenderXPosition(telegraphIndex) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / 16) / 2)
+  local destinationX = self:telegraphRenderXPosition(receiver, telegraphIndex) + (TELEGRAPH_BLOCK_WIDTH / 2) - ((TELEGRAPH_BLOCK_WIDTH / 16) / 2)
 
-  local attackX = (colOrigin - 1) * 16 + self.sender.panelOriginX
-  local attackY = (11 - rowOrigin) * 16 + self.sender.panelOriginY + (self.sender.displacement or 0)
+  local attackX = (colOrigin - 1) * 16 + sender.panelOriginX
+  local attackY = (11 - rowOrigin) * 16 + sender.panelOriginY + (sender.displacement or 0)
   -- -1 for left, 1 for right
   local horizontalDirection = math.sign(destinationX - attackX)
 
@@ -143,7 +124,7 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
   if attackFrame <= #telegraph_attack_animation_speed + self:attackAnimationStartFrame() then
     -- if we aren't past the loopy part yet, draw directly
     -- TODO: tween the scale between sender and receiver scale
-    GraphicsUtil.draw(character.telegraph_garbage_images["attack"], attackX * self.receiverGfxScale, attackY * self.receiverGfxScale, 0, attackScale, attackScale)
+    GraphicsUtil.draw(character.telegraph_garbage_images["attack"], attackX * receiver.gfxScale, attackY * receiver.gfxScale, 0, attackScale, attackScale)
   else
     -- if we are, attackOriginX and attackOriginY are set to the end of the loopy animation now
     -- that means we have to calculate the distance to the desired garbage
@@ -156,26 +137,26 @@ function Telegraph:renderAttack(frameEarned, telegraphIndex, rowOrigin, colOrigi
     local percent =  attackFrame / Telegraph.totalTimeAfterLoopToDestination
 
     -- fixed y location
-    local destinationY = self.originY - TELEGRAPH_PADDING
+    local destinationY = receiver.frameOriginY - TELEGRAPH_HEIGHT - 2 * TELEGRAPH_PADDING
     attackX = attackX + percent * (destinationX - attackX)
     attackY = attackY + percent * (destinationY - attackY)
 
-    GraphicsUtil.draw(character.telegraph_garbage_images["attack"], attackX * self.receiverGfxScale, attackY * self.receiverGfxScale, 0, attackScale, attackScale)
+    GraphicsUtil.draw(character.telegraph_garbage_images["attack"], attackX * receiver.gfxScale, attackY * receiver.gfxScale, 0, attackScale, attackScale)
   end
 
   GraphicsUtil.setColor(1, 1, 1, 1)
 end
 
-function Telegraph:renderAttacks()
-  for i = #self.sender.outgoingGarbage.stagedGarbage, 1, -1 do
-    local garbage = self.sender.outgoingGarbage.stagedGarbage[i]
-    local drawIndex = math.abs(i - #self.sender.outgoingGarbage.stagedGarbage)
-    if garbage.isChain then
+function Telegraph:renderAttacks(sender, receiver)
+  for i = #sender.outgoingGarbage.stagedGarbage, 1, -1 do
+    local garbage = sender.outgoingGarbage.stagedGarbage[i]
+    local drawIndex = math.abs(i - #sender.outgoingGarbage.stagedGarbage)
+    if garbage.isChain and garbage.links then
       for frameEarned, location in pairs(garbage.links) do
-        self:renderAttack(frameEarned, drawIndex, location.rowEarned, location.colEarned)
+        self:renderAttack(sender, receiver, frameEarned, drawIndex, location.rowEarned, location.colEarned)
       end
     else
-      self:renderAttack(garbage.frameEarned, drawIndex, garbage.rowEarned, garbage.colEarned)
+      self:renderAttack(sender, receiver, garbage.frameEarned, drawIndex, garbage.rowEarned, garbage.colEarned)
     end
   end
 end
@@ -183,17 +164,17 @@ end
 local iconHeight = 16
 local iconWidth = 24
 
-function Telegraph:renderStageGarbageIcon(garbage, telegraphIndex)
-  local character = characters[self.sender.character]
-  local y = self.originY * self.receiverGfxScale
-  local x = self:telegraphRenderXPosition(telegraphIndex) * self.receiverGfxScale
+function Telegraph:renderStageGarbageIcon(sender, receiver, garbage, telegraphIndex)
+  local character = characters[sender.character]
+  local y = (receiver.frameOriginY - TELEGRAPH_HEIGHT - TELEGRAPH_PADDING) * receiver.gfxScale
+  local x = self:telegraphRenderXPosition(receiver, telegraphIndex) * receiver.gfxScale
   local image
-  if garbage.isChain then
+  if garbage.isChain and garbage.links then
     if config.renderAttacks then
       -- only display the icon for how many chain links the attack already finished
       local displayHeight = 0
       for frameEarned, _ in pairs(garbage.links) do
-        if self.sender.clock - frameEarned > self:attackAnimationEndFrame() then
+        if sender.clock - frameEarned > self:attackAnimationEndFrame() then
           displayHeight = displayHeight + 1
         end
       end
@@ -210,7 +191,7 @@ function Telegraph:renderStageGarbageIcon(garbage, telegraphIndex)
     end
   else
     if config.renderAttacks then
-      if self.sender.clock - garbage.frameEarned < self:attackAnimationEndFrame() then
+      if sender.clock - garbage.frameEarned < self:attackAnimationEndFrame() then
         -- if attacks are rendered, icon display is delayed until the attack animation finished
         return
       end
@@ -223,26 +204,27 @@ function Telegraph:renderStageGarbageIcon(garbage, telegraphIndex)
   end
 
   local width, height = image:getDimensions()
-  local xScale = iconWidth / width * self.receiverGfxScale
-  local yScale = iconHeight / height * self.receiverGfxScale
+  local xScale = iconWidth / width * receiver.gfxScale
+  local yScale = iconHeight / height * receiver.gfxScale
 
   GraphicsUtil.draw(image, x, y, 0, xScale, yScale)
 end
 
-function Telegraph:renderStagedGarbageIcons()
-  for i = #self.sender.outgoingGarbage.stagedGarbage, 1, -1 do
-    local garbage = self.sender.outgoingGarbage.stagedGarbage[i]
-    self:renderStageGarbageIcon(garbage, math.abs(i - #self.sender.outgoingGarbage.stagedGarbage))
+function Telegraph:renderStagedGarbageIcons(sender, receiver)
+  local stagedGarbageCount = #sender.outgoingGarbage.stagedGarbage
+  for i = stagedGarbageCount, math.max(stagedGarbageCount - MAX_DISPLAY_ITEMS + 1, 1), -1 do
+    local garbage = sender.outgoingGarbage.stagedGarbage[i]
+    self:renderStageGarbageIcon(sender, receiver, garbage, math.abs(i - stagedGarbageCount))
   end
 end
 
-function Telegraph:render()
+function Telegraph:render(sender, receiver)
   if config.renderAttacks then
-    self:renderAttacks()
+    self:renderAttacks(sender, receiver)
   end
 
   if config.renderTelegraph then
-    self:renderStagedGarbageIcons()
+    self:renderStagedGarbageIcons(sender, receiver)
   end
 end
 

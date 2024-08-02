@@ -12,6 +12,7 @@ local InputField = class(
     self.placeholderText = love.graphics.newTextBatch(love.graphics.getFont(), options.placeholder) or love.graphics.newTextBatch(love.graphics.getFont(), "Input Field")
     self.value = options.value or ""
     self.charLimit = options.charLimit or NAME_LENGTH_LIMIT
+    -- unlike the name, this also allows underscores
     self.filterAlphanumeric = options.filterAlphanumeric or (options.filterAlphanumeric == nil and true)
 
     self.backgroundColor = options.backgroundColor or {.3, .3, .3, .7}
@@ -115,7 +116,7 @@ function InputField:onMoveCursor(dir)
 end
 
 function InputField:textInput(t)
-  if self.filterAlphanumeric and string.find(t, "[^%w]+") then
+  if self.filterAlphanumeric and string.find(t, "[^_%w]") then
     return
   end
   if utf8.len(self.value) + utf8.len(t) <= self.charLimit then
