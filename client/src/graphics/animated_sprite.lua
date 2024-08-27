@@ -36,12 +36,6 @@ end
 AnimatedSprite =
 class(
   function(self, animations, switchFunc)
-    --Signal.turnIntoEmitter(self)
-    --self:createSignal("animSwitched")
-    --self:createSignal("animEnded")
-    --self:createSignal("animLooped")
-    --self:createSignal("animStarted")
-
     self.frameTime = 0
     self.currentFrame = 1
     self.loopCount = 0
@@ -100,7 +94,7 @@ function AnimatedSprite:update()
   end
 end
   
-  function AnimatedSprite:qdraw(x, y, rot, x_scale, y_scale)
+  function AnimatedSprite:draw(x, y, rot, x_scale, y_scale)
     GraphicsUtil.drawQuad(self.animations[self.currentAnim].image, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
   end
   
