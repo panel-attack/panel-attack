@@ -13,7 +13,6 @@ class(
   function (self, image, width, height, dur)
     self.image = image
     self.frameSize = {width = width, height = height}
-    self.spriteSheet = love.graphics.newSpriteBatch(image)
     self.frames = {}
     self.frameDuration = dur or 2
     self.loop = false
@@ -100,10 +99,6 @@ function AnimatedSprite:update()
     end
   end
 end
-
-  function AnimatedSprite:draw(x, y, rot, x_scale, y_scale)
-    GraphicsUtil.drawBatch(self.animations[self.currentAnim].spriteSheet, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
-  end
   
   function AnimatedSprite:qdraw(x, y, rot, x_scale, y_scale)
     GraphicsUtil.drawQuad(self.animations[self.currentAnim].image, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
