@@ -5,7 +5,6 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
 
 local quad = love.graphics.newQuad
-local tableInsert = table.insert
 local floor = math.floor
 
 Animation =
