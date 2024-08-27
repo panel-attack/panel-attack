@@ -10,24 +10,24 @@ local floor = math.floor
 
 Animation =
 class(
-  function (self, image, width, height, dur)
+  function (self, image, width, height)
     self.image = image
     self.frameSize = {width = width, height = height}
     self.frames = {}
-    self.frameDuration = dur or 2
     self.loop = false
     self.loopStartFrame = 1
   end
 )
 
-function Animation.addFrame(self, frame, length)
+function Animation.addFrame(self, frame, duration)
   local imgW, imgH = self.image:getDimensions()
   local w = self.frameSize.width
   local h = self.frameSize.height
   local x = w*(frame-1)%imgW
   local y = h*floor(w*(frame-1)/imgW)
-  tableInsert(self.frames, {quad(x, y, w, h, imgW, imgH), length})
+  self.frames[#self.frames+1] = { quad = quad(x, y, w, h, imgW, imgH), duration = duration }
 end
+
 function Animation:beginLoop()
   self.loop = true
   self.loopStartFrame = #self.frames+1
@@ -83,8 +83,10 @@ function AnimatedSprite:update()
     self.finished = false
   end
   if (self.playing and not self.finished) then
-    if (self.frameTime <= anim.frames[self.currentFrame][2]) then
-      self.frameTime = self.frameTime + 1/anim.frameDuration
+    if (self.frameTime <= anim.frames[self.currentFrame].duration) then
+      -- this was 1/frameDuration before with frameDuration fixed to 2 (never set in the example script)
+      -- I think running animations at half the speed of what is specified as durations in the script is a bit confusing because it is not explicit
+      self.frameTime = self.frameTime + 0.5
     elseif (self.currentFrame < #anim.frames) then
       self.frameTime = 0
       self.currentFrame = self.currentFrame + 1
@@ -95,7 +97,7 @@ function AnimatedSprite:update()
 end
   
   function AnimatedSprite:draw(x, y, rot, x_scale, y_scale)
-    GraphicsUtil.drawQuad(self.animations[self.currentAnim].image, self.animations[self.currentAnim].frames[self.currentFrame][1], x, y, rot, x_scale, y_scale)
+    GraphicsUtil.drawQuad(self.animations[self.currentAnim].image, self.animations[self.currentAnim].frames[self.currentFrame].quad, x, y, rot, x_scale, y_scale)
   end
   
   function AnimatedSprite:switchAnimation(selected, finish, frame)
