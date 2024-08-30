@@ -55,7 +55,6 @@ config = {
     show_ingame_infos             = true,
     -- Change danger music back later flag
     danger_music_changeback_delay = false,
-    input_repeat_delay            = consts.DEFAULT_INPUT_REPEAT_DELAY,
     -- analytics
     enable_analytics              = true,
     -- Save replays setting
@@ -178,9 +177,6 @@ config = {
           end
           if type(read_data.music_volume) == "number" then
             configTable.music_volume = util.bound(0, read_data.music_volume, 100)
-          end
-          if type(read_data.input_repeat_delay) == "number" then
-            configTable.input_repeat_delay = util.bound(1, read_data.input_repeat_delay, 50)
           end
           if type(read_data.debug_mode) == "boolean" then
             configTable.debug_mode = read_data.debug_mode

@@ -18,6 +18,7 @@ local SetUserIdMenu = require("client.src.scenes.SetUserIdMenu")
 local UiElement = require("client.src.ui.UIElement")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local ScrollText = require("client.src.ui.ScrollText")
+local util = require("common.lib.util")
 
 -- @module optionsMenu
 -- Scene for the options menu
@@ -236,7 +237,6 @@ function OptionsMenu:loadGeneralMenu()
     MenuItem.createToggleButtonGroupMenuItem("op_analytics", nil, nil, createToggleButtonGroup("enable_analytics", function()
       analytics.init()
     end)),
-    MenuItem.createSliderMenuItem("op_input_delay", nil, nil, createConfigSlider("input_repeat_delay", 0, 50)),
     MenuItem.createToggleButtonGroupMenuItem("op_replay_public", nil, nil, publicReplayButtonGroup),
     MenuItem.createSliderMenuItem("op_performance_drain", nil, nil, performanceSlider),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
@@ -293,35 +293,52 @@ function OptionsMenu:loadGraphicsMenu()
   for index, value in ipairs(fixedScaleData) do
     value.index = index
   end
-  local function updateFixedScale(fixedScale)
-    assert(config.gameScaleType == "fixed")
-    config.gameScaleFixedValue = fixedScale
-    scaleSettingsChanged()
+
+  local function getFixedScaleSlider()
+    local slider = Slider({
+      min = 50,
+      max = 300,
+      value = (config.gameScaleFixedValue * 100) or 100,
+      tickLength = 1,
+      onValueChange = function(slider)
+        config.gameScaleFixedValue = slider.value / 100
+        scaleSettingsChanged()
+      end
+    })
+    slider.minText:set(slider.min / 100)
+    slider.maxText:set(slider.max / 100)
+    slider.valueText:set(slider.value / 100)
+    slider.setValue = function(s, value)
+      if value ~= s.value then
+        s.value = util.bound(s.min, value, s.max)
+        s.valueText:set(s.value / 100)
+        s:onValueChange()
+      end
+    end
+    slider.receiveInputs = function(s, input)
+      if input:isPressedWithRepeat("Left") then
+        s:setValue(s.value - 10)
+      elseif input:isPressedWithRepeat("Right") then
+        s:setValue(s.value + 10)
+      end
+    end
+    local function touchDrag(s, x, y)
+      local screenX, screenY = s:getScreenPos()
+      s.valueText:set((math.floor((x - screenX) / s.tickLength) + s.min) / 100)
+    end
+    slider.onTouch = touchDrag
+    slider.onDrag = touchDrag
+    return slider
   end
 
-  local fixedScaleButtonGroup = ButtonGroup({
-    buttons = tableUtils.map(fixedScaleData, function(scaleType)
-      return TextButton({label = Label({text = scaleType.label, translate = false})})
-    end),
-    values = tableUtils.map(fixedScaleData, function(scaleType)
-      return scaleType.value
-    end),
-    selectedIndex = tableUtils.first(fixedScaleData, function(scaleType)
-      return scaleType.value == config.gameScaleFixedValue
-    end).index or 1,
-    onChange = function(value)
-      GAME.theme:playMoveSfx()
-      updateFixedScale(value)
-    end
-  })
-
-  local fixedScaleGroup = MenuItem.createToggleButtonGroupMenuItem("op_scale_fixed_value", nil, nil, fixedScaleButtonGroup)
+  local fixedScaleSlider = MenuItem.createSliderMenuItem("op_scale_fixed_value", nil, true,
+    getFixedScaleSlider())
   local function updateFixedButtonGroupVisibility()
     if config.gameScaleType ~= "fixed" then
-      self.menus.graphicsMenu:removeMenuItem(fixedScaleGroup.id)
+      self.menus.graphicsMenu:removeMenuItem(fixedScaleSlider.id)
     else
-      if self.menus.graphicsMenu:containsMenuItemID(fixedScaleGroup.id) == false then
-        self.menus.graphicsMenu:addMenuItem(3, fixedScaleGroup)
+      if self.menus.graphicsMenu:containsMenuItemID(fixedScaleSlider.id) == false then
+        self.menus.graphicsMenu:addMenuItem(3, fixedScaleSlider)
       end
     end
   end
@@ -352,7 +369,6 @@ function OptionsMenu:loadGraphicsMenu()
   })
 
   local function getShakeIntensitySlider()
-    
     local slider = Slider({
       min = 50,
       max = 100,
@@ -389,7 +405,7 @@ function OptionsMenu:loadGraphicsMenu()
 
   local menu = Menu.createCenteredMenu(graphicsMenuOptions)
   if config.gameScaleType == "fixed" then
-    menu:addMenuItem(3, fixedScaleGroup)
+    menu:addMenuItem(3, fixedScaleSlider)
   end
   return menu
 end
