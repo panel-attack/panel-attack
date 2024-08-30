@@ -284,16 +284,6 @@ function OptionsMenu:loadGraphicsMenu()
     end
   end
 
-  local fixedScaleData = {}
-  for _, value in ipairs(GAME.availableScales) do
-    fixedScaleData[#fixedScaleData + 1] = {}
-    fixedScaleData[#fixedScaleData].value = value
-    fixedScaleData[#fixedScaleData].label = value
-  end
-  for index, value in ipairs(fixedScaleData) do
-    value.index = index
-  end
-
   local function getFixedScaleSlider()
     local slider = Slider({
       min = 50,

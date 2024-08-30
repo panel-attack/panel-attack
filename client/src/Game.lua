@@ -64,7 +64,7 @@ local Game = class(
     -- depends on canvasXScale
     self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
 
-    self.availableScales = {1, 1.5, 2, 2.5, 3}
+    self.automaticScales = {1, 1.5, 2, 2.5, 3}
     -- specifies a time that is compared against self.timer to determine if GameScale should be shown
     self.showGameScaleUntil = 0
     self.needsAssetReload = false
@@ -464,7 +464,7 @@ end
 function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   local scaleIsUpdated = false
   if config.gameScaleType ~= "fit" then
-    local availableScales = shallowcpy(self.availableScales)
+    local availableScales = shallowcpy(self.automaticScales)
     if config.gameScaleType == "fixed" then
       availableScales = {config.gameScaleFixedValue}
     end
