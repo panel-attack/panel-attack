@@ -1,6 +1,5 @@
 local tableUtils = require("common.lib.tableUtils")
 local fileUtils = require("client.src.FileUtils")
---local Signal = require("common.lib.signal")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
 
@@ -35,7 +34,7 @@ end
 AnimatedSprite =
 class(
   function(self, animations, switchFunc)
-    self.frameTime = 0
+    self.currentFrameCounter = 0
     self.currentFrame = 1
     self.loopCount = 0
     self.playing = false
@@ -59,12 +58,12 @@ end
 function AnimatedSprite:stop()
   self.playing = false;
   self.currentFrame = 1;
-  self.frameTime = 0;
+  self.currentFrameCounter = 1;
   self.loopCount = 0;
 end
 function AnimatedSprite:goToFrame(frame)
   self.currentFrame = frame;
-  self.frameTime = 0;
+  self.currentFrameCounter = 1;
   self.loopCount = 0;
 end
 
@@ -76,18 +75,18 @@ function AnimatedSprite:update()
   local anim = self.animations[self.currentAnim]
   if not anim then return end;
   if anim.loop and self.finished then
-    self.frameTime = 0
+    self.currentFrameCounter = 1
     self.currentFrame = anim.loopStartFrame
     self.loopCount = self.loopCount + 1
     self.finished = false
   end
   if (self.playing and not self.finished) then
-    if (self.frameTime <= anim.frames[self.currentFrame].duration) then
+    if (self.currentFrameCounter <= anim.frames[self.currentFrame].duration) then
       -- this was 1/frameDuration before with frameDuration fixed to 2 (never set in the example script)
       -- I think running animations at half the speed of what is specified as durations in the script is a bit confusing because it is not explicit
-      self.frameTime = self.frameTime + 0.5
+      self.currentFrameCounter = self.currentFrameCounter + 1
     elseif (self.currentFrame < #anim.frames) then
-      self.frameTime = 0
+      self.currentFrameCounter = 1
       self.currentFrame = self.currentFrame + 1
     else
       self.finished = true
@@ -106,7 +105,7 @@ end
     if (not finish) or self.finished then
       self.currentAnim = selected;
       self.currentFrame = (frame or 1);
-      self.frameTime = 0;
+      self.currentFrameCounter = 1;
       self.loopCount = 0;
     end
     --self:emitSignal("animSwitched", self.currentAnim)
