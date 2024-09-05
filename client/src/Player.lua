@@ -111,14 +111,16 @@ function Player:createStackFromSettings(match, which)
           switch = "hurt"
         elseif state == "attack" then
           switch = "attack"
-        elseif (self.stack.danger and anim.animations["danger"] ~= nil)then
+        elseif (self.stack.danger)then
           switch = "danger"
           finish = anim.currentAnim ~= "normal"
         else
           switch = "normal"
           finish = true
         end
-        s:switchAnimation(switch, finish)
+        if anim.animations[switch] ~= nil then
+          s:switchAnimation(switch, finish)
+        end
       end
     )
     self.stack.battleAnimations[name] = anim
