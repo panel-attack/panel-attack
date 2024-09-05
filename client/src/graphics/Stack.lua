@@ -718,7 +718,7 @@ function Stack:drawBattleAnimations()
     
     anim:switchFunction()
     anim:update()
-    anim:qdraw(x, y, 0, self.gfxScale*portraitMirror, self.gfxScale)
+    anim:draw(x, y, 0, self.gfxScale*portraitMirror, self.gfxScale)
   end
 end
 
