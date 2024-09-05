@@ -121,16 +121,16 @@ function AnimatedSprite.loadSpriteFromConfig(file)
   for set, path, width, height in config:gmatch("(spritePath: *(%w+)%..-frameSize: *%((%d+), *(%d+)%).-})") do
     local image = GraphicsUtil.loadImageFromSupportedExtensions(dir.."/"..path)
     for anim, name, duration in set:gmatch("(%[(%a+),? *(%d*)%].-end)") do
-      sprite.animations[name] = Animation(image, tonumber(width), tonumber(height), tonumber(duration) or 2)
+      sprite.animations[name] = Animation(image, tonumber(width), tonumber(height))
       for func, frame, length in anim:gmatch("(%a+)%(?(%d*),? *(%d*)%)?") do
         if (func == "beginLoop") then
           sprite.animations[name]:beginLoop()
         end
         if (func == "addFrame") then
           if repeatCount then
-            repeatHold[#repeatHold+1] = {tonumber(frame), tonumber(length) or 1}
+            repeatHold[#repeatHold+1] = {tonumber(frame), tonumber(length) or tonumber(duration) or 2}
           else
-            sprite.animations[name]:addFrame(tonumber(frame), tonumber(length) or 1)
+            sprite.animations[name]:addFrame(tonumber(frame), tonumber(length) or tonumber(duration) or 2)
           end
         end
         if (func == "repeat") then
