@@ -192,10 +192,12 @@ function Telegraph:renderStageGarbageIcon(sender, receiver, garbage, telegraphIn
           -- if attacks are rendered, icon display is delayed until the attack animation finished
           return
         end
-        image = character.telegraph_garbage_images[garbage.height][6]
+        -- 14 is the maximum we have default data for
+        image = character.telegraph_garbage_images[math.min(garbage.height, 14)][6]
       end
     else
-      image = character.telegraph_garbage_images[garbage.height][6]
+      -- 14 is the maximum we have default data for
+      image = character.telegraph_garbage_images[math.min(garbage.height, 14)][6]
     end
   else
     if config.renderAttacks then
@@ -205,7 +207,7 @@ function Telegraph:renderStageGarbageIcon(sender, receiver, garbage, telegraphIn
       end
     end
     if garbage.isMetal then
-    image = character.telegraph_garbage_images["metal"]
+      image = character.telegraph_garbage_images["metal"]
     else
       image = character.telegraph_garbage_images[1][garbage.width]
     end
