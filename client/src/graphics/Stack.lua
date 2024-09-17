@@ -542,6 +542,10 @@ function Stack.render(self)
   self:drawCountdown()
   self:drawCanvas()
 
+  if config.show_ingame_infos then
+    self:drawMultibar()
+  end
+
   self:drawPopEffects()
   self:drawCards()
 

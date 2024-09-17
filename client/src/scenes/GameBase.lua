@@ -322,9 +322,6 @@ function GameBase:drawHUD()
           stack:drawScore()
           stack:drawSpeed()
         end
-        prof.push("Stack:drawMultibar")
-        stack:drawMultibar()
-        prof.pop("Stack:drawMultibar")
       end
 
       -- Draw VS HUD
