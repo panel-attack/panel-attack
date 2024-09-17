@@ -34,7 +34,7 @@ local inputManager = {
     TauntDown = "u",
     Raise1 = "c",
     Raise2 = "v",
-    Start = "p"
+    Start = "return"
   }
 }
 
