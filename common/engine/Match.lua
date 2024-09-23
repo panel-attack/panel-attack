@@ -691,8 +691,6 @@ end
 
 function Match:handleMatchEnd()
   self:checkAborted()
-  -- this prepares everything about the replay except the save location
-  Replay.finalizeReplay(self, self.replay)
 
   if self.aborted then
     self.winners = {}
@@ -703,11 +701,10 @@ function Match:handleMatchEnd()
     for i = 1, #winners do
       characters[winners[i].stack.character]:playWinSfx()
     end
-    if #winners == 1 then
-      -- ideally this would be public player id
-      self.replay.winnerIndex = tableUtils.indexOf(self.players, winners[1])
-    end
   end
+
+  -- this prepares everything about the replay except the save location
+  Replay.finalizeReplay(self, self.replay)
 
   -- execute callbacks
   self:emitSignal("matchEnded", self)
