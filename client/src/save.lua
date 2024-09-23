@@ -129,6 +129,8 @@ function read_puzzles()
               local puzzleSet = PuzzleSet(puzzleSetName, puzzles)
               GAME.puzzleSets[puzzleSetName] = puzzleSet
             end
+          elseif current_json["Version"] ~= 2 and current_json["Version"] then
+            error("Puzzle " .. filename .. " specifies invalid version " .. current_json["Version"])
           else -- old file format compatibility
             for set_name, puzzle_set in pairs(current_json) do
               local puzzles = {}
