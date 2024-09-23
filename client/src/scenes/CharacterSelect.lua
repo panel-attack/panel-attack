@@ -892,7 +892,12 @@ function CharacterSelect:draw()
 end
 
 function CharacterSelect:leave()
-  GAME.navigationStack:pop(nil, function() GAME.battleRoom:shutdown() end)
+  GAME.navigationStack:pop(nil,
+    function()
+      if GAME.battleRoom then
+        GAME.battleRoom:shutdown()
+      end
+    end)
 end
 
 return CharacterSelect

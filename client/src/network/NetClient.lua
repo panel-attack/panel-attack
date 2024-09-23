@@ -79,6 +79,10 @@ local function processCharacterSelectMessage(self, message)
   -- these extra messages will remain unprocessed in the queue and need to be cleared up so they don't get applied the next match
   self.tcpClient:dropOldInputMessages()
 
+  if not self.room then
+    return
+  end
+
   -- character_select and create_room are the same message
   -- except that character_select has an additional character_select = true flag
   message = ServerMessages.sanitizeCreateRoom(message)
@@ -110,17 +114,20 @@ local function processLeaveRoomMessage(self, message)
       self.room.match:deinit()
     end
 
-    if self.room then
-      -- and then shutdown the room
-      self.room:shutdown()
-      self.room = nil
-    end
+    -- and then shutdown the room
+    self.room:shutdown()
+    self.room = nil
+
     self.state = states.ONLINE
     GAME.navigationStack:popToName("Lobby")
   end
 end
 
 local function processTauntMessage(self, message)
+  if not self.room then
+    return
+  end
+
   local characterId = tableUtils.first(self.room.players, function(player)
     return player.playerNumber == message.player_number
   end).settings.characterId
@@ -128,6 +135,10 @@ local function processTauntMessage(self, message)
 end
 
 local function processMatchStartMessage(self, message)
+  if not self.room then
+    return
+  end
+
   message = ServerMessages.sanitizeStartMatch(message)
 
   for _, playerSettings in ipairs(message.playerSettings) do
@@ -169,10 +180,18 @@ local function processMatchStartMessage(self, message)
 end
 
 local function processWinCountsMessage(self, message)
+  if not self.room then
+    return
+  end
+
   self.room:setWinCounts(message.win_counts)
 end
 
 local function processRankedStatusMessage(self, message)
+  if not self.room then
+    return
+  end
+
   local rankedStatus = message.ranked_match_approved or false
   local comments = ""
   if message.reasons then
@@ -224,7 +243,6 @@ end
 
 -- starts to spectate a 2p vs online match
 local function spectate2pVsOnlineMatch(self, spectateRequestGrantedMessage)
-  -- Not yet implemented
   GAME.battleRoom = BattleRoom.createFromServerMessage(spectateRequestGrantedMessage)
   self.room = GAME.battleRoom
   if GAME.battleRoom.match then
