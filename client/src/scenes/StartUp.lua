@@ -2,8 +2,6 @@ local class = require("common.lib.class")
 local Scene = require("client.src.scenes.Scene")
 local consts = require("common.engine.consts")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
-local TitleScreen = require("client.src.scenes.TitleScreen")
-local MainMenu = require("client.src.scenes.MainMenu")
 local logger = require("common.lib.logger")
 local fileUtils = require("client.src.FileUtils")
 
@@ -51,10 +49,11 @@ function StartUp:update(dt)
 
     if coroutine.status(self.setupRoutine) == "dead" then
       love.graphics.setFont(GraphicsUtil.getGlobalFont())
+      -- we need the indirection for the scenes here because startup initializes localization which following scenes need
       if themes[config.theme].images.bg_title then
-        GAME.navigationStack:replace(TitleScreen())
+        GAME.navigationStack:replace(require("client.src.scenes.TitleScreen")())
       else
-        GAME.navigationStack:replace(MainMenu())
+        GAME.navigationStack:replace(require("client.src.scenes.MainMenu")())
       end
     end
   end
