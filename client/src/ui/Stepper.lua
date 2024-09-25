@@ -62,17 +62,17 @@ local Stepper = class(
     self.color = {.5, .5, 1, .7}
     self.borderColor = {.7, .7, 1, .7}
 
-    setLabels(self, options.labels, options.values, self.selectedIndex)
-
-    if #self.labels > 0 then
-      for i = 1, #self.labels do
-        self.labels[i].hAlign = "center"
-        self.labels[i].vAlign = "center"
-        self.width = math.max(self.labels[i].width + 10 + navButtonWidth * 2, self.width)
-        self.height = math.max(self.labels[i].height + 4, self.height)
+    if #options.labels > 0 then
+      for i = 1, #options.labels do
+        options.labels[i].hAlign = "center"
+        options.labels[i].vAlign = "center"
+        self.width = math.max(options.labels[i].width + 10 + navButtonWidth * 2, self.width)
+        self.height = math.max(options.labels[i].height + 4, self.height)
       end
       self.rightButton.x = self.width - navButtonWidth
     end
+
+    setLabels(self, options.labels, options.values, self.selectedIndex)
 
     self.TYPE = "Stepper"
   end,

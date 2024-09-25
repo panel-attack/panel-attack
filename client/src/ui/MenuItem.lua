@@ -22,10 +22,9 @@ function MenuItem.createMenuItem(label, item)
 
   label.vAlign = "center"
   label.x = MenuItem.PADDING
-
-  menuItem:addChild(label)
   menuItem.width = label.width + (2 * MenuItem.PADDING)
   menuItem.height = label.height + (2 * MenuItem.PADDING)
+  menuItem:addChild(label)
 
   if item ~= nil then
     local spaceBetween = 16

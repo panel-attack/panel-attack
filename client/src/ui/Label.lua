@@ -2,11 +2,15 @@ local class = require("common.lib.class")
 local UIElement = require("client.src.ui.UIElement")
 local GraphicsUtil = require("client.src.graphics.graphics_util")
 
---@module Label
 local Label = class(
   function(self, options)
     self.hAlign = options.hAlign or "left"
     self.vAlign = options.vAlign or "top"
+
+    self.hFill = options.hFill or true
+
+    self.wrap = options.wrap or false
+    self.wrapRatio = options.wrapRatio or 1
 
     self:setText(options.text, options.replacements, options.translate)
 
@@ -14,6 +18,10 @@ local Label = class(
   end,
   UIElement
 )
+
+function Label:getEffectiveDimensions()
+  return self.drawable:getDimensions()
+end
 
 function Label:setText(text, replacementTable, translate)
   if text == self.text and replacementTable == self.replacementTable and self.translate == translate then
@@ -42,14 +50,46 @@ function Label:setText(text, replacementTable, translate)
     -- always need a new text cause the font might have changed
     self.drawable = love.graphics.newTextBatch(love.graphics.getFont(), loc(self.text, unpack(self.replacementTable)))
   else
-    if self.drawable then
-      self.drawable:set(self.text)
-    else
+    if not self.drawable then
       self.drawable = love.graphics.newTextBatch(love.graphics.getFont(), self.text)
     end
   end
 
-  self.width, self.height = self.drawable:getDimensions()
+  self:refreshFormatting()
+
+  self.width = math.max(self.parent and self.parent.width or 0, self.drawable:getWidth())
+  self.height = self.drawable:getHeight()
+end
+
+function Label:setWrap(wrapRatio, hAlign)
+  self.wrap = not not wrapRatio
+  self.wrapRatio = wrapRatio
+  self.hAlign = hAlign or self.hAlign
+  self:refreshFormatting()
+end
+
+function Label:refreshFormatting()
+  local text = self.text
+
+  if self.translate then
+    text = loc(self.text, unpack(self.replacementTable))
+  end
+
+  if self.wrap then
+    self.drawable:setf(text, self.wrapRatio * self.width, self.hAlign)
+  else
+    self.drawable:set(text)
+  end
+end
+
+function Label:onResize()
+  if self.wrap then
+    self.width = math.max(self.width, self.drawable:getWidth())
+  else
+    self.width = self.drawable:getWidth()
+  end
+  self.height = self.drawable:getHeight()
+  self:refreshFormatting()
 end
 
 function Label:refreshLocalization()

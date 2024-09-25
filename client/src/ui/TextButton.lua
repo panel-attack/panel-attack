@@ -13,8 +13,9 @@ local TextButton = class(function(self, options)
   self:addChild(self.label)
 
   -- stretch to fit text
-  self.width = math.max(self.label.width + TEXT_WIDTH_PADDING, self.width)
-  self.height = math.max(self.label.height + TEXT_HEIGHT_PADDING, self.height)
+  local width, height = self.label:getEffectiveDimensions()
+  self.width = math.max(width + TEXT_WIDTH_PADDING, self.width)
+  self.height = math.max(height + TEXT_HEIGHT_PADDING, self.height)
 
   self.TYPE = "Button"
 end, Button)

@@ -266,7 +266,7 @@ function CharacterSelect:getCharacterButtons()
     characterButton.characterId = character.id
     characterButton.image = ImageContainer({image = character.images.icon, hFill = true, vFill = true})
     characterButton:addChild(characterButton.image)
-    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "top", hAlign = "center"})
+    characterButton.label = Label({text = character.display_name, translate = character.id == consts.RANDOM_CHARACTER_SPECIAL_VALUE, vAlign = "top", hAlign = "center", wrap = true})
     characterButton:addChild(characterButton.label)
 
     if character.flag and themes[config.theme].images.flags[character.flag] then
