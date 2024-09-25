@@ -586,7 +586,7 @@ function Stack:updateScoreWithChain()
 end
 
 function Stack:clearChainingFlags()
-  for row = 1, self.height do
+  for row = 1, #self.panels do
     for column = 1, self.width do
       local panel = self.panels[row][column]
       -- if a chaining panel wasn't matched but was eligible, we have to remove its chain flag
