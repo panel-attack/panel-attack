@@ -167,6 +167,10 @@ end
 -- 
 function Panels:convertSinglesToSheetTexture(images, animationStates)
   local canvas = love.graphics.newCanvas(self.size * 10, self.size * #animationStates,  {dpiscale = images[1]:getDPIScale()})
+  if self.size <= 24 then
+    -- none of the panels is bigger than 24x24 so we can assume pixel art style panels
+    canvas:setFilter("nearest", "nearest")
+  end
   canvas:renderTo(function()
     local row = 1
     -- ipairs over a static table so the ordering is definitely consistent
