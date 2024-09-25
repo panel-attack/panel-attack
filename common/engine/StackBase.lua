@@ -263,7 +263,7 @@ function StackBase:drawWall(displacement, rowCount)
 
   if wallImage then
     local y = (4 - displacement + rowCount * 16) * self.gfxScale
-    local width = 92
+    local width = 96
     local scaleX = width * self.gfxScale / wallImage:getWidth()
     GraphicsUtil.draw(wallImage, 12, y, 0, scaleX, scaleX)
   end
