@@ -1,8 +1,6 @@
 local logger = require("common.lib.logger")
 local GameModes = require("common.engine.GameModes")
 local consts = require("common.engine.consts")
-local ReplayV1 = require("common.engine.replayV1")
-local ReplayV2 = require("common.engine.replayV2")
 local utf8 = require("common.lib.utf8Additions")
 local class = require("common.lib.class")
 require("common.lib.timezones")
@@ -90,9 +88,9 @@ function Replay.load(jsonData)
       jsonData.engineVersion = "046"
     end
     if not jsonData.replayVersion then
-      replay = ReplayV1.transform(jsonData)
+      replay = require("common.engine.replayV1").transform(jsonData)
     else
-      replay = ReplayV2.transform(jsonData)
+      replay = require("common.engine.replayV2").transform(jsonData)
     end
     replay.loadedFromFile = true
   end

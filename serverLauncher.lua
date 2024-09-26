@@ -1,5 +1,9 @@
+if arg[1] == "debug" then
+  -- for debugging in visual studio code
+  pcall(function() require("lldebugger").start() end)
+end
+
 -- We must launch the server from the root directory so all the requires are the right path relatively.
-require("client.src.developer") -- Require developer here so we can debug if the debug flag is set
 require("server.server_globals")
 local util = require("common.lib.util")
 util.addToCPath("./common/lib/??")
