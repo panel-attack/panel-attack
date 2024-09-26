@@ -1,6 +1,3 @@
--- TODO: need to inverse this dependency, rich presence should instead be able to pull a loc based on game mode
-require("client.src.localization")
-
 local TIME_ATTACK_TIME = 120
 
 local GameModes = {}
@@ -23,7 +20,7 @@ local OnePlayerVsSelf = {
   style = Styles.MODERN,
   gameScene = "VsSelfGame",
   setupScene = "CharacterSelectVsSelf",
-  richPresenceLabel = loc("mm_1_vs"),
+  richPresenceLabel = "1p vs self", -- loc("mm_1_vs"),
 
   -- already known match properties
   playerCount = 1,
@@ -37,7 +34,7 @@ local OnePlayerTimeAttack = {
   style = Styles.CHOOSE,
   gameScene = "TimeAttackGame",
   setupScene = "TimeAttackMenu",
-  richPresenceLabel = loc("mm_1_time"),
+  richPresenceLabel = "Time Attack", -- loc("mm_1_time"),
 
   -- already known match properties
   playerCount = 1,
@@ -52,7 +49,7 @@ local OnePlayerEndless = {
   style = Styles.CHOOSE,
   gameScene = "EndlessGame",
   setupScene = "EndlessMenu",
-  richPresenceLabel = loc("mm_1_endless"),
+  richPresenceLabel = "Endless", -- loc("mm_1_endless"),
 
   -- already known match properties
   playerCount = 1,
@@ -66,7 +63,7 @@ local OnePlayerTraining = {
   style = Styles.MODERN,
   gameScene = "Game1pTraining",
   setupScene = "CharacterSelectVsSelf",
-  richPresenceLabel = loc("mm_1_training"),
+  richPresenceLabel = "Training", -- loc("mm_1_training"),
 
   -- already known match properties
   playerCount = 1,
@@ -79,7 +76,7 @@ local OnePlayerTraining = {
 local OnePlayerPuzzle = {
   -- flags for battleRoom to evaluate and in some cases offer UI for
   style = Styles.MODERN,
-  richPresenceLabel = loc("mm_1_puzzle"),
+  richPresenceLabel = "Puzzle", -- loc("mm_1_puzzle"),
   gameScene = "PuzzleGame",
   setupScene = "PuzzleMenu",
 
@@ -97,7 +94,7 @@ local OnePlayerChallenge = {
   style = Styles.MODERN,
   gameScene = "Game1pChallenge",
   setupScene = "CharacterSelectChallenge",
-  richPresenceLabel = loc("mm_1_challenge_mode"),
+  richPresenceLabel = "Challenge Mode", -- loc("mm_1_challenge_mode"),
 
   -- already known match properties
   playerCount = 1,
@@ -111,7 +108,7 @@ local TwoPlayerVersus = {
   style = Styles.MODERN,
   gameScene = "Game2pVs",
   setupScene = "CharacterSelect2p",
-  richPresenceLabel = loc("mm_2_vs"),
+  richPresenceLabel = "2p versus", -- loc("mm_2_vs"),
 
   -- already known match properties
   playerCount = 2,

@@ -5,18 +5,13 @@ local GraphicsUtil = require("client.src.graphics.graphics_util")
 local class = require("common.lib.class")
 
 -- Holds all the data for localizing the game
-Localization =
-  class(
-  function(self)
-    self.data = {}
-    self.langs = {}
-    self.codes = {}
-    self.lang_index = 1
-    self.init = false
-  end
-)
-
-localization = Localization()
+Localization = {
+    data = {},
+    langs = {},
+    codes = {},
+    lang_index = 1,
+    init = false,
+}
 
 function Localization.get_list_codes(self)
   return self.codes
@@ -28,28 +23,6 @@ end
 
 function Localization.refresh_global_strings(self)
   join_community_msg = loc("join_community") .. "\ndiscord." .. consts.SERVER_LOCATION
-end
-
-function Localization.set_language(self, lang_code)
-  for i, v in ipairs(self.codes) do
-    if v == lang_code then
-      self.lang_index = i
-      break
-    end
-  end
-  config.language_code = self.codes[self.lang_index]
-
-  if themes[config.theme] and themes[config.theme].font and themes[config.theme].font.path then
-    GraphicsUtil.setGlobalFont(themes[config.theme].font.path, themes[config.theme].font.size)
-  elseif config.language_code == "JP" then
-    GraphicsUtil.setGlobalFont("client/assets/fonts/jp.ttf", 14)
-  elseif config.language_code == "TH" then
-    GraphicsUtil.setGlobalFont("client/assets/fonts/th.otf", 14)
-  else
-    GraphicsUtil.setGlobalFont(nil, 12)
-  end
-
-  self:refresh_global_strings()
 end
 
 function Localization.init(self)
@@ -167,21 +140,19 @@ function Localization.init(self)
         print(a..": "..b)
       end
     end--]]
-  self:set_language(config.language_code)
 end
 
 -- Gets the localized string for a loc key
 function loc(text_key, ...)
-  local self = localization
-  local code = self.codes[self.lang_index]
+  local code = Localization.codes[Localization.lang_index]
 
-  if not code or not self.data[code] then
-    code = self.codes[1]
+  if not code or not Localization.data[code] then
+    code = Localization.codes[1]
   end
 
   local ret = nil
-  if self.init then
-    ret = self.data[code][text_key]
+  if Localization.init then
+    ret = Localization.data[code][text_key]
   end
 
   if ret then
@@ -198,3 +169,5 @@ function loc(text_key, ...)
 
   return ret
 end
+
+return Localization

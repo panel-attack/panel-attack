@@ -48,7 +48,7 @@ local Game = class(
     self.server_queue = ServerQueue()
     self.main_menu_screen_pos = {consts.CANVAS_WIDTH / 2 - 108 + 50, consts.CANVAS_HEIGHT / 2 - 111}
     self.config = config
-    self.localization = Localization()
+    self.localization = Localization
     self.replay = {}
     self.currently_paused_tracks = {} -- list of tracks currently paused
     self.rich_presence = RichPresence()
@@ -106,7 +106,8 @@ end
 function Game:setupRoutine()
   -- loading various assets into the game
   coroutine.yield("Loading localization...")
-  Localization.init(localization)
+  Localization:init()
+  self.setLanguage(config.language_code)
   fileUtils.copyFile("docs/puzzles.txt", "puzzles/README.txt")
   
   coroutine.yield(loc("ld_theme"))
@@ -521,7 +522,7 @@ function Game:refreshCanvasAndImagesForNewScale()
   characters_reload_graphics()
   
   -- Reload loc to get the new font
-  localization:set_language(config.language_code)
+  self.setLanguage(config.language_code)
 end
 
 -- Transform from window coordinates to game coordinates
@@ -538,6 +539,28 @@ function Game:drawLoadingString(loadingString)
   local backgroundPadding = 10
   GraphicsUtil.drawRectangle("fill", consts.CANVAS_WIDTH / 2 - (textMaxWidth / 2) , y - backgroundPadding, textMaxWidth, textHeight, 0, 0, 0, 0.5)
   GraphicsUtil.printf(loadingString, x, y, consts.CANVAS_WIDTH, "center", nil, nil, 10)
+end
+
+function Game.setLanguage(lang_code)
+  for i, v in ipairs(Localization.codes) do
+    if v == lang_code then
+      Localization.lang_index = i
+      break
+    end
+  end
+  config.language_code = Localization.codes[Localization.lang_index]
+
+  if themes[config.theme] and themes[config.theme].font and themes[config.theme].font.path then
+    GraphicsUtil.setGlobalFont(themes[config.theme].font.path, themes[config.theme].font.size)
+  elseif config.language_code == "JP" then
+    GraphicsUtil.setGlobalFont("client/assets/fonts/jp.ttf", 14)
+  elseif config.language_code == "TH" then
+    GraphicsUtil.setGlobalFont("client/assets/fonts/th.otf", 14)
+  else
+    GraphicsUtil.setGlobalFont(nil, 12)
+  end
+
+  Localization:refresh_global_strings()
 end
 
 return Game
