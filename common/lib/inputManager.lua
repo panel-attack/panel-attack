@@ -95,25 +95,61 @@ function inputManager:joystickReleased(joystick, button)
   self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
 end
 
--- maps joysticks' analog sticks state to the appropriate input maps
-function inputManager:joystickToButtons()
-  for _, joystick in ipairs(love.joystick.getJoysticks()) do
-    for axisIndex = 1, joystick:getAxisCount() / 2 do
-      local dpadState = joystickManager:joystickToDPad(joystick, axisIndex * 2 - 1, axisIndex * 2)
-      for key, isPressed in pairs(dpadState) do
-        if isPressed then
-          if not self.allKeys.isDown[key] and not self.allKeys.isPressed[key] then
-            self.allKeys.isDown[key] = KEY_CHANGE.DETECTED
-          end
-        else
-          if self.allKeys.isDown[key] or self.allKeys.isPressed[key] then
-            self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
-          end
-        end
-      end
+function inputManager:joystickaxis(joystick, axisIndex, value)
+  local stickIndex = math.floor((1 + axisIndex) / 2)
+  local direction
+
+  if axisIndex % 2 then
+    direction = "y"
+  else
+    direction = "x"
+  end
+
+  direction = direction .. stickIndex
+
+  local positiveKeybind = joystickManager:getJoystickButtonName(joystick, "+" .. direction)
+  local negativeKeybind = joystickManager:getJoystickButtonName(joystick, "-" .. direction)
+
+  if value > 0.5 then
+    if not self.allKeys.isDown[positiveKeybind] and not self.allKeys.isPressed[positiveKeybind] then
+      self.allKeys.isDown[positiveKeybind] = KEY_CHANGE.DETECTED
+    end
+  else
+    if self.allKeys.isDown[positiveKeybind] or self.allKeys.isPressed[positiveKeybind] then
+      self.allKeys.isUp[positiveKeybind] = KEY_CHANGE.DETECTED
+    end
+  end
+
+  if value < -0.5 then
+    if not self.allKeys.isDown[negativeKeybind] and not self.allKeys.isPressed[negativeKeybind] then
+      self.allKeys.isDown[negativeKeybind] = KEY_CHANGE.DETECTED
+    end
+  else
+    if self.allKeys.isDown[negativeKeybind] or self.allKeys.isPressed[negativeKeybind] then
+      self.allKeys.isUp[negativeKeybind] = KEY_CHANGE.DETECTED
     end
   end
 end
+
+-- maps joysticks' analog sticks state to the appropriate input maps
+-- function inputManager:joystickToButtons()
+--   for _, joystick in ipairs(love.joystick.getJoysticks()) do
+--     for axisIndex = 1, joystick:getAxisCount() / 2 do
+--       local dpadState = joystickManager:joystickToDPad(joystick, axisIndex * 2 - 1, axisIndex * 2)
+--       for key, isPressed in pairs(dpadState) do
+--         if isPressed then
+--           if not self.allKeys.isDown[key] and not self.allKeys.isPressed[key] then
+--             self.allKeys.isDown[key] = KEY_CHANGE.DETECTED
+--           end
+--         else
+--           if self.allKeys.isDown[key] or self.allKeys.isPressed[key] then
+--             self.allKeys.isUp[key] = KEY_CHANGE.DETECTED
+--           end
+--         end
+--       end
+--     end
+--   end
+-- end
 
 -- maps joysticks' dpad to the appropriate input maps
 function inputManager:dPadToButtons()
@@ -245,7 +281,7 @@ function inputManager:updateKeyMaps()
 end
 
 function inputManager:update(dt)
-  self:joystickToButtons()
+  --self:joystickToButtons()
   self:dPadToButtons()
   self:updateKeyStates(dt, self.allKeys)
   self:updateKeyStates(dt, self.mouse)
