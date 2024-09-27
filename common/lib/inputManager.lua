@@ -99,7 +99,7 @@ function inputManager:joystickaxis(joystick, axisIndex, value)
   local stickIndex = math.floor((1 + axisIndex) / 2)
   local direction
 
-  if axisIndex % 2 then
+  if axisIndex % 2 == 0 then
     direction = "y"
   else
     direction = "x"
