@@ -270,8 +270,27 @@ function CharacterSelect:getCharacterButtons()
     characterButton:addChild(characterButton.label)
 
     if character.flag and themes[config.theme].images.flags[character.flag] then
-      characterButton.flag = ImageContainer({image = themes[config.theme].images.flags[character.flag], vAlign = "bottom", hAlign = "right", x = -2, y = -2, scale = 0.5})
+      characterButton.flag = ImageContainer({image = themes[config.theme].images.flags[character.flag], vAlign = "bottom", hAlign = "right", x = -2, y = -2, width = 16, height = 16})
       characterButton:addChild(characterButton.flag)
+    end
+
+    if character.stage and stages[character.stage] then
+      -- draw the stage icon in the center
+      characterButton.stageIcon = ImageContainer({image = stages[character.stage].images.thumbnail, vAlign = "bottom", hAlign = "center", y = -2, width = 32, height = 16})
+      characterButton:addChild(characterButton.stageIcon)
+    end
+
+    if character.panels and panels[character.panels] then
+      -- draw the color 1 normal panel in the left corner
+      -- it's only available on the sheet so we got to render it to its own canvas first
+      local panels = panels[character.panels]
+      local canvas = love.graphics.newCanvas(panels.size, panels.size)
+      canvas:renderTo(function()
+        panels:drawPanelFrame(1, "normal", 0, 0, panels.size)
+      end)
+
+      characterButton.panelIcon = ImageContainer({image = canvas, vAlign = "bottom", hAlign = "left", x = 2, y = -2, width = 16, height = 16})
+      characterButton:addChild(characterButton.panelIcon)
     end
 
     characterButtons[#characterButtons + 1] = characterButton
