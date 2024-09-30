@@ -96,6 +96,7 @@ function inputManager:joystickReleased(joystick, button)
 end
 
 function inputManager:joystickaxis(joystick, axisIndex, value)
+  local device = joystickManager.devices[joystick:getID()]
   local stickIndex = math.floor((1 + axisIndex) / 2)
   local direction
 
@@ -110,7 +111,9 @@ function inputManager:joystickaxis(joystick, axisIndex, value)
   local positiveKeybind = joystickManager:getJoystickButtonName(joystick, "+" .. direction)
   local negativeKeybind = joystickManager:getJoystickButtonName(joystick, "-" .. direction)
 
-  if value > 0.5 then
+  local correctedValue = value - device.defaultAxisPositions[axisIndex]
+
+  if correctedValue > 0.5 then
     if not self.allKeys.isDown[positiveKeybind] and not self.allKeys.isPressed[positiveKeybind] then
       self.allKeys.isDown[positiveKeybind] = KEY_CHANGE.DETECTED
     end
@@ -120,7 +123,7 @@ function inputManager:joystickaxis(joystick, axisIndex, value)
     end
   end
 
-  if value < -0.5 then
+  if correctedValue < -0.5 then
     if not self.allKeys.isDown[negativeKeybind] and not self.allKeys.isPressed[negativeKeybind] then
       self.allKeys.isDown[negativeKeybind] = KEY_CHANGE.DETECTED
     end

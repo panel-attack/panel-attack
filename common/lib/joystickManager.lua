@@ -3,19 +3,17 @@ local tableUtils = require("common.lib.tableUtils")
 --@module joystickManager
 local joystickManager = {
   guidToName = {},
-  
-  -- TODO: Convert this into a list of sensitivities per player
+
+  -- TODO: Convert this into a list of sensitivities per device or input configuration
   joystickSensitivity = .5,
+  -- mapping of GUID to map of joysticks under that GUID (GUIDs are unique per controller type)
+  -- the joystick map is a list of {joystickID: customJoystickID}
+  -- the custom joystick id is a number starting at 0 and increases by 1 for each new joystick of that type
+  -- this is to give each joystick an id that will remain consistant over multiple sessions (the joystick IDs can change per session)
+  guidsToJoysticks = {},
+  -- mapping of joystick ID to a joystick information containing recorded default axis whether the joystick is a gamepad and a reference to the joystick itself
+  devices = {},
 }
-
--- mapping of GUID to map of joysticks under that GUID (GUIDs are unique per controller type)
--- the joystick map is a list of {joystickID: customJoystickID}
--- the custom joystick id is a number starting at 0 and increases by 1 for each new joystick of that type
--- this is to give each joystick an id that will remain consistant over multiple sessions (the joystick IDs can change per session)
-local guidsToJoysticks = {}
-
--- mapping of joystick to a table of axis and their default value
-local joystickToDefaultAxisPositions = {}
 
 -- list of (directions, axis) pairs for the 8 cardinal directions
 local stickMap = { 
@@ -43,17 +41,7 @@ local joystickHatToDirs = {
 }
 
 function joystickManager:getJoystickButtonName(joystick, button)
-  return string.format("%s:%s:%s", joystick:getGUID(), guidsToJoysticks[joystick:getGUID()][joystick:getID()], button)
-end
-
-function joystickManager:recordDefaultAxis(joystick)
-  if joystickToDefaultAxisPositions[joystick] == nil then
-    joystickToDefaultAxisPositions[joystick] = {}
-    for axisIndex = 1, joystick:getAxisCount() do
-      local baseValue = joystick:getAxis(axisIndex)
-      joystickToDefaultAxisPositions[joystick][axisIndex] = baseValue
-    end
-  end
+  return string.format("%s:%s:%s", joystick:getGUID(), joystickManager.guidsToJoysticks[joystick:getGUID()][joystick:getID()], button)
 end
 
 -- -- maps joysticks to buttons by converting the {x, y} axis values to {direction, magnitude} pair
@@ -120,16 +108,43 @@ function love.joystickadded(joystick)
   -- ID is a per-session identifier for each controller regardless of type
   local id = joystick:getID()
 
-  if not guidsToJoysticks[guid] then
-    guidsToJoysticks[guid] = {}
+  if not joystickManager.guidsToJoysticks[guid] then
+    joystickManager.guidsToJoysticks[guid] = {}
     joystickManager.guidToName[guid] = joystick:getName()
   end
 
-  local guidSticks = guidsToJoysticks[guid]
+  local guidSticks = joystickManager.guidsToJoysticks[guid]
 
   if not guidSticks[id] then
     guidSticks[id] = #guidSticks + 1
   end
+
+  local device = { defaultAxisPositions = {}, isGamepad = joystick:isGamepad(), joystick = joystick}
+
+  if device.isGamepad then
+    device.axisToGamepadAxis = {}
+    -- if we have a known gamepad, assume 0 center for sticks but record axis for triggers as they often won't be 0 based
+    for i, gamepadAxis in ipairs({"leftx", "lefty", "rightx", "righty", "triggerleft", "triggerright"}) do
+      local inputtype, inputindex, _ = joystick:getGamepadMapping(gamepadAxis)
+      if inputtype == "axis" then
+        device.axisToGamepadAxis[inputindex] = gamepadAxis
+        if string.match(gamepadAxis, "trigger") then
+          device.defaultAxisPositions[inputindex] = joystick:getAxis(inputindex)
+        else
+          -- the controller would malfunction if a stick was held in a position when connecting
+          device.defaultAxisPositions[inputindex] = 0
+        end
+      end
+    end
+  else
+    -- if we don't have a known gamepad, just record everything
+    for axisIndex = 1, joystick:getAxisCount() do
+      local baseValue = joystick:getAxis(axisIndex)
+      device.defaultAxisPositions[axisIndex] = baseValue
+    end
+  end
+
+  joystickManager.devices[id] = device
 end
 
 function love.joystickremoved(joystick)
@@ -139,11 +154,13 @@ function love.joystickremoved(joystick)
   -- ID is a per-session identifier for each controller regardless of type
   local id = joystick:getID()
 
-  guidsToJoysticks[guid][id] = nil
+  joystickManager.guidsToJoysticks[guid][id] = nil
 
-  if tableUtils.length(guidsToJoysticks[guid]) == 0 then
-    guidsToJoysticks[guid] = nil
+  if tableUtils.length(joystickManager.guidsToJoysticks[guid]) == 0 then
+    joystickManager.guidsToJoysticks[guid] = nil
   end
+
+  joystickManager.devices[id] = nil
 end
 
 return joystickManager
