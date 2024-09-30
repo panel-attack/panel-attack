@@ -9,7 +9,7 @@ function love.conf(t)
 
   --t.identity = "" -- (already set above) -- The name of the save directory (string)
   t.appendidentity = false            -- Search files in source directory before save directory (boolean)
-  t.version = "11.3"                  -- The LÖVE version this game was made for (string)
+  t.version = "12.0"                  -- The LÖVE version this game was made for (string)
   t.console = false                   -- Attach a console (boolean, Windows only)
   t.accelerometerjoystick = false     -- Enable the accelerometer on iOS and Android by exposing it as a Joystick (boolean)
   -- is loaded inside the auto updater

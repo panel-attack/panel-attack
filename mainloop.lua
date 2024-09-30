@@ -245,22 +245,16 @@ do
       local fontHeight = get_global_font():getHeight()
       local infoYPosition = 705 - fontHeight/2
 
-      local loveString = Game.loveVersionString()
-      if loveString == "11.3.0" then
+      local major, minor, revision, codename = love.getVersion()
+      if major < 12 then
         gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
         infoYPosition = infoYPosition - fontHeight
+      else
+        love.setDeprecationOutput(false)
       end
 
-      if GAME_UPDATER_GAME_VERSION then
-        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, canvas_width, "right")
-        infoYPosition = infoYPosition - fontHeight
-        if has_game_update then
-          menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
-        end
-      end
-
-      local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
-      local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 2.0)
+      local runningFromAutoUpdater = GAME_UPDATER ~= nil
+      local autoUpdaterOutOfDate = (not GAME_UPDATER.version or GAME_UPDATER.version.major < "1.0")
       if runningFromAutoUpdater and autoUpdaterOutOfDate then
         local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
         if GAME_UPDATER.name == "panel-beta" then
