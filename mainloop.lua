@@ -260,7 +260,7 @@ do
       end
 
       local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
-      local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
+      local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 2.0)
       if runningFromAutoUpdater and autoUpdaterOutOfDate then
         local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
         if GAME_UPDATER.name == "panel-beta" then
