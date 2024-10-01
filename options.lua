@@ -8,6 +8,7 @@ local scaleTypeIndex
 local fixedScaleIndex
 local found_themes = {}
 local utf8 = require("utf8")
+local tableUtils = require("tableUtils")
 
 local function general_menu()
   local ret = nil
@@ -104,10 +105,6 @@ local function general_menu()
     generalMenu:set_active_idx(#generalMenu.buttons)
   end
 
-  local function exitSettings()
-    ret = {options.main, {2}}
-  end
-
   generalMenu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, 1)
   generalMenu:add_button(loc("op_countdown"), update_countdown, goEscape, update_countdown, update_countdown)
   generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
@@ -116,6 +113,67 @@ local function general_menu()
   generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
   generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
   generalMenu:add_button(loc("op_performance_drain"), nextMenu, goEscape, decreaseGarbageCollectionPercent, increaseGarbageCollectionPercent)
+
+  if GAME_UPDATER and GAME_UPDATER.releaseStreams and GAME_UPDATER_STATES then
+    local releaseStreams = {}
+    for name, _ in pairs(GAME_UPDATER.releaseStreams) do
+      releaseStreams[#releaseStreams+1] = name
+    end
+
+    -- in case the version was changed earlier and we return to options again, reset to the currently launched version
+    -- this is so whatever the user leaves the setting on when quitting options that will be what is launched with next time
+    GAME_UPDATER:writeLaunchConfig(GAME_UPDATER.activeVersion)
+
+    local releaseStreamIndex = tableUtils.indexOf(releaseStreams, GAME_UPDATER.activeVersion.releaseStream.name)
+
+    local function updateReleaseStreamPreference()
+      local releaseStream = GAME_UPDATER.releaseStreams[releaseStreams[releaseStreamIndex]]
+      local version = GAME_UPDATER.getLatestInstalledVersion(releaseStream)
+      if not version then
+        if not GAME_UPDATER:updateAvailable(releaseStream) then
+          GAME_UPDATER:getAvailableVersions(releaseStream)
+          while GAME_UPDATER.state ~= GAME_UPDATER_STATES.idle do
+            GAME_UPDATER:update()
+          end
+        end
+        if GAME_UPDATER:updateAvailable(releaseStream) then
+          table.sort(releaseStream.availableVersions, function(a,b) return a.version > b.version end)
+          version = releaseStream.availableVersions[1]
+        else
+          -- if we cannot find available versions for a release stream, remove it from the selection
+          table.remove(releaseStreams, releaseStreamIndex)
+          releaseStreamIndex = bound(1, releaseStreamIndex, #releaseStreams)
+          updateReleaseStreamPreference()
+          return
+        end
+      end
+      GAME_UPDATER:writeLaunchConfig(version)
+      generalMenu:set_button_setting(8, releaseStream.name)
+    end
+
+    local function increaseReleaseStreamIndex()
+      releaseStreamIndex = bound(1, releaseStreamIndex + 1, #releaseStreams)
+      updateReleaseStreamPreference()
+    end
+
+    local function decreaseReleaseStreamIndex()
+      releaseStreamIndex = bound(1, releaseStreamIndex - 1, #releaseStreams)
+      updateReleaseStreamPreference()
+    end
+
+    generalMenu:add_button("Release Stream", nextMenu, goEscape, decreaseReleaseStreamIndex, increaseReleaseStreamIndex)
+    updateReleaseStreamPreference()
+  end
+
+  local function exitSettings()
+    ret = {options.main, {2}}
+    if GAME_UPDATER and GAME_UPDATER.releaseStreams then
+      if generalMenu.buttons[8].currentSettingText ~= GAME_UPDATER.activeReleaseStream.name then
+        love.window.showMessageBox("Changing Release Stream", "Please restart the game to launch the selected release stream")
+      end
+    end
+  end
+
   generalMenu:add_button(loc("back"), exitSettings, exitSettings)
   update_countdown(true)
   update_fps(true)
