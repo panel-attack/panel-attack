@@ -9,6 +9,7 @@ local StartUp = class(function(scene, sceneParams)
   scene.migrationRoutine = coroutine.create(scene.migrate)
   scene.setupRoutine = coroutine.create(sceneParams.setupRoutine)
   scene.message = "Startup"
+  scene.loveMajorVersion = love.getVersion()
   scene.migrationPath = scene:checkIfMigrationIsPossible()
 
   local saveDir = love.filesystem.getSaveDirectory()
@@ -26,7 +27,13 @@ end, Scene)
 StartUp.name = "StartUp"
 
 function StartUp:update(dt)
-  if self.migrationPath then
+  if self.loveMajorVersion < 12 then
+    local msg = "Panel Attack is moving to a newer version of its framework. Because of that you need to download a new version of our updater at panelattack.com. Sorry for the trouble!"
+    if self.message ~= msg then
+      self.message = msg
+      love.system.openURL("http://panelattack.com/download.html")
+    end
+  elseif self.migrationPath then
     local success, status = coroutine.resume(self.migrationRoutine, self)
     if success then
       if status then
@@ -72,6 +79,10 @@ function StartUp:draw()
 end
 
 function StartUp:checkIfMigrationIsPossible()
+  if self.loveMajorVersion < 12 then
+    return nil
+  end
+
   local os = love.system.getOS()
   if os == "Linux" or os == "OS X" then
     if not love.filesystem.exists("conf.json") then
