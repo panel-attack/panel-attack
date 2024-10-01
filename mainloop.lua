@@ -253,15 +253,15 @@ do
         love.setDeprecationOutput(false)
       end
 
-      local runningFromAutoUpdater = GAME_UPDATER ~= nil
-      local autoUpdaterOutOfDate = (not GAME_UPDATER.version or GAME_UPDATER.version.major < "1.0")
-      if runningFromAutoUpdater and autoUpdaterOutOfDate then
-        local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
-        if GAME_UPDATER.name == "panel-beta" then
-          downloadLink = consts.SERVER_LOCATION .. "/panel-beta.zip"
+      if GAME_UPDATER then
+        if (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
+          local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
+          if GAME_UPDATER.name == "panel-beta" then
+            downloadLink = consts.SERVER_LOCATION .. "/panel-beta.zip"
+          end
+          gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
+          infoYPosition = infoYPosition - fontHeight
         end
-        gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
-        infoYPosition = infoYPosition - fontHeight
       end
 
       wait()
