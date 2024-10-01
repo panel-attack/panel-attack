@@ -83,7 +83,7 @@ function PuzzleMenu:load(sceneParams)
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomColors and 2 or 1,
-      onChange = function(value)
+      onChange = function(group, value)
         GAME.theme:playMoveSfx()
         config.puzzle_randomColors = value
       end
@@ -98,7 +98,7 @@ function PuzzleMenu:load(sceneParams)
       },
       values = {false, true},
       selectedIndex = config.puzzle_randomFlipped and 2 or 1,
-      onChange = function(value)
+      onChange = function(group, value)
         GAME.theme:playMoveSfx()
         config.puzzle_randomFlipped = value
       end

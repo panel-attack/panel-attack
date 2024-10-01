@@ -134,7 +134,7 @@ function SoundTest:load()
       },
       values = {"normal_music", "danger_music"},
       selectedIndex = 1,
-      onChange = function(value)
+      onChange = function(group, value)
         GAME.theme:playMoveSfx()
         if playButtonGroup.value == "character" then
           playMusic(playButtonGroup.value, characterStepper.value, value)
@@ -154,7 +154,7 @@ function SoundTest:load()
       },
       values = {"", "character", "stage"},
       selectedIndex = 1,
-      onChange = function(value)
+      onChange = function(group, value)
         GAME.theme:playMoveSfx()
         if value == "character" then
           playMusic(value, characterStepper.value, musicTypeButtonGroup.value)

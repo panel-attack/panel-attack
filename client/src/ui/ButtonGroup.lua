@@ -23,7 +23,7 @@ local function genButtonGroupFn(self, i, onClick)
   return function(selfElement, inputSource, holdTime)
     setState(self, i)
     onClick(selfElement, inputSource, holdTime)
-    self.onChange(self.value)
+    self:onChange(self.value)
   end
 end
 

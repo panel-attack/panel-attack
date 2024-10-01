@@ -77,7 +77,7 @@ function SimpleGameSetupMenu:load(sceneParams)
         },
         values = {1, 2, 3, 4},
         selectedIndex = GAME.config.endless_difficulty or 1,
-        onChange = function(value)
+        onChange = function(group, value)
           GAME.theme:playMoveSfx()
           config.endless_difficulty = value
         end
@@ -109,7 +109,7 @@ function SimpleGameSetupMenu:load(sceneParams)
       },
       values = {"Classic", "Modern"},
       selectedIndex = config.endless_level and 2 or 1,
-      onChange = function(value)
+      onChange = function(group, value)
         GAME.theme:playMoveSfx()
         if value == "Classic" then
           GAME.localPlayer:setStyle(GameModes.Styles.CLASSIC)
