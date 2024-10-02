@@ -62,7 +62,7 @@ local Game = class(
     self.backgroundColor = { 0.0, 0.0, 0.0 }
 
     -- depends on canvasXScale
-    self.global_canvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
+    self.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=newCanvasSnappedScale(self)})
 
     self.automaticScales = {1, 1.5, 2, 2.5, 3}
     -- specifies a time that is compared against self.timer to determine if GameScale should be shown
@@ -475,11 +475,11 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
     for i = #availableScales, 1, -1 do
       local scale = availableScales[i]
       if config.gameScaleType ~= "auto" or 
-        (newWindowWidth >= consts.CANVAS_WIDTH * scale and newWindowHeight >= consts.CANVAS_HEIGHT * scale) then
+        (newWindowWidth >= self.globalCanvas:getWidth() * scale and newWindowHeight >= self.globalCanvas:getHeight() * scale) then
         self.canvasXScale = scale
         self.canvasYScale = scale
-        self.canvasX = math.floor((newWindowWidth - (scale * consts.CANVAS_WIDTH)) / 2)
-        self.canvasY = math.floor((newWindowHeight - (scale * consts.CANVAS_HEIGHT)) / 2)
+        self.canvasX = math.floor((newWindowWidth - (scale * self.globalCanvas:getWidth())) / 2)
+        self.canvasY = math.floor((newWindowHeight - (scale * self.globalCanvas:getHeight())) / 2)
         scaleIsUpdated = true
         break
       end
@@ -490,8 +490,8 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
     -- The only thing left to do is scale to fit the window
     local w, h
     self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
-    self.canvasXScale = w / consts.CANVAS_WIDTH
-    self.canvasYScale = h / consts.CANVAS_HEIGHT
+    self.canvasXScale = w / self.globalCanvas:getWidth()
+    self.canvasYScale = h / self.globalCanvas:getHeight()
   end
 
   self.previousWindowWidth = newWindowWidth

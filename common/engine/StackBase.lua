@@ -201,7 +201,7 @@ function StackBase:moveForRenderIndex(renderIndex)
       self.mirror_x = -1
       self.multiplication = 1
     end
-    local centerX = (consts.CANVAS_WIDTH / 2)
+    local centerX = (GAME.globalCanvas:getWidth() / 2)
     local stackWidth = self:stackCanvasWidth()
     local innerStackXMovement = 100
     local outerStackXMovement = stackWidth + innerStackXMovement
