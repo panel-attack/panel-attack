@@ -605,7 +605,11 @@ function CharacterSelect:createRankedSelection(player, width)
       self:setValue(true)
     elseif inputs.isDown["Down"] then
       self:setValue(false)
-    elseif inputs.isDown["Swap2"] or inputs.isDown["Swap1"] then
+    elseif inputs.isDown["Swap1"] then
+      GAME.theme:playValidationSfx()
+      self:yieldFocus()
+    elseif inputs.isDown["Swap2"] then
+      GAME.theme:playCancelSfx()
       self:yieldFocus()
     end
   end
@@ -646,7 +650,11 @@ function CharacterSelect:createStyleSelection(player, width)
       self:setValue(true)
     elseif inputs.isDown["Down"] then
       self:setValue(false)
-    elseif inputs.isDown["Swap2"] or inputs.isDown["Swap1"] then
+    elseif inputs.isDown["Swap1"] then
+      GAME.theme:playValidationSfx()
+      self:yieldFocus()
+    elseif inputs.isDown["Swap2"] then
+      GAME.theme:playCancelSfx()
       self:yieldFocus()
     end
   end
