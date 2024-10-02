@@ -75,6 +75,9 @@ function BattleRoom.createFromServerMessage(message)
     if message.replay then
       local replay = ReplayV1.transform(message.replay)
       local match = Match.createFromReplay(replay, false)
+      for i, player in ipairs(match.players) do
+        player:updateWithMenuState(message.players[i])
+      end
       -- need this to make sure both have the same player tables
       -- there's like one stupid reference to battleRoom in engine that breaks otherwise
       battleRoom = BattleRoom.createFromMatch(match)
