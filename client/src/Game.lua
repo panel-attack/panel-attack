@@ -489,9 +489,10 @@ function Game:updateCanvasPositionAndScale(newWindowWidth, newWindowHeight)
   if scaleIsUpdated == false then
     -- The only thing left to do is scale to fit the window
     local w, h
-    self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, 16, 9)
-    self.canvasXScale = w / self.globalCanvas:getWidth()
-    self.canvasYScale = h / self.globalCanvas:getHeight()
+    local canvasWidth, canvasHeight = self.globalCanvas:getDimensions()
+    self.canvasX, self.canvasY, w, h = scale_letterbox(newWindowWidth, newWindowHeight, canvasWidth, canvasHeight)
+    self.canvasXScale = w / canvasWidth
+    self.canvasYScale = h / canvasHeight
   end
 
   self.previousWindowWidth = newWindowWidth
