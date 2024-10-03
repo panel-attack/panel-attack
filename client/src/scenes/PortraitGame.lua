@@ -184,7 +184,17 @@ function PortraitGame:drawMultibar(stack)
       self:drawBar(stack, themes[config.theme].images.IMG_multibar_prestop_bar, stack.multi_prestopQuad, barPos, preStopHeight, bottomOffset, 0, scale)
 
       if remainingSeconds > 0 then
-        stack:drawString(string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds), overtimePos, false, 20)
+        local formattedSeconds = string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds)
+        local x = math.floor((stack.frameOriginX + stack.panelOriginXOffset + overtimePos[1] / 3) * stack.gfxScale)
+        local y = stack.panelOriginY * stack.gfxScale
+
+        local limit = GAME.globalCanvas:getWidth() - x
+        local alignment = "right"
+        limit = x - GraphicsUtil.getGlobalFont():getWidth(formattedSeconds) / 2
+        x = 0
+        local fontDelta = 20 - GraphicsUtil.fontSize
+
+        GraphicsUtil.printf(formattedSeconds, x, y, limit, alignment, nil, nil, fontDelta)
       end
     end
   end
