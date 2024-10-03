@@ -222,9 +222,9 @@ function PortraitGame:draw()
       self:drawMultibar(stack)
     end
 
-    --if stack.garbageTarget and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
+    if stack.garbageTarget then --and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
       Telegraph:render(stack, stack.garbageTarget)
-    --end
+    end
   end
 
   if self.match.ended then
@@ -250,7 +250,7 @@ function PortraitGame:onMatchEnded(match)
   elseif DEBUG_ENABLED then
     GAME:updateCanvasPositionAndScale(width, height)
   end
-  for _, player in ipairs(self.match.players) do
+  for _, player in ipairs(match.players) do
     if player.isLocal and player.human and player.settings.inputMethod == "touch" then
       -- recreate the stack canvas to use gfxScale of 3
       player.stack.gfxScale = 3
