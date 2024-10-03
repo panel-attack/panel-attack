@@ -149,13 +149,15 @@ function GameBase:load(sceneParams)
       self.match:abort()
     end),
   }
+
   self.pauseMenu = Menu({
     x = 0,
     y = 0,
     hAlign = "center",
     vAlign = "center",
     menuItems = pauseMenuItems,
-    height = 200})
+    height = 200
+  })
   self.pauseMenu:setVisibility(false)
   self.uiRoot:addChild(self.pauseMenu)
 
@@ -168,7 +170,7 @@ end
 
 function GameBase:handlePause()
   if not self.match.isPaused then
-    if self.match.supportsPause and (input.isDown["MenuPause"] or input.isDown["MenuEsc"] or (not GAME.focused and not self.match.isPaused)) then
+    if self.match.supportsPause and (input.isDown["MenuPause"] or input.allKeys.isDown["escape"] or (not GAME.focused and not self.match.isPaused)) then
       self.match:togglePause()
       self.pauseMenu:setVisibility(true)
 

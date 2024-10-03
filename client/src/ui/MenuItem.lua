@@ -18,22 +18,32 @@ MenuItem.PADDING = 2
 function MenuItem.createMenuItem(label, item)
   assert(label ~= nil)
 
-  local menuItem = MenuItem({x = 0, y = 0})
-
   label.vAlign = "center"
   label.x = MenuItem.PADDING
+
+  local menuItem = MenuItem({x = 0, y = 0})
+
   menuItem.width = label.width + (2 * MenuItem.PADDING)
-  menuItem.height = label.height + (2 * MenuItem.PADDING)
-  menuItem:addChild(label)
+
+  if love.system.getOS() == "Android" or DEBUG_ENABLED then
+    label.height = math.max(30, label.height + (2 * MenuItem.PADDING))
+    menuItem.height = math.max(30, label.height, item and item.height or 0)
+  else
+    menuItem.height = math.max(menuItem.height, math.max(label.height, item and item.height or 0) + (2 * MenuItem.PADDING))
+  end
 
   if item ~= nil then
     local spaceBetween = 16
-    item.vAlign = "center"
     item.x = label.width + spaceBetween
-    menuItem:addChild(item)
+    item.vAlign = "center"
+    if love.system.getOS() == "Android" or DEBUG_ENABLED then
+      item.height = math.max(30, item.height)
+    end
     menuItem.width = item.x + item.width + MenuItem.PADDING
-    menuItem.height = math.max(menuItem.height, item.height + (2 * MenuItem.PADDING))
+    menuItem:addChild(item)
   end
+  menuItem:addChild(label)
+
 
   return menuItem
 end
@@ -45,7 +55,16 @@ function MenuItem.createButtonMenuItem(text, replacements, translate, onClick)
   if translate == nil then
     translate = true
   end
-  local textButton = TextButton({label = Label({text = text, replacements = replacements, translate = translate, hAlign = "center", vAlign = "center"}), onClick = onClick, width = BUTTON_WIDTH})
+  local textButton = TextButton({
+    label = Label({
+      text = text,
+      replacements = replacements,
+      translate = translate,
+      hAlign = "center",
+      vAlign = "center"
+    }),
+    onClick = onClick, width = BUTTON_WIDTH
+  })
 
   local menuItem = MenuItem.createMenuItem(textButton)
   menuItem.textButton = textButton
