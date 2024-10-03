@@ -68,6 +68,7 @@ function PortraitGame:customLoad()
   if love.system.getOS() == "Android" then
     -- flip the window dimensions to portrait
     love.window.updateMode(height, width)
+    love.window.setFullscreen()
   elseif DEBUG_ENABLED then
     GAME:updateCanvasPositionAndScale(width, height)
   end
