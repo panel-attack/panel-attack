@@ -39,8 +39,26 @@ function PortraitGame:customLoad()
   self.uiRoot.width = consts.CANVAS_HEIGHT
   self.uiRoot.height = consts.CANVAS_WIDTH
 
+  local communityMessage = Label({
+    text = "join_community",
+    replacements = {"\ndiscord." .. consts.SERVER_LOCATION},
+    translate = true,
+    hAlign = "center",
+    vAlign = "top",
+    y = 10,
+  })
+  self.uiRoot.communityMessage = communityMessage
+  self.uiRoot:addChild(self.uiRoot.communityMessage)
+
   local timerScale = themes[config.theme].time_Scale
-  self.uiRoot.timer = PixelFontLabel({text = getTimer(self.match), fontMap = themes[config.theme].fontMaps.time, hAlign = "center", y = 10, xScale = timerScale, yScale = timerScale})
+  self.uiRoot.timer = PixelFontLabel({
+    text = getTimer(self.match),
+    fontMap = themes[config.theme].fontMaps.time,
+    hAlign = "center",
+    y = 60,
+    xScale = timerScale,
+    yScale = timerScale,
+  })
   self.uiRoot:addChild(self.uiRoot.timer)
 
   -- recreate the global canvas in portrait dimensions
@@ -187,8 +205,6 @@ function PortraitGame:draw()
       Telegraph:render(stack, stack.garbageTarget)
     end
   end
-
-  self:drawCommunityMessage()
 
   if self.match.ended then
     local winners = self.match:getWinners()

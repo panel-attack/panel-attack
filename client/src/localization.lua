@@ -22,7 +22,7 @@ function Localization.get_language(self)
 end
 
 function Localization.refresh_global_strings(self)
-  join_community_msg = loc("join_community") .. "\ndiscord." .. consts.SERVER_LOCATION
+  join_community_msg = loc("join_community" ,"\ndiscord." .. consts.SERVER_LOCATION)
 end
 
 function Localization.init(self)
