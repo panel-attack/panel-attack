@@ -214,16 +214,17 @@ function PortraitGame:draw()
   if self.backgroundImage then
     self.backgroundImage:draw()
   end
-  self.uiRoot:draw()
-  for _, stack in ipairs(self.match.stacks) do
-    stack:render()
-    -- don't render stacks that only have an attack engine
-    if stack.is_local and stack.player.human and stack.inputMethod == "touch" then
-      self:drawMultibar(stack)
-    end
+  if not self.match.isPaused or self.match.renderDuringPause then
+    for _, stack in ipairs(self.match.stacks) do
+      stack:render()
+      -- don't render stacks that only have an attack engine
+      if stack.is_local and stack.player.human and stack.inputMethod == "touch" then
+        self:drawMultibar(stack)
+      end
 
-    if stack.garbageTarget then --and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
-      Telegraph:render(stack, stack.garbageTarget)
+      if stack.garbageTarget then --and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
+        Telegraph:render(stack, stack.garbageTarget)
+      end
     end
   end
 
@@ -238,6 +239,11 @@ function PortraitGame:draw()
     end
     GraphicsUtil.printf(message, pos.x, pos.y, consts.CANVAS_WIDTH, "center")
   end
+
+  if self.match.isPaused then
+    self.match:draw_pause()
+  end
+  self.uiRoot:draw()
 end
 
 function PortraitGame:onMatchEnded(match)

@@ -535,3 +535,4 @@ auto_updater_version_warning,Warning shown to users with an old autoupdater,"New
 username_blank_warning,shown in user name input when nothing is entered,Username cannot be blank,Le nom d'utilisateur ne peut pas être vide,O nome de usuário não pode ficar em branco,ユーザー名を空白にすることはできません,Nombre de usuario no puede estar en blanco,Benutzername darf nicht leer sein,Il nome utente non può essere vuoto,Username ไม่สามารถเป็นค่าว่างได้
 op_shakeIntensity,Option for the intensity of the shake animation,Shake Animation Intensity,,,,,Stärke der Aufprallanimation
 op_performance_drain,Label for the option to configure the amount of active garbage collection in favor of sleeping,Performance/Battery Drain,,,,,Performance/Stromverbrauch
+pause_resume,Label for the resume button in the pause menu,Resume,,,,Continuar,Fortsetzen,,
