@@ -65,6 +65,7 @@ function PortraitGame:customLoad()
       stack.frameOriginY = (GAME.globalCanvas:getHeight() - stack.canvas:getHeight()) / stack.gfxScale
       stack.panelOriginX = stack.frameOriginX + stack.panelOriginXOffset
       stack.panelOriginY = stack.frameOriginY + stack.panelOriginYOffset
+      stack.origin_x = stack.frameOriginX / stack.gfxScale
       -- TODO: create a raise button
       local raiseButton = TextButton({label = Label({text = "raise", fontSize = 20}), hAlign = "right", vAlign = "bottom", height = player.stack.canvas:getHeight() / 2})
       raiseButton.onTouch = function(button, x, y)
@@ -81,19 +82,92 @@ function PortraitGame:customLoad()
       raiseButton.width = 70
       self.uiRoot.raiseButton = raiseButton
       self.uiRoot:addChild(raiseButton)
-
-      -- fixing multibar pos different from theme settings
-      self.multibar = {}
-      -- so basically offset does no longer apply
-      -- but we want to try and keep the relationship between the different offsets I guess
-      -- local framePos = themes[config.theme].healthbar_frame_Pos
-      -- local barPos = themes[config.theme].multibar_Pos
-      -- local overtimePos = themes[config.theme].multibar_LeftoverTime_Pos
-      -- this might actually be way too finicky / not feasible with the theme asset / configs
-      -- it might make sense to instead use a separate free floating multibar specifically for portrait mode based on the default theme one
-      -- because otherwise there is really no telling what files / config we get
     end
   end
+end
+
+function PortraitGame:drawBar(stack, image, quad, themePositionOffset, height, yOffset, rotate, scale)
+  local imageWidth, imageHeight = image:getDimensions()
+  local barYScale = height / imageHeight
+  local quadY = 0
+  if barYScale < 1 then
+    barYScale = 1
+    quadY = imageHeight - height
+  end
+  local x = (stack.frameOriginX + stack.panelOriginXOffset + themePositionOffset[1] / 3) * stack.gfxScale
+  local y = (stack.panelOriginY + themePositionOffset[2] / 3) * stack.gfxScale
+  quad:setViewport(0, quadY, imageWidth, imageHeight - quadY)
+  GraphicsUtil.drawQuad(image, quad, x, y - height - yOffset, rotate, scale * stack.gfxScale / 3, scale * barYScale, 0, 0, 1)
+end
+
+function PortraitGame:drawMultibar(stack)
+  local stop_time = stack.stop_time
+  local shake_time = stack.shake_time
+
+  -- before the first move, display the stop time from the puzzle, not the stack
+  if stack.puzzle and stack.puzzle.puzzleType == "clear" and stack.puzzle.moves == stack.puzzle.remaining_moves then
+    stop_time = stack.puzzle.stop_time
+    shake_time = stack.puzzle.shake_time
+  end
+
+  framePos = framePos or themes[config.theme].healthbar_frame_Pos
+  barPos = barPos or themes[config.theme].multibar_Pos
+  overtimePos = overtimePos or themes[config.theme].multibar_LeftoverTime_Pos
+
+  local scale = themes[config.theme].healthbar_frame_Scale * (stack.gfxScale / 3)
+
+  GraphicsUtil.draw(themes[config.theme].images.healthbarFrames.absolute[stack.which],
+                    math.floor((stack.frameOriginX + stack.panelOriginXOffset + framePos[1] / 3) * stack.gfxScale),
+                    stack.frameOriginY * stack.gfxScale,
+                    0,
+                    scale,
+                    scale)
+
+  local multiBarFrameCount = stack.multiBarFrameCount
+  local multiBarMaxHeight = 589 * (stack.gfxScale / 3) * themes[config.theme].multibar_Scale
+  local bottomOffset = 0
+
+  scale = themes[config.theme].multibar_Scale
+  local healthHeight = (stack.health / multiBarFrameCount) * multiBarMaxHeight
+  self:drawBar(stack, themes[config.theme].images.IMG_healthbar, stack.healthQuad, barPos, healthHeight, 0, 0, scale)
+
+  bottomOffset = healthHeight
+
+  local stopHeight = 0
+  local preStopHeight = 0
+
+  if shake_time > 0 and shake_time > (stop_time + stack.pre_stop_time) then
+    -- shake is only drawn if it is greater than prestop + stop
+    -- shake is always guaranteed to fit
+    local shakeHeight = (shake_time / multiBarFrameCount) * multiBarMaxHeight
+    self:drawBar(stack, themes[config.theme].images.IMG_multibar_shake_bar, stack.multi_shakeQuad, barPos, shakeHeight, bottomOffset, 0, scale)
+  else
+    -- stop/prestop are only drawn if greater than shake
+    if stop_time > 0 then
+      stopHeight = math.min(stop_time, multiBarFrameCount - stack.health) / multiBarFrameCount * multiBarMaxHeight
+      self:drawBar(stack, themes[config.theme].images.IMG_multibar_stop_bar, stack.multi_stopQuad, barPos, stopHeight, bottomOffset, 0, scale)
+
+      bottomOffset = bottomOffset + stopHeight
+    end
+    if stack.pre_stop_time and stack.pre_stop_time > 0 then
+      local totalInvincibility = stack.health + stack.stop_time + stack.pre_stop_time
+      local remainingSeconds = 0
+      if totalInvincibility > multiBarFrameCount then
+        -- total invincibility exceeds what the multibar can display -> fill only the remaining space with prestop
+        preStopHeight = (1 - (stack.health + stop_time) / multiBarFrameCount) * multiBarMaxHeight
+        remainingSeconds = (totalInvincibility - multiBarFrameCount) / 60
+      else
+        preStopHeight = stack.pre_stop_time / multiBarFrameCount * multiBarMaxHeight
+      end
+
+      self:drawBar(stack, themes[config.theme].images.IMG_multibar_prestop_bar, stack.multi_prestopQuad, barPos, preStopHeight, bottomOffset, 0, scale)
+
+      if remainingSeconds > 0 then
+        stack:drawString(string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds), overtimePos, false, 20)
+      end
+    end
+  end
+
 end
 
 function PortraitGame:draw()
@@ -106,6 +180,7 @@ function PortraitGame:draw()
     if stack.is_local and stack.inputMethod == "touch" then
       stack:render()
       --stack:drawMultibar()
+      self:drawMultibar(stack)
     end
 
     if stack.garbageTarget and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
