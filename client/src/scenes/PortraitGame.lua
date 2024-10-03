@@ -218,8 +218,7 @@ function PortraitGame:draw()
   for _, stack in ipairs(self.match.stacks) do
     stack:render()
     -- don't render stacks that only have an attack engine
-    if stack.is_local and stack.inputMethod == "touch" then
-      --stack:drawMultibar()
+    if stack.is_local and stack.player.human and stack.inputMethod == "touch" then
       self:drawMultibar(stack)
     end
 

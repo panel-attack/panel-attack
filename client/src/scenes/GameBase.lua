@@ -143,7 +143,12 @@ function GameBase:load(sceneParams)
 end
 
 function GameBase:handlePause()
-  if self.match.supportsPause and (input.isDown["MenuPause"] or (not GAME.focused and not self.match.isPaused)) then
+  if self.match.isPaused and input.isDown["MenuEsc"] then
+    GAME.theme:playCancelSfx()
+    self.match:abort()
+  end
+
+  if self.match.supportsPause and (input.isDown["MenuPause"] or input.isDown["MenuEsc"] or (not GAME.focused and not self.match.isPaused)) then
     if self.match.isPaused then
       self:initializeFrameInfo()
     end
@@ -157,11 +162,6 @@ function GameBase:handlePause()
       end
     end
     GAME.theme:playValidationSfx()
-  end
-
-  if self.match.isPaused and input.isDown["MenuEsc"] then
-    GAME.theme:playCancelSfx()
-    self.match:abort()
   end
 end
 
@@ -279,19 +279,23 @@ function GameBase:update(dt)
 end
 
 function GameBase:draw()
-  prof.push("GameBase:draw")
-  self:drawBackground()
-  prof.push("Match:render")
-  self.match:render()
-  prof.pop("Match:render")
-  prof.push("GameBase:drawHUD")
-  self:drawHUD()
-  prof.pop("GameBase:drawHUD")
-  if self.customDraw then
-    self:customDraw()
+  if self.match.paused and not self.match.renderDuringPause then
+    self.match:draw_pause()
+  else
+    prof.push("GameBase:draw")
+    self:drawBackground()
+    prof.push("Match:render")
+    self.match:render()
+    prof.pop("Match:render")
+    prof.push("GameBase:drawHUD")
+    self:drawHUD()
+    prof.pop("GameBase:drawHUD")
+    if self.customDraw then
+      self:customDraw()
+    end
+    self:drawForegroundOverlay()
+    prof.pop("GameBase:draw")
   end
-  self:drawForegroundOverlay()
-  prof.pop("GameBase:draw")
 end
 
 function GameBase:drawBackground()

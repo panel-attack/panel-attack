@@ -152,10 +152,6 @@ function Match:render()
     end
   end
 
-  if self.isPaused then
-    self:draw_pause()
-  end
-
   if not self.isPaused or self.renderDuringPause then
     for _, stack in ipairs(self.stacks) do
       -- don't render stacks that only have an attack engine
