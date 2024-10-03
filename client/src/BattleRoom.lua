@@ -342,8 +342,9 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:start()
   self.state = BattleRoom.states.MatchInProgress
   local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn())
-  -- for touch android players
+  -- for touch android players load a different scene
   if (love.system.getOS() == "Android" or DEBUG_ENABLED) and
+  --but only if they are the only local player cause for 2p vs local using portrait mode would be bad
       tableUtils.count(self.players, function(p) return p.isLocal end) == 1 then
     for _, player in ipairs(self.players) do
       if player.isLocal and player.human and player.settings.inputMethod == "touch" then

@@ -84,7 +84,8 @@ function PortraitGame:customLoad()
       stack.panelOriginX = stack.frameOriginX + stack.panelOriginXOffset
       stack.panelOriginY = stack.frameOriginY + stack.panelOriginYOffset
       stack.origin_x = stack.frameOriginX / stack.gfxScale
-      -- TODO: create a raise button
+
+      -- create a raise button that interacts with the touch controller
       local raiseButton = TextButton({label = Label({text = "raise", fontSize = 20}), hAlign = "right", vAlign = "bottom", height = player.stack.canvas:getHeight() / 2})
       raiseButton.onTouch = function(button, x, y)
         button.backgroundColor[4] = 1
@@ -118,6 +119,8 @@ function PortraitGame:drawBar(stack, image, quad, themePositionOffset, height, y
   GraphicsUtil.drawQuad(image, quad, x, y - height - yOffset, rotate, scale * stack.gfxScale / 3, scale * barYScale, 0, 0, 1)
 end
 
+-- when using the stack function, the multibar ends up somewhere
+-- so just force absolute multibar with a somewhat fixed draw
 function PortraitGame:drawMultibar(stack)
   local stop_time = stack.stop_time
   local shake_time = stack.shake_time
@@ -185,7 +188,6 @@ function PortraitGame:drawMultibar(stack)
       end
     end
   end
-
 end
 
 function PortraitGame:draw()
