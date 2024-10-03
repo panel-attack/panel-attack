@@ -102,6 +102,15 @@ function PortraitGame:customLoad()
       raiseButton.width = 70
       self.uiRoot.raiseButton = raiseButton
       self.uiRoot:addChild(raiseButton)
+    else
+      local stack = player.stack
+      stack.gfxScale = 1
+      stack.canvas = love.graphics.newCanvas(104 * stack.gfxScale, 204 * stack.gfxScale, {dpiscale = GAME:newCanvasSnappedScale()})
+      stack.frameOriginX = (GAME.globalCanvas:getWidth() - stack.canvas:getWidth()) - 12
+      stack.frameOriginY = 10
+      stack.panelOriginX = stack.frameOriginX + stack.panelOriginXOffset
+      stack.panelOriginY = stack.frameOriginY + stack.panelOriginYOffset
+      stack.origin_x = stack.frameOriginX / stack.gfxScale
     end
   end
 end
@@ -207,16 +216,16 @@ function PortraitGame:draw()
   end
   self.uiRoot:draw()
   for _, stack in ipairs(self.match.stacks) do
+    stack:render()
     -- don't render stacks that only have an attack engine
     if stack.is_local and stack.inputMethod == "touch" then
-      stack:render()
       --stack:drawMultibar()
       self:drawMultibar(stack)
     end
 
-    if stack.garbageTarget and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
+    --if stack.garbageTarget and stack.garbageTarget.is_local and stack.garbageTarget.inputMethod == "touch" then
       Telegraph:render(stack, stack.garbageTarget)
-    end
+    --end
   end
 
   if self.match.ended then
