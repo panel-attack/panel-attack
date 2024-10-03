@@ -46,6 +46,7 @@ function PortraitGame:customLoad()
 end
 
 function PortraitGame:draw()
+  self:drawBackground()
   self.uiRoot:draw()
   for _, stack in ipairs(self.match.stacks) do
     -- don't render stacks that only have an attack engine
