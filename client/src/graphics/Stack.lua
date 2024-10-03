@@ -138,7 +138,7 @@ function Stack.drawCards(self)
         GraphicsUtil.setColor(1, 1, 1, 1)
       end
       -- draw card
-      local iconSize = 48 / self.gfxScale
+      local iconSize = 16
       local cardImage = nil
       if card.chain then
         cardImage = self.theme:chainImage(card.n)
@@ -541,10 +541,6 @@ function Stack.render(self)
 
   self:drawCountdown()
   self:drawCanvas()
-
-  if config.show_ingame_infos then
-    self:drawMultibar()
-  end
 
   self:drawPopEffects()
   self:drawCards()

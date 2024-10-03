@@ -17,7 +17,7 @@ local PixelFontLabel = class(function(self, options)
   -- effectively we'll draw a quad for each character this much apart
   self.charDistanceScaled = (self.fontMap.charWidth + self.charSpacing) * self.xScale
 
-  self.width = self.text:len() * self.charDistanceScaled * self.xScale
+  self.width = self.text:len() * self.charDistanceScaled
   self.height = self.fontMap.charHeight * self.yScale
 end,
 UiElement)
@@ -30,7 +30,7 @@ function PixelFontLabel:setText(text)
   end
 
   self.text = text
-  self.width = text:len() * self.charDistanceScaled * self.xScale
+  self.width = text:len() * self.charDistanceScaled
 end
 
 

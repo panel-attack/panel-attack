@@ -322,6 +322,7 @@ function GameBase:drawHUD()
           stack:drawScore()
           stack:drawSpeed()
         end
+        stack:drawMultibar()
       end
 
       -- Draw VS HUD
