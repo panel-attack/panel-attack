@@ -342,10 +342,14 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
   match:start()
   self.state = BattleRoom.states.MatchInProgress
   local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn())
-  for _, player in ipairs(self.players) do
-    if player.isLocal and player.human and player.settings.inputMethod == "touch" then
-      GAME.navigationStack:push(require("client.src.scenes.PortraitGame")({match = self.match}), transition)
-      return
+  -- for touch android players
+  if (love.system.getOS() == "Android" or DEBUG_ENABLED) and
+      tableUtils.count(self.players, function(p) return p.isLocal end) == 1 then
+    for _, player in ipairs(self.players) do
+      if player.isLocal and player.human and player.settings.inputMethod == "touch" then
+        GAME.navigationStack:push(require("client.src.scenes.PortraitGame")({match = self.match}), transition)
+        return
+      end
     end
   end
   if self.gameScene then
