@@ -253,6 +253,7 @@ function PortraitGame:onMatchEnded(match)
   local width, height, _ = love.window.getMode()
   if love.system.getOS() == "Android" then
     love.window.updateMode(height, width)
+    love.window.setFullscreen(false)
   elseif DEBUG_ENABLED then
     GAME:updateCanvasPositionAndScale(width, height)
   end
