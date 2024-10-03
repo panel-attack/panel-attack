@@ -306,15 +306,19 @@ function StackBase:drawCanvas()
   love.graphics.setBlendMode("alpha", "alphamultiply")
 end
 
-function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
-  self:drawLabel(themes[config.theme].images.healthbarFrames.absolute[self.which], themes[config.theme].healthbar_frame_Pos, themes[config.theme].healthbar_frame_Scale)
+function StackBase:drawAbsoluteMultibar(stop_time, shake_time, framePos, barPos, overtimePos)
+  framePos = framePos or themes[config.theme].healthbar_frame_Pos
+  barPos = barPos or themes[config.theme].multibar_Pos
+  overtimePos = overtimePos or themes[config.theme].multibar_LeftoverTime_Pos
+
+  self:drawLabel(themes[config.theme].images.healthbarFrames.absolute[self.which], framePos, themes[config.theme].healthbar_frame_Scale * (self.gfxScale / 3))
 
   local multiBarFrameCount = self.multiBarFrameCount
-  local multiBarMaxHeight = 589 * themes[config.theme].multibar_Scale
+  local multiBarMaxHeight = 589 * (self.gfxScale / 3) * themes[config.theme].multibar_Scale
   local bottomOffset = 0
 
   local healthHeight = (self.health / multiBarFrameCount) * multiBarMaxHeight
-  self:drawBar(themes[config.theme].images.IMG_healthbar, self.healthQuad, themes[config.theme].multibar_Pos, healthHeight, 0, 0, themes[config.theme].multibar_Scale)
+  self:drawBar(themes[config.theme].images.IMG_healthbar, self.healthQuad, barPos, healthHeight, 0, 0, themes[config.theme].multibar_Scale)
 
   bottomOffset = healthHeight
 
@@ -325,12 +329,12 @@ function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
     -- shake is only drawn if it is greater than prestop + stop
     -- shake is always guaranteed to fit
     local shakeHeight = (shake_time / multiBarFrameCount) * multiBarMaxHeight
-    self:drawBar(themes[config.theme].images.IMG_multibar_shake_bar, self.multi_shakeQuad, themes[config.theme].multibar_Pos, shakeHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
+    self:drawBar(themes[config.theme].images.IMG_multibar_shake_bar, self.multi_shakeQuad, barPos, shakeHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
   else
     -- stop/prestop are only drawn if greater than shake
     if stop_time > 0 then
       stopHeight = math.min(stop_time, multiBarFrameCount - self.health) / multiBarFrameCount * multiBarMaxHeight
-      self:drawBar(themes[config.theme].images.IMG_multibar_stop_bar, self.multi_stopQuad, themes[config.theme].multibar_Pos, stopHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
+      self:drawBar(themes[config.theme].images.IMG_multibar_stop_bar, self.multi_stopQuad, barPos, stopHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
 
       bottomOffset = bottomOffset + stopHeight
     end
@@ -345,10 +349,10 @@ function StackBase:drawAbsoluteMultibar(stop_time, shake_time)
         preStopHeight = self.pre_stop_time / multiBarFrameCount * multiBarMaxHeight
       end
 
-      self:drawBar(themes[config.theme].images.IMG_multibar_prestop_bar, self.multi_prestopQuad, themes[config.theme].multibar_Pos, preStopHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
+      self:drawBar(themes[config.theme].images.IMG_multibar_prestop_bar, self.multi_prestopQuad, barPos, preStopHeight, bottomOffset, 0, themes[config.theme].multibar_Scale)
 
       if remainingSeconds > 0 then
-        self:drawString(string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds), themes[config.theme].multibar_LeftoverTime_Pos, false, 20)
+        self:drawString(string.format("%." .. themes[config.theme].multibar_LeftoverTime_Decimals .. "f", remainingSeconds), overtimePos, false, 20)
       end
     end
   end

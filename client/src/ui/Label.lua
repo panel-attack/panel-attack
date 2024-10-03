@@ -12,6 +12,13 @@ local Label = class(
     self.wrap = options.wrap or false
     self.wrapRatio = options.wrapRatio or 1
 
+    if options.fontSize then
+      self.font = GraphicsUtil.getGlobalFontWithSize(options.fontSize)
+      self.fontSize = options.fontSize
+    else
+      self.font = GraphicsUtil.getGlobalFont()
+    end
+
     self:setText(options.text, options.replacements, options.translate)
 
     self.TYPE = "Label"
@@ -48,10 +55,10 @@ function Label:setText(text, replacementTable, translate)
 
   if self.translate then
     -- always need a new text cause the font might have changed
-    self.drawable = love.graphics.newTextBatch(love.graphics.getFont(), loc(self.text, unpack(self.replacementTable)))
+    self.drawable = love.graphics.newTextBatch(self.font, loc(self.text, unpack(self.replacementTable)))
   else
     if not self.drawable then
-      self.drawable = love.graphics.newTextBatch(love.graphics.getFont(), self.text)
+      self.drawable = love.graphics.newTextBatch(self.font, self.text)
     end
   end
 
@@ -94,8 +101,13 @@ end
 
 function Label:refreshLocalization()
   if self.translate then
+    if self.fontSize then
+      self.font = GraphicsUtil.getGlobalFontWithSize(self.fontSize)
+    else
+      self.font = GraphicsUtil.getGlobalFont()
+    end
     -- always need a new text cause the font might have changed
-    self.drawable = love.graphics.newTextBatch(love.graphics.getFont(), loc(self.text, unpack(self.replacementTable)))
+    self.drawable = love.graphics.newTextBatch(self.font, loc(self.text, unpack(self.replacementTable)))
     self.width, self.height = self.drawable:getDimensions()
   end
 end
