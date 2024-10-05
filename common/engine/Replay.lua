@@ -99,7 +99,7 @@ function Replay.load(jsonData)
 end
 
 function Replay.addAnalyticsDataToReplay(match, replay)
-  replay.duration = match.gameOverClock
+  replay.duration = match.clock
 
   for i = 1, #match.players do
     if match.players[i].human then
