@@ -126,7 +126,7 @@ end
 function ReplayBrowser:update()
   if state == "browser" then
     if input.isDown["MenuEsc"] then
-      GAME.theme.playCancelSfx()
+      GAME.theme:playCancelSfx()
       GAME.navigationStack:pop()
     end
     if input.isDown["MenuSelect"] then
