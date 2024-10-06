@@ -64,7 +64,7 @@ function Label:setText(text, replacementTable, translate)
 
   self:refreshFormatting()
 
-  self.width = math.max(self.parent and self.parent.width or 0, self.drawable:getWidth())
+  self.width = self.drawable:getWidth()
   self.height = self.drawable:getHeight()
 end
 
