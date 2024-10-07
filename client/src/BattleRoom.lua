@@ -400,10 +400,11 @@ end
 -- if lock is false it unclaims the player's current inputConfiguration
 function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   if lock then
-    for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
+    for i, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
       if not inputConfiguration.claimed and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:setInputMethod("controller")
+        logger.debug("Claiming input configuration " .. i .. " for player " .. player.playerNumber)
         player:restrictInputs(inputConfiguration)
         break
       end
@@ -411,6 +412,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
     if not player.inputConfiguration and not GAME.input.mouse.claimed then
       if GAME.input.mouse.isDown[1] or GAME.input.mouse.isPressed[1] then
         player:setInputMethod("touch")
+        logger.debug("Claiming touch configuration for player " .. player.playerNumber)
         player:restrictInputs(GAME.input.mouse)
       end
     end

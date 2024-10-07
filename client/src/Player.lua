@@ -6,6 +6,7 @@ local MatchParticipant = require("client.src.MatchParticipant")
 local consts = require("common.engine.consts")
 local CharacterLoader = require("client.src.mods.CharacterLoader")
 local Stack = require("common.engine.Stack")
+local logger = require("common.lib.logger")
 require("client.src.graphics.Stack")
 
 -- A player is mostly a data representation of a Panel Attack player
@@ -251,6 +252,7 @@ function Player:unrestrictInputs()
     -- and then before that arrives we unready, thus losing the input configuration which crashes the match
     -- for this case, the last used input configuration is stored here
     -- if a match start arrives while no input configuration is set, the player gets restricted to the last used one again
+    logger.debug("Unrestricting inputs for player " .. self.playerNumber)
     self.lastUsedInputConfiguration = self.inputConfiguration
     input:releaseConfiguration(self, self.inputConfiguration)
     self.inputConfiguration = nil
