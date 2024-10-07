@@ -10,6 +10,7 @@ local Label = require("client.src.ui.Label")
 -- @module setNameMenu
 -- Scene for setting the username
 local SetUserIdMenu = class(function(self, sceneParams)
+  self.keepMusic = true
   self:load(sceneParams)
 end, Scene)
 
