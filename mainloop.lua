@@ -9,6 +9,7 @@ local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local Replay = require("replay")
+local migrateIfPossible = require("saveDirMigration")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -29,6 +30,7 @@ local puzzle_menu_last_index = 3
 
 function fmainloop()
   Localization.init(localization)
+  migrateIfPossible()
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   if love.system.getOS() ~= "OS X" then
     recursiveRemoveFiles(".", ".DS_Store")
