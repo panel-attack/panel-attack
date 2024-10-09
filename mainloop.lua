@@ -257,10 +257,7 @@ do
 
       if GAME_UPDATER then
         if (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
-          local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
-          if GAME_UPDATER.name == "panel-beta" then
-            downloadLink = consts.SERVER_LOCATION .. "/panel-beta.zip"
-          end
+          local downloadLink = consts.SERVER_LOCATION .. "/migration.html"
           gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
           infoYPosition = infoYPosition - fontHeight
         end
