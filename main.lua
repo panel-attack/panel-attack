@@ -318,3 +318,7 @@ end
 function love.keyreleased(key, unicode)
   inputManager:keyReleased(key, unicode)
 end
+
+function love.joystickaxis(joystick, axisIndex, value)
+  inputManager:joystickaxis(joystick, axisIndex, value)
+end
