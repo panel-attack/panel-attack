@@ -85,7 +85,7 @@ function CustomRun.processEvents()
     for name, a, b, c, d, e, f in love.event.poll() do
       if name == "quit" then
         if not love.quit or not love.quit() then
-          return a or 0
+          return a or 0, b
         end
       end
       love.handlers[name](a, b, c, d, e, f)
@@ -177,18 +177,14 @@ function CustomRun.innerRun()
   prof.pop("frame")
 end
 
--- This is a copy of the outer run loop that love uses.
+-- This is a copy of the outer run loop that love 12 uses.
 -- We have broken it up into calling a inner function so we can change the inner function in the game love file to override behavior
 -- If you change this function also change DefaultLoveRunFunction's equivalent method
 function CustomRun.run()
-  if love.load then
-    love.load(love.arg.parseGameArguments(arg), arg)
-  end
+  if love.load then love.load(love.parsedGameArguments, love.rawGameArguments) end
 
-  -- We don't want the first frame's dt to include time taken by love.load.
-  if love.timer then
-    love.timer.step()
-  end
+	-- We don't want the first frame's dt to include time taken by love.load.
+	if love.timer then love.timer.step() end
 
   dt = 0
 
