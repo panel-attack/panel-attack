@@ -88,11 +88,17 @@ local Game = class(
 
 Game.newCanvasSnappedScale = newCanvasSnappedScale
 
-function Game:load(gameUpdater)
+function Game:load()
   -- TODO: include this with save.lua?
   require("client.src.puzzles")
   -- move to constructor
-  self.gameUpdater = gameUpdater
+  self.updater = GAME_UPDATER or nil
+  if self.updater then
+    local success = pcall(self.updater.init, self.updater)
+    if not success then
+      self.updater = nil
+    end
+  end
   local user_input_conf = save.read_key_file()
   if user_input_conf then
     self.input:importConfigurations(user_input_conf)
@@ -197,10 +203,10 @@ function Game:createDirectoriesIfNeeded()
 end
 
 function Game:checkForUpdates()
-  --check for game updates
-  if self.gameUpdater and self.gameUpdater.check_update_ingame then
-    wait_game_update = self.gameUpdater:async_download_latest_version()
-  end
+  -- --check for game updates
+  -- if self.updater and self.updater.check_update_ingame then
+  --   wait_game_update = self.updater:async_download_latest_version()
+  -- end
 end
 
 function Game:runUnitTests()
@@ -338,8 +344,8 @@ function Game.errorData(errorString, traceBack)
   local loveVersion = Game.loveVersionString() or "Unknown"
   local username = config.name or "Unknown"
   local buildVersion
-  if GAME_UPDATER then
-    buildVersion = GAME_UPDATER.activeReleaseStream.name .. " " .. GAME_UPDATER.activeVersion.version
+  if GAME.updater then
+    buildVersion = GAME.updater.activeReleaseStream.name .. " " .. GAME.updater.activeVersion.version
   else
     buildVersion = "Unknown"
   end

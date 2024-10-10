@@ -33,7 +33,7 @@ function love.load(args)
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
   GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
 
-  GAME:load(GAME_UPDATER)
+  GAME:load()
 end
 
 function love.focus(f)
@@ -170,9 +170,9 @@ function love.errorhandler(msg)
     local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
     local detailedErrorLogString = Game.detailedErrorLogString(errorData)
     errorData.detailedErrorLogString = detailedErrorLogString
-    if GAME_UPDATER_GAME_VERSION then
-      GAME.netClient:sendErrorReport(errorData, consts.SERVER_LOCATION, 59569)
-    end
+    -- if GAME_UPDATER_GAME_VERSION then
+    --   GAME.netClient:sendErrorReport(errorData, consts.SERVER_LOCATION, 59569)
+    -- end
     return detailedErrorLogString
   end
 
