@@ -113,11 +113,29 @@ function Game:load()
   self.globalCanvas = love.graphics.newCanvas(consts.CANVAS_WIDTH, consts.CANVAS_HEIGHT, {dpiscale=GAME:newCanvasSnappedScale()})
 end
 
+local function detectHardwareProblems()
+  local OS = love.system.getOS()
+  if OS == "Windows" then
+    local version, vendor = select(2, love.graphics.getRendererInfo())
+    if vendor == "ATI Technologies Inc." and
+		(version:find("22.7.1", 1, true) or version:find(".2207", 1, true)) then
+      love.window.showMessageBox(
+        "AMD driver 22.7.1 detected",
+        "AMD driver 22.7.1 is known to have problems with running LÖVE (this includes Panel Attack). If the game fails to render its visuals, it is recommended to upgrade or downgrade your AMD GPU drivers.",
+        "warning"
+      )
+    end
+  end
+end
+
 function Game:setupRoutine()
   -- loading various assets into the game
   coroutine.yield("Loading localization...")
   Localization:init()
   self.setLanguage(config.language_code)
+
+  detectHardwareProblems()
+
   fileUtils.copyFile("docs/puzzles.txt", "puzzles/README.txt")
   
   coroutine.yield(loc("ld_theme"))
