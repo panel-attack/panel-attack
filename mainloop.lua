@@ -202,6 +202,10 @@ do
 
     match_type_message = ""
     local items = {
+      {"https://panelattack.com/migration.html", function()
+        love.system.openURL("https://panelattack.com/migration.html")
+        return main_select_mode, {}
+      end},
       {loc("mm_1_endless"), main_endless_select},
       {loc("mm_1_puzzle"), main_select_puzz},
       {loc("mm_1_time"), main_timeattack_select},
@@ -258,7 +262,7 @@ do
       if GAME_UPDATER then
         if (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
           local downloadLink = consts.SERVER_LOCATION .. "/migration.html"
-          gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
+          gprintf(loc("auto_updater_replacement") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
           infoYPosition = infoYPosition - fontHeight
         end
       end
