@@ -175,7 +175,7 @@ function love.joystickremoved(joystick)
 
   local vendorID, productID, productVersion = joystick:getDeviceInfo( )
 
-  logger.info("Disonnecting device " .. vendorID .. ";" .. productID .. ";" .. productVersion .. ";" .. joystick:getName() .. ";" .. guid .. ";" .. id)
+  logger.info("Disconnecting device " .. vendorID .. ";" .. productID .. ";" .. productVersion .. ";" .. joystick:getName() .. ";" .. guid .. ";" .. id)
 
   joystickManager.guidsToJoysticks[guid][id] = nil
 

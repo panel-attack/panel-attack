@@ -84,6 +84,7 @@ function Label:refreshFormatting()
 
   if self.wrap then
     self.drawable:setf(text, self.wrapRatio * self.width, self.hAlign)
+    self.height = self.drawable:getHeight()
   else
     self.drawable:set(text)
   end
