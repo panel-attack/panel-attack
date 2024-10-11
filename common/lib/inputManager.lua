@@ -1,6 +1,7 @@
 local tableUtils = require("common.lib.tableUtils")
 local joystickManager = require("common.lib.joystickManager")
 local consts = require("common.engine.consts")
+local logger = require("common.lib.logger")
 
 -- @module inputManager 
 -- table containing the set of keys in various states 
@@ -97,6 +98,11 @@ end
 
 function inputManager:joystickaxis(joystick, axisIndex, value)
   local device = joystickManager.devices[joystick:getID()]
+  if not device.defaultAxisPositions[axisIndex] then
+    logger.info("Detected input from previously unrecorded axis " .. axisIndex .. " for stick with guid " .. joystick:getGUID())
+    return
+  end
+
   local stickIndex = math.floor((1 + axisIndex) / 2)
   local direction
 

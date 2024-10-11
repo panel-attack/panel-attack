@@ -1,4 +1,5 @@
 local tableUtils = require("common.lib.tableUtils")
+local logger = require("common.lib.logger")
 
 --@module joystickManager
 local joystickManager = {
@@ -121,7 +122,14 @@ function love.joystickadded(joystick)
 
   local device = { defaultAxisPositions = {}, isGamepad = joystick:isGamepad(), joystick = joystick}
 
+  local vendorID, productID, productVersion = joystick:getDeviceInfo( )
+
+  logger.info("Connecting new device " .. vendorID .. ";" .. productID .. ";" .. productVersion .. ";" .. joystick:getName() .. ";" .. guid .. ";" .. id)
+
   if device.isGamepad then
+    logger.info("Connecting new gamepad " .. joystick:getGamepadMappingString())
+    logger.info("Gamepad has " .. joystick:getAxisCount() .. " axes")
+
     device.axisToGamepadAxis = {}
     -- if we have a known gamepad, assume 0 center for sticks but record axis for triggers as they often won't be 0 based
     for i, gamepadAxis in ipairs({"leftx", "lefty", "rightx", "righty", "triggerleft", "triggerright"}) do
@@ -136,7 +144,18 @@ function love.joystickadded(joystick)
         end
       end
     end
+
+    -- in case we still somehow have more axes, record them
+    for axisIndex = 1, joystick:getAxisCount() do
+      if not device.defaultAxisPositions[axisIndex] then
+        local baseValue = joystick:getAxis(axisIndex)
+        device.defaultAxisPositions[axisIndex] = baseValue
+      end
+    end
   else
+    logger.info("Connecting new Joystick")
+    logger.info("Joystick has " .. joystick:getAxisCount() .. " axes")
+
     -- if we don't have a known gamepad, just record everything
     for axisIndex = 1, joystick:getAxisCount() do
       local baseValue = joystick:getAxis(axisIndex)
@@ -153,6 +172,10 @@ function love.joystickremoved(joystick)
   local guid = joystick:getGUID()
   -- ID is a per-session identifier for each controller regardless of type
   local id = joystick:getID()
+
+  local vendorID, productID, productVersion = joystick:getDeviceInfo( )
+
+  logger.info("Disonnecting device " .. vendorID .. ";" .. productID .. ";" .. productVersion .. ";" .. joystick:getName() .. ";" .. guid .. ";" .. id)
 
   joystickManager.guidsToJoysticks[guid][id] = nil
 
