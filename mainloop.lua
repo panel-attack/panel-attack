@@ -256,13 +256,13 @@ do
       local fontHeight = get_global_font():getHeight()
       local infoYPosition = 685 - fontHeight/2
 
-      -- local major, minor, revision, codename = love.getVersion()
-      -- if major < 12 then
-      --   gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
-      --   infoYPosition = infoYPosition - fontHeight
-      -- else
-      --   love.setDeprecationOutput(false)
-      -- end
+      local major, minor, revision, codename = love.getVersion()
+      if major < 12 then
+        -- gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
+        -- infoYPosition = infoYPosition - fontHeight
+      else
+        love.setDeprecationOutput(false)
+      end
 
       if GAME_UPDATER or DEBUG_ENABLED then
         if DEBUG_ENABLED or (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
