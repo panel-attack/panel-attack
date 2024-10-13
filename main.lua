@@ -71,6 +71,11 @@ function love.load()
     GAME.profiler:start()
   end
   
+  local major, minor, revision, codename = love.getVersion()
+  if major == 12 then
+    love.setDeprecationOutput(false)
+  end
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
