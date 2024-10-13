@@ -202,10 +202,6 @@ do
 
     match_type_message = ""
     local items = {
-      {"https://panelattack.com/migration.html", function()
-        love.system.openURL("https://panelattack.com/migration.html")
-        return main_select_mode, {}
-      end},
       {loc("mm_1_endless"), main_endless_select},
       {loc("mm_1_puzzle"), main_select_puzz},
       {loc("mm_1_time"), main_timeattack_select},
@@ -227,6 +223,15 @@ do
 
     if TESTS_ENABLED then
       table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
+    end
+
+    if GAME_UPDATER or DEBUG_ENABLED then
+      if DEBUG_ENABLED or (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
+        table.insert(items, 1, {"https://panelattack.com/migration.html", function()
+          love.system.openURL("https://panelattack.com/migration.html")
+          return main_select_mode, {}
+        end})
+      end
     end
 
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
