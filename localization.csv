@@ -534,14 +534,14 @@ auto_updater_version_warning,Warning shown to users with an old autoupdater,"New
 username_blank_warning,shown in user name input when nothing is entered,Username cannot be blank,Le nom d'utilisateur ne peut pas être vide,O nome de usuário não pode ficar em branco,ユーザー名を空白にすることはできません,Nombre de usuario no puede estar en blanco,Benutzername darf nicht leer sein,Il nome utente non può essere vuoto,Username ไม่สามารถเป็นค่าว่างได้
 op_shakeIntensity,Option for the intensity of the shake animation,Shake Animation Intensity,,,,,Stärke der Aufprallanimation
 op_performance_drain,Label for the option to configure the amount of active garbage collection in favor of sleeping,Performance/Battery Drain,,,,,Performance/Stromverbrauch
-auto_updater_replacement,Message shown to users with an updater at the end of its life,Panel Attack is replacing its updater. This will be one of the last updates you will receive with the current one.
-Please download the new updater from https://panelattack.com/migration.html,Panel Attack remplace son programme de mise à jour. Ce sera l'une des dernières mises à jour que vous recevrez avec l'actuel.
-Veuillez télécharger le nouveau programme de mise à jour à partir de https://panelattack.com/migration.html.,Panel Attack está substituindo seu atualizador. Esta será uma das últimas atualizações que você receberá com o atual.
-Faça o download do novo atualizador em https://panelattack.com/migration.html.,本ソフトウェアはアップデータを交換します。これが現在のアップデータで受け取る最後のアップデートのひとつとなります。
-新しいアップデータをウェブサイトからダウンロードしてください。https://panelattack.com/migration.html,Panel Attack está sustituyendo su actualizador. Esta será una de las últimas actualizaciones que recibirá con el actual.
-Descargue el nuevo actualizador desde https://panelattack.com/migration.html.,Der Panel Attack Updater wird ersetzt. Dies ist eines der letzten Updates, die du mit diesem Updater erhalten wirst.
-Bitte laden den neuen Updater unter https://panelattack.com/migration.html herunter.,Panel Attack sta sostituendo il suo programma di aggiornamento. Questo sarà uno degli ultimi aggiornamenti che riceverete con quello attuale.
-Scaricare il nuovo programma di aggiornamento dal https://panelattack.com/migration.html.,Panel Attack กำลังจะเปลี่ยนไปใช้ระบบอัพเดทอันใหม่ 
+auto_updater_replacement,Message shown to users with an updater at the end of its life,"Panel Attack is replacing its updater. This will be one of the last updates you will receive with the current one.
+Please download the new updater from https://panelattack.com/migration.html","Panel Attack remplace son programme de mise à jour. Ce sera l'une des dernières mises à jour que vous recevrez avec l'actuel.
+Veuillez télécharger le nouveau programme de mise à jour à partir de https://panelattack.com/migration.html.","Panel Attack está substituindo seu atualizador. Esta será uma das últimas atualizações que você receberá com o atual.
+Faça o download do novo atualizador em https://panelattack.com/migration.html.","本ソフトウェアはアップデータを交換します。これが現在のアップデータで受け取る最後のアップデートのひとつとなります。
+新しいアップデータをウェブサイトからダウンロードしてください。https://panelattack.com/migration.html","Panel Attack está sustituyendo su actualizador. Esta será una de las últimas actualizaciones que recibirá con el actual.
+Descargue el nuevo actualizador desde https://panelattack.com/migration.html.","Der Panel Attack Updater wird ersetzt. Dies ist eines der letzten Updates, die du mit diesem Updater erhalten wirst.
+Bitte laden den neuen Updater unter https://panelattack.com/migration.html herunter".,"Panel Attack sta sostituendo il suo programma di aggiornamento. Questo sarà uno degli ultimi aggiornamenti che riceverete con quello attuale.
+Scaricare il nuovo programma di aggiornamento dal https://panelattack.com/migration.html.","Panel Attack กำลังจะเปลี่ยนไปใช้ระบบอัพเดทอันใหม่ 
 นี่เป็นการอัพเดทครั้งสุดท้ายที่คุณจะได้รับจากระบบอัพเดทอันเก่า
 กรุณาดาวน์โหลดระบบบอัพเดทอันใหม่ที่: 
-https://panelattack.com/migration.html
+https://panelattack.com/migration.html"

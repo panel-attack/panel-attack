@@ -254,7 +254,7 @@ do
       end
       
       local fontHeight = get_global_font():getHeight()
-      local infoYPosition = 705 - fontHeight/2
+      local infoYPosition = 685 - fontHeight/2
 
       -- local major, minor, revision, codename = love.getVersion()
       -- if major < 12 then
@@ -264,10 +264,9 @@ do
       --   love.setDeprecationOutput(false)
       -- end
 
-      if GAME_UPDATER then
-        if (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
-          local downloadLink = consts.SERVER_LOCATION .. "/migration.html"
-          gprintf(loc("auto_updater_replacement") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
+      if GAME_UPDATER or DEBUG_ENABLED then
+        if DEBUG_ENABLED or (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
+          gprintf(loc("auto_updater_replacement"), 10, canvas_height / 2, menu_x - 10, "center")
           infoYPosition = infoYPosition - fontHeight
         end
       end
