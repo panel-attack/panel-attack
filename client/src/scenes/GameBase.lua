@@ -11,6 +11,8 @@ local ModController = require("client.src.mods.ModController")
 local SoundController = require("client.src.music.SoundController")
 local UpdatingImage = require("client.src.graphics.UpdatingImage")
 local prof = require("common.lib.jprof.jprof")
+local Menu = require("client.src.ui.Menu")
+local MenuItem = require("client.src.ui.MenuItem")
 
 --@module GameBase
 -- Scene template for running any type of game instance (endless, vs-self, replays, etc.)
@@ -135,6 +137,30 @@ function GameBase:load(sceneParams)
     SoundController:stopMusic()
   end
 
+  local pauseMenuItems = {
+    MenuItem.createButtonMenuItem("pause_resume", nil, true, function()
+      GAME.theme:playValidationSfx()
+      self.pauseMenu:setVisibility(false)
+      self.match:togglePause()
+      self:initializeFrameInfo()
+    end),
+    MenuItem.createButtonMenuItem("back", nil, true, function()
+      GAME.theme:playCancelSfx()
+      self.match:abort()
+    end),
+  }
+
+  self.pauseMenu = Menu({
+    x = 0,
+    y = 0,
+    hAlign = "center",
+    vAlign = "center",
+    menuItems = pauseMenuItems,
+    height = 200
+  })
+  self.pauseMenu:setVisibility(false)
+  self.uiRoot:addChild(self.pauseMenu)
+
   self:customLoad(sceneParams)
 
   leftover_time = 1 / 120
@@ -143,25 +169,22 @@ function GameBase:load(sceneParams)
 end
 
 function GameBase:handlePause()
-  if self.match.supportsPause and (input.isDown["MenuPause"] or (not GAME.focused and not self.match.isPaused)) then
-    if self.match.isPaused then
-      self:initializeFrameInfo()
-    end
-    self.match:togglePause()
+  if not self.match.isPaused then
+    if self.match.supportsPause and (input.isDown["MenuPause"] or input.allKeys.isDown["escape"] or (not GAME.focused and not self.match.isPaused)) then
+      self.match:togglePause()
+      self.pauseMenu:setVisibility(true)
 
-    if self.musicSource then
-      if self.match.isPaused then
-        SoundController:pauseMusic()
-      else
-        SoundController:playMusic(self.musicSource.stageTrack)
+      if self.musicSource then
+        if self.match.isPaused then
+          SoundController:pauseMusic()
+        else
+          SoundController:playMusic(self.musicSource.stageTrack)
+        end
       end
+      GAME.theme:playValidationSfx()
     end
-    GAME.theme:playValidationSfx()
-  end
-
-  if self.match.isPaused and input.isDown["MenuEsc"] then
-    GAME.theme:playCancelSfx()
-    self.match:abort()
+  else
+    self.pauseMenu:receiveInputs()
   end
 end
 
@@ -279,19 +302,26 @@ function GameBase:update(dt)
 end
 
 function GameBase:draw()
-  prof.push("GameBase:draw")
-  self:drawBackground()
-  prof.push("Match:render")
-  self.match:render()
-  prof.pop("Match:render")
-  prof.push("GameBase:drawHUD")
-  self:drawHUD()
-  prof.pop("GameBase:drawHUD")
-  if self.customDraw then
-    self:customDraw()
+  if not self.match.paused or self.match.renderDuringPause then
+    prof.push("GameBase:draw")
+    self:drawBackground()
+    prof.push("Match:render")
+    self.match:render()
+    prof.pop("Match:render")
+    prof.push("GameBase:drawHUD")
+    self:drawHUD()
+    prof.pop("GameBase:drawHUD")
+    if self.customDraw then
+      self:customDraw()
+    end
+    self:drawForegroundOverlay()
+    prof.pop("GameBase:draw")
   end
-  self:drawForegroundOverlay()
-  prof.pop("GameBase:draw")
+
+  if self.match.isPaused then
+    self.match:draw_pause()
+    self.uiRoot:draw()
+  end
 end
 
 function GameBase:drawBackground()
@@ -322,6 +352,7 @@ function GameBase:drawHUD()
           stack:drawScore()
           stack:drawSpeed()
         end
+        stack:drawMultibar()
       end
 
       -- Draw VS HUD

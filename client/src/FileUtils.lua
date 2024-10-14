@@ -33,7 +33,7 @@ end
 
 -- copies a file from the given source to the given destination
 function fileUtils.copyFile(source, destination)
-  local sucess
+  local success
   local source_file, err = love.filesystem.read(source)
   success, err = love.filesystem.write(destination, source_file)
   return success, err

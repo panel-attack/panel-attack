@@ -75,6 +75,9 @@ function BattleRoom.createFromServerMessage(message)
     if message.replay then
       local replay = ReplayV1.transform(message.replay)
       local match = Match.createFromReplay(replay, false)
+      for i, player in ipairs(match.players) do
+        player:updateWithMenuState(message.players[i])
+      end
       -- need this to make sure both have the same player tables
       -- there's like one stupid reference to battleRoom in engine that breaks otherwise
       battleRoom = BattleRoom.createFromMatch(match)
@@ -338,8 +341,19 @@ function BattleRoom:startMatch(stageId, seed, replayOfMatch)
 
   match:start()
   self.state = BattleRoom.states.MatchInProgress
+  local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn())
+  -- for touch android players load a different scene
+  if (love.system.getOS() == "Android" or DEBUG_ENABLED) and
+  --but only if they are the only local player cause for 2p vs local using portrait mode would be bad
+      tableUtils.count(self.players, function(p) return p.isLocal and p.human end) == 1 then
+    for _, player in ipairs(self.players) do
+      if player.isLocal and player.human and player.settings.inputMethod == "touch" then
+        GAME.navigationStack:push(require("client.src.scenes.PortraitGame")({match = self.match}), transition)
+        return
+      end
+    end
+  end
   if self.gameScene then
-    local transition = BlackFadeTransition(GAME.timer, 0.4, Easings.getSineIn())
     GAME.navigationStack:push(self.gameScene({match = self.match}), transition)
   end
 end
@@ -386,10 +400,11 @@ end
 -- if lock is false it unclaims the player's current inputConfiguration
 function BattleRoom.updateInputConfigurationForPlayer(player, lock)
   if lock then
-    for _, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
+    for i, inputConfiguration in ipairs(GAME.input.inputConfigurations) do
       if not inputConfiguration.claimed and tableUtils.length(inputConfiguration.isDown) > 0 then
         -- assign the first unclaimed input configuration that is used
         player:setInputMethod("controller")
+        logger.debug("Claiming input configuration " .. i .. " for player " .. player.playerNumber)
         player:restrictInputs(inputConfiguration)
         break
       end
@@ -397,6 +412,7 @@ function BattleRoom.updateInputConfigurationForPlayer(player, lock)
     if not player.inputConfiguration and not GAME.input.mouse.claimed then
       if GAME.input.mouse.isDown[1] or GAME.input.mouse.isPressed[1] then
         player:setInputMethod("touch")
+        logger.debug("Claiming touch configuration for player " .. player.playerNumber)
         player:restrictInputs(GAME.input.mouse)
       end
     end

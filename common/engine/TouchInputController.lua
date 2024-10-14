@@ -50,11 +50,11 @@ function TouchInputController:encodedCharacterForCurrentTouchInput()
       --let's say we are still touching the panel we had touched last.
       rowTouched = self.touchedCell.row
       columnTouched = self.touchedCell.col
-    elseif false then -- TODO replace with button
+    elseif self.touchingRaise then
       --note: changed this to an elseif.  
       --This means we won't be able to press raise by accident if we dragged too far off the stack, into the raise button
       --but we also won't be able to input swaps and press raise at the same time, though the network protocol allows touching a panel and raising at the same time
-      --Endaris has said we don't need to be able to swap and raise at the same time anyway though.
+      --Endaris has said we don't need to be able to swap and raise at the same time anyway though (swap suspends raise).
       shouldRaise = true
     else
       shouldRaise = false

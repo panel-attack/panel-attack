@@ -126,6 +126,7 @@ end
 function ReplayBrowser:update()
   if state == "browser" then
     if input.isDown["MenuEsc"] then
+      GAME.theme:playCancelSfx()
       GAME.navigationStack:pop()
     end
     if input.isDown["MenuSelect"] then
@@ -135,8 +136,12 @@ function ReplayBrowser:update()
       end
     end
     if input.isDown["MenuBack"] then
-      GAME.theme:playValidationSfx()
-      setPathToParentDir()
+      if current_path == "/" then
+        GAME.theme:playCancelSfx()
+      else
+        GAME.theme:playValidationSfx()
+        setPathToParentDir()
+      end
     end
     if input:isPressedWithRepeat("MenuUp") then
       GAME.theme:playMoveSfx()

@@ -134,7 +134,6 @@ function SimulatedStack:render()
   self:drawFrame()
   self:drawWall(0, 12)
   self:drawCanvas()
-  self:drawAbsoluteMultibar(0, 0)
 
   self:drawDebug()
 end

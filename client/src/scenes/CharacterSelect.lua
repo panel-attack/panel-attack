@@ -605,7 +605,11 @@ function CharacterSelect:createRankedSelection(player, width)
       self:setValue(true)
     elseif inputs.isDown["Down"] then
       self:setValue(false)
-    elseif inputs.isDown["Swap2"] or inputs.isDown["Swap1"] then
+    elseif inputs.isDown["Swap1"] then
+      GAME.theme:playValidationSfx()
+      self:yieldFocus()
+    elseif inputs.isDown["Swap2"] then
+      GAME.theme:playCancelSfx()
       self:yieldFocus()
     end
   end
@@ -646,7 +650,11 @@ function CharacterSelect:createStyleSelection(player, width)
       self:setValue(true)
     elseif inputs.isDown["Down"] then
       self:setValue(false)
-    elseif inputs.isDown["Swap2"] or inputs.isDown["Swap1"] then
+    elseif inputs.isDown["Swap1"] then
+      GAME.theme:playValidationSfx()
+      self:yieldFocus()
+    elseif inputs.isDown["Swap2"] then
+      GAME.theme:playCancelSfx()
       self:yieldFocus()
     end
   end
@@ -679,8 +687,8 @@ function CharacterSelect:createRecordsBox(lastText)
   local stackPanel = StackPanel({alignment = "top", hFill = true, vAlign = "center"})
 
   local lastLines = UiElement({hFill = true})
-  local lastLinesLabel = PixelFontLabel({ text = lastText, xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
-  local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  local lastLinesLabel = PixelFontLabel({ text = lastText, xScale = 0.5, yScale = 1, hAlign = "left", x = 10})
+  local lastLinesValue = PixelFontLabel({ text = self.lastScore, xScale = 0.5, yScale = 1, hAlign = "right", x = -10})
   lastLines.height = lastLinesLabel.height + 4
   lastLines.label = lastLinesLabel
   lastLines.value = lastLinesValue
@@ -690,8 +698,8 @@ function CharacterSelect:createRecordsBox(lastText)
   stackPanel:addElement(lastLines)
 
   local record = UiElement({hFill = true})
-  local recordLabel = PixelFontLabel({ text = "record", xScale = 0.5, yScale = 1, hAlign = "left", x = 20})
-  local recordValue = PixelFontLabel({ text = self.record, xScale = 0.5, yScale = 1, hAlign = "right", x = -20})
+  local recordLabel = PixelFontLabel({ text = "record", xScale = 0.5, yScale = 1, hAlign = "left", x = 10})
+  local recordValue = PixelFontLabel({ text = self.record, xScale = 0.5, yScale = 1, hAlign = "right", x = -10})
   record.height = recordLabel.height + 4
   record.label = recordLabel
   record.value = recordValue
@@ -894,6 +902,7 @@ function CharacterSelect:update(dt)
   end
   if GAME.battleRoom and GAME.battleRoom.spectating then
     if input.isDown["MenuEsc"] then
+      GAME.theme:playCancelSfx()
       GAME.netClient:leaveRoom()
       GAME.battleRoom.online = false
       GAME.navigationStack:pop(nil, function() GAME.battleRoom:shutdown() end)

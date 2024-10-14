@@ -19,12 +19,7 @@ GAME = Game()
 -- We override love.run with a function that refers to `runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.runInternal = CustomRun.innerRun
-if GAME_UPDATER == nil then
-  -- We don't have an autoupdater, so we need to override run.
-  -- In the autoupdater case run will already have been overridden and be running
-  love.run = CustomRun.run
-end
-
+love.run = CustomRun.run
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
@@ -38,7 +33,7 @@ function love.load(args)
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
   GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
 
-  GAME:load(GAME_UPDATER)
+  GAME:load()
 end
 
 function love.focus(f)
@@ -175,9 +170,9 @@ function love.errorhandler(msg)
     local errorData = Game.errorData(sanitizedMessage, sanitizedTrace)
     local detailedErrorLogString = Game.detailedErrorLogString(errorData)
     errorData.detailedErrorLogString = detailedErrorLogString
-    if GAME_UPDATER_GAME_VERSION then
-      GAME.netClient:sendErrorReport(errorData, consts.SERVER_LOCATION, 59569)
-    end
+    -- if GAME_UPDATER_GAME_VERSION then
+    --   GAME.netClient:sendErrorReport(errorData, consts.SERVER_LOCATION, 59569)
+    -- end
     return detailedErrorLogString
   end
 
@@ -317,4 +312,8 @@ end
 
 function love.keyreleased(key, unicode)
   inputManager:keyReleased(key, unicode)
+end
+
+function love.joystickaxis(joystick, axisIndex, value)
+  inputManager:joystickaxis(joystick, axisIndex, value)
 end

@@ -44,7 +44,7 @@ end
 function Scene:drawCommunityMessage()
   -- Draw the community message
   if not config.debug_mode then
-    GraphicsUtil.printf(join_community_msg or "", 0, 668, consts.CANVAS_WIDTH, "center")
+    GraphicsUtil.printf(join_community_msg or "", 0, (668 / 720) * GAME.globalCanvas:getHeight(), GAME.globalCanvas:getWidth(), "center")
   end
 end
 

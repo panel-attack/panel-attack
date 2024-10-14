@@ -40,7 +40,7 @@ endless_modern,new difficulty style in endless / time attack,Modern,Moderne,Mode
 anonymous,,Anonymous,Anonyme,Anônimo,匿名,Anónimo,Anonym,Anonimo,ไม่ระบุตัวตน
 stages,,stages,terrains,Cenários,ステージ,escenarios,Arenen,Scenario,ด่าน
 characters,,characters,personnages,Personagens,キャラクター,personajes,Charaktere,Personaggi,ตัวละคร
-join_community,,Join the community at,Rejoignez la communauté sur,Participe da comunidade em,コミュニティに参加しよう,Únete a nuestra comunidad en,Tritt unserer Community bei unter,Unisciti alla community su,เข้าร่วมกลุ่มได้ที่
+join_community,,Join the community at %1,Rejoignez la communauté sur %1,Participe da comunidade em %1,コミュニティに参加しよう %1,Únete a nuestra comunidad en %1,Tritt unserer Community bei unter %1,Unisciti alla community su %1,เข้าร่วมกลุ่มได้ที่ %1
 warning_msg,,You've had a bug. Please report this on Discord with file:,"Vous venez de rencontrer un problème.
 S'il vous plaît, signalez le sur Discord avec le fichier :","Você encontrou um problema. Por favor, reporte no Discord o arquivo em anexo:",不具合が発生しました。以下のファイルでディスコードに報告して下さい：,"Hubo un problema. Por favor, reporta esto en Discord con el siguiente archivo:",Ein Bug ist aufgetreten. Bitte melde diesen in unserem Discord mit der Datei:,"Hai riscontrato un bug. Per favore, segnalalo su Discord con il file:",คุณเจอ bug กรุณารายงานปัญหาใน Discord ด้วยไฟล์นี้:
 lb_alone,,You are all alone in the lobby :(,Vous êtes seul dans le salon :(,Você está sozinho(a) no lobby :(,ぼっち　(´・ω・`),No hay nadie en el salón :(,Du bist ganz alleine in der Lobby :<,Sei tutto solo nella lobby :(,ในล็อบบี้ตอนนี้มีคุณคนเดียว :(
@@ -535,3 +535,4 @@ auto_updater_version_warning,Warning shown to users with an old autoupdater,"New
 username_blank_warning,shown in user name input when nothing is entered,Username cannot be blank,Le nom d'utilisateur ne peut pas être vide,O nome de usuário não pode ficar em branco,ユーザー名を空白にすることはできません,Nombre de usuario no puede estar en blanco,Benutzername darf nicht leer sein,Il nome utente non può essere vuoto,Username ไม่สามารถเป็นค่าว่างได้
 op_shakeIntensity,Option for the intensity of the shake animation,Shake Animation Intensity,,,,,Stärke der Aufprallanimation
 op_performance_drain,Label for the option to configure the amount of active garbage collection in favor of sleeping,Performance/Battery Drain,,,,,Performance/Stromverbrauch
+pause_resume,Label for the resume button in the pause menu,Resume,,,,Continuar,Fortsetzen,,

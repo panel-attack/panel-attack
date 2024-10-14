@@ -122,7 +122,7 @@ function OptionsMenu:getSystemInfo()
   sysInfo[#sysInfo + 1] = {name = "Graphics Card", value = graphicsCardName}
   sysInfo[#sysInfo + 1] = {name = "LOVE Version", value = GAME:loveVersionString()}
   sysInfo[#sysInfo + 1] = {name = "Panel Attack Engine Version", value = consts.ENGINE_VERSION}
-  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = GAME_UPDATER_GAME_VERSION}
+  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = tostring(GAME.updater.activeVersion.version)}
   sysInfo[#sysInfo + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}
   sysInfo[#sysInfo + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme .. "/" .. #characters_ids}
   sysInfo[#sysInfo + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme .. "/" .. #stages_ids}
