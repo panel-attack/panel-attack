@@ -9,7 +9,6 @@ local StartUp = class(function(scene, sceneParams)
   scene.migrationRoutine = coroutine.create(scene.migrate)
   scene.setupRoutine = coroutine.create(sceneParams.setupRoutine)
   scene.message = "Startup"
-  scene.loveMajorVersion = love.getVersion()
   scene.migrationPath = scene:checkIfMigrationIsPossible()
 
   local saveDir = love.filesystem.getSaveDirectory()
