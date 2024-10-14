@@ -1224,6 +1224,7 @@ function Stack.simulate(self)
   if self.shake_time == 0 then
     self.peak_shake_time = 0
   end
+
   prof.pop("shake time updates")
 
   -- Phase 3. /////////////////////////////////////////////////////////////
@@ -2014,6 +2015,7 @@ function Stack.onGarbageLand(self, panel)
 
     -- whether we ran through it or not, the panel should lose its shake time
     panel.shake_time = nil
+    self:emitSignal("hurt", "hurt")
   end
 end
 

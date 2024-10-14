@@ -139,6 +139,7 @@ function Stack:checkMatches()
     if isChainLink or comboSize > 3 or metalCount > 0 then
       self:pushGarbage(attackGfxOrigin, isChainLink, comboSize, metalCount)
       self:queueAttackSoundEffect(isChainLink, self.chain_counter, comboSize, metalCount)
+      self:emitSignal("attackSent", "attack")
     end
 
     self.analytic:register_destroyed_panels(comboSize)
