@@ -74,7 +74,7 @@ function love.load()
   local major, minor, revision, codename = love.getVersion()
   if major == 12 then
     love.setDeprecationOutput(false)
-    if GAME_UPDATER and GAME_UPDATER_STATES then
+    if GAME_UPDATER and GAME_UPDATER.version and GAME_UPDATER.version.major >= 1 then
       GAME_UPDATER:init()
     end
   end
