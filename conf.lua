@@ -26,7 +26,7 @@ function love.conf(t)
   t.audio.mixwithsystem = false       -- Keep background music playing when opening LOVE (boolean, iOS and Android only)
 
   t.window.title = "Panel Attack"          -- The window title (string)
-  t.window.icon = nil                      -- Filepath to an image to use as the window's icon (string)
+  t.window.icon = "panels/__default/panel11.png" -- Filepath to an image to use as the window's icon (string)
   t.window.width = config.windowWidth            -- The window width (number)
   t.window.height = config.windowHeight          -- The window height (number)
   t.window.borderless = config.borderless  -- Remove all border visuals from the window (boolean)

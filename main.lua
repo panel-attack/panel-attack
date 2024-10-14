@@ -37,11 +37,16 @@ local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+local logger = require("logger")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.pa_runInternal = CustomRun.innerRun
-love.run = CustomRun.run
+
+function love.run()
+  logger.debug("running CustomRun.run()")
+  return CustomRun.run()
+end
 
 local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
 
@@ -49,7 +54,6 @@ if PROFILING_ENABLED then
   GAME.profiler = require("profiler")
 end
 
-local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
