@@ -122,7 +122,7 @@ function OptionsMenu:getSystemInfo()
   sysInfo[#sysInfo + 1] = {name = "Graphics Card", value = graphicsCardName}
   sysInfo[#sysInfo + 1] = {name = "LOVE Version", value = GAME:loveVersionString()}
   sysInfo[#sysInfo + 1] = {name = "Panel Attack Engine Version", value = consts.ENGINE_VERSION}
-  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = tostring(GAME.updater.activeVersion.version)}
+  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = GAME.updater and tostring(GAME.updater.activeVersion.version) or nil}
   sysInfo[#sysInfo + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}
   sysInfo[#sysInfo + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme .. "/" .. #characters_ids}
   sysInfo[#sysInfo + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme .. "/" .. #stages_ids}
@@ -233,16 +233,16 @@ function OptionsMenu:loadGeneralMenu()
 
   local releaseStreamSelection
 
-  if GAME_UPDATER and GAME_UPDATER.releaseStreams and GAME_UPDATER_STATES then
+  if GAME.updater and GAME.updater.releaseStreams and GAME_UPDATER_STATES then
     local releaseStreams = {}
 
-    for name, _ in pairs(GAME_UPDATER.releaseStreams) do
+    for name, _ in pairs(GAME.updater.releaseStreams) do
       releaseStreams[#releaseStreams+1] = name
     end
 
     -- in case the version was changed earlier and we return to options again, reset to the currently launched version
     -- this is so whatever the user leaves the setting on when quitting options that will be what is launched with next time
-    GAME_UPDATER:writeLaunchConfig(GAME_UPDATER.activeVersion)
+    GAME.updater:writeLaunchConfig(GAME.updater.activeVersion)
 
     local buttons = {}
 
@@ -251,23 +251,23 @@ function OptionsMenu:loadGeneralMenu()
     end
 
     local function updateReleaseStreamConfig(releaseStreamName)
-      local releaseStream = GAME_UPDATER.releaseStreams[releaseStreamName]
-      local version = GAME_UPDATER.getLatestInstalledVersion(releaseStream)
+      local releaseStream = GAME.updater.releaseStreams[releaseStreamName]
+      local version = GAME.updater.getLatestInstalledVersion(releaseStream)
       if not version then
-        if not GAME_UPDATER:updateAvailable(releaseStream) then
-          GAME_UPDATER:getAvailableVersions(releaseStream)
-          while GAME_UPDATER.state ~= GAME_UPDATER_STATES.idle do
-            GAME_UPDATER:update()
+        if not GAME.updater:updateAvailable(releaseStream) then
+          GAME.updater:getAvailableVersions(releaseStream)
+          while GAME.updater.state ~= GAME_UPDATER_STATES.idle do
+            GAME.updater:update()
           end
         end
-        if GAME_UPDATER:updateAvailable(releaseStream) then
+        if GAME.updater:updateAvailable(releaseStream) then
           table.sort(releaseStream.availableVersions, function(a,b) return a.version > b.version end)
           version = releaseStream.availableVersions[1]
         else
           return false
         end
       end
-      GAME_UPDATER:writeLaunchConfig(version)
+      GAME.updater:writeLaunchConfig(version)
 
       return true
     end
@@ -275,7 +275,7 @@ function OptionsMenu:loadGeneralMenu()
     releaseStreamSelection = ButtonGroup({
       buttons = buttons,
       values = releaseStreams,
-      selectedIndex = tableUtils.indexOf(releaseStreams, GAME_UPDATER.activeVersion.releaseStream.name),
+      selectedIndex = tableUtils.indexOf(releaseStreams, GAME.updater.activeVersion.releaseStream.name),
       onChange = function(group, value)
         GAME.theme:playMoveSfx()
         local success = updateReleaseStreamConfig(value)
@@ -283,9 +283,7 @@ function OptionsMenu:loadGeneralMenu()
           -- there are no versions for the picked stream
           -- for safety reasons remove the option for that button so the updater does not start in a potentially unsalvageable configuration
           local index = tableUtils.indexOf(releaseStreams, value)
-          table.remove(releaseStreams, index)
-          buttons[index]:detach()
-          table.remove(buttons, index)
+          group:removeButtonByValue(value)
           index = util.bound(1, index, #group.buttons)
           -- simulate changing to the button that replaces the one that got removed due to no attached versions
           group.buttons[index]:onClick(nil, 0)
@@ -312,8 +310,8 @@ function OptionsMenu:loadGeneralMenu()
   function()
     GAME.theme:playCancelSfx()
     self:switchToScreen("baseMenu")
-    if GAME_UPDATER and GAME_UPDATER.releaseStreams then
-      if releaseStreamSelection.value ~= GAME_UPDATER.activeReleaseStream.name then
+    if GAME.updater and GAME.updater.releaseStreams then
+      if releaseStreamSelection.value ~= GAME.updater.activeReleaseStream.name then
         love.window.showMessageBox("Changing Release Stream", "Please restart the game to launch the selected release stream")
       end
     end

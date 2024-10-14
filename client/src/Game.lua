@@ -94,10 +94,14 @@ function Game:load()
   -- move to constructor
   self.updater = GAME_UPDATER or nil
   if self.updater then
+    logger.debug("Launching game with updater")
     local success = pcall(self.updater.init, self.updater)
     if not success then
+      logger.debug("updater:init failed")
       self.updater = nil
     end
+  else
+    logger.debug("Launching game without updater")
   end
   local user_input_conf = save.read_key_file()
   if user_input_conf then

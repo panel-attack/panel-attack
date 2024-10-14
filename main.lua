@@ -3,7 +3,6 @@ require("common.lib.mathExtensions")
 local utf8 = require("common.lib.utf8Additions")
 local inputManager = require("common.lib.inputManager")
 require("client.src.globals")
-local consts = require("client.src.CustomRun")
 local touchHandler = require("client.src.ui.touchHandler")
 local inputFieldManager = require("client.src.ui.inputFieldManager")
 local ClientMessages = require("common.network.ClientProtocol")
@@ -19,7 +18,10 @@ GAME = Game()
 -- We override love.run with a function that refers to `runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.runInternal = CustomRun.innerRun
-love.run = CustomRun.run
+
+function love.run()
+  return CustomRun.run()
+end
 
 -- Called at the beginning to load the game
 -- Either called directly or from auto_updater
