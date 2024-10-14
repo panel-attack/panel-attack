@@ -131,14 +131,6 @@ function MainMenu:createMainMenu()
 end
 
 function MainMenu:update(dt)
-  if wait_game_update ~= nil then
-    has_game_update = wait_game_update:pop()
-    if has_game_update ~= nil and has_game_update then
-      wait_game_update = nil
-      GAME_UPDATER_GAME_VERSION = "NEW VERSION FOUND! RESTART THE GAME!"
-    end
-  end
-
   GAME.theme.images.bg_main:update(dt)
   self.menu:receiveInputs()
 end
@@ -155,13 +147,13 @@ function MainMenu:draw()
     infoYPosition = infoYPosition - fontHeight
   end
 
-  if GAME_UPDATER_GAME_VERSION then
-    GraphicsUtil.printf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, consts.CANVAS_WIDTH, "right")
-    infoYPosition = infoYPosition - fontHeight
-    if has_game_update then
-      panels[config.panels]:drawPanelFrame(1, "normal", 1262, 685)
-    end
-  end
+  -- if GAME_UPDATER_GAME_VERSION then
+  --   GraphicsUtil.printf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, consts.CANVAS_WIDTH, "right")
+  --   infoYPosition = infoYPosition - fontHeight
+  --   if has_game_update then
+  --     panels[config.panels]:drawPanelFrame(1, "normal", 1262, 685)
+  --   end
+  -- end
 end
 
 return MainMenu

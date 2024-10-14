@@ -1,6 +1,7 @@
 local class = require("common.lib.class")
 local UIElement = require("client.src.ui.UIElement")
 local util = require("common.lib.util")
+local tableUtils = require("common.lib.tableUtils")
 
 local BUTTON_PADDING = 5
 
@@ -10,20 +11,22 @@ local BUTTON_PADDING = 5
 -- changes state for the button group
 -- updates the color of the selected button
 -- updates the value to the selected button's value
-local function setState(self, i)
-  self.buttons[self.selectedIndex].backgroundColor = {.3, .3, .3, .7}
-  self.selectedIndex = i
-  self.buttons[i].backgroundColor = {.5, .5, 1, .7}
-  self.value = self.values[i]
+local function buttonClicked(buttonGroup, button)
+  buttonGroup.buttons[buttonGroup.selectedIndex].backgroundColor = {.3, .3, .3, .7}
+  local i = tableUtils.indexOf(buttonGroup.buttons, button)
+  buttonGroup.buttons[i].backgroundColor = {.5, .5, 1, .7}
+  buttonGroup.value = buttonGroup.values[i]
+  buttonGroup.selectedIndex = i
 end
 
 -- forced override for each of the button's onClick function
 -- this allows buttons to have individual custom behaviour while also triggering the global state change
-local function genButtonGroupFn(self, i, onClick)
-  return function(selfElement, inputSource, holdTime)
-    setState(self, i)
-    onClick(selfElement, inputSource, holdTime)
-    self.onChange(self.value)
+local function genButtonGroupFn(self, button)
+  local onClick = button.onClick
+  return function(b, inputSource, holdTime)
+    buttonClicked(self, b)
+    onClick(b, inputSource, holdTime)
+    self:onChange(self.value)
   end
 end
 
@@ -47,7 +50,7 @@ local function setButtons(self, buttons, values, selectedIndex)
        button.x = self.buttons[i - 1].x + self.buttons[i - 1].width + BUTTON_PADDING
        overallWidth = overallWidth + BUTTON_PADDING
     end
-    button.onClick = genButtonGroupFn(self, i, button.onClick)
+    button.onClick = genButtonGroupFn(self, button)
     self:addChild(button)
     overallHeight = math.max(overallHeight, button.height)
   end
@@ -83,6 +86,39 @@ function ButtonGroup:receiveInputs(input)
   elseif input:isPressedWithRepeat("Right") then
     self:setActiveButton(self.selectedIndex + 1)
   end
+end
+
+function ButtonGroup:refreshLayout()
+  local overallWidth = 0
+  local overallHeight = 0
+  for i, button in ipairs(self.buttons) do
+    overallWidth = overallWidth + button.width
+    if i > 1 then
+       button.x = self.buttons[i - 1].x + self.buttons[i - 1].width + BUTTON_PADDING
+       overallWidth = overallWidth + BUTTON_PADDING
+    end
+    overallHeight = math.max(overallHeight, button.height)
+  end
+  self.width = overallWidth
+  self.height = overallHeight
+  self.buttons[self.selectedIndex].backgroundColor = {.5, .5, 1, .7}
+  self.value = self.values[self.selectedIndex]
+end
+
+function ButtonGroup:removeButton(button)
+  local index = tableUtils.indexOf(self.buttons, button)
+  table.remove(self.buttons, index)
+  table.remove(self.values, index)
+  button:detach()
+  if #self.buttons > 0 then
+    self.selectedIndex = util.bound(1, self.selectedIndex, #self.buttons)
+    self:refreshLayout()
+  end
+end
+
+function ButtonGroup:removeButtonByValue(value)
+  local index = tableUtils.indexOf(self.values, value)
+  self:removeButton(self.buttons[index])
 end
 
 ButtonGroup.setButtons = setButtons

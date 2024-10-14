@@ -87,7 +87,7 @@ local function createToggleButtonGroup(configField, onChangeFn)
     buttons = {TextButton({width = 60, label = Label({text = "op_off"})}), TextButton({width = 60, label = Label({text = "op_on"})})},
     values = {false, true},
     selectedIndex = config[configField] and 2 or 1,
-    onChange = function(value)
+    onChange = function(group, value)
       GAME.theme:playMoveSfx()
       config[configField] = value
       if onChangeFn then
@@ -122,7 +122,7 @@ function OptionsMenu:getSystemInfo()
   sysInfo[#sysInfo + 1] = {name = "Graphics Card", value = graphicsCardName}
   sysInfo[#sysInfo + 1] = {name = "LOVE Version", value = GAME:loveVersionString()}
   sysInfo[#sysInfo + 1] = {name = "Panel Attack Engine Version", value = consts.ENGINE_VERSION}
-  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = GAME_UPDATER_GAME_VERSION}
+  sysInfo[#sysInfo + 1] = {name = "Panel Attack Release Version", value = GAME.updater and tostring(GAME.updater.activeVersion.version) or nil}
   sysInfo[#sysInfo + 1] = {name = "Save Data Directory Path", value = love.filesystem.getSaveDirectory()}
   sysInfo[#sysInfo + 1] = {name = "Characters [Enabled/Total]", value = #characters_ids_for_current_theme .. "/" .. #characters_ids}
   sysInfo[#sysInfo + 1] = {name = "Stages [Enabled/Total]", value = #stages_ids_for_current_theme .. "/" .. #stages_ids}
@@ -219,7 +219,7 @@ function OptionsMenu:loadGeneralMenu()
     },
     values = {"with my name", "anonymously", "not at all"},
     selectedIndex = saveReplaysPubliclyIndexMap[config.save_replays_publicly],
-    onChange = function(value)
+    onChange = function(group, value)
       GAME.theme:playMoveSfx()
       config.save_replays_publicly = value
     end
@@ -231,6 +231,67 @@ function OptionsMenu:loadGeneralMenu()
     GAME.theme:playMoveSfx()
   end
 
+  local releaseStreamSelection
+
+  if GAME.updater and GAME.updater.releaseStreams and GAME_UPDATER_STATES then
+    local releaseStreams = {}
+
+    for name, _ in pairs(GAME.updater.releaseStreams) do
+      releaseStreams[#releaseStreams+1] = name
+    end
+
+    -- in case the version was changed earlier and we return to options again, reset to the currently launched version
+    -- this is so whatever the user leaves the setting on when quitting options that will be what is launched with next time
+    GAME.updater:writeLaunchConfig(GAME.updater.activeVersion)
+
+    local buttons = {}
+
+    for i = 1, #releaseStreams do
+      buttons[#buttons+1] = TextButton({label = Label({text = releaseStreams[i], translate = false})})
+    end
+
+    local function updateReleaseStreamConfig(releaseStreamName)
+      local releaseStream = GAME.updater.releaseStreams[releaseStreamName]
+      local version = GAME.updater.getLatestInstalledVersion(releaseStream)
+      if not version then
+        if not GAME.updater:updateAvailable(releaseStream) then
+          GAME.updater:getAvailableVersions(releaseStream)
+          while GAME.updater.state ~= GAME_UPDATER_STATES.idle do
+            GAME.updater:update()
+          end
+        end
+        if GAME.updater:updateAvailable(releaseStream) then
+          table.sort(releaseStream.availableVersions, function(a,b) return a.version > b.version end)
+          version = releaseStream.availableVersions[1]
+        else
+          return false
+        end
+      end
+      GAME.updater:writeLaunchConfig(version)
+
+      return true
+    end
+
+    releaseStreamSelection = ButtonGroup({
+      buttons = buttons,
+      values = releaseStreams,
+      selectedIndex = tableUtils.indexOf(releaseStreams, GAME.updater.activeVersion.releaseStream.name),
+      onChange = function(group, value)
+        GAME.theme:playMoveSfx()
+        local success = updateReleaseStreamConfig(value)
+        if not success then
+          -- there are no versions for the picked stream
+          -- for safety reasons remove the option for that button so the updater does not start in a potentially unsalvageable configuration
+          local index = tableUtils.indexOf(releaseStreams, value)
+          group:removeButtonByValue(value)
+          index = util.bound(1, index, #group.buttons)
+          -- simulate changing to the button that replaces the one that got removed due to no attached versions
+          group.buttons[index]:onClick(nil, 0)
+        end
+      end
+    })
+  end
+
   local generalMenuOptions = {
     MenuItem.createToggleButtonGroupMenuItem("op_fps", nil, nil, createToggleButtonGroup("show_fps")),
     MenuItem.createToggleButtonGroupMenuItem("op_ingame_infos", nil, nil, createToggleButtonGroup("show_ingame_infos")),
@@ -239,11 +300,22 @@ function OptionsMenu:loadGeneralMenu()
     end)),
     MenuItem.createToggleButtonGroupMenuItem("op_replay_public", nil, nil, publicReplayButtonGroup),
     MenuItem.createSliderMenuItem("op_performance_drain", nil, nil, performanceSlider),
-    MenuItem.createButtonMenuItem("back", nil, nil, function()
-          GAME.theme:playCancelSfx()
-        self:switchToScreen("baseMenu")
-      end)
   }
+
+  if releaseStreamSelection then
+    generalMenuOptions[#generalMenuOptions+1] = MenuItem.createToggleButtonGroupMenuItem("Release Stream", nil, false, releaseStreamSelection)
+  end
+
+  generalMenuOptions[#generalMenuOptions + 1] = MenuItem.createButtonMenuItem("back", nil, nil,
+  function()
+    GAME.theme:playCancelSfx()
+    self:switchToScreen("baseMenu")
+    if GAME.updater and GAME.updater.releaseStreams then
+      if releaseStreamSelection.value ~= GAME.updater.activeReleaseStream.name then
+        love.window.showMessageBox("Changing Release Stream", "Please restart the game to launch the selected release stream")
+      end
+    end
+  end)
 
   local menu = Menu.createCenteredMenu(generalMenuOptions)
   return menu
@@ -350,7 +422,7 @@ function OptionsMenu:loadGraphicsMenu()
     selectedIndex = tableUtils.first(scaleTypeData, function(scaleType)
       return scaleType.value == config.gameScaleType
     end).index,
-    onChange = function(value)
+    onChange = function(group, value)
       GAME.theme:playMoveSfx()
       config.gameScaleType = value
       updateFixedButtonGroupVisibility()
@@ -409,7 +481,7 @@ function OptionsMenu:loadSoundMenu()
     },
     values = {"stage", "often_stage", "either", "often_characters", "characters"},
     selectedIndex = musicFrequencyIndexMap[config.use_music_from],
-    onChange = function(value)
+    onChange = function(group, value)
       GAME.theme:playMoveSfx()
       config.use_music_from = value
     end

@@ -31,6 +31,10 @@ for _, value in pairs(arg) do
     collectgarbage("stop")
   elseif value == "performanceTests" then
     PERFORMANCE_TESTS_ENABLED = 1
+  elseif value == "updaterTest" then
+    -- drop the updater directory of the updater in for debugging purposes
+    GAME_UPDATER_STATES = { idle = 0, checkingForUpdates = 1, downloading = 2}
+    GAME_UPDATER = require("updater.gameUpdater")
   else
     for match in string.gmatch(value, "user%-id=(.*)") do
       CUSTOM_USER_ID = match
