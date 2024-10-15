@@ -142,6 +142,7 @@ function GameBase:load(sceneParams)
       GAME.theme:playValidationSfx()
       self.pauseMenu:setVisibility(false)
       self.match:togglePause()
+      SoundController:playMusic(self.musicSource.stageTrack)
       self:initializeFrameInfo()
     end),
     MenuItem.createButtonMenuItem("back", nil, true, function()
@@ -175,11 +176,7 @@ function GameBase:handlePause()
       self.pauseMenu:setVisibility(true)
 
       if self.musicSource then
-        if self.match.isPaused then
-          SoundController:pauseMusic()
-        else
-          SoundController:playMusic(self.musicSource.stageTrack)
-        end
+        SoundController:pauseMusic()
       end
       GAME.theme:playValidationSfx()
     end
