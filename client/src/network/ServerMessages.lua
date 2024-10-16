@@ -40,6 +40,7 @@ function ServerMessages.sanitizeMenuState(menuState)
   sanitized.selectedStageId = menuState.stage_is_random
   sanitized.level = menuState.level
   sanitized.wantsRanked = menuState.ranked
+  sanitized.inputMethod = menuState.inputMethod
 
   sanitized.wantsReady = menuState.wants_ready
   sanitized.hasLoaded = menuState.loaded

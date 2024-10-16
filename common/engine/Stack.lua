@@ -2084,7 +2084,7 @@ function Stack:getInfo()
   local info = {}
   info.playerNumber = self.which
   info.character = self.character
-  info.panels = self.panels_dir
+  info.inputMethod = self.inputMethod
   info.rollbackCount = self.rollbackCount
   if self.rollbackCopies then
     info.rollbackCopyCount = tableUtils.length(self.rollbackCopies)

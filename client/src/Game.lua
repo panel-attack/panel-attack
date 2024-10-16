@@ -438,7 +438,7 @@ function Game.detailedErrorLogString(errorData)
         "    P" .. i .. ": " .. newLine ..
         "      Player Number: " .. stack.playerNumber .. newLine ..
         "      Character: " .. stack.character .. newLine ..
-        "      Panels: " .. stack.panels .. newLine ..
+        "      InputMethod: " .. stack.inputMethod .. newLine ..
         "      Rollback Count: " .. stack.rollbackCount .. newLine ..
         "      Rollback Frames Saved: " .. stack.rollbackCopyCount
       end
