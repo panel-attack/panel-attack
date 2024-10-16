@@ -71,9 +71,31 @@ function BattleRoom.createFromServerMessage(message)
   local gameMode = GameModes.getPreset("TWO_PLAYER_VS")
 
   if message.spectate_request_granted then
+    logger.debug("Joining a match as spectator")
     message = ServerMessages.sanitizeSpectatorJoin(message)
+    for key, value in pairs(message) do
+      if key ~= "replay" then
+        if type(value) == "table" then
+          logger.debug(key .. ":" .. table_to_string(value))
+        else
+          logger.debug(key .. ":" .. tostring(value))
+        end
+      end
+    end
     if message.replay then
+      for key, value in pairs(message.replay.vs) do
+        if key ~= "I" and key ~= "in_buf" then
+          if key ~= "replay" then
+            if type(value) == "table" then
+              logger.debug(key .. ":" .. table_to_string(value))
+            else
+              logger.debug(key .. ":" .. tostring(value))
+            end
+          end
+        end
+      end
       local replay = ReplayV1.transform(message.replay)
+      logger.debug("post transform:\n" .. table_to_string(replay))
       local match = Match.createFromReplay(replay, false)
       for i, player in ipairs(match.players) do
         player:updateWithMenuState(message.players[i])
