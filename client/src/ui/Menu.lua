@@ -297,18 +297,18 @@ end
 function Menu:onRelease(x, y)
   if not self.touchedChild or not self.touchedChild.onRelease then
     self:onDrag(x, y)
-    self.swiping = false
-    self.touchedChild = nil
   else
-    if self.touchedChild.onDrag then
-      -- if it implements an onDrag we can assume it has an idea what to do with the new coords
-      self.touchedChild:onRelease(x, y)
-    else
-      -- otherwise check if our original click is still inside the release window
-      -- to not accidently trigger the release
+    if self.yOffset ~= self.originalY then
+      -- we dragged so trigger with the original touch coordinates
+      -- that way the button will only trigger its on-click if it still touches the start coords
       self.touchedChild:onRelease(self.initialTouchX, self.initialTouchY)
+    else
+      self.touchedChild:onRelease(x, y)
     end
   end
+
+  self.swiping = false
+  self.touchedChild = nil
 end
 
 -- overwrite the default callback to always return itself
