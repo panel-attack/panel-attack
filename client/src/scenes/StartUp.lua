@@ -76,6 +76,9 @@ function StartUp:checkIfMigrationIsPossible()
   if os == "Linux" or os == "OS X" then
     if not love.filesystem.exists("conf.json") then
       local path = love.filesystem.getAppdataDirectory()
+      if path:sub(-1) ~= "/" then
+        path = path .. "/"
+      end
       if os == "Linux" then
         path = path .. "love/"
       elseif os == "OS X" then
