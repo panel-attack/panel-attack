@@ -40,6 +40,7 @@ function love.conf(t)
   t.window.depth = nil                     -- The number of bits per sample in the depth buffer
   t.window.stencil = nil                   -- The number of bits per sample in the stencil buffer
   t.window.display = config.display        -- Index of the monitor to show the window in (number)
+  t.window.displayindex = config.display
   t.window.highdpi = true                  -- Enable high-dpi mode for the window on a Retina display (boolean)
   t.window.usedpiscale = false             -- Enable automatic DPI scaling when highdpi is set to true as well (boolean)
   t.window.x = config.windowX              -- The x-coordinate of the window's position in the specified display (number)
