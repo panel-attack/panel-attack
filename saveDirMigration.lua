@@ -10,6 +10,9 @@ local function migrateIfPossible()
     -- this means this is the first startup on a fused build (meaning the new native updater on mac/linux)
     -- we check if there is content in what would be the save directory in unfused mode
     local path = love.filesystem.getAppdataDirectory()
+    if path:sub(-1) ~= "/" then
+      path = path .. "/"
+    end
     if os == "Linux" then
       path = path .. "love/"
     elseif os == "OS X" then
