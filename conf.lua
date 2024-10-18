@@ -9,7 +9,7 @@ function love.conf(t)
 
   --t.identity = "" -- (already set above) -- The name of the save directory (string)
   t.appendidentity = false            -- Search files in source directory before save directory (boolean)
-  t.version = "11.3"                  -- The LÖVE version this game was made for (string)
+  t.version = "12.0"                  -- The LÖVE version this game was made for (string)
   t.console = false                   -- Attach a console (boolean, Windows only)
   t.accelerometerjoystick = false     -- Enable the accelerometer on iOS and Android by exposing it as a Joystick (boolean)
   -- is loaded inside the auto updater
@@ -18,7 +18,7 @@ function love.conf(t)
     t.externalstorage = UseAndroidExternalStorage    -- True to save files (and read from the save directory) in external storage on Android (boolean) 
   else
     -- game was started without auto_updater or an outdated auto_updater that isn't external_storage ready
-    t.externalstorage = false
+    t.externalstorage = true
   end
   t.gammacorrect = false              -- Enable gamma-correct rendering, when supported by the system (boolean)
 
@@ -26,7 +26,7 @@ function love.conf(t)
   t.audio.mixwithsystem = false       -- Keep background music playing when opening LOVE (boolean, iOS and Android only)
 
   t.window.title = "Panel Attack"          -- The window title (string)
-  t.window.icon = nil                      -- Filepath to an image to use as the window's icon (string)
+  t.window.icon = "panels/__default/panel11.png" -- Filepath to an image to use as the window's icon (string)
   t.window.width = config.windowWidth            -- The window width (number)
   t.window.height = config.windowHeight          -- The window height (number)
   t.window.borderless = config.borderless  -- Remove all border visuals from the window (boolean)
@@ -40,6 +40,7 @@ function love.conf(t)
   t.window.depth = nil                     -- The number of bits per sample in the depth buffer
   t.window.stencil = nil                   -- The number of bits per sample in the stencil buffer
   t.window.display = config.display        -- Index of the monitor to show the window in (number)
+  t.window.displayindex = config.display
   t.window.highdpi = true                  -- Enable high-dpi mode for the window on a Retina display (boolean)
   t.window.usedpiscale = false             -- Enable automatic DPI scaling when highdpi is set to true as well (boolean)
   t.window.x = config.windowX              -- The x-coordinate of the window's position in the specified display (number)

@@ -37,14 +37,15 @@ local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+local logger = require("logger")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.pa_runInternal = CustomRun.innerRun
-if GAME_UPDATER == nil then
-  -- We don't have an autoupdater, so we need to override run.
-  -- In the autoupdater case run will already have been overridden and be running
-  love.run = CustomRun.run
+
+function love.run()
+  logger.debug("running CustomRun.run()")
+  return CustomRun.run()
 end
 
 local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
@@ -53,7 +54,6 @@ if PROFILING_ENABLED then
   GAME.profiler = require("profiler")
 end
 
-local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
@@ -71,6 +71,14 @@ function love.load()
     GAME.profiler:start()
   end
   
+  local major, minor, revision, codename = love.getVersion()
+  if major == 12 then
+    love.setDeprecationOutput(false)
+    if GAME_UPDATER and GAME_UPDATER.version and GAME_UPDATER.version.major >= 1 then
+      GAME_UPDATER:init()
+    end
+  end
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
