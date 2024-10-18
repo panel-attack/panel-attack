@@ -5,7 +5,7 @@ end
 local function readFile(filename)
   local content, size = love.filesystem.read(filename)
   if not content then
-    local msg = "Failed to read file " .. filename
+    local msg = "Failed to read file " .. filename .. ": " .. tostring(size or "")
     love.thread.getChannel("migration"):push(msg)
     log(msg)
   end
