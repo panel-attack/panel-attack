@@ -2,33 +2,43 @@ local function log(msg)
   love.filesystem.append("migration.log", msg)
 end
 
+local function readFile(filename)
+  local content, size = love.filesystem.read(filename)
+  if not content then
+    local msg = "Failed to read file " .. filename
+    love.thread.getChannel("migration"):push(msg)
+    log(msg)
+  end
+
+  return content
+end
+
+local function writeFile(filename, content)
+  local success, message = love.filesystem.write(filename, content)
+  if not success then
+    local msg = "Failed to write to file " .. filename .. ": " .. message
+    love.thread.getChannel("migration"):push(msg)
+    log(msg)
+  end
+end
+
 -- copies a file from the given source to the given destination
 local function recursive_copy(source, destination)
   local lfs = love.filesystem
   local names = lfs.getDirectoryItems(source)
   log("\nCopying directory " .. source .. " with content\n  " .. table.concat(names, "\n  "))
-  local temp
   for i, name in ipairs(names) do
-    local info = lfs.getInfo(source .. "/" .. name)
+    local sourceName = source .. "/" .. name
+    local destinationName = destination .. "/" .. name
+    local info = lfs.getInfo(sourceName)
     if info and info.type == "directory" then
-      recursive_copy(source .. "/" .. name, destination .. "/" .. name)
+      love.filesystem.createDirectory(destinationName)
+      recursive_copy(sourceName, destinationName)
     elseif info and info.type == "file" then
-      local destination_info = lfs.getInfo(destination)
-      if not destination_info or destination_info.type ~= "directory" then
-        love.filesystem.createDirectory(destination)
+      local content = readFile(sourceName)
+      if content then
+        writeFile(destinationName, content)
       end
-
-      local content, size = love.filesystem.read(source .. "/" .. name)
-      local source_file = lfs.newFile(source .. "/" .. name)
-      source_file:open("r")
-      local source_size = source_file:getSize()
-      temp = source_file:read(source_size)
-      source_file:close()
-
-      local new_file = lfs.newFile(destination .. "/" .. name)
-      new_file:open("w")
-      local success, message = new_file:write(temp, source_size)
-      new_file:close()
     end
   end
 
