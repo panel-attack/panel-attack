@@ -1,10 +1,10 @@
 local logger = require("logger")
 
 local function migrateIfPossible()
-  local os = love.system.getOS()
+  local OS = love.system.getOS()
   local loveMajorVer = love.getVersion()
   if love.filesystem.isFused() and loveMajorVer == 12 and
-    (os == "Linux" or os == "OS X") and
+    (OS == "Linux" or OS == "OS X") and
     not love.filesystem.exists("conf.json") then
 
     -- this means this is the first startup on a fused build (meaning the new native updater on mac/linux)
@@ -13,9 +13,9 @@ local function migrateIfPossible()
     if path:sub(-1) ~= "/" then
       path = path .. "/"
     end
-    if os == "Linux" then
+    if OS == "Linux" then
       path = path .. "love/"
-    elseif os == "OS X" then
+    elseif OS == "OS X" then
       path = path .. "LOVE/"
     end
     path = path .. love.filesystem.getIdentity()
