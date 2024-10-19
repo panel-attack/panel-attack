@@ -153,6 +153,7 @@ function ServerMessages.sanitizeSettings(settings)
     level = settings.level,
     characterId = settings.character,
     panelId = settings.panels_dir,
+    inputMethod = settings.inputMethod,
     sanitized = true
   }
 end
