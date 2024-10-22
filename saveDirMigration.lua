@@ -47,13 +47,13 @@ local function migrateIfPossible()
       love.filesystem.unmountFullPath(path)
       -- since we likely copied a conf.json with the migration, rerun everything related to conf setup
       readConfigFile(config)
-      love.window.setMode(config.windowWidth, config.windowHeight,
+      love.window.updateMode(config.windowWidth, config.windowHeight,
         {
           x = config.windowX,
           y = config.windowY,
           fullscreen = config.fullscreen,
           borderless = config.borderless,
-          displayindex = config.display
+          displayindex = config.display,
         })
       love.load()
     end

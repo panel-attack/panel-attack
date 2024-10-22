@@ -95,7 +95,7 @@ function love.load()
       if love.window.isMaximized() then
         love.window.restore()
       end
-      love.window.setMode(w, windowHeight - 30, flags)
+      love.window.updateMode(w, windowHeight - 30, flags)
       love.window.setPosition(x, 30)
     end
   end
