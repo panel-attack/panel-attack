@@ -518,10 +518,13 @@ function OptionsMenu:loadDebugMenu()
     MenuItem.createSliderMenuItem("VS Frames Behind", nil, false, createConfigSlider("debug_vsFramesBehind", 0, 200)),
     MenuItem.createToggleButtonGroupMenuItem("Show Debug Servers", nil, false, createToggleButtonGroup("debugShowServers")),
     MenuItem.createToggleButtonGroupMenuItem("Show Design Helper", nil, false, createToggleButtonGroup("debugShowDesignHelper")),
+    MenuItem.createButtonMenuItem("Window Size Tester", nil, false, function()
+      GAME.navigationStack:push(require("client.src.scenes.WindowSizeTester")())
+    end),
     MenuItem.createButtonMenuItem("back", nil, nil, function()
           GAME.theme:playCancelSfx()
           self:switchToScreen("baseMenu")
-        end)
+        end),
   }
 
   return Menu.createCenteredMenu(debugMenuOptions)

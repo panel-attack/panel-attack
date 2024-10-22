@@ -33,15 +33,26 @@ local textOffset = 0
 local sliderBarThickness = 5
 
 function Slider:onTouch(x, y)
-  self:setValueFromPos(x)
+  self.preTouchValue = self.value
+  self.value = self:getValueForPos(x)
+  self.valueText:set(self.value)
 end
 
 function Slider:onDrag(x, y)
-  self:setValueFromPos(x)
+  self.value = self:getValueForPos(x)
+  --print("value is " .. self.value)
+  self.valueText:set(self.value)
 end
 
 function Slider:onRelease(x, y)
-  self:setValueFromPos(x)
+  if self:inBounds(x, y) then
+    self.value = nil
+    self:setValueFromPos(x)
+  else
+    self:setValue(self.preTouchValue)
+  end
+
+  self.preTouchValue = nil
 end
 
 function Slider:receiveInputs(input)
@@ -54,13 +65,22 @@ function Slider:receiveInputs(input)
   end
 end
 
-function Slider:setValueFromPos(x)
+function Slider:getValueForPos(x)
   local screenX, screenY = self:getScreenPos()
+  local v
   if self.precision > 0 then
-    self:setValue(math.round((x - screenX) / self.tickLength, self.precision) + self.min - .5)
+    v = math.round((x - screenX) / self.tickLength, self.precision) + self.min - .5
   else
-    self:setValue(math.floor((x - screenX) / self.tickLength) + self.min)
+    v = math.floor((x - screenX) / self.tickLength) + self.min
   end
+
+  v = util.bound(self.min, v, self.max)
+
+  return v
+end
+
+function Slider:setValueFromPos(x)
+  self:setValue(self:getValueForPos(x))
 end
 
 function Slider:setValue(value)
@@ -79,15 +99,16 @@ function Slider:drawSelf()
   GraphicsUtil.drawRectangle("fill", self.x, self.y + yOffset, (self.max - self.min + 1) * self.tickLength, sliderBarThickness)
 
   GraphicsUtil.setColor(unpack(SLIDER_CIRCLE_COLOR))
-  love.graphics.circle("fill", self.x + (self.value - self.min + .5) * self.tickLength, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)
+  local x = self.x + (self.value - self.min + .5) * self.tickLength
+  love.graphics.circle("fill", x, self.y + yOffset + sliderBarThickness / 2, handleRadius, 32)
   GraphicsUtil.setColor(1, 1, 1, 1)
-  
+
   local textWidth, textHeight = self.minText:getDimensions()
   GraphicsUtil.draw(self.minText, self.x - textWidth * .3, self.y + textOffset, 0, 1, 1, 0, 0)
-  
+
   textWidth, textHeight = self.maxText:getDimensions()
   GraphicsUtil.draw(self.maxText, self.x + (self.max - self.min + 1) * self.tickLength - textWidth, self.y + textOffset, 0, 1, 1, 0, 0)
-  
+
   textWidth, textHeight = self.valueText:getDimensions()
   GraphicsUtil.draw(self.valueText, self.x + ((self.max - self.min + 1) / 2.0) * self.tickLength - textWidth / 2, self.y + textOffset, 0, 1, 1, 0, 0)
 end

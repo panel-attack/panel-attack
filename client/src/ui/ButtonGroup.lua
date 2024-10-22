@@ -8,23 +8,12 @@ local BUTTON_PADDING = 5
 --@module ButtonGroup
 -- UIElement representing a set of buttons which share state (think radio buttons)
 
--- changes state for the button group
--- updates the color of the selected button
--- updates the value to the selected button's value
-local function buttonClicked(buttonGroup, button)
-  buttonGroup.buttons[buttonGroup.selectedIndex].backgroundColor = {.3, .3, .3, .7}
-  local i = tableUtils.indexOf(buttonGroup.buttons, button)
-  buttonGroup.buttons[i].backgroundColor = {.5, .5, 1, .7}
-  buttonGroup.value = buttonGroup.values[i]
-  buttonGroup.selectedIndex = i
-end
-
 -- forced override for each of the button's onClick function
 -- this allows buttons to have individual custom behaviour while also triggering the global state change
 local function genButtonGroupFn(self, button)
   local onClick = button.onClick
   return function(b, inputSource, holdTime)
-    buttonClicked(self, b)
+    self:buttonClicked(b)
     onClick(b, inputSource, holdTime)
     self:onChange(self.value)
   end
@@ -79,6 +68,17 @@ local ButtonGroup = class(
   end,
   UIElement
 )
+
+-- changes state for the button group
+-- updates the color of the selected button
+-- updates the value to the selected button's value
+function ButtonGroup:buttonClicked(button)
+  self.buttons[self.selectedIndex].backgroundColor = {.3, .3, .3, .7}
+  local i = tableUtils.indexOf(self.buttons, button)
+  self.buttons[i].backgroundColor = {.5, .5, 1, .7}
+  self.value = self.values[i]
+  self.selectedIndex = i
+end
 
 function ButtonGroup:receiveInputs(input)
   if input:isPressedWithRepeat("Left") then
