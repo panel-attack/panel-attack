@@ -64,12 +64,13 @@ function WindowSizeTester:load()
     value = width,
     tickLength = 2,
     onValueChange = function(slider)
-      local _, height = love.window.getMode()
+      local _, height, flags = love.window.getMode()
       if not flags.fullscreen then
         love.window.restore()
-        love.window.setMode(slider.value, height)
+        love.window.updateMode(slider.value, height)
+        self:onResize()
       else
-        -- in case the setMode is made invalid by fullscreen/maximize, set the values back
+        -- in case the updateMode is made invalid by fullscreen/maximize, set the values back
         slider.value = width
         slider.valueText:set(slider.value)
       end
@@ -84,9 +85,10 @@ function WindowSizeTester:load()
       local width, height, flags = love.window.getMode()
       if not flags.fullscreen then
         love.window.restore()
-        love.window.setMode(width, slider.value)
+        love.window.updateMode(width, slider.value)
+        self:onResize()
       else
-        -- in case the setMode is made invalid by fullscreen/maximize, set the values back
+        -- in case the updateMode is made invalid by fullscreen/maximize, set the values back
         slider.value = height
         slider.valueText:set(slider.value)
       end

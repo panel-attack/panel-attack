@@ -103,13 +103,14 @@ function StartUp:migrate()
   self.migrationPath = nil
   self.migrationMessage = nil
   readConfigFile(config)
-  love.window.setMode(config.windowWidth, config.windowHeight,
+  love.window.updateMode(config.windowWidth, config.windowHeight,
     {
       x = config.windowX,
       y = config.windowY,
       fullscreen = config.fullscreen,
       borderless = config.borderless,
-      displayindex = config.display
+      displayindex = config.display,
+      resizable = true,
     })
   love.load()
 end
