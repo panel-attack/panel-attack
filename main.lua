@@ -83,6 +83,23 @@ function love.load()
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
   end
+
+  -- there is a bug on windows that causes the game to start like it was borderless
+  -- check for that and restore the window if that's the case:
+  local dWidth, desktopHeight = love.window.getDesktopDimensions()
+  local x, y = love.window.getPosition()
+  local w, windowHeight, flags = love.window.getMode()
+
+  if not flags.fullscreen and not flags.borderless then
+    if y == 0 and windowHeight == desktopHeight then
+      if love.window.isMaximized() then
+        love.window.restore()
+      end
+      love.window.setMode(w, windowHeight - 30, flags)
+      love.window.setPosition(x, 30)
+    end
+  end
+
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
   GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
   math.randomseed(os.time())
