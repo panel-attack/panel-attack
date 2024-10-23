@@ -246,9 +246,10 @@ Stack =
     s.peak_shake_time = 0
 
     s.analytic = AnalyticsInstance(s.is_local)
-
-    s.opponentStack = nil -- the other stack you are playing against
-    s.garbageTarget = nil -- the target you are sending attacks to
+    -- the target you are sending attacks to
+    -- implicitly also the stack that sends attacks to you
+    -- TODO: remove this coupling
+    s.garbageTarget = nil
 
     s.panelGenCount = 0
     s.garbageGenCount = 0
@@ -447,41 +448,41 @@ function Stack.rollbackCopy(source, other)
   return other
 end
 
-function Stack.rollbackToFrame(self, frame)
-  local currentFrame = self.clock
-  local difference = currentFrame - frame
-  local safeToRollback = difference <= MAX_LAG
-  if not safeToRollback then
-    if self.opponentStack then
-      self.opponentStack.tooFarBehindError = true
-    end
-    return false -- EARLY RETURN
-  end
-
-  if frame < currentFrame then
-    logger.debug("Rolling back " .. self.which .. " to " .. frame)
-    assert(self.rollbackCopies[frame])
-    Stack.rollbackCopy(self.rollbackCopies[frame], self)
+local function internalRollbackToFrame(stack, frame)
+  local currentFrame = stack.clock
+  if frame < currentFrame and stack.rollbackCopies[frame] then
+    logger.debug("Rolling back " .. stack.which .. " to " .. frame)
+    Stack.rollbackCopy(stack.rollbackCopies[frame], stack)
     -- The remaining inputs is the confirmed inputs not processed yet for this clock time
     -- We have processed clock time number of inputs when we are at clock, so we only want to process the clock+1 input on
-    self.input_buffer = {}
-    for i = self.clock + 1, #self.confirmedInput do
-      self.input_buffer[#self.input_buffer+1] = self.confirmedInput[i]
+    stack.input_buffer = {}
+    for i = stack.clock + 1, #stack.confirmedInput do
+      stack.input_buffer[#stack.input_buffer+1] = stack.confirmedInput[i]
     end
     -- this is for the interpolation of the shake animation only (not a physics relevant field)
-    if self.rollbackCopies[frame - 1] then
-      self.prev_shake_time = self.rollbackCopies[frame - 1].shake_time
+    if stack.rollbackCopies[frame - 1] then
+      stack.prev_shake_time = stack.rollbackCopies[frame - 1].shake_time
     else
       -- if this is the oldest rollback frame we don't need to interpolate with previous values
       -- because there are no previous values, pretend it just went down smoothly
       -- this can lead to minor differences in display for the same frame when using rewind
-      self.prev_shake_time = self.shake_time + 1
+      stack.prev_shake_time = stack.shake_time + 1
     end
 
     for f = frame, currentFrame do
-      self:deleteRollbackCopy(f)
+      stack:deleteRollbackCopy(f)
     end
 
+    return true
+  end
+
+  return false
+end
+
+function Stack.rollbackToFrame(self, frame)
+  local currentFrame = self.clock
+
+  if internalRollbackToFrame(self, frame) then
     if self.incomingGarbage then
       self.incomingGarbage:rollbackToFrame(frame)
     end
@@ -490,44 +491,38 @@ function Stack.rollbackToFrame(self, frame)
       self.outgoingGarbage:rollbackToFrame(frame)
     end
 
-    -- leaving this in commented out as it would spark worry:
-    -- we don't need this anymore because the inTransitGarbage now lives on the sender's garbage queue
-    -- no longer on the receivers
-    -- that means just by fetching the copy of the garbage queue, we should have a perfectly functional copy
-
-    -- if self.opponentStack and self.opponentStack.inTransitGarbage then
-    --   -- The garbage that we send this time might (rarely) not be the same
-    --   -- as the garbage we sent before.  Wipe out the garbage we sent before...
-    --   local targetFrame = frame + GARBAGE_DELAY_LAND_TIME
-    --   for k, _ in pairs(self.opponentStack.inTransitGarbage) do
-    --     -- The time we actually affected the target was garbage delay away,
-    --     -- so we only need to remove it if its at least that far away
-    --     if k >= targetFrame then
-    --       self.opponentStack.inTransitGarbage[k] = nil
-    --     end
-    --   end
-    -- end
-
     self.rollbackCount = self.rollbackCount + 1
+    -- match will try to fast forward this stack to that frame
     self.lastRollbackFrame = currentFrame
+    return true
   end
 
-  return true
+  return false
+end
+
+function Stack:rewindToFrame(frame)
+  if internalRollbackToFrame(self, frame) then
+    if self.incomingGarbage then
+      self.incomingGarbage:rewindToFrame(frame)
+    end
+
+    if self.outgoingGarbage then
+      self.outgoingGarbage:rewindToFrame(frame)
+    end
+
+    return true
+  else
+    return false
+  end
 end
 
 -- Saves state in backups in case its needed for rollback
 -- NOTE: the clock time is the save state for simulating right BEFORE that clock time is simulated
 function Stack.saveForRollback(self)
   prof.push("Stack:saveForRollback")
-  local opponentStack = self.opponentStack
-  local rollbackCopies = self.rollbackCopies
-  local attackTarget = self.garbageTarget
-  self.opponentStack = nil
-  self.garbageTarget = nil
-  self.rollbackCopies = nil
   self:remove_extra_rows()
   prof.push("Stack.rollbackCopy")
-  rollbackCopies[self.clock] = Stack.rollbackCopy(self)
+  self.rollbackCopies[self.clock] = Stack.rollbackCopy(self)
   prof.pop("Stack.rollbackCopy")
   prof.push("incomingGarbage:rollbackCopy")
   self.incomingGarbage:rollbackCopy(self.clock)
@@ -538,9 +533,6 @@ function Stack.saveForRollback(self)
   end
   prof.pop("outgoingGarbage:rollbackCopy")
 
-  self.rollbackCopies = rollbackCopies
-  self.opponentStack = opponentStack
-  self.garbageTarget = attackTarget
   prof.push("delete rollback copy")
   local deleteFrame = self.clock - MAX_LAG - 1
   self:deleteRollbackCopy(deleteFrame)
@@ -564,6 +556,8 @@ end
 -- stackCanvasWidth
 function Stack.setGarbageTarget(self, newGarbageTarget)
   if newGarbageTarget ~= nil then
+    -- the abstract notion of a garbage target
+    -- in reality the target will be a stack of course but this is the interface so to speak
     assert(newGarbageTarget.frameOriginX ~= nil)
     assert(newGarbageTarget.frameOriginY ~= nil)
     assert(newGarbageTarget.mirror_x ~= nil)
@@ -571,9 +565,6 @@ function Stack.setGarbageTarget(self, newGarbageTarget)
     assert(newGarbageTarget.incomingGarbage ~= nil)
   end
   self.garbageTarget = newGarbageTarget
-
-  -- in the longrun, opponentStack should not be known to the stack
-  self.opponentStack = newGarbageTarget
 end
 
 local MAX_TAUNT_PER_10_SEC = 4
@@ -1472,10 +1463,6 @@ function Stack.simulate(self)
 
   prof.push("update times")
   self.clock = self.clock + 1
-
-  if self.opponentStack and self.clock > self.opponentStack.clock + MAX_LAG then
-    self.opponentStack.tooFarBehindError = true
-  end
 
   if self.game_stopwatch_running and (not self.match.gameOverClock or self.clock <= self.match.gameOverClock) then
     self.game_stopwatch = (self.game_stopwatch or -1) + 1

@@ -179,13 +179,24 @@ function SimulatedStack:saveForRollback()
   end
 end
 
-function SimulatedStack:rollbackToFrame(frame)
-  local copy = self.rollbackCopies[frame]
+local function internalRollbackToFrame(stack, frame)
+  local copy = stack.rollbackCopies[frame]
 
-  for i = frame + 1, self.clock do
-    self.rollbackCopyPool:push(self.rollbackCopies[i])
-    self.rollbackCopies[i] = nil
+  for i = frame + 1, stack.clock do
+    stack.rollbackCopyPool:push(stack.rollbackCopies[i])
+    stack.rollbackCopies[i] = nil
   end
+
+  if stack.healthEngine then
+    stack.healthEngine:rollbackToFrame(frame)
+    stack.health = stack.healthEngine.framesToppedOutToLose
+  else
+    stack.health = copy.health
+  end
+end
+
+function SimulatedStack:rollbackToFrame(frame)
+  internalRollbackToFrame(self, frame)
 
   self.incomingGarbage:rollbackToFrame(frame)
 
@@ -193,13 +204,19 @@ function SimulatedStack:rollbackToFrame(frame)
     self.attackEngine:rollbackToFrame(frame)
   end
 
-  if self.healthEngine then
-    self.healthEngine:rollbackToFrame(frame)
-    self.health = self.healthEngine.framesToppedOutToLose
-  else
-    self.health = copy.health
-  end
   self.lastRollbackFrame = self.clock
+  self.clock = frame
+end
+
+function SimulatedStack:rewindToFrame(frame)
+  internalRollbackToFrame(self, frame)
+
+  self.incomingGarbage:rewindToFrame(frame)
+
+  if self.attackEngine then
+    self.attackEngine:rewindToFrame(frame)
+  end
+
   self.clock = frame
 end
 

@@ -33,7 +33,7 @@ function StackReplayTestingUtils.createEndlessMatch(speed, difficulty, level, wa
     else
       player:setStyle(GameModes.Styles.CLASSIC)
     end
-    player:restrictInputs(inputs.inputConfigurations[i])
+    --player:restrictInputs(inputs.inputConfigurations[i])
     players[#players+1] = player
   end
 
@@ -53,7 +53,6 @@ end
 function StackReplayTestingUtils.createSinglePlayerMatch(gameMode)
   local players = { Player.getLocalPlayer() }
   players[1].isLocal = false
-  players[1]:restrictInputs(inputs.inputConfigurations[1])
 
   local match = Match(players, gameMode.doCountdown, gameMode.stackInteraction, gameMode.winConditions, gameMode.gameOverConditions, false)
   match:setSeed(1)
@@ -120,7 +119,9 @@ end
 
 function StackReplayTestingUtils:cleanup(match)
   for _, player in ipairs(match.players) do
-    player:unrestrictInputs()
+    if player.human and player.playerNumber and player.inputConfiguration then
+      player:unrestrictInputs()
+    end
   end
   if match then
     match:deinit()

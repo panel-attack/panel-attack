@@ -9,6 +9,9 @@ util.addToCPath("./server/lib/??")
 local logger = require("common.lib.logger")
 require("client.src.globals")
 local Game = require("client.src.Game")
+if arg[2] == "debug" then
+  require("client.src.developer")
+end
 
 function love.load()
   -- this is necessary setup of globals while non-client tests still depend on client components
@@ -27,6 +30,7 @@ function love.load()
 end
 
 local tests = {
+  "common.tests.engine.StackRollbackReplayTests",
   "client.tests.QueueTests",
   "client.tests.ServerQueueTests",
   --"client.tests.StackGraphicsTests",
@@ -41,7 +45,6 @@ local tests = {
   "common.tests.engine.RollbackBufferTests",
   "common.tests.engine.StackTests",
   "common.tests.engine.StackReplayTests",
-  "common.tests.engine.StackRollbackReplayTests",
   "common.tests.engine.StackTouchReplayTests",
   -- disabled for testLauncher because it needs the client love callbacks
   --"common.tests.lib.InputTests",

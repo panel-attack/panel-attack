@@ -174,4 +174,9 @@ function AttackEngine:rollbackToFrame(frame)
   self.clock = frame
 end
 
+function AttackEngine:rewindToFrame(frame)
+  self.outgoingGarbage:rewindToFrame(frame)
+  self.clock = frame
+end
+
 return AttackEngine

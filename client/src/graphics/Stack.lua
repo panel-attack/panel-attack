@@ -516,16 +516,15 @@ function Stack.render(self)
 
   local garbageImages
   local shockGarbageImages
+  -- functionally, the garbage target being the source of the images for garbage landing on this stack is possible but not a given
+  -- there is technically no guarantee that the target we're sending towards is also sending to us
+  -- at the moment however this is the case so let's take it for granted until then
   if not self.garbageTarget then
     garbageImages = characters[self.character].images
+    shockGarbageImages = panels[self.panels_dir].images.metals
   else
     garbageImages = characters[self.garbageTarget.character].images
-  end
-
-  if self.opponentStack then
-    shockGarbageImages = panels[self.opponentStack.panels_dir].images.metals
-  else
-    shockGarbageImages = panels[self.panels_dir].images.metals
+    shockGarbageImages = panels[self.garbageTarget.panels_dir].images.metals
   end
 
   local shakeOffset = self:currentShakeOffset() / self.gfxScale

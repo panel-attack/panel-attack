@@ -57,4 +57,20 @@ function Queue:contains(element)
   return false
 end
 
+-- returns a shallow copy of the queue content
+-- metatable not included!
+-- an optional table argument may be passed in to serve as the table so no new table is created
+function Queue:getShallowCopy(copy)
+  if not copy then
+    copy = {}
+  end
+  for i = self.first, self.last do
+    copy[i] = self[i]
+  end
+  copy.first = self.first
+  copy.last = self.last
+
+  return copy
+end
+
 return Queue

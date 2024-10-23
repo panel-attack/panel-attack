@@ -3,6 +3,7 @@ local class = require("common.lib.class")
 local tableUtils = require("common.lib.tableUtils")
 local Queue = require("common.lib.Queue")
 require("table.clear")
+require("table.new")
 local RollbackBuffer = require("common.engine.RollbackBuffer")
 
 -- +1 to compensate for a compensation someone made
@@ -87,9 +88,11 @@ GarbageQueue = class(function(self, allowIllegalStuff, treatMetalAsCombo)
   self.history = {}
   -- holds the clock times for which garbageInTransit has garbage in a continuously integer indexed ordered array
   -- for easier access and order sensitive iteration
+  -- all calls to Queue functions should be done via access to the class function: Queue.func(self.transitTimers, args)
+  -- that is in order to avoid having to rollback copy the metatable along with the actual content
   self.transitTimers = Queue()
   self.currentChain = nil
-  -- illegal stuff means that chains are queued as combos instead
+  -- illegal stuff means that chains may be queued as combos instead
   self.illegalStuffIsAllowed = allowIllegalStuff
   self.treatMetalAsCombo = treatMetalAsCombo
 
@@ -103,10 +106,16 @@ function GarbageQueue:rollbackCopy(frame)
   if copy then
     table.clear(copy.stagedGarbage)
     copy.currentChain = nil
+    table.clear(copy.garbageInTransit)
+    Queue.clear(copy.transitTimers)
+    -- history does not need to be cleared
   else
     copy =
     {
       stagedGarbage = table.new(#self.stagedGarbage, 0),
+      --copy.currentChain = nil,
+      garbageInTransit = {},
+      --copy.transitTimers = nil,
       history = table.new(#self.history, 0),
     }
   end
@@ -122,15 +131,29 @@ function GarbageQueue:rollbackCopy(frame)
     end
   end
 
-  -- by-reference copy works fine for the history
+  -- create a copy of the history
   for i = 1, #self.history do
     if self.history[i] == self.currentChain then
-      -- only need to make sure to use the deepcopied variant of the current chain
+      -- only need to make sure to use the deepcopied variant of the current chain as that still changes
       copy.history[i] = copy.currentChain
     else
+      -- everything else has already become immutable and can be kept by reference
       copy.history[i] = self.history[i]
     end
   end
+
+  -- TRANSIT INFO IS ONLY KEPT FOR REPLAY REWIND
+  -- ONLINE ROLLBACK DOES NOT NEED / WANT THIS INFORMATION 
+
+  -- create a copy of the garbage in transit for rewind
+  for i = self.transitTimers.first, self.transitTimers.last do
+    local transitFrame = self.transitTimers[i]
+    -- garbage in transit is definitely immutable so use the reference
+    copy.garbageInTransit[transitFrame] = self.garbageInTransit[transitFrame]
+  end
+
+  -- and the access table for transit garbage
+  copy.transitTimers = Queue.getShallowCopy(self.transitTimers, copy.transitTimers)
 
   -- these two should never change during the life time of a garbage queue
   -- copy.illegalStuffIsAllowed = self.illegalStuffIsAllowed
@@ -162,6 +185,20 @@ function GarbageQueue:rollbackToFrame(frame)
       self.transitTimers.last = self.transitTimers.last - 1
     end
   end
+end
+
+function GarbageQueue:rewindToFrame(frame)
+  assert(self.rollbackBuffer, "Attempted to rewind garbage queue to frame " .. frame .. " but no rollback buffer has been kept")
+
+  local copy = self.rollbackBuffer:rollbackToFrame(frame)
+
+  assert(copy, "Attempted to rewind garbage queue to frame " .. frame .. " but no rollback copy was available")
+
+  self.stagedGarbage = copy.stagedGarbage
+  self.currentChain = copy.currentChain
+  self.history = copy.history
+  self.garbageInTransit = copy.garbageInTransit
+  self.transitTimers = copy.transitTimers
 end
 
 -- corrects garbage pushed as combo to be flagged as a finalized chain if it is higher than 1 row
@@ -227,12 +264,12 @@ function GarbageQueue:pop()
 end
 
 function GarbageQueue:getOldestFinishedTransitTime()
-  return self.transitTimers:peek()
+  return Queue.peek(self.transitTimers)
 end
 
 function GarbageQueue:popFinishedTransitsAt(clock)
-  if self.transitTimers:peek() == clock then
-    self.transitTimers:pop()
+  if Queue.peek(self.transitTimers) == clock then
+    Queue.pop(self.transitTimers)
     return self.garbageInTransit[clock]
   end
 end
@@ -270,7 +307,7 @@ function GarbageQueue:processStagedGarbageForClock(clock)
   if poppedGarbage then
     local deliveryTime = clock + GARBAGE_DELAY_LAND_TIME
     self.garbageInTransit[deliveryTime] = poppedGarbage
-    self.transitTimers:push(deliveryTime)
+    Queue.push(self.transitTimers, deliveryTime)
   end
 end
 

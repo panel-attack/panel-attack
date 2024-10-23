@@ -46,9 +46,6 @@ local function rollbackPastAttackTest()
   StackReplayTestingUtils:cleanup(match)
 end
 
-logger.info("running rollbackPastAttackTest")
-rollbackPastAttackTest()
-
 -- Vs rollback just one frame on both stacks
 -- We need to make sure we don't remove garbage if we didn't rollback far enough to mess with it.
 local function rollbackNotPastAttackTest()
@@ -87,9 +84,6 @@ local function rollbackNotPastAttackTest()
   assert(tableUtils.count(match.stacks[2].outgoingGarbage.history, function(g) return not g.isChain end) == 4)
   StackReplayTestingUtils:cleanup(match)
 end
-
-logger.info("running rollbackNotPastAttackTest")
-rollbackNotPastAttackTest()
 
 -- Vs rollback before attack even happened
 -- Make sure the attack only happens once and only once if we rollback before it happened
@@ -169,6 +163,32 @@ local function rollbackFullyPastAttack()
   assert(tableUtils.count(match.stacks[1].outgoingGarbage.history, function(g) return not g.isChain end) == 1)
   StackReplayTestingUtils:cleanup(match)
 end
+
+local function rollbackFromDeath()
+  local match = StackReplayTestingUtils:setupReplayWithPath(testReplayFolder .. "rollbackFromDeath.json")
+
+  StackReplayTestingUtils:fullySimulateMatch(match)
+  assert(match.stacks[1].game_over_clock == 652)
+
+  match:rewindToFrame(613)
+  assert(match.stacks[1].outgoingGarbage.garbageInTransit[631], "expected +4 in transit")
+  StackReplayTestingUtils:fullySimulateMatch(match)
+  assert(match.stacks[1].game_over_clock == 652)
+
+  match:rewindToFrame(481)
+  assert(match.stacks[1].outgoingGarbage.stagedGarbage[1].frameEarned == 480, "expected +4 queued")
+  StackReplayTestingUtils:fullySimulateMatch(match)
+  assert(match.stacks[1].game_over_clock == 652)
+end
+
+logger.info("running rollbackFromDeath")
+rollbackFromDeath()
+
+logger.info("running rollbackPastAttackTest")
+rollbackPastAttackTest()
+
+logger.info("running rollbackNotPastAttackTest")
+rollbackNotPastAttackTest()
 
 logger.info("running rollbackFullyPastAttack")
 rollbackFullyPastAttack()

@@ -21,7 +21,7 @@ function Stack.idleInput(self)
 end
 
 function Stack.send_controls(self)
-  if self.is_local and GAME.netClient:isConnected() and #self.confirmedInput > 0 and self.opponentStack and #self.opponentStack.confirmedInput == 0 then
+  if self.is_local and GAME.netClient:isConnected() and #self.confirmedInput > 0 and self.garbageTarget and #self.garbageTarget.confirmedInput == 0 then
     -- Send 1 frame at clock time 0 then wait till we get our first input from the other player.
     -- This will cause a player that got the start message earlier than the other player to wait for the other player just once.
     -- print("self.confirmedInput="..(self.confirmedInput or "nil"))
