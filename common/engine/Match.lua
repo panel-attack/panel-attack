@@ -380,14 +380,17 @@ end
 -- rewind is ONLY to be used for replay playback as it relies on all stacks being at the same clock time
 -- and also uses slightly different data required only in a both-sides rollback scenario that would never occur for online rollback
 function Match:rewindToFrame(frame)
-  for i = 1, #self.stacks do
-    local stack = self.stacks[i]
-    if stack.rollbackCopies[frame] then
-      stack:rewindToFrame(frame)
+  local failed = false
+  for i, stack in ipairs(self.stacks) do
+    if not stack:rewindToFrame(frame) then
+      failed = true
+      break
     end
   end
-  self.clock = frame
-  self.ended = false
+  if not failed then
+    self.clock = frame
+    self.ended = false
+  end
 end
 
 local countdownEnd = consts.COUNTDOWN_START + consts.COUNTDOWN_LENGTH

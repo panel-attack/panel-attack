@@ -511,9 +511,9 @@ function Stack:rewindToFrame(frame)
     end
 
     return true
-  else
-    return false
   end
+
+  return false
 end
 
 -- Saves state in backups in case its needed for rollback

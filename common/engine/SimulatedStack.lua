@@ -182,42 +182,56 @@ end
 local function internalRollbackToFrame(stack, frame)
   local copy = stack.rollbackCopies[frame]
 
-  for i = frame + 1, stack.clock do
-    stack.rollbackCopyPool:push(stack.rollbackCopies[i])
-    stack.rollbackCopies[i] = nil
+  if copy and frame < stack.clock then
+    for f = frame, stack.clock do
+      if stack.rollbackCopies[f] then
+        stack.rollbackCopyPool:push(stack.rollbackCopies[f])
+        stack.rollbackCopies[f] = nil
+      end
+    end
+
+    if stack.healthEngine then
+      stack.healthEngine:rollbackToFrame(frame)
+      stack.health = stack.healthEngine.framesToppedOutToLose
+    else
+      stack.health = copy.health
+    end
+
+    return true
   end
 
-  if stack.healthEngine then
-    stack.healthEngine:rollbackToFrame(frame)
-    stack.health = stack.healthEngine.framesToppedOutToLose
-  else
-    stack.health = copy.health
-  end
+  return false
 end
 
 function SimulatedStack:rollbackToFrame(frame)
-  internalRollbackToFrame(self, frame)
+  if internalRollbackToFrame(self, frame) then
+    self.incomingGarbage:rollbackToFrame(frame)
 
-  self.incomingGarbage:rollbackToFrame(frame)
+    if self.attackEngine then
+      self.attackEngine:rollbackToFrame(frame)
+    end
 
-  if self.attackEngine then
-    self.attackEngine:rollbackToFrame(frame)
+    self.lastRollbackFrame = self.clock
+    self.clock = frame
+    return true
   end
 
-  self.lastRollbackFrame = self.clock
-  self.clock = frame
+  return false
 end
 
 function SimulatedStack:rewindToFrame(frame)
-  internalRollbackToFrame(self, frame)
+  if internalRollbackToFrame(self, frame) then
+    self.incomingGarbage:rewindToFrame(frame)
 
-  self.incomingGarbage:rewindToFrame(frame)
+    if self.attackEngine then
+      self.attackEngine:rewindToFrame(frame)
+    end
 
-  if self.attackEngine then
-    self.attackEngine:rewindToFrame(frame)
+    self.clock = frame
+    return true
   end
 
-  self.clock = frame
+  return false
 end
 
 function SimulatedStack:starting_state()
