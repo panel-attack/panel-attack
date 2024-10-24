@@ -14,6 +14,7 @@ local StageTrack = require("client.src.music.StageTrack")
 local DynamicStageTrack = require("client.src.music.DynamicStageTrack")
 local RelayStageTrack = require("client.src.music.RelayStageTrack")
 local Mod = require("client.src.mods.Mod")
+require("client.src.graphics.animated_sprite")
 
 local default_character = nil -- holds default assets fallbacks
 local randomCharacter = nil -- acts as the bundle character for all theme characters
@@ -31,6 +32,7 @@ local Character =
     self.panels = nil -- string | panels that get selected upon doing the super selection of that character
     self.sub_characters = {} -- stringS | either empty or with two elements at least; holds the sub characters IDs for bundle characters
     self.images = {}
+    self.battleAnimations = {} -- AnimatedSprite | will be skipped if there is no sprite provided (Wouls like to get default sprites in the future)
     self.sounds = {}
     self.musics = {}
     self.flag = nil -- string | flag to be displayed in the select screen
@@ -265,6 +267,12 @@ function Character.graphics_init(self, full, yields)
       coroutine.yield()
     end
   end
+  if (next(self.battleAnimations) == nil) then
+    for index, file in pairs(tableUtils.filter(love.filesystem.getDirectoryItems(self.path), function(s) return s:find("anim_config") end)) do
+      local name = string.match(file, "(.-)_anim_config")
+      self.battleAnimations[name] = AnimatedSprite.loadSpriteFromConfig(self.path.."/"..file)
+    end
+  end
   if full then
     self.telegraph_garbage_images = {}
     for garbage_h=1,14 do
@@ -336,6 +344,7 @@ function Character.graphics_uninit(self)
       self.images[imageName] = nil
     end
   end
+  self.battleAnimations = {}
   self.telegraph_garbage_images = {}
 end
 

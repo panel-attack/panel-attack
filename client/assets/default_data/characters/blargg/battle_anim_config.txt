@@ -1,0 +1,65 @@
+spritePath: battle.png
+frameSize: (20, 40)
+{
+    [intro]
+        addFrame(10, 30)
+        addFrame(9)
+        addFrame(11)
+        addFrame(12, 14)
+        addFrame(11, 2)
+        addFrame(10)
+        addFrame(9)
+        addFrame(3, 2)
+        addFrame(2)
+        repeat(6)
+            addFrame(5)
+            addFrame(6)
+            closeRepeat
+        addFrame(4)
+        addFrame(3, 2)
+        addFrame(2)
+    end
+
+    [normal] 
+        beginLoop
+        addFrame(1, 32)
+        addFrame(2, 1)
+        addFrame(3, 2)
+        addFrame(2, 1)
+        addFrame(1, 2)
+        addFrame(2, 1)
+        addFrame(3, 2)
+        addFrame(2, 1)
+        addFrame(1, 14)
+        addFrame(2, 1)
+        addFrame(3, 2)
+        addFrame(2, 1)
+    end
+
+    [attack]
+        addFrame(3, 2)
+        addFrame(4, 1)
+        addFrame(5, 1)
+        addFrame(6, 12)
+        addFrame(5, 2)
+        addFrame(4, 2)
+    end
+
+    [win]
+        beginLoop
+        addFrame(7, 12)
+        addFrame(8, 14)
+    end
+
+    [lose]
+        beginLoop
+        addFrame(9, 12)
+        addFrame(10, 14)
+    end
+
+    [hurt]
+        beginLoop
+        addFrame(11)
+        addFrame(12)
+    end
+}

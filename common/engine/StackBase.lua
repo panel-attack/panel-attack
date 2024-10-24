@@ -26,7 +26,8 @@ local StackBase = class(function(self, args)
   self.game_over_clock = -1 -- the exact clock frame the player lost, -1 while alive
   Signal.turnIntoEmitter(self)
   self:createSignal("dangerMusicChanged")
-
+  self:createSignal("hurt")
+  self:createSignal("attackSent")
 
   -- rollback
   self.rollbackCopies = {}
