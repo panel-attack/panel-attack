@@ -14,8 +14,8 @@ local MatchParticipant = class(function(self)
   self.winrate = 0
   self.expectedWinrate = 0
   self.settings = {
-    characterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
-    stageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
+    selectedCharacterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE,
+    selectedStageId = consts.RANDOM_STAGE_SPECIAL_VALUE,
     panelId = config.panels,
     wantsReady = false,
   }
@@ -92,7 +92,11 @@ end
 
 function MatchParticipant:setCharacter(characterId)
   if characterId ~= self.settings.selectedCharacterId or not self.settings.selectedCharacterId then
-    self.settings.selectedCharacterId = CharacterLoader.resolveCharacterSelection(characterId)
+    if characters[characterId] then
+      self.settings.selectedCharacterId = characterId
+    else
+      self.settings.selectedCharacterId = consts.RANDOM_CHARACTER_SPECIAL_VALUE
+    end
     self:emitSignal("selectedCharacterIdChanged", self.settings.selectedCharacterId)
   end
   -- even if it's the same character as before, refresh the pick, cause it could be bundle or random

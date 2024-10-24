@@ -577,6 +577,11 @@ function BattleRoom:onMatchEnded(match)
   -- nilling the match here doesn't keep the game scene from rendering it as the scene has its own reference
   self.match = nil
   self.state = BattleRoom.states.Setup
+
+  for _, player in ipairs(self.players) do
+    -- if a player is using a bundle we want to refresh the pick from the bundle
+    player:refreshCharacter()
+  end
 end
 
 -- called in the errorhandler and thus has a lot worried checking
