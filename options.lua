@@ -110,9 +110,9 @@ local function general_menu()
   generalMenu:add_button(loc("op_fps"), update_fps, goEscape, update_fps, update_fps)
   generalMenu:add_button(loc("op_ingame_infos"), update_infos, goEscape, update_infos, update_infos)
   generalMenu:add_button(loc("op_analytics"), update_analytics, goEscape, update_analytics, update_analytics)
-  generalMenu:add_button(loc("op_input_delay"), nextMenu, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
-  generalMenu:add_button(loc("op_replay_public"), nextMenu, goEscape, increase_publicness, increase_privateness)
-  generalMenu:add_button(loc("op_performance_drain"), nextMenu, goEscape, decreaseGarbageCollectionPercent, increaseGarbageCollectionPercent)
+  generalMenu:add_button(loc("op_input_delay"), update_input_repeat_delay, goEscape, decrease_input_repeat_delay, increase_input_repeat_delay)
+  generalMenu:add_button(loc("op_replay_public"), update_replay_preference, goEscape, increase_publicness, increase_privateness)
+  generalMenu:add_button(loc("op_performance_drain"), updateGarbageCollectionPercent, goEscape, decreaseGarbageCollectionPercent, increaseGarbageCollectionPercent)
 
   if GAME_UPDATER and GAME_UPDATER.releaseStreams and GAME_UPDATER_STATES then
     local releaseStreams = {}
@@ -161,7 +161,7 @@ local function general_menu()
       updateReleaseStreamPreference()
     end
 
-    generalMenu:add_button("Release Stream", nextMenu, goEscape, decreaseReleaseStreamIndex, increaseReleaseStreamIndex)
+    generalMenu:add_button("Release Stream", updateReleaseStreamPreference, goEscape, decreaseReleaseStreamIndex, increaseReleaseStreamIndex)
     updateReleaseStreamPreference()
   end
 
