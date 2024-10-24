@@ -37,14 +37,15 @@ local utf8 = require("utf8Additions")
 require("click_menu")
 require("computerPlayers.computerPlayer")
 require("rich_presence.RichPresence")
+local logger = require("logger")
 
 -- We override love.run with a function that refers to `pa_runInternal` for its gameloop function
 -- so by overwriting that, the new runInternal will get used on the next iteration
 love.pa_runInternal = CustomRun.innerRun
-if GAME_UPDATER == nil then
-  -- We don't have an autoupdater, so we need to override run.
-  -- In the autoupdater case run will already have been overridden and be running
-  love.run = CustomRun.run
+
+function love.run()
+  logger.debug("running CustomRun.run()")
+  return CustomRun.run()
 end
 
 local crashTrace = nil -- set to the trace of your thread before throwing an error if you use a coroutine
@@ -53,7 +54,6 @@ if PROFILING_ENABLED then
   GAME.profiler = require("profiler")
 end
 
-local logger = require("logger")
 GAME.scores = require("scores")
 GAME.rich_presence = RichPresence()
 
@@ -71,10 +71,35 @@ function love.load()
     GAME.profiler:start()
   end
   
+  local major, minor, revision, codename = love.getVersion()
+  if major == 12 then
+    love.setDeprecationOutput(false)
+    if GAME_UPDATER and GAME_UPDATER.version and GAME_UPDATER.version.major >= 1 then
+      GAME_UPDATER:init()
+    end
+  end
+
   love.graphics.setDefaultFilter("linear", "linear")
   if config.maximizeOnStartup and not love.window.isMaximized() then
     love.window.maximize()
   end
+
+  -- there is a bug on windows that causes the game to start like it was borderless
+  -- check for that and restore the window if that's the case:
+  local dWidth, desktopHeight = love.window.getDesktopDimensions()
+  local x, y = love.window.getPosition()
+  local w, windowHeight, flags = love.window.getMode()
+
+  if not flags.fullscreen and not flags.borderless then
+    if y == 0 and windowHeight == desktopHeight then
+      if love.window.isMaximized() then
+        love.window.restore()
+      end
+      love.window.updateMode(w, windowHeight - 30, flags)
+      love.window.setPosition(x, 30)
+    end
+  end
+
   local newPixelWidth, newPixelHeight = love.graphics.getWidth(), love.graphics.getHeight()
   GAME:updateCanvasPositionAndScale(newPixelWidth, newPixelHeight)
   math.randomseed(os.time())

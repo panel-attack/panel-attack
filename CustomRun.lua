@@ -75,7 +75,7 @@ function CustomRun.processEvents()
     for name, a, b, c, d, e, f in love.event.poll() do
       if name == "quit" then
         if not love.quit or not love.quit() then
-          return a or 0
+          return a or 0, b
         end
       end
       love.handlers[name](a, b, c, d, e, f)
@@ -88,9 +88,9 @@ local dt = 0
 local mem = 0
 local prevMem = 0
 function CustomRun.innerRun()
-  local shouldQuit = CustomRun.processEvents()
+  local shouldQuit, keepValue = CustomRun.processEvents()
   if shouldQuit then
-    return shouldQuit
+    return shouldQuit, keepValue
   end
   mem = collectgarbage("count")
 
@@ -161,13 +161,22 @@ end
 -- We have broken it up into calling a inner function so we can change the inner function in the game love file to override behavior
 -- If you change this function also change DefaultLoveRunFunction's equivalent method
 function CustomRun.run()
-  if love.load then
-    love.load(love.arg.parseGameArguments(arg), arg)
-  end
+  local major = love.getVersion()
 
-  -- We don't want the first frame's dt to include time taken by love.load.
-  if love.timer then
-    love.timer.step()
+  if major == 12 then
+    if love.load then love.load(love.parsedGameArguments, love.rawGameArguments) end
+
+    -- We don't want the first frame's dt to include time taken by love.load.
+    if love.timer then love.timer.step() end
+  else
+    if love.load then
+      love.load(love.arg.parseGameArguments(arg), arg)
+    end
+
+    -- We don't want the first frame's dt to include time taken by love.load.
+    if love.timer then
+      love.timer.step()
+    end
   end
 
   dt = 0

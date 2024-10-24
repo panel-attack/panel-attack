@@ -9,6 +9,7 @@ local utf8 = require("utf8Additions")
 local analytics = require("analytics")
 local main_config_input = require("config_inputs")
 local Replay = require("replay")
+local migrateIfPossible = require("saveDirMigration")
 
 local wait, resume = coroutine.yield, coroutine.resume
 
@@ -29,6 +30,7 @@ local puzzle_menu_last_index = 3
 
 function fmainloop()
   Localization.init(localization)
+  migrateIfPossible()
   copy_file("readme_puzzles.txt", "puzzles/README.txt")
   if love.system.getOS() ~= "OS X" then
     recursiveRemoveFiles(".", ".DS_Store")
@@ -223,6 +225,15 @@ do
       table.insert(items, 6, {"Vs Computer", main_local_vs_computer_setup})
     end
 
+    if GAME_UPDATER or DEBUG_ENABLED then
+      if DEBUG_ENABLED or (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
+        table.insert(items, 1, {"https://panelattack.com/migration.html", function()
+          love.system.openURL("https://panelattack.com/migration.html")
+          return main_select_mode, {}
+        end})
+      end
+    end
+
     main_menu = Click_menu(menu_x, menu_y, nil, themes[config.theme].main_menu_max_height, main_menu_last_index)
     for i = 1, #items do
       main_menu:add_button(items[i][1], selectFunction(items[i][2], items[i][3]), goEscape)
@@ -243,31 +254,21 @@ do
       end
       
       local fontHeight = get_global_font():getHeight()
-      local infoYPosition = 705 - fontHeight/2
+      local infoYPosition = 685 - fontHeight/2
 
-      local loveString = Game.loveVersionString()
-      if loveString == "11.3.0" then
-        gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
-        infoYPosition = infoYPosition - fontHeight
+      local major, minor, revision, codename = love.getVersion()
+      if major < 12 then
+        -- gprintf(loc("love_version_warning"), -5, infoYPosition, canvas_width, "right")
+        -- infoYPosition = infoYPosition - fontHeight
+      else
+        love.setDeprecationOutput(false)
       end
 
-      if GAME_UPDATER_GAME_VERSION then
-        gprintf("PA Version: " .. GAME_UPDATER_GAME_VERSION, -5, infoYPosition, canvas_width, "right")
-        infoYPosition = infoYPosition - fontHeight
-        if has_game_update then
-          menu_draw(panels[config.panels].images.classic[1][1], 1262, 685)
+      if GAME_UPDATER or DEBUG_ENABLED then
+        if DEBUG_ENABLED or (not GAME_UPDATER.version or GAME_UPDATER.version.major < 1) then
+          gprintf(loc("auto_updater_replacement"), 10, canvas_height / 2, menu_x - 10, "center")
+          infoYPosition = infoYPosition - fontHeight
         end
-      end
-
-      local runningFromAutoUpdater = GAME_UPDATER_GAME_VERSION ~= nil
-      local autoUpdaterOutOfDate = (GAME_UPDATER_VERSION == nil or GAME_UPDATER_VERSION < 1.1)
-      if runningFromAutoUpdater and autoUpdaterOutOfDate then
-        local downloadLink = consts.SERVER_LOCATION .. "/panel.zip"
-        if GAME_UPDATER.name == "panel-beta" then
-          downloadLink = consts.SERVER_LOCATION .. "/panel-beta.zip"
-        end
-        gprintf(loc("auto_updater_version_warning") .. " " .. downloadLink, -5, infoYPosition, canvas_width, "right")
-        infoYPosition = infoYPosition - fontHeight
       end
 
       wait()
